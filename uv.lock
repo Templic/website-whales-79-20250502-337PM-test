@@ -189,6 +189,7 @@ dependencies = [
     { name = "flask-talisman" },
     { name = "flask-wtf" },
     { name = "python-dotenv" },
+    { name = "wtforms" },
 ]
 
 [package.metadata]
@@ -198,6 +199,7 @@ requires-dist = [
     { name = "flask-talisman", specifier = ">=1.1.0" },
     { name = "flask-wtf", specifier = ">=1.2.2" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "wtforms", specifier = ">=3.2.1" },
 ]
 
 [[package]]
