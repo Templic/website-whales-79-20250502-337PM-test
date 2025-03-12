@@ -15,7 +15,7 @@ export function Header() {
           <li><Link href="/" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Home</Link></li>
           <li><Link href="/about" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">About</Link></li>
           <li><Link href="/music-release" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">New Music</Link></li>
-          <li><Link href="/music" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Archived Music</Link></li>
+          <li><Link href="/archived-music" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Archived Music</Link></li>
           <li><Link href="/tour" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Tour</Link></li>
           <li><Link href="/engage" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Engage</Link></li>
           <li><Link href="/newsletter" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Newsletter</Link></li>
@@ -25,7 +25,7 @@ export function Header() {
         </ul>
       </nav>
 
-      <div className="search-container flex justify-center mt-5">
+      <div className="search-container flex justify-center mt-5 w-full md:w-auto">
         <input 
           type="text" 
           placeholder="Search..." 
