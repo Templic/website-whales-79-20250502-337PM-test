@@ -26,7 +26,7 @@ export function Header() {
           </ul>
         </nav>
 
-        <div className="flex items-center">
+        <div className="search-container flex items-center">
           <input 
             type="text" 
             placeholder="Search..." 
