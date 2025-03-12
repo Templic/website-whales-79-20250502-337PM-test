@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Dale Loves Whales - Home</title>
+  <meta name="description" content="Dive into the cosmic and tropical world of Dale Loves Whales. Music, tours, and community await!">
+	
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="Dale Loves Whales - Home">
+  <meta property="og:description" content="Dive into the cosmic and tropical world of Dale Loves Whales. Music, tours, and community await!">
+  <meta property="og:image" content="proxy-image(48).jpg" >
+  <meta property="og:type" content="website">
+
+  <style>
+    :root {
+      /* Color Palette */
+      --background-color: #303436;
+      --midground-color: #0a325c;
+      --foreground-color: #9e140d;
+      --fill-color: #00ebd6;
+      --accent-color: #fe0064;
+      --font-color: #e8e6e3;
+    }
+
+    html {
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+      font-size: 16px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+      background-color: var(--background-color);
+      color: var(--font-color);
+      line-height: 1.6;
+    }
+
+    header {
+      background-color: var(--midground-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .logo {
+      color: var(--fill-color);
+      font-size: 2rem;
+      font-weight: bold;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav li {
+      margin-left: 1.5rem;
+    }
+
+    nav a {
+      color: var(--font-color);
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+
+    nav a:hover,
+    nav a:focus {
+      background-color: var(--accent-color);
+      color: #fff;
+    }
+
+    .hero {
+      background: linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8)),
+        url(https://onlyinhawaii.org/wp-content/uploads/2011/03/Rainbow-Falls.jpg)
+        no-repeat center center / cover;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      position: relative;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      padding: 2rem;
+    }
+
+    .hero-content h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px var(--accent-color);
+    }
+
+    .hero-content p {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      background-color: var(--fill-color);
+      color: #303436;
+      padding: 0.75rem 2rem;
+      font-size: 1.25rem;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 0 15px var(--fill-color);
+    }
+
+    .cta-button:hover,
+    .cta-button:focus {
+      background-color: var(--accent-color);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-color);
+    }
+
+    main {
+      padding: 4rem 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    section.section {
+      margin-bottom: 4rem;
+      background: rgba(10, 50, 92, 0.6);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      color: var(--font-color);
+      backdrop-filter: blur(5px);
+    }
+
+    section h2 {
+      color: var(--fill-color);
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--accent-color);
+      display: inline-block;
+    }
+
+    section p {
+      font-size: 1.25rem;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    footer {
+      background-color: var(--midground-color);
+      color: var(--font-color);
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+      }
+
+      nav ul {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      nav li {
+        margin: 0.5rem 0;
+      }
+
+      .cta-button {
+        width: 100%;
+      }
+
+      .hero {
+        min-height: 60vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header>
+    <a href="home_page.html" class="logo">Dale Loves Whales</a>
+    <nav>
+      <ul>
+        <li><a href="home_page.html" aria-current="page">Home</a></li>
+        <li><a href="about_page.html">About</a></li>
+		<li><a href="music_release_page.html">New Music</a></li>
+        <li><a href="music_page.html">Archived Music</a></li>
+		<li><a href="tour_page.html">Tour</a></li>
+		<li><a href="engage_page.html">Engage</a></li>
+		<li><a href="newsletter_page.html">Newsletter</a></li>
+        <li><a href="blog_page.html">Blog</a></li>
+		<li><a href="gifts_and_sponsorships_page.html">Collaboration</a></li>
+        <li><a href="contact_page.html">Contact</a></li>
+      </ul>
+    </nav>
+	<div class="search-container">
+		<input type="text" placeholder="Search...">
+		<button type="button">Search</button>
+		
+	</div>
+  </header>
+</body>
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1>Ride the Cosmic Wave</h1>
+      <p>Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.</p>
+      <p>Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.</p>
+      <a href="music_page.html" class="cta-button">Explore Music</a>
+
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main>
+    <!-- About Section -->
+    <section class="section" id="about">
+      <h2>Ideal Activity</h2>
+      <p>Dale Loves Whales blends cosmic rhythms with tropical soul. Dive deep into his musical journey that bridges the stars with the ocean's depths.</p>
+	  
+    </section>
+
+    <!-- Services / What We Offer -->
+    <section class="section" id="services">
+      <h2>Cosmic Sound Vibes</h2>
+      <p>From live performances to collaborative projects, Dale brings a unique sound experience infused with retro-futuristic beats, fluid tropical notes, and immersive visuals.</p>
+
+    </section>
+  </main>
+
+  <!-- Footer -->
+<footer>
+    <div class="footer-content">
+        <!-- Quick Links Section -->
+        <div class="quick-links">
+            <h4>Quick Links</h4>
+
+					  <nav>
+						<ul><a href="home_page.html" class="styled-link">Home</a></ul>
+						<ul><a href="about_page.html" class="styled-link">About</a></ul>
+						<ul><a href="music_page.html" class="styled-link">Music</a></ul>
+						<ul><a href="tour_page.html" class="styled-link">Tour</a></ul>
+						<ul><a href="contact_page.html" class="styled-link">Contact</a></ul>
+						<ul><a href="collaboration_page.html" class="styled-link">Collaboration</a></ul>
+						<ul><a href="gifts_and_sponsorships_page.html" class="styled-link">Gifts and Sponsorships</a></ul>
+						<ul><a href="blog_page.html" class="styled-link">Blog</a></ul>
+						<ul><a href="newsletter_page.html" class="styled-link">Newsletter</a></ul>
+					  </nav>
+        </div>
+
+        <!-- Social Media Icons Section -->
+        <div class="social-media">
+            <h4>Follow Us</h4>
+            <a href="https://facebook.com/DaleTheWhale" target="_blank">
+                <img src="icons8-facebook-48.png" alt="Facebook">
+            </a>
+            <a href="https://twitter.com/DaleTheWhale" target="_blank">
+                <img src="icons8-Twitter-48.png" alt="Twitter">
+            </a>
+            <a href="https://instagram.com/DaleTheWhale" target="_blank">
+                <img src="icons8-Instagram-48.png" alt="Instagram">
+            </a>
+        </div>
+
+        <!-- Newsletter Signup Section -->
+        <div class="newsletter-signup">
+            <h4>Join Our Newsletter</h4>
+            <form action="#" method="post">
+                <input type="email" name="email" placeholder="Enter your email" required>
+                <button type="submit">Subscribe</button>
+            </form>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 Dale Loves Whales. All rights reserved.</p>
+    </div>
+</footer>
+
+
+
+</body>
+
+</html>
