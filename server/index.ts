@@ -1,9 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { log } from "./vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -55,7 +54,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  const server = app;
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -78,7 +77,6 @@ process.on('unhandledRejection', (reason, promise) => {
       server.listen({
         port,
         host: "0.0.0.0",
-        reusePort: true,
       }, (err?: Error) => {
         if (err) {
           console.error('Server startup error:', err);
