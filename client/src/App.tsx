@@ -6,16 +6,16 @@ import { MainLayout } from "./components/layout/MainLayout";
 import NotFound from "./pages/not-found";
 
 // Pages
-import HomePage from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage";
-import MusicReleasePage from "./pages/MusicReleasePage";
-import MusicArchivePage from "./pages/MusicArchivePage";
-import TourPage from "./pages/TourPage";
-import EngagePage from "./pages/EngagePage";
-import NewsletterPage from "./pages/NewsletterPage";
-import BlogPage from "./pages/BlogPage";
-import CollaborationPage from "./pages/CollaborationPage";
-import ContactPage from "./pages/ContactPage";
+import HomePage from "@/pages/HomePage";
+import AboutPage from "@/pages/AboutPage";
+import MusicReleasePage from "@/pages/MusicReleasePage";
+import MusicArchivePage from "@/pages/MusicArchivePage";
+import TourPage from "@/pages/TourPage";
+import EngagePage from "@/pages/EngagePage";
+import NewsletterPage from "@/pages/NewsletterPage";
+import BlogPage from "@/pages/BlogPage";
+import CollaborationPage from "@/pages/CollaborationPage";
+import ContactPage from "@/pages/ContactPage";
 
 function Router() {
   return (
