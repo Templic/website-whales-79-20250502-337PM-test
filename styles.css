@@ -182,3 +182,12 @@ ul {
 .footer-links a:hover {
   color: var(--fill-color); /* Optional: Change color on hover */
 }
+.footer-links a {
+  color: var(--font-color);
+  text-decoration: none;
+  margin: 0 10px; /* Adjust spacing as necessary */
+}
+
+.footer-links a:hover {
+  color: var(--fill-color);
+}
