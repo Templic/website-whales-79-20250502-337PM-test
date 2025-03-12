@@ -162,3 +162,23 @@ ul {
 .styled-link:hover {
     background-color: #555;
 }
+.footer-links {
+  list-style-type: none;
+  display: flex;
+  justify-content: center;
+  gap: 2rem; /* Adjust spacing between links */
+  padding: 1rem 0;
+}
+
+.footer-links li {
+  margin: 0;
+}
+
+.footer-links a {
+  color: var(--font-color); /* Ensure link color is consistent */
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--fill-color); /* Optional: Change color on hover */
+}

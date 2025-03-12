@@ -7,14 +7,14 @@
 
   <title>Dale Loves Whales - Home</title>
   <meta name="description" content="Dive into the cosmic and tropical world of Dale Loves Whales. Music, tours, and community await!">
-	
+
   <link rel="icon" href="favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="styles.css">
 
   <!-- Open Graph tags -->
   <meta property="og:title" content="Dale Loves Whales - Home">
   <meta property="og:description" content="Dive into the cosmic and tropical world of Dale Loves Whales. Music, tours, and community await!">
-  <meta property="og:image" content="proxy-image(48).jpg" >
+  <meta property="og:image" content="proxy-image(48).jpg">
   <meta property="og:type" content="website">
 
   <style>
@@ -34,7 +34,9 @@
       font-size: 16px;
     }
 
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       box-sizing: inherit;
     }
 
@@ -203,41 +205,62 @@
         min-height: 60vh;
       }
     }
+
+    /* Additional footer styling for proper list formatting */
+    .quick-links ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .quick-links li {
+      margin-bottom: 0.5rem;
+    }
+
+    .quick-links .styled-link {
+      color: var(--font-color);
+      text-decoration: none;
+      transition: color 0.3s ease;
+      display: inline-block;
+      padding: 0.3rem 0;
+    }
+
+    .quick-links .styled-link:hover {
+      color: var(--accent-color);
+    }
   </style>
 </head>
 
 <body>
   <!-- Header -->
   <header>
-    <a href="home_page.html" class="logo">Dale Loves Whales</a>
+    <a href="pages/home_page.html" class="logo">Dale Loves Whales</a>
     <nav>
       <ul>
-        <li><a href="home_page.html" aria-current="page">Home</a></li>
-        <li><a href="about_page.html">About</a></li>
-		<li><a href="music_release_page.html">New Music</a></li>
-        <li><a href="music_page.html">Archived Music</a></li>
-		<li><a href="tour_page.html">Tour</a></li>
-		<li><a href="engage_page.html">Engage</a></li>
-		<li><a href="newsletter_page.html">Newsletter</a></li>
-        <li><a href="blog_page.html">Blog</a></li>
-		<li><a href="gifts_and_sponsorships_page.html">Collaboration</a></li>
-        <li><a href="contact_page.html">Contact</a></li>
+        <li><a href="pages/home_page.html" aria-current="page">Home</a></li>
+        <li><a href="pages/about_page.html">About</a></li>
+        <li><a href="pages/music_release_page.html">New Music</a></li>
+        <li><a href="pages/music_page.html">Archived Music</a></li>
+        <li><a href="pages/tour_page.html">Tour</a></li>
+        <li><a href="pages/engage_page.html">Engage</a></li>
+        <li><a href="pages/newsletter_page.html">Newsletter</a></li>
+        <li><a href="pages/blog_page.html">Blog</a></li>
+        <li><a href="pages/gifts_and_sponsorships_page.html">Collaboration</a></li>
+        <li><a href="pages/contact_page.html">Contact</a></li>
       </ul>
     </nav>
-	<div class="search-container">
-		<input type="text" placeholder="Search...">
-		<button type="button">Search</button>
-		
-	</div>
+    <div class="search-container">
+      <input type="text" placeholder="Search...">
+      <button type="button">Search</button>
+    </div>
   </header>
-</body>
   <!-- Hero Section -->
   <section class="hero" id="home">
     <div class="hero-content">
       <h1>Ride the Cosmic Wave</h1>
       <p>Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.</p>
       <p>Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.</p>
-      <a href="music_page.html" class="cta-button">Explore Music</a>
+      <a href="pages/music_page.html" class="cta-button">Explore Music</a>
 
     </div>
   </section>
@@ -248,7 +271,7 @@
     <section class="section" id="about">
       <h2>Ideal Activity</h2>
       <p>Dale Loves Whales blends cosmic rhythms with tropical soul. Dive deep into his musical journey that bridges the stars with the ocean's depths.</p>
-	  
+
     </section>
 
     <!-- Services / What We Offer -->
@@ -260,53 +283,53 @@
   </main>
 
   <!-- Footer -->
-<footer>
+  <footer>
     <div class="footer-content">
-        <!-- Quick Links Section -->
-        <div class="quick-links">
-            <h4>Quick Links</h4>
+      <!-- Quick Links Section -->
+      <div class="quick-links">
+        <h4>Quick Links</h4>
+        <nav>
+          <ul>
+            <li><a href="pages/home_page.html" class="styled-link">Home</a></li>
+            <li><a href="pages/about_page.html" class="styled-link">About</a></li>
+            <li><a href="pages/music_page.html" class="styled-link">Music</a></li>
+            <li><a href="pages/tour_page.html" class="styled-link">Tour</a></li>
+            <li><a href="pages/contact_page.html" class="styled-link">Contact</a></li>
+            <li><a href="pages/collaboration_page.html" class="styled-link">Collaboration</a></li>
+            <li><a href="pages/gifts_and_sponsorships_page.html" class="styled-link">Gifts and Sponsorships</a></li>
+            <li><a href="pages/blog_page.html" class="styled-link">Blog</a></li>
+            <li><a href="pages/newsletter_page.html" class="styled-link">Newsletter</a></li>
+          </ul>
+        </nav>
+      </div>
 
-					  <nav>
-						<ul><a href="home_page.html" class="styled-link">Home</a></ul>
-						<ul><a href="about_page.html" class="styled-link">About</a></ul>
-						<ul><a href="music_page.html" class="styled-link">Music</a></ul>
-						<ul><a href="tour_page.html" class="styled-link">Tour</a></ul>
-						<ul><a href="contact_page.html" class="styled-link">Contact</a></ul>
-						<ul><a href="collaboration_page.html" class="styled-link">Collaboration</a></ul>
-						<ul><a href="gifts_and_sponsorships_page.html" class="styled-link">Gifts and Sponsorships</a></ul>
-						<ul><a href="blog_page.html" class="styled-link">Blog</a></ul>
-						<ul><a href="newsletter_page.html" class="styled-link">Newsletter</a></ul>
-					  </nav>
-        </div>
+      <!-- Social Media Icons Section -->
+      <div class="social-media">
+        <h4>Follow Us</h4>
+        <a href="https://facebook.com/DaleTheWhale" target="_blank">
+          <img src="icons8-facebook-48.png" alt="Facebook">
+        </a>
+        <a href="https://twitter.com/DaleTheWhale" target="_blank">
+          <img src="icons8-Twitter-48.png" alt="Twitter">
+        </a>
+        <a href="https://instagram.com/DaleTheWhale" target="_blank">
+          <img src="icons8-Instagram-48.png" alt="Instagram">
+        </a>
+      </div>
 
-        <!-- Social Media Icons Section -->
-        <div class="social-media">
-            <h4>Follow Us</h4>
-            <a href="https://facebook.com/DaleTheWhale" target="_blank">
-                <img src="icons8-facebook-48.png" alt="Facebook">
-            </a>
-            <a href="https://twitter.com/DaleTheWhale" target="_blank">
-                <img src="icons8-Twitter-48.png" alt="Twitter">
-            </a>
-            <a href="https://instagram.com/DaleTheWhale" target="_blank">
-                <img src="icons8-Instagram-48.png" alt="Instagram">
-            </a>
-        </div>
-
-        <!-- Newsletter Signup Section -->
-        <div class="newsletter-signup">
-            <h4>Join Our Newsletter</h4>
-            <form action="#" method="post">
-                <input type="email" name="email" placeholder="Enter your email" required>
-                <button type="submit">Subscribe</button>
-            </form>
-        </div>
+      <!-- Newsletter Signup Section -->
+      <div class="newsletter-signup">
+        <h4>Join Our Newsletter</h4>
+        <form action="#" method="post">
+          <input type="email" name="email" placeholder="Enter your email" required>
+          <button type="submit">Subscribe</button>
+        </form>
+      </div>
     </div>
     <div class="footer-bottom">
-        <p>&copy; 2025 Dale Loves Whales. All rights reserved.</p>
+      <p>&copy; 2025 Dale Loves Whales. All rights reserved.</p>
     </div>
-</footer>
-
+  </footer>
 
 
 </body>
