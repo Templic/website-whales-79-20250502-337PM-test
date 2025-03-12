@@ -131,7 +131,7 @@ header {
     margin: 10px 0;
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 25px;
 }
 
 .newsletter-signup input {
