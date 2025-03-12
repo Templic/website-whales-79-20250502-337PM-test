@@ -5,6 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dale the Whale - Music Release</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Base styles */
+        header {
+            background-color: var(--midground-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .logo {
+            color: var(--fill-color);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: bold;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+
+        nav li {
+            margin: 0.5rem;
+        }
+
+        nav a {
+            color: var(--font-color);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        /* Media queries for responsive design */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .logo {
+                margin-bottom: 1rem;
+                text-align: center;
+            }
+
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+                width: 100%;
+            }
+
+            nav li {
+                margin: 0.25rem 0;
+                width: 100%;
+                text-align: center;
+            }
+
+            nav a {
+                display: block;
+                padding: 0.75rem;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            nav a {
+                padding: 0.5rem;
+            }
+        }
+    </style>
 </head>
 
 <header>
@@ -25,15 +123,9 @@
 </header>
 
 <body>
-
-<div class="search-container">
-    <input type="text" placeholder="Search...">
-    <button type="button">Search</button>
-</div>
-
     <main>
         <section class="main-banner">
-            <img src="C:\Users\Templ\Documents\Projects _ Active\Website_Dale Loves Whales_\album cover for feels so good song.png" alt="Album Cover" class="album-cover">
+            <img src="album cover for feels so good song.png" alt="Album Cover" class="album-cover">
             <div class="release-info">
                 <h1>FEELS SO GOOD</h1>
                 <p>Release Date: March 14, 2025</p>
@@ -70,56 +162,10 @@
         <section class="call-to-action">
             <button class="cta-button">Buy Now</button>
         </section>
-
     </main>
 
-     <!-- Footer -->
-  <footer>
-    <div class="footer-content">
-        <!-- Quick Links Section -->
-        <div class="quick-links">
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="home_page.html">Home</a></li>
-                <li><a href="about_page.html">About</a></li>
-                <li><a href="music_page.html">Music</a></li>
-                <li><a href="tour_page.html">Tour</a></li>
-                <li><a href="contact_page.html">Contact</a></li>
-                <li><a href="collaboration_page.html">Collaboration</a></li>
-                <li><a href="gifts_and_sponsorships_page.html">Gifts and Sponsorships</a></li>
-                <li><a href="blog_page.html">Blog</a></li>
-                <li><a href="newsletter_page.html">Newsletter</a></li>
-            </ul>
-        </div>
-
-        <!-- Social Media Icons Section -->
-        <div class="social-media">
-			<h4>Follow Us</h4>
-			<a href="https://facebook.com/DaleTheWhale" target="_blank">
-				<img src="facebook-icon.png" alt="Facebook">
-			</a>
-			<a href="https://twitter.com/DaleTheWhale" target="_blank">
-				<img src="twitter-icon.png" alt="Twitter">
-			</a>
-			<a href="https://instagram.com/DaleTheWhale" target="_blank">
-				<img src="instagram-icon.png" alt="Instagram">
-			</a>
-		</div>
-
-
-        <!-- Newsletter Signup Section -->
-        <div class="newsletter-signup">
-            <h4>Join Our Newsletter</h4>
-            <form action="#" method="post">
-                <input type="email" name="email" placeholder="Enter your email" required>
-                <button type="submit">Subscribe</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="footer-bottom">
+    <footer>
         <p>&copy; 2025 Dale Loves Whales. All rights reserved.</p>
-    </div>
-</footer>
+    </footer>
 </body>
 </html>

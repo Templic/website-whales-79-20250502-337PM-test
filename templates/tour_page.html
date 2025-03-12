@@ -59,7 +59,7 @@
 
     .logo {
       color: var(--fill-color);
-      font-size: 2rem;
+      font-size: clamp(1.5rem, 4vw, 2rem);
       font-weight: bold;
       text-decoration: none;
       letter-spacing: 1px;
@@ -70,10 +70,11 @@
       display: flex;
       margin: 0;
       padding: 0;
+      flex-wrap: wrap;
     }
 
     nav li {
-      margin-left: 1.5rem;
+      margin: 0.5rem;
     }
 
     nav a {
@@ -83,6 +84,7 @@
       padding: 0.5rem 1rem;
       border-radius: 5px;
       transition: all 0.3s ease;
+      font-size: clamp(0.8rem, 2vw, 1rem);
     }
 
     nav a:hover,
@@ -227,15 +229,33 @@
     @media (max-width: 768px) {
       header {
         flex-direction: column;
+        padding: 1rem;
+      }
+
+      .logo {
+        margin-bottom: 1rem;
+        text-align: center;
       }
 
       nav ul {
         flex-direction: column;
+        align-items: center;
         width: 100%;
       }
 
       nav li {
-        margin: 0.5rem 0;
+        margin: 0.25rem 0;
+        width: 100%;
+        text-align: center;
+      }
+
+      nav a {
+        display: block;
+        padding: 0.75rem;
+      }
+
+      .section-header h2 {
+        font-size: 1.75em;
       }
 
       .tour-item {
@@ -244,8 +264,27 @@
       }
 
       .buy-button {
-        margin-top: 1rem;
         width: 100%;
+        text-align: center;
+        margin-top: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 10px;
+      }
+
+      .section-header h2 {
+        font-size: 1.5em;
+      }
+
+      nav a {
+        padding: 0.5rem;
+      }
+
+      .tour-details h3 {
+        font-size: 1.1rem;
       }
     }
   </style>
