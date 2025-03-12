@@ -24,7 +24,7 @@ function Router() {
         <Route path="/" component={HomePage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/music-release" component={MusicReleasePage} />
-        <Route path="/music" component={MusicArchivePage} />
+        <Route path="/archived-music" component={MusicArchivePage} />
         <Route path="/tour" component={TourPage} />
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />
