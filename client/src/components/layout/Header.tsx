@@ -1,10 +1,17 @@
-import { Link } from "wouter";
-import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { useState, useCallback } from "react";
 import { Menu, X, Search } from "lucide-react";
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [, setLocation] = useLocation();
+
+  // Handler to close menu
+  const handleNavigationClick = useCallback((path: string) => {
+    setIsMenuOpen(false);
+    setLocation(path);
+  }, [setLocation]);
 
   return (
     <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
@@ -13,27 +20,31 @@ export function Header() {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="md:hidden text-[#00ebd6] hover:text-[#e8e6e3] transition-colors"
+            aria-label="Toggle menu"
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
 
-          <Link href="/" className="text-[#00ebd6] text-xl sm:text-2xl font-bold no-underline font-montserrat">
+          <button 
+            onClick={() => handleNavigationClick("/")}
+            className="text-[#00ebd6] text-xl sm:text-2xl font-bold no-underline font-montserrat"
+          >
             Dale Loves Whales
-          </Link>
+          </button>
         </div>
 
         <nav className="hidden md:block flex-grow mx-8">
           <ul className="flex flex-wrap gap-4 lg:gap-6 list-none p-0 justify-center">
-            <li><Link href="/" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Home</Link></li>
-            <li><Link href="/about" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">About</Link></li>
-            <li><Link href="/music-release" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">New Music</Link></li>
-            <li><Link href="/archived-music" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Archived Music</Link></li>
-            <li><Link href="/tour" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Tour</Link></li>
-            <li><Link href="/engage" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Engage</Link></li>
-            <li><Link href="/newsletter" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Newsletter</Link></li>
-            <li><Link href="/blog" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Blog</Link></li>
-            <li><Link href="/collaboration" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Collaboration</Link></li>
-            <li><Link href="/contact" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Contact</Link></li>
+            <li><button onClick={() => handleNavigationClick("/")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Home</button></li>
+            <li><button onClick={() => handleNavigationClick("/about")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">About</button></li>
+            <li><button onClick={() => handleNavigationClick("/music-release")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">New Music</button></li>
+            <li><button onClick={() => handleNavigationClick("/archived-music")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Archived Music</button></li>
+            <li><button onClick={() => handleNavigationClick("/tour")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Tour</button></li>
+            <li><button onClick={() => handleNavigationClick("/engage")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Engage</button></li>
+            <li><button onClick={() => handleNavigationClick("/newsletter")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Newsletter</button></li>
+            <li><button onClick={() => handleNavigationClick("/blog")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Blog</button></li>
+            <li><button onClick={() => handleNavigationClick("/collaboration")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Collaboration</button></li>
+            <li><button onClick={() => handleNavigationClick("/contact")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2">Contact</button></li>
           </ul>
         </nav>
 
@@ -54,16 +65,16 @@ export function Header() {
       {/* Mobile navigation menu */}
       <nav className={`md:hidden transition-all duration-300 ${isMenuOpen ? 'max-h-screen' : 'max-h-0 overflow-hidden'}`}>
         <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
-          <li><Link href="/" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Home</Link></li>
-          <li><Link href="/about" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">About</Link></li>
-          <li><Link href="/music-release" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">New Music</Link></li>
-          <li><Link href="/archived-music" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Archived Music</Link></li>
-          <li><Link href="/tour" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Tour</Link></li>
-          <li><Link href="/engage" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Engage</Link></li>
-          <li><Link href="/newsletter" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Newsletter</Link></li>
-          <li><Link href="/blog" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Blog</Link></li>
-          <li><Link href="/collaboration" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Collaboration</Link></li>
-          <li><Link href="/contact" className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block">Contact</Link></li>
+          <li><button onClick={() => handleNavigationClick("/")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Home</button></li>
+          <li><button onClick={() => handleNavigationClick("/about")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">About</button></li>
+          <li><button onClick={() => handleNavigationClick("/music-release")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">New Music</button></li>
+          <li><button onClick={() => handleNavigationClick("/archived-music")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Archived Music</button></li>
+          <li><button onClick={() => handleNavigationClick("/tour")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Tour</button></li>
+          <li><button onClick={() => handleNavigationClick("/engage")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Engage</button></li>
+          <li><button onClick={() => handleNavigationClick("/newsletter")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Newsletter</button></li>
+          <li><button onClick={() => handleNavigationClick("/blog")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Blog</button></li>
+          <li><button onClick={() => handleNavigationClick("/collaboration")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Collaboration</button></li>
+          <li><button onClick={() => handleNavigationClick("/contact")} className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-3 block w-full text-left">Contact</button></li>
         </ul>
 
         {/* Mobile search */}
