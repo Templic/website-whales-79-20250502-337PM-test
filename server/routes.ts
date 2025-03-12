@@ -14,6 +14,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create HTTP server with the Express app
   const httpServer = createServer(app);
+  // Don't start listening here, let the main application handle that
   return httpServer;
 }
