@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter - Dale Loves Whales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}" class="logo">Dale Loves Whales</a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+                <li><a href="{{ url_for('music_release') }}">New Music</a></li>
+                <li><a href="{{ url_for('music') }}">Archived Music</a></li>
+                <li><a href="{{ url_for('tour') }}">Tour</a></li>
+                <li><a href="{{ url_for('engage') }}">Engage</a></li>
+                <li><a href="{{ url_for('newsletter') }}" aria-current="page">Newsletter</a></li>
+                <li><a href="{{ url_for('blog') }}">Blog</a></li>
+                <li><a href="{{ url_for('collaboration') }}">Collaboration</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="section-header">
+            <h1>Newsletter Signup</h1>
+            <p>Stay connected with Dale Loves Whales! Subscribe to our newsletter for exclusive updates.</p>
+        </section>
+
+        <section class="newsletter-form">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="POST" action="{{ url_for('newsletter') }}">
+                {{ form.csrf_token }}
+                <div class="form-group">
+                    {{ form.email.label }}
+                    {{ form.email(class="form-control", placeholder="Enter your email") }}
+                    {% if form.email.errors %}
+                        {% for error in form.email.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                <button type="submit">Subscribe</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; {{ year }} Dale Loves Whales. All rights reserved.</p>
+    </footer>
+</body>
+</html>

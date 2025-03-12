@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Dale Loves Whales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <a href="{{ url_for('home') }}" class="logo">Dale Loves Whales</a>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+                <li><a href="{{ url_for('music_release') }}">New Music</a></li>
+                <li><a href="{{ url_for('music') }}">Archived Music</a></li>
+                <li><a href="{{ url_for('tour') }}">Tour</a></li>
+                <li><a href="{{ url_for('engage') }}">Engage</a></li>
+                <li><a href="{{ url_for('newsletter') }}">Newsletter</a></li>
+                <li><a href="{{ url_for('blog') }}" aria-current="page">Blog</a></li>
+                <li><a href="{{ url_for('collaboration') }}">Collaboration</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="section-header">
+            <h1>Blog</h1>
+            <p>Stay updated with the latest news, thoughts, and stories from Dale Loves Whales.</p>
+        </section>
+
+        <section class="blog-content">
+            <p>Blog content coming soon...</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; {{ year }} Dale Loves Whales. All rights reserved.</p>
+    </footer>
+</body>
+</html>
