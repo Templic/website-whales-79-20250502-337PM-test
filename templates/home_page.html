@@ -224,6 +224,21 @@
           <li><a href="contact_page.html">Contact</a></li>
         </ul>
       </nav>
+      <div className="search-container flex items-center">
+          <input 
+            type="text" 
+            placeholder="Search..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-3 py-2 text-base border border-gray-300 rounded-md w-[300px]"
+          />
+          <button 
+            type="button" 
+            className="px-5 py-2 ml-2 text-base bg-[#00ebd6] text-[#303436] border-none rounded-md cursor-pointer hover:bg-[#0056b3]"
+          >
+            Search
+          </button>
+        </div>   
   </header>
 </body>
   <!-- Hero Section -->
