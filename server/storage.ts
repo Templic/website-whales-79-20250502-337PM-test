@@ -1,38 +1,27 @@
-import { users, type User, type InsertUser } from "@shared/schema";
-
-// modify the interface with any CRUD methods
-// you might need
+import { type Subscriber, type InsertSubscriber } from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  currentId: number;
+  private subscribers: Map<number, Subscriber>;
+  currentSubscriberId: number;
 
   constructor() {
-    this.users = new Map();
-    this.currentId = 1;
+    this.subscribers = new Map();
+    this.currentSubscriberId = 1;
   }
 
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
+    const id = this.currentSubscriberId++;
+    const subscriber: Subscriber = { 
+      ...insertSubscriber, 
+      id,
+      active: true 
+    };
+    this.subscribers.set(id, subscriber);
+    return subscriber;
   }
 }
 
