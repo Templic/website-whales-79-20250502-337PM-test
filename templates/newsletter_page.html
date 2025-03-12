@@ -4,7 +4,196 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Newsletter - Dale Loves Whales</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        :root {
+            --background-color: #303436;
+            --midground-color: #0a325c;
+            --foreground-color: #9e140d;
+            --fill-color: #00ebd6;
+            --accent-color: #fe0064;
+            --font-color: #e8e6e3;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--font-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--midground-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .logo {
+            color: var(--fill-color);
+            font-size: 2rem;
+            font-weight: bold;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav li {
+            margin-left: 1.5rem;
+        }
+
+        nav a {
+            color: var(--font-color);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        main {
+            padding: 4rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h1 {
+            color: var(--fill-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-color);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        .section-header p {
+            font-size: 1.25rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .newsletter-form {
+            background: rgba(10, 50, 92, 0.6);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid var(--fill-color);
+            border-radius: 5px;
+            background: rgba(48, 52, 54, 0.8);
+            color: var(--font-color);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 5px var(--accent-color);
+        }
+
+        button {
+            background-color: var(--fill-color);
+            color: var(--background-color);
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .error {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .alert-success {
+            background-color: rgba(0, 235, 214, 0.2);
+            border: 1px solid var(--fill-color);
+            color: var(--fill-color);
+        }
+
+        .alert-error {
+            background-color: rgba(254, 0, 100, 0.2);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        footer {
+            background-color: var(--midground-color);
+            color: var(--font-color);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                width: 100%;
+                text-align: center;
+            }
+
+            nav li {
+                margin: 0.5rem 0;
+            }
+
+            main {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -13,13 +202,10 @@
             <ul>
                 <li><a href="{{ url_for('home') }}">Home</a></li>
                 <li><a href="{{ url_for('about') }}">About</a></li>
-                <li><a href="{{ url_for('music_release') }}">New Music</a></li>
-                <li><a href="{{ url_for('music') }}">Archived Music</a></li>
+                <li><a href="{{ url_for('music') }}">Music</a></li>
                 <li><a href="{{ url_for('tour') }}">Tour</a></li>
-                <li><a href="{{ url_for('engage') }}">Engage</a></li>
                 <li><a href="{{ url_for('newsletter') }}" aria-current="page">Newsletter</a></li>
                 <li><a href="{{ url_for('blog') }}">Blog</a></li>
-                <li><a href="{{ url_for('collaboration') }}">Collaboration</a></li>
                 <li><a href="{{ url_for('contact') }}">Contact</a></li>
             </ul>
         </nav>
@@ -27,8 +213,8 @@
 
     <main>
         <section class="section-header">
-            <h1>Newsletter Signup</h1>
-            <p>Stay connected with Dale Loves Whales! Subscribe to our newsletter for exclusive updates.</p>
+            <h1>Join Our Cosmic Newsletter</h1>
+            <p>Stay updated with the latest releases, tour dates, and exclusive content from Dale Loves Whales.</p>
         </section>
 
         <section class="newsletter-form">
@@ -39,19 +225,19 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
+
             <form method="POST" action="{{ url_for('newsletter') }}">
                 {{ form.csrf_token }}
                 <div class="form-group">
-                    {{ form.email.label }}
-                    {{ form.email(class="form-control", placeholder="Enter your email") }}
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Enter your cosmic email address") }}
                     {% if form.email.errors %}
                         {% for error in form.email.errors %}
                             <span class="error">{{ error }}</span>
                         {% endfor %}
                     {% endif %}
                 </div>
-                <button type="submit">Subscribe</button>
+                <button type="submit">Subscribe to the Cosmic Wave</button>
             </form>
         </section>
     </main>
