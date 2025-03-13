@@ -1,30 +1,36 @@
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";
 
+type Theme = "light" | "dark" | "system";
+
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<Theme>("system");
 
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove("light", "dark");
+    root.classList.remove("light", "dark", "system");
     root.classList.add(theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+  const cycleTheme = () => {
+    setTheme(current => {
+      const themeOrder: Theme[] = ["light", "system", "dark"];
+      const currentIndex = themeOrder.indexOf(current);
+      return themeOrder[(currentIndex + 1) % themeOrder.length];
+    });
   };
 
   return (
     <Button
-      variant="ghost"
+      variant="outline"
       size="icon"
-      onClick={toggleTheme}
-      className="relative w-9 h-9"
-      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      onClick={cycleTheme}
+      className="relative w-10 h-10 border-2 border-primary bg-background hover:bg-accent hover:text-accent-foreground"
     >
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <Sun className={`h-5 w-5 transition-all ${theme !== 'light' ? 'hidden' : ''}`} />
+      <Moon className={`h-5 w-5 transition-all ${theme !== 'dark' ? 'hidden' : ''}`} />
+      <SunMoon className={`h-5 w-5 transition-all ${theme !== 'system' ? 'hidden' : ''}`} />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );

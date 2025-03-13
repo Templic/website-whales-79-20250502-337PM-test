@@ -1,6 +1,16 @@
 {
   "variant": "vibrant",
   "primary": "hsl(180, 100%, 50%)",
-  "appearance": "dark",
-  "radius": 0.5
+  "appearance": "system",
+  "radius": 0.5,
+  "themes": {
+    "light": {
+      "background": "hsl(210, 25%, 98%)",
+      "foreground": "hsl(210, 25%, 15%)"
+    },
+    "dark": {
+      "background": "hsl(210, 25%, 15%)",
+      "foreground": "hsl(210, 25%, 98%)"
+    }
+  }
 }
