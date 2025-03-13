@@ -9,7 +9,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-4 right-4 z-[100]">
         <ThemeToggle />
       </div>
       <Header />

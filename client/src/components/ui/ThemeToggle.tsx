@@ -22,15 +22,15 @@ export function ThemeToggle() {
   };
 
   return (
-    <Button
+    <Button 
       variant="outline"
       size="icon"
       onClick={cycleTheme}
-      className="relative w-10 h-10 border-2 border-primary bg-background hover:bg-accent hover:text-accent-foreground"
+      className="relative w-12 h-12 rounded-full bg-background border-2 border-primary shadow-lg hover:shadow-primary/50 transition-all duration-300"
     >
-      <Sun className={`h-5 w-5 transition-all ${theme !== 'light' ? 'hidden' : ''}`} />
-      <Moon className={`h-5 w-5 transition-all ${theme !== 'dark' ? 'hidden' : ''}`} />
-      <SunMoon className={`h-5 w-5 transition-all ${theme !== 'system' ? 'hidden' : ''}`} />
+      <Sun className={`absolute inset-0 m-auto h-6 w-6 transition-all duration-300 ${theme !== 'light' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`} />
+      <Moon className={`absolute inset-0 m-auto h-6 w-6 transition-all duration-300 ${theme !== 'dark' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`} />
+      <SunMoon className={`absolute inset-0 m-auto h-6 w-6 transition-all duration-300 ${theme !== 'system' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`} />
       <span className="sr-only">Toggle theme</span>
     </Button>
   );
