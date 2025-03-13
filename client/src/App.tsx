@@ -14,6 +14,7 @@ import TourPage from "@/pages/TourPage";
 import EngagePage from "@/pages/EngagePage";
 import NewsletterPage from "@/pages/NewsletterPage";
 import BlogPage from "@/pages/BlogPage";
+import BlogPostPage from "@/pages/BlogPostPage";
 import CollaborationPage from "@/pages/CollaborationPage";
 import ContactPage from "@/pages/ContactPage";
 
@@ -29,6 +30,7 @@ function Router() {
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />
         <Route path="/blog" component={BlogPage} />
+        <Route path="/blog/:id" component={BlogPostPage} />
         <Route path="/collaboration" component={CollaborationPage} />
         <Route path="/contact" component={ContactPage} />
         <Route component={NotFound} />
