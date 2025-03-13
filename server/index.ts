@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { log } from "./vite";
 import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
+import { pgPool } from "./db";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -82,6 +83,32 @@ async function startServer() {
         resolve(true);
       });
     });
+
+    // Setup graceful shutdown
+    const shutdown = async () => {
+      console.log('Shutting down server...');
+      try {
+        await new Promise<void>((resolve) => {
+          httpServer.close(() => {
+            console.log('HTTP server closed');
+            resolve();
+          });
+        });
+
+        console.log('Closing database pool...');
+        await pgPool.end();
+        console.log('Database pool closed');
+
+        process.exit(0);
+      } catch (error) {
+        console.error('Error during shutdown:', error);
+        process.exit(1);
+      }
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
