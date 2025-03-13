@@ -5,11 +5,11 @@
   "radius": 0.5,
   "themes": {
     "light": {
-      "background": "hsl(210, 25%, 98%)",
-      "foreground": "hsl(210, 25%, 15%)"
+      "background": "hsl(210, 30%, 99%)",
+      "foreground": "hsl(210, 25%, 10%)"
     },
     "dark": {
-      "background": "hsl(210, 25%, 15%)",
+      "background": "hsl(210, 30%, 8%)",
       "foreground": "hsl(210, 25%, 98%)"
     }
   }
