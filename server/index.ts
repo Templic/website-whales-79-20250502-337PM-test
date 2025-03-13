@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { log } from "./vite";
 import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
-import { pgPool } from "./db";
+import { pgPool, initializeDatabase } from "./db";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,26 +17,10 @@ app.use(express.urlencoded({ extended: false }));
 // Add logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-      log(logLine);
+    if (req.path.startsWith("/api")) {
+      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
     }
   });
   next();
@@ -57,13 +41,15 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
+    // Initialize database first
+    await initializeDatabase();
+
     const httpServer = await registerRoutes(app);
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite in development mode...');
       await setupVite(app, httpServer);
     } else {
-      // Serve static files from the templates directory
       app.use(express.static(path.resolve(__dirname, "../templates")));
       app.use("*", (_req, res) => {
         res.sendFile(path.resolve(__dirname, "../templates/home_page.html"));
