@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { log } from "./vite";
 import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
-import { pgPool, initializeDatabase } from "./db";
+import { pgPool } from "./db";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,9 +41,6 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Initialize database first
-    await initializeDatabase();
-
     const httpServer = await registerRoutes(app);
 
     if (process.env.NODE_ENV !== 'production') {
