@@ -20,3 +20,11 @@ export const db = drizzle(pool, { schema });
 
 // Export pool to be able to end it when the server closes
 export const pgPool = pool;
+
+// Log successful connection
+pool.connect().then(() => {
+  console.log('Successfully connected to PostgreSQL database');
+}).catch(err => {
+  console.error('Failed to connect to PostgreSQL:', err);
+  process.exit(-1);
+});
