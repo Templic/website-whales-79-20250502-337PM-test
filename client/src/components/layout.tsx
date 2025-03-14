@@ -1,94 +1,132 @@
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu } from "lucide-react";
+import { useState } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const NavLinks = () => (
+    <>
+      <Link href="/">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </Link>
+      <Link href="/about">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Info className="h-4 w-4 mr-2" />
+          About
+        </Button>
+      </Link>
+      <Link href="/music-release">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Music className="h-4 w-4 mr-2" />
+          Music Release
+        </Button>
+      </Link>
+      <Link href="/archived-music">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Archive className="h-4 w-4 mr-2" />
+          Archived Music
+        </Button>
+      </Link>
+      <Link href="/tour">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Calendar className="h-4 w-4 mr-2" />
+          Tour
+        </Button>
+      </Link>
+      <Link href="/blog">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <BookOpen className="h-4 w-4 mr-2" />
+          Blog
+        </Button>
+      </Link>
+      <Link href="/engage">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Heart className="h-4 w-4 mr-2" />
+          Engage
+        </Button>
+      </Link>
+      <Link href="/contact">
+        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <MessageSquare className="h-4 w-4 mr-2" />
+          Contact
+        </Button>
+      </Link>
+    </>
+  );
+
+  const AuthLinks = () => (
+    <>
+      {user ? (
+        <>
+          <Link href="/portal">
+            <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+              <User className="h-4 w-4 mr-2" />
+              My Dashboard
+            </Button>
+          </Link>
+          {(user.role === "admin" || user.role === "super_admin") && (
+            <Link href="/admin">
+              <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+                <Settings className="h-4 w-4 mr-2" />
+                Admin Portal
+              </Button>
+            </Link>
+          )}
+        </>
+      ) : (
+        <Link href="/auth">
+          <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+            <User className="h-4 w-4 mr-2" />
+            Login
+          </Button>
+        </Link>
+      )}
+    </>
+  );
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex justify-between items-center">
-            <div className="flex items-center space-x-4 flex-wrap">
-              <Link href="/">
-                <Button variant="ghost">
-                  <Home className="h-4 w-4 mr-2" />
-                  Home
-                </Button>
-              </Link>
-              <Link href="/about">
-                <Button variant="ghost">
-                  <Info className="h-4 w-4 mr-2" />
-                  About
-                </Button>
-              </Link>
-              <Link href="/music-release">
-                <Button variant="ghost">
-                  <Music className="h-4 w-4 mr-2" />
-                  Music Release
-                </Button>
-              </Link>
-              <Link href="/archived-music">
-                <Button variant="ghost">
-                  <Archive className="h-4 w-4 mr-2" />
-                  Archived Music
-                </Button>
-              </Link>
-              <Link href="/tour">
-                <Button variant="ghost">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Tour
-                </Button>
-              </Link>
-              <Link href="/blog">
-                <Button variant="ghost">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Blog
-                </Button>
-              </Link>
-              <Link href="/engage">
-                <Button variant="ghost">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Engage
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant="ghost">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Contact
-                </Button>
-              </Link>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            <div className="hidden md:flex md:gap-x-4">
+              <NavLinks />
             </div>
-            <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Link href="/portal">
-                    <Button variant="ghost">
-                      <User className="h-4 w-4 mr-2" />
-                      My Dashboard
-                    </Button>
-                  </Link>
-                  {(user.role === "admin" || user.role === "super_admin") && (
-                    <Link href="/admin">
-                      <Button variant="ghost">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin Portal
-                      </Button>
-                    </Link>
-                  )}
-                </>
-              ) : (
-                <Link href="/auth">
-                  <Button variant="ghost">
-                    <User className="h-4 w-4 mr-2" />
-                    Login
+
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-6 w-6" />
+                    <span className="sr-only">Toggle menu</span>
                   </Button>
-                </Link>
-              )}
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                  <nav className="flex flex-col gap-4">
+                    <NavLinks />
+                    <div className="my-4 h-[1px] bg-border" />
+                    <AuthLinks />
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
-          </nav>
+
+            <div className="hidden md:flex md:items-center md:gap-x-4">
+              <AuthLinks />
+            </div>
+          </div>
         </div>
       </header>
 
