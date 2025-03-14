@@ -15,7 +15,7 @@ export default function BlogPostPage() {
   const { toast } = useToast();
   const postId = parseInt(id);
 
-  const { data: post, isLoading: postLoading } = useQuery<Post>({
+  const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
     queryKey: ['/api/posts', postId],
     enabled: !isNaN(postId)
   });
@@ -64,7 +64,7 @@ export default function BlogPostPage() {
 
   if (postLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse">
+      <div className="max-w-4xl mx-auto px-4 py-8 animate-pulse" role="status">
         <div className="h-8 bg-[rgba(10,50,92,0.6)] rounded w-3/4 mb-4"></div>
         <div className="h-4 bg-[rgba(10,50,92,0.6)] rounded w-1/4 mb-8"></div>
         <div className="space-y-4">
@@ -72,6 +72,21 @@ export default function BlogPostPage() {
             <div key={i} className="h-4 bg-[rgba(10,50,92,0.6)] rounded w-full"></div>
           ))}
         </div>
+        <span className="sr-only">Loading blog post...</span>
+      </div>
+    );
+  }
+
+  if (postError) {
+    toast({
+      title: "Error",
+      description: "Failed to load blog post",
+      variant: "destructive"
+    });
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Error Loading Post</h1>
+        <p>We encountered an error while loading this post. Please try again later.</p>
       </div>
     );
   }
@@ -90,52 +105,61 @@ export default function BlogPostPage() {
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time>{new Date(post.createdAt).toLocaleDateString()}</time>
+          <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
         </div>
+
         {post.featuredImage && (
           <img
             src={post.featuredImage}
-            alt={post.title}
+            alt={`Featured image for ${post.title}`}
             className="w-full h-[400px] object-cover rounded-xl mb-8"
+            loading="lazy"
           />
         )}
+
         <div className="prose prose-invert max-w-none">
-          {post.content.split('\n').map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
+          {post.content && post.content.split('\n').map((paragraph, index) => (
+            paragraph.trim() && <p key={index}>{paragraph}</p>
           ))}
         </div>
       </article>
 
       <section className="mt-16">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-8">Comments</h2>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6 mb-12">
             <div>
-              <label className="block text-sm font-medium mb-2">Name</label>
+              <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
               <Input
+                id="authorName"
                 {...form.register("authorName")}
                 className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
                 placeholder="Your name"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
-              <Input
-                {...form.register("authorEmail")}
-                type="email"
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                placeholder="your@email.com"
+                aria-label="Your name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Comment</label>
+              <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
+              <Input
+                id="authorEmail"
+                {...form.register("authorEmail")}
+                type="email"
+                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                placeholder="your@email.com"
+                aria-label="Your email address"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
               <Textarea
+                id="content"
                 {...form.register("content")}
                 className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
                 placeholder="Share your thoughts..."
+                aria-label="Your comment"
               />
             </div>
 
@@ -143,6 +167,7 @@ export default function BlogPostPage() {
               type="submit"
               className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
               disabled={commentMutation.isPending}
+              aria-busy={commentMutation.isPending}
             >
               {commentMutation.isPending ? "Posting..." : "Post Comment"}
             </Button>
@@ -151,18 +176,21 @@ export default function BlogPostPage() {
 
         <div className="space-y-8">
           {commentsLoading ? (
-            [...Array(3)].map((_, i) => (
-              <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl animate-pulse">
-                <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-1/4 mb-4"></div>
-                <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-full"></div>
-              </div>
-            ))
+            <div role="status" className="animate-pulse">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl mb-4">
+                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-1/4 mb-4"></div>
+                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-full"></div>
+                </div>
+              ))}
+              <span className="sr-only">Loading comments...</span>
+            </div>
           ) : comments.length > 0 ? (
             comments.map(comment => (
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">{comment.authorName}</span>
-                  <time className="text-sm text-gray-400">
+                  <time dateTime={comment.createdAt} className="text-sm text-gray-400">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </time>
                 </div>
