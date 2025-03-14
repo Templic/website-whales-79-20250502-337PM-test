@@ -19,7 +19,7 @@ export const posts = pgTable("posts", {
   published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  authorId: integer("author_id").notNull()
+  authorId: integer("author_id").notNull().default(1) // Add default value
 });
 
 // Categories table
@@ -55,7 +55,8 @@ export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
 export const insertPostSchema = createInsertSchema(posts)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
-    categories: z.array(z.number()).optional()
+    categories: z.array(z.number()).optional(),
+    authorId: z.number().default(1) // Add default value in schema
   });
 
 export const insertCategorySchema = createInsertSchema(categories)
