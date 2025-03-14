@@ -16,49 +16,49 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const NavLinks = () => (
     <>
       <Link href="/">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Home className="h-4 w-4 mr-2" />
           Home
         </Button>
       </Link>
       <Link href="/about">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Info className="h-4 w-4 mr-2" />
           About
         </Button>
       </Link>
       <Link href="/music-release">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Music className="h-4 w-4 mr-2" />
           Music Release
         </Button>
       </Link>
       <Link href="/archived-music">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Archive className="h-4 w-4 mr-2" />
           Archived Music
         </Button>
       </Link>
       <Link href="/tour">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Calendar className="h-4 w-4 mr-2" />
           Tour
         </Button>
       </Link>
       <Link href="/blog">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <BookOpen className="h-4 w-4 mr-2" />
           Blog
         </Button>
       </Link>
       <Link href="/engage">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <Heart className="h-4 w-4 mr-2" />
           Engage
         </Button>
       </Link>
       <Link href="/contact">
-        <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+        <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
           <MessageSquare className="h-4 w-4 mr-2" />
           Contact
         </Button>
@@ -71,14 +71,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {user ? (
         <>
           <Link href="/portal">
-            <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+            <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
               <User className="h-4 w-4 mr-2" />
               My Dashboard
             </Button>
           </Link>
           {(user.role === "admin" || user.role === "super_admin") && (
             <Link href="/admin">
-              <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+              <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
                 <Settings className="h-4 w-4 mr-2" />
                 Admin Portal
               </Button>
@@ -87,7 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </>
       ) : (
         <Link href="/auth">
-          <Button variant="ghost" className="w-full md:w-auto justify-start md:justify-center">
+          <Button variant="ghost" className="w-full sm:w-auto justify-start sm:justify-center">
             <User className="h-4 w-4 mr-2" />
             Login
           </Button>
@@ -100,12 +100,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
-            <div className="hidden md:flex md:gap-x-4">
-              <NavLinks />
-            </div>
-
-            <div className="md:hidden">
+          <div className="flex h-auto py-2 sm:h-16 items-center justify-between">
+            {/* Mobile Menu (visible only on smallest screens) */}
+            <div className="sm:hidden">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -113,7 +110,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <span className="sr-only">Toggle menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                <SheetContent side="left" className="w-[300px]">
                   <nav className="flex flex-col gap-4">
                     <NavLinks />
                     <div className="my-4 h-[1px] bg-border" />
@@ -123,7 +120,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Sheet>
             </div>
 
-            <div className="hidden md:flex md:items-center md:gap-x-4">
+            {/* Desktop Navigation (2 rows on medium screens, 1 row on large screens) */}
+            <nav className="hidden sm:flex flex-col lg:flex-row lg:items-center lg:gap-x-2 flex-grow">
+              <div className="flex flex-wrap gap-2 justify-center">
+                <NavLinks />
+              </div>
+            </nav>
+
+            {/* Auth Links (always on the right) */}
+            <div className="hidden sm:flex sm:items-center sm:gap-x-2">
               <AuthLinks />
             </div>
           </div>
