@@ -6,49 +6,22 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Share2, Calendar, ArrowRight, Tag } from "lucide-react";
-import { useCallback } from "react";
+import { Share2, Calendar, ArrowRight } from "lucide-react";
 
 export default function BlogPage() {
   const { toast } = useToast();
 
-  const { data: posts = [], isLoading, error } = useQuery<Post[]>({
+  const { data: posts, isLoading, error } = useQuery<Post[]>({ 
     queryKey: ['/api/posts'],
     retry: 1
   });
 
-  const handleShare = useCallback(async (post: Post) => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt || post.content.substring(0, 150),
-          url: window.location.origin + `/blog/${post.id}`
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.origin + `/blog/${post.id}`);
-        toast({
-          title: "Link Copied!",
-          description: "Post link copied to clipboard"
-        });
-      }
-    } catch (err) {
-      console.error('Error sharing:', err);
-      toast({
-        title: "Error",
-        description: "Failed to share post",
-        variant: "destructive"
-      });
-    }
-  }, [toast]);
-
   if (error) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Error</h1>
-        <p>Failed to load blog posts. Please try again later.</p>
-      </div>
-    );
+    toast({
+      title: "Error",
+      description: "Failed to load blog posts",
+      variant: "destructive"
+    });
   }
 
   return (
@@ -63,6 +36,7 @@ export default function BlogPage() {
         aria-label="Blog posts"
       >
         {isLoading ? (
+          // Loading skeletons
           Array(6).fill(0).map((_, i) => (
             <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg backdrop-blur-sm">
               <Skeleton className="w-full h-48 rounded-lg mb-4" />
@@ -79,36 +53,28 @@ export default function BlogPage() {
             itemScope 
             itemType="http://schema.org/BlogPosting"
           >
-            {(post.thumbnailImage || post.featuredImage) && (
-              <figure className="mb-4 relative group">
+            {post.featuredImage && (
+              <figure className="mb-4">
                 <img 
-                  src={post.thumbnailImage || post.featuredImage || ''}
-                  alt={post.imageMetadata?.altText || `Featured image for ${post.title}`}
+                  src={post.featuredImage} 
+                  alt={`Featured image for ${post.title}`}
                   className="w-full h-48 object-cover rounded-lg"
                   loading="lazy"
                   itemProp="image"
                 />
-                {post.imageMetadata?.caption && (
-                  <figcaption className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    {post.imageMetadata.caption}
-                  </figcaption>
-                )}
               </figure>
             )}
-
             <div className="space-y-4">
               <header>
                 <h2 
                   className="text-2xl font-bold text-[#00ebd6] hover:text-[#fe0064] transition-colors"
                   itemProp="headline"
                 >
-                  <Link href={`/blog/${post.id}`} className="hover:underline">
-                    {post.title}
-                  </Link>
+                  {post.title}
                 </h2>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mt-2">
                   <Calendar className="w-4 h-4" />
-                  <time dateTime={new Date(post.createdAt).toISOString()} itemProp="datePublished">
+                  <time dateTime={post.createdAt} itemProp="datePublished">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </time>
                 </div>
@@ -118,28 +84,38 @@ export default function BlogPage() {
                 {post.excerpt || post.content.substring(0, 150) + "..."}
               </div>
 
-              <footer className="pt-4">
-                <div className="flex justify-between items-center">
-                  <Link href={`/blog/${post.id}`}>
-                    <Button 
-                      className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white inline-flex items-center gap-2"
-                      aria-label={`Read more about ${post.title}`}
-                    >
-                      Read More
-                      <ArrowRight className="w-4 h-4" />
-                    </Button>
-                  </Link>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:text-[#fe0064]"
-                    onClick={() => handleShare(post)}
-                    aria-label="Share post"
+              <footer className="pt-4 flex justify-between items-center">
+                <Link href={`/blog/${post.id}`}>
+                  <Button 
+                    className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white inline-flex items-center gap-2"
+                    aria-label={`Read more about ${post.title}`}
                   >
-                    <Share2 className="w-5 h-5" />
+                    Read More
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
-                </div>
+                </Link>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    navigator.share?.({
+                      title: post.title,
+                      text: post.excerpt,
+                      url: window.location.origin + `/blog/${post.id}`
+                    }).catch(() => {
+                      // Fallback if Web Share API is not supported
+                      navigator.clipboard.writeText(window.location.origin + `/blog/${post.id}`);
+                      toast({
+                        title: "Link Copied!",
+                        description: "Post link copied to clipboard"
+                      });
+                    });
+                  }}
+                  aria-label="Share post"
+                >
+                  <Share2 className="w-5 h-5" />
+                </Button>
               </footer>
             </div>
           </article>

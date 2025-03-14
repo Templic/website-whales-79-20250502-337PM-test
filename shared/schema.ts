@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,19 +9,17 @@ export const subscribers = pgTable("subscribers", {
   active: boolean("active").notNull().default(true)
 });
 
-// Enhanced Blog posts table with image metadata
+// Blog posts table
 export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt"),
   featuredImage: text("featured_image"),
-  thumbnailImage: text("thumbnail_image"), // New: Optimized thumbnail version
-  imageMetadata: jsonb("image_metadata"), // New: Store image dimensions, alt text, etc.
   published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  authorId: integer("author_id").notNull().default(1)
+  authorId: integer("author_id").notNull().default(1) // Add default value
 });
 
 // Categories table
@@ -49,7 +47,7 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
 
-// Enhanced Insert schemas
+// Insert schemas
 export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
   email: true
 });
@@ -58,13 +56,7 @@ export const insertPostSchema = createInsertSchema(posts)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
     categories: z.array(z.number()).optional(),
-    authorId: z.number().default(1),
-    imageMetadata: z.object({
-      width: z.number().optional(),
-      height: z.number().optional(),
-      altText: z.string().optional(),
-      caption: z.string().optional()
-    }).optional()
+    authorId: z.number().default(1) // Add default value in schema
   });
 
 export const insertCategorySchema = createInsertSchema(categories)
