@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Share2, Calendar, ArrowRight, Tag, Heart } from "lucide-react";
+import { Share2, Calendar, ArrowRight, Tag } from "lucide-react";
+import { useCallback } from "react";
 
 export default function BlogPage() {
   const { toast } = useToast();
@@ -16,7 +17,7 @@ export default function BlogPage() {
     retry: 1
   });
 
-  const handleShare = async (post: Post) => {
+  const handleShare = useCallback(async (post: Post) => {
     try {
       if (navigator.share) {
         await navigator.share({
@@ -33,8 +34,13 @@ export default function BlogPage() {
       }
     } catch (err) {
       console.error('Error sharing:', err);
+      toast({
+        title: "Error",
+        description: "Failed to share post",
+        variant: "destructive"
+      });
     }
-  };
+  }, [toast]);
 
   if (error) {
     toast({
@@ -56,7 +62,6 @@ export default function BlogPage() {
         aria-label="Blog posts"
       >
         {isLoading ? (
-          // Loading skeletons
           Array(6).fill(0).map((_, i) => (
             <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg backdrop-blur-sm">
               <Skeleton className="w-full h-48 rounded-lg mb-4" />
@@ -81,8 +86,6 @@ export default function BlogPage() {
                   className="w-full h-48 object-cover rounded-lg"
                   loading="lazy"
                   itemProp="image"
-                  width={post.imageMetadata?.width}
-                  height={post.imageMetadata?.height}
                 />
                 {post.imageMetadata?.caption && (
                   <figcaption className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
@@ -104,7 +107,7 @@ export default function BlogPage() {
                 </h2>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mt-2">
                   <Calendar className="w-4 h-4" />
-                  <time dateTime={post.createdAt} itemProp="datePublished">
+                  <time dateTime={new Date(post.createdAt).toISOString()} itemProp="datePublished">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </time>
                 </div>
@@ -115,18 +118,20 @@ export default function BlogPage() {
               </div>
 
               <footer className="pt-4 space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {post.categories?.map(category => (
-                    <Badge 
-                      key={category} 
-                      variant="secondary"
-                      className="bg-[rgba(0,235,214,0.1)] text-[#00ebd6] hover:bg-[rgba(0,235,214,0.2)]"
-                    >
-                      <Tag className="w-3 h-3 mr-1" />
-                      {category}
-                    </Badge>
-                  ))}
-                </div>
+                {post.categories && post.categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {post.categories.map(category => (
+                      <Badge 
+                        key={category} 
+                        variant="secondary"
+                        className="bg-[rgba(0,235,214,0.1)] text-[#00ebd6] hover:bg-[rgba(0,235,214,0.2)]"
+                      >
+                        <Tag className="w-3 h-3 mr-1" />
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex justify-between items-center">
                   <Link href={`/blog/${post.id}`}>
