@@ -100,7 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
-          <div className="flex h-auto py-2 sm:h-16 items-center justify-between">
+          <div className="flex h-auto py-4 sm:h-20 items-center justify-between">
             {/* Mobile Menu (visible only on smallest screens) */}
             <div className="sm:hidden">
               <Sheet>
@@ -121,14 +121,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop Navigation (2 rows on medium screens, 1 row on large screens) */}
-            <nav className="hidden sm:flex flex-col lg:flex-row lg:items-center lg:gap-x-2 flex-grow">
-              <div className="flex flex-wrap gap-2 justify-center">
+            <nav className="hidden sm:flex flex-col lg:flex-row lg:items-center flex-grow">
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start sm:max-h-[80px] sm:overflow-hidden">
                 <NavLinks />
               </div>
             </nav>
 
             {/* Auth Links (always on the right) */}
-            <div className="hidden sm:flex sm:items-center sm:gap-x-2">
+            <div className="hidden sm:flex sm:items-center sm:gap-x-2 sm:ml-4">
               <AuthLinks />
             </div>
           </div>
