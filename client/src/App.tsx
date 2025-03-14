@@ -21,6 +21,7 @@ import CollaborationPage from "@/pages/CollaborationPage";
 import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
+import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 
 function Router() {
   return (
@@ -39,6 +40,8 @@ function Router() {
         <ProtectedRoute path="/contact" component={ContactPage} />
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/recover-password" component={PasswordRecoveryPage} />
+        <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route component={NotFound} />
       </Switch>
     </MainLayout>

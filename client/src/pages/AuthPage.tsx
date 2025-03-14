@@ -6,7 +6,7 @@ import { insertUserSchema, type InsertUser } from "@shared/schema";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { Loader2 } from "lucide-react";
 
 export default function AuthPage() {
@@ -69,6 +69,11 @@ export default function AuthPage() {
                   className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
                   placeholder="Enter your password"
                 />
+              </div>
+              <div className="flex justify-between items-center">
+                <Link href="/recover-password" className="text-sm text-[#00ebd6] hover:text-[#fe0064]">
+                  Forgot Password?
+                </Link>
               </div>
               <Button 
                 type="submit"
