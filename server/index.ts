@@ -34,8 +34,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
-// Change port from 5000 to 3000
-const port = 3000;
+// Use port 5000 as required by the workflow
+const port = process.env.PORT || 5000;
 
 async function startServer() {
   console.log('Starting server initialization...');

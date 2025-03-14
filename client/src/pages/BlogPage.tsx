@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Share2, Calendar, ArrowRight } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
 import styles from "./BlogPage.module.css";
 
 export default function BlogPage() {
@@ -22,6 +23,27 @@ export default function BlogPage() {
       variant: "destructive"
     });
   }
+
+  const formatDisplayDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      if (!isValid(date)) {
+        return "Invalid date";
+      }
+      return format(date, 'MMM dd, yyyy');
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
+  const getValidISOString = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? date.toISOString() : dateString;
+    } catch {
+      return dateString;
+    }
+  };
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8" role="main">
@@ -78,8 +100,8 @@ export default function BlogPage() {
                 </h2>
                 <div className={styles.dateInfo}>
                   <Calendar className="w-4 h-4" aria-hidden="true" />
-                  <time dateTime={new Date(post.createdAt).toISOString()} itemProp="datePublished">
-                    {new Date(post.createdAt).toLocaleDateString()}
+                  <time dateTime={getValidISOString(post.createdAt)} itemProp="datePublished">
+                    {formatDisplayDate(post.createdAt)}
                   </time>
                 </div>
               </header>

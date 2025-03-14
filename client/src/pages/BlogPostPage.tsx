@@ -9,11 +9,33 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryClient } from "@/lib/queryClient";
+import { format, parseISO, isValid } from "date-fns";
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const postId = parseInt(id);
+
+  const formatDisplayDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      if (!isValid(date)) {
+        return "Invalid date";
+      }
+      return format(date, 'MMM dd, yyyy');
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
+  const getValidISOString = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? date.toISOString() : dateString;
+    } catch {
+      return dateString;
+    }
+  };
 
   const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
     queryKey: ['/api/posts', postId],
@@ -96,8 +118,8 @@ export default function BlogPostPage() {
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time dateTime={new Date(post.createdAt).toISOString()}>
-            {new Date(post.createdAt).toLocaleDateString()}
+          <time dateTime={getValidISOString(post.createdAt)}>
+            {formatDisplayDate(post.createdAt)}
           </time>
         </div>
 
@@ -185,8 +207,8 @@ export default function BlogPostPage() {
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">{comment.authorName}</span>
-                  <time dateTime={new Date(comment.createdAt).toISOString()} className="text-sm text-gray-400">
-                    {new Date(comment.createdAt).toLocaleDateString()}
+                  <time dateTime={getValidISOString(comment.createdAt)} className="text-sm text-gray-400">
+                    {formatDisplayDate(comment.createdAt)}
                   </time>
                 </div>
                 <p>{comment.content}</p>
