@@ -58,7 +58,9 @@ export default function AdminPortalPage() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both the unapproved comments list and the comments for all posts
       queryClient.invalidateQueries({ queryKey: ['/api/posts/comments/unapproved'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
       toast({
         title: "Success",
         description: "Comment approved successfully"
