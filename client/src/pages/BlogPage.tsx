@@ -12,7 +12,7 @@ import { useCallback } from "react";
 export default function BlogPage() {
   const { toast } = useToast();
 
-  const { data: posts, isLoading, error } = useQuery<Post[]>({ 
+  const { data: posts = [], isLoading, error } = useQuery<Post[]>({
     queryKey: ['/api/posts'],
     retry: 1
   });
@@ -43,11 +43,12 @@ export default function BlogPage() {
   }, [toast]);
 
   if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load blog posts",
-      variant: "destructive"
-    });
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 text-center">
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Error</h1>
+        <p>Failed to load blog posts. Please try again later.</p>
+      </div>
+    );
   }
 
   return (
@@ -81,7 +82,7 @@ export default function BlogPage() {
             {(post.thumbnailImage || post.featuredImage) && (
               <figure className="mb-4 relative group">
                 <img 
-                  src={post.thumbnailImage || post.featuredImage}
+                  src={post.thumbnailImage || post.featuredImage || ''}
                   alt={post.imageMetadata?.altText || `Featured image for ${post.title}`}
                   className="w-full h-48 object-cover rounded-lg"
                   loading="lazy"
@@ -117,22 +118,7 @@ export default function BlogPage() {
                 {post.excerpt || post.content.substring(0, 150) + "..."}
               </div>
 
-              <footer className="pt-4 space-y-4">
-                {post.categories && post.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {post.categories.map(category => (
-                      <Badge 
-                        key={category} 
-                        variant="secondary"
-                        className="bg-[rgba(0,235,214,0.1)] text-[#00ebd6] hover:bg-[rgba(0,235,214,0.2)]"
-                      >
-                        <Tag className="w-3 h-3 mr-1" />
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
+              <footer className="pt-4">
                 <div className="flex justify-between items-center">
                   <Link href={`/blog/${post.id}`}>
                     <Button 
@@ -144,17 +130,15 @@ export default function BlogPage() {
                     </Button>
                   </Link>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="hover:text-[#fe0064]"
-                      onClick={() => handleShare(post)}
-                      aria-label="Share post"
-                    >
-                      <Share2 className="w-5 h-5" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:text-[#fe0064]"
+                    onClick={() => handleShare(post)}
+                    aria-label="Share post"
+                  >
+                    <Share2 className="w-5 h-5" />
+                  </Button>
                 </div>
               </footer>
             </div>
