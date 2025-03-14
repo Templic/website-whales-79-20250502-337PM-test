@@ -2,7 +2,7 @@ import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { MainLayout } from "./components/layout/MainLayout";
+import { Layout } from "./components/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "./pages/not-found";
@@ -22,10 +22,11 @@ import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
+import UserPortal from "@/pages/user-portal";
 
 function Router() {
   return (
-    <MainLayout>
+    <Layout>
       <Switch>
         <ProtectedRoute path="/" component={HomePage} />
         <ProtectedRoute path="/about" component={AboutPage} />
@@ -39,12 +40,13 @@ function Router() {
         <ProtectedRoute path="/collaboration" component={CollaborationPage} />
         <ProtectedRoute path="/contact" component={ContactPage} />
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
+        <ProtectedRoute path="/portal" component={UserPortal} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/recover-password" component={PasswordRecoveryPage} />
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route component={NotFound} />
       </Switch>
-    </MainLayout>
+    </Layout>
   );
 }
 
