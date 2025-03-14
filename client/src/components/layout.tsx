@@ -100,7 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
-          <div className="flex h-20 items-center justify-between">
+          <div className="flex items-center justify-between">
             {/* Mobile Menu */}
             <div className="sm:hidden">
               <Sheet>
@@ -121,8 +121,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden sm:block flex-grow">
-              <div className="flex flex-wrap gap-2 items-center h-[60px] overflow-hidden">
+            <nav className="hidden sm:flex flex-grow">
+              <div className="flex flex-wrap gap-2 py-4">
                 <NavLinks />
               </div>
             </nav>
