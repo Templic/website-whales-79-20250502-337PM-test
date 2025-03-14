@@ -180,6 +180,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/posts/comments/:id/reject", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const comment = await storage.rejectComment(Number(req.params.id));
+      res.json(comment);
+    } catch (error) {
+      console.error("Error rejecting comment:", error);
+      res.status(500).json({ message: "Error rejecting comment" });
+    }
+  });
+
   // Password recovery routes
   app.post("/api/recover-password", async (req, res) => {
     try {

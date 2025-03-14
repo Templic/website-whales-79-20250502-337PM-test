@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Post, Comment } from "@shared/schema";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, X } from "lucide-react";
 import { Redirect } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -78,6 +78,31 @@ export default function AdminPortalPage() {
     }
   });
 
+  const rejectCommentMutation = useMutation({
+    mutationFn: async (commentId: number) => {
+      const response = await fetch(`/api/posts/comments/${commentId}/reject`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to reject comment');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/posts/comments/unapproved'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
+      toast({
+        title: "Success",
+        description: "Comment rejected successfully"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to reject comment",
+        variant: "destructive"
+      });
+    }
+  });
+
   if (usersLoading || postsLoading || commentsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -141,15 +166,26 @@ export default function AdminPortalPage() {
                       </p>
                       <p className="text-sm">{comment.content}</p>
                     </div>
-                    <Button
-                      onClick={() => approveCommentMutation.mutate(comment.id)}
-                      disabled={approveCommentMutation.isPending}
-                      size="sm"
-                      className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Approve
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => approveCommentMutation.mutate(comment.id)}
+                        disabled={approveCommentMutation.isPending}
+                        size="sm"
+                        className="bg-[#00ebd6] text-[#303436] hover:bg-[#00ebd6] hover:text-[#303436]"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Approve
+                      </Button>
+                      <Button
+                        onClick={() => rejectCommentMutation.mutate(comment.id)}
+                        disabled={rejectCommentMutation.isPending}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Reject
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

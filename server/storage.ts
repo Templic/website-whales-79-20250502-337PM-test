@@ -40,6 +40,7 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   getCommentsByPostId(postId: number): Promise<Comment[]>;
   approveComment(id: number): Promise<Comment>;
+  rejectComment(id: number): Promise<Comment>; // Added method for rejecting comments
 
   // Password recovery methods
   createPasswordResetToken(userId: number): Promise<string>;
@@ -140,6 +141,13 @@ export class PostgresStorage implements IStorage {
   async approveComment(id: number): Promise<Comment> {
     const result = await db.update(comments)
       .set({ approved: true })
+      .where(eq(comments.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async rejectComment(id: number): Promise<Comment> {
+    const result = await db.delete(comments)
       .where(eq(comments.id, id))
       .returning();
     return result[0];

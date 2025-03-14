@@ -7,11 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Share2, Calendar, ArrowRight } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import styles from "./BlogPage.module.css";
-import { useAuth } from "@/hooks/use-auth"; // Import useAuth
+import { useAuth } from "@/hooks/use-auth";
+import { useMemo } from "react";
 
 export default function BlogPage() {
   const { toast } = useToast();
-  const { user } = useAuth(); // Added useAuth
+  const { user } = useAuth();
 
   const { data: posts, isLoading, error } = useQuery<Post[]>({ 
     queryKey: ['/api/posts'],
@@ -26,7 +27,8 @@ export default function BlogPage() {
     });
   }
 
-  const formatDisplayDate = (dateString: string) => {
+  // Memoize date formatting functions to prevent re-renders
+  const formatDisplayDate = useMemo(() => (dateString: string) => {
     try {
       const date = parseISO(dateString);
       if (!isValid(date)) {
@@ -36,16 +38,16 @@ export default function BlogPage() {
     } catch (e) {
       return "Invalid date";
     }
-  };
+  }, []);
 
-  const getValidISOString = (dateString: string) => {
+  const getValidISOString = useMemo(() => (dateString: string) => {
     try {
       const date = parseISO(dateString);
-      return isValid(date) ? date.toISOString() : dateString;
+      return isValid(date) ? dateString : dateString;
     } catch {
       return dateString;
     }
-  };
+  }, []);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8" role="main">
