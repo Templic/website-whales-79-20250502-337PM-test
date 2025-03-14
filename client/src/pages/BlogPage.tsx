@@ -7,9 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Share2, Calendar, ArrowRight } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import styles from "./BlogPage.module.css";
+import { useAuth } from "@/hooks/use-auth"; // Import useAuth
 
 export default function BlogPage() {
   const { toast } = useToast();
+  const { user } = useAuth(); // Added useAuth
 
   const { data: posts, isLoading, error } = useQuery<Post[]>({ 
     queryKey: ['/api/posts'],

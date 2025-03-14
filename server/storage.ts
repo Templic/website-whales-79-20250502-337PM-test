@@ -45,6 +45,11 @@ export interface IStorage {
   createPasswordResetToken(userId: number): Promise<string>;
   validatePasswordResetToken(token: string): Promise<User | undefined>;
   updateUserPassword(userId: number, newPassword: string): Promise<User>;
+
+  // Admin methods for content moderation
+  approvePost(id: number): Promise<Post>;
+  getUnapprovedPosts(): Promise<Post[]>;
+  getUnapprovedComments(): Promise<Comment[]>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -186,6 +191,28 @@ export class PostgresStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+
+  async approvePost(id: number): Promise<Post> {
+    const result = await db.update(posts)
+      .set({ approved: true, updatedAt: new Date() })
+      .where(eq(posts.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async getUnapprovedPosts(): Promise<Post[]> {
+    return await db.select()
+      .from(posts)
+      .where(sql`approved = false`)
+      .orderBy(sql`created_at DESC`);
+  }
+
+  async getUnapprovedComments(): Promise<Comment[]> {
+    return await db.select()
+      .from(comments)
+      .where(sql`approved = false`)
+      .orderBy(sql`created_at DESC`);
   }
 }
 
