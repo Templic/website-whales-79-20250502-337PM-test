@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Share2, Calendar, ArrowRight } from "lucide-react";
+import { Share2, Calendar, ArrowRight, Tag, Heart } from "lucide-react";
 
 export default function BlogPage() {
   const { toast } = useToast();
@@ -15,6 +15,26 @@ export default function BlogPage() {
     queryKey: ['/api/posts'],
     retry: 1
   });
+
+  const handleShare = async (post: Post) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || post.content.substring(0, 150),
+          url: window.location.origin + `/blog/${post.id}`
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.origin + `/blog/${post.id}`);
+        toast({
+          title: "Link Copied!",
+          description: "Post link copied to clipboard"
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
 
   if (error) {
     toast({
@@ -53,24 +73,34 @@ export default function BlogPage() {
             itemScope 
             itemType="http://schema.org/BlogPosting"
           >
-            {post.featuredImage && (
-              <figure className="mb-4">
+            {(post.thumbnailImage || post.featuredImage) && (
+              <figure className="mb-4 relative group">
                 <img 
-                  src={post.featuredImage} 
-                  alt={`Featured image for ${post.title}`}
+                  src={post.thumbnailImage || post.featuredImage}
+                  alt={post.imageMetadata?.altText || `Featured image for ${post.title}`}
                   className="w-full h-48 object-cover rounded-lg"
                   loading="lazy"
                   itemProp="image"
+                  width={post.imageMetadata?.width}
+                  height={post.imageMetadata?.height}
                 />
+                {post.imageMetadata?.caption && (
+                  <figcaption className="absolute bottom-0 left-0 right-0 bg-black/60 text-white p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    {post.imageMetadata.caption}
+                  </figcaption>
+                )}
               </figure>
             )}
+
             <div className="space-y-4">
               <header>
                 <h2 
                   className="text-2xl font-bold text-[#00ebd6] hover:text-[#fe0064] transition-colors"
                   itemProp="headline"
                 >
-                  {post.title}
+                  <Link href={`/blog/${post.id}`} className="hover:underline">
+                    {post.title}
+                  </Link>
                 </h2>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mt-2">
                   <Calendar className="w-4 h-4" />
@@ -84,38 +114,43 @@ export default function BlogPage() {
                 {post.excerpt || post.content.substring(0, 150) + "..."}
               </div>
 
-              <footer className="pt-4 flex justify-between items-center">
-                <Link href={`/blog/${post.id}`}>
-                  <Button 
-                    className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white inline-flex items-center gap-2"
-                    aria-label={`Read more about ${post.title}`}
-                  >
-                    Read More
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
+              <footer className="pt-4 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {post.categories?.map(category => (
+                    <Badge 
+                      key={category} 
+                      variant="secondary"
+                      className="bg-[rgba(0,235,214,0.1)] text-[#00ebd6] hover:bg-[rgba(0,235,214,0.2)]"
+                    >
+                      <Tag className="w-3 h-3 mr-1" />
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    navigator.share?.({
-                      title: post.title,
-                      text: post.excerpt,
-                      url: window.location.origin + `/blog/${post.id}`
-                    }).catch(() => {
-                      // Fallback if Web Share API is not supported
-                      navigator.clipboard.writeText(window.location.origin + `/blog/${post.id}`);
-                      toast({
-                        title: "Link Copied!",
-                        description: "Post link copied to clipboard"
-                      });
-                    });
-                  }}
-                  aria-label="Share post"
-                >
-                  <Share2 className="w-5 h-5" />
-                </Button>
+                <div className="flex justify-between items-center">
+                  <Link href={`/blog/${post.id}`}>
+                    <Button 
+                      className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white inline-flex items-center gap-2"
+                      aria-label={`Read more about ${post.title}`}
+                    >
+                      Read More
+                      <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="hover:text-[#fe0064]"
+                      onClick={() => handleShare(post)}
+                      aria-label="Share post"
+                    >
+                      <Share2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
               </footer>
             </div>
           </article>
