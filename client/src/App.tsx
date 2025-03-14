@@ -20,6 +20,7 @@ import BlogPostPage from "@/pages/BlogPostPage";
 import CollaborationPage from "@/pages/CollaborationPage";
 import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
+import AdminPortalPage from "@/pages/AdminPortalPage";
 
 function Router() {
   return (
@@ -36,6 +37,7 @@ function Router() {
         <ProtectedRoute path="/blog/:id" component={BlogPostPage} />
         <ProtectedRoute path="/collaboration" component={CollaborationPage} />
         <ProtectedRoute path="/contact" component={ContactPage} />
+        <ProtectedRoute path="/admin" component={AdminPortalPage} />
         <Route path="/auth" component={AuthPage} />
         <Route component={NotFound} />
       </Switch>
