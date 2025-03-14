@@ -9,18 +9,8 @@ import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryClient } from "@/lib/queryClient";
-import { format, parseISO, isValid } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
-
-// Move date formatting functions outside component
-const formatDisplayDate = (dateString: string) => {
-  try {
-    const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Invalid date";
-  } catch (e) {
-    return "Invalid date";
-  }
-};
+import { formatDisplayDate } from "@/lib/date-utils";
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();

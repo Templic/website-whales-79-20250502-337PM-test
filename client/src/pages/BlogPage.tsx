@@ -4,37 +4,41 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Share2, Calendar, ArrowRight } from "lucide-react";
-import { format, parseISO, isValid } from "date-fns";
+import { Calendar, ArrowRight } from "lucide-react";
 import styles from "./BlogPage.module.css";
 import { useAuth } from "@/hooks/use-auth";
-
-// Move date formatting functions outside component
-const formatDisplayDate = (dateString: string) => {
-  try {
-    const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Invalid date";
-  } catch (e) {
-    return "Invalid date";
-  }
-};
+import { formatDisplayDate } from "@/lib/date-utils";
+import { useEffect, useRef, useCallback } from "react";
 
 export default function BlogPage() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const hasShownError = useRef(false);
 
   const { data: posts, isLoading, error } = useQuery<Post[]>({ 
     queryKey: ['/api/posts'],
     retry: 1
   });
 
-  if (error) {
+  // Handle error outside of render cycle with useRef to prevent multiple toasts
+  useEffect(() => {
+    if (error && !hasShownError.current) {
+      hasShownError.current = true;
+      toast({
+        title: "Error",
+        description: "Failed to load blog posts",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
+
+  // Memoize the load more handler
+  const handleLoadMore = useCallback(() => {
     toast({
-      title: "Error",
-      description: "Failed to load blog posts",
-      variant: "destructive"
+      title: "Coming Soon",
+      description: "More posts will be available soon!"
     });
-  }
+  }, [toast]);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8" role="main">
@@ -66,78 +70,36 @@ export default function BlogPage() {
           </div>
         ) : posts?.map((post) => (
           <article 
-            key={post.id} 
+            key={post.id}
             className={styles.blogPost}
-            itemScope 
-            itemType="http://schema.org/BlogPosting"
           >
             {post.featuredImage && (
-              <figure>
-                <img 
-                  src={post.featuredImage} 
-                  alt={`Featured image for ${post.title}`}
-                  loading="lazy"
-                  itemProp="image"
-                />
-              </figure>
+              <img 
+                src={post.featuredImage} 
+                alt={`Featured image for ${post.title}`}
+                loading="lazy"
+                className="w-full h-48 object-cover rounded-lg mb-4"
+              />
             )}
-            <div className={styles.postContent}>
-              <header className={styles.postHeader}>
-                <h2 
-                  className="text-2xl font-bold text-[#00ebd6] hover:text-[#fe0064] transition-colors"
-                  itemProp="headline"
-                >
-                  {post.title}
-                </h2>
-                <div className={styles.dateInfo}>
-                  <Calendar className="w-4 h-4" aria-hidden="true" />
-                  <time dateTime={post.createdAt} itemProp="datePublished">
-                    {formatDisplayDate(post.createdAt)}
-                  </time>
-                </div>
-              </header>
-
-              <div 
-                itemProp="description" 
-                className="line-clamp-3 text-gray-300"
-              >
-                {post.excerpt || post.content?.substring(0, 150) + "..."}
+            <div>
+              <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">
+                {post.title}
+              </h2>
+              <div className="flex items-center text-gray-400 mb-4">
+                <Calendar className="w-4 h-4 mr-2" />
+                <time dateTime={post.createdAt} className="text-sm">
+                  {formatDisplayDate(post.createdAt)}
+                </time>
               </div>
-
-              <footer className={styles.postFooter}>
-                <Link href={`/blog/${post.id}`}>
-                  <Button 
-                    className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white inline-flex items-center gap-2"
-                    aria-label={`Read more about ${post.title}`}
-                  >
-                    Read More
-                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                  </Button>
-                </Link>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    navigator.share?.({
-                      title: post.title,
-                      text: post.excerpt || "",
-                      url: window.location.origin + `/blog/${post.id}`
-                    }).catch(() => {
-                      navigator.clipboard.writeText(
-                        window.location.origin + `/blog/${post.id}`
-                      );
-                      toast({
-                        title: "Link Copied!",
-                        description: "Post link copied to clipboard"
-                      });
-                    });
-                  }}
-                  aria-label={`Share ${post.title}`}
-                >
-                  <Share2 className="w-5 h-5" aria-hidden="true" />
+              <p className="line-clamp-3 text-gray-300 mb-4">
+                {post.excerpt || (post.content ? post.content.substring(0, 150) + "..." : "")}
+              </p>
+              <Link href={`/blog/${post.id}`}>
+                <Button>
+                  Read More
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
-              </footer>
+              </Link>
             </div>
           </article>
         ))}
@@ -147,10 +109,7 @@ export default function BlogPage() {
         <footer className="flex justify-center mt-12">
           <Button 
             className="bg-[#00ebd6] text-[#303436] px-8 py-6 rounded-full hover:bg-[#fe0064] hover:text-white"
-            onClick={() => toast({
-              title: "Coming Soon",
-              description: "More posts will be available soon!"
-            })}
+            onClick={handleLoadMore}
           >
             Load More Posts
           </Button>
