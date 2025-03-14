@@ -38,15 +38,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Blog post routes
   app.get("/api/posts", async (req, res) => {
     try {
+      console.log("Fetching all posts...");
       const posts = await storage.getPosts();
+      console.log(`Found ${posts.length} posts`);
+
       // Only return approved posts for non-admin users
-      if (!req.isAuthenticated() || req.user?.role === 'user') {
-        res.json(posts.filter(post => post.approved));
-      } else {
-        res.json(posts);
-      }
+      const filteredPosts = (!req.isAuthenticated() || req.user?.role === 'user')
+        ? posts.filter(post => post.approved)
+        : posts;
+
+      res.json(filteredPosts);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching posts" });
+      console.error("Error fetching posts:", error);
+      res.status(500).json({ 
+        message: "Error fetching posts",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
