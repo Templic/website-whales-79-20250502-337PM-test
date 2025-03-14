@@ -2,6 +2,17 @@ import { pgTable, text, serial, boolean, timestamp, integer } from "drizzle-orm/
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Users table with role-based authentication
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email").notNull().unique(),
+  role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
 // Existing subscribers table
 export const subscribers = pgTable("subscribers", {
   id: serial("id").primaryKey(),
@@ -9,7 +20,7 @@ export const subscribers = pgTable("subscribers", {
   active: boolean("active").notNull().default(true)
 });
 
-// Blog posts table
+// Blog posts table with author relation
 export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -19,7 +30,7 @@ export const posts = pgTable("posts", {
   published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  authorId: integer("author_id").notNull().default(1) // Add default value
+  authorId: integer("author_id").notNull().references(() => users.id)
 });
 
 // Categories table
@@ -36,7 +47,7 @@ export const postCategories = pgTable("post_categories", {
   categoryId: integer("category_id").notNull()
 });
 
-// Comments table
+// Comments table with author relation
 export const comments = pgTable("comments", {
   id: serial("id").primaryKey(),
   content: text("content").notNull(),
@@ -48,6 +59,17 @@ export const comments = pgTable("comments", {
 });
 
 // Insert schemas
+export const insertUserSchema = createInsertSchema(users)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string()
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"]
+  });
+
 export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
   email: true
 });
@@ -55,8 +77,7 @@ export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
 export const insertPostSchema = createInsertSchema(posts)
   .omit({ id: true, createdAt: true, updatedAt: true })
   .extend({
-    categories: z.array(z.number()).optional(),
-    authorId: z.number().default(1) // Add default value in schema
+    categories: z.array(z.number()).optional()
   });
 
 export const insertCategorySchema = createInsertSchema(categories)
@@ -66,6 +87,9 @@ export const insertCommentSchema = createInsertSchema(comments)
   .omit({ id: true, createdAt: true, approved: true });
 
 // Types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;
 

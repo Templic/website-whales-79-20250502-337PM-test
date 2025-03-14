@@ -1,8 +1,25 @@
-import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, subscribers, posts, categories, comments } from "@shared/schema";
-import { sql } from "drizzle-orm";
+declare module 'connect-pg-simple' {
+  import session from 'express-session';
+  export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
+}
+
+import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, subscribers, posts, categories, comments, users } from "@shared/schema";
+import { sql, eq } from "drizzle-orm";
 import { db } from "./db";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
+  // Session store
+  sessionStore: session.Store;
+
+  // User methods
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
 
@@ -23,6 +40,35 @@ export interface IStorage {
 }
 
 export class PostgresStorage implements IStorage {
+  sessionStore: session.Store;
+
+  constructor() {
+    // Initialize session store with PostgreSQL
+    this.sessionStore = new PostgresSessionStore({
+      conObject: {
+        connectionString: process.env.DATABASE_URL,
+      },
+      createTableIfMissing: true,
+    });
+  }
+
+  // User methods
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users).values(user).returning();
+    return newUser;
+  }
+
+  // Keep existing methods
   async createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
     const result = await db.insert(subscribers).values(insertSubscriber).returning();
     return result[0];
@@ -38,14 +84,14 @@ export class PostgresStorage implements IStorage {
   }
 
   async getPostById(id: number): Promise<Post | null> {
-    const result = await db.select().from(posts).where(sql`id = ${id}`);
+    const result = await db.select().from(posts).where(eq(posts.id, id));
     return result[0] || null;
   }
 
   async updatePost(id: number, post: Partial<InsertPost>): Promise<Post> {
     const result = await db.update(posts)
       .set({ ...post, updatedAt: new Date() })
-      .where(sql`id = ${id}`)
+      .where(eq(posts.id, id))
       .returning();
     return result[0];
   }
@@ -74,11 +120,11 @@ export class PostgresStorage implements IStorage {
   async approveComment(id: number): Promise<Comment> {
     const result = await db.update(comments)
       .set({ approved: true })
-      .where(sql`id = ${id}`)
+      .where(eq(comments.id, id))
       .returning();
     return result[0];
   }
 }
 
-// Export an instance of PostgresStorage instead of MemStorage
+// Export an instance of PostgresStorage
 export const storage = new PostgresStorage();

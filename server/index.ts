@@ -6,6 +6,7 @@ import { log } from "./vite";
 import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
 import { pgPool } from "./db";
+import { setupAuth } from "./auth";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,6 +42,10 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
+    // Setup authentication first
+    setupAuth(app);
+
+    // Register API routes
     const httpServer = await registerRoutes(app);
 
     if (process.env.NODE_ENV !== 'production') {
@@ -54,17 +59,20 @@ async function startServer() {
     }
 
     console.log(`Attempting to start server on port ${port}...`);
+
+    // Close any existing connections before starting
+    if (httpServer.listening) {
+      await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    }
+
     await new Promise((resolve, reject) => {
-      // Fix the parameter order: port first, then hostname
-      httpServer.listen(port, "0.0.0.0", (err?: Error) => {
-        if (err) {
-          console.error('Server startup error:', err);
-          reject(err);
-          return;
-        }
+      httpServer.listen(port, '0.0.0.0', () => {
         console.log(`Server successfully listening on port ${port}`);
         log(`Server listening on port ${port}`);
         resolve(true);
+      }).on('error', (err: Error) => {
+        console.error('Server startup error:', err);
+        reject(err);
       });
     });
 
