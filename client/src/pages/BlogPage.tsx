@@ -8,7 +8,16 @@ import { Share2, Calendar, ArrowRight } from "lucide-react";
 import { format, parseISO, isValid } from "date-fns";
 import styles from "./BlogPage.module.css";
 import { useAuth } from "@/hooks/use-auth";
-import { useMemo } from "react";
+
+// Move date formatting functions outside component
+const formatDisplayDate = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Invalid date";
+  } catch (e) {
+    return "Invalid date";
+  }
+};
 
 export default function BlogPage() {
   const { toast } = useToast();
@@ -26,28 +35,6 @@ export default function BlogPage() {
       variant: "destructive"
     });
   }
-
-  // Memoize date formatting functions to prevent re-renders
-  const formatDisplayDate = useMemo(() => (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      if (!isValid(date)) {
-        return "Invalid date";
-      }
-      return format(date, 'MMM dd, yyyy');
-    } catch (e) {
-      return "Invalid date";
-    }
-  }, []);
-
-  const getValidISOString = useMemo(() => (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      return isValid(date) ? dateString : dateString;
-    } catch {
-      return dateString;
-    }
-  }, []);
 
   return (
     <main className="max-w-7xl mx-auto px-4 py-8" role="main">
@@ -104,7 +91,7 @@ export default function BlogPage() {
                 </h2>
                 <div className={styles.dateInfo}>
                   <Calendar className="w-4 h-4" aria-hidden="true" />
-                  <time dateTime={getValidISOString(post.createdAt)} itemProp="datePublished">
+                  <time dateTime={post.createdAt} itemProp="datePublished">
                     {formatDisplayDate(post.createdAt)}
                   </time>
                 </div>

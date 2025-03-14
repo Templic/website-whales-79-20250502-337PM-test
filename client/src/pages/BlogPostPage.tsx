@@ -12,32 +12,21 @@ import { queryClient } from "@/lib/queryClient";
 import { format, parseISO, isValid } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 
+// Move date formatting functions outside component
+const formatDisplayDate = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Invalid date";
+  } catch (e) {
+    return "Invalid date";
+  }
+};
+
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const postId = parseInt(id);
   const { user } = useAuth();
-
-  const formatDisplayDate = (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      if (!isValid(date)) {
-        return "Invalid date";
-      }
-      return format(date, 'MMM dd, yyyy');
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
-
-  const getValidISOString = (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      return isValid(date) ? date.toISOString() : dateString;
-    } catch {
-      return dateString;
-    }
-  };
 
   const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
     queryKey: ['/api/posts', postId],
@@ -121,7 +110,7 @@ export default function BlogPostPage() {
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time dateTime={getValidISOString(post.createdAt)}>
+          <time dateTime={post.createdAt}>
             {formatDisplayDate(post.createdAt)}
           </time>
         </div>
@@ -210,7 +199,7 @@ export default function BlogPostPage() {
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">{comment.authorName}</span>
-                  <time dateTime={getValidISOString(comment.createdAt)} className="text-sm text-gray-400">
+                  <time dateTime={comment.createdAt}>
                     {formatDisplayDate(comment.createdAt)}
                   </time>
                 </div>
