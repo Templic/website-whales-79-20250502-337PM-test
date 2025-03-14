@@ -209,13 +209,19 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUnapprovedComments(): Promise<Comment[]> {
-    const results = await db.select()
-      .from(comments)
-      .where(eq(comments.approved, false))
-      .orderBy(sql`created_at DESC`);
+    console.log('Attempting to fetch unapproved comments...');
+    try {
+      const results = await db.select()
+        .from(comments)
+        .where(eq(comments.approved, false))
+        .orderBy(sql`created_at DESC`);
 
-    console.log('Fetched unapproved comments:', results);
-    return results;
+      console.log('Fetched unapproved comments:', results);
+      return results;
+    } catch (error) {
+      console.error('Error fetching unapproved comments:', error);
+      throw error;
+    }
   }
 }
 

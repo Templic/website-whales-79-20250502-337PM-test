@@ -12,7 +12,7 @@ export default function AdminPortalPage() {
   const { toast } = useToast();
 
   // Redirect non-admin users
-  if (user && user.role === 'user') {
+  if (!user || user.role === 'user') {
     return <Redirect to="/" />;
   }
 
@@ -26,10 +26,20 @@ export default function AdminPortalPage() {
     enabled: user?.role === 'admin' || user?.role === 'super_admin'
   });
 
-  const { data: unapprovedComments, isLoading: commentsLoading } = useQuery<Comment[]>({
+  const { data: unapprovedComments = [], isLoading: commentsLoading, error: commentsError } = useQuery<Comment[]>({
     queryKey: ['/api/posts/comments/unapproved'],
-    enabled: user?.role === 'admin' || user?.role === 'super_admin'
+    enabled: user?.role === 'admin' || user?.role === 'super_admin',
+    retry: 1
   });
+
+  if (commentsError) {
+    console.error('Error loading unapproved comments:', commentsError);
+    toast({
+      title: "Error",
+      description: "Failed to load unapproved comments",
+      variant: "destructive"
+    });
+  }
 
   const approvePostMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -88,11 +98,11 @@ export default function AdminPortalPage() {
           {/* Unapproved Posts */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-3">Pending Posts</h3>
-            {unapprovedPosts?.length === 0 ? (
+            {!unapprovedPosts?.length ? (
               <p className="text-gray-400">No posts pending approval</p>
             ) : (
               <div className="space-y-4">
-                {unapprovedPosts?.map(post => (
+                {unapprovedPosts.map(post => (
                   <div key={post.id} className="flex items-center justify-between p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
                     <div>
                       <p className="font-medium">{post.title}</p>
@@ -118,11 +128,11 @@ export default function AdminPortalPage() {
           {/* Unapproved Comments */}
           <div>
             <h3 className="text-xl font-semibold mb-3">Pending Comments</h3>
-            {unapprovedComments?.length === 0 ? (
+            {unapprovedComments.length === 0 ? (
               <p className="text-gray-400">No comments pending approval</p>
             ) : (
               <div className="space-y-4">
-                {unapprovedComments?.map(comment => (
+                {unapprovedComments.map(comment => (
                   <div key={comment.id} className="flex items-center justify-between p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
                     <div>
                       <p className="font-medium">{comment.authorName}</p>

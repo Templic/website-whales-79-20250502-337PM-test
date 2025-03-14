@@ -154,6 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/posts/comments/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      console.log('Unauthorized access attempt to unapproved comments');
       return res.status(403).json({ message: "Unauthorized" });
     }
     try {
