@@ -23,6 +23,7 @@ import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
+import SitemapPage from "@/pages/SitemapPage";
 
 function Router() {
   return (
@@ -44,6 +45,7 @@ function Router() {
         <Route path="/auth" component={AuthPage} />
         <Route path="/recover-password" component={PasswordRecoveryPage} />
         <Route path="/reset-password" component={PasswordRecoveryPage} />
+        <Route path="/sitemap" component={SitemapPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
