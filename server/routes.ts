@@ -1,12 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { 
+import {
   insertSubscriberSchema,
   insertPostSchema,
   insertCommentSchema,
   insertCategorySchema
 } from "@shared/schema";
+import { createTransport } from "nodemailer";
+import { hashPassword } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User management routes
@@ -105,6 +107,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(comments);
     } catch (error) {
       res.status(500).json({ message: "Error fetching comments" });
+    }
+  });
+
+  // Setup email transport
+  const transporter = createTransport({
+    // Use environment variables for email configuration
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: process.env.SMTP_SECURE === "true",
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  // Password recovery routes
+  app.post("/api/recover-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        // Don't reveal if email exists or not
+        return res.json({ message: "If an account exists with this email, you will receive a recovery link." });
+      }
+
+      const token = await storage.createPasswordResetToken(user.id);
+      const resetLink = `${process.env.APP_URL}/reset-password?token=${token}`;
+
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject: "Password Recovery",
+        text: `Click this link to reset your password: ${resetLink}`,
+        html: `
+          <p>Click the link below to reset your password:</p>
+          <p><a href="${resetLink}">Reset Password</a></p>
+          <p>This link will expire in 1 hour.</p>
+        `,
+      });
+
+      res.json({ message: "If an account exists with this email, you will receive a recovery link." });
+    } catch (error) {
+      console.error("Password recovery error:", error);
+      res.status(500).json({ message: "Failed to process recovery request" });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      const user = await storage.validatePasswordResetToken(token);
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Password reset error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
     }
   });
 

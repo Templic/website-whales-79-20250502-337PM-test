@@ -8,6 +8,7 @@ import { sql, eq } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import { randomBytes } from 'crypto';
 
 const PostgresSessionStore = connectPg(session);
 
@@ -20,6 +21,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  getUserByEmail(email: string): Promise<User | undefined>; // Added method
 
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
@@ -38,6 +40,11 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   getCommentsByPostId(postId: number): Promise<Comment[]>;
   approveComment(id: number): Promise<Comment>;
+
+  // Password recovery methods
+  createPasswordResetToken(userId: number): Promise<string>;
+  validatePasswordResetToken(token: string): Promise<User | undefined>;
+  updateUserPassword(userId: number, newPassword: string): Promise<User>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -73,12 +80,13 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(users).orderBy(users.createdAt);
   }
 
-  // Keep existing methods
+  // Subscriber methods
   async createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
     const result = await db.insert(subscribers).values(insertSubscriber).returning();
     return result[0];
   }
 
+  // Post methods
   async createPost(post: InsertPost): Promise<Post> {
     const result = await db.insert(posts).values(post).returning();
     return result[0];
@@ -101,6 +109,7 @@ export class PostgresStorage implements IStorage {
     return result[0];
   }
 
+  // Category methods
   async createCategory(category: InsertCategory): Promise<Category> {
     const result = await db.insert(categories).values(category).returning();
     return result[0];
@@ -110,6 +119,7 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(categories);
   }
 
+  // Comment methods
   async createComment(comment: InsertComment): Promise<Comment> {
     const result = await db.insert(comments).values(comment).returning();
     return result[0];
@@ -128,6 +138,54 @@ export class PostgresStorage implements IStorage {
       .where(eq(comments.id, id))
       .returning();
     return result[0];
+  }
+
+  // Password recovery methods
+  async createPasswordResetToken(userId: number): Promise<string> {
+    const token = randomBytes(32).toString("hex");
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1); // Token expires in 1 hour
+
+    await db.execute(sql`
+      INSERT INTO password_reset_tokens (user_id, token, expires, used)
+      VALUES (${userId}, ${token}, ${expires}, false)
+    `);
+
+    return token;
+  }
+
+  async validatePasswordResetToken(token: string): Promise<User | undefined> {
+    const result = await db.execute(sql`
+      SELECT u.* FROM users u
+      JOIN password_reset_tokens t ON u.id = t.user_id
+      WHERE t.token = ${token}
+      AND t.expires > NOW()
+      AND t.used = false
+    `);
+
+    return result.rows[0];
+  }
+
+  async updateUserPassword(userId: number, newPassword: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ password: newPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // Mark any existing reset tokens as used
+    await db.execute(sql`
+      UPDATE password_reset_tokens
+      SET used = true
+      WHERE user_id = ${userId}
+    `);
+
+    return updatedUser;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
   }
 }
 
