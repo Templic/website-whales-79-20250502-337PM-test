@@ -77,7 +77,7 @@ export default function BlogPostPage() {
     );
   }
 
-  if (postError) {
+  if (postError || !post) {
     toast({
       title: "Error",
       description: "Failed to load blog post",
@@ -91,21 +91,14 @@ export default function BlogPostPage() {
     );
   }
 
-  if (!post) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Post Not Found</h1>
-        <p>The blog post you're looking for doesn't exist.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
+          <time dateTime={new Date(post.createdAt).toISOString()}>
+            {new Date(post.createdAt).toLocaleDateString()}
+          </time>
         </div>
 
         {post.featuredImage && (
@@ -118,8 +111,10 @@ export default function BlogPostPage() {
         )}
 
         <div className="prose prose-invert max-w-none">
-          {post.content && post.content.split('\n').map((paragraph, index) => (
-            paragraph.trim() && <p key={index}>{paragraph}</p>
+          {post.content?.split('\n').map((paragraph, index) => (
+            paragraph.trim() && (
+              <p key={index}>{paragraph}</p>
+            )
           ))}
         </div>
       </article>
@@ -190,7 +185,7 @@ export default function BlogPostPage() {
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">{comment.authorName}</span>
-                  <time dateTime={comment.createdAt} className="text-sm text-gray-400">
+                  <time dateTime={new Date(comment.createdAt).toISOString()} className="text-sm text-gray-400">
                     {new Date(comment.createdAt).toLocaleDateString()}
                   </time>
                 </div>

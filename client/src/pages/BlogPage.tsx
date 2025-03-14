@@ -39,7 +39,6 @@ export default function BlogPage() {
         aria-label="Blog posts"
       >
         {isLoading ? (
-          // Loading skeletons with ARIA live region
           <div role="status" aria-live="polite" className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(6).fill(0).map((_, i) => (
               <div key={i} className={styles.blogPost}>
@@ -79,7 +78,7 @@ export default function BlogPage() {
                 </h2>
                 <div className={styles.dateInfo}>
                   <Calendar className="w-4 h-4" aria-hidden="true" />
-                  <time dateTime={post.createdAt} itemProp="datePublished">
+                  <time dateTime={new Date(post.createdAt).toISOString()} itemProp="datePublished">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </time>
                 </div>
@@ -89,7 +88,7 @@ export default function BlogPage() {
                 itemProp="description" 
                 className="line-clamp-3 text-gray-300"
               >
-                {post.excerpt || post.content.substring(0, 150) + "..."}
+                {post.excerpt || post.content?.substring(0, 150) + "..."}
               </div>
 
               <footer className={styles.postFooter}>
@@ -109,7 +108,7 @@ export default function BlogPage() {
                   onClick={() => {
                     navigator.share?.({
                       title: post.title,
-                      text: post.excerpt,
+                      text: post.excerpt || "",
                       url: window.location.origin + `/blog/${post.id}`
                     }).catch(() => {
                       navigator.clipboard.writeText(
