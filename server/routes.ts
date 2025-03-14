@@ -39,9 +39,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts", async (req, res) => {
     try {
       const posts = await storage.getPosts();
-      res.json(posts);
+      // Only return approved posts for non-admin users
+      if (!req.isAuthenticated() || req.user?.role === 'user') {
+        res.json(posts.filter(post => post.approved));
+      } else {
+        res.json(posts);
+      }
     } catch (error) {
       res.status(500).json({ message: "Error fetching posts" });
+    }
+  });
+
+  app.get("/api/posts/unapproved", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const posts = await storage.getUnapprovedPosts();
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching unapproved posts" });
+    }
+  });
+
+  app.post("/api/posts/:id/approve", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const post = await storage.approvePost(Number(req.params.id));
+      res.json(post);
+    } catch (error) {
+      res.status(500).json({ message: "Error approving post" });
     }
   });
 
@@ -49,6 +78,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const post = await storage.getPostById(Number(req.params.id));
       if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      // Only allow viewing unapproved posts if user is admin
+      if (!post.approved && (!req.isAuthenticated() || req.user?.role === 'user')) {
         return res.status(404).json({ message: "Post not found" });
       }
       res.json(post);
@@ -92,11 +125,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const data = insertCommentSchema.parse({
         ...req.body,
-        postId: Number(req.params.postId)
+        postId: Number(req.params.postId),
+        approved: false  // All new comments start as unapproved
       });
+      console.log("Creating comment with data:", data);
       const comment = await storage.createComment(data);
+      console.log("Created comment:", comment);
       res.json(comment);
     } catch (error) {
+      console.error("Error creating comment:", error);
       res.status(400).json({ message: "Invalid comment data" });
     }
   });
@@ -104,22 +141,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts/:postId/comments", async (req, res) => {
     try {
       const comments = await storage.getCommentsByPostId(Number(req.params.postId));
-      res.json(comments);
+      // Only return approved comments for non-admin users
+      if (!req.isAuthenticated() || req.user?.role === 'user') {
+        res.json(comments.filter(comment => comment.approved));
+      } else {
+        res.json(comments);
+      }
     } catch (error) {
       res.status(500).json({ message: "Error fetching comments" });
     }
   });
 
-  // Setup email transport
-  const transporter = createTransport({
-    // Use environment variables for email configuration
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
+  app.get("/api/posts/comments/unapproved", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      console.log("Fetching unapproved comments");
+      const comments = await storage.getUnapprovedComments();
+      console.log("Found unapproved comments:", comments);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching unapproved comments:", error);
+      res.status(500).json({ message: "Error fetching unapproved comments" });
+    }
+  });
+
+  app.post("/api/posts/comments/:id/approve", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const comment = await storage.approveComment(Number(req.params.id));
+      res.json(comment);
+    } catch (error) {
+      res.status(500).json({ message: "Error approving comment" });
+    }
   });
 
   // Password recovery routes

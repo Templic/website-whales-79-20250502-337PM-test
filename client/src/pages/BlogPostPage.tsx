@@ -10,11 +10,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryClient } from "@/lib/queryClient";
 import { format, parseISO, isValid } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const postId = parseInt(id);
+  const { user } = useAuth();
 
   const formatDisplayDate = (dateString: string) => {
     try {
@@ -53,7 +55,8 @@ export default function BlogPostPage() {
       content: "",
       authorName: "",
       authorEmail: "",
-      postId
+      postId,
+      approved: false
     }
   });
 
@@ -70,8 +73,8 @@ export default function BlogPostPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/posts', postId, 'comments'] });
       toast({
-        title: "Success",
-        description: "Your comment has been submitted for review"
+        title: "Comment Submitted",
+        description: "Your comment has been submitted and will be visible after approval by a moderator."
       });
       form.reset();
     },
@@ -212,10 +215,15 @@ export default function BlogPostPage() {
                   </time>
                 </div>
                 <p>{comment.content}</p>
+                {comment.approved ? (
+                  <span className="text-green-500 text-xs">Approved</span>
+                ) : (
+                  <span className="text-red-500 text-xs">Pending Approval</span>
+                )}
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-400">No comments yet. Be the first to comment!</p>
+            <p className="text-center text-gray-400">No approved comments yet. Be the first to comment!</p>
           )}
         </div>
       </section>

@@ -28,6 +28,7 @@ export const posts = pgTable("posts", {
   excerpt: text("excerpt"),
   featuredImage: text("featured_image"),
   published: boolean("published").notNull().default(false),
+  approved: boolean("approved").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
   authorId: integer("author_id").notNull().references(() => users.id)
@@ -84,7 +85,10 @@ export const insertCategorySchema = createInsertSchema(categories)
   .omit({ id: true });
 
 export const insertCommentSchema = createInsertSchema(comments)
-  .omit({ id: true, createdAt: true, approved: true });
+  .omit({ id: true, createdAt: true })
+  .extend({
+    approved: z.boolean().default(false)
+  });
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
