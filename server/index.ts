@@ -55,6 +55,7 @@ async function startServer() {
 
     console.log(`Attempting to start server on port ${port}...`);
     await new Promise((resolve, reject) => {
+      // Fix the parameter order: port first, then hostname
       httpServer.listen(port, "0.0.0.0", (err?: Error) => {
         if (err) {
           console.error('Server startup error:', err);
