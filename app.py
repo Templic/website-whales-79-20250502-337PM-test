@@ -104,7 +104,7 @@ def inject_year():
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
     try:
-        app.run(host='0.0.0.0', port=8080, debug=True)
+        app.run(host='0.0.0.0', port=5000, debug=True)
         logger.info("Flask application started successfully")
     except Exception as e:
         logger.error(f"Failed to start Flask application: {str(e)}")
