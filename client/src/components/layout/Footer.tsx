@@ -1,8 +1,10 @@
 import { Link } from "wouter";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Footer() {
   const [email, setEmail] = useState("");
+  const { user } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +29,16 @@ export function Footer() {
                 <li><Link href="/gifts-and-sponsorships" className="text-[#e8e6e3] hover:text-[#00ebd6]">Gifts and Sponsorships</Link></li>
                 <li><Link href="/blog" className="text-[#e8e6e3] hover:text-[#00ebd6]">Blog</Link></li>
                 <li><Link href="/newsletter" className="text-[#e8e6e3] hover:text-[#00ebd6]">Newsletter</Link></li>
+                {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                  <li>
+                    <Link 
+                      href="/admin" 
+                      className="text-[#fe0064] hover:text-[#00ebd6] font-semibold"
+                    >
+                      Admin Portal
+                    </Link>
+                  </li>
+                )}
               </ul>
             </nav>
           </div>
