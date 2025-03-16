@@ -4,6 +4,7 @@ import { Album, Track } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { formatDisplayDate } from "@/lib/date-utils";
 
 type AudioPlayerProps = {
   track: Track;
@@ -36,7 +37,7 @@ const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
   };
 
   return (
-    <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl flex items-center gap-4">
+    <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl flex items-center gap-4 backdrop-blur-sm">
       <audio
         ref={audioRef}
         src={track.audioUrl}
@@ -52,6 +53,7 @@ const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
           size="icon"
           onClick={onPrevious}
           disabled={!onPrevious}
+          className="text-[#00ebd6] hover:text-[#fe0064]"
         >
           <SkipBack className="h-6 w-6" />
         </Button>
@@ -60,6 +62,7 @@ const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
           variant="ghost"
           size="icon"
           onClick={togglePlay}
+          className="text-[#00ebd6] hover:text-[#fe0064]"
         >
           {isPlaying ? (
             <Pause className="h-6 w-6" />
@@ -73,24 +76,26 @@ const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
           size="icon"
           onClick={onNext}
           disabled={!onNext}
+          className="text-[#00ebd6] hover:text-[#fe0064]"
         >
           <SkipForward className="h-6 w-6" />
         </Button>
       </div>
 
       <div className="flex items-center gap-2 w-32">
-        <Volume2 className="h-4 w-4" />
+        <Volume2 className="h-4 w-4 text-[#00ebd6]" />
         <Slider
           defaultValue={[1]}
           max={1}
           step={0.1}
           value={[volume]}
           onValueChange={handleVolumeChange}
+          className="w-full"
         />
       </div>
 
       <div className="text-sm">
-        <p className="font-medium">{track.title}</p>
+        <p className="font-medium text-[#00ebd6]">{track.title}</p>
         <p className="text-gray-400">{track.artist}</p>
       </div>
     </div>
@@ -134,8 +139,8 @@ export default function MusicArchivePage() {
   };
 
   return (
-    <div className="space-y-8">
-      <section className="header-section text-center mb-12">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <section className="text-center mb-12">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Music Archive</h1>
         <p className="text-xl max-w-2xl mx-auto">
           Explore Dale's complete discography, from cosmic beginnings to latest stellar releases.
@@ -152,7 +157,7 @@ export default function MusicArchivePage() {
         </section>
       )}
 
-      <section className="albums-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {albumsLoading ? (
           Array(6).fill(0).map((_, i) => (
             <div key={i} className="animate-pulse">
@@ -162,7 +167,7 @@ export default function MusicArchivePage() {
             </div>
           ))
         ) : albums?.map((album) => (
-          <div key={album.id} className="album-card bg-[rgba(10,50,92,0.6)] rounded-xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-transform duration-300">
+          <div key={album.id} className="bg-[rgba(10,50,92,0.6)] rounded-xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-transform duration-300 backdrop-blur-sm">
             {album.coverImage && (
               <img 
                 src={album.coverImage} 
@@ -172,38 +177,57 @@ export default function MusicArchivePage() {
             )}
             <div className="p-6">
               <h3 className="text-xl font-bold text-[#00ebd6] mb-2">{album.title}</h3>
-              <p className="text-sm mb-4">Released: {new Date(album.releaseDate!).toLocaleDateString()}</p>
+              <p className="text-sm text-gray-400 mb-4">
+                Released: {album.releaseDate ? formatDisplayDate(album.releaseDate) : 'Release date TBA'}
+              </p>
 
-              {tracks?.filter(track => track.albumId === album.id).map(track => (
-                <div 
-                  key={track.id}
-                  className="flex justify-between items-center p-2 hover:bg-[rgba(48,52,54,0.5)] rounded-lg cursor-pointer"
-                  onClick={() => setCurrentTrackId(track.id)}
-                >
-                  <span className="text-sm">{track.title}</span>
-                  <span className="text-sm text-gray-400">{track.duration}</span>
-                </div>
-              ))}
+              <div className="space-y-2">
+                {tracks?.filter(track => track.albumId === album.id).map(track => (
+                  <div 
+                    key={track.id}
+                    className={`flex justify-between items-center p-2 rounded-lg cursor-pointer transition-colors ${
+                      currentTrackId === track.id 
+                        ? 'bg-[rgba(0,235,214,0.2)] text-[#00ebd6]' 
+                        : 'hover:bg-[rgba(48,52,54,0.5)]'
+                    }`}
+                    onClick={() => setCurrentTrackId(track.id)}
+                  >
+                    <span className="text-sm flex items-center gap-2">
+                      {currentTrackId === track.id && <Play className="h-3 w-3" />}
+                      {track.title}
+                    </span>
+                    <span className="text-sm text-gray-400">{track.duration}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ))}
       </section>
-      <section className="playlists bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm mt-12">
+
+      <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm mt-12">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Featured Playlists</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="playlist-item p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-            <h3 className="text-lg font-bold mb-2">Best of Dale</h3>
-            <p className="text-sm mb-4">A curated collection of Dale's most popular tracks</p>
-            <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">
+          <div className="p-6 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors">
+            <h3 className="text-lg font-bold text-[#00ebd6] mb-2">Best of Dale</h3>
+            <p className="text-sm mb-4 text-gray-300">A curated collection of Dale's most popular tracks</p>
+            <Button 
+              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
+              onClick={() => setCurrentTrackId(tracks?.[0]?.id || null)}
+            >
               Play All
-            </button>
+            </Button>
           </div>
-          <div className="playlist-item p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-            <h3 className="text-lg font-bold mb-2">Cosmic Journey</h3>
-            <p className="text-sm mb-4">Experience the evolution of Dale's cosmic sound</p>
-            <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">
+
+          <div className="p-6 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors">
+            <h3 className="text-lg font-bold text-[#00ebd6] mb-2">Cosmic Journey</h3>
+            <p className="text-sm mb-4 text-gray-300">Experience the evolution of Dale's cosmic sound</p>
+            <Button 
+              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
+              onClick={() => setCurrentTrackId(tracks?.[0]?.id || null)}
+            >
               Play All
-            </button>
+            </Button>
           </div>
         </div>
       </section>
