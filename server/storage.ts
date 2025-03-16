@@ -3,7 +3,7 @@ declare module 'connect-pg-simple' {
   export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
-import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, subscribers, posts, categories, comments, users } from "@shared/schema";
+import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, subscribers, posts, categories, comments, users, tracks, albums } from "@shared/schema";
 import { sql, eq } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
@@ -51,6 +51,10 @@ export interface IStorage {
   approvePost(id: number): Promise<Post>;
   getUnapprovedPosts(): Promise<Post[]>;
   getUnapprovedComments(): Promise<Comment[]>;
+
+  // Music methods
+  getTracks(): Promise<Track[]>;
+  getAlbums(): Promise<Album[]>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -230,6 +234,15 @@ export class PostgresStorage implements IStorage {
       console.error('Error fetching unapproved comments:', error);
       throw error;
     }
+  }
+
+  // Music methods
+  async getTracks(): Promise<Track[]> {
+    return await db.select().from(tracks).orderBy(sql`created_at DESC`);
+  }
+
+  async getAlbums(): Promise<Album[]> {
+    return await db.select().from(albums).orderBy(sql`release_date DESC`);
   }
 }
 

@@ -252,6 +252,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Music routes
+  app.get("/api/tracks", async (req, res) => {
+    try {
+      const tracks = await storage.getTracks();
+      res.json(tracks);
+    } catch (error) {
+      console.error("Error fetching tracks:", error);
+      res.status(500).json({ 
+        message: "Error fetching tracks",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/albums", async (req, res) => {
+    try {
+      const albums = await storage.getAlbums();
+      res.json(albums);
+    } catch (error) {
+      console.error("Error fetching albums:", error);
+      res.status(500).json({ 
+        message: "Error fetching albums",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
   return httpServer;

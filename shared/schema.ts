@@ -90,6 +90,44 @@ export const insertCommentSchema = createInsertSchema(comments)
     approved: z.boolean().default(false)
   });
 
+// Music tracks table
+export const tracks = pgTable("tracks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  albumId: integer("album_id"),
+  duration: text("duration"),
+  audioUrl: text("audio_url").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// Music albums table
+export const albums = pgTable("albums", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  artist: text("artist").notNull(),
+  releaseDate: timestamp("release_date"),
+  coverImage: text("cover_image"),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
+// Insert schemas for new tables
+export const insertTrackSchema = createInsertSchema(tracks)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export const insertAlbumSchema = createInsertSchema(albums)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Types for new tables
+export type InsertTrack = z.infer<typeof insertTrackSchema>;
+export type Track = typeof tracks.$inferSelect;
+
+export type InsertAlbum = z.infer<typeof insertAlbumSchema>;
+export type Album = typeof albums.$inferSelect;
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
