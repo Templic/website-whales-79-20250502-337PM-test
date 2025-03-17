@@ -87,8 +87,21 @@ export class PostgresStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
-    return newUser;
+    try {
+      const [newUser] = await db.insert(users).values(user).returning();
+      return newUser;
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      if (error.code === '23505') { // PostgreSQL unique constraint violation
+        if (error.constraint?.includes('email')) {
+          throw new Error('Email address already exists');
+        }
+        if (error.constraint?.includes('username')) {
+          throw new Error('Username already exists');
+        }
+      }
+      throw error;
+    }
   }
 
   async getAllUsers(): Promise<User[]> {

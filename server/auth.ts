@@ -95,9 +95,16 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
-      if (existingUser) {
+      // Check for existing username
+      const existingUsername = await storage.getUserByUsername(req.body.username);
+      if (existingUsername) {
         return res.status(400).json({ message: "Username already exists" });
+      }
+
+      // Check for existing email
+      const existingEmail = await storage.getUserByEmail(req.body.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email address already in use" });
       }
 
       const user = await storage.createUser({
@@ -110,6 +117,7 @@ export function setupAuth(app: Express) {
         res.status(201).json(user);
       });
     } catch (err) {
+      console.error("Registration error:", err);
       next(err);
     }
   });
@@ -144,7 +152,7 @@ export function setupAuth(app: Express) {
     req.logout((err) => {
       if (err) {
         console.error("Error during logout:", err);
-        return next(err); // Pass the error to the next middleware
+        return next(err);
       }
       console.log("User logged out successfully.");
       res.sendStatus(200);
