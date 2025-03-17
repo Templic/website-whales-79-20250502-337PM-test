@@ -38,14 +38,36 @@ export function setupAuth(app: Express) {
     cookie: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours default
+      rolling: true, // Refresh session on activity
+    },
+    name: 'sid', // Custom session ID name
+    proxy: true // Trust the reverse proxy
   };
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Session analytics middleware
+  app.use((req, res, next) => {
+    if (req.session) {
+      // Update last activity timestamp
+      req.session.lastActivity = Date.now();
+
+      // Record analytics if session is authenticated
+      if (req.isAuthenticated()) {
+        req.session.analytics = {
+          ...req.session.analytics,
+          lastAccess: new Date(),
+          userAgent: req.headers['user-agent'],
+          ip: req.ip
+        };
+      }
+    }
+    next();
+  });
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
@@ -97,6 +119,12 @@ export function setupAuth(app: Express) {
       if (err) return next(err);
       if (!user) return res.status(401).json(info);
 
+      // Handle remember-me functionality
+      const rememberMe = req.body.rememberMe === true;
+      if (rememberMe && req.session) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+      }
+
       req.login(user, (err) => {
         if (err) return next(err);
         res.json(user);
@@ -105,6 +133,11 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
+    // Record logout time in analytics
+    if (req.session?.analytics) {
+      req.session.analytics.logoutTime = new Date();
+    }
+
     req.logout((err) => {
       if (err) return next(err);
       res.sendStatus(200);
@@ -114,5 +147,22 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
+  });
+
+  // Session analytics endpoint
+  app.get("/api/session/status", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const sessionInfo = {
+      id: req.sessionID,
+      lastActivity: req.session?.lastActivity,
+      analytics: req.session?.analytics,
+      cookie: {
+        expires: req.session?.cookie.expires,
+        maxAge: req.session?.cookie.maxAge
+      }
+    };
+
+    res.json(sessionInfo);
   });
 }

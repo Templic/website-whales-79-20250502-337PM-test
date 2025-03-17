@@ -7,6 +7,7 @@ import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
 import { pgPool } from "./db";
 import { setupAuth } from "./auth";
+import { storage } from "./storage";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,6 +39,9 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 // Use port 5000 as required by the workflow
 const port = process.env.PORT || 5000;
 
+// Add session cleanup interval
+let cleanupInterval: NodeJS.Timer;
+
 async function startServer() {
   console.log('Starting server initialization...');
 
@@ -65,6 +69,16 @@ async function startServer() {
       await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     }
 
+    // Start periodic session cleanup (every 6 hours)
+    cleanupInterval = setInterval(async () => {
+      try {
+        await storage.cleanupExpiredSessions();
+        console.log('Session cleanup completed successfully');
+      } catch (error) {
+        console.error('Session cleanup failed:', error);
+      }
+    }, 6 * 60 * 60 * 1000);
+
     await new Promise((resolve, reject) => {
       httpServer.listen(port, '0.0.0.0', () => {
         console.log(`Server successfully listening on port ${port}`);
@@ -80,6 +94,11 @@ async function startServer() {
     const shutdown = async () => {
       console.log('Shutting down server...');
       try {
+        // Clear session cleanup interval
+        if (cleanupInterval) {
+          clearInterval(cleanupInterval);
+        }
+
         await new Promise<void>((resolve) => {
           httpServer.close(() => {
             console.log('HTTP server closed');

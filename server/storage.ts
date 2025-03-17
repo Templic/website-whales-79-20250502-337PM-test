@@ -21,7 +21,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
-  getUserByEmail(email: string): Promise<User | undefined>; // Added method
+  getUserByEmail(email: string): Promise<User | undefined>;
 
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
@@ -40,7 +40,7 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   getCommentsByPostId(postId: number): Promise<Comment[]>;
   approveComment(id: number): Promise<Comment>;
-  rejectComment(id: number): Promise<Comment>; // Added method for rejecting comments
+  rejectComment(id: number): Promise<Comment>;
 
   // Password recovery methods
   createPasswordResetToken(userId: number): Promise<string>;
@@ -55,6 +55,11 @@ export interface IStorage {
   // Music methods
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
+
+  // Session management methods
+  cleanupExpiredSessions(): Promise<void>;
+  getSessionAnalytics(userId: number): Promise<any>;
+  updateSessionActivity(sessionId: string, data: any): Promise<void>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -243,6 +248,49 @@ export class PostgresStorage implements IStorage {
 
   async getAlbums(): Promise<Album[]> {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
+  }
+
+  // Session cleanup method
+  async cleanupExpiredSessions(): Promise<void> {
+    try {
+      await db.execute(sql`
+        DELETE FROM "session"
+        WHERE expire < NOW()
+      `);
+    } catch (error) {
+      console.error("Error cleaning up expired sessions:", error);
+      throw error;
+    }
+  }
+
+  // Session analytics methods
+  async getSessionAnalytics(userId: number): Promise<any> {
+    try {
+      const result = await db.execute(sql`
+        SELECT s.*
+        FROM "session" s
+        JOIN "users" u ON s.sess->>'passport'->>'user' = u.id::text
+        WHERE u.id = ${userId}
+        ORDER BY s.expire DESC
+      `);
+      return result.rows;
+    } catch (error) {
+      console.error("Error fetching session analytics:", error);
+      throw error;
+    }
+  }
+
+  async updateSessionActivity(sessionId: string, data: any): Promise<void> {
+    try {
+      await db.execute(sql`
+        UPDATE "session"
+        SET sess = jsonb_set(sess::jsonb, '{analytics}', ${JSON.stringify(data)}::jsonb)
+        WHERE sid = ${sessionId}
+      `);
+    } catch (error) {
+      console.error("Error updating session activity:", error);
+      throw error;
+    }
   }
 }
 
