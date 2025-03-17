@@ -1,20 +1,36 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Post, Comment } from "@shared/schema";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, LogOut } from "lucide-react";
 import { Redirect } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 
 export default function AdminPortalPage() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
 
   // Redirect non-admin users
   if (!user || user.role === 'user') {
     return <Redirect to="/" />;
   }
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      toast({
+        title: "Logout successful",
+        description: "You have been logged out successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
@@ -68,7 +84,6 @@ export default function AdminPortalPage() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate both the unapproved comments list and the comments for all posts
       queryClient.invalidateQueries({ queryKey: ['/api/posts/comments/unapproved'] });
       queryClient.invalidateQueries({ queryKey: ['/api/posts'] });
       toast({
@@ -113,7 +128,23 @@ export default function AdminPortalPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-4xl font-bold text-[#00ebd6] mb-8">Admin Portal</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-[#00ebd6]">Admin Portal</h1>
+        <Button
+          variant="outline"
+          onClick={handleLogout}
+          disabled={logoutMutation.isPending}
+        >
+          {logoutMutation.isPending ? (
+            "Logging out..."
+          ) : (
+            <>
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </>
+          )}
+        </Button>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Content Moderation Section */}

@@ -133,20 +133,22 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
+    // Logging the request session for debugging purposes
+    console.log("Logout request received:", req.session);
+
     // Record logout time in analytics
     if (req.session?.analytics) {
       req.session.analytics.logoutTime = new Date();
+      console.log("Logout time recorded:", req.session.analytics.logoutTime);
     }
-
     req.logout((err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error("Error during logout:", err);
+        return next(err); // Pass the error to the next middleware
+      }
+      console.log("User logged out successfully.");
       res.sendStatus(200);
     });
-  });
-
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
   });
 
   // Session analytics endpoint
