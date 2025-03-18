@@ -60,6 +60,15 @@ export interface IStorage {
   cleanupExpiredSessions(): Promise<void>;
   getSessionAnalytics(userId: number): Promise<any>;
   updateSessionActivity(sessionId: string, data: any): Promise<void>;
+
+  // Advanced admin methods
+  updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User>;
+  banUser(userId: number): Promise<void>;
+  unbanUser(userId: number): Promise<void>;
+  getSystemSettings(): Promise<any>;
+  updateSystemSettings(settings: any): Promise<void>;
+  getAdminAnalytics(): Promise<any>;
+  getUserActivity(userId: number): Promise<any>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -302,6 +311,127 @@ export class PostgresStorage implements IStorage {
       `);
     } catch (error) {
       console.error("Error updating session activity:", error);
+      throw error;
+    }
+  }
+
+  // Advanced admin methods implementation
+  async updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
+    try {
+      const [updatedUser] = await db.update(users)
+        .set({ role, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      throw error;
+    }
+  }
+
+  async banUser(userId: number): Promise<void> {
+    try {
+      await db.update(users)
+        .set({ 
+          isBanned: true,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      console.error("Error banning user:", error);
+      throw error;
+    }
+  }
+
+  async unbanUser(userId: number): Promise<void> {
+    try {
+      await db.update(users)
+        .set({ 
+          isBanned: false,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, userId));
+    } catch (error) {
+      console.error("Error unbanning user:", error);
+      throw error;
+    }
+  }
+
+  async getSystemSettings(): Promise<any> {
+    try {
+      const result = await db.execute(sql`
+        SELECT *
+        FROM system_settings
+        LIMIT 1
+      `);
+      return result.rows[0] || {
+        enableRegistration: true,
+        requireEmailVerification: false,
+        autoApproveContent: false
+      };
+    } catch (error) {
+      console.error("Error fetching system settings:", error);
+      throw error;
+    }
+  }
+
+  async updateSystemSettings(settings: any): Promise<void> {
+    try {
+      await db.execute(sql`
+        INSERT INTO system_settings ${sql.raw(Object.keys(settings).join(', '))}
+        VALUES ${sql.raw(Object.values(settings).map(v => typeof v === 'boolean' ? v : `'${v}'`).join(', '))}
+        ON CONFLICT (id) DO UPDATE
+        SET ${sql.raw(Object.entries(settings).map(([k, v]) => `${k} = ${typeof v === 'boolean' ? v : `'${v}'`}`).join(', '))}
+      `);
+    } catch (error) {
+      console.error("Error updating system settings:", error);
+      throw error;
+    }
+  }
+
+  async getAdminAnalytics(): Promise<any> {
+    try {
+      const [activeUsers] = await db.select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`last_activity > now() - interval '24 hours'`);
+
+      const [newRegistrations] = await db.select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`created_at > now() - interval '7 days'`);
+
+      const [contentReports] = await db.select({ count: sql<number>`count(*)` })
+        .from('content_reports')
+        .where(sql`created_at > now() - interval '24 hours'`);
+
+      return {
+        activeUsers: activeUsers?.count || 0,
+        newRegistrations: newRegistrations?.count || 0,
+        contentReports: contentReports?.count || 0,
+        systemHealth: 'Good' // You can implement more sophisticated health checks
+      };
+    } catch (error) {
+      console.error("Error fetching admin analytics:", error);
+      throw error;
+    }
+  }
+
+  async getUserActivity(userId: number): Promise<any> {
+    try {
+      const result = await db.execute(sql`
+        SELECT 
+          u.username,
+          u.last_activity,
+          COUNT(DISTINCT p.id) as post_count,
+          COUNT(DISTINCT c.id) as comment_count
+        FROM users u
+        LEFT JOIN posts p ON p.author_id = u.id
+        LEFT JOIN comments c ON c.author_id = u.id
+        WHERE u.id = ${userId}
+        GROUP BY u.id, u.username, u.last_activity
+      `);
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error fetching user activity:", error);
       throw error;
     }
   }

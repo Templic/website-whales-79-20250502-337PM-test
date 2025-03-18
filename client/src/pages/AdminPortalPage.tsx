@@ -1,11 +1,14 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Post, Comment } from "@shared/schema";
-import { Loader2, Check, X, LogOut } from "lucide-react";
+import { Loader2, Check, X, LogOut, Shield, Settings, Ban, UserPlus, ChartBar, Bell } from "lucide-react";
 import { Redirect } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
@@ -31,6 +34,75 @@ export default function AdminPortalPage() {
       });
     }
   };
+
+  // Advanced user management mutations
+  const promoteUserMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: number; role: 'user' | 'admin' | 'super_admin' }) => {
+      const response = await fetch(`/api/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role })
+      });
+      if (!response.ok) throw new Error('Failed to update user role');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Success",
+        description: "User role updated successfully"
+      });
+    }
+  });
+
+  const banUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/users/${userId}/ban`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to ban user');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Success",
+        description: "User banned successfully"
+      });
+    }
+  });
+
+  // Fetch system settings
+  const { data: systemSettings } = useQuery({
+    queryKey: ['/api/admin/settings'],
+    enabled: user?.role === 'super_admin'
+  });
+
+  // Fetch analytics data
+  const { data: analyticsData } = useQuery({
+    queryKey: ['/api/admin/analytics'],
+    enabled: user?.role === 'admin' || user?.role === 'super_admin'
+  });
+
+  // System settings mutation
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (settings: any) => {
+      const response = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (!response.ok) throw new Error('Failed to update settings');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/settings'] });
+      toast({
+        title: "Success",
+        description: "System settings updated successfully"
+      });
+    }
+  });
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
@@ -147,10 +219,141 @@ export default function AdminPortalPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Content Moderation Section */}
+        {/* User Management Section */}
+        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+          <h2 className="text-2xl font-bold mb-4">User Management</h2>
+          <div className="space-y-4">
+            {users?.map(managedUser => (
+              <div key={managedUser.id} className="flex items-center justify-between p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+                <div>
+                  <p className="font-medium">{managedUser.username}</p>
+                  <p className="text-sm text-gray-400">{managedUser.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {user.role === 'super_admin' && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Change Role
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Change User Role</DialogTitle>
+                          <DialogDescription>
+                            Select a new role for {managedUser.username}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          {['user', 'admin'].map(role => (
+                            <Button
+                              key={role}
+                              onClick={() => promoteUserMutation.mutate({ userId: managedUser.id, role: role as 'user' | 'admin' })}
+                              disabled={managedUser.role === role}
+                              variant={managedUser.role === role ? "secondary" : "outline"}
+                            >
+                              {role.charAt(0).toUpperCase() + role.slice(1)}
+                            </Button>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => banUserMutation.mutate(managedUser.id)}
+                    disabled={banUserMutation.isPending}
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Ban
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* System Settings Section (Super Admin Only) */}
+        {user.role === 'super_admin' && (
+          <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <h2 className="text-2xl font-bold mb-4">System Settings</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Enable User Registration</Label>
+                  <p className="text-sm text-gray-400">Allow new users to register</p>
+                </div>
+                <Switch
+                  checked={systemSettings?.enableRegistration}
+                  onCheckedChange={(checked) =>
+                    updateSettingsMutation.mutate({ enableRegistration: checked })
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Email Verification</Label>
+                  <p className="text-sm text-gray-400">Users must verify email before login</p>
+                </div>
+                <Switch
+                  checked={systemSettings?.requireEmailVerification}
+                  onCheckedChange={(checked) =>
+                    updateSettingsMutation.mutate({ requireEmailVerification: checked })
+                  }
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Auto-approve Content</Label>
+                  <p className="text-sm text-gray-400">Skip moderation for trusted users</p>
+                </div>
+                <Switch
+                  checked={systemSettings?.autoApproveContent}
+                  onCheckedChange={(checked) =>
+                    updateSettingsMutation.mutate({ autoApproveContent: checked })
+                  }
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Analytics Dashboard */}
+        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+          <h2 className="text-2xl font-bold mb-4">Analytics Overview</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">Active Users</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.activeUsers || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">New Registrations</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.newRegistrations || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">Content Reports</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.contentReports || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">System Health</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.systemHealth || 'Good'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Existing Content Moderation Section */}
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Content Moderation</h2>
-
           {/* Unapproved Posts */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-3">Pending Posts</h3>
@@ -221,55 +424,6 @@ export default function AdminPortalPage() {
                 ))}
               </div>
             )}
-          </div>
-        </section>
-
-        {/* User Management Section */}
-        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">User Management</h2>
-          <div className="space-y-4">
-            {users?.map(user => (
-              <div key={user.id} className="flex items-center justify-between p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-                <div>
-                  <p className="font-medium">{user.username}</p>
-                  <p className="text-sm text-gray-400">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-1 text-sm rounded bg-[rgba(0,235,214,0.2)] text-[#00ebd6]">
-                    {user.role}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Analytics Section */}
-        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">Analytics Overview</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Total Users</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">{users?.length || 0}</p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Admins</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {users?.filter(u => u.role !== 'user').length || 0}
-              </p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Pending Posts</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {unapprovedPosts?.length || 0}
-              </p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Pending Comments</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {unapprovedComments?.length || 0}
-              </p>
-            </div>
           </div>
         </section>
       </div>
