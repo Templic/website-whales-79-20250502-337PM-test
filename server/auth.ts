@@ -159,6 +159,47 @@ export function setupAuth(app: Express) {
     });
   });
 
+  // Add role management endpoint
+  app.patch("/api/users/:userId/role", async (req, res) => {
+    try {
+      // Check if user is authorized (must be super_admin)
+      if (!req.isAuthenticated() || req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const userId = parseInt(req.params.userId);
+      const { role } = req.body;
+
+      // Validate role
+      if (!['user', 'admin', 'super_admin'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  // Ban user endpoint
+  app.post("/api/users/:userId/ban", async (req, res) => {
+    try {
+      // Check if user is authorized (must be admin or super_admin)
+      if (!req.isAuthenticated() || !['admin', 'super_admin'].includes(req.user.role)) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const userId = parseInt(req.params.userId);
+      await storage.banUser(userId);
+      res.json({ message: "User banned successfully" });
+    } catch (error) {
+      console.error("Error banning user:", error);
+      res.status(500).json({ message: "Failed to ban user" });
+    }
+  });
+
   // Session analytics endpoint
   app.get("/api/session/status", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

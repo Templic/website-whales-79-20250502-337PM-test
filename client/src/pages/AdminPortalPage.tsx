@@ -47,11 +47,12 @@ export default function AdminPortalPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role })
       });
+
+      const data = await response.json();
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update user role');
+        throw new Error(data.message || 'Failed to update user role');
       }
-      return response.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -72,16 +73,28 @@ export default function AdminPortalPage() {
   const banUserMutation = useMutation({
     mutationFn: async (userId: number) => {
       const response = await fetch(`/api/users/${userId}/ban`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
       });
-      if (!response.ok) throw new Error('Failed to ban user');
-      return response.json();
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to ban user');
+      }
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       toast({
         title: "Success",
         description: "User banned successfully"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
       });
     }
   });
