@@ -10,6 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+// Define available roles
+const AVAILABLE_ROLES = ['user', 'admin', 'super_admin'] as const;
+type UserRole = typeof AVAILABLE_ROLES[number];
+
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
@@ -37,13 +41,16 @@ export default function AdminPortalPage() {
 
   // Advanced user management mutations
   const promoteUserMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: number; role: 'user' | 'admin' | 'super_admin' }) => {
+    mutationFn: async ({ userId, role }: { userId: number; role: UserRole }) => {
       const response = await fetch(`/api/users/${userId}/role`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role })
       });
-      if (!response.ok) throw new Error('Failed to update user role');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update user role');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -51,6 +58,13 @@ export default function AdminPortalPage() {
       toast({
         title: "Success",
         description: "User role updated successfully"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
       });
     }
   });
@@ -228,6 +242,7 @@ export default function AdminPortalPage() {
                 <div>
                   <p className="font-medium">{managedUser.username}</p>
                   <p className="text-sm text-gray-400">{managedUser.email}</p>
+                  <p className="text-sm text-[#00ebd6]">Current Role: {managedUser.role}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   {user.role === 'super_admin' && (
@@ -246,14 +261,16 @@ export default function AdminPortalPage() {
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
-                          {['user', 'admin'].map(role => (
+                          {AVAILABLE_ROLES.map(role => (
                             <Button
                               key={role}
-                              onClick={() => promoteUserMutation.mutate({ userId: managedUser.id, role: role as 'user' | 'admin' })}
-                              disabled={managedUser.role === role}
+                              onClick={() => promoteUserMutation.mutate({ userId: managedUser.id, role })}
+                              disabled={managedUser.role === role || promoteUserMutation.isPending}
                               variant={managedUser.role === role ? "secondary" : "outline"}
+                              className={managedUser.role === role ? "bg-[#00ebd6]/20" : ""}
                             >
-                              {role.charAt(0).toUpperCase() + role.slice(1)}
+                              {role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' ')}
+                              {managedUser.role === role && " (Current)"}
                             </Button>
                           ))}
                         </div>
