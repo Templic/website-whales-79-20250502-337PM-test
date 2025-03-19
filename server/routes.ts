@@ -52,6 +52,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ message: "Invalid file path" });
     }
 
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "File not found" });
+    }
+
+    // Get file stats for content length
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+
     // Get file extension and set content type
     const ext = path.extname(filename).toLowerCase();
     const mimeTypes = {
@@ -68,18 +77,63 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-    // Set proper headers for streaming
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Accept-Ranges', 'bytes');
+    // Parse Range header
+    const range = req.headers.range;
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
 
-    // Stream the file
-    const stream = fs.createReadStream(filePath);
-    stream.on('error', (error) => {
-      console.error('Error streaming file:', error);
-      res.status(500).json({ message: "Error streaming file" });
-    });
+      // Create read stream for the range
+      const stream = fs.createReadStream(filePath, { start, end });
 
-    stream.pipe(res);
+      // Set headers for partial content
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      // Handle stream errors
+      stream.on('error', (error) => {
+        console.error('Error streaming file:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error streaming file" });
+        }
+      });
+
+      // Pipe the stream to response
+      stream.pipe(res);
+    } else {
+      // Set headers for full content
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': contentType,
+        'Accept-Ranges': 'bytes',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      // Create read stream for entire file
+      const stream = fs.createReadStream(filePath);
+
+      // Handle stream errors
+      stream.on('error', (error) => {
+        console.error('Error streaming file:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error streaming file" });
+        }
+      });
+
+      // Pipe the stream to response
+      stream.pipe(res);
+    }
   });
   // User management routes
   app.get("/api/users", async (req, res) => {
