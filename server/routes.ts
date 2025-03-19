@@ -2,46 +2,122 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import fileUpload from 'express-fileupload';
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Configure express-fileupload middleware with detailed logging
-const fileUploadMiddleware = fileUpload({
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max file size
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
-  debug: true,
-  safeFileNames: true,
-  preserveExtension: true,
-  abortOnLimit: true,
-  uploadTimeout: 0, // Disable timeout
-  createParentPath: true
-});
-
-// Additional validation for uploaded files
-const validateUploadedFile = (file: fileUpload.UploadedFile) => {
-  // Check file size
-  const maxSize = 100 * 1024 * 1024; // 100MB
-  if (file.size > maxSize) {
-    throw new Error(`File too large. Maximum size is ${maxSize / (1024 * 1024)}MB`);
+// Middleware to handle file uploads
+const handleFileUpload = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (!req.is('multipart/form-data')) {
+    return next();
   }
 
-  // Validate mime type
-  const allowedMimeTypes = new Set([
-    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
-    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
-    'video/quicktime', 'video/mp4'
-  ]);
+  try {
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
+    if (contentLength > 100 * 1024 * 1024) { // 100MB limit
+      throw new Error('File too large');
+    }
 
-  if (!allowedMimeTypes.has(file.mimetype)) {
-    throw new Error(`Invalid file type. Allowed types: ${Array.from(allowedMimeTypes).join(', ')}`);
+    const chunks: Buffer[] = [];
+    let bytesReceived = 0;
+
+    // Handle data chunks
+    req.on('data', (chunk) => {
+      chunks.push(chunk);
+      bytesReceived += chunk.length;
+      console.log(`Received ${bytesReceived} bytes of ${contentLength}`);
+    });
+
+    // Handle end of stream
+    await new Promise<void>((resolve, reject) => {
+      req.on('end', () => {
+        try {
+          const boundary = getBoundary(req.headers['content-type'] || '');
+          const buffer = Buffer.concat(chunks);
+          const parts = parseMultipart(buffer, boundary);
+
+          req.files = parts.files;
+          req.body = parts.fields;
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      });
+
+      req.on('error', reject);
+    });
+
+    next();
+  } catch (error) {
+    console.error('File upload error:', error);
+    res.status(500).json({ 
+      message: 'File upload failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
+};
 
-  return true;
+// Helper to get multipart boundary
+const getBoundary = (contentType: string): string => {
+  const matches = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+  if (!matches) {
+    throw new Error('No multipart boundary found in content-type header');
+  }
+  return matches[1] || matches[2];
+};
+
+// Helper to parse multipart form data
+const parseMultipart = (buffer: Buffer, boundary: string) => {
+  const parts = {
+    files: {} as { [key: string]: any },
+    fields: {} as { [key: string]: string }
+  };
+
+  // Split the buffer into parts using the boundary
+  const boundaryBuffer = Buffer.from(`\r\n--${boundary}`);
+  const dataChunks = buffer.toString().split(boundaryBuffer.toString());
+
+  dataChunks.forEach((chunk) => {
+    if (!chunk.includes('Content-Disposition: form-data;')) {
+      return;
+    }
+
+    const matches = chunk.match(/name="([^"]+)"/);
+    if (!matches) return;
+
+    const name = matches[1];
+    if (chunk.includes('filename="')) {
+      // This is a file
+      const fileMatches = chunk.match(/filename="([^"]+)"/);
+      if (!fileMatches) return;
+
+      const filename = fileMatches[1];
+      const contentType = chunk.match(/Content-Type: (.+)\r\n/)?.[1] || 'application/octet-stream';
+
+      // Find the start of file data (after double CRLF)
+      const dataStart = chunk.indexOf('\r\n\r\n') + 4;
+      const fileData = chunk.slice(dataStart);
+
+      const tempPath = path.join('/tmp', `upload_${Date.now()}_${filename}`);
+      fs.writeFileSync(tempPath, fileData);
+
+      parts.files[name] = {
+        name: filename,
+        tempFilePath: tempPath,
+        size: fileData.length,
+        mimetype: contentType
+      };
+    } else {
+      // This is a field
+      const valueStart = chunk.indexOf('\r\n\r\n') + 4;
+      const value = chunk.slice(valueStart).trim();
+      parts.fields[name] = value;
+    }
+  });
+
+  return parts;
 };
 
 // Initialize ClamAV scanner with detailed logging
@@ -103,38 +179,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
-  // Apply file upload middleware with custom error handling
-  app.use((req, res, next) => {
-    // Skip file upload middleware for non-upload routes
-    if (!req.path.includes('/upload')) {
-      return next();
-    }
-
-    // Check content type
-    if (!req.headers['content-type']?.includes('multipart/form-data')) {
-      console.error('Invalid content type for file upload');
-      return res.status(400).json({ message: 'Invalid content type' });
-    }
-
-    fileUploadMiddleware(req, res, (err) => {
-      if (err) {
-        console.error('File upload middleware error:', err);
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(413).json({ message: 'File too large' });
-        }
-        return res.status(500).json({ 
-          message: 'File upload failed',
-          error: err.message 
-        });
-      }
-      next();
-    });
-  });
+  // Apply custom file upload middleware
+  app.use('/api/upload', handleFileUpload);
 
   // Music upload route with virus scanning
   app.post("/api/upload/music", async (
     req: express.Request & { 
-      files?: fileUpload.FileArray;
+      files?: { [key: string]: any };
       user?: { id: number; role: string; }
       isAuthenticated(): boolean;
     },
@@ -151,9 +202,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Get the uploaded file
       const uploadedFile = req.files?.file;
-      if (!uploadedFile || Array.isArray(uploadedFile)) {
-        console.error('No file in request or multiple files received');
-        return res.status(400).json({ message: "No file uploaded or multiple files received" });
+      if (!uploadedFile) {
+        console.error('No file in request');
+        return res.status(400).json({ message: "No file uploaded" });
       }
 
       // Validate target page
@@ -163,14 +214,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       if (!targetPage || !allowedPages.includes(targetPage)) {
         console.error(`Invalid target page: ${targetPage}`);
         return res.status(400).json({ message: "Invalid target page" });
-      }
-
-      // Validate the uploaded file
-      try {
-        validateUploadedFile(uploadedFile);
-      } catch (validationError) {
-        console.error('File validation error:', validationError);
-        return res.status(400).json({ message: validationError instanceof Error ? validationError.message : 'File validation failed' });
       }
 
       console.log('Upload request details:', {
@@ -206,12 +249,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Upload the file using storage interface
       const result = await storage.uploadMusic({
-        file: {
-          name: uploadedFile.name,
-          size: uploadedFile.size,
-          tempFilePath: uploadedFile.tempFilePath,
-          mimetype: uploadedFile.mimetype
-        },
+        file: uploadedFile,
         targetPage: targetPage,
         uploadedBy: req.user.id,
         userRole: req.user.role as 'admin' | 'super_admin'
