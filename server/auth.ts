@@ -61,7 +61,9 @@ export function setupAuth(app: Express) {
       maxAge: 4 * 60 * 60 * 1000, // 4 hours default
       path: "/",
       httpOnly: true,
-      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
+      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined,
+      signed: true,
+      partitioned: true // Enable partitioned cookies for enhanced privacy
     },
     name: '_sess', // Less obvious session ID name
     proxy: true, // Trust the reverse proxy

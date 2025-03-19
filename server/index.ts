@@ -54,8 +54,21 @@ app.use((req, res, next) => {
     'usb=(),' +
     'battery=(),' +
     'midi=(),' +
-    'notifications=()'
+    'notifications=(),' +
+    'accelerometer=(),' +
+    'gyroscope=(),' +
+    'magnetometer=(),' +
+    'ambient-light-sensor=(),' +
+    'interest-cohort=()' // Disable FLoC tracking
   );
+  
+  // Add Cache-Control header for privacy
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  
+  // Add Clear-Site-Data header for enhanced privacy when logging out
+  if (req.path === '/api/logout') {
+    res.setHeader('Clear-Site-Data', '"cache","cookies","storage"');
+  }
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
@@ -116,17 +129,20 @@ app.use((req, res, next) => {
       const status = res.statusCode;
       
       // Log in a structured format for easier parsing
+      // Mask IP address
+      const maskIP = (ip: string) => ip.replace(/(\d+)\.(\d+)\.(\d+)\.(\d+)/, '$1.***.***.***');
+      
       log(JSON.stringify({
         timestamp: new Date().toISOString(),
-        ip: clientIP,
+        ip: maskIP(clientIP),
         method: method,
-        path: path,
+        path: path.replace(/\d+/g, '[ID]'), // Mask IDs in URLs
         status: status,
         duration: duration,
-        userAgent: userAgent,
-        referrer: referrer,
+        userAgent: userAgent.substring(0, userAgent.indexOf('/')), // Truncate user agent
+        referrer: referrer.split('?')[0], // Remove query parameters
         authenticated: req.isAuthenticated(),
-        userId: req.user?.id || 'anonymous'
+        userId: req.isAuthenticated() ? '[AUTHENTICATED]' : 'anonymous'
       }));
 
       // Additional logging for suspicious activities
