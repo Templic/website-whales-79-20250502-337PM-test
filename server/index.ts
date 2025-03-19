@@ -71,7 +71,7 @@ async function startServer() {
     const httpServer = await registerRoutes(app);
 
     // Initialize WebSocket and Socket.IO servers AFTER httpServer is created.
-    import { setupWebSockets } from './websocket';
+    const { setupWebSockets } = await import('./websocket');
     const { wss, io } = setupWebSockets(httpServer);
     app.use(fileUpload({
       limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
