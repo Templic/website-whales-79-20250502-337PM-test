@@ -113,6 +113,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     fs.mkdirSync(uploadDir, { recursive: true });
   }
 
+  const tempUploadDir = path.join(process.cwd(), 'private_storage/uploads/temp');
+  if (!fs.existsSync(tempUploadDir)) {
+    fs.mkdirSync(tempUploadDir, { recursive: true });
+  }
+
+
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
