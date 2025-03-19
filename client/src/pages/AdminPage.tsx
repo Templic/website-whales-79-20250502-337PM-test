@@ -1,20 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { User, Post, Comment, Track } from '@shared/schema';
-import UserList from '@/components/UserList';
-import UnapprovedPosts from '@/components/UnapprovedPosts';
-import UnapprovedComments from '@/components/UnapprovedComments';
 import UploadForm from '@/components/UploadForm';
+import UserList from '@/components/UserList';
 
-interface FileItem {
-  id: number;
-  title: string;
-  audioUrl: string;
-  page: string;
-  createdAt: string;
-}
+interface AdminPageProps {}
 
-export default function AdminPage() {
+export default function AdminPage({}: AdminPageProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [unapprovedPosts, setUnapprovedPosts] = useState<Post[]>([]);
   const [unapprovedComments, setUnapprovedComments] = useState<Comment[]>([]);
@@ -27,12 +19,7 @@ export default function AdminPage() {
 
   const fetchData = async () => {
     try {
-      const [
-        usersRes,
-        postsRes, 
-        commentsRes,
-        tracksRes
-      ] = await Promise.all([
+      const [usersRes, postsRes, commentsRes, tracksRes] = await Promise.all([
         axios.get('/api/users'),
         axios.get('/api/posts/unapproved'),
         axios.get('/api/posts/comments/unapproved'),
@@ -75,7 +62,7 @@ export default function AdminPage() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
         <h2 className="text-2xl font-semibold mb-4">File Management</h2>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white dark:bg-gray-800">
+          <table className="min-w-full">
             <thead>
               <tr className="bg-gray-100 dark:bg-gray-700">
                 <th className="px-6 py-3 text-left">Title</th>
@@ -117,16 +104,6 @@ export default function AdminPage() {
       <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold mb-4">Users</h2>
         <UserList users={users} />
-      </section>
-
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Unapproved Posts</h2>
-        <UnapprovedPosts posts={unapprovedPosts} onApprove={fetchData} />
-      </section>
-
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Unapproved Comments</h2>
-        <UnapprovedComments comments={unapprovedComments} onApprove={fetchData} />
       </section>
     </div>
   );
