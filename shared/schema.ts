@@ -121,6 +121,20 @@ export const insertTrackSchema = createInsertSchema(tracks)
 export const insertAlbumSchema = createInsertSchema(albums)
   .omit({ id: true, createdAt: true, updatedAt: true });
 
+//Added Music Uploads Table
+export const musicUploads = pgTable("music_uploads", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull(),
+  filetype: text("filetype").notNull(),
+  targetPage: text("target_page").notNull(),
+  uploadedBy: integer("uploaded_by").notNull(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow()
+});
+
+// Insert schema for music uploads
+export const insertMusicUploadSchema = createInsertSchema(musicUploads).omit({id: true, uploadedAt: true});
+
+
 // Types for new tables
 export type InsertTrack = z.infer<typeof insertTrackSchema>;
 export type Track = typeof tracks.$inferSelect;
@@ -143,3 +157,6 @@ export type Category = typeof categories.$inferSelect;
 
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type Comment = typeof comments.$inferSelect;
+
+export type InsertMusicUpload = z.infer<typeof insertMusicUploadSchema>;
+export type MusicUpload = typeof musicUploads.$inferSelect;

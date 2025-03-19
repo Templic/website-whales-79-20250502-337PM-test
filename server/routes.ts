@@ -252,7 +252,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Music routes
+  // Music upload route
+  app.post("/api/upload/music", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (!req.files || !req.files.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const file = req.files.file;
+    const targetPage = req.body.page;
+    const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
+    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
+
+    if (!allowedPages.includes(targetPage)) {
+      return res.status(400).json({ message: "Invalid target page" });
+    }
+
+    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !allowedTypes.includes(fileExt)) {
+      return res.status(400).json({ message: "Invalid file type" });
+    }
+
+    try {
+      const result = await storage.uploadMusic({
+        file: file,
+        targetPage: targetPage,
+        uploadedBy: req.user.id
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Error uploading music file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Music routes 
   app.get("/api/tracks", async (req, res) => {
     try {
       const tracks = await storage.getTracks();

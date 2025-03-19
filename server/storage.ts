@@ -9,6 +9,9 @@ import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { randomBytes } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+
 
 const PostgresSessionStore = connectPg(session);
 
@@ -55,6 +58,7 @@ export interface IStorage {
   // Music methods
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
+  uploadMusic(params: { file: any; targetPage: string; uploadedBy: number }): Promise<Track>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -277,16 +281,19 @@ export class PostgresStorage implements IStorage {
     targetPage: string,
     uploadedBy: number 
   }): Promise<Track> {
-    // Save file to object storage
+    // Simple local file saving - replace with cloud storage in production
+    const uploadDir = path.join(__dirname, '../uploads');
+    await fs.mkdir(uploadDir, { recursive: true }).catch(() => {}); // Ignore if dir exists
     const fileName = `${Date.now()}-${file.name}`;
-    const objectStorageClient = new Client();
-    await objectStorageClient.upload(fileName, file.data);
+    const filePath = path.join(uploadDir, fileName);
+    await fs.writeFile(filePath, file.data);
+
 
     // Create database record
     const [track] = await db.insert(tracks).values({
       title: file.name,
       artist: "Dale the Whale", // Could be made dynamic
-      audioUrl: fileName,
+      audioUrl: fileName, //Store relative path
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();
