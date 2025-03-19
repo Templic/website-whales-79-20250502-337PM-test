@@ -32,6 +32,14 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  createParentPath: true,
+  abortOnLimit: true,
+  safeFileNames: true,
+  preserveExtension: true,
+  debug: process.env.NODE_ENV !== 'production'
+}));
 
 
 // Add logging middleware
@@ -71,16 +79,9 @@ async function startServer() {
     const httpServer = await registerRoutes(app);
 
     // Initialize WebSocket and Socket.IO servers AFTER httpServer is created.
-    const { setupWebSockets } = await import('./websocket');
-    const { wss, io } = setupWebSockets(httpServer);
-    app.use(fileUpload({
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
-      createParentPath: true,
-      abortOnLimit: true,
-      safeFileNames: true,
-      preserveExtension: true,
-      debug: process.env.NODE_ENV !== 'production'
-    }));
+    import('./websocket').then(({ setupWebSockets }) => {
+      const { wss, io } = setupWebSockets(httpServer);
+    });
 
 
     if (process.env.NODE_ENV !== 'production') {
