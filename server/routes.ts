@@ -1,4 +1,4 @@
-import Express = from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import {
@@ -10,7 +10,7 @@ import {
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: express.Application): Promise<Server> {
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
