@@ -58,7 +58,7 @@ export interface IStorage {
   // Music methods
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
-  uploadMusic(params: { file: any; targetPage: string; uploadedBy: number }): Promise<Track>;
+  uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -276,11 +276,16 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
   }
 
-  async uploadMusic({ file, targetPage, uploadedBy }: { 
+  async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
     file: any, 
     targetPage: string,
-    uploadedBy: number 
+    uploadedBy: number,
+    userRole: 'admin' | 'super_admin'
   }): Promise<Track> {
+    // Verify user has required role
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      throw new Error('Unauthorized - requires admin privileges');
+    }
     // Simple local file saving - replace with cloud storage in production
     const uploadDir = path.join(process.cwd(), 'uploads');
     await fs.mkdir(uploadDir, { recursive: true }).catch(() => {}); // Ignore if dir exists

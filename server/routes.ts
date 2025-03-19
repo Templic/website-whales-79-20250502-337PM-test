@@ -283,7 +283,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
-        uploadedBy: req.user.id
+        uploadedBy: req.user.id,
+        userRole: req.user.role as 'admin' | 'super_admin'
       });
       res.json(result);
     } catch (error) {
@@ -346,7 +347,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
-        uploadedBy: req.user.id
+        uploadedBy: req.user.id,
+        userRole: req.user.role as 'admin' | 'super_admin'
       });
       res.json(result);
     } catch (error) {
