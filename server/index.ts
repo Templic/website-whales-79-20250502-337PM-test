@@ -72,11 +72,11 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Setup authentication first
-    setupAuth(app);
-
-    // Run migrations
+    // Run migrations first
     await migrate();
+    
+    // Setup authentication after migrations
+    setupAuth(app);
 
     // Register API routes
     const httpServer = await registerRoutes(app);

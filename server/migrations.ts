@@ -4,6 +4,7 @@ import * as schema from "@shared/schema";
 import { sql } from "drizzle-orm";
 
 export async function migrate() {
+  console.log('Starting database migrations...');
   try {
     // Create users table
     await db.execute(sql`
