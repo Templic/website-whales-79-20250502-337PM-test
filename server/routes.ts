@@ -2,43 +2,19 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storageInstance as storage } from "./storage";
-import multer from 'multer';
+//import multer from 'multer'; // Removed Multer import
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Configure multer for file uploads
-const multerStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), 'private_storage/uploads'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-
-const upload = multer({
-  storage: multerStorage,
-  limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
-    fieldSize: 100 * 1024 * 1024 // Also increase field size limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = new Set([
-      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
-      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
-      'video/quicktime', 'video/mp4'
-    ]);
-
-    if (allowedMimeTypes.has(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  }
-});
+// Allowed MIME types for uploads
+const allowedMimeTypes = new Set([
+  'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+  'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
+  'video/quicktime', 'video/mp4'
+]);
 
 // Function to scan file for viruses
 const scanFile = async (filePath: string, scanner: any) => {
@@ -124,15 +100,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Music upload route with virus scanning
   app.post("/api/upload/music", 
-    (req, res, next) => {
-      upload.single('file')(req, res, (err) => {
-        if (err) {
-          console.error('Multer error:', err);
-          return res.status(400).json({ message: "File upload error", error: err.message });
-        }
-        next();
-      });
-    },
     async (
       req: express.Request & { 
         file?: Express.Multer.File;
@@ -150,16 +117,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           return res.status(403).json({ message: "Unauthorized" });
         }
 
-        // Validate file was properly uploaded
-        if (!req.file || !req.file.path || !fs.existsSync(req.file.path)) {
-          console.error('Invalid file upload - file or path missing');
-          return res.status(400).json({ message: "Invalid file upload" });
-        }
+        // Validate file was properly uploaded. Assuming file upload middleware handles this now.
 
-        // Get the uploaded file
+        // Get the uploaded file. Assuming file upload middleware populates req.file
         if (!req.file) {
           console.error('No file in request');
           return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        //Check if mimetype is allowed
+        if (!allowedMimeTypes.has(req.file.mimetype)) {
+          return res.status(400).json({ message: "Invalid file type"});
         }
 
         // Validate target page
