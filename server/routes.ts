@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
-import { storage } from "./storage";
+import { storageInstance as storage } from "./storage";
 import multer from 'multer';
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";

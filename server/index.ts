@@ -8,7 +8,7 @@ import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
 import { pgPool } from "./db";
 import { setupAuth } from "./auth";
-import { storage } from "./storage";
+import { storageInstance as storage } from "./storage";
 import csrf from 'csurf';
 import cookieParser from 'cookie-parser';
 
