@@ -9,12 +9,60 @@ import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Allowed MIME types for uploads
-const allowedMimeTypes = new Set([
-  'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
-  'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
-  'video/quicktime', 'video/mp4'
-]);
+// MIME type validation configuration
+const mimeTypeConfig = {
+  audio: {
+    types: new Set([
+      'audio/mpeg',     // .mp3
+      'audio/mp4',      // .m4a, .mp4a
+      'audio/aac',      // .aac
+      'audio/flac',     // .flac
+      'audio/wav',      // .wav
+      'audio/aiff',     // .aiff
+      'audio/x-ms-wma', // .wma
+      'audio/ogg'       // .ogg
+    ]),
+    maxSize: 50 * 1024 * 1024 // 50MB for audio files
+  },
+  video: {
+    types: new Set([
+      'video/mp4',       // .mp4
+      'video/avi',       // .avi
+      'video/x-ms-wmv',  // .wmv
+      'video/quicktime', // .mov
+      'video/x-msvideo', // alternative MIME for .avi
+      'video/webm'       // .webm
+    ]),
+    maxSize: 100 * 1024 * 1024 // 100MB for video files
+  }
+};
+
+// Helper function to validate file type and size
+const validateFileUpload = (file: Express.Multer.File): { valid: boolean; error?: string } => {
+  // Check if mimetype exists
+  if (!file.mimetype) {
+    return { valid: false, error: 'Invalid file type' };
+  }
+
+  // Determine file category and validate
+  const isAudio = mimeTypeConfig.audio.types.has(file.mimetype);
+  const isVideo = mimeTypeConfig.video.types.has(file.mimetype);
+
+  if (!isAudio && !isVideo) {
+    return { valid: false, error: 'Unsupported file type' };
+  }
+
+  // Check file size based on type
+  const maxSize = isAudio ? mimeTypeConfig.audio.maxSize : mimeTypeConfig.video.maxSize;
+  if (file.size > maxSize) {
+    return { 
+      valid: false, 
+      error: `File size exceeds limit (${Math.floor(maxSize / 1024 / 1024)}MB maximum)`
+    };
+  }
+
+  return { valid: true };
+};
 
 // Function to scan file for viruses
 const scanFile = async (filePath: string, scanner: any) => {
@@ -125,9 +173,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           return res.status(400).json({ message: "No file uploaded" });
         }
 
-        //Check if mimetype is allowed
-        if (!allowedMimeTypes.has(req.file.mimetype)) {
-          return res.status(400).json({ message: "Invalid file type"});
+        // Validate file type and size
+        const validation = validateFileUpload(req.file);
+        if (!validation.valid) {
+          return res.status(400).json({ message: validation.error });
         }
 
         // Validate target page
