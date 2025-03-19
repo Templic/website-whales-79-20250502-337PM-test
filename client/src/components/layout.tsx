@@ -12,7 +12,7 @@ import { useState } from "react";
 // Debug text to verify component update
 console.log("Layout component loaded - v3 with smooth scrolling");
 
-// Add global styles
+// Update the global styles to include logo animation
 const globalStyles = `
   html {
     scroll-behavior: smooth;
@@ -36,6 +36,17 @@ const globalStyles = `
     align-items: center;
     justify-content: center;
     position: relative;
+  }
+
+  /* Logo animation styles */
+  .logo {
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .logo:hover {
+    transform: scale(1.1);
+    color: var(--fill-color);
   }
 `;
 
