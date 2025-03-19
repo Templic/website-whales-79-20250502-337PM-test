@@ -123,7 +123,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Music upload route with virus scanning
   app.post("/api/upload/music", 
-    upload.single('file'),
+    (req, res, next) => {
+      upload.single('file')(req, res, (err) => {
+        if (err) {
+          console.error('Multer error:', err);
+          return res.status(400).json({ message: "File upload error", error: err.message });
+        }
+        next();
+      });
+    },
     async (
       req: express.Request & { 
         file?: Express.Multer.File;
@@ -139,6 +147,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         if (!req.isAuthenticated() || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
           console.error('Unauthorized upload attempt');
           return res.status(403).json({ message: "Unauthorized" });
+        }
+
+        // Validate file was properly uploaded
+        if (!req.file || !req.file.path || !fs.existsSync(req.file.path)) {
+          console.error('Invalid file upload - file or path missing');
+          return res.status(400).json({ message: "Invalid file upload" });
         }
 
         // Get the uploaded file
