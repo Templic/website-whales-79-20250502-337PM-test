@@ -41,24 +41,24 @@ export default function BlogPage() {
   }, [toast]);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8" role="main">
+    <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in" role="main">
       <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">
+        <h1 className="text-4xl font-bold text-primary mb-4 animate-slide-in">
           Cosmic Chronicles
         </h1>
-        <p className="text-xl">
+        <p className="text-xl text-muted-foreground">
           Dive into Dale's thoughts, stories, and musical journey
         </p>
       </header>
 
       <section 
-        className={styles.blogGrid}
+        className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
         aria-label="Blog posts"
       >
         {isLoading ? (
           <div role="status" aria-live="polite" className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {Array(6).fill(0).map((_, i) => (
-              <div key={i} className={styles.blogPost}>
+              <div key={i} className="p-6 rounded-lg border bg-card transition-all duration-300 hover:shadow-lg">
                 <Skeleton className="w-full h-48 rounded-lg mb-4" />
                 <Skeleton className="h-8 w-3/4 mb-2" />
                 <Skeleton className="h-4 w-1/4 mb-4" />
@@ -71,7 +71,7 @@ export default function BlogPage() {
         ) : posts?.map((post) => (
           <article 
             key={post.id}
-            className={styles.blogPost}
+            className="p-6 rounded-lg border bg-card transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
           >
             {post.featuredImage && (
               <img 
@@ -82,22 +82,22 @@ export default function BlogPage() {
               />
             )}
             <div>
-              <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">
+              <h2 className="text-2xl font-bold text-primary mb-2 line-clamp-2">
                 {post.title}
               </h2>
-              <div className="flex items-center text-gray-400 mb-4">
+              <div className="flex items-center text-muted-foreground mb-4">
                 <Calendar className="w-4 h-4 mr-2" />
                 <time dateTime={post.createdAt} className="text-sm">
                   {formatDisplayDate(post.createdAt)}
                 </time>
               </div>
-              <p className="line-clamp-3 text-gray-300 mb-4">
+              <p className="line-clamp-3 text-card-foreground mb-4">
                 {post.excerpt || (post.content ? post.content.substring(0, 150) + "..." : "")}
               </p>
               <Link href={`/blog/${post.id}`}>
-                <Button>
+                <Button className="group transition-all duration-300 hover:translate-y-[-2px]">
                   Read More
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
@@ -108,7 +108,7 @@ export default function BlogPage() {
       {posts && posts.length > 0 && (
         <footer className="flex justify-center mt-12">
           <Button 
-            className="bg-[#00ebd6] text-[#303436] px-8 py-6 rounded-full hover:bg-[#fe0064] hover:text-white"
+            className="bg-primary text-primary-foreground px-8 py-6 rounded-full transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg"
             onClick={handleLoadMore}
           >
             Load More Posts
