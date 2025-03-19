@@ -73,19 +73,18 @@ export default function AuthPage() {
     }
   });
 
-  if (user) {
-    return <Redirect to="/" />;
-  }
-
   const registerForm = useForm<ContactForm>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       username: "",
       email: "",
-      password: "",
-      confirmPassword: ""
+      password: ""
     }
   });
+
+  if (user) {
+    return <Redirect to="/" />;
+  }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const password = e.target.value;
