@@ -7,7 +7,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Redirect, Link } from "wouter";
-import { Loader2, Eye, EyeOff, Info } from "lucide-react";
+import { Loader2, Eye, EyeOff, Info, Check, X } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -203,8 +203,13 @@ export default function AuthPage() {
                         <ul className="space-y-1">
                           {passwordRules.map((rule, index) => (
                             <li key={index} className="flex items-center text-sm">
+                              {rule.regex.test(registerForm.watch("password")) ? (
+                                <Check className="h-4 w-4 text-green-500 mr-2" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500 mr-2" />
+                              )}
                               <span className={rule.regex.test(registerForm.watch("password")) ? "text-green-500" : "text-gray-400"}>
-                                • {rule.text}
+                                {rule.text}
                               </span>
                             </li>
                           ))}
