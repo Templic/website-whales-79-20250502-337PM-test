@@ -331,13 +331,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     // Validate MIME type
-    const allowedMimeTypes = [
-      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
-      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
-      'video/quicktime', 'video/mp4'
-    ];
-    if (!allowedMimeTypes.includes(file.mimetype)) {
-      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + allowedMimeTypes.join(', ') });
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + Array.from(allowedMimeTypes).join(', ') });
     }
 
     try {
