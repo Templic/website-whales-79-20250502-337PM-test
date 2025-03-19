@@ -156,18 +156,64 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    // Record logout time in analytics
-    if (req.session?.analytics) {
-      req.session.analytics.logoutTime = new Date();
+  // Track revoked sessions
+  const revokedSessions = new Set<string>();
+
+  // Helper to revoke a session
+  const revokeSession = async (sessionId: string) => {
+    revokedSessions.add(sessionId);
+    await storage.sessionStore.destroy(sessionId);
+  };
+
+  // Middleware to check for revoked sessions
+  app.use((req, res, next) => {
+    if (req.sessionID && revokedSessions.has(req.sessionID)) {
+      return res.status(401).json({ message: "Session has been revoked" });
     }
-    req.logout((err) => {
-      if (err) {
-        console.error("Error during logout:", err);
-        return next(err);
+    next();
+  });
+
+  app.post("/api/logout", async (req, res, next) => {
+    try {
+      // Record logout time in analytics
+      if (req.session?.analytics) {
+        req.session.analytics.logoutTime = new Date();
       }
-      res.sendStatus(200);
-    });
+
+      // Revoke the session
+      if (req.sessionID) {
+        await revokeSession(req.sessionID);
+      }
+
+      req.logout((err) => {
+        if (err) {
+          console.error("Error during logout:", err);
+          return next(err);
+        }
+        res.sendStatus(200);
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Endpoint to revoke all sessions for a user
+  app.post("/api/revoke-sessions", async (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const sessions = await storage.sessionStore.all();
+      for (const session of Object.values(sessions)) {
+        if (session.passport?.user === req.user.id) {
+          await revokeSession(session.id);
+        }
+      }
+      res.json({ message: "All sessions revoked successfully" });
+    } catch (err) {
+      next(err);
+    }
   });
 
   // Add role management endpoint
