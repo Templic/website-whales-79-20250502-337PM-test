@@ -26,7 +26,6 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24))
 csrf = CSRFProtect(app)
 # Talisman is temporarily disabled for testing purposes.  Re-enable as needed.
 
-
 @app.route('/')
 def home():
     return render_template('home_page.html')
@@ -35,12 +34,12 @@ def home():
 def about():
     return render_template('about_page.html')
 
-@app.route('/music-release')
-def music_release():
+@app.route('/new-music')
+def new_music():
     return render_template('music_release_page.html')
 
-@app.route('/music')
-def music():
+@app.route('/archived-music')
+def archived_music():
     return render_template('music_page.html')
 
 @app.route('/tour')
