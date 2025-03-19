@@ -91,7 +91,7 @@ export function setupAuth(app: Express) {
         
         if (!user) {
           console.log('User not found:', username);
-          return done(null, false, { message: "Invalid username or password" });
+          return done(null, false, { message: "User not found. Please register first." });
         }
         
         const isValidPassword = await comparePasswords(password, user.password);
@@ -99,7 +99,12 @@ export function setupAuth(app: Express) {
         
         if (!isValidPassword) {
           console.log('Invalid password for user:', username);
-          return done(null, false, { message: "Invalid username or password" });
+          return done(null, false, { message: "Incorrect password" });
+        }
+        
+        if (user.isBanned) {
+          console.log('Banned user attempted login:', username);
+          return done(null, false, { message: "This account has been banned" });
         }
         
         console.log('Authentication successful for user:', username);
