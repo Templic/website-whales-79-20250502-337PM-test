@@ -349,28 +349,25 @@ export class PostgresStorage implements IStorage {
             releaseDate: new Date("2025-01-15"),
             genre: "Ambient Electronic",
             isNewRelease: false,
-            audioPath: "/uploads/oceanic-dreams.mp3",
-            uploadedBy: 1
+            audioUrl: "oceanic-dreams.mp3",
+            createdAt: new Date(),
+            updatedAt: new Date()
           },
           {
             title: "Feels So Good",
             artist: "Dale The Whale ft. AC3-2085",
             duration: "3:45",
-            releaseDate: new Date("2025-03-14"),
-            genre: "R&B, Soulful",
-            isNewRelease: true,
-            audioPath: "/uploads/feels-so-good.mp3",
-            uploadedBy: 1
+            audioUrl: "feels-so-good.mp3",
+            createdAt: new Date(),
+            updatedAt: new Date()
           },
           {
-            title: "Cosmic Echoes",
+            title: "Cosmic Echoes", 
             artist: "Dale The Whale",
             duration: "5:20",
-            releaseDate: new Date("2024-12-01"),
-            genre: "Space Ambient",
-            isNewRelease: false,
-            audioPath: "/uploads/cosmic-echoes.mp3",
-            uploadedBy: 1
+            audioUrl: "cosmic-echoes.mp3",
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         ]);
 
