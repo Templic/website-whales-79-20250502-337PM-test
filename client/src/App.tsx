@@ -10,8 +10,8 @@ import NotFound from "./pages/not-found";
 // Pages
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
-import MusicReleasePage from "@/pages/MusicReleasePage";
-import MusicArchivePage from "@/pages/MusicArchivePage";
+import NewMusicPage from "@/pages/MusicReleasePage";
+import ArchivedMusicPage from "@/pages/MusicArchivePage";
 import TourPage from "@/pages/TourPage";
 import EngagePage from "@/pages/EngagePage";
 import NewsletterPage from "@/pages/NewsletterPage";
@@ -31,8 +31,8 @@ function Router() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/about" component={AboutPage} />
-        <Route path="/music-release" component={MusicReleasePage} />
-        <Route path="/archived-music" component={MusicArchivePage} />
+        <Route path="/music-release" component={NewMusicPage} />
+        <Route path="/archived-music" component={ArchivedMusicPage} />
         <Route path="/tour" component={TourPage} />
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />

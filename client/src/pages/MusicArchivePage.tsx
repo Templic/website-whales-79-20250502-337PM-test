@@ -114,7 +114,7 @@ export default function MusicArchivePage() {
   });
 
   useEffect(() => {
-    document.title = "Music Archive - Dale Loves Whales";
+    document.title = "Archived Music - Dale Loves Whales";
   }, []);
 
   const currentTrack = tracks?.find(track => track.id === currentTrackId);
@@ -141,7 +141,7 @@ export default function MusicArchivePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Music Archive</h1>
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Archived Music</h1>
         <p className="text-xl max-w-2xl mx-auto">
           Explore Dale's complete discography, from cosmic beginnings to latest stellar releases.
         </p>
