@@ -2,122 +2,54 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
+import multer from 'multer';
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Middleware to handle file uploads
-const handleFileUpload = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!req.is('multipart/form-data')) {
-    return next();
-  }
+// Configure multer for file uploads
+const upload = multer({
+  dest: '/tmp/',
+  limits: {
+    fileSize: 100 * 1024 * 1024 // 100MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = new Set([
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
+      'video/quicktime', 'video/mp4'
+    ]);
 
-  try {
-    const contentLength = parseInt(req.headers['content-length'] || '0', 10);
-    if (contentLength > 100 * 1024 * 1024) { // 100MB limit
-      throw new Error('File too large');
-    }
-
-    const chunks: Buffer[] = [];
-    let bytesReceived = 0;
-
-    // Handle data chunks
-    req.on('data', (chunk) => {
-      chunks.push(chunk);
-      bytesReceived += chunk.length;
-      console.log(`Received ${bytesReceived} bytes of ${contentLength}`);
-    });
-
-    // Handle end of stream
-    await new Promise<void>((resolve, reject) => {
-      req.on('end', () => {
-        try {
-          const boundary = getBoundary(req.headers['content-type'] || '');
-          const buffer = Buffer.concat(chunks);
-          const parts = parseMultipart(buffer, boundary);
-
-          req.files = parts.files;
-          req.body = parts.fields;
-          resolve();
-        } catch (error) {
-          reject(error);
-        }
-      });
-
-      req.on('error', reject);
-    });
-
-    next();
-  } catch (error) {
-    console.error('File upload error:', error);
-    res.status(500).json({ 
-      message: 'File upload failed',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-};
-
-// Helper to get multipart boundary
-const getBoundary = (contentType: string): string => {
-  const matches = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
-  if (!matches) {
-    throw new Error('No multipart boundary found in content-type header');
-  }
-  return matches[1] || matches[2];
-};
-
-// Helper to parse multipart form data
-const parseMultipart = (buffer: Buffer, boundary: string) => {
-  const parts = {
-    files: {} as { [key: string]: any },
-    fields: {} as { [key: string]: string }
-  };
-
-  // Split the buffer into parts using the boundary
-  const boundaryBuffer = Buffer.from(`\r\n--${boundary}`);
-  const dataChunks = buffer.toString().split(boundaryBuffer.toString());
-
-  dataChunks.forEach((chunk) => {
-    if (!chunk.includes('Content-Disposition: form-data;')) {
-      return;
-    }
-
-    const matches = chunk.match(/name="([^"]+)"/);
-    if (!matches) return;
-
-    const name = matches[1];
-    if (chunk.includes('filename="')) {
-      // This is a file
-      const fileMatches = chunk.match(/filename="([^"]+)"/);
-      if (!fileMatches) return;
-
-      const filename = fileMatches[1];
-      const contentType = chunk.match(/Content-Type: (.+)\r\n/)?.[1] || 'application/octet-stream';
-
-      // Find the start of file data (after double CRLF)
-      const dataStart = chunk.indexOf('\r\n\r\n') + 4;
-      const fileData = chunk.slice(dataStart);
-
-      const tempPath = path.join('/tmp', `upload_${Date.now()}_${filename}`);
-      fs.writeFileSync(tempPath, fileData);
-
-      parts.files[name] = {
-        name: filename,
-        tempFilePath: tempPath,
-        size: fileData.length,
-        mimetype: contentType
-      };
+    if (allowedMimeTypes.has(file.mimetype)) {
+      cb(null, true);
     } else {
-      // This is a field
-      const valueStart = chunk.indexOf('\r\n\r\n') + 4;
-      const value = chunk.slice(valueStart).trim();
-      parts.fields[name] = value;
+      cb(new Error('Invalid file type'));
     }
-  });
+  }
+});
 
-  return parts;
+// Function to scan file for viruses
+const scanFile = async (filePath: string, scanner: any) => {
+  try {
+    console.log(`Starting virus scan for file: ${filePath}`);
+    const result = await scanner.isInfected(filePath);
+    console.log('Scan result:', result);
+
+    return {
+      isInfected: result.isInfected,
+      viruses: result.viruses || [],
+      error: null
+    };
+  } catch (error) {
+    console.error('Error during virus scan:', error);
+    return {
+      isInfected: false,
+      viruses: [],
+      error: error instanceof Error ? error.message : 'Unknown error during virus scan'
+    };
+  }
 };
 
 // Initialize ClamAV scanner with detailed logging
@@ -169,28 +101,6 @@ const initClamAV = async () => {
   }
 };
 
-// Function to scan file for viruses
-const scanFile = async (filePath: string, scanner: any) => {
-  try {
-    console.log(`Starting virus scan for file: ${filePath}`);
-    const result = await scanner.isInfected(filePath);
-    console.log('Scan result:', result);
-
-    return {
-      isInfected: result.isInfected,
-      viruses: result.viruses || [],
-      error: null
-    };
-  } catch (error) {
-    console.error('Error during virus scan:', error);
-    return {
-      isInfected: false,
-      viruses: [],
-      error: error instanceof Error ? error.message : 'Unknown error during virus scan'
-    };
-  }
-};
-
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Ensure upload directory exists
   const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
@@ -201,118 +111,122 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
-  // Apply custom file upload middleware
-  app.use('/api/upload', handleFileUpload);
-
   // Music upload route with virus scanning
-  app.post("/api/upload/music", async (
-    req: express.Request & { 
-      files?: { [key: string]: any };
-      user?: { id: number; role: string; }
-      isAuthenticated(): boolean;
-    },
-    res: express.Response
-  ) => {
-    console.log('Processing music upload request...');
+  app.post("/api/upload/music", 
+    upload.single('file'),
+    async (
+      req: express.Request & { 
+        file?: Express.Multer.File;
+        user?: { id: number; role: string; }
+        isAuthenticated(): boolean;
+      },
+      res: express.Response
+    ) => {
+      console.log('Processing music upload request...');
 
-    try {
-      // Authentication check
-      if (!req.isAuthenticated() || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-        console.error('Unauthorized upload attempt');
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
-      // Get the uploaded file
-      const uploadedFile = req.files?.file;
-      if (!uploadedFile) {
-        console.error('No file in request');
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      // Validate target page
-      const targetPage = req.body.page;
-      const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-
-      if (!targetPage || !allowedPages.includes(targetPage)) {
-        console.error(`Invalid target page: ${targetPage}`);
-        return res.status(400).json({ message: "Invalid target page" });
-      }
-
-      console.log('Upload request details:', {
-        filename: uploadedFile.name,
-        size: uploadedFile.size,
-        targetPage,
-        tempFilePath: uploadedFile.tempFilePath,
-        mimetype: uploadedFile.mimetype
-      });
-
-      // Virus scan using ClamAV
-      if (clamAV) {
-        console.log(`Starting virus scan for file: ${uploadedFile.tempFilePath}`);
-        const scanResult = await scanFile(uploadedFile.tempFilePath, clamAV);
-
-        if (scanResult.error) {
-          console.warn('Virus scan error:', scanResult.error);
-          // Continue with upload but log the error
-        } else if (scanResult.isInfected) {
-          // Clean up the infected file
-          try {
-            fs.unlinkSync(uploadedFile.tempFilePath);
-          } catch (cleanupError) {
-            console.error('Error cleaning up infected file:', cleanupError);
-          }
-
-          return res.status(400).json({
-            message: "File is infected with malware",
-            viruses: scanResult.viruses
-          });
+      try {
+        // Authentication check
+        if (!req.isAuthenticated() || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+          console.error('Unauthorized upload attempt');
+          return res.status(403).json({ message: "Unauthorized" });
         }
 
-        console.log('File passed virus scan');
-      } else {
-        console.warn("ClamAV not available - skipping virus scan");
-      }
+        // Get the uploaded file
+        if (!req.file) {
+          console.error('No file in request');
+          return res.status(400).json({ message: "No file uploaded" });
+        }
 
-      // Upload the file using storage interface
-      const result = await storage.uploadMusic({
-        file: uploadedFile,
-        targetPage: targetPage,
-        uploadedBy: req.user.id,
-        userRole: req.user.role as 'admin' | 'super_admin'
-      });
+        // Validate target page
+        const targetPage = req.body.page;
+        const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
 
-      console.log('Upload successful:', result);
+        if (!targetPage || !allowedPages.includes(targetPage)) {
+          console.error(`Invalid target page: ${targetPage}`);
+          return res.status(400).json({ message: "Invalid target page" });
+        }
 
-      // Clean up temp file after successful upload
-      try {
-        fs.unlinkSync(uploadedFile.tempFilePath);
-      } catch (cleanupError) {
-        console.error('Error cleaning up temp file:', cleanupError);
-      }
+        console.log('Upload request details:', {
+          filename: req.file.originalname,
+          size: req.file.size,
+          targetPage,
+          tempFilePath: req.file.path,
+          mimetype: req.file.mimetype
+        });
 
-      res.json({
-        ...result,
-        scanned: !!clamAV,
-        clean: true
-      });
-    } catch (error) {
-      console.error("Error in music file upload:", error);
-      res.status(500).json({
-        message: "Failed to upload file",
-        error: error instanceof Error ? error.message : 'Unknown error',
-        details: error instanceof Error ? error.stack : undefined
-      });
+        // Virus scan using ClamAV
+        if (clamAV) {
+          console.log(`Starting virus scan for file: ${req.file.path}`);
+          const scanResult = await scanFile(req.file.path, clamAV);
 
-      // Clean up temp file on error
-      if (req.files?.file && fs.existsSync(req.files.file.tempFilePath)) {
+          if (scanResult.error) {
+            console.warn('Virus scan error:', scanResult.error);
+            // Continue with upload but log the error
+          } else if (scanResult.isInfected) {
+            // Clean up the infected file
+            try {
+              fs.unlinkSync(req.file.path);
+            } catch (cleanupError) {
+              console.error('Error cleaning up infected file:', cleanupError);
+            }
+
+            return res.status(400).json({
+              message: "File is infected with malware",
+              viruses: scanResult.viruses
+            });
+          }
+
+          console.log('File passed virus scan');
+        } else {
+          console.warn("ClamAV not available - skipping virus scan");
+        }
+
+        // Upload the file using storage interface
+        const result = await storage.uploadMusic({
+          file: {
+            name: req.file.originalname,
+            size: req.file.size,
+            tempFilePath: req.file.path,
+            mimetype: req.file.mimetype
+          },
+          targetPage: targetPage,
+          uploadedBy: req.user.id,
+          userRole: req.user.role as 'admin' | 'super_admin'
+        });
+
+        console.log('Upload successful:', result);
+
+        // Clean up temp file after successful upload
         try {
-          fs.unlinkSync(req.files.file.tempFilePath);
+          fs.unlinkSync(req.file.path);
         } catch (cleanupError) {
-          console.error('Error cleaning up temp file after error:', cleanupError);
+          console.error('Error cleaning up temp file:', cleanupError);
+        }
+
+        res.json({
+          ...result,
+          scanned: !!clamAV,
+          clean: true
+        });
+      } catch (error) {
+        console.error("Error in music file upload:", error);
+        res.status(500).json({
+          message: "Failed to upload file",
+          error: error instanceof Error ? error.message : 'Unknown error',
+          details: error instanceof Error ? error.stack : undefined
+        });
+
+        // Clean up temp file on error
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+          try {
+            fs.unlinkSync(req.file.path);
+          } catch (cleanupError) {
+            console.error('Error cleaning up temp file after error:', cleanupError);
+          }
         }
       }
     }
-  });
+  );
 
   // Secure file serving endpoint
   app.get('/media/:filename', (req, res) => {
