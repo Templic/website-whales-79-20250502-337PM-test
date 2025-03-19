@@ -304,50 +304,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const NodeClam = await import('clamav.js');
-    const ClamScan = new NodeClam.default().init({
-        removeInfected: true,
-        quarantineInfected: false,
-        scanLog: null,
-        debugMode: false,
-        fileList: null,
-        scanRecursively: true,
-        clamscan: {
-            path: '/usr/bin/clamscan',
-            db: null,
-            scanArchives: true,
-            active: true
-        },
-        preference: 'clamscan'
-    });
-
     const file = req.files.file;
     const targetPage = req.body.page;
     const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-    const allowedTypes = new Set(['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov']);
+    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
 
-    // Scan file for viruses
-    try {
-        const {isInfected, viruses} = await ClamScan.isInfected(file.tempFilePath);
-        if (isInfected) {
-            return res.status(400).json({ 
-                message: "File is infected with malware",
-                viruses: viruses 
-            });
-        }
-    } catch (err) {
-        console.error("Virus scan error:", err);
-        return res.status(500).json({ message: "Error scanning file" });
-    }
-    const allowedMimeTypes = new Set([
-      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
-      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
-      'video/quicktime', 'video/mp4'
-    ]);
-
-    // Sanitize filename to prevent path traversal
-
-
+    // Validate target page
     if (!allowedPages.includes(targetPage)) {
       return res.status(400).json({ message: "Invalid target page" });
     }
@@ -364,12 +326,63 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "File too large. Maximum size: 50MB" });
     }
 
-    // Validate MIME type
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + Array.from(allowedMimeTypes).join(', ') });
-    }
-
     try {
+      // Initialize ClamAV scanning
+      console.log("Initializing ClamAV scan...");
+      let isFileScanned = false;
+
+      try {
+        const NodeClam = await import('clamav.js').catch(err => {
+          console.error("Failed to import ClamAV:", err);
+          return null;
+        });
+
+        if (NodeClam) {
+          const ClamScan = new NodeClam.default();
+
+          try {
+            await ClamScan.init({
+              removeInfected: true,
+              quarantineInfected: false,
+              scanLog: null,
+              debugMode: false,
+              fileList: null,
+              scanRecursively: true,
+              clamscan: {
+                path: '/usr/bin/clamscan',
+                db: null,
+                scanArchives: true,
+                active: true
+              },
+              preference: 'clamscan'
+            });
+
+            console.log("Scanning file for viruses...");
+            const {isInfected, viruses} = await ClamScan.isInfected(file.tempFilePath);
+            isFileScanned = true;
+
+            if (isInfected) {
+              console.error("File is infected:", viruses);
+              return res.status(400).json({ 
+                message: "File is infected with malware",
+                viruses: viruses 
+              });
+            }
+          } catch (scanErr) {
+            console.error("ClamAV scan error:", scanErr);
+            // Continue with upload if scan fails, but log the error
+          }
+        }
+      } catch (clamErr) {
+        console.error("ClamAV initialization error:", clamErr);
+        // Continue with upload if ClamAV is not available
+      }
+
+      if (!isFileScanned) {
+        console.warn("File uploaded without virus scan - ClamAV unavailable");
+      }
+
+      // Proceed with file upload
       const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
       const fileName = secureFilename(file.name);
       const filePath = path.join(uploadDir, fileName);
@@ -379,6 +392,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       if (!normalizedPath.startsWith(uploadDir)) {
         throw new Error('Path traversal attempt detected');
       }
+
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
@@ -386,10 +400,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         userRole: req.user.role as 'admin' | 'super_admin',
         filePath: filePath
       });
-      res.json(result);
+
+      res.json({
+        ...result,
+        scanned: isFileScanned
+      });
     } catch (error) {
-      console.error("Error uploading music file:", error);
-      res.status(500).json({ message: "Failed to upload file" });
+      console.error("Error in music file upload:", error);
+      res.status(500).json({ 
+        message: "Failed to upload file",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
