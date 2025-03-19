@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertUserSchema, type InsertUser } from "@shared/schema";
+import { z } from "zod";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
-import * as z from 'zod';
 
 const passwordStrengthText = {
   0: "Very Weak",
@@ -49,15 +48,16 @@ function calculatePasswordStrength(password: string): number {
 
 // Registration form schema with password confirmation
 const registrationSchema = z.object({
-  ...insertUserSchema.shape,
-  confirmPassword: z.string()
-    .min(1, "Please confirm your password"),
+  username: z.string().min(1, "Please enter your username"),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Please enter your password"),
+  confirmPassword: z.string().min(1, "Please confirm your password")
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
-  path: ["confirmPassword"],
+  path: ["confirmPassword"]
 });
 
-type RegistrationForm = z.infer<typeof registrationSchema>;
+type ContactForm = z.infer<typeof registrationSchema>;
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
@@ -70,16 +70,14 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
-  // Login form
-  const loginForm = useForm<Pick<InsertUser, "username" | "password">>({
+  const loginForm = useForm<Pick<typeof registrationSchema["_type"], "username" | "password">>({
     defaultValues: {
       username: "",
       password: ""
     }
   });
 
-  // Registration form
-  const registerForm = useForm<RegistrationForm>({
+  const registerForm = useForm<ContactForm>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       username: "",
@@ -104,9 +102,8 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      {/* Forms Column */}
-      <div className="p-8 flex flex-col justify-center space-y-8">
+    <div className="container mx-auto py-8">
+      <div className="grid md:grid-cols-2 gap-8">
         {/* Login Form */}
         <div>
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Login</h2>
@@ -164,7 +161,10 @@ export default function AuthPage() {
         <div>
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Register</h2>
           <Form {...registerForm}>
-            <form onSubmit={registerForm.handleSubmit(data => registerMutation.mutate(data))} className="space-y-4">
+            <form onSubmit={registerForm.handleSubmit(data => {
+              const { confirmPassword, ...registerData } = data;
+              registerMutation.mutate(registerData);
+            })} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Username</label>
                 <Input
@@ -191,14 +191,14 @@ export default function AuthPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium">Password</label>
-                  <TooltipProvider>
+                  <TooltipProvider delayDuration={5000}> {/* Increased delay */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="ghost" size="icon">
                           <Info className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent className="w-80 p-4">
+                      <TooltipContent side="right" className="w-80 p-4" sideOffset={5}>
                         <p className="font-semibold mb-2">Password Requirements:</p>
                         <ul className="space-y-1">
                           {passwordRules.map((rule, index) => (
@@ -215,11 +215,12 @@ export default function AuthPage() {
                 </div>
                 <div className="relative">
                   <Input
-                    {...registerForm.register("password")}
+                    {...registerForm.register("password", {
+                      onChange: handlePasswordChange
+                    })}
                     type={showPassword ? "text" : "password"}
                     className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
                     placeholder="Choose a password"
-                    onChange={handlePasswordChange}
                   />
                   <Button
                     type="button"
@@ -239,7 +240,7 @@ export default function AuthPage() {
                   <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.password.message}</p>
                 )}
                 <div className="mt-2">
-                  <Progress value={passwordStrength * 25} className={`h-2 ${passwordStrengthColor[passwordStrength]}`} />
+                  <Progress value={passwordStrength * 25} className={`h-2 ${passwordStrengthColor[passwordStrength as keyof typeof passwordStrengthColor]}`} />
                   <p className="text-sm mt-1 text-gray-400">
                     Password Strength: {passwordStrengthText[passwordStrength as keyof typeof passwordStrengthText]}
                   </p>
@@ -281,26 +282,6 @@ export default function AuthPage() {
               </Button>
             </form>
           </Form>
-        </div>
-      </div>
-
-      {/* Hero Column */}
-      <div 
-        className="hidden md:flex flex-col justify-center p-16 text-center bg-cover bg-center"
-        style={{
-          background: `linear-gradient(rgba(48, 52, 54, 0.8), rgba(10, 50, 92, 0.9)),
-            url(https://onlyinhawaii.org/wp-content/uploads/2011/03/Rainbow-Falls.jpg)
-            no-repeat center center / cover`
-        }}
-      >
-        <h1 className="text-4xl font-bold text-[#00ebd6]">Welcome to Dale Loves Whales</h1>
-        <p className="text-xl mb-8">
-          Join our community to explore the depths of cosmic music and oceanic vibes.
-        </p>
-        <div className="text-lg opacity-80">
-          <p>✓ Access exclusive content</p>
-          <p>✓ Join the conversation</p>
-          <p>✓ Stay updated with latest releases</p>
         </div>
       </div>
     </div>
