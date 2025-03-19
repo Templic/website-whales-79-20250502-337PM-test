@@ -1,17 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { User, Post, Comment, Track } from '@shared/schema';
+import { User, Track } from '@shared/schema';
 import UserList from '@/components/UserList';
+import AdminMusicUpload from '@/components/AdminMusicUpload';
+import DeleteButton from '@/components/DeleteButton';
+import { Card } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface AdminPageProps {}
 
 export default function AdminPage({}: AdminPageProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [targetPage, setTargetPage] = useState('new_music');
-  const [uploadStatus, setUploadStatus] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -30,131 +31,68 @@ export default function AdminPage({}: AdminPageProps) {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedFile) {
-      setUploadStatus('Please select a file');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('page', targetPage);
-
-    try {
-      await axios.post('/api/upload/music', formData);
-      setUploadStatus('File uploaded successfully!');
-      fetchData(); // Refresh the track list
-      setSelectedFile(null);
-    } catch (error) {
-      setUploadStatus('Failed to upload file');
-      console.error('Upload error:', error);
-    }
-  };
-
-  const handleDelete = async (trackId: number) => {
-    try {
-      await axios.delete(`/api/tracks/${trackId}`);
-      fetchData(); // Refresh the track list
-    } catch (error) {
-      console.error('Error deleting track:', error);
-    }
+  const handleTrackDeleted = () => {
+    fetchData(); // Refresh the track list after deletion
   };
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+      <section>
         <h2 className="text-2xl font-semibold mb-4">File Upload</h2>
-        <form onSubmit={handleUpload} className="space-y-4">
-          <div>
-            <label className="block mb-2">Select File:</label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              accept=".mp3,.mp4,.aac,.flac,.wav,.aiff,.avi,.wmv,.mov"
-              className="w-full p-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block mb-2">Target Page:</label>
-            <select
-              value={targetPage}
-              onChange={(e) => setTargetPage(e.target.value)}
-              className="w-full p-2 border rounded"
-            >
-              <option value="new_music">New Music</option>
-              <option value="music_archive">Music Archive</option>
-              <option value="blog">Blog</option>
-              <option value="home">Home</option>
-              <option value="about">About</option>
-              <option value="newsletter">Newsletter</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Upload
-          </button>
-          {uploadStatus && (
-            <p className={uploadStatus.includes('success') ? 'text-green-500' : 'text-red-500'}>
-              {uploadStatus}
-            </p>
-          )}
-        </form>
+        <AdminMusicUpload />
       </section>
 
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">File Management</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-100 dark:bg-gray-700">
-                <th className="px-6 py-3 text-left">Title</th>
-                <th className="px-6 py-3 text-left">Page</th>
-                <th className="px-6 py-3 text-left">Upload Date</th>
-                <th className="px-6 py-3 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tracks.map((track) => (
-                <tr key={track.id} className="border-b dark:border-gray-600">
-                  <td className="px-6 py-4">{track.title}</td>
-                  <td className="px-6 py-4">{track.page || 'N/A'}</td>
-                  <td className="px-6 py-4">
-                    {new Date(track.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleDelete(track.id)}
-                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {tracks.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
-                    No files available
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      <section>
+        <Card className="p-6">
+          <h2 className="text-2xl font-semibold mb-4">File Management</h2>
+          <div className="rounded-md border">
+            <Table>
+              <TableCaption>A list of all uploaded multimedia files</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Page</TableHead>
+                  <TableHead>Upload Date</TableHead>
+                  <TableHead>File Type</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tracks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      No files available
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tracks.map((track) => (
+                    <TableRow key={track.id}>
+                      <TableCell className="font-medium">{track.title}</TableCell>
+                      <TableCell>{track.page || 'N/A'}</TableCell>
+                      <TableCell>
+                        {new Date(track.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{track.fileType || 'Unknown'}</TableCell>
+                      <TableCell className="text-right">
+                        <DeleteButton 
+                          trackId={track.id} 
+                          onDelete={handleTrackDeleted}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       </section>
 
-      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-semibold mb-4">Users</h2>
-        <UserList users={users} />
+      <section>
+        <Card className="p-6">
+          <h2 className="text-2xl font-semibold mb-4">Users</h2>
+          <UserList users={users} />
+        </Card>
       </section>
     </div>
   );
