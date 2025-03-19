@@ -132,7 +132,12 @@ app.use(fileUpload({
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true,
-  debug: process.env.NODE_ENV !== 'production'
+  debug: process.env.NODE_ENV !== 'production',
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  uploadTimeout: 30000, // 30 seconds timeout
+  parseNested: true,
+  cleanup: true // Enable automatic cleanup of partial uploads
 }));
 
 
