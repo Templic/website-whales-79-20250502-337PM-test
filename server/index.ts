@@ -127,17 +127,21 @@ app.get('/api/csrf-token', csrfProtection, (req, res) => {
 });
 
 app.use(fileUpload({
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max file size
   createParentPath: true,
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true,
-  debug: process.env.NODE_ENV !== 'production',
+  debug: true,
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  uploadTimeout: 30000, // 30 seconds timeout
+  uploadTimeout: 60000, // 60 seconds timeout
   parseNested: true,
-  cleanup: true // Enable automatic cleanup of partial uploads
+  uploadTimeout: 0, // Disable timeout
+  preserveExtension: 4, // Preserve longer extensions for audio files
+  responseOnLimit: "File size limit has been reached",
+  uploadTimeout: 30000,
+  tempFileDir: '/tmp/'
 }));
 
 
