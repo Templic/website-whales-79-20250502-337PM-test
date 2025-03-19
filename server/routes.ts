@@ -2,15 +2,14 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import fileUpload from 'express-fileupload';
-import { type UploadedFile } from 'express-fileupload';
+import fileUpload, { UploadedFile, FileArray } from 'express-fileupload';
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
-import NodeClam from 'clamav.js';
+import * as NodeClamModule from 'clamav.js';
 
-// Configure express-fileupload middleware
+// Configure express-fileupload middleware with detailed debug logging
 const fileUploadMiddleware = fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
   useTempFiles: true,
@@ -18,60 +17,102 @@ const fileUploadMiddleware = fileUpload({
   debug: true,
   safeFileNames: true,
   preserveExtension: true,
-  abortOnLimit: true
+  abortOnLimit: true,
+  createParentPath: true, // Ensure parent directories are created
+  parseNested: true // Enable nested form data parsing
 });
 
-// Simple sanitization function (replace with sanitize-filename package for production)
+// Simple sanitization function
 const secureFilename = (filename: string): string => {
   return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
 };
 
 // Type-safe middleware for file type validation
 const validateFileType = (
-  req: express.Request & { files?: { [key: string]: UploadedFile | UploadedFile[] } },
+  req: express.Request & { files?: FileArray },
   res: express.Response,
   next: express.NextFunction
 ) => {
-  if (!req.files?.file || Array.isArray(req.files.file)) {
-    return res.status(400).json({ message: "No file uploaded" });
-  }
+  try {
+    console.log('Validating file upload request:', { 
+      files: req.files,
+      body: req.body,
+      headers: req.headers
+    });
 
-  const file = req.files.file;
-  const allowedMimeTypes = new Set([
-    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
-    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
-    'video/quicktime', 'video/mp4'
-  ]);
+    if (!req.files?.file || Array.isArray(req.files.file)) {
+      console.error('No file or invalid file structure in request');
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
-  if (!allowedMimeTypes.has(file.mimetype)) {
-    return res.status(400).json({ message: "Invalid file type" });
+    const file = req.files.file as UploadedFile;
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      mimetype: file.mimetype,
+      tempFilePath: file.tempFilePath
+    });
+
+    const allowedMimeTypes = new Set([
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
+      'video/quicktime', 'video/mp4'
+    ]);
+
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      console.error(`Invalid mimetype: ${file.mimetype}`);
+      return res.status(400).json({ message: "Invalid file type" });
+    }
+    next();
+  } catch (error) {
+    console.error('Error in validateFileType middleware:', error);
+    return res.status(500).json({ message: "Error validating file" });
   }
-  next();
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Apply express-fileupload middleware
   app.use(fileUploadMiddleware);
 
-  // Initialize ClamAV scanner
+  // Initialize ClamAV scanner with detailed logging
   const initClamAV = async () => {
     try {
+      console.log('Initializing ClamAV scanner...');
+      console.log('NodeClam type:', typeof NodeClamModule.default);
+
+      const NodeClam = NodeClamModule.default;
+      if (!NodeClam) {
+        console.error('Failed to import NodeClam constructor');
+        return null;
+      }
+
+      // Check if ClamAV binary exists
+      const clamPath = '/usr/bin/clamscan';
+      if (!fs.existsSync(clamPath)) {
+        console.error(`ClamAV binary not found at ${clamPath}`);
+        return null;
+      }
+
       const scanner = new NodeClam();
+      console.log('Created NodeClam instance');
+
       await scanner.init({
         removeInfected: true,
         quarantineInfected: false,
         scanLog: null,
-        debugMode: false,
+        debugMode: true, // Enable debug mode
         fileList: null,
         scanRecursively: true,
         clamscan: {
-          path: '/usr/bin/clamscan',
+          path: clamPath,
           db: null,
           scanArchives: true,
           active: true
         },
         preference: 'clamscan'
       });
+
+      console.log('ClamAV scanner initialized successfully');
       return scanner;
     } catch (error) {
       console.error('Failed to initialize ClamAV:', error);
@@ -85,36 +126,58 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Music upload route with virus scanning
   app.post("/api/upload/music", validateFileType, async (
     req: express.Request & { 
-      files?: { [key: string]: UploadedFile | UploadedFile[] },
+      files?: FileArray,
       user?: { id: number; role: string; }
+      isAuthenticated(): boolean;
     },
     res: express.Response
   ) => {
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    if (!req.files?.file || Array.isArray(req.files.file)) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const file = req.files.file;
-    const targetPage = req.body.page as string;
-    const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-
-    // Validate target page
-    if (!allowedPages.includes(targetPage)) {
-      return res.status(400).json({ message: "Invalid target page" });
-    }
+    console.log('Processing music upload request...');
 
     try {
+      // Authentication check
+      if (!req.isAuthenticated() || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+        console.error('Unauthorized upload attempt');
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      if (!req.files?.file || Array.isArray(req.files.file)) {
+        console.error('No file in request');
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const file = req.files.file as UploadedFile;
+      const targetPage = req.body.page as string;
+      const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
+
+      console.log('Upload request details:', {
+        filename: file.name,
+        size: file.size,
+        targetPage,
+        tempPath: file.tempFilePath
+      });
+
+      // Validate target page
+      if (!allowedPages.includes(targetPage)) {
+        console.error(`Invalid target page: ${targetPage}`);
+        return res.status(400).json({ message: "Invalid target page" });
+      }
+
+      // Create upload directory if it doesn't exist
+      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
+      if (!fs.existsSync(uploadDir)) {
+        console.log(`Creating upload directory: ${uploadDir}`);
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
       // Virus scan using ClamAV
       let scanResult: { isInfected: boolean; viruses?: string[] } = { isInfected: false };
 
       if (clamAV) {
         try {
-          console.log("Scanning file for viruses...");
+          console.log(`Scanning file for viruses: ${file.tempFilePath}`);
           scanResult = await clamAV.isInfected(file.tempFilePath);
+          console.log('Scan result:', scanResult);
 
           if (scanResult.isInfected) {
             return res.status(400).json({
@@ -130,8 +193,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         console.warn("ClamAV not available - skipping virus scan");
       }
 
-      // Proceed with file upload
-      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
+      // Prepare file path
       const fileName = secureFilename(file.name);
       const filePath = path.join(uploadDir, fileName);
 
@@ -141,17 +203,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         throw new Error('Path traversal attempt detected');
       }
 
-      // Ensure upload directory exists
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
+      console.log('Uploading file to:', filePath);
 
+      // Upload the file using storage interface
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
         uploadedBy: req.user.id,
         userRole: req.user.role as 'admin' | 'super_admin'
       });
+
+      console.log('Upload successful:', result);
 
       res.json({
         ...result,
@@ -166,7 +228,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-
   // Secure file serving endpoint
   app.get('/media/:filename', (req, res) => {
     const filename = req.params.filename;
