@@ -98,6 +98,8 @@ export const tracks = pgTable("tracks", {
   albumId: integer("album_id"),
   duration: text("duration"),
   audioUrl: text("audio_url").notNull(),
+  fileType: text("file_type"),
+  page: text("page"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });
