@@ -304,8 +304,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    import NodeClam from 'clamav.js';
-    const ClamScan = new NodeClam().init({
+    const NodeClam = await import('clamav.js');
+    const ClamScan = new NodeClam.default().init({
         removeInfected: true,
         quarantineInfected: false,
         scanLog: null,
