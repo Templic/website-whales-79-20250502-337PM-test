@@ -13,6 +13,7 @@ interface AdminPageProps {}
 export default function AdminPage({}: AdminPageProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     fetchData();
@@ -24,10 +25,12 @@ export default function AdminPage({}: AdminPageProps) {
         axios.get('/api/users'),
         axios.get('/api/tracks')
       ]);
+      console.log('Tracks API Response:', tracksRes.data); // Debug log
       setUsers(usersRes.data);
       setTracks(tracksRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setError('Failed to fetch data. Please try again.');
     }
   };
 
@@ -39,12 +42,18 @@ export default function AdminPage({}: AdminPageProps) {
     <div className="container mx-auto p-4 space-y-6">
       <section>
         <h2 className="text-2xl font-semibold mb-4">File Upload</h2>
-        <AdminMusicUpload />
+        <AdminMusicUpload onUploadSuccess={fetchData} />
       </section>
 
       <section>
         <Card className="p-6">
           <h2 className="text-2xl font-semibold mb-4">File Management</h2>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           <div className="rounded-md border">
             <Table>
               <TableCaption>A list of all uploaded multimedia files</TableCaption>
