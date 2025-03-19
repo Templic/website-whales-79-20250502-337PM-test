@@ -59,6 +59,7 @@ export interface IStorage {
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
   uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
+  deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -95,8 +96,15 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user;
+    try {
+      console.log(`Attempting to find user with username: ${username}`);
+      const result = await db.select().from(users).where(eq(users.username, username));
+      console.log(`User lookup result:`, result);
+      return result[0];
+    } catch (error) {
+      console.error('Error finding user by username:', error);
+      throw error;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
