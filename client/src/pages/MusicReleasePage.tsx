@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import DeleteButton from '@/components/DeleteButton';
-import { Track } from '@/types';
 
-export default function MusicReleasePage() {
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+interface Track {
+  id: number;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  createdAt: string;
+}
+
+export default function NewMusicPage() {
   const [tracks, setTracks] = useState<Track[]>([]);
 
   useEffect(() => {
@@ -48,11 +55,10 @@ export default function MusicReleasePage() {
                 <p className="text-sm">Artist: {track.artist}</p>
                 <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
               </div>
-              <audio controls className="w-full mb-2">
+              <audio controls className="w-full">
                 <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
-              <DeleteButton trackId={track.id} onDelete={fetchTracks} />
             </div>
           ))}
           {tracks.length === 0 && (
@@ -62,12 +68,4 @@ export default function MusicReleasePage() {
       </section>
     </div>
   );
-}
-
-interface Track {
-  id: number;
-  title: string;
-  artist: string;
-  audioUrl: string;
-  createdAt: string;
 }

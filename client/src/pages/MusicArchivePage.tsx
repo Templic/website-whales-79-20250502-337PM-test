@@ -28,26 +28,6 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
     }
   };
 
-  const handleTrackDeleted = () => {
-    fetchMusicContent();
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Music Archive</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tracks.map(track => (
-          <div key={track.id} className="border p-4 rounded-lg">
-            <h3 className="font-bold">{track.title}</h3>
-            <p className="text-gray-600">{track.artist}</p>
-            <audio controls src={`/uploads/${track.audioUrl}`} className="mt-2 w-full" />
-            <DeleteButton trackId={track.id} onDelete={handleTrackDeleted} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-12 p-8">
       <section className="albums-section">
