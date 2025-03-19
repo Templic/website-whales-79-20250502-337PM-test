@@ -131,17 +131,12 @@ app.use(fileUpload({
   createParentPath: true,
   abortOnLimit: true,
   safeFileNames: true,
-  preserveExtension: true,
-  debug: true,
+  preserveExtension: 4,
+  debug: false,
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  uploadTimeout: 60000, // 60 seconds timeout
   parseNested: true,
-  uploadTimeout: 0, // Disable timeout
-  preserveExtension: 4, // Preserve longer extensions for audio files
-  responseOnLimit: "File size limit has been reached",
-  uploadTimeout: 30000,
-  tempFileDir: '/tmp/'
+  uploadTimeout: 300000, // 5 minutes timeout
 }));
 
 
