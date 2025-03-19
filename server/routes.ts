@@ -36,8 +36,23 @@ const validateFileType = (req, res, next) => {
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Serve uploaded files
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  // Secure file serving endpoint
+  app.get('/media/:filename', (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const filename = req.params.filename;
+    const filePath = path.join(process.cwd(), 'private_storage/uploads', filename);
+
+    // Validate the file path
+    const normalizedPath = path.normalize(filePath);
+    if (!normalizedPath.startsWith(path.join(process.cwd(), 'private_storage/uploads'))) {
+      return res.status(403).json({ message: "Invalid file path" });
+    }
+
+    res.sendFile(filePath);
+  });
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -355,7 +370,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     try {
-      const uploadDir = path.join(process.cwd(), 'uploads');
+      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
       const fileName = secureFilename(file.name);
       const filePath = path.join(uploadDir, fileName);
 
