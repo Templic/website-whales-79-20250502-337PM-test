@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import fileUpload from "express-fileupload";
 import path from "path";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -15,6 +16,10 @@ const __dirname = dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  createParentPath: true
+}));
 
 // Add logging middleware
 app.use((req, res, next) => {
