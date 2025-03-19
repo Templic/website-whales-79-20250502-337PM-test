@@ -33,17 +33,6 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Initialize WebSocket and Socket.IO servers
-import { setupWebSockets } from './websocket';
-const { wss, io } = setupWebSockets(httpServer);
-app.use(fileUpload({
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
-  createParentPath: true,
-  abortOnLimit: true,
-  safeFileNames: true,
-  preserveExtension: true,
-  debug: process.env.NODE_ENV !== 'production'
-}));
 
 // Add logging middleware
 app.use((req, res, next) => {
@@ -80,6 +69,19 @@ async function startServer() {
 
     // Register API routes
     const httpServer = await registerRoutes(app);
+
+    // Initialize WebSocket and Socket.IO servers AFTER httpServer is created.
+    import { setupWebSockets } from './websocket';
+    const { wss, io } = setupWebSockets(httpServer);
+    app.use(fileUpload({
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+      createParentPath: true,
+      abortOnLimit: true,
+      safeFileNames: true,
+      preserveExtension: true,
+      debug: process.env.NODE_ENV !== 'production'
+    }));
+
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite in development mode...');
