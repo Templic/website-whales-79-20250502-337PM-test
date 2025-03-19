@@ -72,6 +72,48 @@ export default function AdminPage() {
         <UploadForm onUploadComplete={fetchData} />
       </section>
 
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
+        <h2 className="text-2xl font-semibold mb-4">File Management</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white dark:bg-gray-800">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                <th className="px-6 py-3 text-left">Title</th>
+                <th className="px-6 py-3 text-left">Page</th>
+                <th className="px-6 py-3 text-left">Upload Date</th>
+                <th className="px-6 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tracks.map((track) => (
+                <tr key={track.id} className="border-b dark:border-gray-600">
+                  <td className="px-6 py-4">{track.title}</td>
+                  <td className="px-6 py-4">{track.page || 'N/A'}</td>
+                  <td className="px-6 py-4">
+                    {new Date(track.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => handleDelete(track.id)}
+                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {tracks.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    No files uploaded yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
         <h2 className="text-2xl font-semibold mb-4">File Management</h2>
         <div className="overflow-x-auto">
