@@ -272,6 +272,28 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
   }
 
+  async uploadMusic({ file, targetPage, uploadedBy }: { 
+    file: any, 
+    targetPage: string,
+    uploadedBy: number 
+  }): Promise<Track> {
+    // Save file to object storage
+    const fileName = `${Date.now()}-${file.name}`;
+    const objectStorageClient = new Client();
+    await objectStorageClient.upload(fileName, file.data);
+
+    // Create database record
+    const [track] = await db.insert(tracks).values({
+      title: file.name,
+      artist: "Dale the Whale", // Could be made dynamic
+      audioUrl: fileName,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+
+    return track;
+  }
+
   // Session cleanup method
   async cleanupExpiredSessions(): Promise<void> {
     try {
