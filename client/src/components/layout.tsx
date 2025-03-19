@@ -10,66 +10,100 @@ import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquar
 import { useState } from "react";
 
 // Debug text to verify component update
-console.log("Layout component loaded - v2 with updated navigation labels");
+console.log("Layout component loaded - v3 with smooth scrolling");
+
+// Add global styles
+const globalStyles = `
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .nav-link {
+    transition: all 0.3s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--fill-color);
+    transform: translateY(-2px);
+  }
+
+  .parallax-section {
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+`;
+
+// Add style tag to document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = globalStyles;
+  document.head.appendChild(style);
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
 const NavLinks = () => {
-  console.log("NavLinks component rendering - checking labels");
+  console.log("NavLinks component rendering - with enhanced transitions");
   return (
     <>
       <Link href="/">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Home className="h-4 w-4 mr-2" />
           Home
         </Button>
       </Link>
       <Link href="/about">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Info className="h-4 w-4 mr-2" />
           About
         </Button>
       </Link>
       <Link href="/music-release">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Music className="h-4 w-4 mr-2" />
           New Music
         </Button>
       </Link>
       <Link href="/archived-music">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Archive className="h-4 w-4 mr-2" />
           Archived Music
         </Button>
       </Link>
       <Link href="/tour">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Calendar className="h-4 w-4 mr-2" />
           Tour
         </Button>
       </Link>
       <Link href="/engage">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Heart className="h-4 w-4 mr-2" />
           Engage
         </Button>
       </Link>
       <Link href="/newsletter">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Mail className="h-4 w-4 mr-2" />
           Newsletter
         </Button>
       </Link>
       <Link href="/blog">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <BookOpen className="h-4 w-4 mr-2" />
           Blog
         </Button>
       </Link>
       <Link href="/collaboration">
-        <Button variant="ghost" size="sm" className="h-9">
+        <Button variant="ghost" size="sm" className="h-9 nav-link">
           <Users className="h-4 w-4 mr-2" />
           Collaborate
         </Button>
@@ -87,7 +121,7 @@ const NavLinks = () => {
             <div className="sm:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="nav-link">
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle menu</span>
                   </Button>
@@ -127,35 +161,35 @@ const NavLinks = () => {
             <div>
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                <li><Link href="/about">About</Link></li>
-                <li><Link href="/newsletter">Newsletter</Link></li>
-                <li><Link href="/collaboration">Collaboration</Link></li>
+                <li><Link href="/about" className="nav-link">About</Link></li>
+                <li><Link href="/newsletter" className="nav-link">Newsletter</Link></li>
+                <li><Link href="/collaboration" className="nav-link">Collaboration</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Content</h3>
               <ul className="space-y-2">
-                <li><Link href="/blog">Blog</Link></li>
-                <li><Link href="/music-release">New Music</Link></li>
-                <li><Link href="/archived-music">Archived Music</Link></li>
+                <li><Link href="/blog" className="nav-link">Blog</Link></li>
+                <li><Link href="/music-release" className="nav-link">New Music</Link></li>
+                <li><Link href="/archived-music" className="nav-link">Archived Music</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Community</h3>
               <ul className="space-y-2">
-                <li><Link href="/engage">Engage</Link></li>
-                <li><Link href="/tour">Tour Dates</Link></li>
-                <li><Link href="/contact">Contact</Link></li>
+                <li><Link href="/engage" className="nav-link">Engage</Link></li>
+                <li><Link href="/tour" className="nav-link">Tour Dates</Link></li>
+                <li><Link href="/contact" className="nav-link">Contact</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Account & Info</h3>
               <ul className="space-y-2">
-                <li><Link href="/sitemap">Sitemap</Link></li>
-                <li><Link href="/privacy">Privacy Policy</Link></li>
-                <li><Link href="/terms">Terms of Service</Link></li>
-                {user && <li><Link href="/portal">My Dashboard</Link></li>}
-                {user?.role === "admin" && <li><Link href="/admin">Admin Portal</Link></li>}
+                <li><Link href="/sitemap" className="nav-link">Sitemap</Link></li>
+                <li><Link href="/privacy" className="nav-link">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="nav-link">Terms of Service</Link></li>
+                {user && <li><Link href="/portal" className="nav-link">My Dashboard</Link></li>}
+                {user?.role === "admin" && <li><Link href="/admin" className="nav-link">Admin Portal</Link></li>}
               </ul>
             </div>
           </div>
@@ -175,14 +209,14 @@ const AuthLinks = () => {
       {user ? (
         <>
           <Link href="/portal">
-            <Button variant="ghost" size="sm" className="h-9">
+            <Button variant="ghost" size="sm" className="h-9 nav-link">
               <User className="h-4 w-4 mr-2" />
               Dashboard
             </Button>
           </Link>
           {(user.role === "admin" || user.role === "super_admin") && (
             <Link href="/admin">
-              <Button variant="ghost" size="sm" className="h-9">
+              <Button variant="ghost" size="sm" className="h-9 nav-link">
                 <Settings className="h-4 w-4 mr-2" />
                 Admin
               </Button>
@@ -191,7 +225,7 @@ const AuthLinks = () => {
         </>
       ) : (
         <Link href="/auth">
-          <Button variant="ghost" size="sm" className="h-9">
+          <Button variant="ghost" size="sm" className="h-9 nav-link">
             <User className="h-4 w-4 mr-2" />
             Login
           </Button>
