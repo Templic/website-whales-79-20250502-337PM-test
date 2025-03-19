@@ -385,13 +385,25 @@ export class PostgresStorage implements IStorage {
   // Advanced admin methods implementation
   async updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
     try {
+      console.log(`Updating user ${userId} to role ${role}`);
       const [updatedUser] = await db.update(users)
         .set({ role, updatedAt: new Date() })
         .where(eq(users.id, userId))
         .returning();
+      console.log('User role updated:', updatedUser);
       return updatedUser;
     } catch (error) {
       console.error("Error updating user role:", error);
+      throw error;
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      return user;
+    } catch (error) {
+      console.error("Error finding user by email:", error);
       throw error;
     }
   }

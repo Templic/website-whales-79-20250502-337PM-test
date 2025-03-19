@@ -354,7 +354,52 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  //This route was duplicated in the original code.  Removing the duplicate.
+  app.patch("/api/users/:userId/role", async (req, res) => {
+    try {
+      // Check if user is authorized (must be super_admin)
+      if (!req.isAuthenticated() || req.user.role !== 'super_admin') {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const userId = parseInt(req.params.userId);
+      const { role } = req.body;
+
+      // Validate role
+      if (!['user', 'admin', 'super_admin'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
+  // Add route to update user role by email
+  app.patch("/api/users/email/:email/role", async (req, res) => {
+    try {
+      const email = req.params.email;
+      const { role } = req.body;
+
+      // Validate role
+      if (!['user', 'admin', 'super_admin'].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedUser = await storage.updateUserRole(user.id, role);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
