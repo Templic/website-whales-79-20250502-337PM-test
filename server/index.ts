@@ -14,11 +14,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+// Force HTTPS
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && !req.secure) {
+    return res.redirect('https://' + req.headers.host + req.url);
+  }
+  next();
+});
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
-  createParentPath: true
+  createParentPath: true,
+  abortOnLimit: true,
+  safeFileNames: true,
+  preserveExtension: true,
+  debug: process.env.NODE_ENV !== 'production'
 }));
 
 // Add logging middleware

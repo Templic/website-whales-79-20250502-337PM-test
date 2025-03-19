@@ -274,9 +274,26 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "Invalid target page" });
     }
 
+    // Enhanced file validation
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     if (!fileExt || !allowedTypes.includes(fileExt)) {
-      return res.status(400).json({ message: "Invalid file type" });
+      return res.status(400).json({ message: "Invalid file type. Allowed types: " + allowedTypes.join(', ') });
+    }
+
+    // Validate file size (50MB limit)
+    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+    if (file.size > maxSize) {
+      return res.status(400).json({ message: "File too large. Maximum size: 50MB" });
+    }
+
+    // Validate MIME type
+    const allowedMimeTypes = [
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
+      'video/quicktime', 'video/mp4'
+    ];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + allowedMimeTypes.join(', ') });
     }
 
     try {
@@ -320,42 +337,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/upload/music", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    if (!req.files || !req.files.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const file = req.files.file;
-    const targetPage = req.body.page;
-    const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
-
-    if (!allowedPages.includes(targetPage)) {
-      return res.status(400).json({ message: "Invalid target page" });
-    }
-
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExt || !allowedTypes.includes(fileExt)) {
-      return res.status(400).json({ message: "Invalid file type" });
-    }
-
-    try {
-      const result = await storage.uploadMusic({
-        file: file,
-        targetPage: targetPage,
-        uploadedBy: req.user.id,
-        userRole: req.user.role as 'admin' | 'super_admin'
-      });
-      res.json(result);
-    } catch (error) {
-      console.error("Error uploading music file:", error);
-      res.status(500).json({ message: "Failed to upload file" });
-    }
-  });
+  //This route was duplicated in the original code.  Removing the duplicate.
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
