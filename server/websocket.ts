@@ -8,18 +8,19 @@ export function setupWebSockets(httpServer: Server) {
   // WebSocket setup
   const wss = new WebSocketServer({ 
     server: httpServer,
-    handleProtocols: (protocols) => {
-      return protocols[0]; // Accept first protocol
-    }
+    perMessageDeflate: false,
+    maxPayload: 64 * 1024, // 64kb
+    skipUTF8Validation: true
   });
   
   wss.on('connection', (ws: WebSocket) => {
     log('WebSocket client connected');
     
-    ws.on('message', (message: string) => {
+    ws.on('message', (message) => {
       try {
-        log(`WebSocket message received: ${message}`);
-        ws.send(`Echo: ${message}`);
+        const data = message.toString();
+        log(`WebSocket message received: ${data}`);
+        ws.send(`Echo: ${data}`);
       } catch (error) {
         console.error('WebSocket message error:', error);
       }
@@ -27,7 +28,11 @@ export function setupWebSockets(httpServer: Server) {
 
     ws.on('error', (error) => {
       console.error('WebSocket error:', error);
-      // Don't terminate on error
+      try {
+        ws.close();
+      } catch (e) {
+        console.error('Error closing WebSocket:', e);
+      }
     });
 
     ws.on('close', () => {
@@ -37,7 +42,6 @@ export function setupWebSockets(httpServer: Server) {
 
   wss.on('error', (error) => {
     console.error('WebSocket server error:', error);
-    // Don't terminate on server error
   });
 
   // Socket.IO setup

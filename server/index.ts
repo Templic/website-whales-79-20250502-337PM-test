@@ -80,7 +80,12 @@ async function startServer() {
 
     // Initialize WebSocket and Socket.IO servers AFTER httpServer is created.
     import('./websocket').then(({ setupWebSockets }) => {
-      const { wss, io } = setupWebSockets(httpServer);
+      try {
+        const { wss, io } = setupWebSockets(httpServer);
+        console.log('WebSocket server initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize WebSocket server:', error);
+      }
     });
 
 
