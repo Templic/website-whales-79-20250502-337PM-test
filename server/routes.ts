@@ -169,6 +169,28 @@ const initClamAV = async () => {
   }
 };
 
+// Function to scan file for viruses
+const scanFile = async (filePath: string, scanner: any) => {
+  try {
+    console.log(`Starting virus scan for file: ${filePath}`);
+    const result = await scanner.isInfected(filePath);
+    console.log('Scan result:', result);
+
+    return {
+      isInfected: result.isInfected,
+      viruses: result.viruses || [],
+      error: null
+    };
+  } catch (error) {
+    console.error('Error during virus scan:', error);
+    return {
+      isInfected: false,
+      viruses: [],
+      error: error instanceof Error ? error.message : 'Unknown error during virus scan'
+    };
+  }
+};
+
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Ensure upload directory exists
   const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
@@ -225,24 +247,28 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
 
       // Virus scan using ClamAV
-      let scanResult: { isInfected: boolean; viruses?: string[] } = { isInfected: false };
-
       if (clamAV) {
-        try {
-          console.log(`Scanning file for viruses: ${uploadedFile.tempFilePath}`);
-          scanResult = await clamAV.isInfected(uploadedFile.tempFilePath);
-          console.log('Scan result:', scanResult);
+        console.log(`Starting virus scan for file: ${uploadedFile.tempFilePath}`);
+        const scanResult = await scanFile(uploadedFile.tempFilePath, clamAV);
 
-          if (scanResult.isInfected) {
-            return res.status(400).json({
-              message: "File is infected with malware",
-              viruses: scanResult.viruses
-            });
+        if (scanResult.error) {
+          console.warn('Virus scan error:', scanResult.error);
+          // Continue with upload but log the error
+        } else if (scanResult.isInfected) {
+          // Clean up the infected file
+          try {
+            fs.unlinkSync(uploadedFile.tempFilePath);
+          } catch (cleanupError) {
+            console.error('Error cleaning up infected file:', cleanupError);
           }
-        } catch (scanError) {
-          console.error("ClamAV scan error:", scanError);
-          // Log the error but continue with upload
+
+          return res.status(400).json({
+            message: "File is infected with malware",
+            viruses: scanResult.viruses
+          });
         }
+
+        console.log('File passed virus scan');
       } else {
         console.warn("ClamAV not available - skipping virus scan");
       }
@@ -257,10 +283,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       console.log('Upload successful:', result);
 
+      // Clean up temp file after successful upload
+      try {
+        fs.unlinkSync(uploadedFile.tempFilePath);
+      } catch (cleanupError) {
+        console.error('Error cleaning up temp file:', cleanupError);
+      }
+
       res.json({
         ...result,
         scanned: !!clamAV,
-        clean: !scanResult.isInfected
+        clean: true
       });
     } catch (error) {
       console.error("Error in music file upload:", error);
@@ -269,6 +302,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         error: error instanceof Error ? error.message : 'Unknown error',
         details: error instanceof Error ? error.stack : undefined
       });
+
+      // Clean up temp file on error
+      if (req.files?.file && fs.existsSync(req.files.file.tempFilePath)) {
+        try {
+          fs.unlinkSync(req.files.file.tempFilePath);
+        } catch (cleanupError) {
+          console.error('Error cleaning up temp file after error:', cleanupError);
+        }
+      }
     }
   });
 
