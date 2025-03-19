@@ -9,74 +9,74 @@ import {
 import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu } from "lucide-react";
 import { useState } from "react";
 
+// Debug text to verify component update
+console.log("Layout component loaded - v2 with updated navigation labels");
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-const NavLinks = () => (
-  <>
-    <Link href="/">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Home className="h-4 w-4 mr-2" />
-        Home
-      </Button>
-    </Link>
-    <Link href="/about">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Info className="h-4 w-4 mr-2" />
-        About
-      </Button>
-    </Link>
-    <Link href="/music-release">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Music className="h-4 w-4 mr-2" />
-        New Music
-      </Button>
-    </Link>
-    <Link href="/archived-music">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Archive className="h-4 w-4 mr-2" />
-        Archived Music
-      </Button>
-    </Link>
-    <Link href="/tour">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Calendar className="h-4 w-4 mr-2" />
-        Tour
-      </Button>
-    </Link>
-    <Link href="/engage">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Heart className="h-4 w-4 mr-2" />
-        Engage
-      </Button>
-    </Link>
-    <Link href="/newsletter">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Mail className="h-4 w-4 mr-2" />
-        Newsletter
-      </Button>
-    </Link>
-    <Link href="/blog">
-      <Button variant="ghost" size="sm" className="h-9">
-        <BookOpen className="h-4 w-4 mr-2" />
-        Blog
-      </Button>
-    </Link>
-    <Link href="/collaboration">
-      <Button variant="ghost" size="sm" className="h-9">
-        <Users className="h-4 w-4 mr-2" />
-        Collab
-      </Button>
-    </Link>
-    <Link href="/contact">
-      <Button variant="ghost" size="sm" className="h-9">
-        <MessageSquare className="h-4 w-4 mr-2" />
-        Contact
-      </Button>
-    </Link>
-  </>
-);
+  const NavLinks = () => {
+    console.log("NavLinks component rendering - checking labels");
+    return (
+      <>
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+        </Link>
+        <Link href="/about">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Info className="h-4 w-4 mr-2" />
+            About
+          </Button>
+        </Link>
+        <Link href="/music-release">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Music className="h-4 w-4 mr-2" />
+            New Music
+          </Button>
+        </Link>
+        <Link href="/archived-music">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Archive className="h-4 w-4 mr-2" />
+            Archived Music
+          </Button>
+        </Link>
+        <Link href="/tour">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Calendar className="h-4 w-4 mr-2" />
+            Tour
+          </Button>
+        </Link>
+        <Link href="/engage">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Heart className="h-4 w-4 mr-2" />
+            Engage
+          </Button>
+        </Link>
+        <Link href="/newsletter">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Mail className="h-4 w-4 mr-2" />
+            Newsletter
+          </Button>
+        </Link>
+        <Link href="/blog">
+          <Button variant="ghost" size="sm" className="h-9">
+            <BookOpen className="h-4 w-4 mr-2" />
+            Blog
+          </Button>
+        </Link>
+        <Link href="/collaboration">
+          <Button variant="ghost" size="sm" className="h-9">
+            <Users className="h-4 w-4 mr-2" />
+            Collab
+          </Button>
+        </Link>
+      </>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -136,8 +136,8 @@ const NavLinks = () => (
               <h3 className="font-semibold mb-4">Content</h3>
               <ul className="space-y-2">
                 <li><Link href="/blog">Blog</Link></li>
-                <li><Link href="/music-release">Latest Release</Link></li>
-                <li><Link href="/archived-music">Archive</Link></li>
+                <li><Link href="/music-release">New Music</Link></li>
+                <li><Link href="/archived-music">Archived Music</Link></li>
               </ul>
             </div>
             <div>
