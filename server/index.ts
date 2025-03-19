@@ -16,18 +16,6 @@ const __dirname = dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Add security headers
-app.use((req, res, next) => {
-  res.set({
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'Content-Security-Policy': "default-src 'self'"
-  });
-  next();
-});
-
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
   createParentPath: true
