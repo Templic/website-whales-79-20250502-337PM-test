@@ -85,9 +85,11 @@ app.use(express.urlencoded({ extended: false }));
 import csrf from 'csurf';
 const csrfProtection = csrf({
   cookie: {
+    key: '_csrf',
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    httpOnly: true
+    httpOnly: true,
+    signed: false
   }
 });
 
