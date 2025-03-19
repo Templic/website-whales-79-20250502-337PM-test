@@ -265,10 +265,41 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "No file uploaded" });
     }
 
+    const NodeClam = require('clamav.js');
+    const ClamScan = new NodeClam().init({
+        removeInfected: true,
+        quarantineInfected: false,
+        scanLog: null,
+        debugMode: false,
+        fileList: null,
+        scanRecursively: true,
+        clamscan: {
+            path: '/usr/bin/clamscan',
+            db: null,
+            scanArchives: true,
+            active: true
+        },
+        preference: 'clamscan'
+    });
+
     const file = req.files.file;
     const targetPage = req.body.page;
     const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
     const allowedTypes = new Set(['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov']);
+
+    // Scan file for viruses
+    try {
+        const {isInfected, viruses} = await ClamScan.isInfected(file.tempFilePath);
+        if (isInfected) {
+            return res.status(400).json({ 
+                message: "File is infected with malware",
+                viruses: viruses 
+            });
+        }
+    } catch (err) {
+        console.error("Virus scan error:", err);
+        return res.status(500).json({ message: "Error scanning file" });
+    }
     const allowedMimeTypes = new Set([
       'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
       'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
