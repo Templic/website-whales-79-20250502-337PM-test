@@ -59,7 +59,6 @@ export interface IStorage {
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
   uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
-  deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -96,15 +95,8 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    try {
-      console.log(`Attempting to find user with username: ${username}`);
-      const result = await db.select().from(users).where(eq(users.username, username));
-      console.log(`User lookup result:`, result);
-      return result[0];
-    } catch (error) {
-      console.error('Error finding user by username:', error);
-      throw error;
-    }
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -385,25 +377,13 @@ export class PostgresStorage implements IStorage {
   // Advanced admin methods implementation
   async updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
     try {
-      console.log(`Updating user ${userId} to role ${role}`);
       const [updatedUser] = await db.update(users)
         .set({ role, updatedAt: new Date() })
         .where(eq(users.id, userId))
         .returning();
-      console.log('User role updated:', updatedUser);
       return updatedUser;
     } catch (error) {
       console.error("Error updating user role:", error);
-      throw error;
-    }
-  }
-
-  async getUserByEmail(email: string): Promise<User | undefined> {
-    try {
-      const [user] = await db.select().from(users).where(eq(users.email, email));
-      return user;
-    } catch (error) {
-      console.error("Error finding user by email:", error);
       throw error;
     }
   }

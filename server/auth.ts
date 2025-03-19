@@ -86,31 +86,12 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log('Authentication attempt for username:', username);
         const user = await storage.getUserByUsername(username);
-        
-        if (!user) {
-          console.log('User not found:', username);
-          return done(null, false, { message: "User not found. Please register first." });
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Invalid username or password" });
         }
-        
-        const isValidPassword = await comparePasswords(password, user.password);
-        console.log('Password validation result:', isValidPassword);
-        
-        if (!isValidPassword) {
-          console.log('Invalid password for user:', username);
-          return done(null, false, { message: "Incorrect password" });
-        }
-        
-        if (user.isBanned) {
-          console.log('Banned user attempted login:', username);
-          return done(null, false, { message: "This account has been banned" });
-        }
-        
-        console.log('Authentication successful for user:', username);
         return done(null, user);
       } catch (err) {
-        console.error('Authentication error:', err);
         return done(err);
       }
     })

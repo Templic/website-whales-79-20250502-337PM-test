@@ -9,7 +9,6 @@ import { registerRoutes } from "./routes";
 import { pgPool } from "./db";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { migrate } from "./migrations";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -72,11 +71,7 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    console.log('Running database migrations...');
-    await migrate();
-    console.log('Database migrations completed');
-    
-    // Setup authentication after migrations
+    // Setup authentication first
     setupAuth(app);
 
     // Register API routes
