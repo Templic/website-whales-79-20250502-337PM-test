@@ -1,3 +1,68 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import DeleteButton from '@/components/DeleteButton';
+import { Track } from '@/types';
+
+export default function MusicReleasePage() {
+  const [tracks, setTracks] = useState<Track[]>([]);
+
+  useEffect(() => {
+    document.title = "New Music - Dale Loves Whales";
+    fetchTracks();
+  }, []);
+
+  const fetchTracks = async () => {
+    try {
+      const response = await axios.get('/api/tracks');
+      setTracks(response.data);
+    } catch (error) {
+      console.error('Error fetching tracks:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <section className="main-banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <img 
+            src="/album cover for feels so good song.png" 
+            alt="Album Cover" 
+            className="w-full rounded-lg shadow-xl"
+          />
+          <div className="release-info space-y-4">
+            <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
+            <p className="text-xl">Release Date: March 14, 2025</p>
+            <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
+            <p className="text-xl">Artist: Dale The Whale & Featuring AC3-2085</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="music-player space-y-6">
+        <h2 className="text-2xl font-bold text-[#00ebd6]">Latest Tracks</h2>
+        <div className="grid gap-4">
+          {tracks.map(track => (
+            <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg hover:bg-[rgba(10,50,92,0.8)] transition-all">
+              <h3 className="text-xl mb-2 text-[#00ebd6]">{track.title}</h3>
+              <div className="flex flex-col space-y-2 mb-4">
+                <p className="text-sm">Artist: {track.artist}</p>
+                <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
+              </div>
+              <audio controls className="w-full mb-2">
+                <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+              <DeleteButton trackId={track.id} onDelete={fetchTracks} />
+            </div>
+          ))}
+          {tracks.length === 0 && (
+            <p className="text-center text-gray-400">No tracks available yet.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
 
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -66,48 +131,6 @@ export default function NewMusicPage() {
           )}
         </div>
       </section>
-    </div>
-  );
-}
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import DeleteButton from '@/components/DeleteButton';
-import { Track } from '@/types';
-
-export default function MusicReleasePage() {
-  const [tracks, setTracks] = useState<Track[]>([]);
-
-  useEffect(() => {
-    document.title = "New Music - Dale Loves Whales";
-    fetchTracks();
-  }, []);
-
-  const fetchTracks = async () => {
-    try {
-      const response = await axios.get('/api/tracks');
-      setTracks(response.data);
-    } catch (error) {
-      console.error('Error fetching tracks:', error);
-    }
-  };
-
-  const handleTrackDeleted = () => {
-    fetchTracks();
-  };
-
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">New Releases</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {tracks.map(track => (
-          <div key={track.id} className="border p-4 rounded-lg">
-            <h3 className="font-bold">{track.title}</h3>
-            <p className="text-gray-600">{track.artist}</p>
-            <audio controls src={`/uploads/${track.audioUrl}`} className="mt-2 w-full" />
-            <DeleteButton trackId={track.id} onDelete={handleTrackDeleted} />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
