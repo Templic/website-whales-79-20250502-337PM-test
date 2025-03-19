@@ -84,13 +84,8 @@ app.use(express.urlencoded({ extended: false }));
 // Setup CSRF protection
 import csrf from 'csurf';
 const csrfProtection = csrf({
-  cookie: {
-    key: '_csrf',
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    httpOnly: true,
-    signed: false
-  }
+  cookie: false,
+  sessionKey: 'csrf-token'
 });
 
 // Apply CSRF protection to all routes except those that don't need it
