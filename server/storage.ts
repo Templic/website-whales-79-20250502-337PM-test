@@ -59,6 +59,7 @@ export interface IStorage {
   getTracks(): Promise<Track[]>;
   getAlbums(): Promise<Album[]>;
   uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
+  deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -329,6 +330,64 @@ export class PostgresStorage implements IStorage {
     }).returning();
 
     return track;
+  }
+
+  async initializeSampleData() {
+    try {
+      // Check if sample data already exists
+      const existingTracks = await db.select().from(tracks);
+      if (existingTracks.length === 0) {
+        // Add sample tracks
+        await db.insert(tracks).values([
+          {
+            title: "Oceanic Dreams",
+            artist: "Dale The Whale",
+            duration: "4:35",
+            releaseDate: new Date("2025-01-15"),
+            genre: "Ambient Electronic",
+            isNewRelease: false,
+            audioPath: "/uploads/oceanic-dreams.mp3"
+          },
+          {
+            title: "Feels So Good",
+            artist: "Dale The Whale ft. AC3-2085",
+            duration: "3:45",
+            releaseDate: new Date("2025-03-14"),
+            genre: "R&B, Soulful",
+            isNewRelease: true,
+            audioPath: "/uploads/feels-so-good.mp3"
+          },
+          {
+            title: "Cosmic Echoes",
+            artist: "Dale The Whale",
+            duration: "5:20",
+            releaseDate: new Date("2024-12-01"),
+            genre: "Space Ambient",
+            isNewRelease: false,
+            audioPath: "/uploads/cosmic-echoes.mp3"
+          }
+        ]);
+
+        await db.insert(albums).values([
+          {
+            title: "Oceanic Collection",
+            artist: "Dale The Whale",
+            releaseDate: new Date("2025-01-15"),
+            coverArt: "/static/images/oceanic-collection.jpg",
+            tracksCount: 12
+          },
+          {
+            title: "Cosmic Journeys",
+            artist: "Dale The Whale",
+            releaseDate: new Date("2024-12-01"),
+            coverArt: "/static/images/cosmic-journeys.jpg",
+            tracksCount: 10
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error("Error initializing sample data:", error);
+    }
   }
 
   // Session cleanup method
