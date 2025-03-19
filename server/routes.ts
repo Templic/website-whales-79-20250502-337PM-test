@@ -426,6 +426,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // Validate CSRF token
+    if (!req.csrfToken || req.get('CSRF-Token') !== req.csrfToken()) {
+      return res.status(403).json({ message: "Invalid CSRF token" });
+    }
+
     try {
       const trackId = Number(req.params.id);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');

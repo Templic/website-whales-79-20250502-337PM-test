@@ -36,6 +36,31 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Setup CSRF protection
+const csrf = require('csurf');
+const csrfProtection = csrf({
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    httpOnly: true
+  }
+});
+
+// Apply CSRF protection to all routes except those that don't need it
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/login') || req.path.startsWith('/api/register')) {
+    next();
+  } else {
+    csrfProtection(req, res, next);
+  }
+});
+
+// Provide CSRF token
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
   createParentPath: true,
