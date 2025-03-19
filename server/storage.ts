@@ -276,6 +276,31 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
   }
 
+  async deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void> {
+    // Verify user has required role
+    if (userRole !== 'admin' && userRole !== 'super_admin') {
+      throw new Error('Unauthorized - requires admin privileges');
+    }
+
+    // Get track info before deletion
+    const [track] = await db.select().from(tracks).where(eq(tracks.id, trackId));
+    if (!track) {
+      throw new Error('Track not found');
+    }
+
+    // Delete file from filesystem
+    const filePath = path.join(process.cwd(), 'uploads', track.audioUrl);
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      // Continue with database deletion even if file deletion fails
+    }
+
+    // Delete from database
+    await db.delete(tracks).where(eq(tracks.id, trackId));
+  }
+
   async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
     file: any, 
     targetPage: string,

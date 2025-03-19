@@ -337,6 +337,23 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
+  // Delete music endpoint
+  app.delete("/api/tracks/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const trackId = Number(req.params.id);
+      await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
+      res.json({ message: "Track deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting track:", error);
+      res.status(error.message === 'Track not found' ? 404 : 500)
+        .json({ message: error.message || "Failed to delete track" });
+    }
+  });
+
   //This route was duplicated in the original code.  Removing the duplicate.
 
   // Create HTTP server with the Express app
