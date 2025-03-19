@@ -47,6 +47,18 @@ function calculatePasswordStrength(password: string): number {
     score + (rule.regex.test(password) ? 1 : 0), 0);
 }
 
+// Registration form schema with password confirmation
+const registrationSchema = z.object({
+  ...insertUserSchema.shape,
+  confirmPassword: z.string()
+    .min(1, "Please confirm your password"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type RegistrationForm = z.infer<typeof registrationSchema>;
+
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -66,18 +78,9 @@ export default function AuthPage() {
     }
   });
 
-  // Extended registration schema with password confirmation
-  const extendedRegisterSchema = insertUserSchema.extend({
-    confirmPassword: z.string()
-      .min(1, "Please confirm your password")
-      .refine((data) => data === registerForm.getValues().password, {
-        message: "Passwords do not match"
-      })
-  });
-
   // Registration form
-  const registerForm = useForm<InsertUser>({
-    resolver: zodResolver(extendedRegisterSchema),
+  const registerForm = useForm<RegistrationForm>({
+    resolver: zodResolver(registrationSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -238,7 +241,7 @@ export default function AuthPage() {
                 <div className="mt-2">
                   <Progress value={passwordStrength * 25} className={`h-2 ${passwordStrengthColor[passwordStrength]}`} />
                   <p className="text-sm mt-1 text-gray-400">
-                    Password Strength: {passwordStrengthText[passwordStrength]}
+                    Password Strength: {passwordStrengthText[passwordStrength as keyof typeof passwordStrengthText]}
                   </p>
                 </div>
               </div>
