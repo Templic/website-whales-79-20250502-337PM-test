@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
+import AdminMusicUpload from "@/components/AdminMusicUpload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Post, Comment } from "@shared/schema";
 import { Loader2, Check, X, LogOut, Shield, Settings, Ban, UserPlus, ChartBar, Bell } from "lucide-react";
@@ -259,6 +260,10 @@ export default function AdminPortalPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
+        {/* Music Upload Section */}
+        {(user?.role === 'admin' || user?.role === 'super_admin') && (
+          <AdminMusicUpload />
+        )}
         {/* User Management Section */}
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-4">User Management</h2>
