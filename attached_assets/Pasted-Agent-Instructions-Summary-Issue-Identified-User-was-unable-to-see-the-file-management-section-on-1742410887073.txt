@@ -1,0 +1,87 @@
+Agent Instructions Summary:
+Issue Identified: User was unable to see the file management section on the Admin frontend despite multiple code changes to AdminPage.tsx.
+
+Code Restructuring Proposed:
+
+Suggested restructuring the AdminPage.tsx to properly display the file management section.
+Added necessary code to fetch and manage tracks data that should be displayed in the section.
+Implement Changes: Ensure the following updates to AdminPage.tsx:
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { User, Post, Comment, Track } from '@shared/schema';
+import UploadForm from '@/components/UploadForm';
+import UserList from '@/components/UserList';
+interface AdminPageProps {}
+export default function AdminPage({}: AdminPageProps) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [unapprovedPosts, setUnapprovedPosts] = useState<Post[]>([]);
+  const [unapprovedComments, setUnapprovedComments] = useState<Comment[]>([]);
+  const fetchData = async () => {
+    try {
+      const [usersRes, postsRes, commentsRes, tracksRes] = await Promise.all([
+        axios.get('/api/users'),
+        axios.get('/api/posts/unapproved'),
+        axios.get('/api/posts/comments/unapproved'),
+        axios.get('/api/tracks')
+      ]);
+      setUsers(usersRes.data);
+      setUnapprovedPosts(postsRes.data);
+      setUnapprovedComments(commentsRes.data);
+      setTracks(tracksRes.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
+  return (
+    <div>
+      <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
+        <h2 className="text-2xl font-semibold mb-4">File Management</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-gray-700">
+                <th className="px-6 py-3 text-left">Title</th>
+                {/* Add additional headers */}
+                <th className="px-6 py-3 text-left">Page</th>
+                <th className="px-6 py-3 text-left">Upload Date</th>
+                <th className="px-6 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tracks.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center">No tracks available</td>
+                </tr>
+              ) : (
+                tracks.map(track => (
+                  <tr key={track.id}>
+                    <td className="px-6 py-4">{track.title}</td>
+                    <td className="px-6 py-4">{track.page}</td>
+                    <td className="px-6 py-4">{new Date(track.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4">
+                      <button onClick={() => handleDelete(track.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {/* Other sections */}
+    </div>
+  );
+}
+Server-Side Changes Needed:
+
+Ensure the /api/tracks endpoint is properly implemented in server/routes.ts to handle fetching the list of tracks.
+Error Handling: Confirm that any middleware that interacts with file uploads is correctly configured, especially regarding file management functionalities.
+
+Next Steps:
+After applying the above changes to AdminPage.tsx, ensure to test the admin frontend for the file management section functionality.
+Verify the server-side API endpoints for robustness and accessibility. If issues persist, further investigate server logs for any error messages.
