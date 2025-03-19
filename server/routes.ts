@@ -10,7 +10,7 @@ import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const multerStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(process.cwd(), 'private_storage/uploads'));
   },
