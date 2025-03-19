@@ -16,67 +16,67 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  const NavLinks = () => {
-    console.log("NavLinks component rendering - checking labels");
-    return (
-      <>
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-        </Link>
-        <Link href="/about">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Info className="h-4 w-4 mr-2" />
-            About
-          </Button>
-        </Link>
-        <Link href="/music-release">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Music className="h-4 w-4 mr-2" />
-            New Music
-          </Button>
-        </Link>
-        <Link href="/archived-music">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Archive className="h-4 w-4 mr-2" />
-            Archived Music
-          </Button>
-        </Link>
-        <Link href="/tour">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Calendar className="h-4 w-4 mr-2" />
-            Tour
-          </Button>
-        </Link>
-        <Link href="/engage">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Heart className="h-4 w-4 mr-2" />
-            Engage
-          </Button>
-        </Link>
-        <Link href="/newsletter">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Mail className="h-4 w-4 mr-2" />
-            Newsletter
-          </Button>
-        </Link>
-        <Link href="/blog">
-          <Button variant="ghost" size="sm" className="h-9">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Blog
-          </Button>
-        </Link>
-        <Link href="/collaboration">
-          <Button variant="ghost" size="sm" className="h-9">
-            <Users className="h-4 w-4 mr-2" />
-            Collab
-          </Button>
-        </Link>
-      </>
-    );
-  };
+const NavLinks = () => {
+  console.log("NavLinks component rendering - checking labels");
+  return (
+    <>
+      <Link href="/">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Home className="h-4 w-4 mr-2" />
+          Home
+        </Button>
+      </Link>
+      <Link href="/about">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Info className="h-4 w-4 mr-2" />
+          About
+        </Button>
+      </Link>
+      <Link href="/music-release">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Music className="h-4 w-4 mr-2" />
+          New Music
+        </Button>
+      </Link>
+      <Link href="/archived-music">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Archive className="h-4 w-4 mr-2" />
+          Archived Music
+        </Button>
+      </Link>
+      <Link href="/tour">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Calendar className="h-4 w-4 mr-2" />
+          Tour
+        </Button>
+      </Link>
+      <Link href="/engage">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Heart className="h-4 w-4 mr-2" />
+          Engage
+        </Button>
+      </Link>
+      <Link href="/newsletter">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Mail className="h-4 w-4 mr-2" />
+          Newsletter
+        </Button>
+      </Link>
+      <Link href="/blog">
+        <Button variant="ghost" size="sm" className="h-9">
+          <BookOpen className="h-4 w-4 mr-2" />
+          Blog
+        </Button>
+      </Link>
+      <Link href="/collaboration">
+        <Button variant="ghost" size="sm" className="h-9">
+          <Users className="h-4 w-4 mr-2" />
+          Collaborate
+        </Button>
+      </Link>
+    </>
+  );
+};
 
   return (
     <div className="min-h-screen flex flex-col">

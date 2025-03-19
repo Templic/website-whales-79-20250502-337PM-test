@@ -12,7 +12,7 @@ const navigationItems = [
   { path: "/engage", label: "Engage" },
   { path: "/newsletter", label: "Newsletter" },
   { path: "/blog", label: "Blog" },
-  { path: "/collaboration", label: "Collaboration" },
+  { path: "/collaboration", label: "Collaborate" },
   { path: "/contact", label: "Contact" }
 ];
 
@@ -34,7 +34,7 @@ export function Header() {
   return (
     <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
       {/* Debug marker to verify updated component */}
-      <div className="hidden">DEBUG: Header Updated - Archived Music v2</div>
+      <div className="hidden">DEBUG: Header Updated - Collaborate label v3</div>
 
       <div className="flex items-center justify-between p-4 container mx-auto">
         <div className="flex items-center gap-4">
