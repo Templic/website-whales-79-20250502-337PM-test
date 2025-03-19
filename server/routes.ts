@@ -96,7 +96,7 @@ const initClamAV = async () => {
       scanRecursively: true,
       clamscan: {
         path: clamPath,
-        db: null,
+        db: '/var/lib/clamav',
         scanArchives: true,
         active: true
       },
