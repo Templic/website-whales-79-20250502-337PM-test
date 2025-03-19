@@ -10,10 +10,20 @@ import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
 // Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(process.cwd(), 'private_storage/uploads'));
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
 const upload = multer({
-  dest: '/tmp/',
+  storage: storage,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB limit
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+    fieldSize: 100 * 1024 * 1024 // Also increase field size limit
   },
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = new Set([
