@@ -66,16 +66,16 @@ export default function AuthPage() {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
 
-  if (user) {
-    return <Redirect to="/" />;
-  }
-
   const loginForm = useForm<Pick<typeof registrationSchema["_type"], "username" | "password">>({
     defaultValues: {
       username: "",
       password: ""
     }
   });
+
+  if (user) {
+    return <Redirect to="/" />;
+  }
 
   const registerForm = useForm<ContactForm>({
     resolver: zodResolver(registrationSchema),
