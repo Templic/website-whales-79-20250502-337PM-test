@@ -34,6 +34,12 @@ const mimeTypeConfig = {
       'video/webm'       // .webm
     ]),
     maxSize: 100 * 1024 * 1024 // 100MB for video files
+  },
+  text: {
+    types: new Set([
+      'text/plain'      // .txt
+    ]),
+    maxSize: 5 * 1024 * 1024  // 5MB for text files
   }
 };
 
@@ -47,13 +53,17 @@ const validateFileUpload = (file: Express.Multer.File): { valid: boolean; error?
   // Determine file category and validate
   const isAudio = mimeTypeConfig.audio.types.has(file.mimetype);
   const isVideo = mimeTypeConfig.video.types.has(file.mimetype);
+  const isText = mimeTypeConfig.text.types.has(file.mimetype);
 
-  if (!isAudio && !isVideo) {
+  if (!isAudio && !isVideo && !isText) {
     return { valid: false, error: 'Unsupported file type' };
   }
 
   // Check file size based on type
-  const maxSize = isAudio ? mimeTypeConfig.audio.maxSize : mimeTypeConfig.video.maxSize;
+  let maxSize;
+  if (isAudio) maxSize = mimeTypeConfig.audio.maxSize;
+  else if (isVideo) maxSize = mimeTypeConfig.video.maxSize;
+  else maxSize = mimeTypeConfig.text.maxSize;
   if (file.size > maxSize) {
     return { 
       valid: false, 
