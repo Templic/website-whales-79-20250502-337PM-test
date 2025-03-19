@@ -1,6 +1,7 @@
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
+      <ScrollProgress />
       <div className="fixed top-4 right-4 z-[100] transition-all duration-300 hover:scale-105">
         <ThemeToggle />
       </div>
