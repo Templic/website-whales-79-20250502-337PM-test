@@ -39,10 +39,6 @@ const validateFileType = (req, res, next) => {
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Secure file serving endpoint
   app.get('/media/:filename', (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const filename = req.params.filename;
     const filePath = path.join(process.cwd(), 'private_storage/uploads', filename);
 
@@ -75,7 +71,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       '.mov': 'video/quicktime'
     };
 
-    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    const contentType = mimeTypes[ext as keyof typeof mimeTypes] || 'application/octet-stream';
 
     // Parse Range header
     const range = req.headers.range;
