@@ -1,9 +1,31 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+interface Track {
+  id: number;
+  title: string;
+  artist: string;
+  audioUrl: string;
+  createdAt: string;
+}
 
 export default function NewMusicPage() {
+  const [tracks, setTracks] = useState<Track[]>([]);
+
   useEffect(() => {
     document.title = "New Music - Dale Loves Whales";
+    fetchTracks();
   }, []);
+
+  const fetchTracks = async () => {
+    try {
+      const response = await axios.get('/api/tracks');
+      setTracks(response.data);
+    } catch (error) {
+      console.error('Error fetching tracks:', error);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -23,40 +45,20 @@ export default function NewMusicPage() {
         </div>
       </section>
 
-      <section className="music-player bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-        <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Listen Now</h2>
-        <div className="player-controls flex gap-4 mb-6">
-          <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Play</button>
-          <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Pause</button>
-          <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Next</button>
-          <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Previous</button>
+      <section className="music-player space-y-6">
+        <h2 className="text-2xl font-bold text-[#00ebd6]">Latest Tracks</h2>
+        <div className="grid gap-4">
+          {tracks.map(track => (
+            <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg">
+              <h3 className="text-xl mb-2">{track.title}</h3>
+              <p className="text-sm mb-2">Artist: {track.artist}</p>
+              <audio controls className="w-full">
+                <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+          ))}
         </div>
-        <ul className="tracklist space-y-4">
-          <li className="flex justify-between items-center bg-[rgba(48,52,54,0.5)] p-4 rounded-lg">
-            Track 1 <span>3:45</span>
-            <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Play</button>
-          </li>
-          <li className="flex justify-between items-center bg-[rgba(48,52,54,0.5)] p-4 rounded-lg">
-            Track 2 <span>4:00</span>
-            <button className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors">Play</button>
-          </li>
-        </ul>
-      </section>
-
-      <section className="streaming-links bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-        <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Stream on Your Favorite Platform</h2>
-        <div className="platform-links grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a href="#" className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg text-center hover:bg-[#fe0064] hover:text-white transition-colors">Spotify</a>
-          <a href="#" className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg text-center hover:bg-[#fe0064] hover:text-white transition-colors">Apple Music</a>
-          <a href="#" className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg text-center hover:bg-[#fe0064] hover:text-white transition-colors">YouTube Music</a>
-          <a href="#" className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg text-center hover:bg-[#fe0064] hover:text-white transition-colors">Amazon Music</a>
-        </div>
-      </section>
-
-      <section className="call-to-action text-center">
-        <button className="bg-[#00ebd6] text-[#303436] px-8 py-3 rounded-full text-xl font-bold hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg hover:shadow-xl">
-          Buy Now
-        </button>
       </section>
     </div>
   );

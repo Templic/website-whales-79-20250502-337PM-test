@@ -1,5 +1,6 @@
 import express from "express";
 import { createServer, type Server } from "http";
+import path from "path";
 import { storage } from "./storage";
 import {
   insertSubscriberSchema,
@@ -11,6 +12,8 @@ import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
