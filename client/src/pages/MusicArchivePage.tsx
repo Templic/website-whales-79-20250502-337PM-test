@@ -1,234 +1,85 @@
-import { useEffect, useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Album, Track } from "@shared/schema";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
-import { formatDisplayDate } from "@/lib/date-utils";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { Track, Album } from "@shared/schema";
+import AudioPlayer from "@/components/AudioPlayer"; // Assuming AudioPlayer is in a separate file
 
-type AudioPlayerProps = {
-  track: Track;
-  onNext?: () => void;
-  onPrevious?: () => void;
-};
 
-const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const audioRef = useRef<HTMLAudioElement>(null);
+interface MusicArchivePageProps {}
 
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
-  const handleVolumeChange = (value: number[]) => {
-    const newVolume = value[0];
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-  };
-
-  return (
-    <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl flex items-center gap-4 backdrop-blur-sm">
-      <audio
-        ref={audioRef}
-        src={track.audioUrl}
-        onEnded={() => {
-          setIsPlaying(false);
-          onNext?.();
-        }}
-      />
-
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onPrevious}
-          disabled={!onPrevious}
-          className="text-[#00ebd6] hover:text-[#fe0064]"
-        >
-          <SkipBack className="h-6 w-6" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={togglePlay}
-          className="text-[#00ebd6] hover:text-[#fe0064]"
-        >
-          {isPlaying ? (
-            <Pause className="h-6 w-6" />
-          ) : (
-            <Play className="h-6 w-6" />
-          )}
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onNext}
-          disabled={!onNext}
-          className="text-[#00ebd6] hover:text-[#fe0064]"
-        >
-          <SkipForward className="h-6 w-6" />
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-2 w-32">
-        <Volume2 className="h-4 w-4 text-[#00ebd6]" />
-        <Slider
-          defaultValue={[1]}
-          max={1}
-          step={0.1}
-          value={[volume]}
-          onValueChange={handleVolumeChange}
-          className="w-full"
-        />
-      </div>
-
-      <div className="text-sm">
-        <p className="font-medium text-[#00ebd6]">{track.title}</p>
-        <p className="text-gray-400">{track.artist}</p>
-      </div>
-    </div>
-  );
-};
-
-export default function ArchivedMusicPage() {
-  const [currentTrackId, setCurrentTrackId] = useState<number | null>(null);
-
-  const { data: albums, isLoading: albumsLoading } = useQuery<Album[]>({
-    queryKey: ['/api/albums'],
-  });
-
-  const { data: tracks, isLoading: tracksLoading } = useQuery<Track[]>({
-    queryKey: ['/api/tracks'],
-  });
+export default function MusicArchivePage({}: MusicArchivePageProps) {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
 
   useEffect(() => {
-    document.title = "Archived Music - Dale Loves Whales";
+    document.title = "Music Archive - Dale Loves Whales";
+    fetchMusicContent();
   }, []);
 
-  const currentTrack = tracks?.find(track => track.id === currentTrackId);
-  const albumTracks = tracks?.filter(track => track.albumId === currentTrack?.albumId);
-
-  const handleNextTrack = () => {
-    if (albumTracks && currentTrackId) {
-      const currentIndex = albumTracks.findIndex(track => track.id === currentTrackId);
-      if (currentIndex < albumTracks.length - 1) {
-        setCurrentTrackId(albumTracks[currentIndex + 1].id);
-      }
-    }
-  };
-
-  const handlePreviousTrack = () => {
-    if (albumTracks && currentTrackId) {
-      const currentIndex = albumTracks.findIndex(track => track.id === currentTrackId);
-      if (currentIndex > 0) {
-        setCurrentTrackId(albumTracks[currentIndex - 1].id);
-      }
+  const fetchMusicContent = async () => {
+    try {
+      const [tracksResponse, albumsResponse] = await Promise.all([
+        axios.get('/api/tracks'),
+        axios.get('/api/albums')
+      ]);
+      setTracks(tracksResponse.data);
+      setAlbums(albumsResponse.data);
+    } catch (error) {
+      console.error('Error fetching music content:', error);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Archived Music</h1>
-        <p className="text-xl max-w-2xl mx-auto">
-          Explore Dale's complete discography, from cosmic beginnings to latest stellar releases.
-        </p>
+    <div className="space-y-12 p-8">
+      <section className="albums-section">
+        <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {albums.map(album => (
+            <div key={album.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl hover:transform hover:-translate-y-2 transition-all duration-300">
+              <h3 className="text-2xl text-[#00ebd6] mb-3">{album.title}</h3>
+              <p className="text-sm mb-2">Release Date: {new Date(album.releaseDate).toLocaleDateString()}</p>
+              <p className="text-sm mb-4">{album.description}</p>
+              {album.coverUrl && (
+                <img 
+                  src={album.coverUrl} 
+                  alt={`${album.title} cover`}
+                  className="w-full h-48 object-cover rounded-lg mb-4"
+                />
+              )}
+              <a 
+                href={album.streamUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block bg-[#fe0064] text-white px-4 py-2 rounded-full hover:bg-opacity-80 transition-all"
+              >
+                Stream Now
+              </a>
+            </div>
+          ))}
+          {albums.length === 0 && (
+            <p className="text-center text-gray-400 col-span-full">No albums available yet.</p>
+          )}
+        </div>
       </section>
 
-      {currentTrack && (
-        <section className="sticky top-4 z-10">
-          <AudioPlayer
-            track={currentTrack}
-            onNext={albumTracks && albumTracks.length > 1 ? handleNextTrack : undefined}
-            onPrevious={albumTracks && albumTracks.length > 1 ? handlePreviousTrack : undefined}
-          />
-        </section>
-      )}
-
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {albumsLoading ? (
-          Array(6).fill(0).map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-[rgba(10,50,92,0.3)] h-64 rounded-xl mb-4" />
-              <div className="h-6 bg-[rgba(10,50,92,0.3)] rounded w-3/4 mb-2" />
-              <div className="h-4 bg-[rgba(10,50,92,0.3)] rounded w-1/2" />
-            </div>
-          ))
-        ) : albums?.map((album) => (
-          <div key={album.id} className="bg-[rgba(10,50,92,0.6)] rounded-xl overflow-hidden shadow-lg hover:transform hover:scale-105 transition-transform duration-300 backdrop-blur-sm">
-            {album.coverImage && (
-              <img 
-                src={album.coverImage} 
-                alt={`${album.title} Cover`} 
-                className="w-full h-64 object-cover"
-              />
-            )}
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-[#00ebd6] mb-2">{album.title}</h3>
-              <p className="text-sm text-gray-400 mb-4">
-                Released: {album.releaseDate ? formatDisplayDate(album.releaseDate) : 'Release date TBA'}
-              </p>
-
-              <div className="space-y-2">
-                {tracks?.filter(track => track.albumId === album.id).map(track => (
-                  <div 
-                    key={track.id}
-                    className={`flex justify-between items-center p-2 rounded-lg cursor-pointer transition-colors ${
-                      currentTrackId === track.id 
-                        ? 'bg-[rgba(0,235,214,0.2)] text-[#00ebd6]' 
-                        : 'hover:bg-[rgba(48,52,54,0.5)]'
-                    }`}
-                    onClick={() => setCurrentTrackId(track.id)}
-                  >
-                    <span className="text-sm flex items-center gap-2">
-                      {currentTrackId === track.id && <Play className="h-3 w-3" />}
-                      {track.title}
-                    </span>
-                    <span className="text-sm text-gray-400">{track.duration}</span>
-                  </div>
-                ))}
+      <section className="tracks-section">
+        <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">All Tracks</h2>
+        <div className="grid gap-4">
+          {tracks.map(track => (
+            <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg hover:bg-[rgba(10,50,92,0.8)] transition-all">
+              <h3 className="text-xl mb-2 text-[#00ebd6]">{track.title}</h3>
+              <div className="flex flex-col space-y-2 mb-4">
+                <p className="text-sm">Artist: {track.artist}</p>
+                <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
               </div>
+              <audio controls className="w-full">
+                <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
+                Your browser does not support the audio element.
+              </audio>
             </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm mt-12">
-        <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Featured Playlists</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors">
-            <h3 className="text-lg font-bold text-[#00ebd6] mb-2">Best of Dale</h3>
-            <p className="text-sm mb-4 text-gray-300">A curated collection of Dale's most popular tracks</p>
-            <Button 
-              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-              onClick={() => setCurrentTrackId(tracks?.[0]?.id || null)}
-            >
-              Play All
-            </Button>
-          </div>
-
-          <div className="p-6 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors">
-            <h3 className="text-lg font-bold text-[#00ebd6] mb-2">Cosmic Journey</h3>
-            <p className="text-sm mb-4 text-gray-300">Experience the evolution of Dale's cosmic sound</p>
-            <Button 
-              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-              onClick={() => setCurrentTrackId(tracks?.[0]?.id || null)}
-            >
-              Play All
-            </Button>
-          </div>
+          ))}
+          {tracks.length === 0 && (
+            <p className="text-center text-gray-400">No tracks available yet.</p>
+          )}
         </div>
       </section>
     </div>

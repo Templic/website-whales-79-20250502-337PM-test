@@ -49,15 +49,21 @@ export default function NewMusicPage() {
         <h2 className="text-2xl font-bold text-[#00ebd6]">Latest Tracks</h2>
         <div className="grid gap-4">
           {tracks.map(track => (
-            <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg">
-              <h3 className="text-xl mb-2">{track.title}</h3>
-              <p className="text-sm mb-2">Artist: {track.artist}</p>
+            <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg hover:bg-[rgba(10,50,92,0.8)] transition-all">
+              <h3 className="text-xl mb-2 text-[#00ebd6]">{track.title}</h3>
+              <div className="flex flex-col space-y-2 mb-4">
+                <p className="text-sm">Artist: {track.artist}</p>
+                <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
+              </div>
               <audio controls className="w-full">
                 <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
             </div>
           ))}
+          {tracks.length === 0 && (
+            <p className="text-center text-gray-400">No tracks available yet.</p>
+          )}
         </div>
       </section>
     </div>
