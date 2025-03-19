@@ -238,8 +238,12 @@ const fileHandler = {
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
+  import multer from 'multer';
+  const upload = multer({ dest: 'private_storage/uploads/temp' });
+
   // Music upload route with virus scanning
-  app.post("/api/upload/music", 
+  app.post("/api/upload/music",
+    upload.single('file'),
     async (
       req: express.Request & { 
         file?: Express.Multer.File;
