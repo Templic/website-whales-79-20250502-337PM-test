@@ -9,7 +9,7 @@ import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Configure express-fileupload middleware
+// Configure express-fileupload middleware with detailed logging
 const fileUploadMiddleware = fileUpload({
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max file size
   useTempFiles: true,
@@ -21,12 +21,6 @@ const fileUploadMiddleware = fileUpload({
   uploadTimeout: 0, // Disable timeout
   createParentPath: true
 });
-
-// Secure filename sanitization using sanitize-filename package
-import sanitizeFilename from 'sanitize-filename';
-const secureFilename = (filename: string): string => {
-  return sanitizeFilename(filename);
-};
 
 // Additional validation for uploaded files
 const validateUploadedFile = (file: fileUpload.UploadedFile) => {
@@ -110,7 +104,32 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   const clamAV = await initClamAV();
 
   // Apply file upload middleware with custom error handling
-  app.use(fileUploadMiddleware);
+  app.use((req, res, next) => {
+    // Skip file upload middleware for non-upload routes
+    if (!req.path.includes('/upload')) {
+      return next();
+    }
+
+    // Check content type
+    if (!req.headers['content-type']?.includes('multipart/form-data')) {
+      console.error('Invalid content type for file upload');
+      return res.status(400).json({ message: 'Invalid content type' });
+    }
+
+    fileUploadMiddleware(req, res, (err) => {
+      if (err) {
+        console.error('File upload middleware error:', err);
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(413).json({ message: 'File too large' });
+        }
+        return res.status(500).json({ 
+          message: 'File upload failed',
+          error: err.message 
+        });
+      }
+      next();
+    });
+  });
 
   // Music upload route with virus scanning
   app.post("/api/upload/music", async (
