@@ -9,22 +9,42 @@ import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Configure express-fileupload middleware with detailed debug logging
+// Configure express-fileupload middleware with optimized settings for large files
 const fileUploadMiddleware = fileUpload({
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  limits: { 
+    fileSize: 100 * 1024 * 1024, // 100MB max file size
+  },
   useTempFiles: true,
   tempFileDir: '/tmp/',
   debug: true,
   safeFileNames: true,
   preserveExtension: true,
   abortOnLimit: true,
-  createParentPath: true, // Ensure parent directories are created
-  parseNested: true // Enable nested form data parsing
+  createParentPath: true,
+  parseNested: true,
+  uploadTimeout: 60000, // 60 seconds timeout
+  responseOnLimit: "File size limit has been reached"
 });
 
-// Simple sanitization function
+// Error handler for file upload
+const handleUploadError = (error: any, res: express.Response) => {
+  console.error('File upload error:', error);
+  if (error.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ message: 'File is too large' });
+  }
+  if (error.code === 'ENOENT') {
+    return res.status(500).json({ message: 'File upload directory is not accessible' });
+  }
+  return res.status(500).json({ 
+    message: 'File upload failed',
+    error: error.message 
+  });
+};
+
+// Secure filename sanitization using sanitize-filename package
+import sanitizeFilename from 'sanitize-filename';
 const secureFilename = (filename: string): string => {
-  return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+  return sanitizeFilename(filename);
 };
 
 // Type-safe middleware for file type validation
@@ -65,14 +85,20 @@ const validateFileType = (
     }
     next();
   } catch (error) {
-    console.error('Error in validateFileType middleware:', error);
-    return res.status(500).json({ message: "Error validating file" });
+    handleUploadError(error, res);
   }
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Apply express-fileupload middleware
-  app.use(fileUploadMiddleware);
+  // Apply express-fileupload middleware with error handling
+  app.use((req, res, next) => {
+    fileUploadMiddleware(req, res, (err) => {
+      if (err) {
+        return handleUploadError(err, res);
+      }
+      next();
+    });
+  });
 
   // Initialize ClamAV scanner with detailed logging
   const initClamAV = async () => {
@@ -87,7 +113,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
 
       // Check if ClamAV binary exists
-      const clamPath = '/usr/bin/clamscan';
+      const clamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
       if (!fs.existsSync(clamPath)) {
         console.error(`ClamAV binary not found at ${clamPath}`);
         return null;
@@ -222,10 +248,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error) {
       console.error("Error in music file upload:", error);
-      res.status(500).json({
-        message: "Failed to upload file",
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      handleUploadError(error, res);
     }
   });
   // Secure file serving endpoint
@@ -612,7 +635,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .json({ message: error.message || "Failed to delete track" });
     }
   });
-
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
