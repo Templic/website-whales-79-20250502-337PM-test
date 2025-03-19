@@ -14,32 +14,25 @@ import { Label } from "@/components/ui/label";
 const AVAILABLE_ROLES = ['user', 'admin', 'super_admin'] as const;
 type UserRole = typeof AVAILABLE_ROLES[number];
 
+// Define types for system settings and analytics
+interface SystemSettings {
+  enableRegistration: boolean;
+  requireEmailVerification: boolean;
+  autoApproveContent: boolean;
+}
+
+interface AnalyticsData {
+  activeUsers: number;
+  newRegistrations: number;
+  contentReports: number;
+  systemHealth: string;
+}
+
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
 
-  // Redirect non-admin users
-  if (!user || user.role === 'user') {
-    return <Redirect to="/" />;
-  }
-
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      toast({
-        title: "Logout successful",
-        description: "You have been logged out successfully."
-      });
-    } catch (error) {
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Advanced user management mutations
+  // Define all mutations first
   const promoteUserMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: number; role: UserRole }) => {
       const response = await fetch(`/api/users/${userId}/role`, {
@@ -99,21 +92,8 @@ export default function AdminPortalPage() {
     }
   });
 
-  // Fetch system settings
-  const { data: systemSettings } = useQuery({
-    queryKey: ['/api/admin/settings'],
-    enabled: user?.role === 'super_admin'
-  });
-
-  // Fetch analytics data
-  const { data: analyticsData } = useQuery({
-    queryKey: ['/api/admin/analytics'],
-    enabled: user?.role === 'admin' || user?.role === 'super_admin'
-  });
-
-  // System settings mutation
   const updateSettingsMutation = useMutation({
-    mutationFn: async (settings: any) => {
+    mutationFn: async (settings: Partial<SystemSettings>) => {
       const response = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -130,31 +110,6 @@ export default function AdminPortalPage() {
       });
     }
   });
-
-  const { data: users, isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ['/api/users'],
-    enabled: user?.role === 'admin' || user?.role === 'super_admin'
-  });
-
-  const { data: unapprovedPosts, isLoading: postsLoading } = useQuery<Post[]>({
-    queryKey: ['/api/posts/unapproved'],
-    enabled: user?.role === 'admin' || user?.role === 'super_admin'
-  });
-
-  const { data: unapprovedComments = [], isLoading: commentsLoading, error: commentsError } = useQuery<Comment[]>({
-    queryKey: ['/api/posts/comments/unapproved'],
-    enabled: user?.role === 'admin' || user?.role === 'super_admin',
-    retry: 1
-  });
-
-  if (commentsError) {
-    console.error('Error loading unapproved comments:', commentsError);
-    toast({
-      title: "Error",
-      description: "Failed to load unapproved comments",
-      variant: "destructive"
-    });
-  }
 
   const approvePostMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -217,13 +172,71 @@ export default function AdminPortalPage() {
     }
   });
 
-  if (usersLoading || postsLoading || commentsLoading) {
+  // Define all queries
+  const { data: systemSettings = {} as SystemSettings, isLoading: settingsLoading } = useQuery<SystemSettings>({
+    queryKey: ['/api/admin/settings'],
+    enabled: !!user && user.role === 'super_admin'
+  });
+
+  const { data: analyticsData = {} as AnalyticsData, isLoading: analyticsLoading } = useQuery<AnalyticsData>({
+    queryKey: ['/api/admin/analytics'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin')
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin')
+  });
+
+  const { data: unapprovedPosts = [], isLoading: postsLoading } = useQuery<Post[]>({
+    queryKey: ['/api/posts/unapproved'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin')
+  });
+
+  const { data: unapprovedComments = [], isLoading: commentsLoading, error: commentsError } = useQuery<Comment[]>({
+    queryKey: ['/api/posts/comments/unapproved'],
+    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin')
+  });
+
+  // Handle errors
+  if (commentsError) {
+    console.error('Error loading unapproved comments:', commentsError);
+    toast({
+      title: "Error",
+      description: "Failed to load unapproved comments",
+      variant: "destructive"
+    });
+  }
+
+  // Check auth status
+  if (!user || user.role === 'user') {
+    return <Redirect to="/" />;
+  }
+
+  // Check loading state
+  if (usersLoading || postsLoading || commentsLoading || settingsLoading || analyticsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
       </div>
     );
   }
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      toast({
+        title: "Logout successful",
+        description: "You have been logged out successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -381,7 +394,7 @@ export default function AdminPortalPage() {
           </div>
         </section>
 
-        {/* Existing Content Moderation Section */}
+        {/* Content Moderation Section */}
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
           <h2 className="text-2xl font-bold mb-4">Content Moderation</h2>
           {/* Unapproved Posts */}
