@@ -1,28 +1,95 @@
-
 import { WebSocket, WebSocketServer } from 'ws';
 import { Server as SocketIOServer } from 'socket.io';
 import { type Server } from 'http';
 import { log } from './vite';
 
+// Define message types
+interface WebSocketMessage {
+  type: 'file_upload' | 'file_delete' | 'status_update';
+  payload: any;
+}
+
 export function setupWebSockets(httpServer: Server) {
-  // WebSocket setup
+  // WebSocket setup with proper configuration
   const wss = new WebSocketServer({ 
     server: httpServer,
-    perMessageDeflate: false,
-    maxPayload: 64 * 1024, // 64kb
-    skipUTF8Validation: true
+    path: '/ws',
+    perMessageDeflate: {
+      zlibDeflateOptions: {
+        chunkSize: 1024,
+        memLevel: 7,
+        level: 3
+      },
+      zlibInflateOptions: {
+        chunkSize: 10 * 1024
+      },
+      clientNoContextTakeover: true,
+      serverNoContextTakeover: true,
+      serverMaxWindowBits: 10,
+      concurrencyLimit: 10,
+      threshold: 1024
+    },
+    maxPayload: 64 * 1024 // 64kb
   });
-  
+
   wss.on('connection', (ws: WebSocket) => {
     log('WebSocket client connected');
-    
+
+    // Setup heartbeat
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    }, 30000);
+
     ws.on('message', (message) => {
       try {
-        const data = message.toString();
-        log(`WebSocket message received: ${data}`);
-        ws.send(`Echo: ${data}`);
+        const data: WebSocketMessage = JSON.parse(message.toString());
+        log(`WebSocket message received: ${JSON.stringify(data)}`);
+
+        switch (data.type) {
+          case 'file_upload':
+            // Handle file upload notifications
+            wss.clients.forEach(client => {
+              if (client !== ws && client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'file_upload',
+                  payload: data.payload
+                }));
+              }
+            });
+            break;
+
+          case 'file_delete':
+            // Handle file deletion notifications
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'file_delete',
+                  payload: data.payload
+                }));
+              }
+            });
+            break;
+
+          case 'status_update':
+            // Handle status updates
+            wss.clients.forEach(client => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                  type: 'status_update',
+                  payload: data.payload
+                }));
+              }
+            });
+            break;
+        }
       } catch (error) {
         console.error('WebSocket message error:', error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          payload: 'Invalid message format'
+        }));
       }
     });
 
@@ -36,32 +103,57 @@ export function setupWebSockets(httpServer: Server) {
     });
 
     ws.on('close', () => {
+      clearInterval(pingInterval);
       log('WebSocket client disconnected');
+    });
+
+    ws.on('pong', () => {
+      // Handle pong response
+      ws.isAlive = true;
     });
   });
 
+  // Socket.IO setup with proper configuration
+  const io = new SocketIOServer(httpServer, {
+    path: '/socket.io',
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST']
+    },
+    connectTimeout: 45000,
+    pingTimeout: 30000,
+    pingInterval: 25000,
+    upgradeTimeout: 10000,
+    maxHttpBufferSize: 1e6,
+    transports: ['websocket', 'polling']
+  });
+
+  // Handle Socket.IO connections
+  io.on('connection', (socket) => {
+    log('Socket.IO client connected');
+
+    socket.on('file_event', (data) => {
+      log(`Socket.IO file event received: ${JSON.stringify(data)}`);
+      // Broadcast to all other clients
+      socket.broadcast.emit('file_event', data);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket.IO error:', error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      log(`Socket.IO client disconnected: ${reason}`);
+    });
+  });
+
+  // Error handling for both servers
   wss.on('error', (error) => {
     console.error('WebSocket server error:', error);
   });
 
-  // Socket.IO setup
-  const io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: '*'
-    }
-  });
-
-  io.on('connection', (socket) => {
-    log('Socket.IO client connected');
-
-    socket.on('message', (message) => {
-      log(`Socket.IO message received: ${message}`);
-      socket.emit('message', `Echo: ${message}`);
-    });
-
-    socket.on('disconnect', () => {
-      log('Socket.IO client disconnected');
-    });
+  io.on('error', (error) => {
+    console.error('Socket.IO server error:', error);
   });
 
   return { wss, io };

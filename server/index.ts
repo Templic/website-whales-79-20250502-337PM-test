@@ -78,16 +78,60 @@ async function startServer() {
     // Register API routes
     const httpServer = await registerRoutes(app);
 
-    // Initialize WebSocket and Socket.IO servers AFTER httpServer is created.
-    import('./websocket').then(({ setupWebSockets }) => {
-      try {
-        const { wss, io } = setupWebSockets(httpServer);
-        console.log('WebSocket server initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize WebSocket server:', error);
-      }
-    });
+    // Initialize WebSocket and Socket.IO servers
+    try {
+      const { wss, io } = await import('./websocket').then(({ setupWebSockets }) => setupWebSockets(httpServer));
+      console.log('WebSocket and Socket.IO servers initialized successfully');
 
+      // Add WebSocket server cleanup to shutdown process
+      const shutdown = async () => {
+        console.log('Shutting down server...');
+        try {
+          // Clear session cleanup interval
+          if (cleanupInterval) {
+            clearInterval(cleanupInterval);
+          }
+
+          // Close WebSocket connections
+          wss.clients.forEach(client => {
+            try {
+              client.close();
+            } catch (err) {
+              console.error('Error closing WebSocket client:', err);
+            }
+          });
+          wss.close();
+
+          // Close Socket.IO connections
+          io.close(() => {
+            console.log('Socket.IO server closed');
+          });
+
+          await new Promise<void>((resolve) => {
+            httpServer.close(() => {
+              console.log('HTTP server closed');
+              resolve();
+            });
+          });
+
+          console.log('Closing database pool...');
+          await pgPool.end();
+          console.log('Database pool closed');
+
+          process.exit(0);
+        } catch (error) {
+          console.error('Error during shutdown:', error);
+          process.exit(1);
+        }
+      };
+
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+
+    } catch (error) {
+      console.error('Failed to initialize WebSocket server:', error);
+      // Continue server startup even if WebSocket fails
+    }
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite in development mode...');
@@ -99,12 +143,6 @@ async function startServer() {
       });
     }
 
-    console.log(`Attempting to start server on port ${port}...`);
-
-    // Close any existing connections before starting
-    if (httpServer.listening) {
-      await new Promise<void>((resolve) => httpServer.close(() => resolve()));
-    }
 
     // Start periodic session cleanup (every 6 hours)
     cleanupInterval = setInterval(async () => {
@@ -126,36 +164,6 @@ async function startServer() {
         reject(err);
       });
     });
-
-    // Setup graceful shutdown
-    const shutdown = async () => {
-      console.log('Shutting down server...');
-      try {
-        // Clear session cleanup interval
-        if (cleanupInterval) {
-          clearInterval(cleanupInterval);
-        }
-
-        await new Promise<void>((resolve) => {
-          httpServer.close(() => {
-            console.log('HTTP server closed');
-            resolve();
-          });
-        });
-
-        console.log('Closing database pool...');
-        await pgPool.end();
-        console.log('Database pool closed');
-
-        process.exit(0);
-      } catch (error) {
-        console.error('Error during shutdown:', error);
-        process.exit(1);
-      }
-    };
-
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
 
   } catch (error) {
     console.error('Failed to start server:', error);
