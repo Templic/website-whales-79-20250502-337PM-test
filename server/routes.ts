@@ -2,24 +2,37 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import {
-  insertSubscriberSchema,
-  insertPostSchema,
-  insertCommentSchema,
-  insertCategorySchema
-} from "@shared/schema";
+import fileUpload from 'express-fileupload';
+import { type UploadedFile } from 'express-fileupload';
+import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
+import NodeClam from 'clamav.js';
+
+// Configure express-fileupload middleware
+const fileUploadMiddleware = fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  debug: true,
+  safeFileNames: true,
+  preserveExtension: true,
+  abortOnLimit: true
+});
 
 // Simple sanitization function (replace with sanitize-filename package for production)
 const secureFilename = (filename: string): string => {
   return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
 };
 
-// Middleware for file type validation
-const validateFileType = (req, res, next) => {
-  if (!req.files?.file) {
+// Type-safe middleware for file type validation
+const validateFileType = (
+  req: express.Request & { files?: { [key: string]: UploadedFile | UploadedFile[] } },
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  if (!req.files?.file || Array.isArray(req.files.file)) {
     return res.status(400).json({ message: "No file uploaded" });
   }
 
@@ -37,6 +50,123 @@ const validateFileType = (req, res, next) => {
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
+  // Apply express-fileupload middleware
+  app.use(fileUploadMiddleware);
+
+  // Initialize ClamAV scanner
+  const initClamAV = async () => {
+    try {
+      const scanner = new NodeClam();
+      await scanner.init({
+        removeInfected: true,
+        quarantineInfected: false,
+        scanLog: null,
+        debugMode: false,
+        fileList: null,
+        scanRecursively: true,
+        clamscan: {
+          path: '/usr/bin/clamscan',
+          db: null,
+          scanArchives: true,
+          active: true
+        },
+        preference: 'clamscan'
+      });
+      return scanner;
+    } catch (error) {
+      console.error('Failed to initialize ClamAV:', error);
+      return null;
+    }
+  };
+
+  // Initialize ClamAV scanner
+  const clamAV = await initClamAV();
+
+  // Music upload route with virus scanning
+  app.post("/api/upload/music", validateFileType, async (
+    req: express.Request & { 
+      files?: { [key: string]: UploadedFile | UploadedFile[] },
+      user?: { id: number; role: string; }
+    },
+    res: express.Response
+  ) => {
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (!req.files?.file || Array.isArray(req.files.file)) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const file = req.files.file;
+    const targetPage = req.body.page as string;
+    const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
+
+    // Validate target page
+    if (!allowedPages.includes(targetPage)) {
+      return res.status(400).json({ message: "Invalid target page" });
+    }
+
+    try {
+      // Virus scan using ClamAV
+      let scanResult: { isInfected: boolean; viruses?: string[] } = { isInfected: false };
+
+      if (clamAV) {
+        try {
+          console.log("Scanning file for viruses...");
+          scanResult = await clamAV.isInfected(file.tempFilePath);
+
+          if (scanResult.isInfected) {
+            return res.status(400).json({
+              message: "File is infected with malware",
+              viruses: scanResult.viruses
+            });
+          }
+        } catch (scanError) {
+          console.error("ClamAV scan error:", scanError);
+          // Log the error but continue with upload
+        }
+      } else {
+        console.warn("ClamAV not available - skipping virus scan");
+      }
+
+      // Proceed with file upload
+      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
+      const fileName = secureFilename(file.name);
+      const filePath = path.join(uploadDir, fileName);
+
+      // Additional path traversal check
+      const normalizedPath = path.normalize(filePath);
+      if (!normalizedPath.startsWith(uploadDir)) {
+        throw new Error('Path traversal attempt detected');
+      }
+
+      // Ensure upload directory exists
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const result = await storage.uploadMusic({
+        file: file,
+        targetPage: targetPage,
+        uploadedBy: req.user.id,
+        userRole: req.user.role as 'admin' | 'super_admin'
+      });
+
+      res.json({
+        ...result,
+        scanned: !!clamAV,
+        clean: !scanResult.isInfected
+      });
+    } catch (error) {
+      console.error("Error in music file upload:", error);
+      res.status(500).json({
+        message: "Failed to upload file",
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Secure file serving endpoint
   app.get('/media/:filename', (req, res) => {
     const filename = req.params.filename;
@@ -372,125 +502,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Music upload route
-  app.post("/api/upload/music", validateFileType, async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    if (!req.files || !req.files.file) {
-      return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const file = req.files.file;
-    const targetPage = req.body.page;
-    const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
-
-    // Validate target page
-    if (!allowedPages.includes(targetPage)) {
-      return res.status(400).json({ message: "Invalid target page" });
-    }
-
-    // Enhanced file validation
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExt || !allowedTypes.includes(fileExt)) {
-      return res.status(400).json({ message: "Invalid file type. Allowed types: " + allowedTypes.join(', ') });
-    }
-
-    // Validate file size (50MB limit)
-    const maxSize = 50 * 1024 * 1024; // 50MB in bytes
-    if (file.size > maxSize) {
-      return res.status(400).json({ message: "File too large. Maximum size: 50MB" });
-    }
-
-    try {
-      // Initialize ClamAV scanning
-      console.log("Initializing ClamAV scan...");
-      let isFileScanned = false;
-
-      try {
-        const NodeClam = await import('clamav.js').catch(err => {
-          console.error("Failed to import ClamAV:", err);
-          return null;
-        });
-
-        if (NodeClam) {
-          const ClamScan = new NodeClam.default();
-
-          try {
-            await ClamScan.init({
-              removeInfected: true,
-              quarantineInfected: false,
-              scanLog: null,
-              debugMode: false,
-              fileList: null,
-              scanRecursively: true,
-              clamscan: {
-                path: '/usr/bin/clamscan',
-                db: null,
-                scanArchives: true,
-                active: true
-              },
-              preference: 'clamscan'
-            });
-
-            console.log("Scanning file for viruses...");
-            const { isInfected, viruses } = await ClamScan.isInfected(file.tempFilePath);
-            isFileScanned = true;
-
-            if (isInfected) {
-              console.error("File is infected:", viruses);
-              return res.status(400).json({
-                message: "File is infected with malware",
-                viruses: viruses
-              });
-            }
-          } catch (scanErr) {
-            console.error("ClamAV scan error:", scanErr);
-            // Continue with upload if scan fails, but log the error
-          }
-        }
-      } catch (clamErr) {
-        console.error("ClamAV initialization error:", clamErr);
-        // Continue with upload if ClamAV is not available
-      }
-
-      if (!isFileScanned) {
-        console.warn("File uploaded without virus scan - ClamAV unavailable");
-      }
-
-      // Proceed with file upload
-      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
-      const fileName = secureFilename(file.name);
-      const filePath = path.join(uploadDir, fileName);
-
-      // Additional path traversal check
-      const normalizedPath = path.normalize(filePath);
-      if (!normalizedPath.startsWith(uploadDir)) {
-        throw new Error('Path traversal attempt detected');
-      }
-
-      const result = await storage.uploadMusic({
-        file: file,
-        targetPage: targetPage,
-        uploadedBy: req.user.id,
-        userRole: req.user.role as 'admin' | 'super_admin',
-        filePath: filePath
-      });
-
-      res.json({
-        ...result,
-        scanned: isFileScanned
-      });
-    } catch (error) {
-      console.error("Error in music file upload:", error);
-      res.status(500).json({
-        message: "Failed to upload file",
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
 
   // Music routes 
   app.get("/api/tracks", async (req, res) => {
