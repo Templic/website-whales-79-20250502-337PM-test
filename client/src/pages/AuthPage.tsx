@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const passwordStrengthText = {
   0: "Very Weak",
@@ -59,6 +60,12 @@ const registrationSchema = z.object({
 
 type ContactForm = z.infer<typeof registrationSchema>;
 
+type LoginForm = {
+  username: string;
+  password: string;
+  rememberMe: boolean;
+};
+
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -66,10 +73,11 @@ export default function AuthPage() {
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
 
-  const loginForm = useForm<Pick<typeof registrationSchema["_type"], "username" | "password">>({
+  const loginForm = useForm<LoginForm>({
     defaultValues: {
       username: "",
-      password: ""
+      password: "",
+      rememberMe: false
     }
   });
 
@@ -139,6 +147,18 @@ export default function AuthPage() {
                   </Button>
                 </div>
               </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="rememberMe"
+                  {...loginForm.register("rememberMe")}
+                />
+                <label
+                  htmlFor="rememberMe"
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  Remember me
+                </label>
+              </div>
               <div className="flex justify-between items-center">
                 <Link href="/recover-password" className="text-sm text-[#00ebd6] hover:text-[#fe0064]">
                   Forgot Password?
@@ -160,8 +180,7 @@ export default function AuthPage() {
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Register</h2>
           <Form {...registerForm}>
             <form onSubmit={registerForm.handleSubmit(data => {
-              const { confirmPassword, ...registerData } = data;
-              registerMutation.mutate(registerData);
+              registerMutation.mutate(data);
             })} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Username</label>

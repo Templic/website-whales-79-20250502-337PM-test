@@ -7,6 +7,19 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 
+// Extend session type to include our custom properties
+declare module 'express-session' {
+  interface SessionData {
+    lastActivity?: number;
+    analytics?: {
+      lastAccess: Date;
+      userAgent?: string;
+      ip?: string;
+      logoutTime?: Date;
+    };
+  }
+}
+
 declare global {
   namespace Express {
     interface User extends SelectUser {}
@@ -39,7 +52,8 @@ export function setupAuth(app: Express) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours default
-      rolling: true, // Refresh session on activity
+      path: "/",
+      httpOnly: true,
     },
     name: 'sid', // Custom session ID name
     proxy: true // Trust the reverse proxy
@@ -141,20 +155,15 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    // Logging the request session for debugging purposes
-    console.log("Logout request received:", req.session);
-
     // Record logout time in analytics
     if (req.session?.analytics) {
       req.session.analytics.logoutTime = new Date();
-      console.log("Logout time recorded:", req.session.analytics.logoutTime);
     }
     req.logout((err) => {
       if (err) {
         console.error("Error during logout:", err);
         return next(err);
       }
-      console.log("User logged out successfully.");
       res.sendStatus(200);
     });
   });
@@ -180,23 +189,6 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Error updating user role:", error);
       res.status(500).json({ message: "Failed to update user role" });
-    }
-  });
-
-  // Ban user endpoint
-  app.post("/api/users/:userId/ban", async (req, res) => {
-    try {
-      // Check if user is authorized (must be admin or super_admin)
-      if (!req.isAuthenticated() || !['admin', 'super_admin'].includes(req.user.role)) {
-        return res.status(403).json({ message: "Unauthorized" });
-      }
-
-      const userId = parseInt(req.params.userId);
-      await storage.banUser(userId);
-      res.json({ message: "User banned successfully" });
-    } catch (error) {
-      console.error("Error banning user:", error);
-      res.status(500).json({ message: "Failed to ban user" });
     }
   });
 
