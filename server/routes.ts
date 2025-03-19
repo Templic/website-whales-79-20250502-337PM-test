@@ -146,14 +146,46 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Function to handle file paths and storage
-  const fileHandler = {
+  // Path validation and sanitization utilities
+const pathUtils = {
+  isPathSafe: (filePath: string, baseDir: string): boolean => {
+    const normalizedPath = path.normalize(filePath);
+    const normalizedBase = path.normalize(baseDir);
+    return normalizedPath.startsWith(normalizedBase);
+  },
+
+  sanitizePath: (filePath: string): string => {
+    // Remove any directory traversal attempts and unsafe characters
+    return path.normalize(filePath)
+      .replace(/^(\.\.(\/|\\|$))+/, '')
+      .replace(/[<>:"|?*]/g, '_');
+  },
+
+  validateExtension: (filename: string): boolean => {
+    const ext = path.extname(filename).toLowerCase();
+    const safeExtensions = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff', '.avi', '.wmv', '.mov']);
+    return safeExtensions.has(ext);
+  }
+};
+
+// Function to handle file paths and storage
+const fileHandler = {
     getTempPath: (filename: string): string => {
-      const safeFilename = `temp-${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      return path.join(directories.temp, safeFilename);
+      if (!pathUtils.validateExtension(filename)) {
+        throw new Error('Invalid file extension');
+      }
+      const safeFilename = `temp-${Date.now()}-${pathUtils.sanitizePath(path.basename(filename))}`;
+      const tempPath = path.join(directories.temp, safeFilename);
+      if (!pathUtils.isPathSafe(tempPath, directories.temp)) {
+        throw new Error('Invalid temp path');
+      }
+      return tempPath;
     },
 
     getPermanentPath: (filename: string): string => {
+      if (!pathUtils.validateExtension(filename)) {
+        throw new Error('Invalid file extension');
+      }
       const ext = path.extname(filename).toLowerCase();
       const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
       const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
