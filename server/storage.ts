@@ -87,6 +87,9 @@ export class PostgresStorage implements IStorage {
       },
       createTableIfMissing: true,
     });
+    
+    // Initialize sample music data
+    this.initializeSampleData();
   }
 
   // User methods
@@ -346,7 +349,8 @@ export class PostgresStorage implements IStorage {
             releaseDate: new Date("2025-01-15"),
             genre: "Ambient Electronic",
             isNewRelease: false,
-            audioPath: "/uploads/oceanic-dreams.mp3"
+            audioPath: "/uploads/oceanic-dreams.mp3",
+            uploadedBy: 1
           },
           {
             title: "Feels So Good",
@@ -355,7 +359,8 @@ export class PostgresStorage implements IStorage {
             releaseDate: new Date("2025-03-14"),
             genre: "R&B, Soulful",
             isNewRelease: true,
-            audioPath: "/uploads/feels-so-good.mp3"
+            audioPath: "/uploads/feels-so-good.mp3",
+            uploadedBy: 1
           },
           {
             title: "Cosmic Echoes",
@@ -364,7 +369,8 @@ export class PostgresStorage implements IStorage {
             releaseDate: new Date("2024-12-01"),
             genre: "Space Ambient",
             isNewRelease: false,
-            audioPath: "/uploads/cosmic-echoes.mp3"
+            audioPath: "/uploads/cosmic-echoes.mp3",
+            uploadedBy: 1
           }
         ]);
 
