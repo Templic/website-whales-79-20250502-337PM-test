@@ -72,8 +72,9 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Run migrations first
+    console.log('Running database migrations...');
     await migrate();
+    console.log('Database migrations completed');
     
     // Setup authentication after migrations
     setupAuth(app);
