@@ -7,7 +7,7 @@ const navigationItems = [
   { path: "/", label: "Home" },
   { path: "/about", label: "About" },
   { path: "/music-release", label: "New Music" },
-  { path: "/archived-music", label: "Archived Music" }, // Updated from Archive
+  { path: "/archived-music", label: "Archived Music" }, 
   { path: "/tour", label: "Tour" },
   { path: "/engage", label: "Engage" },
   { path: "/newsletter", label: "Newsletter" },
@@ -31,11 +31,11 @@ export function Header() {
   const mobileNavItemStyles = `${navItemStyles} p-3 block w-full text-left`;
   const searchInputStyles = "px-3 py-2 text-base border border-gray-300 rounded-md bg-white/10 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00ebd6]";
 
-  // Debug text to verify component update
-  console.log("Header component loaded - Updated with Archived Music label");
-
   return (
     <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
+      {/* Debug marker to verify updated component */}
+      <div className="hidden">DEBUG: Header Updated - Archived Music v2</div>
+
       <div className="flex items-center justify-between p-4 container mx-auto">
         <div className="flex items-center gap-4">
           <button

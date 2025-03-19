@@ -8,8 +8,11 @@ export default function SitemapPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-8 space-y-8">
+      {/* Debug marker */}
+      <div className="hidden">DEBUG: Sitemap Updated - Labels corrected v2</div>
+
       <h1 className="text-4xl font-bold mb-8">Sitemap</h1>
-      
+
       <div className="grid gap-8 md:grid-cols-3">
         <section>
           <h2 className="text-2xl font-semibold mb-4">Main Pages</h2>
