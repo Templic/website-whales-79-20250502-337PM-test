@@ -31,9 +31,36 @@ export default function AdminMusicUpload() {
     }
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('page', page);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('page', page);
+
+      const response = await axios.post('/api/upload/music', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'CSRF-Token': csrfToken
+        }
+      });
+
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+      });
+
+      // Reset form
+      setFile(null);
+      setPage('new_music');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to upload file",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+    }
 
     try {
       await axios.post('/api/upload/music', formData, {
