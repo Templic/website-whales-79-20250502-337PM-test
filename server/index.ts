@@ -9,6 +9,8 @@ import { registerRoutes } from "./routes";
 import { pgPool } from "./db";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import csrf from 'csurf';
+import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -80,26 +82,47 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser(process.env.SESSION_SECRET)); // Required for CSRF
 
-// Setup CSRF protection after session middleware
-import csrf from 'csurf';
+// Setup auth first since we need session
+setupAuth(app);
+
+// CSRF protection setup
 const csrfProtection = csrf({
-  cookie: true, // Use cookies for CSRF
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-  value: (req) => req.headers['csrf-token'] as string
+  cookie: {
+    key: '_csrf',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    httpOnly: true,
+    signed: true,
+    path: '/'
+  }
 });
 
-// Apply CSRF protection to all routes except authentication
+// CSRF error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({
+      message: 'Invalid CSRF token',
+      error: 'CSRF_ERROR'
+    });
+  }
+  next(err);
+});
+
+// Apply CSRF protection to all routes except auth endpoints
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/login') || req.path.startsWith('/api/register')) {
+  if (req.path.startsWith('/api/login') || 
+      req.path.startsWith('/api/register') || 
+      req.path.startsWith('/api/csrf-token')) {
     next();
   } else {
     csrfProtection(req, res, next);
   }
 });
 
-// Provide CSRF token
-app.get('/api/csrf-token', (req, res) => {
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
@@ -170,9 +193,6 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Setup authentication first
-    setupAuth(app);
-
     // Register API routes
     const httpServer = await registerRoutes(app);
 
