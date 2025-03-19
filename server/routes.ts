@@ -268,7 +268,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     const file = req.files.file;
     const targetPage = req.body.page;
     const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
+    const allowedTypes = new Set(['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov']);
+    const allowedMimeTypes = new Set([
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
+      'video/quicktime', 'video/mp4'
+    ]);
+    
+    // Sanitize filename to prevent path traversal
+    const sanitizeFilename = (filename: string): string => {
+      return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+    };
 
     if (!allowedPages.includes(targetPage)) {
       return res.status(400).json({ message: "Invalid target page" });

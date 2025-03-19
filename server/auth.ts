@@ -50,13 +50,15 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours default
+      sameSite: "strict",
+      maxAge: 4 * 60 * 60 * 1000, // 4 hours default
       path: "/",
       httpOnly: true,
+      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
     },
-    name: 'sid', // Custom session ID name
-    proxy: true // Trust the reverse proxy
+    name: '_sess', // Less obvious session ID name
+    proxy: true, // Trust the reverse proxy
+    rolling: true // Extend session with activity
   };
 
   app.set("trust proxy", 1);
