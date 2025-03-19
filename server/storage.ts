@@ -559,4 +559,4 @@ export class PostgresStorage implements IStorage {
 }
 
 // Export an instance of PostgresStorage
-export const storage = new PostgresStorage();
+export const storageInstance = new PostgresStorage();
