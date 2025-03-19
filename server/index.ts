@@ -102,13 +102,37 @@ app.use(fileUpload({
 }));
 
 
-// Add logging middleware
+// Add enhanced security logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (req.path.startsWith("/api")) {
-      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
+      const clientIP = req.ip || req.connection.remoteAddress;
+      const userAgent = req.headers['user-agent'] || 'Unknown';
+      const referrer = req.headers['referer'] || 'Direct';
+      const method = req.method;
+      const path = req.path;
+      const status = res.statusCode;
+      
+      // Log in a structured format for easier parsing
+      log(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        ip: clientIP,
+        method: method,
+        path: path,
+        status: status,
+        duration: duration,
+        userAgent: userAgent,
+        referrer: referrer,
+        authenticated: req.isAuthenticated(),
+        userId: req.user?.id || 'anonymous'
+      }));
+
+      // Additional logging for suspicious activities
+      if (status >= 400) {
+        console.warn(`Security alert: Failed request from IP ${clientIP} to ${method} ${path} (${status})`);
+      }
     }
   });
   next();
