@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,32 +7,34 @@ export default function AdminMusicUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [page, setPage] = useState('new_music');
   const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
 
     setIsUploading(true);
+    setError('');
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('page', page);
 
     try {
-      await axios.post('/api/upload/music', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await fetch('/api/upload/music', {
+        method: 'POST',
+        body: formData
       });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
       setFile(null);
-      toast({
-        title: "Success",
-        description: "File uploaded successfully"
-      });
+      // Could add success message/callback here
     } catch (err) {
-      toast({
-        title: "Error",
-        description: "Failed to upload file",
-        variant: "destructive"
-      });
+      setError('Failed to upload file');
+      console.error(err);
     } finally {
       setIsUploading(false);
     }
