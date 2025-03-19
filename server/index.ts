@@ -32,6 +32,10 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Initialize WebSocket and Socket.IO servers
+import { setupWebSockets } from './websocket';
+const { wss, io } = setupWebSockets(httpServer);
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
   createParentPath: true,
