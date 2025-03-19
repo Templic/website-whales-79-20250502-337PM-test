@@ -10,6 +10,7 @@ import {
 } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
+import fs from 'fs';
 
 // Simple sanitization function (replace with sanitize-filename package for production)
 const secureFilename = (filename: string): string => {
@@ -24,8 +25,8 @@ const validateFileType = (req, res, next) => {
 
   const file = req.files.file;
   const allowedMimeTypes = new Set([
-    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
-    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
+    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
     'video/quicktime', 'video/mp4'
   ]);
 
@@ -51,7 +52,34 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ message: "Invalid file path" });
     }
 
-    res.sendFile(filePath);
+    // Get file extension and set content type
+    const ext = path.extname(filename).toLowerCase();
+    const mimeTypes = {
+      '.mp3': 'audio/mpeg',
+      '.mp4': 'audio/mp4',
+      '.aac': 'audio/aac',
+      '.flac': 'audio/flac',
+      '.wav': 'audio/wav',
+      '.aiff': 'audio/aiff',
+      '.avi': 'video/avi',
+      '.wmv': 'video/x-ms-wmv',
+      '.mov': 'video/quicktime'
+    };
+
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+    // Set proper headers for streaming
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Accept-Ranges', 'bytes');
+
+    // Stream the file
+    const stream = fs.createReadStream(filePath);
+    stream.on('error', (error) => {
+      console.error('Error streaming file:', error);
+      res.status(500).json({ message: "Error streaming file" });
+    });
+
+    stream.pipe(res);
   });
   // User management routes
   app.get("/api/users", async (req, res) => {
@@ -92,7 +120,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(filteredPosts);
     } catch (error) {
       console.error("Error fetching posts:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching posts",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -358,14 +386,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             });
 
             console.log("Scanning file for viruses...");
-            const {isInfected, viruses} = await ClamScan.isInfected(file.tempFilePath);
+            const { isInfected, viruses } = await ClamScan.isInfected(file.tempFilePath);
             isFileScanned = true;
 
             if (isInfected) {
               console.error("File is infected:", viruses);
-              return res.status(400).json({ 
+              return res.status(400).json({
                 message: "File is infected with malware",
-                viruses: viruses 
+                viruses: viruses
               });
             }
           } catch (scanErr) {
@@ -407,7 +435,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error) {
       console.error("Error in music file upload:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to upload file",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -421,7 +449,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(tracks);
     } catch (error) {
       console.error("Error fetching tracks:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching tracks",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -434,7 +462,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(albums);
     } catch (error) {
       console.error("Error fetching albums:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching albums",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
