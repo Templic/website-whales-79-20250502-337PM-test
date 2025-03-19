@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,10 +7,11 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Redirect, Link } from "wouter";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function AuthPage() {
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
   if (user) {
@@ -63,12 +64,27 @@ export default function AuthPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Password</label>
-                <Input
-                  {...loginForm.register("password")}
-                  type="password"
-                  className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                  placeholder="Enter your password"
-                />
+                <div className="relative">
+                  <Input
+                    {...loginForm.register("password")}
+                    type={showPassword ? "text" : "password"}
+                    className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                    placeholder="Enter your password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <Link href="/recover-password" className="text-sm text-[#00ebd6] hover:text-[#fe0064]">
@@ -159,7 +175,7 @@ export default function AuthPage() {
             no-repeat center center / cover`
         }}
       >
-        <h1 className="text-4xl font-bold mb-6 text-[#00ebd6]">Welcome to Dale Loves Whales</h1>
+        <h1 className="text-4xl font-bold text-[#00ebd6]">Welcome to Dale Loves Whales</h1>
         <p className="text-xl mb-8">
           Join our community to explore the depths of cosmic music and oceanic vibes.
         </p>
