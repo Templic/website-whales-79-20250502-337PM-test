@@ -131,16 +131,41 @@ const initClamAV = async () => {
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Ensure upload directory exists
-  const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  // Define upload directories
+  const baseUploadDir = path.join(process.cwd(), 'private_storage/uploads');
+  const directories = {
+    audio: path.join(baseUploadDir, 'audio'),
+    video: path.join(baseUploadDir, 'video'),
+    temp: path.join(baseUploadDir, 'temp')
+  };
 
-  const tempUploadDir = path.join(process.cwd(), 'private_storage/uploads/temp');
-  if (!fs.existsSync(tempUploadDir)) {
-    fs.mkdirSync(tempUploadDir, { recursive: true });
-  }
+  // Ensure all upload directories exist
+  Object.values(directories).forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+
+  // Function to validate and get upload path
+  const getUploadPath = (filename: string, isTemp = false): string => {
+    const ext = path.extname(filename).toLowerCase();
+    const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
+    const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
+    
+    let uploadDir;
+    if (isTemp) {
+      uploadDir = directories.temp;
+    } else if (audioExts.has(ext)) {
+      uploadDir = directories.audio;
+    } else if (videoExts.has(ext)) {
+      uploadDir = directories.video;
+    } else {
+      throw new Error('Invalid file type');
+    }
+
+    const safeFilename = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    return path.join(uploadDir, safeFilename);
+  };
 
 
   // Initialize ClamAV scanner
@@ -223,12 +248,18 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           console.warn("ClamAV not available - skipping virus scan");
         }
 
+        // Get appropriate upload path
+        const finalPath = getUploadPath(req.file.originalname);
+        
+        // Move file from temp to final location
+        await fs.promises.rename(req.file.path, finalPath);
+
         // Upload the file using storage interface
         const result = await storage.uploadMusic({
           file: {
-            name: req.file.originalname,
+            name: path.basename(finalPath),
             size: req.file.size,
-            tempFilePath: req.file.path,
+            tempFilePath: finalPath,
             mimetype: req.file.mimetype
           },
           targetPage: targetPage,
