@@ -7,132 +7,136 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu } from "lucide-react";
-import { useState } from "react";
-
-// Debug text to verify component update
-console.log("Layout component loaded - v3 with smooth scrolling");
-
-// Update the global styles to include logo animation
-const globalStyles = `
-  html {
-    scroll-behavior: smooth;
-  }
-
-  .nav-link {
-    transition: all 0.3s ease;
-  }
-
-  .nav-link:hover {
-    color: var(--fill-color);
-    transform: translateY(-2px);
-  }
-
-  .parallax-section {
-    background-attachment: fixed;
-    background-size: cover;
-    background-position: center;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  /* Logo animation styles */
-  .logo {
-    transition: all 0.3s ease;
-    display: inline-block;
-  }
-
-  .logo:hover {
-    transform: scale(1.1);
-    color: var(--fill-color);
-  }
-`;
-
-// Add style tag to document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = globalStyles;
-  document.head.appendChild(style);
-}
+import { useState, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
-const NavLinks = () => {
-  console.log("NavLinks component rendering - with enhanced transitions");
-  return (
-    <>
-      <Link href="/">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Home className="h-4 w-4 mr-2" />
-          Home
-        </Button>
-      </Link>
-      <Link href="/about">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Info className="h-4 w-4 mr-2" />
-          About
-        </Button>
-      </Link>
-      <Link href="/music-release">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Music className="h-4 w-4 mr-2" />
-          New Music
-        </Button>
-      </Link>
-      <Link href="/archived-music">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Archive className="h-4 w-4 mr-2" />
-          Archived Music
-        </Button>
-      </Link>
-      <Link href="/tour">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Calendar className="h-4 w-4 mr-2" />
-          Tour
-        </Button>
-      </Link>
-      <Link href="/engage">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Heart className="h-4 w-4 mr-2" />
-          Engage
-        </Button>
-      </Link>
-      <Link href="/newsletter">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Mail className="h-4 w-4 mr-2" />
-          Newsletter
-        </Button>
-      </Link>
-      <Link href="/blog">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <BookOpen className="h-4 w-4 mr-2" />
-          Blog
-        </Button>
-      </Link>
-      <Link href="/collaboration">
-        <Button variant="ghost" size="sm" className="h-9 nav-link">
-          <Users className="h-4 w-4 mr-2" />
-          Collaborate
-        </Button>
-      </Link>
-    </>
-  );
-};
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const NavLinks = () => {
+    return (
+      <>
+        <Link href="/">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Home
+          </Button>
+        </Link>
+        <Link href="/about">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Info className="h-4 w-4 mr-2" />
+            About
+          </Button>
+        </Link>
+        <Link href="/music-release">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Music className="h-4 w-4 mr-2" />
+            New Music
+          </Button>
+        </Link>
+        <Link href="/archived-music">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Archive className="h-4 w-4 mr-2" />
+            Archived Music
+          </Button>
+        </Link>
+        <Link href="/tour">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Tour
+          </Button>
+        </Link>
+        <Link href="/engage">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            Engage
+          </Button>
+        </Link>
+        <Link href="/newsletter">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            Newsletter
+          </Button>
+        </Link>
+        <Link href="/blog">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <BookOpen className="h-4 w-4 mr-2" />
+            Blog
+          </Button>
+        </Link>
+        <Link href="/collaboration">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Collaborate
+          </Button>
+        </Link>
+      </>
+    );
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header 
+        className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ${
+          isScrolled ? 'shadow-md' : ''
+        }`}
+      >
         <div className="container mx-auto">
           <div className="flex h-[72px] items-center justify-between px-4">
-            {/* Mobile Menu */}
+            {/* Mobile Menu with enhanced transitions */}
             <div className="sm:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="nav-link">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="nav-link transition-all duration-300 hover:rotate-180"
+                  >
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle menu</span>
                   </Button>
@@ -147,7 +151,7 @@ const NavLinks = () => {
               </Sheet>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation with enhanced animations */}
             <nav className="hidden sm:flex w-full justify-center">
               <div className="flex flex-wrap items-center gap-1 py-2 max-w-[900px]">
                 <NavLinks />
@@ -166,7 +170,7 @@ const NavLinks = () => {
         {children}
       </main>
 
-      <footer className="border-t py-8 bg-muted/50">
+      <footer className="border-t py-8 bg-muted/50 transition-colors duration-300">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
@@ -220,14 +224,22 @@ const AuthLinks = () => {
       {user ? (
         <>
           <Link href="/portal">
-            <Button variant="ghost" size="sm" className="h-9 nav-link">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+            >
               <User className="h-4 w-4 mr-2" />
               Dashboard
             </Button>
           </Link>
           {(user.role === "admin" || user.role === "super_admin") && (
             <Link href="/admin">
-              <Button variant="ghost" size="sm" className="h-9 nav-link">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+              >
                 <Settings className="h-4 w-4 mr-2" />
                 Admin
               </Button>
@@ -236,7 +248,11 @@ const AuthLinks = () => {
         </>
       ) : (
         <Link href="/auth">
-          <Button variant="ghost" size="sm" className="h-9 nav-link">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
             <User className="h-4 w-4 mr-2" />
             Login
           </Button>
