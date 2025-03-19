@@ -16,6 +16,25 @@ const secureFilename = (filename: string): string => {
   return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
 };
 
+// Middleware for file type validation
+const validateFileType = (req, res, next) => {
+  if (!req.files?.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  const file = req.files.file;
+  const allowedMimeTypes = new Set([
+    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
+    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
+    'video/quicktime', 'video/mp4'
+  ]);
+
+  if (!allowedMimeTypes.has(file.mimetype)) {
+    return res.status(400).json({ message: "Invalid file type" });
+  }
+  next();
+};
+
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -261,7 +280,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Music upload route
-  app.post("/api/upload/music", async (req, res) => {
+  app.post("/api/upload/music", validateFileType, async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -312,7 +331,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     ]);
 
     // Sanitize filename to prevent path traversal
-    
+
 
     if (!allowedPages.includes(targetPage)) {
       return res.status(400).json({ message: "Invalid target page" });
@@ -403,7 +422,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  //This route was duplicated in the original code.  Removing the duplicate.
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
