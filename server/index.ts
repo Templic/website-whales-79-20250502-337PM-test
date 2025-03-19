@@ -81,14 +81,15 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Setup CSRF protection
+// Setup CSRF protection after session middleware
 import csrf from 'csurf';
 const csrfProtection = csrf({
-  cookie: false,
-  sessionKey: 'csrf-token'
+  cookie: true, // Use cookies for CSRF
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+  value: (req) => req.headers['csrf-token'] as string
 });
 
-// Apply CSRF protection to all routes except those that don't need it
+// Apply CSRF protection to all routes except authentication
 app.use((req, res, next) => {
   if (req.path.startsWith('/api/login') || req.path.startsWith('/api/register')) {
     next();
