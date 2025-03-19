@@ -89,8 +89,8 @@ const initClamAV = async () => {
     const scanner = await clamav.createScanner({
       removeInfected: true,
       quarantineInfected: true,
-      quarantinePath: '/tmp/quarantine',
-      scanLog: '/tmp/clamav.log',
+      quarantinePath: './private_storage/quarantine',
+      scanLog: './private_storage/clamav.log',
       debugMode: true,
       fileList: null,
       scanRecursively: true,
