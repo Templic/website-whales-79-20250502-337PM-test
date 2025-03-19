@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,26 @@ export default function AdminMusicUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [page, setPage] = useState('new_music');
   const [isUploading, setIsUploading] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Fetch CSRF token on component mount
+    axios.get('/api/csrf-token')
+      .then(response => setCsrfToken(response.data.csrfToken))
+      .catch(error => console.error('Failed to fetch CSRF token:', error));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file) {
+      toast({
+        title: "Error",
+        description: "Please select a file to upload",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsUploading(true);
     const formData = new FormData();
@@ -21,17 +37,20 @@ export default function AdminMusicUpload() {
 
     try {
       await axios.post('/api/upload/music', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'CSRF-Token': csrfToken
+        }
       });
       setFile(null);
       toast({
         title: "Success",
         description: "File uploaded successfully"
       });
-    } catch (err) {
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Failed to upload file",
+        description: err.response?.data?.message || "Failed to upload file",
         variant: "destructive"
       });
     } finally {
@@ -40,45 +59,34 @@ export default function AdminMusicUpload() {
   };
 
   return (
-    <Card className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Upload Music</h3>
+    <Card className="p-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Select Multimedia File
-            <input
-              type="file"
-              accept=".mp3,.mp4,.aac,.flac,.wav,.aiff,.avi,.wmv,.mov"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="mt-1 block w-full px-3 py-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-              required
-            />
-          </label>
+          <label className="block mb-2">Upload Music File:</label>
+          <input
+            type="file"
+            accept=".mp3,.mp4,.aac,.flac,.wav,.aiff,.avi,.wmv,.mov"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Target Page
-            <select
-              value={page}
-              onChange={(e) => setPage(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-              required
-            >
-              <option value="new_music">New Music Page</option>
-              <option value="music_archive">Music Archive Page</option>
-              <option value="blog">Blog Page</option>
-              <option value="home">Home Page</option>
-              <option value="about">About Page</option>
-              <option value="newsletter">Newsletter Page</option>
-            </select>
-          </label>
+          <label className="block mb-2">Target Page:</label>
+          <select 
+            value={page}
+            onChange={(e) => setPage(e.target.value)}
+            className="w-full p-2 border rounded"
+          >
+            <option value="new_music">New Music</option>
+            <option value="music_archive">Music Archive</option>
+          </select>
         </div>
         <Button 
           type="submit" 
-          disabled={isUploading}
-          className="w-full bg-[#00ebd6] hover:bg-[#00ebd6]/80"
+          disabled={isUploading || !file}
+          className="w-full"
         >
-          {isUploading ? 'Uploading...' : 'Upload File'}
+          {isUploading ? 'Uploading...' : 'Upload Music'}
         </Button>
       </form>
     </Card>
