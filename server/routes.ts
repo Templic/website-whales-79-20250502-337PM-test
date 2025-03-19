@@ -146,25 +146,50 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Function to validate and get upload path
-  const getUploadPath = (filename: string, isTemp = false): string => {
-    const ext = path.extname(filename).toLowerCase();
-    const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
-    const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
-    
-    let uploadDir;
-    if (isTemp) {
-      uploadDir = directories.temp;
-    } else if (audioExts.has(ext)) {
-      uploadDir = directories.audio;
-    } else if (videoExts.has(ext)) {
-      uploadDir = directories.video;
-    } else {
-      throw new Error('Invalid file type');
-    }
+  // Function to handle file paths and storage
+  const fileHandler = {
+    getTempPath: (filename: string): string => {
+      const safeFilename = `temp-${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      return path.join(directories.temp, safeFilename);
+    },
 
-    const safeFilename = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    return path.join(uploadDir, safeFilename);
+    getPermanentPath: (filename: string): string => {
+      const ext = path.extname(filename).toLowerCase();
+      const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
+      const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
+      
+      let uploadDir;
+      if (audioExts.has(ext)) {
+        uploadDir = directories.audio;
+      } else if (videoExts.has(ext)) {
+        uploadDir = directories.video;
+      } else {
+        throw new Error('Invalid file type');
+      }
+
+      const safeFilename = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      return path.join(uploadDir, safeFilename);
+    },
+
+    moveToPermStorage: async (tempPath: string, permanentPath: string): Promise<void> => {
+      try {
+        await fs.promises.rename(tempPath, permanentPath);
+      } catch (error) {
+        // If rename fails (e.g., across devices), fallback to copy and delete
+        await fs.promises.copyFile(tempPath, permanentPath);
+        await fs.promises.unlink(tempPath);
+      }
+    },
+
+    cleanupTemp: async (filePath: string): Promise<void> => {
+      try {
+        if (fs.existsSync(filePath)) {
+          await fs.promises.unlink(filePath);
+        }
+      } catch (error) {
+        console.error('Error cleaning up temp file:', error);
+      }
+    }
   };
 
 
@@ -248,18 +273,22 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           console.warn("ClamAV not available - skipping virus scan");
         }
 
-        // Get appropriate upload path
-        const finalPath = getUploadPath(req.file.originalname);
+        // Generate paths for temporary and permanent storage
+        const tempPath = fileHandler.getTempPath(req.file.originalname);
+        const permanentPath = fileHandler.getPermanentPath(req.file.originalname);
         
-        // Move file from temp to final location
-        await fs.promises.rename(req.file.path, finalPath);
+        // First move to temp location
+        await fs.promises.rename(req.file.path, tempPath);
+
+        // After validation passed, move to permanent storage
+        await fileHandler.moveToPermStorage(tempPath, permanentPath);
 
         // Upload the file using storage interface
         const result = await storage.uploadMusic({
           file: {
-            name: path.basename(finalPath),
+            name: path.basename(permanentPath),
             size: req.file.size,
-            tempFilePath: finalPath,
+            tempFilePath: permanentPath,
             mimetype: req.file.mimetype
           },
           targetPage: targetPage,
@@ -289,13 +318,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           details: error instanceof Error ? error.stack : undefined
         });
 
-        // Clean up temp file on error
-        if (req.file?.path && fs.existsSync(req.file.path)) {
-          try {
-            fs.unlinkSync(req.file.path);
-          } catch (cleanupError) {
-            console.error('Error cleaning up temp file after error:', cleanupError);
-          }
+        // Clean up any temporary files on error
+        if (req.file?.path) {
+          await fileHandler.cleanupTemp(req.file.path);
+        }
+        if (tempPath && fs.existsSync(tempPath)) {
+          await fileHandler.cleanupTemp(tempPath);
         }
       }
     }
