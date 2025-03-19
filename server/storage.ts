@@ -87,7 +87,7 @@ export class PostgresStorage implements IStorage {
       },
       createTableIfMissing: true,
     });
-    
+
     // Initialize sample music data
     this.initializeSampleData();
   }
@@ -557,6 +557,15 @@ export class PostgresStorage implements IStorage {
     }
   }
 }
+
+// Add debug logging
+db.on('query', (e) => {
+  console.log('QUERY:', e.query);
+});
+
+db.on('error', (error) => {
+  console.error('Database error:', error);
+});
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
