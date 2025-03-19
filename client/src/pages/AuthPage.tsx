@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Redirect, Link } from "wouter";
 import { Loader2, Eye, EyeOff, Info, Check, X } from "lucide-react";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 
 const passwordStrengthText = {
@@ -32,7 +34,6 @@ const passwordStrengthColor = {
   4: "bg-emerald-500"
 };
 
-// Password validation rules
 const passwordRules = [
   { regex: /.{8,}/, text: "At least 8 characters" },
   { regex: /[A-Z]/, text: "At least one uppercase letter" },
@@ -42,11 +43,10 @@ const passwordRules = [
 ];
 
 function calculatePasswordStrength(password: string): number {
-  return passwordRules.reduce((score, rule) => 
+  return passwordRules.reduce((score, rule) =>
     score + (rule.regex.test(password) ? 1 : 0), 0);
 }
 
-// Registration form schema with password confirmation
 const registrationSchema = z.object({
   username: z.string().min(1, "Please enter your username"),
   email: z.string().email("Please enter a valid email address"),
@@ -64,8 +64,8 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
 
-  // Redirect if already logged in
   if (user) {
     return <Redirect to="/" />;
   }
@@ -87,7 +87,6 @@ export default function AuthPage() {
     }
   });
 
-  // Handle password strength calculation
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const password = e.target.value;
     setPasswordStrength(calculatePasswordStrength(password));
@@ -146,7 +145,7 @@ export default function AuthPage() {
                   Forgot Password?
                 </Link>
               </div>
-              <Button 
+              <Button
                 type="submit"
                 className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
                 disabled={loginMutation.isPending}
@@ -191,32 +190,57 @@ export default function AuthPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-medium">Password</label>
-                  <TooltipProvider delayDuration={5000}> {/* Increased delay */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <Info className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="w-80 p-4" sideOffset={5}>
-                        <p className="font-semibold mb-2">Password Requirements:</p>
-                        <ul className="space-y-1">
+                  <Dialog open={isPasswordReqOpen} onOpenChange={setIsPasswordReqOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-transparent focus:bg-transparent relative z-50"
+                        onClick={() => setIsPasswordReqOpen(true)}
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle className="text-[#00ebd6]">Password Requirements</DialogTitle>
+                        <DialogDescription>
+                          Your password must meet the following criteria:
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="bg-[rgba(48,52,54,0.95)] p-4 rounded-lg">
+                        <ul className="space-y-2">
                           {passwordRules.map((rule, index) => (
                             <li key={index} className="flex items-center text-sm">
                               {rule.regex.test(registerForm.watch("password")) ? (
-                                <Check className="h-4 w-4 text-green-500 mr-2" />
+                                <Check className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                               ) : (
-                                <X className="h-4 w-4 text-red-500 mr-2" />
+                                <X className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
                               )}
-                              <span className={rule.regex.test(registerForm.watch("password")) ? "text-green-500" : "text-gray-400"}>
+                              <span
+                                className={`${
+                                  rule.regex.test(registerForm.watch("password"))
+                                    ? "text-green-500"
+                                    : "text-gray-400"
+                                }`}
+                              >
                                 {rule.text}
                               </span>
                             </li>
                           ))}
                         </ul>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setIsPasswordReqOpen(false)}
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
                 <div className="relative">
                   <Input
@@ -278,7 +302,7 @@ export default function AuthPage() {
                   <p className="text-red-500 text-sm mt-1">{registerForm.formState.errors.confirmPassword.message}</p>
                 )}
               </div>
-              <Button 
+              <Button
                 type="submit"
                 className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
                 disabled={registerMutation.isPending}
