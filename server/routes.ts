@@ -11,6 +11,11 @@ import {
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 
+// Simple sanitization function (replace with sanitize-filename package for production)
+const secureFilename = (filename: string): string => {
+  return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+};
+
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -305,11 +310,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
       'video/quicktime', 'video/mp4'
     ]);
-    
+
     // Sanitize filename to prevent path traversal
-    const sanitizeFilename = (filename: string): string => {
-      return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-    };
+    
 
     if (!allowedPages.includes(targetPage)) {
       return res.status(400).json({ message: "Invalid target page" });
@@ -338,11 +341,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     try {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      const fileName = secureFilename(file.name);
+      const filePath = path.join(uploadDir, fileName);
+
+      // Additional path traversal check
+      const normalizedPath = path.normalize(filePath);
+      if (!normalizedPath.startsWith(uploadDir)) {
+        throw new Error('Path traversal attempt detected');
+      }
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
         uploadedBy: req.user.id,
-        userRole: req.user.role as 'admin' | 'super_admin'
+        userRole: req.user.role as 'admin' | 'super_admin',
+        filePath: filePath
       });
       res.json(result);
     } catch (error) {
