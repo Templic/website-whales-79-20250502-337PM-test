@@ -276,23 +276,6 @@ export class PostgresStorage implements IStorage {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
   }
 
-  async deleteMedia(id: number): Promise<void> {
-    const [track] = await db.select().from(tracks).where(eq(tracks.id, id));
-    
-    if (!track) {
-      throw new Error("Media not found");
-    }
-
-    // Delete file from filesystem
-    const filePath = path.join(process.cwd(), 'uploads', track.audioUrl);
-    await fs.unlink(filePath).catch(() => {
-      console.warn(`File ${filePath} not found on filesystem`);
-    });
-
-    // Delete from database
-    await db.delete(tracks).where(eq(tracks.id, id));
-  }
-
   async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
     file: any, 
     targetPage: string,

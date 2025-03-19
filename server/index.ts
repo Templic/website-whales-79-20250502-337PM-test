@@ -1,5 +1,4 @@
 import express, { type Request, Response, NextFunction } from "express";
-import fs from 'fs';
 import fileUpload from "express-fileupload";
 import path from "path";
 import { dirname } from "path";
@@ -74,19 +73,9 @@ async function startServer() {
       console.log('Setting up Vite in development mode...');
       await setupVite(app, httpServer);
     } else {
-      const staticPath = path.resolve(__dirname, "../templates");
-      console.log('Serving static files from:', staticPath);
-      
-      app.use(express.static(staticPath));
+      app.use(express.static(path.resolve(__dirname, "../templates")));
       app.use("*", (_req, res) => {
-        const homePath = path.resolve(__dirname, "../templates/home_page.html");
-        console.log('Attempting to serve:', homePath);
-        
-        if (!fs.existsSync(homePath)) {
-          console.error('Home page file not found');
-          return res.status(404).send('Home page not found');
-        }
-        res.sendFile(homePath);
+        res.sendFile(path.resolve(__dirname, "../templates/home_page.html"));
       });
     }
 

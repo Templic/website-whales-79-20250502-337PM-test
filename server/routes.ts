@@ -337,21 +337,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Delete media file endpoint
-  app.delete("/api/media/:id", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
-    try {
-      await storage.deleteMedia(Number(req.params.id));
-      res.json({ message: "Media deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting media:", error);
-      res.status(500).json({ message: "Failed to delete media" });
-    }
-  });
-
   //This route is duplicated in the original code.  Removing the duplicate.
 
   // Create HTTP server with the Express app
