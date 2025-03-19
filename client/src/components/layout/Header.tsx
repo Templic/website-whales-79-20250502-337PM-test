@@ -7,7 +7,7 @@ const navigationItems = [
   { path: "/", label: "Home" },
   { path: "/about", label: "About" },
   { path: "/music-release", label: "New Music" },
-  { path: "/archived-music", label: "Archived Music" }, 
+  { path: "/archived-music", label: "Archived Music" },
   { path: "/tour", label: "Tour" },
   { path: "/engage", label: "Engage" },
   { path: "/newsletter", label: "Newsletter" },
@@ -22,12 +22,14 @@ export function Header() {
   const [, setLocation] = useLocation();
 
   const handleNavigationClick = useCallback((path: string) => {
-    // First scroll to top
+    // First scroll to top with smooth behavior
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Then close menu and navigate
-    setIsMenuOpen(false);
-    setLocation(path);
+    // Add a small delay to allow the scroll animation to complete
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      setLocation(path);
+    }, 300); // 300ms delay to allow for smooth scroll
   }, [setLocation]);
 
   // Common styles
@@ -38,7 +40,7 @@ export function Header() {
   return (
     <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
       {/* Debug marker to verify updated component */}
-      <div className="hidden">DEBUG: Header Updated - With Scroll To Top v1</div>
+      <div className="hidden">DEBUG: Header Updated - With Scroll To Top v2</div>
 
       <div className="flex items-center justify-between p-4 container mx-auto">
         <div className="flex items-center gap-4">
