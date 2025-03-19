@@ -90,16 +90,16 @@ const initClamAV = async () => {
       removeInfected: true,
       quarantineInfected: true,
       quarantinePath: './private_storage/clamav/quarantine',
-      scanLog: './private_storage/clamav/logs/scan.log',
+      scanLog: './private_storage/clamav/scan.log',
       debugMode: true,
       fileList: null,
       scanRecursively: true,
       clamscan: {
         path: clamPath,
         db: './private_storage/clamav/db',
-        configFile: './private_storage/clamav/clamd.conf',
         scanArchives: true,
-        active: true
+        active: true,
+        timeout: 60000
       },
       preference: 'clamscan'
     });
