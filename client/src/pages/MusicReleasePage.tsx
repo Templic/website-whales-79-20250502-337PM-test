@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-export default function MusicReleasePage() {
+export default function NewMusicPage() {
   useEffect(() => {
     document.title = "New Music - Dale Loves Whales";
   }, []);

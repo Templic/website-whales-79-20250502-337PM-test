@@ -102,7 +102,7 @@ const AudioPlayer = ({ track, onNext, onPrevious }: AudioPlayerProps) => {
   );
 };
 
-export default function MusicArchivePage() {
+export default function ArchivedMusicPage() {
   const [currentTrackId, setCurrentTrackId] = useState<number | null>(null);
 
   const { data: albums, isLoading: albumsLoading } = useQuery<Album[]>({
