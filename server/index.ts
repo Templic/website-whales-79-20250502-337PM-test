@@ -82,7 +82,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Setup CSRF protection
-const csrf = require('csurf');
+import csrf from 'csurf';
 const csrfProtection = csrf({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
