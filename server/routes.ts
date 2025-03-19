@@ -2,43 +2,28 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import fileUpload, { UploadedFile, FileArray } from 'express-fileupload';
+import formidable from 'formidable';
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
 import * as NodeClamModule from 'clamav.js';
 
-// Configure express-fileupload middleware with optimized settings for large files
-const fileUploadMiddleware = fileUpload({
-  limits: { 
-    fileSize: 100 * 1024 * 1024, // 100MB max file size
-  },
-  useTempFiles: true,
-  tempFileDir: '/tmp/',
-  debug: true,
-  safeFileNames: true,
-  preserveExtension: true,
-  abortOnLimit: true,
-  createParentPath: true,
-  parseNested: true,
-  uploadTimeout: 60000, // 60 seconds timeout
-  responseOnLimit: "File size limit has been reached"
-});
-
-// Error handler for file upload
-const handleUploadError = (error: any, res: express.Response) => {
-  console.error('File upload error:', error);
-  if (error.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ message: 'File is too large' });
+// Configure formidable options
+const formidableOptions = {
+  uploadDir: path.join(process.cwd(), 'private_storage/uploads'),
+  keepExtensions: true,
+  maxFileSize: 100 * 1024 * 1024, // 100MB
+  multiples: false,
+  filter: function ({ mimetype }) {
+    // Filter allowed mime types
+    const allowedMimeTypes = new Set([
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
+      'video/quicktime', 'video/mp4'
+    ]);
+    return allowedMimeTypes.has(mimetype || '');
   }
-  if (error.code === 'ENOENT') {
-    return res.status(500).json({ message: 'File upload directory is not accessible' });
-  }
-  return res.status(500).json({ 
-    message: 'File upload failed',
-    error: error.message 
-  });
 };
 
 // Secure filename sanitization using sanitize-filename package
@@ -47,112 +32,89 @@ const secureFilename = (filename: string): string => {
   return sanitizeFilename(filename);
 };
 
-// Type-safe middleware for file type validation
-const validateFileType = (
-  req: express.Request & { files?: FileArray },
-  res: express.Response,
-  next: express.NextFunction
-) => {
+// Additional validation for uploaded files
+const validateUploadedFile = (file: formidable.File) => {
+  // Check file size
+  const maxSize = 100 * 1024 * 1024; // 100MB
+  if (file.size > maxSize) {
+    throw new Error(`File too large. Maximum size is ${maxSize / (1024 * 1024)}MB`);
+  }
+
+  // Validate mime type
+  const allowedMimeTypes = new Set([
+    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
+    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
+    'video/quicktime', 'video/mp4'
+  ]);
+
+  if (!allowedMimeTypes.has(file.mimetype || '')) {
+    throw new Error(`Invalid file type. Allowed types: ${Array.from(allowedMimeTypes).join(', ')}`);
+  }
+
+  return true;
+};
+
+// Initialize ClamAV scanner with detailed logging
+const initClamAV = async () => {
   try {
-    console.log('Validating file upload request:', { 
-      files: req.files,
-      body: req.body,
-      headers: req.headers
-    });
+    console.log('Initializing ClamAV scanner...');
+    console.log('NodeClam module structure:', NodeClamModule);
 
-    if (!req.files?.file || Array.isArray(req.files.file)) {
-      console.error('No file or invalid file structure in request');
-      return res.status(400).json({ message: "No file uploaded" });
+    // The module exports an object with initialization methods
+    const clamav = NodeClamModule.default;
+
+    if (!clamav) {
+      console.error('Failed to import ClamAV module');
+      return null;
     }
 
-    const file = req.files.file as UploadedFile;
-    console.log('File details:', {
-      name: file.name,
-      size: file.size,
-      mimetype: file.mimetype,
-      tempFilePath: file.tempFilePath
+    // Check if ClamAV binary exists
+    const clamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
+    if (!fs.existsSync(clamPath)) {
+      console.error(`ClamAV binary not found at ${clamPath}`);
+      return null;
+    }
+
+    console.log('Configuring ClamAV scanner...');
+
+    // Initialize scanner with configuration
+    const scanner = await clamav.createScanner({
+      removeInfected: true,
+      quarantineInfected: false,
+      scanLog: null,
+      debugMode: true,
+      fileList: null,
+      scanRecursively: true,
+      clamscan: {
+        path: clamPath,
+        db: null,
+        scanArchives: true,
+        active: true
+      },
+      preference: 'clamscan'
     });
 
-    const allowedMimeTypes = new Set([
-      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac',
-      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv',
-      'video/quicktime', 'video/mp4'
-    ]);
-
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      console.error(`Invalid mimetype: ${file.mimetype}`);
-      return res.status(400).json({ message: "Invalid file type" });
-    }
-    next();
+    console.log('ClamAV scanner initialized successfully');
+    return scanner;
   } catch (error) {
-    handleUploadError(error, res);
+    console.error('Failed to initialize ClamAV:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : undefined);
+    return null;
   }
 };
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Apply express-fileupload middleware with error handling
-  app.use((req, res, next) => {
-    fileUploadMiddleware(req, res, (err) => {
-      if (err) {
-        return handleUploadError(err, res);
-      }
-      next();
-    });
-  });
-
-  // Initialize ClamAV scanner with detailed logging
-  const initClamAV = async () => {
-    try {
-      console.log('Initializing ClamAV scanner...');
-      console.log('NodeClam type:', typeof NodeClamModule.default);
-
-      const NodeClam = NodeClamModule.default;
-      if (!NodeClam) {
-        console.error('Failed to import NodeClam constructor');
-        return null;
-      }
-
-      // Check if ClamAV binary exists
-      const clamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
-      if (!fs.existsSync(clamPath)) {
-        console.error(`ClamAV binary not found at ${clamPath}`);
-        return null;
-      }
-
-      const scanner = new NodeClam();
-      console.log('Created NodeClam instance');
-
-      await scanner.init({
-        removeInfected: true,
-        quarantineInfected: false,
-        scanLog: null,
-        debugMode: true, // Enable debug mode
-        fileList: null,
-        scanRecursively: true,
-        clamscan: {
-          path: clamPath,
-          db: null,
-          scanArchives: true,
-          active: true
-        },
-        preference: 'clamscan'
-      });
-
-      console.log('ClamAV scanner initialized successfully');
-      return scanner;
-    } catch (error) {
-      console.error('Failed to initialize ClamAV:', error);
-      return null;
-    }
-  };
+  // Ensure upload directory exists
+  if (!fs.existsSync(formidableOptions.uploadDir)) {
+    fs.mkdirSync(formidableOptions.uploadDir, { recursive: true });
+  }
 
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
   // Music upload route with virus scanning
-  app.post("/api/upload/music", validateFileType, async (
+  app.post("/api/upload/music", async (
     req: express.Request & { 
-      files?: FileArray,
       user?: { id: number; role: string; }
       isAuthenticated(): boolean;
     },
@@ -167,42 +129,71 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      if (!req.files?.file || Array.isArray(req.files.file)) {
-        console.error('No file in request');
-        return res.status(400).json({ message: "No file uploaded" });
-      }
+      // Create formidable form instance with detailed error handling
+      const form = formidable({
+        ...formidableOptions,
+        filename: (name, ext, part) => {
+          const originalName = part.originalFilename || 'unnamed';
+          return secureFilename(originalName);
+        }
+      });
 
-      const file = req.files.file as UploadedFile;
-      const targetPage = req.body.page as string;
-      const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
+      // Parse the form with enhanced error handling
+      const [fields, files] = await new Promise<[formidable.Fields, formidable.Files]>((resolve, reject) => {
+        form.parse(req, (err, fields, files) => {
+          if (err) {
+            console.error('Form parsing error:', err);
+            reject(new Error(`File upload failed: ${err.message}`));
+            return;
+          }
+          resolve([fields, files]);
+        });
+      });
 
-      console.log('Upload request details:', {
-        filename: file.name,
-        size: file.size,
-        targetPage,
-        tempPath: file.tempFilePath
+      console.log('Form parsed successfully:', {
+        fields: JSON.stringify(fields),
+        files: Object.keys(files)
       });
 
       // Validate target page
-      if (!allowedPages.includes(targetPage)) {
+      const targetPage = fields.page?.[0];
+      const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
+
+      if (!targetPage || !allowedPages.includes(targetPage)) {
         console.error(`Invalid target page: ${targetPage}`);
         return res.status(400).json({ message: "Invalid target page" });
       }
 
-      // Create upload directory if it doesn't exist
-      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
-      if (!fs.existsSync(uploadDir)) {
-        console.log(`Creating upload directory: ${uploadDir}`);
-        fs.mkdirSync(uploadDir, { recursive: true });
+      // Get and validate the uploaded file
+      const file = Array.isArray(files.file) ? files.file[0] : files.file;
+      if (!file) {
+        console.error('No file in request');
+        return res.status(400).json({ message: "No file uploaded" });
       }
+
+      // Validate the uploaded file
+      try {
+        validateUploadedFile(file);
+      } catch (validationError) {
+        console.error('File validation error:', validationError);
+        return res.status(400).json({ message: validationError.message });
+      }
+
+      console.log('Upload request details:', {
+        filename: file.originalFilename,
+        size: file.size,
+        targetPage,
+        filepath: file.filepath,
+        mimetype: file.mimetype
+      });
 
       // Virus scan using ClamAV
       let scanResult: { isInfected: boolean; viruses?: string[] } = { isInfected: false };
 
       if (clamAV) {
         try {
-          console.log(`Scanning file for viruses: ${file.tempFilePath}`);
-          scanResult = await clamAV.isInfected(file.tempFilePath);
+          console.log(`Scanning file for viruses: ${file.filepath}`);
+          scanResult = await clamAV.isInfected(file.filepath);
           console.log('Scan result:', scanResult);
 
           if (scanResult.isInfected) {
@@ -219,21 +210,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         console.warn("ClamAV not available - skipping virus scan");
       }
 
-      // Prepare file path
-      const fileName = secureFilename(file.name);
-      const filePath = path.join(uploadDir, fileName);
-
-      // Additional path traversal check
-      const normalizedPath = path.normalize(filePath);
-      if (!normalizedPath.startsWith(uploadDir)) {
-        throw new Error('Path traversal attempt detected');
-      }
-
-      console.log('Uploading file to:', filePath);
-
       // Upload the file using storage interface
       const result = await storage.uploadMusic({
-        file: file,
+        file: {
+          name: file.originalFilename || 'unnamed',
+          size: file.size,
+          tempFilePath: file.filepath,
+          mimetype: file.mimetype || ''
+        },
         targetPage: targetPage,
         uploadedBy: req.user.id,
         userRole: req.user.role as 'admin' | 'super_admin'
@@ -248,7 +232,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error) {
       console.error("Error in music file upload:", error);
-      handleUploadError(error, res);
+      res.status(500).json({
+        message: "Failed to upload file",
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : undefined
+      });
     }
   });
   // Secure file serving endpoint
