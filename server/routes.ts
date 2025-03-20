@@ -380,10 +380,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       console.log('Fetching admin analytics data...');
       
+      // Extract date range parameters from query
+      const fromDate = req.query.from as string || undefined;
+      const toDate = req.query.to as string || undefined;
+      
+      // Log the date range for debugging
+      console.log(`Date range for analytics: from=${fromDate}, to=${toDate}`);
+      
       // Get analytics data from storage interface with error handling
       let analyticsData;
       try {
-        analyticsData = await storage.getAdminAnalytics();
+        analyticsData = await storage.getAdminAnalytics(fromDate, toDate);
         console.log('Base analytics data retrieved:', analyticsData);
       } catch (analyticError) {
         console.error('Error retrieving base analytics:', analyticError);
