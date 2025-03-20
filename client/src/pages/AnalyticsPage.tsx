@@ -372,7 +372,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={handleUserActivityRefresh}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -391,7 +391,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={handleRegistrationsRefresh}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -410,7 +410,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={handleContentRefresh}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -429,7 +429,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={handleRolesRefresh}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -448,7 +448,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => handleComingSoonRefresh('Page Views')}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -466,7 +466,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => handleComingSoonRefresh('User Engagement')}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -484,7 +484,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => handleComingSoonRefresh('Content Growth')}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -502,7 +502,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => handleComingSoonRefresh('Geographic Stats')}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
@@ -520,7 +520,7 @@ export default function AnalyticsPage() {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => handleComingSoonRefresh('System Performance')}
               className="h-7 w-7 p-0 rounded-full"
             >
               <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
