@@ -24,44 +24,13 @@ app.use((req, res, next) => {
 
 // Security headers
 app.use((req, res, next) => {
-  // Basic security headers
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  
-  // Enhanced CSP with more restrictive policies
-  res.setHeader('Content-Security-Policy', 
-    "default-src 'self';" +
-    "img-src 'self' data: https:;" +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval';" +
-    "style-src 'self' 'unsafe-inline';" +
-    "font-src 'self';" +
-    "frame-src 'none';" +
-    "object-src 'none';" +
-    "base-uri 'self';" +
-    "form-action 'self';" +
-    "frame-ancestors 'none';"
-  );
-  
-  // Additional security headers
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 
-    'geolocation=(),' +
-    'microphone=(),' +
-    'camera=(),' +
-    'payment=(),' +
-    'usb=(),' +
-    'battery=(),' +
-    'midi=(),' +
-    'notifications=()'
-  );
-  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-  
-  // Remove unnecessary headers
-  res.removeHeader('X-Powered-By');
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
 });
 
@@ -102,37 +71,13 @@ app.use(fileUpload({
 }));
 
 
-// Add enhanced security logging middleware
+// Add logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (req.path.startsWith("/api")) {
-      const clientIP = req.ip || req.connection.remoteAddress;
-      const userAgent = req.headers['user-agent'] || 'Unknown';
-      const referrer = req.headers['referer'] || 'Direct';
-      const method = req.method;
-      const path = req.path;
-      const status = res.statusCode;
-      
-      // Log in a structured format for easier parsing
-      log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        ip: clientIP,
-        method: method,
-        path: path,
-        status: status,
-        duration: duration,
-        userAgent: userAgent,
-        referrer: referrer,
-        authenticated: req.isAuthenticated(),
-        userId: req.user?.id || 'anonymous'
-      }));
-
-      // Additional logging for suspicious activities
-      if (status >= 400) {
-        console.warn(`Security alert: Failed request from IP ${clientIP} to ${method} ${path} (${status})`);
-      }
+      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
     }
   });
   next();
