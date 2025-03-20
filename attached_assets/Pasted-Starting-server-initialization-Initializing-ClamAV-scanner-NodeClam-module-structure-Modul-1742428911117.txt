@@ -1,0 +1,38 @@
+Starting server initialization...
+Initializing ClamAV scanner...
+NodeClam module structure: [Module: null prototype] { default: clamav {} }
+Configuring ClamAV scanner...
+ClamAV scanner initialized successfully
+WebSocket and Socket.IO servers initialized successfully
+Setting up Vite in development mode...
+Server successfully listening on port 5000
+12:00:07 AM [express] Server listening on port 5000
+Fetching unapproved comments
+Attempting to fetch unapproved comments...
+Fetched unapproved comments: []
+Found unapproved comments: []
+12:00:40 AM [express] {"timestamp":"2025-03-20T00:00:40.876Z","ip":"10.***.***.***","method":"GET","path":"/api/posts/comments/unapproved","status":200,"duration":64,"userAgent":"Mozilla","referrer":"https://89ef1c8c-f938-40d8-9f35-06c17e9d8b24-00-3jn5vvii8y8w0.picard.replit.dev/admin","authenticated":true,"userId":"[AUTHENTICATED]"}
+12:00:40 AM [express] {"timestamp":"2025-03-20T00:00:40.984Z","ip":"10.***.***.***","method":"GET","path":"/api/users","status":200,"duration":60,"userAgent":"Mozilla","referrer":"https://89ef1c8c-f938-40d8-9f35-06c17e9d8b24-00-3jn5vvii8y8w0.picard.replit.dev/admin","authenticated":true,"userId":"[AUTHENTICATED]"}
+12:00:40 AM [express] {"timestamp":"2025-03-20T00:00:40.987Z","ip":"10.***.***.***","method":"GET","path":"/api/posts/unapproved","status":200,"duration":66,"userAgent":"Mozilla","referrer":"https://89ef1c8c-f938-40d8-9f35-06c17e9d8b24-00-3jn5vvii8y8w0.picard.replit.dev/admin","authenticated":true,"userId":"[AUTHENTICATED]"}
+Error: Unexpected end of form
+    at Multipart._final (/home/runner/workspace/node_modules/busboy/lib/types/multipart.js:588:17)
+    at prefinish (node:internal/streams/writable:916:14)
+    at finishMaybe (node:internal/streams/writable:930:5)
+    at Writable.end (node:internal/streams/writable:845:5)
+    at onend (node:internal/streams/readable:948:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+12:00:53 AM [express] {"timestamp":"2025-03-20T00:00:53.602Z","ip":"10.***.***.***","method":"POST","path":"/api/upload/music","status":500,"duration":32,"userAgent":"Mozilla","referrer":"https://89ef1c8c-f938-40d8-9f35-06c17e9d8b24-00-3jn5vvii8y8w0.picard.replit.dev/admin","authenticated":true,"userId":"[AUTHENTICATED]"}
+Security alert: Failed request from IP 10.81.2.15 to POST /api/upload/music (500)
+Error: Unexpected end of form
+    at Multipart._final (/home/runner/workspace/node_modules/busboy/lib/types/multipart.js:588:17)
+    at prefinish (node:internal/streams/writable:916:14)
+    at finishMaybe (node:internal/streams/writable:930:5)
+    at Writable.end (node:internal/streams/writable:845:5)
+    at onend (node:internal/streams/readable:948:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+12:01:09 AM [express] {"timestamp":"2025-03-20T00:01:09.337Z","ip":"10.***.***.***","method":"POST","path":"/api/upload/music","status":500,"duration":30,"userAgent":"Mozilla","referrer":"https://89ef1c8c-f938-40d8-9f35-06c17e9d8b24-00-3jn5vvii8y8w0.picard.replit.dev/admin","authenticated":true,"userId":"[AUTHENTICATED]"}
+Security alert: Failed request from IP 10.81.2.15 to POST /api/upload/music (500)
+^CShutting down server...
+HTTP server closed
+Closing database pool...
+Database pool closed
