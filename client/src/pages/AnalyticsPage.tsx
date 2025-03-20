@@ -5,6 +5,7 @@ import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { queryClient } from "@/lib/queryClient";
+import { toast } from "@/hooks/use-toast";
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -244,8 +245,57 @@ export default function AnalyticsPage() {
     }
   };
 
-  const handleRefresh = () => {
+  // Individual refresh functions for each chart
+  const handleMainRefresh = () => {
     refetch();
+  };
+  
+  const handleUserActivityRefresh = () => {
+    // In a more complex app, this could refresh just the user activity data
+    refetch();
+    toast({
+      title: "Refreshing User Activity Data",
+      description: "Updated user activity metrics",
+      duration: 2000
+    });
+  };
+  
+  const handleRegistrationsRefresh = () => {
+    // In a more complex app, this could refresh just the registrations data
+    refetch();
+    toast({
+      title: "Refreshing Registration Data",
+      description: "Updated registration metrics",
+      duration: 2000
+    });
+  };
+  
+  const handleContentRefresh = () => {
+    // In a more complex app, this could refresh just the content distribution data
+    refetch();
+    toast({
+      title: "Refreshing Content Data",
+      description: "Updated content distribution metrics",
+      duration: 2000
+    });
+  };
+  
+  const handleRolesRefresh = () => {
+    // In a more complex app, this could refresh just the user roles data
+    refetch();
+    toast({
+      title: "Refreshing User Roles Data",
+      description: "Updated user role metrics",
+      duration: 2000
+    });
+  };
+  
+  const handleComingSoonRefresh = (metricName: string) => {
+    toast({
+      title: `${metricName} Metrics`,
+      description: "This chart data is coming soon",
+      duration: 2000
+    });
   };
 
   return (
@@ -260,7 +310,7 @@ export default function AnalyticsPage() {
           </Link>
           <Button
             variant="outline"
-            onClick={handleRefresh}
+            onClick={handleMainRefresh}
             className="flex items-center"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
