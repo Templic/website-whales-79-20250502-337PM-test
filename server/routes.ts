@@ -11,48 +11,9 @@ import {
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 
-// Simple sanitization function (replace with sanitize-filename package for production)
-const secureFilename = (filename: string): string => {
-  return filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-};
-
-// Middleware for file type validation
-const validateFileType = (req, res, next) => {
-  if (!req.files?.file) {
-    return res.status(400).json({ message: "No file uploaded" });
-  }
-
-  const file = req.files.file;
-  const allowedMimeTypes = new Set([
-    'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
-    'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
-    'video/quicktime', 'video/mp4'
-  ]);
-
-  if (!allowedMimeTypes.has(file.mimetype)) {
-    return res.status(400).json({ message: "Invalid file type" });
-  }
-  next();
-};
-
 export async function registerRoutes(app: express.Application): Promise<Server> {
-  // Secure file serving endpoint
-  app.get('/media/:filename', (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const filename = req.params.filename;
-    const filePath = path.join(process.cwd(), 'private_storage/uploads', filename);
-
-    // Validate the file path
-    const normalizedPath = path.normalize(filePath);
-    if (!normalizedPath.startsWith(path.join(process.cwd(), 'private_storage/uploads'))) {
-      return res.status(403).json({ message: "Invalid file path" });
-    }
-
-    res.sendFile(filePath);
-  });
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -295,7 +256,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Music upload route
-  app.post("/api/upload/music", validateFileType, async (req, res) => {
+  app.post("/api/upload/music", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -304,49 +265,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const NodeClam = require('clamav.js');
-    const ClamScan = new NodeClam().init({
-        removeInfected: true,
-        quarantineInfected: false,
-        scanLog: null,
-        debugMode: false,
-        fileList: null,
-        scanRecursively: true,
-        clamscan: {
-            path: '/usr/bin/clamscan',
-            db: null,
-            scanArchives: true,
-            active: true
-        },
-        preference: 'clamscan'
-    });
-
     const file = req.files.file;
     const targetPage = req.body.page;
     const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
-    const allowedTypes = new Set(['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov']);
-
-    // Scan file for viruses
-    try {
-        const {isInfected, viruses} = await ClamScan.isInfected(file.tempFilePath);
-        if (isInfected) {
-            return res.status(400).json({ 
-                message: "File is infected with malware",
-                viruses: viruses 
-            });
-        }
-    } catch (err) {
-        console.error("Virus scan error:", err);
-        return res.status(500).json({ message: "Error scanning file" });
-    }
-    const allowedMimeTypes = new Set([
-      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
-      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
-      'video/quicktime', 'video/mp4'
-    ]);
-
-    // Sanitize filename to prevent path traversal
-
+    const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
 
     if (!allowedPages.includes(targetPage)) {
       return res.status(400).json({ message: "Invalid target page" });
@@ -365,26 +287,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     // Validate MIME type
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + Array.from(allowedMimeTypes).join(', ') });
+    const allowedMimeTypes = [
+      'audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/flac', 
+      'audio/wav', 'audio/aiff', 'video/avi', 'video/x-ms-wmv', 
+      'video/quicktime', 'video/mp4'
+    ];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + allowedMimeTypes.join(', ') });
     }
 
     try {
-      const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
-      const fileName = secureFilename(file.name);
-      const filePath = path.join(uploadDir, fileName);
-
-      // Additional path traversal check
-      const normalizedPath = path.normalize(filePath);
-      if (!normalizedPath.startsWith(uploadDir)) {
-        throw new Error('Path traversal attempt detected');
-      }
       const result = await storage.uploadMusic({
         file: file,
         targetPage: targetPage,
         uploadedBy: req.user.id,
-        userRole: req.user.role as 'admin' | 'super_admin',
-        filePath: filePath
+        userRole: req.user.role as 'admin' | 'super_admin'
       });
       res.json(result);
     } catch (error) {
@@ -426,11 +343,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    // Validate CSRF token
-    if (!req.csrfToken || req.get('CSRF-Token') !== req.csrfToken()) {
-      return res.status(403).json({ message: "Invalid CSRF token" });
-    }
-
     try {
       const trackId = Number(req.params.id);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
@@ -442,6 +354,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
+  //This route was duplicated in the original code.  Removing the duplicate.
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);

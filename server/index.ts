@@ -27,40 +27,11 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';");
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Setup CSRF protection
-const csrf = require('csurf');
-const csrfProtection = csrf({
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    httpOnly: true
-  }
-});
-
-// Apply CSRF protection to all routes except those that don't need it
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api/login') || req.path.startsWith('/api/register')) {
-    next();
-  } else {
-    csrfProtection(req, res, next);
-  }
-});
-
-// Provide CSRF token
-app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
-
 app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
   createParentPath: true,

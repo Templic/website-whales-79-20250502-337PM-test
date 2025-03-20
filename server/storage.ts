@@ -316,7 +316,7 @@ export class PostgresStorage implements IStorage {
       throw new Error('Unauthorized - requires admin privileges');
     }
     // Simple local file saving - replace with cloud storage in production
-    const uploadDir = path.join(process.cwd(), 'private_storage/uploads');
+    const uploadDir = path.join(process.cwd(), 'uploads');
     await fs.mkdir(uploadDir, { recursive: true }).catch(() => {}); // Ignore if dir exists
     const fileName = `${Date.now()}-${file.name}`;
     const filePath = path.join(uploadDir, fileName);

@@ -42,13 +42,6 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-import rateLimit from 'express-rate-limit';
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5 // limit each IP to 5 requests per windowMs
-});
-
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
@@ -57,15 +50,13 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 4 * 60 * 60 * 1000, // 4 hours default
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours default
       path: "/",
       httpOnly: true,
-      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
     },
-    name: '_sess', // Less obvious session ID name
-    proxy: true, // Trust the reverse proxy
-    rolling: true // Extend session with activity
+    name: 'sid', // Custom session ID name
+    proxy: true // Trust the reverse proxy
   };
 
   app.set("trust proxy", 1);
@@ -145,7 +136,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", authLimiter, (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string }) => {
       if (err) return next(err);
       if (!user) return res.status(401).json(info);
@@ -163,64 +154,18 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Track revoked sessions
-  const revokedSessions = new Set<string>();
-
-  // Helper to revoke a session
-  const revokeSession = async (sessionId: string) => {
-    revokedSessions.add(sessionId);
-    await storage.sessionStore.destroy(sessionId);
-  };
-
-  // Middleware to check for revoked sessions
-  app.use((req, res, next) => {
-    if (req.sessionID && revokedSessions.has(req.sessionID)) {
-      return res.status(401).json({ message: "Session has been revoked" });
+  app.post("/api/logout", (req, res, next) => {
+    // Record logout time in analytics
+    if (req.session?.analytics) {
+      req.session.analytics.logoutTime = new Date();
     }
-    next();
-  });
-
-  app.post("/api/logout", async (req, res, next) => {
-    try {
-      // Record logout time in analytics
-      if (req.session?.analytics) {
-        req.session.analytics.logoutTime = new Date();
+    req.logout((err) => {
+      if (err) {
+        console.error("Error during logout:", err);
+        return next(err);
       }
-
-      // Revoke the session
-      if (req.sessionID) {
-        await revokeSession(req.sessionID);
-      }
-
-      req.logout((err) => {
-        if (err) {
-          console.error("Error during logout:", err);
-          return next(err);
-        }
-        res.sendStatus(200);
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  // Endpoint to revoke all sessions for a user
-  app.post("/api/revoke-sessions", async (req, res, next) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const sessions = await storage.sessionStore.all();
-      for (const session of Object.values(sessions)) {
-        if (session.passport?.user === req.user.id) {
-          await revokeSession(session.id);
-        }
-      }
-      res.json({ message: "All sessions revoked successfully" });
-    } catch (err) {
-      next(err);
-    }
+      res.sendStatus(200);
+    });
   });
 
   // Add role management endpoint
