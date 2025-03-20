@@ -22,7 +22,7 @@ const navigationItems = [
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
 
   const handleNavigationClick = useCallback((path: string) => {
     // First scroll to top with smooth behavior
@@ -31,9 +31,10 @@ export function Header() {
     // Add a small delay to allow the scroll animation to complete
     setTimeout(() => {
       setIsMenuOpen(false);
-      setLocation(path);
+      navigate(path);
+      console.log("Navigating to:", path); // Debug
     }, 300); // 300ms delay to allow for smooth scroll
-  }, [setLocation]);
+  }, [navigate]);
 
   // Common styles
   const navItemStyles = "text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2";
@@ -67,9 +68,9 @@ export function Header() {
           <ul className="flex flex-wrap gap-4 lg:gap-6 list-none p-0 justify-center">
             {navigationItems.map(({ path, label }) => (
               <li key={path}>
-                <button onClick={() => handleNavigationClick(path)} className={navItemStyles}>
+                <Link href={path} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={navItemStyles}>
                   {label}
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -94,9 +95,12 @@ export function Header() {
         <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
           {navigationItems.map(({ path, label }) => (
             <li key={path}>
-              <button onClick={() => handleNavigationClick(path)} className={mobileNavItemStyles}>
+              <Link href={path} onClick={() => {
+                setIsMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} className={mobileNavItemStyles}>
                 {label}
-              </button>
+              </Link>
             </li>
           ))}
         </ul>
