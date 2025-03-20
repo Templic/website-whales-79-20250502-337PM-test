@@ -4,7 +4,7 @@ import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { storageInstance as storage } from "./storage";
+import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 
 // Extend session type to include our custom properties
@@ -61,9 +61,7 @@ export function setupAuth(app: Express) {
       maxAge: 4 * 60 * 60 * 1000, // 4 hours default
       path: "/",
       httpOnly: true,
-      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined,
-      signed: true,
-      partitioned: true // Enable partitioned cookies for enhanced privacy
+      domain: process.env.NODE_ENV === "production" ? process.env.DOMAIN : undefined
     },
     name: '_sess', // Less obvious session ID name
     proxy: true, // Trust the reverse proxy

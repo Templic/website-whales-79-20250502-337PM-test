@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
+import AudioPlayer from "@/components/AudioPlayer"; // Assuming AudioPlayer is in a separate file
+
 
 interface MusicArchivePageProps {}
 
@@ -34,15 +36,23 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
           {albums.map(album => (
             <div key={album.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl hover:transform hover:-translate-y-2 transition-all duration-300">
               <h3 className="text-2xl text-[#00ebd6] mb-3">{album.title}</h3>
-              <p className="text-sm mb-2">Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
+              <p className="text-sm mb-2">Release Date: {new Date(album.releaseDate).toLocaleDateString()}</p>
               <p className="text-sm mb-4">{album.description}</p>
-              {album.coverImage && (
+              {album.coverUrl && (
                 <img 
-                  src={`/media/${album.coverImage}`}
+                  src={album.coverUrl} 
                   alt={`${album.title} cover`}
                   className="w-full h-48 object-cover rounded-lg mb-4"
                 />
               )}
+              <a 
+                href={album.streamUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block bg-[#fe0064] text-white px-4 py-2 rounded-full hover:bg-opacity-80 transition-all"
+              >
+                Stream Now
+              </a>
             </div>
           ))}
           {albums.length === 0 && (
@@ -62,7 +72,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
                 <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
               </div>
               <audio controls className="w-full">
-                <source src={`/media/${track.audioUrl}`} type="audio/mpeg" />
+                <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
             </div>
