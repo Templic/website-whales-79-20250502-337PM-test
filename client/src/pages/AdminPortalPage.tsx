@@ -3,7 +3,7 @@ import AdminMusicUpload from "@/components/AdminMusicUpload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { User, Post, Comment } from "@shared/schema";
 import { Loader2, Check, X, LogOut, Shield, Settings, Ban, UserPlus, ChartBar, Bell } from "lucide-react";
-import { Redirect } from "wouter";
+import { Redirect, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -244,14 +244,15 @@ export default function AdminPortalPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-[#00ebd6]">Admin Portal</h1>
         <div className="flex gap-2">
-          <Button
-            variant="default"
-            className="bg-[#00ebd6] text-[#303436] hover:bg-[#00c2b0]"
-            onClick={() => window.location.href = "/admin/analytics"}
-          >
-            <ChartBar className="mr-2 h-4 w-4" />
-            Advanced Analytics
-          </Button>
+          <Link href="/admin/analytics">
+            <Button
+              variant="default"
+              className="bg-[#00ebd6] text-[#303436] hover:bg-[#00c2b0]"
+            >
+              <ChartBar className="mr-2 h-4 w-4" />
+              Advanced Analytics
+            </Button>
+          </Link>
           <Button
             variant="outline"
             onClick={handleLogout}
@@ -382,15 +383,16 @@ export default function AdminPortalPage() {
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold">Analytics Overview</h2>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.location.href = "/admin/analytics"}
-              className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/10"
-            >
-              <ChartBar className="mr-2 h-4 w-4" />
-              View Detailed Analytics
-            </Button>
+            <Link href="/admin/analytics">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/10"
+              >
+                <ChartBar className="mr-2 h-4 w-4" />
+                View Detailed Analytics
+              </Button>
+            </Link>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
