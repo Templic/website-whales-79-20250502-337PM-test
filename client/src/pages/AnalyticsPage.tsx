@@ -15,7 +15,8 @@ import {
   Title, 
   Tooltip, 
   Legend,
-  ArcElement
+  ArcElement,
+  Filler
 } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 
@@ -29,7 +30,8 @@ ChartJS.register(
   Title, 
   Tooltip, 
   Legend,
-  ArcElement
+  ArcElement,
+  Filler
 );
 
 // Define types for analytics data
@@ -311,43 +313,172 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+      {/* Charts in 3x3 Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* User Activity Over Time */}
-        <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-2 text-white">User Activity</h3>
-          <p className="text-gray-400 text-sm mb-4">Monthly active user counts for the past 6 months</p>
-          <div className="h-80">
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">User Activity</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Monthly active users (6 months)</p>
+          <div className="h-52">
             <Line data={userActivityData} options={chartOptions} />
           </div>
         </div>
         
         {/* New Registrations Over Time */}
-        <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-2 text-white">New Registrations</h3>
-          <p className="text-gray-400 text-sm mb-4">Monthly new user sign-ups for the past 6 months</p>
-          <div className="h-80">
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">New Registrations</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Monthly sign-ups (6 months)</p>
+          <div className="h-52">
             <Bar data={registrationsData} options={chartOptions} />
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
         {/* Content Distribution */}
-        <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-2 text-white">Content Distribution</h3>
-          <p className="text-gray-400 text-sm mb-4">Breakdown of content types across the platform</p>
-          <div className="h-80">
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">Content Distribution</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Breakdown of content types</p>
+          <div className="h-52">
             <Pie data={contentDistributionData} options={pieOptions} />
           </div>
         </div>
         
         {/* User Roles Distribution */}
-        <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h3 className="text-xl font-bold mb-2 text-white">User Roles</h3>
-          <p className="text-gray-400 text-sm mb-4">Distribution of user access levels in the system</p>
-          <div className="h-80">
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">User Roles</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Distribution of access levels</p>
+          <div className="h-52">
             <Pie data={userRolesData} options={pieOptions} />
+          </div>
+        </div>
+        
+        {/* Sample chart placeholders for 3x3 grid */}
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">Page Views</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Top pages by visitor count</p>
+          <div className="h-52 flex items-center justify-center">
+            <p className="text-gray-500">Page analytics data coming soon</p>
+          </div>
+        </div>
+        
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">User Engagement</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Average session duration</p>
+          <div className="h-52 flex items-center justify-center">
+            <p className="text-gray-500">Engagement metrics coming soon</p>
+          </div>
+        </div>
+        
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">Content Growth</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">New content over time</p>
+          <div className="h-52 flex items-center justify-center">
+            <p className="text-gray-500">Growth metrics coming soon</p>
+          </div>
+        </div>
+        
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">Geographic Stats</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">User locations by region</p>
+          <div className="h-52 flex items-center justify-center">
+            <p className="text-gray-500">Location data coming soon</p>
+          </div>
+        </div>
+        
+        <div className="bg-[rgba(10,50,92,0.6)] p-4 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-bold text-white">System Performance</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="h-7 w-7 p-0 rounded-full"
+            >
+              <RefreshCw className="h-3.5 w-3.5 text-[#00ebd6]" />
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mb-3">Server response times</p>
+          <div className="h-52 flex items-center justify-center">
+            <p className="text-gray-500">Performance metrics coming soon</p>
           </div>
         </div>
       </div>
