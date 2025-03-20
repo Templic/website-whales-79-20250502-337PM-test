@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCw, ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, RefreshCw, ArrowLeft, Calendar as CalendarIcon, Download } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -339,6 +339,89 @@ export default function AnalyticsPage() {
     });
   };
 
+  // Function to export analytics data to CSV
+  const exportToCSV = () => {
+    if (!analyticsData) {
+      toast({
+        title: "Export Failed",
+        description: "No data available to export",
+        variant: "destructive",
+        duration: 3000
+      });
+      return;
+    }
+
+    try {
+      // Create CSV content
+      const headers = ['Metric', 'Value'];
+      
+      const rows = [
+        ['Active Users', analyticsData.activeUsers || 0],
+        ['New Registrations', analyticsData.newRegistrations || 0],
+        ['Content Reports', analyticsData.contentReports || 0],
+        ['System Health', analyticsData.systemHealth || 'Unknown'],
+        ['Content - Posts', analyticsData.contentDistribution?.posts || 0],
+        ['Content - Comments', analyticsData.contentDistribution?.comments || 0],
+        ['Content - Tracks', analyticsData.contentDistribution?.tracks || 0],
+        ['Users - Regular', analyticsData.userRolesDistribution?.user || 0],
+        ['Users - Admin', analyticsData.userRolesDistribution?.admin || 0],
+        ['Users - Super Admin', analyticsData.userRolesDistribution?.super_admin || 0]
+      ];
+      
+      // Add monthly data
+      if (analyticsData.months && analyticsData.activeUsersOverTime) {
+        rows.push(['', '']); // Empty row as separator
+        rows.push(['Month', 'Active Users', 'New Registrations']);
+        
+        analyticsData.months.forEach((month, index) => {
+          rows.push([
+            month,
+            analyticsData.activeUsersOverTime[index] || 0,
+            analyticsData.newRegistrationsOverTime[index] || 0
+          ]);
+        });
+      }
+      
+      // Convert to CSV string
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+      
+      // Create a blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      // Format date for filename
+      const dateStr = format(new Date(), 'yyyy-MM-dd');
+      const fromDateStr = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : '';
+      const toDateStr = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : '';
+      const filename = `analytics-data_${fromDateStr}_to_${toDateStr}_exported-${dateStr}.csv`;
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: `Analytics data exported as ${filename}`,
+        duration: 3000
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting the data",
+        variant: "destructive",
+        duration: 3000
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex flex-col space-y-4 mb-8">
@@ -405,11 +488,28 @@ export default function AnalyticsPage() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh Data
             </Button>
+            <Button
+              variant="outline"
+              onClick={exportToCSV}
+              className="flex items-center"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
           </div>
         </div>
         <div>
           <h1 className="text-4xl font-bold text-[#00ebd6]">Analytics Dashboard</h1>
-          <p className="text-gray-400 mt-2">Comprehensive data insights and metrics for your application</p>
+          <p className="text-gray-400 mt-2">
+            Comprehensive data insights and metrics{' '}
+            {dateRange?.from && dateRange?.to ? (
+              <span className="text-[#00ebd6]">
+                from {format(dateRange.from, "LLL dd, yyyy")} to {format(dateRange.to, "LLL dd, yyyy")}
+              </span>
+            ) : (
+              'for your application'
+            )}
+          </p>
         </div>
       </div>
 
