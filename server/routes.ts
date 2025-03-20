@@ -1,8 +1,8 @@
 import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
+import multer from 'multer';
 import { storageInstance as storage } from "./storage";
-//import multer from 'multer'; // Removed Multer import
 import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
@@ -238,7 +238,6 @@ const fileHandler = {
   // Initialize ClamAV scanner
   const clamAV = await initClamAV();
 
-  import multer from 'multer';
   const upload = multer({ dest: 'private_storage/uploads/temp' });
 
   // Music upload route with virus scanning
