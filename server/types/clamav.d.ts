@@ -9,7 +9,6 @@ declare module 'clamav.js' {
     clamscan?: {
       path: string;
       db: string | null;
-      scanArchives: boolean;
       active: boolean;
     };
     preference?: 'clamscan' | 'clamdscan';
@@ -22,10 +21,15 @@ declare module 'clamav.js' {
   }
 
   class NodeClam {
-    constructor();
-    init(options: ClamScanOptions): Promise<void>;
+    constructor(options?: ClamScanOptions);
+    init(): Promise<void>;
     isInfected(path: string): Promise<ScanResult>;
   }
 
-  export default NodeClam;
+  // Update the export to match the actual module structure
+  const clamav: {
+    createInstance(options?: ClamScanOptions): NodeClam;
+  };
+
+  export = clamav;
 }
