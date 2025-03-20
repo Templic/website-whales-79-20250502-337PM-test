@@ -13,6 +13,9 @@ const navigationItems = [
   { path: "/newsletter", label: "Newsletter" },
   { path: "/blog", label: "Blog" },
   { path: "/collaboration", label: "Collaborate" },
+  // TEMPORARY TEST ITEMS - REMOVE BEFORE DEPLOYMENT
+  { path: "/admin", label: "Admin" },
+  { path: "/admin/analytics", label: "Analytics" },
   { path: "/contact", label: "Contact" }
 ];
 

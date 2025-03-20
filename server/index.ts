@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import { log } from "./vite";
 import { setupVite } from "./vite";
 import { registerRoutes } from "./routes";
-import { pgPool } from "./db";
+import { pgPool, initializeDatabase } from "./db";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 
@@ -72,6 +72,9 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
+    // Initialize database connection
+    await initializeDatabase();
+    
     // Setup authentication first
     setupAuth(app);
 
