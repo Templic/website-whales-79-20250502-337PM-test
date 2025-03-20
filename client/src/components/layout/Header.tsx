@@ -67,9 +67,9 @@ export function Header() {
           <ul className="flex flex-wrap gap-4 lg:gap-6 list-none p-0 justify-center">
             {navigationItems.map(({ path, label }) => (
               <li key={path}>
-                <Link href={path}>
-                  <a className={navItemStyles}>{label}</a>
-                </Link>
+                <button onClick={() => handleNavigationClick(path)} className={navItemStyles}>
+                  {label}
+                </button>
               </li>
             ))}
           </ul>
@@ -94,9 +94,9 @@ export function Header() {
         <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
           {navigationItems.map(({ path, label }) => (
             <li key={path}>
-              <Link href={path}>
-                <a className={mobileNavItemStyles}>{label}</a>
-              </Link>
+              <button onClick={() => handleNavigationClick(path)} className={mobileNavItemStyles}>
+                {label}
+              </button>
             </li>
           ))}
         </ul>
