@@ -58,6 +58,7 @@ interface AnalyticsData {
     admin: number;
     super_admin: number;
   };
+  months: string[]; // The month labels for the charts
 }
 
 // Default color scheme
@@ -163,9 +164,9 @@ export default function AnalyticsPage() {
     );
   }
 
-  // Prepare chart data
+  // Prepare chart data with real months from API response
   const userActivityData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: analyticsData.months || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
         label: 'Active Users',
@@ -179,7 +180,7 @@ export default function AnalyticsPage() {
   };
 
   const registrationsData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: analyticsData.months || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
         label: 'New Registrations',
