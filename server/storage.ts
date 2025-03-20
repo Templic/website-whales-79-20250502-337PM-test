@@ -37,6 +37,27 @@ export interface IStorage {
 
   // Category methods
   createCategory(category: InsertCategory): Promise<Category>;
+
+  async createInitialUsers() {
+    const initialUsers = [
+      { username: 'admin', password: await hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
+      { username: 'superadmin', password: await hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
+      { username: 'user', password: await hashPassword('user123'), email: 'user@example.com', role: 'user' }
+    ];
+
+    for (const userData of initialUsers) {
+      try {
+        const existingUser = await this.getUserByUsername(userData.username);
+        if (!existingUser) {
+          await this.createUser(userData);
+          console.log(`Created user: ${userData.username}`);
+        }
+      } catch (error) {
+        console.error(`Error creating user ${userData.username}:`, error);
+      }
+    }
+  }
+
   getCategories(): Promise<Category[]>;
 
   // Comment methods
@@ -371,27 +392,6 @@ export class PostgresStorage implements IStorage {
             updatedAt: new Date()
           }
         ]);
-
-
-  async createInitialUsers() {
-    const initialUsers = [
-      { username: 'admin', password: await hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
-      { username: 'superadmin', password: await hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
-      { username: 'user', password: await hashPassword('user123'), email: 'user@example.com', role: 'user' }
-    ];
-
-    for (const userData of initialUsers) {
-      try {
-        const existingUser = await this.getUserByUsername(userData.username);
-        if (!existingUser) {
-          await this.createUser(userData);
-          console.log(`Created user: ${userData.username}`);
-        }
-      } catch (error) {
-        console.error(`Error creating user ${userData.username}:`, error);
-      }
-    }
-  }
 
         await db.insert(albums).values([
           {
