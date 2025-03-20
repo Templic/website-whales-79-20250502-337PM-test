@@ -1,0 +1,35 @@
+- [ ] Program in HTML Python, React, Flask; avoid anything that is not Open-Source, and limit the use of javascript unless there is no opensource alternative. 
+- [ ] build a front-end for an analytics dashboard page within the admin_page , we can use a simple React layout featuring configurable space for widgets, graphs, tables, and side-by-side lists. We'll include placeholder data and refresh buttons for interactivity. Here’s a complete implementation using a basic structure.
+
+  Create Analytics_Page.tsx
+  Create a new file named Analytics_Page.tsx in your client/src/pages/ directory with the following content:
+
+  import React from 'react'; const mockData = { activeUsers: 120, newRegistrations: 30, contentReports: 5, systemHealth: 'Good', }; // A reusable button component const Button = ({ onClick, label }) => ( {label} ); const AdminAnalyticsPage = () => { const handleRefresh = () => { // Mock refresh logic (actual implementation should query the API) console.log('Data refreshed'); }; return ( Analytics DashboardActive Users{mockData.activeUsers}
+
+  Copy    \<div className="bg-white p-4 rounded-lg shadow">
+        \<h3 className="text-xl">New Registrations\</h3>
+        \<p className="text-3xl font-bold">{mockData.newRegistrations}\</p>
+      \</div>
+      \<div className="bg-white p-4 rounded-lg shadow">
+        \<h3 className="text-xl">Content Reports\</h3>
+        \<p className="text-3xl font-bold">{mockData.contentReports}\</p>
+      \</div>
+      
+      \<div className="bg-white p-4 rounded-lg shadow">
+        \<h3 className="text-xl">System Health\</h3>
+        \<p className="text-3xl font-bold">{mockData.systemHealth}\</p>
+      \</div>
+    \</div>
+    
+    {/\* Placeholder for charts and tables can be added below \*/}
+    \<div className="mt-6">
+      \<h3 className="text-xl">Charts & Graphs\</h3>
+      {/\* Integrate your charting library here \*/}
+    \</div>
+  \</section>
+  ); }; export default AdminAnalyticsPage; 2. Update Your Routing To access this new dashboard page, you will need to update your routing file (presumably client/src/App.tsx or wherever you manage your routes). Add the following line to the imports:
+
+  import AdminAnalyticsPage from '@/pages/AdminAnalyticsPage'; And in your routing section:
+
+  Explanation
+  Layout: The dashboard grid layout is created using CSS classes, providing a responsive design. Placeholder Data: The mockData object contains simulated data for visual representation. Refresh Functionality: Each time you click the refresh button, it calls a function that simulates a refresh (you would integrate the actual API call here). Styling: Be sure to adjust styles as needed, using CSS for streamlined class-based styling. This code sets up a basic analytics dashboard that you can further enhance by integrating with the Google API or any other data-fetching logic.]
