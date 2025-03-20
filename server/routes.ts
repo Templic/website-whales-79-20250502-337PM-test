@@ -10,6 +10,11 @@ import fs from 'fs';
 // Initialize Express app
 const app = express();
 
+// Root route handler
+app.get('/', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'client', 'index.html'));
+});
+
 // Function to scan file for viruses
 const scanFile = async (filePath: string, scanner: any): Promise<{
   isInfected: boolean;
