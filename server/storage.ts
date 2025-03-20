@@ -4,7 +4,7 @@ declare module 'connect-pg-simple' {
 }
 
 import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, subscribers, posts, categories, comments, users, tracks, albums } from "@shared/schema";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -73,7 +73,7 @@ export interface IStorage {
   unbanUser(userId: number): Promise<void>;
   getSystemSettings(): Promise<any>;
   updateSystemSettings(settings: any): Promise<void>;
-  getAdminAnalytics(): Promise<any>;
+  getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
   getUserActivity(userId: number): Promise<any>;
 }
 
@@ -536,21 +536,59 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getAdminAnalytics(): Promise<any> {
+  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
     try {
+      console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
+      
+      // Apply date filtering if provided
+      const whereClause = fromDate && toDate 
+        ? sql`created_at BETWEEN ${fromDate}::timestamp AND ${toDate}::timestamp`
+        : fromDate 
+          ? sql`created_at >= ${fromDate}::timestamp` 
+          : toDate 
+            ? sql`created_at <= ${toDate}::timestamp`
+            : sql`TRUE`;
+      
       // Get total user count - we don't have last_activity field, so we'll use total users as active
+      // If date range is provided, count users created within that range
       const [activeUsers] = await db.select({ count: sql<number>`count(*)` })
-        .from(users);
+        .from(users)
+        .where(fromDate || toDate ? whereClause : sql`TRUE`);
 
       // Get new registrations in the last 30 days
+      // If date range is provided, use that instead of hardcoded 30 days
+      let registrationsWhereClause;
+      if (fromDate || toDate) {
+        registrationsWhereClause = whereClause;
+      } else {
+        registrationsWhereClause = sql`created_at > now() - interval '30 days'`;
+      }
       const [newRegistrations] = await db.select({ count: sql<number>`count(*)` })
         .from(users)
-        .where(sql`created_at > now() - interval '30 days'`);
+        .where(registrationsWhereClause);
 
       // Get count of posts that need approval as our "content reports" metric
-      const [contentReports] = await db.select({ count: sql<number>`count(*)` })
+      // Apply date filtering here as well if provided
+      let contentReportsQuery = db.select({ count: sql<number>`count(*)` })
         .from(posts)
         .where(sql`approved = false`);
+      
+      // Apply date filter if provided
+      if (fromDate || toDate) {
+        const result = await db.select({ count: sql<number>`count(*)` })
+          .from(posts)
+          .where(sql`approved = false AND ${whereClause}`);
+        const [contentReports] = result;
+        return {
+          activeUsers: activeUsers?.count || 0,
+          newRegistrations: newRegistrations?.count || 0,
+          contentReports: contentReports?.count || 0,
+          systemHealth: 'Good' // Simple health status
+        };
+      }
+      
+      // Without date filter
+      const [contentReports] = await contentReportsQuery;
 
       return {
         activeUsers: activeUsers?.count || 0,
