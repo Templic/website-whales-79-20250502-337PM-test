@@ -1,9 +1,8 @@
 import express from "express";
-import { createServer, type Server } from "http";
-import path from "path";
 import multer from 'multer';
+import path from "path";
+import { createServer } from "http";
 import { storageInstance as storage } from "./storage";
-import { insertSubscriberSchema, insertPostSchema, insertCommentSchema, insertCategorySchema } from "@shared/schema";
 import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
 import fs from 'fs';
@@ -68,13 +67,13 @@ const scanFile = async (filePath: string, scanner: any): Promise<{
   }
 };
 
-// Update the ClamAV initialization code
+// Update the ClamAV initialization code to use dynamic import
 const initClamAV = async () => {
   try {
     console.log('Initializing ClamAV scanner...');
 
-    // Import the module using require since it doesn't support ES modules
-    const clamav = require('clamav.js');
+    // Dynamic import of clamav.js
+    const clamav = await import('clamav.js').then(m => m.default);
     console.log('ClamAV module loaded:', !!clamav);
 
     // Find ClamAV binary

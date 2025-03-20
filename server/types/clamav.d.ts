@@ -26,10 +26,10 @@ declare module 'clamav.js' {
     isInfected(path: string): Promise<ScanResult>;
   }
 
-  // Update the export to match the actual module structure
-  const clamav: {
+  interface ClamAV {
     createInstance(options?: ClamScanOptions): NodeClam;
-  };
+  }
 
-  export = clamav;
+  const clamav: ClamAV;
+  export default clamav;
 }
