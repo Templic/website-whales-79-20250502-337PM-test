@@ -719,3 +719,82 @@ export class PostgresStorage implements IStorage {
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
+async getAdminAnalytics(fromDate?: string, toDate?: string) {
+  console.log(`Storage: Filtering analytics from ${fromDate} to ${toDate}`);
+  
+  const activeUsers = await this.db.count().from(users).where(eq(users.active, true));
+  const newRegistrations = await this.db.count().from(users);
+  const contentReports = await this.db.count().from(reports);
+  
+  // Get time series data
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  
+  // Calculate monthly stats
+  const activeUsersOverTime = await Promise.all(
+    months.map(async (_, index) => {
+      const count = await this.db.count().from(users)
+        .where(and(
+          eq(users.active, true),
+          sql`DATE_PART('month', ${users.createdAt}) = ${index + 1}`
+        ));
+      return Number(count) || 0;
+    })
+  );
+
+  const newRegistrationsOverTime = await Promise.all(
+    months.map(async (_, index) => {
+      const count = await this.db.count().from(users)
+        .where(sql`DATE_PART('month', ${users.createdAt}) = ${index + 1}`);
+      return Number(count) || 0;
+    })
+  );
+
+  // Get content distribution
+  const postsCount = await this.db.count().from(posts);
+  const commentsCount = await this.db.count().from(comments);
+  const tracksCount = await this.db.count().from(tracks);
+
+  // Get user roles distribution
+  const userRoles = await this.db.select({
+    role: users.role,
+    count: sql<number>`count(*)::int`
+  })
+  .from(users)
+  .groupBy(users.role);
+
+  const userRolesDistribution = {
+    user: 0,
+    admin: 0,
+    super_admin: 0
+  };
+
+  userRoles.forEach(({role, count}) => {
+    if (role in userRolesDistribution) {
+      userRolesDistribution[role as keyof typeof userRolesDistribution] = count;
+    }
+  });
+
+  return {
+    activeUsers: String(activeUsers),
+    newRegistrations: String(newRegistrations),
+    contentReports: String(contentReports),
+    systemHealth: 'Good',
+    months,
+    activeUsersOverTime,
+    newRegistrationsOverTime,
+    contentDistribution: {
+      posts: String(postsCount),
+      comments: String(commentsCount),
+      tracks: String(tracksCount)
+    },
+    userRolesDistribution
+  };
+}
+
+async cleanupExpiredSessions() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  
+  await this.db.delete(sessions)
+    .where(lt(sessions.expiresAt, thirtyDaysAgo));
+}
