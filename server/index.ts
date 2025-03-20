@@ -26,17 +26,20 @@ async function startServer() {
       console.log('Setting up Vite in development mode...');
       const app = express();
 
-      // Set up CSP headers for development
+      // Set up development-friendly CSP headers
       app.use((req, res, next) => {
         res.setHeader(
           'Content-Security-Policy',
           "default-src 'self';" +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval';" +
-          "style-src 'self' 'unsafe-inline';" +
-          "img-src 'self' data: blob: https:;" +
-          "font-src 'self' data:;" +
-          "connect-src 'self' ws: wss:;" + // Allow WebSocket connections
-          "worker-src 'self' blob:;" // Allow Web Workers
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:;" +
+          "style-src 'self' 'unsafe-inline' http: https:;" +
+          "img-src 'self' data: blob: http: https:;" +
+          "font-src 'self' data: http: https:;" +
+          "connect-src 'self' ws: wss: http: https:;" +
+          "worker-src 'self' blob:;" +
+          "frame-src 'self';" +
+          "media-src 'self' http: https:;" +
+          "object-src 'none';"
         );
         next();
       });

@@ -41,32 +41,36 @@ const initClamAV = async () => {
   try {
     console.log('Initializing ClamAV scanner...');
 
-    // Use dynamic import for 'module' to get createRequire
-    const moduleImport = await import('module');
-    console.log('Module import successful, createRequire available:', !!moduleImport.createRequire);
+    // Import the module using a dynamic import to get createRequire
+    const { createRequire } = await import('module');
+    const require = createRequire(import.meta.url);
 
-    const require = moduleImport.createRequire(import.meta.url);
-    console.log('Created require function');
-
-    // Import ClamAV module
-    const clamav = require('clamav.js');
-    console.log('ClamAV module loaded:', {
-      moduleType: typeof clamav,
-      keys: Object.keys(clamav),
-      hasCreateInstance: typeof clamav?.createInstance === 'function'
+    // Import and log ClamAV module structure
+    const NodeClamModule = require('clamav.js');
+    console.log('ClamAV module structure:', {
+      type: typeof NodeClamModule,
+      keys: Object.keys(NodeClamModule),
+      hasDefaultExport: !!NodeClamModule.default,
+      hasCreateInstance: typeof NodeClamModule.createInstance === 'function' || 
+                        typeof NodeClamModule.default?.createInstance === 'function'
     });
 
-    // Use the system-installed ClamAV from Nix
-    const systemClamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
+    // Get the appropriate module instance
+    const clamav = NodeClamModule.default || NodeClamModule;
 
+    if (!clamav || typeof clamav.createInstance !== 'function') {
+      throw new Error('Invalid ClamAV module structure - createInstance not found');
+    }
+
+    // Use the system-installed ClamAV binary
+    const systemClamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
     if (!fs.existsSync(systemClamPath)) {
-      console.error(`ClamAV binary not found at ${systemClamPath}`);
-      return null;
+      throw new Error(`ClamAV binary not found at ${systemClamPath}`);
     }
 
     console.log('Found ClamAV binary at:', systemClamPath);
 
-    // Create scanner instance with configuration
+    // Create scanner instance with system configuration
     const scanner = clamav.createInstance({
       removeInfected: true,
       debugMode: true,
@@ -192,7 +196,6 @@ Object.values(directories).forEach(dir => {
     fs.mkdirSync(dir, { recursive: true });
   }
 });
-
 
 const upload = multer({ dest: 'private_storage/uploads/temp' });
 
