@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, RefreshCw, ArrowLeft } from "lucide-react";
+import { Loader2, RefreshCw, ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
 import { Redirect, Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 import { 
@@ -68,11 +73,30 @@ const colors = {
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [dateRange, setDateRange] = useState<DateRange | { from: Date; to: Date }>({
+    from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+    to: new Date()
+  });
 
   // Check auth status
   if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
     return <Redirect to="/" />;
   }
+
+  // Handle date range change
+  const handleDateRangeChange = (range: { from: Date; to: Date } | undefined) => {
+    if (range?.from && range?.to) {
+      setDateRange(range);
+      toast({
+        title: "Date range selected",
+        description: `Showing data from ${format(range.from, "LLL dd, y")} to ${format(range.to, "LLL dd, y")}`,
+        duration: 2000
+      });
+      // Refetch data with new date range
+      refetch();
+    }
+  };
 
   // Fetch analytics data with error handling
   const { 
@@ -81,7 +105,23 @@ export default function AnalyticsPage() {
     error: analyticsError,
     refetch
   } = useQuery<AnalyticsData>({
-    queryKey: ['/api/admin/analytics/detailed'],
+    queryKey: ['/api/admin/analytics/detailed', 
+      dateRange?.from ? dateRange.from.toISOString() : 'undefined', 
+      dateRange?.to ? dateRange.to.toISOString() : 'undefined'
+    ],
+    queryFn: async () => {
+      // Default to 30-day range if dates are undefined
+      const fromDate = dateRange?.from 
+        ? dateRange.from.toISOString() 
+        : new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString();
+      const toDate = dateRange?.to 
+        ? dateRange.to.toISOString() 
+        : new Date().toISOString();
+      
+      const response = await fetch(`/api/admin/analytics/detailed?from=${fromDate}&to=${toDate}`);
+      if (!response.ok) throw new Error('Failed to fetch analytics data');
+      return await response.json();
+    },
     enabled: !!user && (user.role === 'admin' || user.role === 'super_admin'),
     retry: 2,
     retryDelay: 1000
@@ -308,14 +348,63 @@ export default function AnalyticsPage() {
               Back to Admin Portal
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            onClick={handleMainRefresh}
-            className="flex items-center"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh Data
-          </Button>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-[240px] justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd, y")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange.from}
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      setDateRange({ 
+                        from: range.from, 
+                        to: range.to 
+                      });
+                      toast({
+                        title: "Date range selected",
+                        description: `Showing data from ${format(range.from, "LLL dd, y")} to ${format(range.to, "LLL dd, y")}`,
+                        duration: 2000
+                      });
+                      refetch();
+                    }
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="outline"
+              onClick={handleMainRefresh}
+              className="flex items-center"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh Data
+            </Button>
+          </div>
         </div>
         <div>
           <h1 className="text-4xl font-bold text-[#00ebd6]">Analytics Dashboard</h1>
