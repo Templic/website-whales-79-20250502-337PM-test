@@ -88,8 +88,9 @@ export class PostgresStorage implements IStorage {
       createTableIfMissing: true,
     });
 
-    // Initialize sample music data
+    // Initialize sample music data and users
     this.initializeSampleData();
+    this.createInitialUsers();
   }
 
   // User methods
@@ -370,6 +371,27 @@ export class PostgresStorage implements IStorage {
             updatedAt: new Date()
           }
         ]);
+
+
+  async createInitialUsers() {
+    const initialUsers = [
+      { username: 'admin', password: await hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
+      { username: 'superadmin', password: await hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
+      { username: 'user', password: await hashPassword('user123'), email: 'user@example.com', role: 'user' }
+    ];
+
+    for (const userData of initialUsers) {
+      try {
+        const existingUser = await this.getUserByUsername(userData.username);
+        if (!existingUser) {
+          await this.createUser(userData);
+          console.log(`Created user: ${userData.username}`);
+        }
+      } catch (error) {
+        console.error(`Error creating user ${userData.username}:`, error);
+      }
+    }
+  }
 
         await db.insert(albums).values([
           {
