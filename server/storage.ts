@@ -719,10 +719,6 @@ export class PostgresStorage implements IStorage {
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
-async getAdminAnalytics(fromDate?: string, toDate?: string) {
-  console.log(`Storage: Filtering analytics from ${fromDate} to ${toDate}`);
-  
-  const activeUsers = await this.db.count().from(users).where(eq(users.active, true));
   const newRegistrations = await this.db.count().from(users);
   const contentReports = await this.db.count().from(reports);
   
