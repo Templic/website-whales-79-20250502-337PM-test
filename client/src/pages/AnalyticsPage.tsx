@@ -71,14 +71,17 @@ export default function AnalyticsPage() {
     return <Redirect to="/" />;
   }
 
-  // Fetch analytics data
+  // Fetch analytics data with error handling
   const { 
     data: analyticsData = {} as AnalyticsData, 
     isLoading: analyticsLoading,
+    error: analyticsError,
     refetch
   } = useQuery<AnalyticsData>({
     queryKey: ['/api/admin/analytics/detailed'],
-    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin')
+    enabled: !!user && (user.role === 'admin' || user.role === 'super_admin'),
+    retry: 2,
+    retryDelay: 1000
   });
 
   // Handle loading state
@@ -86,6 +89,33 @@ export default function AnalyticsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
+      </div>
+    );
+  }
+  
+  // Handle error state
+  if (analyticsError) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="flex flex-col space-y-4 mb-8">
+          <Link href="/admin" className="flex items-center">
+            <Button variant="ghost" className="text-[#00ebd6] hover:bg-[rgba(0,235,214,0.1)]">
+              <ArrowLeft className="mr-2 h-5 w-5" />
+              Back to Admin Portal
+            </Button>
+          </Link>
+          <div className="bg-red-900/20 border border-red-500 rounded-lg p-6 text-center">
+            <h1 className="text-2xl font-bold text-red-500 mb-4">Error Loading Analytics</h1>
+            <p className="text-gray-300 mb-4">There was a problem loading the analytics data.</p>
+            <Button 
+              onClick={() => refetch()} 
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try Again
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
