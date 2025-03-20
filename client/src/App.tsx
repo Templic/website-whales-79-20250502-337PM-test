@@ -21,6 +21,7 @@ import CollaborationPage from "@/pages/CollaborationPage";
 import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
@@ -41,6 +42,7 @@ function Router() {
         <Route path="/collaboration" component={CollaborationPage} />
         <Route path="/contact" component={ContactPage} />
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
+        <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
         <ProtectedRoute path="/portal" component={UserPortal} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/recover-password" component={PasswordRecoveryPage} />

@@ -243,20 +243,30 @@ export default function AdminPortalPage() {
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-[#00ebd6]">Admin Portal</h1>
-        <Button
-          variant="outline"
-          onClick={handleLogout}
-          disabled={logoutMutation.isPending}
-        >
-          {logoutMutation.isPending ? (
-            "Logging out..."
-          ) : (
-            <>
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            className="bg-[#00ebd6] text-[#303436] hover:bg-[#00c2b0]"
+            onClick={() => window.location.href = "/admin/analytics"}
+          >
+            <ChartBar className="mr-2 h-4 w-4" />
+            Advanced Analytics
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+          >
+            {logoutMutation.isPending ? (
+              "Logging out..."
+            ) : (
+              <>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -370,7 +380,18 @@ export default function AdminPortalPage() {
 
         {/* Analytics Dashboard */}
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">Analytics Overview</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Analytics Overview</h2>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.location.href = "/admin/analytics"}
+              className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/10"
+            >
+              <ChartBar className="mr-2 h-4 w-4" />
+              View Detailed Analytics
+            </Button>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
               <p className="text-sm text-gray-400">Active Users</p>

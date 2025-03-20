@@ -11,6 +11,7 @@ import connectPg from "connect-pg-simple";
 import { randomBytes } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
+import { hashPassword } from './auth';
 
 
 const PostgresSessionStore = connectPg(session);
