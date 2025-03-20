@@ -10,37 +10,6 @@ import fs from 'fs';
 // Initialize Express app
 const app = express();
 
-// Ensure ClamAV directories exist
-const clamavDirs = {
-  base: path.join(process.cwd(), 'private_storage/clamav'),
-  db: path.join(process.cwd(), 'private_storage/clamav/db')
-};
-
-Object.values(clamavDirs).forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// Function to find ClamAV binary in system path
-const findClamAVBinary = () => {
-  const possiblePaths = [
-    '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan',
-    '/usr/bin/clamscan',
-    '/usr/local/bin/clamscan'
-  ];
-
-  for (const binPath of possiblePaths) {
-    if (fs.existsSync(binPath)) {
-      console.log(`Found ClamAV binary at: ${binPath}`);
-      return binPath;
-    }
-  }
-
-  console.error('ClamAV binary not found in any expected location');
-  return null;
-};
-
 // Function to scan file for viruses
 const scanFile = async (filePath: string, scanner: any): Promise<{
   isInfected: boolean;
@@ -67,39 +36,52 @@ const scanFile = async (filePath: string, scanner: any): Promise<{
   }
 };
 
-// Update the ClamAV initialization code to use dynamic import
+// Initialize ClamAV scanner
 const initClamAV = async () => {
   try {
     console.log('Initializing ClamAV scanner...');
 
-    // Dynamic import of clamav.js
-    const clamav = await import('clamav.js').then(m => m.default);
-    console.log('ClamAV module loaded:', !!clamav);
+    // Use dynamic import for 'module' to get createRequire
+    const moduleImport = await import('module');
+    console.log('Module import successful, createRequire available:', !!moduleImport.createRequire);
 
-    // Find ClamAV binary
-    const clamPath = findClamAVBinary();
-    if (!clamPath) {
-      console.error('Could not find ClamAV binary');
+    const require = moduleImport.createRequire(import.meta.url);
+    console.log('Created require function');
+
+    // Import ClamAV module
+    const clamav = require('clamav.js');
+    console.log('ClamAV module loaded:', {
+      moduleType: typeof clamav,
+      keys: Object.keys(clamav),
+      hasCreateInstance: typeof clamav?.createInstance === 'function'
+    });
+
+    // Use the system-installed ClamAV from Nix
+    const systemClamPath = '/nix/store/4s7jsmyxy0nn45qv0s32pbp8c6z05gnq-clamav-1.3.1/bin/clamscan';
+
+    if (!fs.existsSync(systemClamPath)) {
+      console.error(`ClamAV binary not found at ${systemClamPath}`);
       return null;
     }
 
-    console.log('Found ClamAV binary at:', clamPath);
-    console.log('DB directory:', clamavDirs.db);
+    console.log('Found ClamAV binary at:', systemClamPath);
 
     // Create scanner instance with configuration
     const scanner = clamav.createInstance({
       removeInfected: true,
       debugMode: true,
       clamscan: {
-        path: clamPath,
-        db: clamavDirs.db,
+        path: systemClamPath,
+        db: null, // Use system's virus database
         active: true
       },
       preference: 'clamscan'
     });
 
+    console.log('ClamAV scanner instance created, initializing...');
     await scanner.init();
     console.log('ClamAV scanner initialized successfully');
+
     return scanner;
   } catch (error) {
     console.error('Failed to initialize ClamAV:', error);
@@ -108,61 +90,70 @@ const initClamAV = async () => {
   }
 };
 
-// Function to handle file paths and storage
+// Initialize ClamAV scanner
+let clamAV: any = null;
+initClamAV().then(scanner => {
+  clamAV = scanner;
+  if (scanner) {
+    console.log('ClamAV scanner ready for use');
+  } else {
+    console.warn('ClamAV scanner initialization failed, virus scanning will be unavailable');
+  }
+}).catch(error => {
+  console.error('Unexpected error during ClamAV initialization:', error);
+});
+
+// File handling utilities
 const fileHandler = {
-    getTempPath: (filename: string): string => {
-      if (!pathUtils.validateExtension(filename)) {
-        throw new Error('Invalid file extension');
-      }
-      const safeFilename = `temp-${Date.now()}-${pathUtils.sanitizePath(path.basename(filename))}`;
-      const tempPath = path.join(directories.temp, safeFilename);
-      if (!pathUtils.isPathSafe(tempPath, directories.temp)) {
-        throw new Error('Invalid temp path');
-      }
-      return tempPath;
-    },
-
-    getPermanentPath: (filename: string): string => {
-      if (!pathUtils.validateExtension(filename)) {
-        throw new Error('Invalid file extension');
-      }
-      const ext = path.extname(filename).toLowerCase();
-      const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
-      const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
-      
-      let uploadDir;
-      if (audioExts.has(ext)) {
-        uploadDir = directories.audio;
-      } else if (videoExts.has(ext)) {
-        uploadDir = directories.video;
-      } else {
-        throw new Error('Invalid file type');
-      }
-
-      const safeFilename = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      return path.join(uploadDir, safeFilename);
-    },
-
-    moveToPermStorage: async (tempPath: string, permanentPath: string): Promise<void> => {
-      try {
-        await fs.promises.rename(tempPath, permanentPath);
-      } catch (error) {
-        // If rename fails (e.g., across devices), fallback to copy and delete
-        await fs.promises.copyFile(tempPath, permanentPath);
-        await fs.promises.unlink(tempPath);
-      }
-    },
-
-    cleanupTemp: async (filePath: string): Promise<void> => {
-      try {
-        if (fs.existsSync(filePath)) {
-          await fs.promises.unlink(filePath);
-        }
-      } catch (error) {
-        console.error('Error cleaning up temp file:', error);
-      }
+  getTempPath: (filename: string): string => {
+    if (!pathUtils.validateExtension(filename)) {
+      throw new Error('Invalid file extension');
     }
-  };
+    const safeFilename = `temp-${Date.now()}-${pathUtils.sanitizePath(path.basename(filename))}`;
+    return path.join(directories.temp, safeFilename);
+  },
+
+  getPermanentPath: (filename: string): string => {
+    if (!pathUtils.validateExtension(filename)) {
+      throw new Error('Invalid file extension');
+    }
+    const ext = path.extname(filename).toLowerCase();
+    const audioExts = new Set(['.mp3', '.mp4', '.aac', '.flac', '.wav', '.aiff']);
+    const videoExts = new Set(['.avi', '.wmv', '.mov', '.mp4']);
+
+    let uploadDir;
+    if (audioExts.has(ext)) {
+      uploadDir = directories.audio;
+    } else if (videoExts.has(ext)) {
+      uploadDir = directories.video;
+    } else {
+      throw new Error('Invalid file type');
+    }
+
+    const safeFilename = `${Date.now()}-${path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    return path.join(uploadDir, safeFilename);
+  },
+
+  moveToPermStorage: async (tempPath: string, permanentPath: string): Promise<void> => {
+    try {
+      await fs.promises.rename(tempPath, permanentPath);
+    } catch (error) {
+      // If rename fails (e.g., across devices), fallback to copy and delete
+      await fs.promises.copyFile(tempPath, permanentPath);
+      await fs.promises.unlink(tempPath);
+    }
+  },
+
+  cleanupTemp: async (filePath: string): Promise<void> => {
+    try {
+      if (fs.existsSync(filePath)) {
+        await fs.promises.unlink(filePath);
+      }
+    } catch (error) {
+      console.error('Error cleaning up temp file:', error);
+    }
+  }
+};
 
 // Path validation and sanitization utilities
 const pathUtils = {
@@ -202,9 +193,6 @@ Object.values(directories).forEach(dir => {
   }
 });
 
-// Initialize ClamAV scanner
-const clamAV = initClamAV();
-
 
 const upload = multer({ dest: 'private_storage/uploads/temp' });
 
@@ -212,7 +200,7 @@ const upload = multer({ dest: 'private_storage/uploads/temp' });
 app.post("/api/upload/music",
   upload.single('file'),
   async (
-    req: express.Request & { 
+    req: express.Request & {
       file?: express.Multer.File;
       user?: { id: number; role: string; }
       isAuthenticated(): boolean;
@@ -265,7 +253,6 @@ app.post("/api/upload/music",
       await fs.promises.rename(req.file.path, tempPath);
 
       // Virus scan using ClamAV
-      const clamAV = await initClamAV();
       if (clamAV) {
         console.log(`Starting virus scan for file: ${tempPath}`);
         const scanResult = await scanFile(tempPath, clamAV);

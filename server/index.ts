@@ -25,6 +25,22 @@ async function startServer() {
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite in development mode...');
       const app = express();
+
+      // Set up CSP headers for development
+      app.use((req, res, next) => {
+        res.setHeader(
+          'Content-Security-Policy',
+          "default-src 'self';" +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval';" +
+          "style-src 'self' 'unsafe-inline';" +
+          "img-src 'self' data: blob: https:;" +
+          "font-src 'self' data:;" +
+          "connect-src 'self' ws: wss:;" + // Allow WebSocket connections
+          "worker-src 'self' blob:;" // Allow Web Workers
+        );
+        next();
+      });
+
       await setupVite(app, httpServer);
     }
 
@@ -39,9 +55,9 @@ async function startServer() {
     }, 6 * 60 * 60 * 1000);
 
     await new Promise((resolve, reject) => {
-      httpServer.listen(process.env.PORT || 5000, '0.0.0.0', () => {
-        console.log(`Server successfully listening on port ${process.env.PORT || 5000}`);
-        log(`Server listening on port ${process.env.PORT || 5000}`);
+      httpServer.listen(5000, '0.0.0.0', () => {
+        console.log(`Server successfully listening on port 5000`);
+        log(`Server listening on port 5000`);
         resolve(true);
       }).on('error', (err: Error) => {
         console.error('Server startup error:', err);
