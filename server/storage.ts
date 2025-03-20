@@ -719,23 +719,6 @@ export class PostgresStorage implements IStorage {
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
-  const newRegistrations = await this.db.count().from(users);
-  const contentReports = await this.db.count().from(reports);
-  
-  // Get time series data
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  
-  // Calculate monthly stats
-  const activeUsersOverTime = await Promise.all(
-    months.map(async (_, index) => {
-      const count = await this.db.count().from(users)
-        .where(and(
-          eq(users.active, true),
-          sql`DATE_PART('month', ${users.createdAt}) = ${index + 1}`
-        ));
-      return Number(count) || 0;
-    })
-  );
 
   const newRegistrationsOverTime = await Promise.all(
     months.map(async (_, index) => {
