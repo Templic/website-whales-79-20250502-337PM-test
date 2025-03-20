@@ -719,12 +719,18 @@ export class PostgresStorage implements IStorage {
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
-async getAdminAnalytics(fromDate?: string, toDate?: string) {
-  console.log(`Storage: Filtering analytics from ${fromDate} to ${toDate}`);
-  
-  const activeUsers = await this.db.count().from(users).where(eq(users.active, true));
-  const newRegistrations = await this.db.count().from(users);
-  const contentReports = await this.db.count().from(reports);
+async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
+  try {
+    console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
+      
+    // Apply date filtering if provided
+    const whereClause = fromDate && toDate 
+      ? sql`created_at BETWEEN ${fromDate}::timestamp AND ${toDate}::timestamp`
+      : fromDate 
+        ? sql`created_at >= ${fromDate}::timestamp` 
+        : toDate 
+          ? sql`created_at <= ${toDate}::timestamp`
+          : sql`TRUE`;
   
   // Get time series data
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
