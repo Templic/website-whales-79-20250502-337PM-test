@@ -131,11 +131,11 @@ app.use(fileUpload({
   createParentPath: true,
   abortOnLimit: true,
   safeFileNames: true,
-  preserveExtension: 4,
-  debug: false,
+  preserveExtension: true,
+  debug: true, // Enable debug for troubleshooting
   useTempFiles: true,
-  tempFileDir: '/tmp/',
-  parseNested: true,
+  tempFileDir: path.join(process.cwd(), 'private_storage/uploads/temp'),
+  parseNested: false,
   uploadTimeout: 300000, // 5 minutes timeout
 }));
 
