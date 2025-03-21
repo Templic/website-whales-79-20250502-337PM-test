@@ -19,9 +19,27 @@ const navigationItems = [
   { path: "/contact", label: "Contact" }
 ];
 
+function ChatPopup({ isOpen, onClose, title }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/50">
+      <div className="bg-white p-4 rounded-lg shadow-lg">
+        <button onClick={onClose} className="absolute top-2 right-2">
+          &times;
+        </button>
+        <h2 className="text-lg font-bold mb-2">{title}</h2>
+        <p>Sample text for {title}.</p>
+      </div>
+    </div>
+  );
+}
+
+
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [, navigate] = useLocation();
 
   const handleNavigationClick = useCallback((path: string) => {
@@ -62,6 +80,20 @@ export function Header() {
           >
             Dale Loves Whales
           </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="px-4 py-2 bg-[#00ebd6] text-[#303436] rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors"
+            >
+              Live Chat
+            </button>
+            <button
+              onClick={() => setIsSupportOpen(true)}
+              className="px-4 py-2 bg-[#00ebd6] text-[#303436] rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors"
+            >
+              Support
+            </button>
+          </div>
         </div>
 
         <nav className="hidden md:block flex-grow mx-8">
@@ -119,6 +151,16 @@ export function Header() {
           </div>
         </div>
       </nav>
+      <ChatPopup
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        title="Live Chat"
+      />
+      <ChatPopup
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        title="Customer Support"
+      />
     </header>
   );
 }
