@@ -43,9 +43,43 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const data = insertSubscriberSchema.parse(req.body);
       const subscriber = await storage.createSubscriber(data);
-      res.json(subscriber);
+      
+      // Send welcome email if SMTP is configured
+      if (transporter) {
+        try {
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@example.com',
+            to: data.email,
+            subject: "Welcome to Dale Loves Whales Newsletter!",
+            html: `
+              <h2>Welcome ${data.name}!</h2>
+              <p>Thanks for subscribing to our newsletter. You'll receive updates about:</p>
+              <ul>
+                <li>New music releases</li>
+                <li>Tour dates and locations</li>
+                <li>Exclusive content and behind-the-scenes</li>
+              </ul>
+              <p>Stay cosmic!</p>
+            `
+          });
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+        }
+      }
+
+      res.json({ 
+        message: "Successfully subscribed!", 
+        subscriber 
+      });
     } catch (error) {
-      res.status(400).json({ message: "Invalid subscription data" });
+      if (error.code === '23505') { // PostgreSQL unique violation
+        res.status(400).json({ message: "This email is already subscribed" });
+      } else if (error.errors) { // Zod validation error
+        res.status(400).json({ message: error.errors[0].message });
+      } else {
+        console.error("Subscription error:", error);
+        res.status(500).json({ message: "Failed to process subscription" });
+      }
     }
   });
 

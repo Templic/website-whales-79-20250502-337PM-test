@@ -16,8 +16,10 @@ export const users = pgTable("users", {
 // Existing subscribers table
 export const subscribers = pgTable("subscribers", {
   id: serial("id").primaryKey(),
+  name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  active: boolean("active").notNull().default(true)
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow()
 });
 
 // Blog posts table with author relation
@@ -71,9 +73,15 @@ export const insertUserSchema = createInsertSchema(users)
     path: ["confirmPassword"]
   });
 
-export const insertSubscriberSchema = createInsertSchema(subscribers).pick({
-  email: true
-});
+export const insertSubscriberSchema = createInsertSchema(subscribers)
+  .pick({
+    email: true,
+    name: true
+  })
+  .extend({
+    email: z.string().email("Invalid email address"),
+    name: z.string().min(2, "Name must be at least 2 characters")
+  });
 
 export const insertPostSchema = createInsertSchema(posts)
   .omit({ id: true, createdAt: true, updatedAt: true })
