@@ -122,3 +122,83 @@ const TermsOfService: React.FC = () => {
 }
 
 export default TermsOfService;
+import React from 'react';
+
+const TermsOfService: React.FC = () => {
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  return (
+    <div className="terms-of-service-container container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">Terms of Service</h1>
+      <p className="mb-4">Terms Effective: March 21, 2025 - {currentDate}</p>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Preamble</h2>
+        <p>
+          Welcome to Dale Loves Whales, a digital sanctuary where the art of music
+          and the science of sound healing converge to create a unique experience for our users. 
+          We are committed to delivering a platform that fosters creativity, well-being, 
+          and community engagement.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Introduction</h2>
+        <p>
+          Welcome to the Dale Loves Whales Web App, your gateway to immersive music 
+          and sound healing experiences. These Terms of Service are designed to ensure 
+          a harmonious and legally compliant environment for all users.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Acceptance of Terms</h2>
+        <p>
+          By using the Dale Loves Whales Web App, you acknowledge and accept these 
+          Terms of Service. Continued use of the platform implies consent to these terms.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">User Conduct</h2>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>Respect copyright and intellectual property rights</li>
+          <li>Do not engage in harassment or abusive behavior</li>
+          <li>Do not attempt to compromise system security</li>
+          <li>Follow community guidelines and content policies</li>
+        </ul>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Content Guidelines</h2>
+        <p>
+          Users are responsible for the content they post and share. All content must comply 
+          with our community standards and applicable laws.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Privacy</h2>
+        <p>
+          We are committed to protecting your privacy. Please review our Privacy Policy 
+          for details on how we collect, use, and protect your data.
+        </p>
+      </section>
+
+      <section className="mb-6">
+        <h2 className="text-xl font-semibold">Contact Information</h2>
+        <p>
+          For questions or concerns about these terms, please contact us at:
+          <br />
+          Email: support@daleloveswhales.com
+        </p>
+      </section>
+    </div>
+  );
+};
+
+export default TermsOfService;

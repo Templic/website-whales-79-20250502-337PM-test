@@ -25,6 +25,7 @@ import AnalyticsPage from "@/pages/AnalyticsPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
+import TermsOfService from "@/pages/TermsOfService";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function Router() {
         <Route path="/recover-password" component={PasswordRecoveryPage} />
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/sitemap" component={SitemapPage} />
+        <Route path="/terms" component={TermsOfService} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
