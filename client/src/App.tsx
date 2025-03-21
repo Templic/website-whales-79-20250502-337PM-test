@@ -26,6 +26,8 @@ import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
+import PrivacyPolicy from "@/pages/PrivacyPolicy"; // Added import for PrivacyPolicy page
+
 
 function Router() {
   return (
@@ -50,6 +52,7 @@ function Router() {
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/sitemap" component={SitemapPage} />
         <Route path="/terms" component={TermsOfService} />
+        <Route path="/privacy" component={PrivacyPolicy} /> {/* Added Privacy Policy route */}
         <Route component={NotFound} />
       </Switch>
     </Layout>
