@@ -118,3 +118,25 @@ export default function BlogPage() {
     </main>
   );
 }
+//error handling
+import { useQuery } from "@tanstack/react-query";
+...
+export default function BlogPage() {
+  ...
+  const { data: posts, isLoading, error } = useQuery<Post[]>({ 
+    queryKey: ['/api/posts'],
+    retry: 1 // Adjust retry settings as necessary for your API's reliability
+  });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error loading posts:", error); // Log error for debugging
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load blog posts",
+        variant: "destructive"
+      });
+    }
+  }, [error, toast]);
+  ...
+}
