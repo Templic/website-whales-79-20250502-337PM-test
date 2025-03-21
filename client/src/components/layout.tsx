@@ -176,33 +176,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
+                <li><Link href="/" className="nav-link">Home</Link></li>
                 <li><Link href="/about" className="nav-link">About</Link></li>
-                <li><Link href="/newsletter" className="nav-link">Newsletter</Link></li>
-                <li><Link href="/collaboration" className="nav-link">Collaboration</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Content</h3>
-              <ul className="space-y-2">
-                <li><Link href="/blog" className="nav-link">Blog</Link></li>
                 <li><Link href="/music-release" className="nav-link">New Music</Link></li>
                 <li><Link href="/archived-music" className="nav-link">Archived Music</Link></li>
+                <li><Link href="/tour" className="nav-link">Tour</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="font-semibold mb-4">Community</h3>
               <ul className="space-y-2">
                 <li><Link href="/engage" className="nav-link">Engage</Link></li>
-                <li><Link href="/tour" className="nav-link">Tour Dates</Link></li>
+                <li><Link href="/newsletter" className="nav-link">Newsletter</Link></li>
+                <li><Link href="/blog" className="nav-link">Blog</Link></li>
+                <li><Link href="/collaboration" className="nav-link">Collaboration</Link></li>
                 <li><Link href="/contact" className="nav-link">Contact</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Account & Info</h3>
+              <h3 className="font-semibold mb-4">Account & Legal</h3>
               <ul className="space-y-2">
-                <li><Link href="/sitemap" className="nav-link">Sitemap</Link></li>
                 <li><Link href="/privacy" className="nav-link">Privacy Policy</Link></li>
                 <li><Link href="/terms" className="nav-link">Terms of Service</Link></li>
+                <li><Link href="/sitemap" className="nav-link">Sitemap</Link></li>
                 {user && <li><Link href="/portal" className="nav-link">My Dashboard</Link></li>}
                 {user?.role === "admin" && <li><Link href="/admin" className="nav-link">Admin Portal</Link></li>}
               </ul>
