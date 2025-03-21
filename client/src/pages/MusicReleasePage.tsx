@@ -38,6 +38,11 @@ export default function NewMusicPage() {
           />
           <div className="release-info space-y-4">
             <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
+            <img 
+              src="/album cover for feels so good song.png"
+              alt="Album Cover - Feels So Good"
+              className="w-full max-w-md mx-auto rounded-lg shadow-lg mb-6"
+            />
             <p className="text-xl">Release Date: March 14, 2025</p>
             <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
             <p className="text-xl">Artist: Dale The Whale & Featuring AC3-2085</p>
