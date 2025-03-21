@@ -112,6 +112,14 @@ export default function BlogPostPage() {
             className="w-full h-[400px] object-cover rounded-xl mb-8"
             loading="lazy"
           />
+          {post.audioUrl && (
+            <audio
+              src={post.audioUrl}
+              controls
+              controlsList="nodownload"
+              className="customAudioPlayer w-full mb-8"
+            />
+          )}
         )}
 
         <div className="prose prose-invert max-w-none">
