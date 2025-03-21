@@ -45,6 +45,19 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const subscriber = await storage.createSubscriber(data);
       
       // Send welcome email if SMTP is configured
+
+
+  // Check if email exists in subscribers
+  app.get("/api/subscribers/check/:email", async (req, res) => {
+    try {
+      const subscriber = await storage.findSubscriberByEmail(req.params.email);
+      res.json({ exists: !!subscriber });
+    } catch (error) {
+      res.status(500).json({ message: "Error checking subscriber" });
+    }
+  });
+
+
       if (transporter) {
         try {
           await transporter.sendMail({
