@@ -258,6 +258,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   app.post("/api/contact", async (req, res) => {
   try {
+    const { insertContactSchema, contactMessages } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
     const message = await storage.db.insert(contactMessages).values(data).returning();
     res.json({ message: "Message sent successfully!", data: message[0] });
