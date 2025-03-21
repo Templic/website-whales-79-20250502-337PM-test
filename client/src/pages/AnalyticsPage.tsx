@@ -139,6 +139,9 @@ export default function AnalyticsPage() {
   
   // Handle error state
   if (analyticsError) {
+    const errorMessage = analyticsError instanceof Error ? analyticsError.message : 'Unknown error occurred';
+    console.error('Analytics Error:', errorMessage);
+    
     return (
       <div className="container mx-auto py-8">
         <div className="flex flex-col space-y-4 mb-8">
@@ -150,14 +153,24 @@ export default function AnalyticsPage() {
           </Link>
           <div className="bg-red-900/20 border border-red-500 rounded-lg p-6 text-center">
             <h1 className="text-2xl font-bold text-red-500 mb-4">Error Loading Analytics</h1>
-            <p className="text-gray-300 mb-4">There was a problem loading the analytics data.</p>
-            <Button 
-              onClick={() => refetch()} 
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
-            </Button>
+            <p className="text-gray-300 mb-4">{errorMessage}</p>
+            <div className="flex justify-center gap-4">
+              <Button 
+                onClick={() => refetch()} 
+                className="bg-red-600 hover:bg-red-700"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="border-red-500 text-red-500 hover:bg-red-900/20"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Reload Page
+              </Button>
+            </div>
           </div>
         </div>
       </div>
