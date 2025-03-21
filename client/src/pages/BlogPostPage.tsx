@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { useEffect } from "react";
+import { z } from "zod";
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,8 +47,11 @@ export default function BlogPostPage() {
     }
   });
 
+  // Define the comment input type
+  type CommentInput = z.infer<typeof insertCommentSchema>;
+  
   const commentMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CommentInput) => {
       const response = await fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
         body: JSON.stringify(data),
