@@ -256,7 +256,20 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts/comments/:id/reject", async (req, res) => {
+  app.post("/api/contact", async (req, res) => {
+  try {
+    const data = insertContactSchema.parse(req.body);
+    const message = await storage.db.insert(contactMessages).values(data).returning();
+    res.json({ message: "Message sent successfully!", data: message[0] });
+  } catch (error) {
+    console.error("Contact form error:", error);
+    res.status(400).json({ 
+      message: error.errors?.[0]?.message || "Failed to send message" 
+    });
+  }
+});
+
+app.post("/api/posts/comments/:id/reject", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
