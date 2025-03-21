@@ -31,7 +31,7 @@ export default function NewMusicPage() {
       <section className="flex flex-col md:flex-row gap-8 items-start">
         <div className="w-full md:w-1/2">
           <img 
-            src="/static/images/album cover for feels so good song.png"
+            src="/uploads/album cover for feels so good song.png"
             alt="Album Cover - Feels So Good"
             className="w-full rounded-lg shadow-xl"
           />
