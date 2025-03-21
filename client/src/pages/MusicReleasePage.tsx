@@ -41,9 +41,16 @@ export default function NewMusicPage() {
             <p className="text-xl">Release Date: March 14, 2025</p>
             <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
             <p className="text-xl">Artist: Dale The Whale & Featuring AC3-2085</p>
-            <div className="music-player mt-6 p-4 bg-[rgba(10,50,92,0.4)] rounded-lg">
-              <h3 className="text-xl mb-4">Listen Now</h3>
-              <audio controls className="w-full">
+            <div className="music-player mt-6 p-6 bg-[rgba(10,50,92,0.6)] rounded-lg shadow-lg backdrop-blur-sm">
+              <h3 className="text-xl font-semibold mb-4">Listen Now</h3>
+              <audio 
+                controls 
+                className="w-full focus:outline-none"
+                style={{
+                  height: '40px',
+                  filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
+                }}
+              >
                 <source src="/feels-so-good.mp3" type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
