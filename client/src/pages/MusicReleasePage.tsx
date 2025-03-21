@@ -39,7 +39,7 @@ export default function NewMusicPage() {
           <div className="release-info space-y-4">
             <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
             <img 
-              src="/album cover for feels so good song.png"
+              src="/static/images/album cover for feels so good song.png"
               alt="Album Cover - Feels So Good"
               className="w-full max-w-md mx-auto rounded-lg shadow-lg mb-6"
             />
