@@ -271,48 +271,6 @@ export default function AdminPortalPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Analytics Dashboard */}
-        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold">Analytics Overview</h2>
-            <Link href="/admin/analytics">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/10"
-              >
-                <ChartBar className="mr-2 h-4 w-4" />
-                View Detailed Analytics
-              </Button>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Active Users</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {analyticsData?.activeUsers || 0}
-              </p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">New Registrations</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {analyticsData?.newRegistrations || 0}
-              </p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">Content Reports</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {analyticsData?.contentReports || 0}
-              </p>
-            </div>
-            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
-              <p className="text-sm text-gray-400">System Health</p>
-              <p className="text-2xl font-bold text-[#00ebd6]">
-                {analyticsData?.systemHealth || 'Good'}
-              </p>
-            </div>
-          </div>
-        </section>
         {/* Music Upload Section */}
         {(user?.role === 'admin' || user?.role === 'super_admin') && (
           <AdminMusicUpload />
@@ -420,6 +378,49 @@ export default function AdminPortalPage() {
             </div>
           </section>
         )}
+
+        {/* Analytics Dashboard */}
+        <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Analytics Overview</h2>
+            <Link href="/admin/analytics">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/10"
+              >
+                <ChartBar className="mr-2 h-4 w-4" />
+                View Detailed Analytics
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">Active Users</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.activeUsers || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">New Registrations</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.newRegistrations || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">Content Reports</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.contentReports || 0}
+              </p>
+            </div>
+            <div className="p-4 bg-[rgba(48,52,54,0.5)] rounded-lg">
+              <p className="text-sm text-gray-400">System Health</p>
+              <p className="text-2xl font-bold text-[#00ebd6]">
+                {analyticsData?.systemHealth || 'Good'}
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Content Moderation Section */}
         <section className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
