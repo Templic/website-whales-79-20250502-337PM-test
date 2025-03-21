@@ -52,14 +52,22 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             to: data.email,
             subject: "Welcome to Dale Loves Whales Newsletter!",
             html: `
-              <h2>Welcome ${data.name}!</h2>
-              <p>Thanks for subscribing to our newsletter. You'll receive updates about:</p>
-              <ul>
-                <li>New music releases</li>
-                <li>Tour dates and locations</li>
-                <li>Exclusive content and behind-the-scenes</li>
-              </ul>
-              <p>Stay cosmic!</p>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+                <h2 style="color: #4A90E2; text-align: center;">Welcome to the Cosmic Journey, ${data.name}! 🐋</h2>
+                <p style="font-size: 16px; line-height: 1.5;">Thank you for joining Dale the Whale's musical universe! Get ready for an extraordinary journey through sound and spirit.</p>
+                <h3 style="color: #4A90E2; margin-top: 20px;">What to Expect:</h3>
+                <ul style="list-style-type: none; padding: 0;">
+                  <li style="margin: 10px 0; padding-left: 20px;">🎵 First access to new releases and exclusive tracks</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎪 Early announcements about upcoming shows and events</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🌟 Behind-the-scenes content and personal stories</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎁 Special subscriber-only offers and experiences</li>
+                </ul>
+                <p style="font-size: 16px; line-height: 1.5; margin-top: 20px;">Stay tuned for your first newsletter, coming soon with some cosmic vibes!</p>
+                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                  <p>"Let the music guide your soul through the celestial waves"</p>
+                  <p style="margin-top: 20px;">- Dale 🐋</p>
+                </div>
+              </div>
             `
           });
         } catch (emailError) {
