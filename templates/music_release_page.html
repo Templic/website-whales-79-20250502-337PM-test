@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Music - Dale Loves Whales</title>
     <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../static/css/audio-player.css">
     <meta name="description" content="Latest music releases from Dale Loves Whales - Listen to our newest tracks and albums">
 </head>
 <body>
@@ -38,16 +39,16 @@
 
         <section class="music-player">
             <h2>Listen Now</h2>
-            <div class="player-controls">
-                <button class="cta-button">Play</button>
-                <button class="cta-button">Pause</button>
-                <button class="cta-button">Next</button>
-                <button class="cta-button">Previous</button>
+            <div class="player-wrapper">
+                <audio id="audioPlayer" controls>
+                    <source src="../uploads/feels-so-good.mp3" type="audio/mp3">
+                    Your browser does not support the audio element.
+                </audio>
+                <div class="time-display">
+                    <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+                </div>
             </div>
-            <ul class="tracklist">
-                <li>Track 1 <span>3:45</span><button class="cta-button">Play</button></li>
-                <li>Track 2 <span>4:00</span><button class="cta-button">Play</button></li>
-            </ul>
+            <canvas id="visualizer" width="800" height="200"></canvas>
         </section>
 
         <section class="streaming-links">
@@ -107,5 +108,6 @@
             <p>Language Copyright: &copy; 2025 Dale Ham. All rights reserved.</p>
         </div>
     </footer>
+<script src="../static/js/audio-visualizer.js"></script>
 </body>
 </html>

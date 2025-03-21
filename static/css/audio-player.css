@@ -1,0 +1,29 @@
+
+.player-wrapper {
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+#audioPlayer {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.time-display {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+#visualizer {
+    width: 100%;
+    max-width: 800px;
+    height: 200px;
+    background: #000;
+    margin: 20px auto;
+    border-radius: 8px;
+}
