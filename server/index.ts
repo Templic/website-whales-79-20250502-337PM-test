@@ -63,10 +63,10 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 // Use port 5000 as required by the workflow
-const port = process.env.PORT || 5000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 
 // Add session cleanup interval
-let cleanupInterval: NodeJS.Timer;
+let cleanupInterval: NodeJS.Timeout;
 
 async function startServer() {
   console.log('Starting server initialization...');
@@ -92,7 +92,7 @@ async function startServer() {
         try {
           // Clear session cleanup interval
           if (cleanupInterval) {
-            clearInterval(cleanupInterval);
+            clearInterval(cleanupInterval as any);
           }
 
           // Close WebSocket connections

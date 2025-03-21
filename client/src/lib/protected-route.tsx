@@ -2,15 +2,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 
-// TEMPORARY FOR TESTING ONLY - REMOVE BEFORE DEPLOYMENT
-const BYPASS_AUTHENTICATION = true;
-const TEST_USER = {
-  id: 2,
-  username: "superadmin",
-  email: "superadmin@example.com",
-  role: "super_admin",
-  createdAt: new Date()
-};
+// Authentication control - set to false for production
+const BYPASS_AUTHENTICATION = false;
 
 export function ProtectedRoute({
   path,
