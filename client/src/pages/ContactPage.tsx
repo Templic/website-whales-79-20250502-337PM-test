@@ -29,16 +29,16 @@ export default function ContactPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) throw new Error(result.message);
-      
+
       toast({
         title: "Success",
         description: "Your message has been sent successfully!",
       });
-      
+
       form.reset();
     } catch (error) {
       toast({
@@ -53,7 +53,7 @@ export default function ContactPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Get in Touch</h1>
       <p className="mb-8">Have a question or want to connect? Drop us a message!</p>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
           <div>
@@ -63,7 +63,7 @@ export default function ContactPage() {
               <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-2">Email</label>
             <Input {...form.register("email")} type="email" className="w-full" />
@@ -71,7 +71,7 @@ export default function ContactPage() {
               <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-2">Message</label>
             <Textarea {...form.register("message")} className="w-full min-h-[150px]" />
@@ -79,7 +79,7 @@ export default function ContactPage() {
               <p className="text-red-500 text-sm mt-1">{form.formState.errors.message.message}</p>
             )}
           </div>
-          
+
           <Button type="submit" className="w-full">Send Message</Button>
         </form>
       </Form>
@@ -87,12 +87,8 @@ export default function ContactPage() {
   );
 }
 
-type ContactForm = z.infer<typeof contactSchema>;
 
-export default function ContactPage() {
-  const { toast } = useToast();
-  
-  useEffect(() => {
+useEffect(() => {
     document.title = "Contact - Dale Loves Whales";
   }, []);
 
