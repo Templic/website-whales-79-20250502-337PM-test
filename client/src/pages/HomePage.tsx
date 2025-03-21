@@ -9,7 +9,7 @@ export default function HomePage() {
       <div className="fixed top-16 left-0 right-0 z-50 flex justify-center">
         <div className="flex gap-2 bg-black/75 p-2 rounded-md">
           <Link href="/admin">
-            <Button variant="default" className="bg-amber-500 hover:bg-amber-600 text-black">
+            <Button variant="default" className="bg-amber-50r0 hover:bg-amber-600 text-black">
               <UsersRound className="w-4 h-4 mr-2" />
               Admin Portal (Test Only)
             </Button>

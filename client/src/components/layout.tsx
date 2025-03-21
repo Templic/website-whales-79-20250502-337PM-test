@@ -209,7 +209,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="mt-8 text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Dale Love Whales. All rights reserved.
+            © {new Date().getFullYear()} Web App Copyright Claim By Lee Swan All rights reserved.
+          </div>
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Language Copyright Claim By Dale Ham. All rights reserved.
           </div>
         </div>
       </footer>
