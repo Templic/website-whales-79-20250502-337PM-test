@@ -38,7 +38,7 @@ app.use(fileUpload({
   abortOnLimit: true,
   safeFileNames: true,
   preserveExtension: true,
-  debug: process.env.NODE_ENV !== 'production'
+  debug: false // Disable debug messages
 }));
 
 
