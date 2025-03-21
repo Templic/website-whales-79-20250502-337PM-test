@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { Post, Comment, insertCommentSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -8,15 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDisplayDate } from "@/lib/date-utils";
+import { useEffect } from "react";
 
 export default function BlogPostPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const postId = parseInt(id);
   const { user } = useAuth();
+  const [_, navigate] = useLocation();
+
+  // Log query process for debugging
+  useEffect(() => {
+    console.log("Fetching blog post with ID:", postId);
+  }, [postId]);
 
   const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
     queryKey: ['/api/posts', postId],
@@ -43,8 +50,8 @@ export default function BlogPostPage() {
     mutationFn: async (data: any) => {
       const response = await fetch(`/api/posts/${postId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to post comment');
       return response.json();
@@ -57,10 +64,11 @@ export default function BlogPostPage() {
       });
       form.reset();
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Comment submission error:", error);
       toast({
         title: "Error",
-        description: "Failed to post comment",
+        description: "Failed to post comment. Please try again.",
         variant: "destructive"
       });
     }
@@ -97,11 +105,33 @@ export default function BlogPostPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      <Button 
+        variant="outline" 
+        className="mb-8" 
+        onClick={() => navigate('/blog')}
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          className="mr-2"
+        >
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        Back to Blog
+      </Button>
+        
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">
-          <time dateTime={post.createdAt}>
-            {formatDisplayDate(post.createdAt)}
+          <time dateTime={post.createdAt ? post.createdAt.toString() : ''}>
+            {formatDisplayDate(post.createdAt ? post.createdAt.toString() : null)}
           </time>
         </div>
 
@@ -113,21 +143,17 @@ export default function BlogPostPage() {
             loading="lazy"
           />
         )}
-        {post.audioUrl && (
-          <audio
-            src={post.audioUrl}
-            controls
-            controlsList="nodownload"
-            className="customAudioPlayer w-full mb-8"
-          />
-        )}
 
-        <div className="prose prose-invert max-w-none">
-          {post.content?.split('\n').map((paragraph, index) => (
-            paragraph.trim() && (
-              <p key={index}>{paragraph}</p>
-            )
-          ))}
+        <div className="prose prose-invert max-w-none mt-8 text-lg">
+          {post.content ? (
+            post.content.split('\n').map((paragraph, index) => (
+              paragraph.trim() && (
+                <p key={index} className="mb-4">{paragraph}</p>
+              )
+            ))
+          ) : (
+            <p className="text-lg opacity-75">No content available for this post.</p>
+          )}
         </div>
       </article>
 
@@ -197,8 +223,8 @@ export default function BlogPostPage() {
               <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-medium">{comment.authorName}</span>
-                  <time dateTime={comment.createdAt}>
-                    {formatDisplayDate(comment.createdAt)}
+                  <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''}>
+                    {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
                   </time>
                 </div>
                 <p>{comment.content}</p>

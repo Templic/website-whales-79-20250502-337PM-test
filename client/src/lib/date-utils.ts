@@ -1,10 +1,13 @@
 import { format, parseISO, isValid } from "date-fns";
 
-export const formatDisplayDate = (dateString: string) => {
+export const formatDisplayDate = (dateString: string | null | undefined) => {
+  if (!dateString) return "Recent";
+  
   try {
     const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Invalid date";
+    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Recent";
   } catch (e) {
-    return "Invalid date";
+    console.error("Error formatting date:", e);
+    return "Recent";
   }
 };
