@@ -44,10 +44,10 @@ export default function BlogPage() {
     <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in" role="main">
       <header className="text-center mb-12">
         <h1 className="text-4xl font-bold text-primary mb-4 animate-slide-in">
-          Cosmic Chronicles
+          Feature coming soon
         </h1>
         <p className="text-xl text-muted-foreground">
-          Dive into Dale's thoughts, stories, and musical journey
+          Cosmic Chronicles: Dive into Dale's thoughts, stories, and musical journey
         </p>
       </header>
 

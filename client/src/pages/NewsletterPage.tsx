@@ -40,7 +40,7 @@ export default function NewsletterPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <section className="text-center">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">Join The Cosmic Newsletter</h1>
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-4"> Feature coming soon: Join The Cosmic Newsletter</h1>
         <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
       </section>
 
