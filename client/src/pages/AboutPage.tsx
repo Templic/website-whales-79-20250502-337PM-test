@@ -13,8 +13,7 @@ export default function AboutPage() {
         </div>
         <article className="grid md:grid-cols-2 gap-8 items-center">
           <div className="bio-image relative rounded-xl overflow-hidden shadow-xl">
-            <img 
-              src="/api/placeholder/600/800" 
+            <img                      src="/uploads/20250321_214034.jpg" 
               alt="Dale the Whale portrait with cosmic overlay"
               className="w-full h-auto transition-transform duration-500 hover:scale-105"
             />
