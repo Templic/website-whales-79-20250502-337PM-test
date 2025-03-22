@@ -1,33 +1,35 @@
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
-import AudioPlayer from "@/components/AudioPlayer"; // Assuming AudioPlayer is in a separate file
-import { Button, XCircle } from '@chakra-ui/react'; // Assuming Chakra UI is used
+import AudioPlayer from "@/components/AudioPlayer";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
+interface MusicArchivePageProps {}
 
-interface MusicArchivePageProps {
-  user?: { role: string }; // Added user prop for authorization
-}
-
-export default function MusicArchivePage({ user }: MusicArchivePageProps) {
+export default function MusicArchivePage({}: MusicArchivePageProps) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    document.title = "Music Archive - Dale Loves Whales";
-    fetchMusicContent();
+    fetchMusic();
   }, []);
 
-  const fetchMusicContent = async () => {
+  const fetchMusic = async () => {
     try {
-      const [tracksResponse, albumsResponse] = await Promise.all([
+      const [tracksRes, albumsRes] = await Promise.all([
         axios.get('/api/tracks'),
         axios.get('/api/albums')
       ]);
-      setTracks(tracksResponse.data);
-      setAlbums(albumsResponse.data);
+      setTracks(tracksRes.data);
+      setAlbums(albumsRes.data);
     } catch (error) {
-      console.error('Error fetching music content:', error);
+      console.error('Error fetching music:', error);
     }
   };
 
@@ -35,9 +37,16 @@ export default function MusicArchivePage({ user }: MusicArchivePageProps) {
     try {
       await axios.delete(`/api/tracks/${trackId}`);
       setTracks(tracks.filter(track => track.id !== trackId));
+      toast({
+        title: "Success",
+        description: "Track deleted successfully"
+      });
     } catch (error) {
-      console.error('Error deleting track:', error);
-      // Add error handling, e.g., alert
+      toast({
+        title: "Error",
+        description: "Failed to delete track",
+        variant: "destructive"
+      });
     }
   };
 
@@ -45,9 +54,16 @@ export default function MusicArchivePage({ user }: MusicArchivePageProps) {
     try {
       await axios.delete(`/api/albums/${albumId}`);
       setAlbums(albums.filter(album => album.id !== albumId));
+      toast({
+        title: "Success",
+        description: "Album deleted successfully"
+      });
     } catch (error) {
-      console.error('Error deleting album:', error);
-      // Add error handling, e.g., alert
+      toast({
+        title: "Error",
+        description: "Failed to delete album",
+        variant: "destructive"
+      });
     }
   };
 
@@ -61,35 +77,28 @@ export default function MusicArchivePage({ user }: MusicArchivePageProps) {
               <h3 className="text-2xl text-[#00ebd6] mb-3">{album.title}</h3>
               <p className="text-sm mb-2">Release Date: {new Date(album.releaseDate).toLocaleDateString()}</p>
               <p className="text-sm mb-4">{album.description}</p>
-              {album.coverUrl && (
-                <img 
-                  src={album.coverUrl} 
-                  alt={`${album.title} cover`}
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
-              )}
-              <a 
-                href={album.streamUrl} 
-                target="_blank" 
+              <a
+                href={album.streamUrl}
+                target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-[#fe0064] text-white px-4 py-2 rounded-full hover:bg-opacity-80 transition-all"
+                className="inline-block bg-[#00ebd6] text-black px-4 py-2 rounded hover:bg-[#00c4b3] transition-colors"
               >
                 Stream Now
               </a>
-              {user?.role === 'admin' || user?.role === 'super_admin' ? (
+              {(user?.role === 'admin' || user?.role === 'super_admin') && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute top-2 right-2 text-red-500 hover:text-red-700"
                   onClick={() => handleDeleteAlbum(album.id)}
                 >
-                  <XCircle className="h-6 w-6" />
+                  <X className="h-6 w-6" />
                 </Button>
-              ) : null}
+              )}
             </div>
           ))}
           {albums.length === 0 && (
-            <p className="text-center text-gray-400 col-span-full">No albums available yet.</p>
+            <p className="text-gray-400">No albums available.</p>
           )}
         </div>
       </section>
@@ -102,26 +111,33 @@ export default function MusicArchivePage({ user }: MusicArchivePageProps) {
               <h3 className="text-xl mb-2 text-[#00ebd6]">{track.title}</h3>
               <div className="flex flex-col space-y-2 mb-4">
                 <p className="text-sm">Artist: {track.artist}</p>
-                <p className="text-sm">Added: {new Date(track.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm">Release Date: {new Date(track.releaseDate).toLocaleDateString()}</p>
               </div>
-              <audio controls className="w-full">
+              <audio
+                controls
+                className="w-full focus:outline-none"
+                style={{
+                  height: '40px',
+                  filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
+                }}
+              >
                 <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                 Your browser does not support the audio element.
               </audio>
-              {user?.role === 'admin' || user?.role === 'super_admin' ? (
+              {(user?.role === 'admin' || user?.role === 'super_admin') && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute top-2 right-2 text-red-500 hover:text-red-700"
                   onClick={() => handleDeleteTrack(track.id)}
                 >
-                  <XCircle className="h-6 w-6" />
+                  <X className="h-6 w-6" />
                 </Button>
-              ) : null}
+              )}
             </div>
           ))}
           {tracks.length === 0 && (
-            <p className="text-center text-gray-400">No tracks available yet.</p>
+            <p className="text-gray-400">No tracks available.</p>
           )}
         </div>
       </section>
