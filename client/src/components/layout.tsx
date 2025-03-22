@@ -132,22 +132,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="sm:hidden">
               <Sheet>
                 <SheetTrigger asChild>
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      variant="ghost"
-                      onClick={() => window.open('/live-chat', '_blank')}
-                      className="text-[#e8e6e3] hover:text-[#00ebd6]"
-                    >
-                      Live Chat
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      onClick={() => window.open('/support', '_blank')}
-                      className="text-[#e8e6e3] hover:text-[#00ebd6]"
-                    >
-                      Customer Support
-                    </Button>
-                  </div>
                   <Button 
                     variant="ghost" 
                     size="icon" 

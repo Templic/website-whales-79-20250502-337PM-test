@@ -33,7 +33,7 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={NewMusicPage} /> {/* Changed default route */}
+        <Route path="/" component={HomePage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/music-release" component={NewMusicPage} />
         <Route path="/archived-music" component={ArchivedMusicPage} />
@@ -52,7 +52,7 @@ function Router() {
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/sitemap" component={SitemapPage} />
         <Route path="/terms" component={TermsOfService} />
-        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/privacy" component={PrivacyPolicy} /> {/* Added Privacy Policy route */}
         <Route component={NotFound} />
       </Switch>
     </Layout>

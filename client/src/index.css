@@ -11,20 +11,3 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background-color: #303436;
-  --midground-color: #0a325c;
-  --foreground-color: #9e140d;
-  --fill-color: #00ebd6;
-  --accent-color: #fe0064;
-  --font-color: #e8e6e3;
-}
-
-body {
-  background-color: var(--background-color);
-  color: var(--font-color);
-}
