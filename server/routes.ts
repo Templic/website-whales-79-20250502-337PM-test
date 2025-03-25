@@ -29,6 +29,20 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
   
+  // Get subscribers list
+  app.get("/api/subscribers", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const subscribers = await storage.getAllSubscribers();
+      res.json(subscribers);
+    } catch (error) {
+      console.error("Error fetching subscribers:", error);
+      res.status(500).json({ message: "Error fetching subscribers" });
+    }
+  });
+
   // Admin Stats API
   app.get("/api/admin/stats", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {

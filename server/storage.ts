@@ -30,6 +30,7 @@ export interface IStorage {
 
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
+  getAllSubscribers(): Promise<Subscriber[]>;
 
   // Post methods
   createPost(post: InsertPost): Promise<Post>;
@@ -133,10 +134,14 @@ export class PostgresStorage implements IStorage {
     const result = await db.insert(subscribers).values(insertSubscriber).returning();
     return result[0];
   }
-  
+
   async findSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
     const [subscriber] = await db.select().from(subscribers).where(eq(subscribers.email, email));
     return subscriber;
+  }
+
+  async getAllSubscribers() {
+    return await db.select().from(subscribers).orderBy(subscribers.createdAt);
   }
 
   // Post methods
@@ -180,7 +185,7 @@ export class PostgresStorage implements IStorage {
 
   async getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
     console.log(`Fetching comments for post ID: ${postId}, onlyApproved: ${onlyApproved}`);
-    
+
     // Build the SQL query based on the parameters
     let query;
     if (onlyApproved) {
@@ -196,7 +201,7 @@ export class PostgresStorage implements IStorage {
         ORDER BY created_at DESC
       `;
     }
-    
+
     const result = await db.execute(query);
     console.log(`Found ${result.rowCount} comments for post ID ${postId}`);
     return result.rows as Comment[];
@@ -264,7 +269,7 @@ export class PostgresStorage implements IStorage {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
   }
-  
+
   async deleteUser(id: number): Promise<void> {
     try {
       // First check if user exists
@@ -272,10 +277,10 @@ export class PostgresStorage implements IStorage {
       if (!user) {
         throw new Error('User not found');
       }
-      
+
       // Delete user from database
       await db.delete(users).where(eq(users.id, id));
-      
+
       // Optionally, delete related records (comments, posts, etc.)
       // This depends on your database constraints and requirements
     } catch (error) {
@@ -686,7 +691,7 @@ export class PostgresStorage implements IStorage {
   async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
     try {
       console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
-      
+
       // Apply date filtering if provided
       const whereClause = fromDate && toDate 
         ? sql`created_at BETWEEN ${fromDate}::timestamp AND ${toDate}::timestamp`
@@ -695,7 +700,7 @@ export class PostgresStorage implements IStorage {
           : toDate 
             ? sql`created_at <= ${toDate}::timestamp`
             : sql`TRUE`;
-      
+
       // Get total user count - we don't have last_activity field, so we'll use total users as active
       // If date range is provided, count users created within that range
       const [activeUsers] = await db.select({ count: sql<number>`count(*)` })
@@ -719,7 +724,7 @@ export class PostgresStorage implements IStorage {
       let contentReportsQuery = db.select({ count: sql<number>`count(*)` })
         .from(posts)
         .where(sql`approved = false`);
-      
+
       // Apply date filter if provided
       let contentReports;
       if (fromDate || toDate) {
@@ -730,36 +735,36 @@ export class PostgresStorage implements IStorage {
       } else {
         contentReports = await contentReportsQuery.then(res => res[0]);
       }
-      
+
       // Get content distribution
       const [postsCount] = await db.select({ count: sql<number>`count(*)` })
         .from(posts);
-      
+
       const [commentsCount] = await db.select({ count: sql<number>`count(*)` })
         .from(comments);
-      
+
       const [tracksCount] = await db.select({ count: sql<number>`count(*)` })
         .from(tracks);
-      
+
       // Get user roles distribution
       const userRolesResult = await db.execute(sql`
         SELECT role, COUNT(*) as count
         FROM users
         GROUP BY role
       `);
-      
+
       const userRolesDistribution = {
         user: 0,
         admin: 0,
         super_admin: 0
       };
-      
+
       userRolesResult.rows.forEach((row: any) => {
         if (row.role && userRolesDistribution.hasOwnProperty(row.role)) {
           userRolesDistribution[row.role as keyof typeof userRolesDistribution] = parseInt(row.count);
         }
       });
-      
+
       // Generate monthly user data for charts (last 6 months)
       const userActivityData = await db.execute(sql`
         SELECT 
@@ -770,25 +775,25 @@ export class PostgresStorage implements IStorage {
         GROUP BY date_trunc('month', created_at)
         ORDER BY date_trunc('month', created_at)
       `);
-      
+
       // Extract months and counts for charts
       const months: string[] = [];
       const activeUsersOverTime: number[] = [];
-      
+
       userActivityData.rows.forEach((row: any) => {
         months.push(row.month);
         activeUsersOverTime.push(parseInt(row.count));
       });
-      
+
       // Fill in missing months to always have 6 data points
       while (months.length < 6) {
         months.push('-');
         activeUsersOverTime.push(0);
       }
-      
+
       // Similarly for registrations over time (use the same months for consistency)
       const newRegistrationsOverTime = [...activeUsersOverTime]; // For simplicity, using the same data pattern
-      
+
       return {
         activeUsers: activeUsers?.count || 0,
         newRegistrations: newRegistrations?.count || 0,
