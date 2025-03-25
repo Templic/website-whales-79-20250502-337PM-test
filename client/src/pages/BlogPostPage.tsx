@@ -50,7 +50,7 @@ export default function BlogPostPage() {
 
   // Define the comment input type
   type CommentInput = z.infer<typeof insertCommentSchema>;
-  
+
   const commentMutation = useMutation({
     mutationFn: async (data: CommentInput) => {
       const response = await fetch(`/api/posts/${postId}/comments`, {
@@ -131,7 +131,7 @@ export default function BlogPostPage() {
         </svg>
         Back to Blog
       </Button>
-        
+
       <article className="prose prose-invert max-w-none">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4">{post.title}</h1>
         <div className="flex items-center text-sm text-gray-400 mb-8">

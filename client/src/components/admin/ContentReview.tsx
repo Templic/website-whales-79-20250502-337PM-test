@@ -122,6 +122,7 @@ export default function ContentReview() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unapprovedComments'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/posts'] }); // Refresh all posts
       toast({ title: 'Success', description: 'Comment approved successfully' });
     },
     onError: (error) => {
