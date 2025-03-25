@@ -171,6 +171,186 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error checking subscriber" });
     }
   });
+  
+  // Content management endpoints for Admin
+  
+  // Get unapproved posts
+  app.get("/api/admin/posts/unapproved", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const posts = await storage.getUnapprovedPosts();
+      
+      // Enhance posts with author usernames
+      const enhancedPosts = await Promise.all(posts.map(async (post) => {
+        let authorName = 'Unknown';
+        try {
+          const author = await storage.getUser(post.authorId);
+          authorName = author?.username || 'Unknown';
+        } catch (error) {
+          console.error(`Error fetching author for post ${post.id}:`, error);
+        }
+        
+        return {
+          ...post,
+          authorName
+        };
+      }));
+      
+      res.json(enhancedPosts);
+    } catch (error) {
+      console.error("Error fetching unapproved posts:", error);
+      res.status(500).json({ message: "Error fetching unapproved posts" });
+    }
+  });
+  
+  // Get unapproved comments
+  app.get("/api/admin/comments/unapproved", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const comments = await storage.getUnapprovedComments();
+      
+      // Enhance comments with author names and post titles
+      const enhancedComments = await Promise.all(comments.map(async (comment) => {
+        let authorName = 'Unknown';
+        let postTitle = 'Unknown Post';
+        
+        try {
+          const author = await storage.getUser(comment.authorId);
+          authorName = author?.username || 'Unknown';
+        } catch (error) {
+          console.error(`Error fetching author for comment ${comment.id}:`, error);
+        }
+        
+        try {
+          const post = await storage.getPostById(comment.postId);
+          postTitle = post?.title || 'Unknown Post';
+        } catch (error) {
+          console.error(`Error fetching post for comment ${comment.id}:`, error);
+        }
+        
+        return {
+          ...comment,
+          authorName,
+          postTitle
+        };
+      }));
+      
+      res.json(enhancedComments);
+    } catch (error) {
+      console.error("Error fetching unapproved comments:", error);
+      res.status(500).json({ message: "Error fetching unapproved comments" });
+    }
+  });
+  
+  // Get recent tracks for review
+  app.get("/api/admin/tracks/recent", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const tracks = await storage.getTracks();
+      
+      // Sort tracks by creation date (newest first) and take the most recent 10
+      const recentTracks = [...tracks]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
+      
+      // Add uploader information if available
+      const enhancedTracks = await Promise.all(recentTracks.map(async (track) => {
+        let uploadedByName = 'Unknown';
+        
+        if (track.uploadedById) {
+          try {
+            const uploader = await storage.getUser(track.uploadedById);
+            uploadedByName = uploader?.username || 'Unknown';
+          } catch (error) {
+            console.error(`Error fetching uploader for track ${track.id}:`, error);
+          }
+        }
+        
+        return {
+          ...track,
+          uploadedByName
+        };
+      }));
+      
+      res.json(enhancedTracks);
+    } catch (error) {
+      console.error("Error fetching recent tracks:", error);
+      res.status(500).json({ message: "Error fetching recent tracks" });
+    }
+  });
+  
+  // Approve a post
+  app.post("/api/admin/posts/:postId/approve", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const postId = parseInt(req.params.postId);
+      const approvedPost = await storage.approvePost(postId);
+      res.json(approvedPost);
+    } catch (error) {
+      console.error(`Error approving post:`, error);
+      res.status(500).json({ message: "Error approving post" });
+    }
+  });
+  
+  // Approve a comment
+  app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const commentId = parseInt(req.params.commentId);
+      const approvedComment = await storage.approveComment(commentId);
+      res.json(approvedComment);
+    } catch (error) {
+      console.error(`Error approving comment:`, error);
+      res.status(500).json({ message: "Error approving comment" });
+    }
+  });
+  
+  // Reject a comment
+  app.post("/api/admin/comments/:commentId/reject", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const commentId = parseInt(req.params.commentId);
+      const rejectedComment = await storage.rejectComment(commentId);
+      res.json(rejectedComment);
+    } catch (error) {
+      console.error(`Error rejecting comment:`, error);
+      res.status(500).json({ message: "Error rejecting comment" });
+    }
+  });
+  
+  // Delete a track
+  app.delete("/api/admin/tracks/:trackId", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const trackId = parseInt(req.params.trackId);
+      await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
+      res.json({ success: true, message: "Track deleted successfully" });
+    } catch (error) {
+      console.error(`Error deleting track:`, error);
+      res.status(500).json({ message: "Error deleting track" });
+    }
+  });
 
 
       if (transporter) {
