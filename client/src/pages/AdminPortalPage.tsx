@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { ChartBar, LogOut, Users, FileText, AlertCircle, ShieldCheck, Gauge, RefreshCw, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AdminStats {
   totalUsers: number;
@@ -141,6 +142,73 @@ export default function AdminPortalPage() {
             )}
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>System Health</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span>Status</span>
+                <Badge variant={statsLoading ? "outline" : "default"}>
+                  {statsLoading ? "Loading..." : adminStats?.systemHealth || "Unknown"}
+                </Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Approval Rate</span>
+                <span>{adminStats?.approvalRate || 0}%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Management</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span>Pending Reviews</span>
+                <Badge variant="outline">{adminStats?.pendingReviews || 0}</Badge>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setActiveTab("content")}
+                className="w-full"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Manage Content
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>User Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span>Users</span>
+                <span>{adminStats?.userRolesDistribution?.user || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Admins</span>
+                <span>{adminStats?.userRolesDistribution?.admin || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Super Admins</span>
+                <span>{adminStats?.userRolesDistribution?.super_admin || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
