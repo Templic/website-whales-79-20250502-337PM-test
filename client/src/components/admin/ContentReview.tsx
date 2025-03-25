@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +72,8 @@ export default function ContentReview() {
     queryFn: () => fetch('/api/admin/comments/unapproved').then(res => {
       if (!res.ok) throw new Error('Failed to fetch unapproved comments');
       return res.json();
-    })
+    }),
+    refetchInterval: 5000 // Refresh every 5 seconds
   });
 
   // Fetch recent tracks for review

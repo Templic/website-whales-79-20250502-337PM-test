@@ -504,10 +504,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Comment routes
   app.post("/api/posts/:postId/comments", async (req, res) => {
     try {
+      // Auto-approve comments from admin users
+      const isAdmin = req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
+      
       const data = insertCommentSchema.parse({
         ...req.body,
         postId: Number(req.params.postId),
-        approved: false  // All new comments start as unapproved
+        approved: isAdmin // Auto-approve if admin
       });
       console.log("Creating comment with data:", data);
       const comment = await storage.createComment(data);
