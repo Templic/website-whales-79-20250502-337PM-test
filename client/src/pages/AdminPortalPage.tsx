@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChartBar, LogOut, X } from "lucide-react";
-import Link from "next/link";
+import { Link } from "wouter";
 import { useEffect } from "react";
 import ToDoList from "../components/ToDoList";
 import { UserRole } from "@/types";
