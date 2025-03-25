@@ -182,8 +182,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Existing subscriber route
   app.post("/api/subscribe", async (req, res) => {
     try {
+      console.log("Received subscription request:", req.body);
       const data = insertSubscriberSchema.parse(req.body);
       const subscriber = await storage.createSubscriber(data);
+      console.log("Created new subscriber:", subscriber);
       
       // Send welcome email if SMTP is configured
 

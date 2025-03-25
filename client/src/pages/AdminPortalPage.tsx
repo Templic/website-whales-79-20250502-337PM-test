@@ -40,11 +40,22 @@ export default function AdminPortalPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
-  const { data: subscribers } = useQuery({
+  const { data: subscribers, refetch: refetchSubscribers } = useQuery({
     queryKey: ['subscribers'],
-    queryFn: () => fetch('/api/subscribers').then(res => res.json()),
-    enabled: activeTab === 'subscribers'
+    queryFn: async () => {
+      const res = await fetch('/api/subscribers');
+      if (!res.ok) throw new Error('Failed to fetch subscribers');
+      return res.json();
+    },
+    enabled: activeTab === 'subscribers',
+    staleTime: 0 // Always fetch fresh data
   });
+
+  useEffect(() => {
+    if (activeTab === 'subscribers') {
+      refetchSubscribers();
+    }
+  }, [activeTab, refetchSubscribers]);
 
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ['adminStats'],
