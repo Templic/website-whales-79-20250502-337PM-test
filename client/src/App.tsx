@@ -89,3 +89,62 @@ function App() {
 }
 
 export default App;
+// In your main App.tsx or _app.tsx
+import { useEffect } from 'react';
+import ReactGA from 'react-ga4';
+
+function App() {
+  useEffect(() => {
+    // Initialize Google Analytics
+    ReactGA.initialize(350352747);
+    
+    // Track page views
+    ReactGA.send('pageview');
+  }, []);
+
+  return (/* Your app components */);
+}
+
+// In AdminPortalPage.tsx, enhance existing tracking
+export default function AdminPortalPage() {
+  useEffect(() => {
+    // Track admin portal page view
+    ReactGA.send({
+      hitType: 'pageview',
+      page: '/admin',
+      title: 'Admin Portal'
+    });
+
+    // Track admin user properties
+    ReactGA.set({
+      user_role: user?.role || 'unknown',
+      admin_access_level: user?.permissions || 'basic'
+    });
+  }, [user]);
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      
+      // Track logout event
+      ReactGA.event({
+        category: 'User',
+        action: 'Logout',
+        label: user?.email
+      });
+
+      toast({/* existing toast */});
+    } catch (error) {
+      // Track logout failure
+      ReactGA.event({
+        category: 'User',
+        action: 'Logout Failed',
+        label: user?.email
+      });
+
+      toast({/* existing error toast */});
+    }
+  };
+
+  // Existing component code...
+}
