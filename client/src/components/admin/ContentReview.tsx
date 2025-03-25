@@ -70,7 +70,8 @@ export default function ContentReview() {
     queryKey: ['unapprovedComments'],
     queryFn: () => {
       console.log('Attempting to fetch unapproved comments...');
-      return fetch('/api/admin/comments/unapproved').then(res => {
+      // Use the posts/comments/unapproved endpoint that we know works from server logs
+      return fetch('/api/posts/comments/unapproved').then(res => {
         console.log('Comments API response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch unapproved comments');
         return res.json();
@@ -130,7 +131,7 @@ export default function ContentReview() {
   const approveCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
       console.log('Sending approve request for comment:', commentId);
-      const response = await fetch(`/api/admin/comments/${commentId}/approve`, {
+      const response = await fetch(`/api/posts/comments/${commentId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -161,7 +162,7 @@ export default function ContentReview() {
   const rejectCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
       console.log('Sending reject request for comment:', commentId);
-      const response = await fetch(`/api/admin/comments/${commentId}/reject`, {
+      const response = await fetch(`/api/posts/comments/${commentId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -352,6 +353,16 @@ export default function ContentReview() {
 
   return (
     <>
+      {/* Debug information */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="bg-muted p-4 mb-4 rounded-md text-xs">
+          <h4 className="font-semibold mb-2">Debug Info:</h4>
+          <p>Comments API data: {JSON.stringify(comments)}</p>
+          <p className="mt-2">Comments in component: {comments?.length || 0}</p>
+          <p className="mt-2">Comments in all items: {allContentItems.filter(item => item.type === 'comment').length}</p>
+        </div>
+      )}
+      
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All Content ({allContentItems.length})</TabsTrigger>
