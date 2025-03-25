@@ -506,7 +506,7 @@ export default function AdminPortalPage() {
 import { useEffect } from "react";
 import ToDoList from "../components/ToDoList"; // adjust the path as needed
 
-export default function AdminPortalPage() {
+export default function AdminPortalContent() {
   useEffect(() => {
     document.title = "AdminPortalPage";
   }, []);
