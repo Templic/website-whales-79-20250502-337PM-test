@@ -6,6 +6,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import ToDoList from "../components/ToDoList";
 
 const newsletterSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -39,6 +40,7 @@ export default function NewsletterPage() {
 
   return (
     <div className="space-y-8">
+      <ToDoList />
       <section className="text-center">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4"> Feature coming soon: Join The Cosmic Newsletter</h1>
         <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
