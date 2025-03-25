@@ -1,11 +1,11 @@
 import React from 'react';
 
-
+const TermsEffectiveDate: React.FC = () => {
+  return (
     <p>Terms Effective: Not In Effect Draft Only </p>
   );
 };
 
-// Main TermsOfService component
 const TermsOfService: React.FC = () => {
   return (
     <div className="terms-of-service-container container mx-auto px-4 py-8">
@@ -111,6 +111,6 @@ const TermsOfService: React.FC = () => {
       </section>
     </div>
   );
-}
-<p>Terms Effective: Not In Effect Draft Only </p>
+};
+
 export default TermsOfService;
