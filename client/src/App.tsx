@@ -1,4 +1,5 @@
-import { Switch, Route, lazy } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
+import { lazy } from 'react';
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +7,8 @@ import { Layout } from "./components/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "./pages/not-found";
+import { useEffect } from "react";
+import { initializeGA, trackPageView } from "@/lib/analytics";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -30,6 +33,13 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy"; // Added import for PrivacyPo
 
 
 function Router() {
+  const [location] = useLocation();
+  
+  useEffect(() => {
+    // Track page view when location changes
+    trackPageView(location);
+  }, [location]);
+
   return (
     <Layout>
       <Switch>
@@ -63,6 +73,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Initialize Google Analytics when app loads
+    initializeGA();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
