@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import ToDoList from "../components/ToDoList";
 
 export default function EngagePage() {
   useEffect(() => {
@@ -8,7 +7,6 @@ export default function EngagePage() {
 
   return (
     <div className="space-y-8">
-      <ToDoList />
       <section className="banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
         <img src="/api/placeholder/1200/400" alt="Main Banner" className="w-full rounded-lg mb-6" />
         <div className="cta-buttons flex flex-wrap gap-4 justify-center">

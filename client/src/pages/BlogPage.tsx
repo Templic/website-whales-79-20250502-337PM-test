@@ -9,12 +9,8 @@ import styles from "./BlogPage.module.css";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { useEffect, useRef, useCallback } from "react";
-import ToDoList from "../components/ToDoList";
 
 export default function BlogPage() {
-  useEffect(() => {
-    document.title = "Blog - Dale Loves Whales";
-  }, []);
   const { toast } = useToast();
   const { user } = useAuth();
   const hasShownError = useRef(false);
