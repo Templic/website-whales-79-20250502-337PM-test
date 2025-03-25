@@ -29,14 +29,12 @@ import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
-import PrivacyPolicy from "@/pages/PrivacyPolicy"; // Added import for PrivacyPolicy page
-
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
 function Router() {
   const [location] = useLocation();
-  
+
   useEffect(() => {
-    // Track page view when location changes
     trackPageView(location);
   }, [location]);
 
@@ -65,7 +63,7 @@ function Router() {
         <Route path="/reset-password" component={PasswordRecoveryPage} />
         <Route path="/sitemap" component={SitemapPage} />
         <Route path="/terms" component={TermsOfService} />
-        <Route path="/privacy" component={PrivacyPolicy} /> {/* Added Privacy Policy route */}
+        <Route path="/privacy" component={PrivacyPolicy} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -74,7 +72,6 @@ function Router() {
 
 function App() {
   useEffect(() => {
-    // Initialize Google Analytics when app loads
     initializeGA();
   }, []);
 
@@ -89,62 +86,3 @@ function App() {
 }
 
 export default App;
-// In your main App.tsx or _app.tsx
-import { useEffect } from 'react';
-import ReactGA from 'react-ga4';
-
-function App() {
-  useEffect(() => {
-    // Initialize Google Analytics
-    ReactGA.initialize(350352747);
-    
-    // Track page views
-    ReactGA.send('pageview');
-  }, []);
-
-  return (/* Your app components */);
-}
-
-// In AdminPortalPage.tsx, enhance existing tracking
-export default function AdminPortalPage() {
-  useEffect(() => {
-    // Track admin portal page view
-    ReactGA.send({
-      hitType: 'pageview',
-      page: '/admin',
-      title: 'Admin Portal'
-    });
-
-    // Track admin user properties
-    ReactGA.set({
-      user_role: user?.role || 'unknown',
-      admin_access_level: user?.permissions || 'basic'
-    });
-  }, [user]);
-
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      
-      // Track logout event
-      ReactGA.event({
-        category: 'User',
-        action: 'Logout',
-        label: user?.email
-      });
-
-      toast({/* existing toast */});
-    } catch (error) {
-      // Track logout failure
-      ReactGA.event({
-        category: 'User',
-        action: 'Logout Failed',
-        label: user?.email
-      });
-
-      toast({/* existing error toast */});
-    }
-  };
-
-  // Existing component code...
-}
