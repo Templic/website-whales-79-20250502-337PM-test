@@ -388,22 +388,107 @@ export class PostgresStorage implements IStorage {
 
   async initializeSampleData() {
     try {
-      // Check if sample data already exists
+      // Initialize subscribers
+      const existingSubscribers = await db.select().from(subscribers);
+      if (existingSubscribers.length === 0) {
+        await db.insert(subscribers).values([
+          {
+            name: "Emily Johnson",
+            email: "emily.j@example.com",
+            active: true,
+            createdAt: new Date("2024-01-15")
+          },
+          {
+            name: "Michael Chen",
+            email: "m.chen@example.com",
+            active: true,
+            createdAt: new Date("2024-01-16")
+          },
+          {
+            name: "Sarah Williams",
+            email: "sarah.w@example.com",
+            active: true,
+            createdAt: new Date("2024-01-17")
+          }
+        ]);
+      }
+
+      // Initialize collaboration proposals
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS collaboration_proposals (
+          id SERIAL PRIMARY KEY,
+          artist_name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          proposal_type TEXT NOT NULL,
+          description TEXT NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      const existingProposals = await db.execute(sql`SELECT * FROM collaboration_proposals`);
+      if (existingProposals.rowCount === 0) {
+        await db.execute(sql`
+          INSERT INTO collaboration_proposals (artist_name, email, proposal_type, description, status)
+          VALUES 
+            ('Luna Echo', 'luna@example.com', 'Music Collaboration', 'Interested in creating a cosmic ambient track together', 'pending'),
+            ('DJ Starlight', 'djstar@example.com', 'Live Performance', 'Would love to collaborate for an ocean-themed event', 'pending'),
+            ('The Wave Riders', 'wave@example.com', 'Album Feature', 'Proposing a joint EP focused on marine conservation', 'pending')
+        `);
+      }
+
+      // Initialize patrons
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS patrons (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          tier TEXT NOT NULL,
+          subscription_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          active BOOLEAN DEFAULT true
+        )
+      `);
+
+      const existingPatrons = await db.execute(sql`SELECT * FROM patrons`);
+      if (existingPatrons.rowCount === 0) {
+        await db.execute(sql`
+          INSERT INTO patrons (name, email, tier)
+          VALUES 
+            ('Alex Thompson', 'alex@example.com', 'Whale Guardian'),
+            ('Maria Garcia', 'maria@example.com', 'Ocean Protector'),
+            ('James Wilson', 'james@example.com', 'Wave Rider')
+        `);
+      }
+
+      // Initialize tour dates
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS tour_dates (
+          id SERIAL PRIMARY KEY,
+          venue TEXT NOT NULL,
+          city TEXT NOT NULL,
+          date TIMESTAMP NOT NULL,
+          ticket_link TEXT,
+          status TEXT DEFAULT 'upcoming'
+        )
+      `);
+
+      const existingTours = await db.execute(sql`SELECT * FROM tour_dates`);
+      if (existingTours.rowCount === 0) {
+        await db.execute(sql`
+          INSERT INTO tour_dates (venue, city, date, ticket_link, status)
+          VALUES 
+            ('Ocean Sound Arena', 'Miami', '2024-04-15 20:00:00', 'https://tickets.example.com/miami', 'upcoming'),
+            ('Cosmic Waves Theater', 'Los Angeles', '2024-05-01 19:30:00', 'https://tickets.example.com/la', 'upcoming'),
+            ('Blue Note Jazz Club', 'New York', '2024-05-15 21:00:00', 'https://tickets.example.com/ny', 'upcoming'),
+            ('Marine Gardens', 'Seattle', '2024-06-01 20:00:00', 'https://tickets.example.com/seattle', 'upcoming')
+        `);
+      }
+
+      // Check if sample tracks exist and maintain "Feels So Good" at the top
       const existingTracks = await db.select().from(tracks);
       if (existingTracks.length === 0) {
         // Add sample tracks
         await db.insert(tracks).values([
-          {
-            title: "Oceanic Dreams",
-            artist: "Dale The Whale",
-            duration: "4:35",
-            releaseDate: new Date("2025-01-15"),
-            genre: "Ambient Electronic",
-            isNewRelease: false,
-            audioUrl: "oceanic-dreams.mp3",
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
           {
             title: "Feels So Good",
             artist: "Dale The Whale ft. AC3-2085",
@@ -413,10 +498,35 @@ export class PostgresStorage implements IStorage {
             updatedAt: new Date()
           },
           {
-            title: "Cosmic Echoes", 
+            title: "Ocean's Calling",
             artist: "Dale The Whale",
-            duration: "5:20",
-            audioUrl: "cosmic-echoes.mp3",
+            duration: "4:15",
+            releaseDate: new Date("2024-03-01"),
+            genre: "Electronic",
+            isNewRelease: true,
+            audioUrl: "oceans-calling.mp3",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            title: "Whale Song Symphony",
+            artist: "Dale The Whale",
+            duration: "6:30",
+            releaseDate: new Date("2024-02-15"),
+            genre: "Ambient",
+            isNewRelease: true,
+            audioUrl: "whale-song-symphony.mp3",
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            title: "Deep Blue Meditation",
+            artist: "Dale The Whale",
+            duration: "8:20",
+            releaseDate: new Date("2024-01-30"),
+            genre: "Meditation",
+            isNewRelease: true,
+            audioUrl: "deep-blue-meditation.mp3",
             createdAt: new Date(),
             updatedAt: new Date()
           }
