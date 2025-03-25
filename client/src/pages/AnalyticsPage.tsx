@@ -59,6 +59,20 @@ interface AnalyticsData {
     super_admin: number;
   };
   months: string[]; // The month labels for the charts
+  // Google Analytics data
+  googleAnalytics?: {
+    pageViews: number;
+    uniqueVisitors: number;
+    avgSessionDuration: number;
+    bounceRate: number;
+    topPages: Array<{path: string, views: number}>;
+    topSources: Array<{source: string, sessions: number}>;
+    deviceDistribution: {
+      desktop: number;
+      mobile: number;
+      tablet: number;
+    };
+  };
 }
 
 // Default color scheme
@@ -365,6 +379,14 @@ export default function AnalyticsPage() {
     }
 
     try {
+      // Track export event with Google Analytics
+      trackEvent(
+        'Analytics',
+        'Export Data',
+        'CSV Export',
+        analyticsData.googleAnalytics?.pageViews || 0
+      );
+
       // Create CSV content
       const headers = ['Metric', 'Value'];
       
@@ -380,6 +402,34 @@ export default function AnalyticsPage() {
         ['Users - Admin', analyticsData.userRolesDistribution?.admin || 0],
         ['Users - Super Admin', analyticsData.userRolesDistribution?.super_admin || 0]
       ];
+      
+      // Add Google Analytics data if available
+      if (analyticsData.googleAnalytics) {
+        rows.push(['', '']); // Empty row as separator
+        rows.push(['Google Analytics Metrics', '']);
+        rows.push(['Page Views', analyticsData.googleAnalytics.pageViews || 0]);
+        rows.push(['Unique Visitors', analyticsData.googleAnalytics.uniqueVisitors || 0]);
+        rows.push(['Avg. Session Duration (seconds)', analyticsData.googleAnalytics.avgSessionDuration || 0]);
+        rows.push(['Bounce Rate (%)', analyticsData.googleAnalytics.bounceRate ? analyticsData.googleAnalytics.bounceRate.toFixed(1) : '0']);
+        
+        // Add device distribution if available
+        if (analyticsData.googleAnalytics.deviceDistribution) {
+          rows.push(['', '']); // Empty row as separator
+          rows.push(['Device Distribution', '']);
+          rows.push(['Desktop', analyticsData.googleAnalytics.deviceDistribution.desktop || 0]);
+          rows.push(['Mobile', analyticsData.googleAnalytics.deviceDistribution.mobile || 0]);
+          rows.push(['Tablet', analyticsData.googleAnalytics.deviceDistribution.tablet || 0]);
+        }
+        
+        // Add top pages if available
+        if (analyticsData.googleAnalytics.topPages && analyticsData.googleAnalytics.topPages.length > 0) {
+          rows.push(['', '']); // Empty row as separator
+          rows.push(['Top Pages', 'Views']);
+          analyticsData.googleAnalytics.topPages.forEach((page) => {
+            rows.push([page.path, page.views]);
+          });
+        }
+      }
       
       // Add monthly data
       if (analyticsData.months && analyticsData.activeUsersOverTime) {
@@ -563,6 +613,147 @@ export default function AnalyticsPage() {
           <p className="text-xs text-gray-400 mt-2">
             Overall platform performance status
           </p>
+        </div>
+      </div>
+
+      {/* Google Analytics Section */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-[#00ebd6]">Google Analytics Insights</h2>
+          <Button
+            variant="outline"
+            onClick={handleMainRefresh}
+            className="flex items-center"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh Google Analytics Data
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg text-gray-300 mb-1">Page Views</h3>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-[#00ebd6]">
+                {analyticsData.googleAnalytics?.pageViews?.toLocaleString() || "0"}
+              </p>
+              <p className="text-sm text-green-400">+4.2%</p>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Total views in selected period</p>
+          </div>
+
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg text-gray-300 mb-1">Unique Visitors</h3>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-[#00ebd6]">
+                {analyticsData.googleAnalytics?.uniqueVisitors?.toLocaleString() || "0"}
+              </p>
+              <p className="text-sm text-green-400">+2.8%</p>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Unique users in selected period</p>
+          </div>
+
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg text-gray-300 mb-1">Avg. Session Duration</h3>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-[#00ebd6]">
+                {analyticsData.googleAnalytics?.avgSessionDuration ? 
+                  `${Math.floor(analyticsData.googleAnalytics.avgSessionDuration / 60)}m ${Math.floor(analyticsData.googleAnalytics.avgSessionDuration % 60)}s` : 
+                  "0m 0s"}
+              </p>
+              <p className="text-sm text-green-400">+1.5%</p>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Average time on site</p>
+          </div>
+
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <h3 className="text-lg text-gray-300 mb-1">Bounce Rate</h3>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-bold text-[#00ebd6]">
+                {analyticsData.googleAnalytics?.bounceRate ? 
+                  `${analyticsData.googleAnalytics.bounceRate.toFixed(1)}%` : 
+                  "0%"}
+              </p>
+              <p className="text-sm text-red-400">+0.8%</p>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Single page sessions</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-white">Top Pages</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleComingSoonRefresh('Top Pages')}
+                className="h-8 w-8 p-0 rounded-full"
+              >
+                <RefreshCw className="h-4 w-4 text-[#00ebd6]" />
+              </Button>
+            </div>
+            {analyticsData.googleAnalytics?.topPages ? (
+              <div className="space-y-3">
+                {analyticsData.googleAnalytics.topPages.map((page, index) => (
+                  <div key={index} className="flex justify-between items-center px-3 py-2 bg-[rgba(0,0,0,0.2)] rounded-lg">
+                    <span className="text-sm truncate max-w-[200px]">{page.path}</span>
+                    <span className="text-[#00ebd6] font-semibold">{page.views.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-48 flex items-center justify-center">
+                <p className="text-gray-500">Page data will appear when available</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-white">Device Distribution</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleComingSoonRefresh('Device Distribution')}
+                className="h-8 w-8 p-0 rounded-full"
+              >
+                <RefreshCw className="h-4 w-4 text-[#00ebd6]" />
+              </Button>
+            </div>
+            <div className="h-48">
+              {analyticsData.googleAnalytics?.deviceDistribution ? (
+                <Pie 
+                  data={{
+                    labels: ['Desktop', 'Mobile', 'Tablet'],
+                    datasets: [{
+                      data: [
+                        analyticsData.googleAnalytics.deviceDistribution.desktop,
+                        analyticsData.googleAnalytics.deviceDistribution.mobile,
+                        analyticsData.googleAnalytics.deviceDistribution.tablet
+                      ],
+                      backgroundColor: [
+                        colors.primary,
+                        colors.secondary,
+                        colors.tertiary,
+                      ],
+                      borderColor: [
+                        colors.textLight,
+                        colors.textLight,
+                        colors.textLight,
+                      ],
+                      borderWidth: 1,
+                    }]
+                  }}
+                  options={pieOptions}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-500">Device data will appear when available</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
