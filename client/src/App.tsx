@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, lazy } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -46,6 +46,9 @@ function Router() {
         <Route path="/contact" component={ContactPage} />
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
         <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
+        <ProtectedRoute path="/admin/users" component={lazy(() => import('./pages/admin/UsersPage'))} />
+        <ProtectedRoute path="/admin/posts" component={lazy(() => import('./pages/admin/PostsPage'))} />
+        <ProtectedRoute path="/admin/music" component={lazy(() => import('./pages/admin/MusicPage'))} />
         <ProtectedRoute path="/portal" component={UserPortal} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/recover-password" component={PasswordRecoveryPage} />
