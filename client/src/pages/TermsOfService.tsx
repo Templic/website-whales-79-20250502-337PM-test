@@ -1,15 +1,7 @@
 import React from 'react';
 
-// TermsEffectiveDate component to show current date
-const TermsEffectiveDate: React.FC = () => {
-  const currentDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
 
-  return (
-    <p>Terms Effective: March 21, 2025 - {currentDate}</p>
+    <p>Terms Effective: Not In Effect Draft Only </p>
   );
 };
 
@@ -120,5 +112,5 @@ const TermsOfService: React.FC = () => {
     </div>
   );
 }
-
+<p>Terms Effective: Not In Effect Draft Only </p>
 export default TermsOfService;

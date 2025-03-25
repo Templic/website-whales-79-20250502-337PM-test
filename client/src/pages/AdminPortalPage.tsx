@@ -501,3 +501,20 @@ export default function AdminPortalPage() {
     </div>
   );
 }
+// client/src/components/ToDoList.tsx
+// client/src/pages/AdminPortalPage.tsx
+import { useEffect } from "react";
+import ToDoList from "../components/ToDoList"; // adjust the path as needed
+
+export default function AdminPortalPage() {
+  useEffect(() => {
+    document.title = "AdminPortalPage";
+  }, []);
+
+  return (
+    <div className="space-y-8">
+      <ToDoList />
+      {/* Other page content */}
+    </div>
+  );
+}
