@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, X, AlertCircle, Eye, FileText, Music, MessageSquare } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 // Define interfaces based on our database schema
 interface Post {
@@ -73,7 +73,7 @@ export default function ContentReview() {
       if (!res.ok) throw new Error('Failed to fetch unapproved comments');
       return res.json();
     }),
-    refetchInterval: 5000 // Refresh every 5 seconds
+    refetchInterval: 2000 // Reduced refresh interval to 2 seconds
   });
 
   // Fetch recent tracks for review
@@ -228,7 +228,7 @@ export default function ContentReview() {
   }
 
   const renderContentItems = (items: ContentItem[]) => {
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       return (
         <Card>
           <CardContent className="flex items-center justify-center py-6">
@@ -237,6 +237,9 @@ export default function ContentReview() {
         </Card>
       );
     }
+
+    const commentItems = items.filter(item => item.type === 'comment');
+    console.log('Unapproved comments in review:', commentItems);
 
     return items.map((item) => (
       <Card key={`${item.type}-${item.id}`}>
