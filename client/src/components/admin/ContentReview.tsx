@@ -73,7 +73,7 @@ export default function ContentReview() {
       if (!res.ok) throw new Error('Failed to fetch unapproved comments');
       return res.json();
     }),
-    refetchInterval: 2000 // Reduced refresh interval to 2 seconds
+    refetchInterval: 30000 // Increased refresh interval to 30 seconds
   });
 
   // Fetch recent tracks for review

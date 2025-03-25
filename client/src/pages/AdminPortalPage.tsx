@@ -67,21 +67,29 @@ export default function AdminPortalPage() {
         }
       });
       
-      // Format success message with proper grammar
-      let actionText = action;
-      if (action === 'delete') {
-        actionText = 'deleted';
-      } else if (action === 'ban') {
-        actionText = 'banned';
-      } else if (action === 'unban') {
-        actionText = 'unbanned';
-      } else {
-        actionText = `${action}d`; // promote -> promoted, demote -> demoted
+      // Generate success message based on action
+      let successMessage = '';
+      switch (action) {
+        case 'delete':
+          successMessage = 'User deleted successfully';
+          break;
+        case 'ban':
+          successMessage = 'User banned successfully';
+          break;
+        case 'unban':
+          successMessage = 'User unbanned successfully';
+          break;
+        case 'promote':
+          successMessage = 'User promoted successfully';
+          break;
+        case 'demote':
+          successMessage = 'User demoted successfully';
+          break;
       }
       
       toast({
         title: 'User Action Success',
-        description: `User ${actionText} successfully`
+        description: successMessage
       });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['adminStats'] });

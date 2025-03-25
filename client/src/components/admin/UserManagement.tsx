@@ -21,7 +21,7 @@ interface User {
 }
 
 interface UserManagementProps {
-  onAction: (userId: string, action: 'promote' | 'demote' | 'delete') => void;
+  onAction: (userId: string, action: 'promote' | 'demote' | 'delete' | 'ban' | 'unban') => void;
 }
 
 export default function UserManagement({ onAction }: UserManagementProps) {
@@ -51,6 +51,21 @@ export default function UserManagement({ onAction }: UserManagementProps) {
   
   const canDelete = (targetUser: User) => {
     if (currentUser?.id === targetUser.id) return false;
+    if (currentUser?.role === 'super_admin') return true;
+    if (currentUser?.role === 'admin' && targetUser.role === 'user') return true;
+    return false;
+  };
+
+  const canBan = (targetUser: User) => {
+    if (currentUser?.id === targetUser.id) return false;
+    if (targetUser.isBanned) return false;
+    if (currentUser?.role === 'super_admin') return true;
+    if (currentUser?.role === 'admin' && targetUser.role === 'user') return true;
+    return false;
+  };
+
+  const canUnban = (targetUser: User) => {
+    if (!targetUser.isBanned) return false;
     if (currentUser?.role === 'super_admin') return true;
     if (currentUser?.role === 'admin' && targetUser.role === 'user') return true;
     return false;
@@ -121,7 +136,7 @@ export default function UserManagement({ onAction }: UserManagementProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>{format(new Date(user.createdAt), 'MMM d, yyyy')}</TableCell>
-                  <TableCell className="space-x-2">
+                  <TableCell className="space-x-2 flex flex-wrap gap-2">
                     {canPromoteToAdmin(user) && (
                       <Button
                         size="sm"
@@ -138,6 +153,25 @@ export default function UserManagement({ onAction }: UserManagementProps) {
                         onClick={() => onAction(user.id.toString(), 'demote')}
                       >
                         Demote
+                      </Button>
+                    )}
+                    {canBan(user) && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => confirm(`Are you sure you want to ban user ${user.username}?`) &&
+                          onAction(user.id.toString(), 'ban')}
+                      >
+                        Ban
+                      </Button>
+                    )}
+                    {canUnban(user) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onAction(user.id.toString(), 'unban')}
+                      >
+                        Unban
                       </Button>
                     )}
                     {canDelete(user) && (
