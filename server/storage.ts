@@ -501,9 +501,6 @@ export class PostgresStorage implements IStorage {
             title: "Ocean's Calling",
             artist: "Dale The Whale",
             duration: "4:15",
-            releaseDate: new Date("2024-03-01"),
-            genre: "Electronic",
-            isNewRelease: true,
             audioUrl: "oceans-calling.mp3",
             createdAt: new Date(),
             updatedAt: new Date()
@@ -512,9 +509,6 @@ export class PostgresStorage implements IStorage {
             title: "Whale Song Symphony",
             artist: "Dale The Whale",
             duration: "6:30",
-            releaseDate: new Date("2024-02-15"),
-            genre: "Ambient",
-            isNewRelease: true,
             audioUrl: "whale-song-symphony.mp3",
             createdAt: new Date(),
             updatedAt: new Date()
@@ -523,9 +517,6 @@ export class PostgresStorage implements IStorage {
             title: "Deep Blue Meditation",
             artist: "Dale The Whale",
             duration: "8:20",
-            releaseDate: new Date("2024-01-30"),
-            genre: "Meditation",
-            isNewRelease: true,
             audioUrl: "deep-blue-meditation.mp3",
             createdAt: new Date(),
             updatedAt: new Date()
