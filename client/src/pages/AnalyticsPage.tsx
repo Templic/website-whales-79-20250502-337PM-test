@@ -11,6 +11,7 @@ import { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import { 
   Chart as ChartJS, 
   CategoryScale, 
@@ -103,6 +104,16 @@ export default function AnalyticsPage() {
   const handleDateRangeChange = (range: { from: Date; to: Date } | undefined) => {
     if (range?.from && range?.to) {
       setDateRange(range);
+      
+      // Track date range selection in Google Analytics
+      const fromStr = format(range.from, "yyyy-MM-dd");
+      const toStr = format(range.to, "yyyy-MM-dd");
+      trackEvent(
+        'Analytics', 
+        'Date Range Selection', 
+        `${fromStr} to ${toStr}`
+      );
+      
       toast({
         title: "Date range selected",
         description: `Showing data from ${format(range.from, "LLL dd, y")} to ${format(range.to, "LLL dd, y")}`,
@@ -315,11 +326,13 @@ export default function AnalyticsPage() {
 
   // Individual refresh functions for each chart
   const handleMainRefresh = () => {
+    trackEvent('Analytics', 'Refresh Data', 'Main Dashboard');
     refetch();
   };
   
   const handleUserActivityRefresh = () => {
     // In a more complex app, this could refresh just the user activity data
+    trackEvent('Analytics', 'Refresh Data', 'User Activity Chart');
     refetch();
     toast({
       title: "Refreshing User Activity Data",
@@ -330,6 +343,7 @@ export default function AnalyticsPage() {
   
   const handleRegistrationsRefresh = () => {
     // In a more complex app, this could refresh just the registrations data
+    trackEvent('Analytics', 'Refresh Data', 'Registrations Chart');
     refetch();
     toast({
       title: "Refreshing Registration Data",
@@ -340,6 +354,7 @@ export default function AnalyticsPage() {
   
   const handleContentRefresh = () => {
     // In a more complex app, this could refresh just the content distribution data
+    trackEvent('Analytics', 'Refresh Data', 'Content Distribution Chart');
     refetch();
     toast({
       title: "Refreshing Content Data",
@@ -350,6 +365,7 @@ export default function AnalyticsPage() {
   
   const handleRolesRefresh = () => {
     // In a more complex app, this could refresh just the user roles data
+    trackEvent('Analytics', 'Refresh Data', 'User Roles Chart');
     refetch();
     toast({
       title: "Refreshing User Roles Data",
@@ -359,6 +375,7 @@ export default function AnalyticsPage() {
   };
   
   const handleComingSoonRefresh = (metricName: string) => {
+    trackEvent('Analytics', 'View Coming Soon Feature', metricName);
     toast({
       title: `${metricName} Metrics`,
       description: "This chart data is coming soon",
@@ -531,6 +548,16 @@ export default function AnalyticsPage() {
                         from: range.from, 
                         to: range.to 
                       });
+                      
+                      // Track date range selection in Google Analytics
+                      const fromStr = format(range.from, "yyyy-MM-dd");
+                      const toStr = format(range.to, "yyyy-MM-dd");
+                      trackEvent(
+                        'Analytics', 
+                        'Date Range Selection', 
+                        `${fromStr} to ${toStr}`
+                      );
+                      
                       toast({
                         title: "Date range selected",
                         description: `Showing data from ${format(range.from, "LLL dd, y")} to ${format(range.to, "LLL dd, y")}`,
