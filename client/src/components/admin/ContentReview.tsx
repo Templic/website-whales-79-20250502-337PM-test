@@ -68,10 +68,20 @@ export default function ContentReview() {
   // Fetch unapproved comments
   const { data: comments, isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ['unapprovedComments'],
-    queryFn: () => fetch('/api/admin/comments/unapproved').then(res => {
-      if (!res.ok) throw new Error('Failed to fetch unapproved comments');
-      return res.json();
-    }),
+    queryFn: () => {
+      console.log('Attempting to fetch unapproved comments...');
+      return fetch('/api/admin/comments/unapproved').then(res => {
+        console.log('Comments API response status:', res.status);
+        if (!res.ok) throw new Error('Failed to fetch unapproved comments');
+        return res.json();
+      }).then(data => {
+        console.log('Received comments data:', data);
+        return data;
+      }).catch(err => {
+        console.error('Error fetching comments:', err);
+        return [];
+      });
+    },
     refetchInterval: 30000 // Increased refresh interval to 30 seconds
   });
 
@@ -84,12 +94,17 @@ export default function ContentReview() {
     })
   });
 
+  // Debug logs
+  console.log('Comments from API:', comments);
+  
   // Create combined content items list
   const allContentItems: ContentItem[] = [
     ...(posts?.map(post => ({ ...post, type: 'post' as const })) || []),
     ...(comments?.map(comment => ({ ...comment, type: 'comment' as const })) || []),
     ...(tracks?.map(track => ({ ...track, type: 'track' as const })) || [])
   ];
+  
+  console.log('All content items:', allContentItems);
 
   // Mutations for different content types
   const approvePostMutation = useMutation({
@@ -114,10 +129,19 @@ export default function ContentReview() {
 
   const approveCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      await fetch(`/api/admin/comments/${commentId}/approve`, {
+      console.log('Sending approve request for comment:', commentId);
+      const response = await fetch(`/api/admin/comments/${commentId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error approving comment:', errorText);
+        throw new Error(`Failed to approve comment: ${errorText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unapprovedComments'] });
@@ -125,6 +149,7 @@ export default function ContentReview() {
       toast({ title: 'Success', description: 'Comment approved successfully' });
     },
     onError: (error) => {
+      console.error('Error in approve mutation:', error);
       toast({ 
         title: 'Error', 
         description: error instanceof Error ? error.message : 'Failed to approve comment', 
@@ -135,16 +160,26 @@ export default function ContentReview() {
 
   const rejectCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      await fetch(`/api/admin/comments/${commentId}/reject`, {
+      console.log('Sending reject request for comment:', commentId);
+      const response = await fetch(`/api/admin/comments/${commentId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error rejecting comment:', errorText);
+        throw new Error(`Failed to reject comment: ${errorText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unapprovedComments'] });
       toast({ title: 'Success', description: 'Comment rejected successfully' });
     },
     onError: (error) => {
+      console.error('Error in reject mutation:', error);
       toast({ 
         title: 'Error', 
         description: error instanceof Error ? error.message : 'Failed to reject comment', 
@@ -181,6 +216,7 @@ export default function ContentReview() {
         break;
       case 'comment':
         approveCommentMutation.mutate(item.id);
+        console.log('Approving comment:', item);
         break;
       default:
         toast({ 
