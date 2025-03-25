@@ -1,12 +1,13 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChartBar, LogOut, X } from "lucide-react";
-import { Link } from "wouter";
+
 import { useEffect } from "react";
-import ToDoList from "../components/ToDoList";
-import { UserRole } from "@/types";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { ChartBar, LogOut, ArrowLeft } from "lucide-react";
+import { ToDoList } from "@/components/admin/ToDoList";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AnalyticsData {
   activeUsers: number;
@@ -40,36 +41,6 @@ export default function AdminPortalPage() {
     }
   };
 
-  const promoteUserMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: number; role: UserRole }) => {
-      const response = await fetch(`/api/users/${userId}/role`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role })
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user role');
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      toast({
-        title: "Success",
-        description: "User role updated successfully"
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
@@ -100,6 +71,57 @@ export default function AdminPortalPage() {
           </Button>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Link href="/admin/users">
+                <Button className="w-full">Manage Users</Button>
+              </Link>
+              <Link href="/admin/subscribers">
+                <Button className="w-full" variant="outline">Newsletter Subscribers</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Content</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Link href="/admin/posts">
+                <Button className="w-full">Manage Posts</Button>
+              </Link>
+              <Link href="/admin/music">
+                <Button className="w-full" variant="outline">Music Library</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Moderation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Link href="/admin/comments">
+                <Button className="w-full">Review Comments</Button>
+              </Link>
+              <Link href="/admin/reports">
+                <Button className="w-full" variant="outline">Content Reports</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="space-y-8">
         <ToDoList />
       </div>
