@@ -35,7 +35,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ message: "Unauthorized" });
     }
     try {
+      console.log("Fetching all subscribers...");
       const subscribers = await storage.getAllSubscribers();
+      console.log("Found subscribers:", subscribers);
       res.json(subscribers);
     } catch (error) {
       console.error("Error fetching subscribers:", error);
