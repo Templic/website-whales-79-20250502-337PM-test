@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
