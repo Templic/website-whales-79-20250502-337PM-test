@@ -31,6 +31,7 @@ export default function BlogPostPage() {
     enabled: !isNaN(postId)
   });
 
+  // Fetch comments - for admins, this will include unapproved comments
   const { data: comments = [], isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ['/api/posts', postId, 'comments'],
     enabled: !isNaN(postId)
