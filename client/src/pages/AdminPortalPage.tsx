@@ -1,18 +1,16 @@
-
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { ChartBar, LogOut, Users, FileText, AlertCircle, 
-         ShieldCheck, Gauge, RefreshCw, Settings } from "lucide-react";
-import { ToDoList } from "@/components/admin/ToDoList";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { apiRequest } from "@/lib/queryClient";
+import { Input } from "@/components/ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { ChartBar, LogOut, Users, FileText, AlertCircle, ShieldCheck, Gauge, RefreshCw, Settings } from "lucide-react";
 
 interface AdminStats {
   totalUsers: number;
@@ -32,63 +30,51 @@ interface AdminStats {
   };
 }
 
+const UserManagementComponent = lazy(() => import('@/components/admin/UserManagement'));
+const ContentReviewComponent = lazy(() => import('@/components/admin/ContentReview'));
+
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    document.title = "Admin Portal";
-  }, []);
-
-  // Fetch admin stats (real data from API)
-  const { data: adminStats, isLoading: statsLoading } = useQuery({
+  const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ['adminStats'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/admin/stats');
-        if (!response.ok) {
-          // If API isn't implemented yet, return sample data structure
-          return {
-            totalUsers: 0,
-            pendingReviews: 0,
-            systemHealth: "Optimal",
-            approvalRate: 0,
-            recentActivities: [],
-            userRolesDistribution: { user: 0, admin: 0, super_admin: 0 }
-          };
-        }
-        return await response.json();
-      } catch (error) {
-        console.error("Error fetching admin stats:", error);
-        return {
-          totalUsers: 0,
-          pendingReviews: 0,
-          systemHealth: "Optimal",
-          approvalRate: 0,
-          recentActivities: [],
-          userRolesDistribution: { user: 0, admin: 0, super_admin: 0 }
-        };
-      }
-    },
+    queryFn: () => fetch('/api/admin/stats').then(res => res.json())
   });
 
-  // System health calculation (for visual indicator)
-  const healthStatus = useMemo(() => {
-    if (!adminStats) return { color: "bg-gray-500", status: "Unknown" };
-    
-    switch (adminStats.systemHealth) {
-      case "Optimal":
-        return { color: "bg-green-500", status: "Optimal" };
-      case "Warning":
-        return { color: "bg-yellow-500", status: "Warning" };
-      case "Critical":
-        return { color: "bg-red-500", status: "Critical" };
-      default:
-        return { color: "bg-blue-500", status: adminStats.systemHealth };
+  const refreshStatsMutation = useMutation({
+    mutationFn: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Stats Refreshed",
+        description: "Dashboard statistics have been updated"
+      });
     }
-  }, [adminStats]);
+  });
+
+  const handleUserAction = async (userId: string, action: 'promote' | 'demote' | 'delete') => {
+    try {
+      await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action })
+      });
+      toast({
+        title: 'User Action Success',
+        description: `User ${action}d successfully`
+      });
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+    } catch (error) {
+      toast({
+        title: 'Action Failed',
+        description: `Could not ${action} user`,
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -106,17 +92,15 @@ export default function AdminPortalPage() {
     }
   };
 
-  const refreshStatsMutation = useMutation({
-    mutationFn: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Stats Refreshed",
-        description: "Dashboard statistics have been updated"
-      });
+  const healthStatus = useMemo(() => {
+    if (!adminStats) return { color: "bg-gray-500", status: "Unknown" };
+    switch (adminStats.systemHealth) {
+      case "Optimal": return { color: "bg-green-500", status: "Optimal" };
+      case "Warning": return { color: "bg-yellow-500", status: "Warning" };
+      case "Critical": return { color: "bg-red-500", status: "Critical" };
+      default: return { color: "bg-blue-500", status: adminStats.systemHealth };
     }
-  });
+  }, [adminStats]);
 
   return (
     <div className="container mx-auto py-8">
@@ -162,18 +146,16 @@ export default function AdminPortalPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="actions">Quick Actions</TabsTrigger>
-          <TabsTrigger value="tasks">Admin Tasks</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="content">Content Review</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-6">
-          {/* Stats Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Users
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -184,12 +166,10 @@ export default function AdminPortalPage() {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Pending Reviews
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -200,149 +180,59 @@ export default function AdminPortalPage() {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  System Health
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">System Health</CardTitle>
                 <Gauge className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-28" />
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className={`h-3 w-3 rounded-full ${healthStatus.color}`} />
-                    <div className="text-2xl font-bold">{healthStatus.status}</div>
-                  </div>
-                )}
+                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${healthStatus.color}`}>
+                  {healthStatus.status}
+                </div>
               </CardContent>
             </Card>
           </div>
-          
-          {/* Approval Rate */}
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Content Approval Rate</CardTitle>
-              <CardDescription>Percentage of content approved vs. rejected</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-4 w-full" />
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">{adminStats?.approvalRate || 0}% Approval</span>
-                    <span className="text-sm text-muted-foreground">Target: 80%</span>
-                  </div>
-                  <Progress value={adminStats?.approvalRate || 0} className="h-2" />
-                </>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Role Distribution */}
           <Card>
             <CardHeader>
-              <CardTitle>User Role Distribution</CardTitle>
-              <CardDescription>User access levels across the platform</CardDescription>
+              <CardTitle>Recent Activities</CardTitle>
             </CardHeader>
             <CardContent>
-              {statsLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-full" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Regular Users</span>
-                      <span className="text-sm font-medium">{adminStats?.userRolesDistribution?.user || 0}</span>
+              <div className="space-y-4">
+                {statsLoading ? (
+                  Array(3).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))
+                ) : (
+                  adminStats?.recentActivities.map(activity => (
+                    <div key={activity.id} className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="text-sm text-muted-foreground">{activity.user}</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
                     </div>
-                    <Progress value={(adminStats?.userRolesDistribution?.user || 0) / 
-                      ((adminStats?.totalUsers || 1) / 100)} className="h-2 bg-gray-200" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Admins</span>
-                      <span className="text-sm font-medium">{adminStats?.userRolesDistribution?.admin || 0}</span>
-                    </div>
-                    <Progress value={(adminStats?.userRolesDistribution?.admin || 0) / 
-                      ((adminStats?.totalUsers || 1) / 100)} className="h-2 bg-gray-200" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Super Admins</span>
-                      <span className="text-sm font-medium">{adminStats?.userRolesDistribution?.super_admin || 0}</span>
-                    </div>
-                    <Progress value={(adminStats?.userRolesDistribution?.super_admin || 0) / 
-                      ((adminStats?.totalUsers || 1) / 100)} className="h-2 bg-gray-200" />
-                  </div>
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="actions">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Users</CardTitle>
-                <CardDescription>Manage user accounts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Link href="/admin/users">
-                    <Button className="w-full">Manage Users</Button>
-                  </Link>
-                  <Link href="/admin/subscribers">
-                    <Button className="w-full" variant="outline">Newsletter Subscribers</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+        <TabsContent value="users">
+          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+            <UserManagementComponent onAction={handleUserAction} />
+          </Suspense>
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Content</CardTitle>
-                <CardDescription>Manage site content</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Link href="/admin/posts">
-                    <Button className="w-full">Manage Posts</Button>
-                  </Link>
-                  <Link href="/admin/music">
-                    <Button className="w-full" variant="outline">Music Library</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
+        <TabsContent value="content">
+          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+            <ContentReviewComponent />
+          </Suspense>
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Moderation</CardTitle>
-                <CardDescription>Review user content</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Link href="/admin/comments">
-                    <Button className="w-full">Review Comments</Button>
-                  </Link>
-                  <Link href="/admin/reports">
-                    <Button className="w-full" variant="outline">Content Reports</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
+        <TabsContent value="settings">
           <Card>
             <CardHeader>
               <CardTitle>System Settings</CardTitle>
@@ -371,12 +261,6 @@ export default function AdminPortalPage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="tasks">
-          <div className="space-y-8">
-            <ToDoList />
-          </div>
         </TabsContent>
       </Tabs>
     </div>
