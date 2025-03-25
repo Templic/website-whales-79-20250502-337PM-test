@@ -524,14 +524,16 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   app.get("/api/posts/:postId/comments", async (req, res) => {
     try {
-      const comments = await storage.getCommentsByPostId(Number(req.params.postId));
-      // Only return approved comments for non-admin users
-      if (!req.isAuthenticated() || req.user?.role === 'user') {
-        res.json(comments.filter(comment => comment.approved));
-      } else {
-        res.json(comments);
-      }
+      const postId = Number(req.params.postId);
+      // Only show approved comments to non-admin users
+      const onlyApproved = !req.isAuthenticated() || req.user?.role === 'user';
+      console.log(`Fetching comments for post ${postId}, onlyApproved: ${onlyApproved}, user: ${req.user?.username || 'guest'}`);
+      
+      const comments = await storage.getCommentsByPostId(postId, onlyApproved);
+      console.log(`Returning ${comments.length} comments for post ${postId}`);
+      res.json(comments);
     } catch (error) {
+      console.error("Error fetching comments:", error);
       res.status(500).json({ message: "Error fetching comments" });
     }
   });

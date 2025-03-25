@@ -180,16 +180,26 @@ export class PostgresStorage implements IStorage {
 
   async getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
     console.log(`Fetching comments for post ID: ${postId}, onlyApproved: ${onlyApproved}`);
-    let query = db.select().from(comments).where(eq(comments.postId, postId));
     
-    // If onlyApproved is true, filter for approved comments only
+    // Build the SQL query based on the parameters
+    let query;
     if (onlyApproved) {
-      query = query.where(eq(comments.approved, true));
+      query = sql`
+        SELECT * FROM comments 
+        WHERE post_id = ${postId} AND approved = true
+        ORDER BY created_at DESC
+      `;
+    } else {
+      query = sql`
+        SELECT * FROM comments 
+        WHERE post_id = ${postId}
+        ORDER BY created_at DESC
+      `;
     }
     
-    const results = await query.orderBy(desc(comments.createdAt));
-    console.log(`Found ${results.length} comments for post ID ${postId}`);
-    return results;
+    const result = await db.execute(query);
+    console.log(`Found ${result.rowCount} comments for post ID ${postId}`);
+    return result.rows as Comment[];
   }
 
   async approveComment(id: number): Promise<Comment> {
