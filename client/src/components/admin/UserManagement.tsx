@@ -21,7 +21,7 @@ interface User {
 }
 
 interface UserManagementProps {
-  onAction: (userId: string, action: 'promote' | 'demote' | 'delete') => void;
+  onAction: (userId: string, action: 'promote' | 'demote' | 'delete' | 'ban' | 'unban') => void;
 }
 
 export default function UserManagement({ onAction }: UserManagementProps) {
@@ -53,6 +53,18 @@ export default function UserManagement({ onAction }: UserManagementProps) {
     (currentUser?.role === 'super_admin' || 
     (currentUser?.role === 'admin' && targetUser.role === 'user')) && 
     targetUser.id !== currentUser?.id;
+    
+  const canBan = (targetUser: User) =>
+    (currentUser?.role === 'super_admin' || 
+    (currentUser?.role === 'admin' && targetUser.role === 'user')) && 
+    targetUser.id !== currentUser?.id && 
+    !targetUser.isBanned;
+    
+  const canUnban = (targetUser: User) =>
+    (currentUser?.role === 'super_admin' || 
+    (currentUser?.role === 'admin' && targetUser.role === 'user')) && 
+    targetUser.id !== currentUser?.id && 
+    targetUser.isBanned;
 
   if (error) {
     return (
@@ -146,6 +158,25 @@ export default function UserManagement({ onAction }: UserManagementProps) {
                           onAction(user.id.toString(), 'delete')}
                       >
                         Delete
+                      </Button>
+                    )}
+                    {canBan(user) && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => confirm(`Are you sure you want to ban user ${user.username}?`) &&
+                          onAction(user.id.toString(), 'ban')}
+                      >
+                        Ban
+                      </Button>
+                    )}
+                    {canUnban(user) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onAction(user.id.toString(), 'unban')}
+                      >
+                        Unban
                       </Button>
                     )}
                   </TableCell>

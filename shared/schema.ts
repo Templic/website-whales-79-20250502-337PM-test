@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email").notNull().unique(),
   role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
+  isBanned: boolean("is_banned").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });

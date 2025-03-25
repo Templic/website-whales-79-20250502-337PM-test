@@ -528,15 +528,19 @@ export class PostgresStorage implements IStorage {
             title: "Oceanic Collection",
             artist: "Dale The Whale",
             releaseDate: new Date("2025-01-15"),
-            coverArt: "/static/images/oceanic-collection.jpg",
-            tracksCount: 12
+            coverImage: "/static/images/oceanic-collection.jpg",
+            description: "A collection of ocean-inspired tracks",
+            createdAt: new Date(),
+            updatedAt: new Date()
           },
           {
             title: "Cosmic Journeys",
             artist: "Dale The Whale",
             releaseDate: new Date("2024-12-01"),
-            coverArt: "/static/images/cosmic-journeys.jpg",
-            tracksCount: 10
+            coverImage: "/static/images/cosmic-journeys.jpg",
+            description: "Deep space ambient music",
+            createdAt: new Date(),
+            updatedAt: new Date()
           }
         ]);
       }
