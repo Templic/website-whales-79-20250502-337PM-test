@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import ToDoList from "../components/ToDoList";
 
 export default function TourPage() {
   useEffect(() => {
@@ -7,6 +8,7 @@ export default function TourPage() {
 
   return (
     <div className="space-y-8">
+      <ToDoList />
       <section className="upcoming-dates bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
         <div className="section-header text-center mb-8">
           <h2 className="text-4xl font-bold text-[#00ebd6] mb-4">Upcoming Tour Dates</h2>
