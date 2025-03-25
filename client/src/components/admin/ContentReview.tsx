@@ -25,12 +25,11 @@ interface Post {
 interface Comment {
   id: number;
   content: string;
-  authorId: number;
   postId: number;
-  isApproved: boolean;
+  authorName: string;
+  authorEmail: string;
+  approved: boolean;
   createdAt: string;
-  updatedAt: string | null;
-  authorName?: string; // Added in API response
   postTitle?: string; // Added in API response
 }
 
