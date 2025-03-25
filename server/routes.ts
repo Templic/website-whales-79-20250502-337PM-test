@@ -144,6 +144,30 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           await storage.deleteUser(userId);
           return res.json({ success: true, message: "User deleted successfully" });
           
+        case 'ban':
+          // Check if user is trying to ban themselves
+          if (userId === req.user.id) {
+            return res.status(400).json({ message: "You cannot ban your own account" });
+          }
+          
+          // Check if user is trying to ban a super admin
+          const userToBan = await storage.getUser(userId);
+          if (userToBan?.role === 'super_admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can ban super admin accounts" });
+          }
+          
+          await storage.banUser(userId);
+          return res.json({ success: true, message: "User banned successfully" });
+          
+        case 'unban':
+          const userToUnban = await storage.getUser(userId);
+          if (userToUnban?.role === 'super_admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can unban super admin accounts" });
+          }
+          
+          await storage.unbanUser(userId);
+          return res.json({ success: true, message: "User unbanned successfully" });
+          
         default:
           return res.status(400).json({ message: "Invalid action" });
       }

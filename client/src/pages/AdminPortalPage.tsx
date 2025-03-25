@@ -57,16 +57,33 @@ export default function AdminPortalPage() {
     }
   });
 
-  const handleUserAction = async (userId: string, action: 'promote' | 'demote' | 'delete') => {
+  const handleUserAction = async (userId: string, action: 'promote' | 'demote' | 'delete' | 'ban' | 'unban') => {
     try {
       await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ action })
+        body: JSON.stringify({ action }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      
+      // Format success message with proper grammar
+      let actionText = action;
+      if (action === 'delete') {
+        actionText = 'deleted';
+      } else if (action === 'ban') {
+        actionText = 'banned';
+      } else if (action === 'unban') {
+        actionText = 'unbanned';
+      } else {
+        actionText = `${action}d`; // promote -> promoted, demote -> demoted
+      }
+      
       toast({
         title: 'User Action Success',
-        description: `User ${action}d successfully`
+        description: `User ${actionText} successfully`
       });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['adminStats'] });
     } catch (error) {
       toast({
