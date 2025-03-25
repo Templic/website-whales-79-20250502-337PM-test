@@ -2,14 +2,17 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
+import { db } from "./db";
+import { eq, sql } from "drizzle-orm";
 import {
   insertSubscriberSchema,
   insertPostSchema,
   insertCommentSchema,
-  insertCategorySchema
+  insertCategorySchema,
+  comments
 } from "@shared/schema";
-import { createTransport } from "nodemailer";
 import { hashPassword } from "./auth";
+import { createTransport } from "nodemailer";
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -25,6 +28,68 @@ const transporter = createTransport({
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // Admin Stats API
+  app.get("/api/admin/stats", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    try {
+      // Get system stats
+      const users = await storage.getAllUsers();
+      const pendingComments = await storage.getUnapprovedComments();
+      const pendingPosts = await storage.getUnapprovedPosts();
+      
+      // Calculate user role distribution
+      const userRolesDistribution = {
+        user: users.filter(user => user.role === 'user').length,
+        admin: users.filter(user => user.role === 'admin').length,
+        super_admin: users.filter(user => user.role === 'super_admin').length
+      };
+      
+      // Get total pending reviews (comments + posts)
+      const pendingReviews = pendingComments.length + pendingPosts.length;
+      
+      // Calculate approval rate (if any reviews have been done)
+      const approvedComments = await db.select({ count: sql`count(*)` })
+        .from(comments)
+        .where(eq(comments.approved, true));
+      
+      const rejectedComments = await db.select({ count: sql`count(*)` })
+        .from(comments)
+        .where(eq(comments.approved, false));
+        
+      const totalReviewed = parseInt(approvedComments[0]?.count.toString() || '0') + 
+                            parseInt(rejectedComments[0]?.count.toString() || '0');
+      
+      const approvalRate = totalReviewed > 0 
+        ? Math.round((parseInt(approvedComments[0]?.count.toString() || '0') / totalReviewed) * 100)
+        : 0;
+      
+      // Determine system health based on pending reviews and other factors
+      let systemHealth = "Optimal";
+      if (pendingReviews > 50) {
+        systemHealth = "Critical";
+      } else if (pendingReviews > 20) {
+        systemHealth = "Warning";
+      }
+      
+      // Return consolidated stats
+      res.json({
+        totalUsers: users.length,
+        pendingReviews,
+        systemHealth,
+        approvalRate,
+        userRolesDistribution,
+        recentActivities: [] // Would be populated from a real activity log
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ message: "Error fetching admin stats" });
+    }
+  });
+  
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -35,6 +100,56 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Error fetching users" });
+    }
+  });
+  
+  // User update endpoint
+  app.patch("/api/users/:userId", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const userId = parseInt(req.params.userId);
+      const { action } = req.body;
+      
+      // Handle different actions based on the request
+      switch (action) {
+        case 'promote':
+          if (req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can promote users" });
+          }
+          const promotedUser = await storage.updateUserRole(userId, 'admin');
+          return res.json(promotedUser);
+          
+        case 'demote':
+          if (req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can demote users" });
+          }
+          const demotedUser = await storage.updateUserRole(userId, 'user');
+          return res.json(demotedUser);
+          
+        case 'delete':
+          // Check if user is trying to delete themselves
+          if (userId === req.user.id) {
+            return res.status(400).json({ message: "You cannot delete your own account" });
+          }
+          
+          // Check if user is trying to delete a super admin
+          const userToDelete = await storage.getUser(userId);
+          if (userToDelete?.role === 'super_admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can delete super admin accounts" });
+          }
+          
+          await storage.deleteUser(userId);
+          return res.json({ success: true, message: "User deleted successfully" });
+          
+        default:
+          return res.status(400).json({ message: "Invalid action" });
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ message: "Failed to update user" });
     }
   });
 
@@ -260,7 +375,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   try {
     const { insertContactSchema, contactMessages } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
-    const message = await storage.db.insert(contactMessages).values(data).returning();
+    const message = await db.insert(contactMessages).values(data).returning();
     res.json({ message: "Message sent successfully!", data: message[0] });
   } catch (error) {
     console.error("Contact form error:", error);

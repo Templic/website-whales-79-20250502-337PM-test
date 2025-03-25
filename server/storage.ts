@@ -26,6 +26,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  deleteUser(id: number): Promise<void>;
 
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
@@ -131,6 +132,11 @@ export class PostgresStorage implements IStorage {
   async createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
     const result = await db.insert(subscribers).values(insertSubscriber).returning();
     return result[0];
+  }
+  
+  async findSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
+    const [subscriber] = await db.select().from(subscribers).where(eq(subscribers.email, email));
+    return subscriber;
   }
 
   // Post methods
@@ -240,6 +246,25 @@ export class PostgresStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;
+  }
+  
+  async deleteUser(id: number): Promise<void> {
+    try {
+      // First check if user exists
+      const user = await this.getUser(id);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Delete user from database
+      await db.delete(users).where(eq(users.id, id));
+      
+      // Optionally, delete related records (comments, posts, etc.)
+      // This depends on your database constraints and requirements
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
   }
 
   async approvePost(id: number): Promise<Post> {
