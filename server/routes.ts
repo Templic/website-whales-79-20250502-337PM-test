@@ -135,38 +135,24 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return res.status(400).json({ message: "You cannot delete your own account" });
           }
           
-          // Check if user is trying to delete a super admin
+          // Get user to delete and perform role checks
           const userToDelete = await storage.getUser(userId);
-          if (userToDelete?.role === 'super_admin' && req.user.role !== 'super_admin') {
+          if (!userToDelete) {
+            return res.status(404).json({ message: "User not found" });
+          }
+          
+          // Prevent deletion of super_admin by non-super_admin
+          if (userToDelete.role === 'super_admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can delete super admin accounts" });
+          }
+          
+          // Prevent admin from deleting other admins
+          if (userToDelete.role === 'admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can delete admin accounts" });
           }
           
           await storage.deleteUser(userId);
           return res.json({ success: true, message: "User deleted successfully" });
-          
-        case 'ban':
-          // Check if user is trying to ban themselves
-          if (userId === req.user.id) {
-            return res.status(400).json({ message: "You cannot ban your own account" });
-          }
-          
-          // Check if user is trying to ban a super admin
-          const userToBan = await storage.getUser(userId);
-          if (userToBan?.role === 'super_admin' && req.user.role !== 'super_admin') {
-            return res.status(403).json({ message: "Only super admins can ban super admin accounts" });
-          }
-          
-          await storage.banUser(userId);
-          return res.json({ success: true, message: "User banned successfully" });
-          
-        case 'unban':
-          const userToUnban = await storage.getUser(userId);
-          if (userToUnban?.role === 'super_admin' && req.user.role !== 'super_admin') {
-            return res.status(403).json({ message: "Only super admins can unban super admin accounts" });
-          }
-          
-          await storage.unbanUser(userId);
-          return res.json({ success: true, message: "User unbanned successfully" });
           
         default:
           return res.status(400).json({ message: "Invalid action" });
@@ -547,8 +533,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Get unapproved comments - added this endpoint to match what the frontend is calling
-  app.get("/api/admin/comments/unapproved", async (req, res) => {
+  app.get("/api/posts/comments/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       console.log('Unauthorized access attempt to unapproved comments');
       return res.status(403).json({ message: "Unauthorized" });
@@ -556,45 +541,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       console.log("Fetching unapproved comments");
       const comments = await storage.getUnapprovedComments();
-      
-      // Enhance comments with post title information
-      const enhancedComments = await Promise.all(comments.map(async (comment) => {
-        let postTitle = 'Unknown Post';
-        try {
-          const post = await storage.getPostById(comment.postId);
-          postTitle = post?.title || 'Unknown Post';
-        } catch (error) {
-          console.error(`Error fetching post for comment ${comment.id}:`, error);
-        }
-        
-        return {
-          ...comment,
-          postTitle
-        };
-      }));
-      
-      console.log("Found unapproved comments:", enhancedComments);
-      res.json(enhancedComments);
+      console.log("Found unapproved comments:", comments);
+      res.json(comments);
     } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
-  
-  // Keep the old endpoint for backwards compatibility
-  app.get("/api/posts/comments/unapproved", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    try {
-      const comments = await storage.getUnapprovedComments();
-      res.json(comments);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching unapproved comments" });
-    }
-  });
 
-  // Approve a comment (keeping the old endpoint for backward compatibility)
   app.post("/api/posts/comments/:id/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -606,53 +560,22 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error approving comment" });
     }
   });
-  
-  // Approve comment endpoint that matches the ContentReview component
-  app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    try {
-      const commentId = parseInt(req.params.commentId);
-      const approvedComment = await storage.approveComment(commentId);
-      res.json(approvedComment);
-    } catch (error) {
-      console.error(`Error approving comment:`, error);
-      res.status(500).json({ message: "Error approving comment" });
-    }
-  });
-  
-  // Reject comment endpoint that matches the ContentReview component
-  app.post("/api/admin/comments/:commentId/reject", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-    try {
-      const commentId = parseInt(req.params.commentId);
-      const rejectedComment = await storage.rejectComment(commentId);
-      res.json(rejectedComment);
-    } catch (error) {
-      console.error(`Error rejecting comment:`, error);
-      res.status(500).json({ message: "Error rejecting comment" });
-    }
-  });
 
   app.post("/api/contact", async (req, res) => {
-    try {
-      const { insertContactSchema, contactMessages } = await import("@shared/schema");
-      const data = insertContactSchema.parse(req.body);
-      const message = await db.insert(contactMessages).values(data).returning();
-      res.json({ message: "Message sent successfully!", data: message[0] });
-    } catch (error) {
-      console.error("Contact form error:", error);
-      res.status(400).json({ 
-        message: error.errors?.[0]?.message || "Failed to send message" 
-      });
-    }
-  });
+  try {
+    const { insertContactSchema, contactMessages } = await import("@shared/schema");
+    const data = insertContactSchema.parse(req.body);
+    const message = await db.insert(contactMessages).values(data).returning();
+    res.json({ message: "Message sent successfully!", data: message[0] });
+  } catch (error) {
+    console.error("Contact form error:", error);
+    res.status(400).json({ 
+      message: error.errors?.[0]?.message || "Failed to send message" 
+    });
+  }
+});
 
-  // Reject a comment (keeping the old endpoint for backward compatibility)
-  app.post("/api/posts/comments/:id/reject", async (req, res) => {
+app.post("/api/posts/comments/:id/reject", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
