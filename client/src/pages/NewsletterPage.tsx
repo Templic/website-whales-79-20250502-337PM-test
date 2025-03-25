@@ -16,7 +16,7 @@ type NewsletterForm = z.infer<typeof newsletterSchema>;
 
 export default function NewsletterPage() {
   const { toast } = useToast();
-  
+
   useEffect(() => {
     document.title = "Newsletter - Dale Loves Whales";
   }, []);
@@ -38,7 +38,7 @@ export default function NewsletterPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
+    <div className="space-y-8">
       <section className="text-center">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4"> Feature coming soon: Join The Cosmic Newsletter</h1>
         <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
@@ -72,7 +72,7 @@ export default function NewsletterPage() {
               )}
             </div>
 
-            <Button 
+            <Button
               type="submit"
               className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
             >

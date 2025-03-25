@@ -1,10 +1,15 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { UsersRound, BarChart3 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function HomePage() {
+  useEffect(() => {
+    document.title = "Home - Dale Loves Whales";
+  }, []);
+
   return (
-    <>
+    <div className="space-y-8">
       {/* Temporary Admin Access (FOR TESTING ONLY - REMOVE BEFORE DEPLOYMENT) */}
       <div className="fixed top-16 left-0 right-0 z-50 flex justify-center">
         <div className="flex gap-2 bg-black/75 p-2 rounded-md">
@@ -22,9 +27,9 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
-      
+
       {/* Hero Section */}
-      <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white" 
+      <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white"
         style={{
           background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8)),
             url(https://onlyinhawaii.org/wp-content/uploads/2011/03/Rainbow-Falls.jpg)
@@ -40,9 +45,9 @@ export default function HomePage() {
           <p className="text-[clamp(1rem,2.5vw,1.5rem)] mb-8">
             Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.
           </p>
-          <Link href="/music" 
-            className="cta-button bg-[#00ebd6] text-[#303436] px-8 py-3 text-xl rounded-[50px] border-none 
-              cursor-pointer transition-colors duration-300 hover:bg-[#fe0064] hover:text-white 
+          <Link href="/music"
+            className="cta-button bg-[#00ebd6] text-[#303436] px-8 py-3 text-xl rounded-[50px] border-none
+              cursor-pointer transition-colors duration-300 hover:bg-[#fe0064] hover:text-white
               shadow-[0_0_15px_#00ebd6] hover:shadow-[0_0_20px_#fe0064] inline-block">
             Explore Music
           </Link>
@@ -71,6 +76,6 @@ export default function HomePage() {
           </p>
         </section>
       </main>
-    </>
+    </div>
   );
 }

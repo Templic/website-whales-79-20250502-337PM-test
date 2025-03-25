@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,7 +13,7 @@ interface Track {
   createdAt: string;
 }
 
-export default function NewMusicPage() {
+export default function MusicReleasePage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -51,7 +50,7 @@ export default function NewMusicPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="space-y-8">
       <section className="flex flex-col md:flex-row gap-8 items-start relative">
         <div className="w-full md:w-1/2">
           <img 

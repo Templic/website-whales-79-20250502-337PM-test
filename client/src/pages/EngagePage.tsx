@@ -59,26 +59,26 @@ export default function EngagePage() {
             <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
             <p className="mb-4">$45.00</p>
             <a 
-  href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203" 
-  target="_blank" 
-  rel="noopener noreferrer" 
-  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
->
-  Buy Now 
-</a>
+              href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+            >
+              Buy Now 
+            </a>
           </div>
           <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
             <img src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" />
             <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
             <p className="mb-4">$45.00</p>
             <a 
-          href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
-          >
-          Buy Now 
-          </a>
+              href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+            >
+              Buy Now 
+            </a>
           </div>
         </div>
       </section>
