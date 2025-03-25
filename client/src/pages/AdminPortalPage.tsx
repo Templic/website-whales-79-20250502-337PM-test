@@ -40,6 +40,12 @@ export default function AdminPortalPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
 
+  const { data: subscribers } = useQuery({
+    queryKey: ['subscribers'],
+    queryFn: () => fetch('/api/subscribers').then(res => res.json()),
+    enabled: activeTab === 'subscribers'
+  });
+
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ['adminStats'],
     queryFn: () => fetch('/api/admin/stats').then(res => res.json())
@@ -241,6 +247,7 @@ export default function AdminPortalPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="content">Content Review</TabsTrigger>
+          <TabsTrigger value="subscribers">Newsletter</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -323,6 +330,37 @@ export default function AdminPortalPage() {
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
             <ContentReviewComponent />
           </Suspense>
+        </TabsContent>
+
+        <TabsContent value="subscribers">
+          <Card>
+            <CardHeader>
+              <CardTitle>Newsletter Subscribers</CardTitle>
+              <CardDescription>Manage your newsletter subscribers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <div className="space-y-2">
+                  {Array(5).fill(0).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 font-bold pb-2 border-b">
+                    <div>Name</div>
+                    <div>Email</div>
+                  </div>
+                  {subscribers?.map((subscriber) => (
+                    <div key={subscriber.id} className="grid grid-cols-2">
+                      <div>{subscriber.name}</div>
+                      <div>{subscriber.email}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings">
