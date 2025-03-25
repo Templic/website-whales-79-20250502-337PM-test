@@ -34,7 +34,17 @@ export default function BlogPostPage() {
   // Fetch comments - for admins, this will include unapproved comments
   const { data: comments = [], isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ['/api/posts', postId, 'comments'],
-    enabled: !isNaN(postId)
+    enabled: !isNaN(postId),
+    queryFn: async () => {
+      console.log(`Fetching comments for post ID: ${postId}`);
+      const response = await fetch(`/api/posts/${postId}/comments`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      const data = await response.json();
+      console.log(`Received ${data.length} comments:`, data);
+      return data;
+    }
   });
 
   const form = useForm({
