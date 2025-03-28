@@ -51,59 +51,14 @@ export default function BlogPage() {
         </p>
       </header>
 
-      <section 
-        className="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
-        aria-label="Blog posts"
-      >
-        {isLoading ? (
-          <div role="status" aria-live="polite" className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="p-6 rounded-lg border bg-card transition-all duration-300 hover:shadow-lg">
-                <Skeleton className="w-full h-48 rounded-lg mb-4" />
-                <Skeleton className="h-8 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/4 mb-4" />
-                <Skeleton className="h-20 w-full mb-4" />
-                <Skeleton className="h-10 w-32" />
-              </div>
-            ))}
-            <span className="sr-only">Loading blog posts...</span>
-          </div>
-        ) : posts?.map((post) => (
-          <article 
-            key={post.id}
-            className="p-6 rounded-lg border bg-card transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-          >
-            {post.featuredImage && (
-              <img 
-                src={post.featuredImage} 
-                alt={`Featured image for ${post.title}`}
-                loading="lazy"
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
-            )}
-            <div>
-              <h2 className="text-2xl font-bold text-primary mb-2 line-clamp-2">
-                {post.title}
-              </h2>
-              <div className="flex items-center text-muted-foreground mb-4">
-                <Calendar className="w-4 h-4 mr-2" />
-                <time dateTime={post.createdAt} className="text-sm">
-                  {formatDisplayDate(post.createdAt)}
-                </time>
-              </div>
-              <p className="line-clamp-3 text-card-foreground mb-4">
-                {post.excerpt || (post.content ? post.content.substring(0, 150) + "..." : "")}
-              </p>
-              <Link href={`/blog/${post.id}`}>
-                <Button className="group transition-all duration-300 hover:translate-y-[-2px]">
-                  Read More
-                  <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            </div>
-          </article>
-        ))}
+      <section className="relative h-[500px] w-full overflow-hidden rounded-lg"> {/*Replaced blog post section*/}
+        <img
+          src="uploads/Dale Loves Whales with AC32085 festival.jpg"
+          alt="Dale Loves Whales with AC32085"
+          className="w-full h-full object-cover"
+        />
       </section>
+
 
       {posts && posts.length > 0 && (
         <footer className="flex justify-center mt-12">

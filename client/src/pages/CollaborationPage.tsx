@@ -1,13 +1,27 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { SiSpotify, SiSoundcloud, SiBandcamp } from "react-icons/si";
 
+const images = [
+  "uploads/whale costume bike.jpg",
+  "uploads/whale costume do we love.jpg",
+  "uploads/whale costume joy happiness.jpg",
+  "uploads/whale costume we're gonna celebrate.jpg",
+  "uploads/whale costume who we are.jpg"
+];
+
 export default function CollaborationPage() {
   const { toast } = useToast();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     document.title = "Collaboration - Dale Loves Whales";
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 9000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleProposalClick = () => {
@@ -49,7 +63,7 @@ export default function CollaborationPage() {
               <span>Remote Production Projects</span>
             </li>
           </ul>
-          <Button 
+          <Button
             onClick={handleProposalClick}
             className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
           >
@@ -77,7 +91,7 @@ export default function CollaborationPage() {
                 </li>
               </ul>
             </div>
-            <Button 
+            <Button
               onClick={handleDonateClick}
               className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
             >
@@ -90,27 +104,27 @@ export default function CollaborationPage() {
       <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Find Our Music</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <a 
-            href="https://spotify.com/daleloveswhales" 
-            target="_blank" 
+          <a
+            href="https://spotify.com/daleloveswhales"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
           >
             <SiSpotify className="text-3xl mr-2" />
             <span>Spotify</span>
           </a>
-          <a 
-            href="https://soundcloud.com/daleloveswhales" 
-            target="_blank" 
+          <a
+            href="https://soundcloud.com/daleloveswhales"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
           >
             <SiSoundcloud className="text-3xl mr-2" />
             <span>SoundCloud</span>
           </a>
-          <a 
-            href="https://daleloveswhales.bandcamp.com" 
-            target="_blank" 
+          <a
+            href="https://daleloveswhales.bandcamp.com"
+            target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
           >
@@ -119,6 +133,17 @@ export default function CollaborationPage() {
           </a>
         </div>
       </section>
+
+      <section className="mt-12"> {/* Added marginTop for spacing */}
+        <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
+          <img
+            src={images[currentImageIndex]}
+            alt="Collaboration"
+            className="absolute w-full h-full object-cover transition-opacity duration-1000"
+          />
+        </div>
+      </section>
+
 
       <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm text-center">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-4">Contact for Business Inquiries</h2>

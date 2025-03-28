@@ -68,6 +68,13 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
 
   return (
     <div className="space-y-12 p-8">
+      <div className="relative h-[500px] w-full overflow-hidden rounded-lg mb-12"> {/* Added mb-12 for spacing */}
+        <img
+          src="uploads/silhouette stars.jpg"
+          alt="Music Archive"
+          className="w-full h-full object-cover"
+        />
+      </div>
       <section className="albums-section">
         <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

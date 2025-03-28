@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,11 +14,23 @@ const newsletterSchema = z.object({
 
 type NewsletterForm = z.infer<typeof newsletterSchema>;
 
+const images = [
+  "uploads/dale in chair (1).jpg",
+  "uploads/dale in chair (2).jpg",
+  "uploads/dale in chair (3).jpg"
+];
+
 export default function NewsletterPage() {
   const { toast } = useToast();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     document.title = "Newsletter - Dale Loves Whales";
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 9000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const form = useForm<NewsletterForm>({
@@ -39,6 +51,15 @@ export default function NewsletterPage() {
 
   return (
     <div className="space-y-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
+          <img
+            src={images[currentImageIndex]}
+            alt="Newsletter"
+            className="absolute w-full h-full object-cover transition-opacity duration-1000"
+          />
+        </div>
+      </div>
       <section className="text-center">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-4"> Feature coming soon: Join The Cosmic Newsletter</h1>
         <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
