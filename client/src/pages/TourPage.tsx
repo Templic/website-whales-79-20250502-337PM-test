@@ -34,9 +34,9 @@ export default function TourPage() {
 
           <div className="tour-item bg-[rgba(48,52,54,0.5)] p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
             <div className="tour-details">
-              <h3 className="text-xl font-bold text-[#00ebd6]">New York, NY</h3>
+              <h3 className="text-xl font-bold text-[#00ebd6]">Big Island, HI</h3>
               <p>Date: September 10, 2025</p>
-              <p>Venue: Galaxy Hall</p>
+              <p>Venue: Hilo Bay Concert Hall</p>
             </div>
             <a href="#" className="bg-[#00ebd6] text-[#303436] px-6 py-2 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg mt-4 md:mt-0">
               Buy Tickets
