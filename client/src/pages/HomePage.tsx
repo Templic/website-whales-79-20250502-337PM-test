@@ -39,7 +39,7 @@ export default function HomePage() {
               no-repeat center center / cover`
           }}>
           <div className="hero-content relative z-10 max-w-[800px] p-8">
-            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] mb-4 text-shadow shadow-[#fe0064]">
+            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] mb-4 text-shadow shadow-[#fe0064] animate-cosmic">
               Ride the Cosmic Wave
             </h1>
             <p className="text-[clamp(1rem,2.5vw,1.5rem)] mb-8">

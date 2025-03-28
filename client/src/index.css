@@ -1,3 +1,24 @@
+
+@keyframes cosmic {
+  0%, 100% {
+    text-shadow: 0 0 10px #00ebd6,
+                 0 0 20px #00ebd6,
+                 0 0 30px #fe0064,
+                 0 0 40px #fe0064;
+  }
+  50% {
+    text-shadow: 0 0 20px #fe0064,
+                 0 0 30px #fe0064,
+                 0 0 40px #00ebd6,
+                 0 0 50px #00ebd6;
+  }
+}
+
+.animate-cosmic {
+  animation: cosmic 3s ease-in-out infinite;
+  letter-spacing: 2px;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
