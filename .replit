@@ -75,4 +75,4 @@ task = "shell.exec"
 args = "NODE_ENV=development npm run dev"
 
 [objectStorage]
-defaultBucketID = "replit-objstore-a2ce4e13-325a-4438-a65a-e8131b355af1"
+defaultBucketID = "replit-objstore-93771c52-e543-454e-b546-e170eacb4202"

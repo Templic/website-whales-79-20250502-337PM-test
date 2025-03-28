@@ -54,7 +54,7 @@ export default function MusicReleasePage() {
       <section className="flex flex-col md:flex-row gap-8 items-start relative">
         <div className="w-full md:w-1/2">
           <img 
-            src="/uploads/album cover for feels so good song.png"
+            src="/images for site Loves Whales/album cover for feels so good song.png"
             alt="Album Cover - Feels So Good"
             className="w-full rounded-lg shadow-xl"
           />
@@ -64,7 +64,11 @@ export default function MusicReleasePage() {
           <div className="space-y-4">
             <p className="text-xl">Release Date: March 14, 2025</p>
             <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
-            <p className="text-xl">Artist: Dale The Whale & Featuring AC3-2085</p>
+            <p className="text-xl">
+              Artist: Dale The Whale<br />
+              <span style={{ marginLeft: '20px' }}>Featuring: AC3-2085</span>
+            </p>
+
             <div className="music-player mt-6 p-6 bg-[rgba(10,50,92,0.6)] rounded-lg shadow-lg backdrop-blur-sm text-center relative">
               {user?.role === 'admin' || user?.role === 'super_admin' ? (
                 <Button
