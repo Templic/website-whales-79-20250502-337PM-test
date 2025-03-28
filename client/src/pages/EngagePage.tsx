@@ -52,21 +52,21 @@ export default function EngagePage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Social Media</h4>
-                  <div className="space-y-4 max-w-[600px]">
+                  <div className="space-y-4">
                     <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors whitespace-nowrap">
-                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                      <span>@DiamondOrca777</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Dale's YouTube:</div>
+                      <div>@DiamondOrca777</div>
                     </a>
                     <a href="https://www.instagram.com/dale_loves_whales" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                      <span>dale_loves_whales</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Dale's Instagram:</div>
+                      <div>dale_loves_whales</div>
                     </a>
                     <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                      <span>dalethewhalemusic</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Dale's Instagram:</div>
+                      <div>dalethewhalemusic</div>
                     </a>
                   </div>
                 </div>
@@ -75,19 +75,16 @@ export default function EngagePage() {
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcast</h4>
                   <div className="space-y-4">
                     <a href="https://youtu.be/jzpvkq3Krjg" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                      <span>"Feels So Good" Music Video</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>"Feels So Good" Music Video</div>
                     </a>
                     <a href="https://open.spotify.com/album/3NDnzf57NDrUwkv7QJ22Th" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
-                      <span>Music on Spotify</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Music on Spotify</div>
                     </a>
                     <a href="https://creators.spotify.com/pod/show/dale-ham" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
-                      <span>🕊🕉 THE IRIDESCENT DOVE Podcast</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>🕊🕉 THE IRIDESCENT DOVE Podcast</div>
                     </a>
                   </div>
                 </div>
@@ -102,14 +99,13 @@ export default function EngagePage() {
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music Production</h4>
                   <div className="space-y-4">
                     <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                      <span>AC3-2085 Channel</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>AC3-2085 Channel</div>
                     </a>
                     <a href="https://www.instagram.com/ac3productionsllc" target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                      <span>ac3productionsllc</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Chris's Instagram:</div>
+                      <div>ac3productionsllc</div>
                     </a>
                   </div>
                 </div>
@@ -118,9 +114,8 @@ export default function EngagePage() {
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Business Inquiries</h4>
                   <div className="space-y-4">
                     <a href="mailto:ac3productionsllc@gmail.com" 
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                      <img src="/icons/email.png" alt="Email" className="w-6 h-6" />
-                      <span>Contact for Business</span>
+                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
+                      <div>Contact for Business</div>
                     </a>
                   </div>
                 </div>
