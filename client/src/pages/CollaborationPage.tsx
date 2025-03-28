@@ -143,7 +143,7 @@ export default function CollaborationPage() {
             <img
               src={images[currentImageIndex]}
               alt="Collaboration"
-              className="absolute w-full h-full object-cover transition-opacity duration-1000"
+              className="absolute w-full h-full object-contain transition-opacity duration-1000 bg-[rgba(10,50,92,0.6)]"
             />
           </div>
         </section>
