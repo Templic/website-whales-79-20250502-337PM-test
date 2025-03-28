@@ -42,9 +42,14 @@ export default function TourPage() {
                 <p>Date: September 10, 2025</p>
                 <p>Venue: Hilo Bay Concert Hall</p>
               </div>
-              <button className="bg-[#00ebd6] text-[#303436] px-6 py-2 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg mt-4 md:mt-0">
-                Buy Tickets
-              </button>
+              <div className="relative">
+                <button disabled className="bg-gray-500 text-white px-6 py-2 rounded-full cursor-not-allowed shadow-lg mt-4 md:mt-0 opacity-70">
+                  Sold Out
+                </button>
+                <div className="absolute -rotate-12 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 border-red-500 text-red-500 px-2 py-1 text-sm font-bold rounded">
+                  SOLD OUT
+                </div>
+              </div>
             </div>
           </div>
         </section>
