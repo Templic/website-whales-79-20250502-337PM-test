@@ -38,68 +38,86 @@ export default function EngagePage() {
             </div>
           </section>
 
-          <section className="social-media bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Connect With Us</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">🐳DÅLË LØVËS WHÄLËS🐳</h3>
-                <div className="space-y-4">
-                  <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                    <span>@DiamondOrca777</span>
-                  </a>
-                  <a href="https://www.instagram.com/dale_loves_whales" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                    <span>dale_loves_whales</span>
-                  </a>
-                  <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                    <span>dalethewhalemusic</span>
-                  </a>
+          <section className="social-media bg-[rgba(10,50,92,0.6)] p-4 md:p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center">Connect With Us</h2>
+            
+            {/* Dale The Whale Section */}
+            <div className="mb-12">
+              <h3 className="text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🐳 Dale The Whale Music & Content 🐳</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                  <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Social Media</h4>
+                  <div className="space-y-4">
+                    <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
+                      <span>@DiamondOrca777</span>
+                    </a>
+                    <a href="https://www.instagram.com/dale_loves_whales" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
+                      <span>dale_loves_whales</span>
+                    </a>
+                    <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
+                      <span>dalethewhalemusic</span>
+                    </a>
+                  </div>
+                </div>
+                
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                  <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcast</h4>
+                  <div className="space-y-4">
+                    <a href="https://youtu.be/jzpvkq3Krjg" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
+                      <span>"Feels So Good" Music Video</span>
+                    </a>
+                    <a href="https://open.spotify.com/album/3NDnzf57NDrUwkv7QJ22Th" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
+                      <span>Music on Spotify</span>
+                    </a>
+                    <a href="https://creators.spotify.com/pod/show/dale-ham" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
+                      <span>🕊🕉 THE IRIDESCENT DOVE Podcast</span>
+                    </a>
+                  </div>
                 </div>
               </div>
-              
-              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcasts</h3>
-                <div className="space-y-4">
-                  <a href="https://youtu.be/jzpvkq3Krjg" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                    <span>"Feels So Good" Music Video</span>
-                  </a>
-                  <a href="https://open.spotify.com/album/3NDnzf57NDrUwkv7QJ22Th" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
-                    <span>Music on Spotify</span>
-                  </a>
-                  <a href="https://creators.spotify.com/pod/show/dale-ham" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/spotify.png" alt="Spotify" className="w-6 h-6" />
-                    <span>🕊🕉 THE IRIDESCENT DOVE Podcast</span>
-                  </a>
-                </div>
-              </div>
+            </div>
 
-              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">Production & Business</h3>
-                <div className="space-y-4">
-                  <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
-                    <span>AC3-2085 Channel</span>
-                  </a>
-                  <a href="https://www.instagram.com/ac3productionsllc" target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
-                    <span>ac3productionsllc</span>
-                  </a>
-                  <a href="mailto:ac3productionsllc@gmail.com" className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
-                    <img src="/icons/email.png" alt="Email" className="w-6 h-6" />
-                    <span>Contact for Business</span>
-                  </a>
+            {/* AC3-2085 Section */}
+            <div>
+              <h3 className="text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🎵 AC3-2085 Music & Business 🎵</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                  <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music Production</h4>
+                  <div className="space-y-4">
+                    <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
+                      <span>AC3-2085 Channel</span>
+                    </a>
+                    <a href="https://www.instagram.com/ac3productionsllc" target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/instagram.png" alt="Instagram" className="w-6 h-6" />
+                      <span>ac3productionsllc</span>
+                    </a>
+                  </div>
+                </div>
+
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                  <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Business Inquiries</h4>
+                  <div className="space-y-4">
+                    <a href="mailto:ac3productionsllc@gmail.com" 
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      <img src="/icons/email.png" alt="Email" className="w-6 h-6" />
+                      <span>Contact for Business</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
