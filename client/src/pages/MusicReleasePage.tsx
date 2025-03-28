@@ -66,7 +66,7 @@ export default function MusicReleasePage() {
             <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
             <p className="text-xl">
               Artist: Dale The Whale<br />
-              <span style={{ marginLeft: '20px' }}>Featuring: AC3-2085</span>
+              Featuring: AC3-2085
             </p>
 
             <div className="music-player mt-6 p-6 bg-[rgba(10,50,92,0.6)] rounded-lg shadow-lg backdrop-blur-sm text-center relative">
