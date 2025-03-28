@@ -15,7 +15,7 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div className="relative rounded-xl overflow-hidden shadow-lg">
             <img 
-              src="/images for site Loves Whales/silhouette stars.jpg" 
+              src="uploads/dale with flowers and staff.jpg" 
               alt="Dale the Whale portrait with cosmic overlay"
               className="w-full h-auto"
             />
