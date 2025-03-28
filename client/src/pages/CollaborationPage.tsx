@@ -138,12 +138,12 @@ export default function CollaborationPage() {
           </div>
         </section>
 
-        <section className="mb-12">
-          <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
+        <section className="mb-12 relative h-[600px] overflow-hidden bg-[rgba(10,50,92,0.6)]">
+          <div className="absolute inset-0 flex items-center justify-center">
             <img
               src={images[currentImageIndex]}
               alt="Collaboration"
-              className="absolute w-full h-full object-contain transition-opacity duration-1000 bg-[rgba(10,50,92,0.6)]"
+              className="max-w-full max-h-full object-contain transition-opacity duration-1000"
             />
           </div>
         </section>
