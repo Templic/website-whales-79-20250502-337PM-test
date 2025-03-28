@@ -1,106 +1,90 @@
-
-import { FaYoutube, FaSpotify, FaInstagram } from "react-icons/fa";
+import { useEffect } from "react";
+import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function EngagePage() {
+  useEffect(() => {
+    document.title = "Engage - Dale Loves Whales";
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Engage</h1>
-      
-      <section className="banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-        <h2 className="text-3xl font-bold mb-6">🐳DÅLË LØVËS WHÄLËS🐳 / Dale Loves Whales</h2>
-        
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcast</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center">
-                <FaYoutube className="text-2xl mr-2 text-red-500" />
-                <a href="https://youtu.be/jzpvkq3Krjg?si=m3CHcSZrFWPsoeoU" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  Debut Song "Feels So Good"
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaSpotify className="text-2xl mr-2 text-green-500" />
-                <a href="https://untitled.stream/library/project/0isqrDZPIX7zPnGlN4GUn" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  Stream "Feels So Good"
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaSpotify className="text-2xl mr-2 text-green-500" />
-                <a href="https://creators.spotify.com/pod/show/dale-ham" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  🕊🕉🕊💟🕊️ THE 🌺♾️🌺 IRIDESCENT 🌺♾️🌺DOVE 🕊🕉🕊
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaSpotify className="text-2xl mr-2 text-green-500" />
-                <a href="https://open.spotify.com/album/3NDnzf57NDrUwkv7QJ22Th" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  Spotify Album
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">YouTube Channels</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center">
-                <FaYoutube className="text-2xl mr-2 text-red-500" />
-                <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  🐳DÅLË LØVËS WHÄLËS🐳 @DiamondOrca777
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaYoutube className="text-2xl mr-2 text-red-500" />
-                <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  AC3-2085 @AC3-2085
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">Instagram</h3>
-            <ul className="space-y-4">
-              <li className="flex items-center">
-                <FaInstagram className="text-2xl mr-2 text-pink-500" />
-                <a href="https://www.instagram.com/dale_loves_whales?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  Dale Loves Whales
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaInstagram className="text-2xl mr-2 text-pink-500" />
-                <a href="https://www.instagram.com/dalethewhalemusic/" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  dalethewhalemusic
-                </a>
-              </li>
-              <li className="flex items-center">
-                <FaInstagram className="text-2xl mr-2 text-pink-500" />
-                <a href="https://www.instagram.com/ac3productionsllc/" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  ac3productionsllc
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-            <h3 className="text-xl font-bold mb-4 text-[#00ebd6]">Contact Information</h3>
-            <div className="space-y-4 text-white">
-              <p>For Business, Marketing, or Event Inquiries:</p>
-              <p>
-                <a href="mailto:ac3productionsllc@gmail.com" className="hover:text-[#00ebd6]">
-                  ac3productionsllc@gmail.com
-                </a>
-              </p>
-              <p>📱 804-437-5418</p>
-              <p>
-                <a href="https://calendly.com/ac3productionsllc/30min?month=2025-01" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6]">
-                  Book Online
-                </a>
-              </p>
+    <>
+      <SpotlightEffect />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Engage</h1>
+        <div className="space-y-8">
+          <section className="banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <img src="/api/placeholder/1200/400" alt="Main Banner" className="w-full rounded-lg mb-6" />
+            <div className="cta-buttons flex flex-wrap gap-4 justify-center">
+              <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg">
+                Join The Whale Pod
+              </button>
+              <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg">
+                Share Your Experience
+              </button>
             </div>
-          </div>
+          </section>
+
+          <section className="fan-reactions bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Fan Reactions</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <p className="italic mb-4">"Amazing performance! The cosmic vibes were unreal!"</p>
+                <p className="text-sm">- Sarah W.</p>
+              </div>
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <p className="italic mb-4">"Dale's music takes you on a journey through space and time."</p>
+                <p className="text-sm">- Michael R.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="social-media bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Social Media</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-4">Latest Updates</h3>
+                <p>Follow our social media channels for real-time updates and behind-the-scenes content.</p>
+              </div>
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-4">Fan Posts</h3>
+                <p>See what other fans are saying about Dale Loves Whales.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="merchandise bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Featured Merchandise</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <img src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg" alt="Digital Art" className="w-full rounded-lg mb-4" />
+                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
+                <p className="mb-4">$45.00</p>
+                <a
+                  href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+                >
+                  Buy Now
+                </a>
+              </div>
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <img src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" />
+                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
+                <p className="mb-4">$45.00</p>
+                <a
+                  href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+                >
+                  Buy Now
+                </a>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }
