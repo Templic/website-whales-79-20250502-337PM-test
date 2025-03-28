@@ -13,7 +13,7 @@ export function SpotlightEffect() {
 
   useEffect(() => {
     const generateSpotlights = () => {
-      const count = 5; // Number of spotlights
+      const count = 3; // Number of spotlights
       const newSpotlights = [];
       
       for (let i = 0; i < count; i++) {
