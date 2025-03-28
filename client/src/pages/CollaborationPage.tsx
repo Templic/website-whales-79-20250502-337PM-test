@@ -135,7 +135,7 @@ export default function CollaborationPage() {
             >
               <div className="flex items-center space-x-4 w-full">
                 <img 
-                  src="/images/dale-profile.jpg" 
+                  src="/images/dale-profile.jpg"
                   alt="Instagram Profile" 
                   className="w-12 h-12 rounded-full"
                 />
