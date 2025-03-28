@@ -114,10 +114,18 @@ export default function CollaborationPage() {
               rel="noopener noreferrer"
               className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <span className="flex flex-col">
-                <span className="font-semibold">Dale's YouTube:</span>
-                <span>@DiamondOrca777</span>
-              </span>
+              <div className="flex items-center space-x-4 w-full">
+                <img 
+                  src="https://yt3.ggpht.com/ytc/APkrFKaqca-xQS5mwY_U6LWpBds93aWgUZqOA4x-5g=s88-c-k-c0x00ffffff-no-rj" 
+                  alt="YouTube Profile" 
+                  className="w-12 h-12 rounded-full"
+                />
+                <span className="flex flex-col flex-grow">
+                  <span className="font-semibold">Dale's YouTube:</span>
+                  <span>@DiamondOrca777</span>
+                </span>
+                <img src="/icons8-youtube-48.png" alt="YouTube" className="w-8 h-8" />
+              </div>
             </a>
             <a
               href="https://www.instagram.com/dalethewhalemusic"
@@ -125,10 +133,18 @@ export default function CollaborationPage() {
               rel="noopener noreferrer"
               className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <span className="flex flex-col">
-                <span className="font-semibold">Dale's Instagram:</span>
-                <span>@dalethewhalemusic</span>
-              </span>
+              <div className="flex items-center space-x-4 w-full">
+                <img 
+                  src="/images/dale-profile.jpg" 
+                  alt="Instagram Profile" 
+                  className="w-12 h-12 rounded-full"
+                />
+                <span className="flex flex-col flex-grow">
+                  <span className="font-semibold">Dale's Instagram:</span>
+                  <span>@dalethewhalemusic</span>
+                </span>
+                <img src="/icons8-instagram-48.png" alt="Instagram" className="w-8 h-8" />
+              </div>
             </a>
             <a
               href="https://creators.spotify.com/pod/show/dale-ham"
@@ -136,10 +152,18 @@ export default function CollaborationPage() {
               rel="noopener noreferrer"
               className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <span className="flex flex-col">
-                <span className="font-semibold">THE IRIDESCENT DOVE Podcast:</span>
-                <span>Ham</span>
-              </span>
+              <div className="flex items-center space-x-4 w-full">
+                <img 
+                  src="/images/podcast-cover.jpg" 
+                  alt="Podcast Cover" 
+                  className="w-12 h-12 rounded-lg"
+                />
+                <span className="flex flex-col flex-grow">
+                  <span className="font-semibold">THE IRIDESCENT DOVE Podcast:</span>
+                  <span>Ham</span>
+                </span>
+                <img src="/icons8-spotify-48.png" alt="Spotify" className="w-8 h-8" />
+              </div>
             </a>
           </div>
         </section>
