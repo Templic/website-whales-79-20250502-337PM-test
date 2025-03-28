@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { XCircle } from "lucide-react";
+import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 interface Track {
   id: number;
@@ -15,6 +16,9 @@ interface Track {
 
 export default function MusicReleasePage() {
   const [tracks, setTracks] = useState<Track[]>([]);
+  return (
+    <>
+      <SpotlightEffect />
   const { user } = useAuth();
   const { toast } = useToast();
 
