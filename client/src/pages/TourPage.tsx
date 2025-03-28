@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import ToDoList from "../components/ToDoList";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function TourPage() {
@@ -43,7 +42,7 @@ export default function TourPage() {
                 <p>Venue: Hilo Bay Concert Hall</p>
               </div>
               <a href="#" className="bg-[#00ebd6] text-[#303436] px-6 py-2 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg mt-4 md:mt-0">
-                Buy Tickets
+                SOLD OUT
               </a>
             </div>
           </div>
