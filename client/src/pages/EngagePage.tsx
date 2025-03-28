@@ -113,10 +113,11 @@ export default function EngagePage() {
                 <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Business Inquiries</h4>
                   <div className="space-y-4">
-                    <a href="mailto:ac3productionsllc@gmail.com" 
-                      className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
-                      <div>Contact for Business</div>
-                    </a>
+                    <div className="block text-white space-y-2 p-2">
+                      <div>Email: <a href="mailto:ac3productionsllc@gmail.com" className="hover:text-[#00ebd6] transition-colors">ac3productionsllc@gmail.com</a></div>
+                      <div>Phone: <a href="tel:8044375418" className="hover:text-[#00ebd6] transition-colors">804-437-5418</a></div>
+                      <div>Book online: <a href="https://calendly.com/ac3productionsllc/30min?month=2025-01" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ebd6] transition-colors">calendly.com/ac3productionsllc/30min</a></div>
+                    </div>
                   </div>
                 </div>
               </div>
