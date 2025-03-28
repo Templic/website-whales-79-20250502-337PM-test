@@ -1,45 +1,25 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Post } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ArrowRight } from "lucide-react";
-import styles from "./BlogPage.module.css";
-import { useAuth } from "@/hooks/use-auth";
 import { formatDisplayDate } from "@/lib/date-utils";
-import { useEffect, useRef, useCallback } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function BlogPage() {
   const { toast } = useToast();
-  const { user } = useAuth();
-  const hasShownError = useRef(false);
-
   const { data: posts, isLoading, error } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
     retry: 1,
   });
 
-  // Handle error outside of render cycle with useRef to prevent multiple toasts
-  useEffect(() => {
-    if (error && !hasShownError.current) {
-      hasShownError.current = true;
-      toast({
-        title: "Error",
-        description: "Failed to load blog posts",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
-
-  // Memoize the load more handler
-  const handleLoadMore = useCallback(() => {
+  const handleLoadMore = () => {
     toast({
       title: "Coming Soon",
       description: "More posts will be available soon!",
     });
-  }, [toast]);
+  };
 
   return (
     <>
@@ -51,13 +31,24 @@ export default function BlogPage() {
         ) : error ? (
           <p>Error loading posts.</p>
         ) : posts && posts.length > 0 ? (
-          posts.map((post) => (
-            <div key={post.id} className="mb-8">
-              <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
-              <p className="text-gray-600 mb-4">{post.content}</p>
-              <p className="text-sm text-gray-500">Published: {formatDisplayDate(post.createdAt)}</p>
-            </div>
-          ))
+          <div className="grid md:grid-cols-2 gap-8">
+            {posts.map((post) => (
+              <article key={post.id} className="bg-[rgba(10,50,92,0.3)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)]">
+                {post.imageUrl && (
+                  <img 
+                    src={post.imageUrl} 
+                    alt={post.title}
+                    className="w-full h-48 object-cover rounded-lg mb-4"
+                  />
+                )}
+                <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
+                <p className="text-gray-300 mb-4">{post.content}</p>
+                <p className="text-sm text-[#fe0064]">
+                  Published: {formatDisplayDate(post.createdAt)}
+                </p>
+              </article>
+            ))}
+          </div>
         ) : (
           <p>No posts found.</p>
         )}
@@ -65,7 +56,7 @@ export default function BlogPage() {
         {posts && posts.length > 0 && (
           <footer className="flex justify-center mt-12">
             <Button
-              className="bg-primary text-primary-foreground px-8 py-6 rounded-full transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg"
+              className="bg-[#00ebd6] text-black px-8 py-6 rounded-full transition-all duration-300 hover:bg-[#fe0064] hover:text-white hover:translate-y-[-2px] hover:shadow-lg"
               onClick={handleLoadMore}
             >
               Load More Posts
