@@ -50,7 +50,7 @@ export default function EngagePage() {
             <div className="mb-12">
               <h3 className="text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🐳 Dale The Whale Music & Content 🐳</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Social Media</h4>
                   <div className="space-y-4 max-w-[600px]">
                     <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
@@ -71,7 +71,7 @@ export default function EngagePage() {
                   </div>
                 </div>
 
-                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcast</h4>
                   <div className="space-y-4">
                     <a href="https://youtu.be/jzpvkq3Krjg" target="_blank" rel="noopener noreferrer"
@@ -98,7 +98,7 @@ export default function EngagePage() {
             <div>
               <h3 className="text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🎵 AC3-2085 Music & Business 🎵</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music Production</h4>
                   <div className="space-y-4">
                     <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer"
@@ -114,7 +114,7 @@ export default function EngagePage() {
                   </div>
                 </div>
 
-                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg space-y-3">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Business Inquiries</h4>
                   <div className="space-y-4">
                     <a href="mailto:ac3productionsllc@gmail.com" 
