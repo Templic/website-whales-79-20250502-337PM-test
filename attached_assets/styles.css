@@ -162,3 +162,30 @@ ul {
 .styled-link:hover {
     background-color: #555;
 }
+
+.footer-links {
+  list-style-type: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2rem;
+  padding: 1rem 0;
+}
+
+.footer-links li {
+  margin: 0;
+  padding: 0.5rem;
+  white-space: nowrap;
+}
+
+.footer-links a {
+  color: var(--font-color); /* Assuming --font-color is defined elsewhere */
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.footer-links a:hover {
+  color: var(--fill-color); /* Assuming --fill-color is defined elsewhere */
+}
