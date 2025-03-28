@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "wouter";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function EngagePage() {
@@ -15,12 +16,16 @@ export default function EngagePage() {
           <section className="banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
             <img src="/api/placeholder/1200/400" alt="Main Banner" className="w-full rounded-lg mb-6" />
             <div className="cta-buttons flex flex-wrap gap-4 justify-center">
-              <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg">
-                Join The Whale Pod
-              </button>
-              <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg">
-                Share Your Experience
-              </button>
+              <Link to="/newsletter">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg whitespace-nowrap">
+                  Join The Whale Pod
+                </button>
+              </Link>
+              <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg whitespace-nowrap">
+                  Share Your Experience
+                </button>
+              </a>
             </div>
           </section>
 
@@ -49,7 +54,7 @@ export default function EngagePage() {
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Social Media</h4>
                   <div className="space-y-4">
                     <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
-                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors">
+                      className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors whitespace-nowrap">
                       <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
                       <span>@DiamondOrca777</span>
                     </a>
