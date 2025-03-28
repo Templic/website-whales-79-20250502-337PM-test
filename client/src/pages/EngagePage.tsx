@@ -45,14 +45,14 @@ export default function EngagePage() {
 
           <section className="social-media bg-[rgba(10,50,92,0.6)] p-4 md:p-8 rounded-xl shadow-lg backdrop-blur-sm">
             <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center">Connect With Us</h2>
-            
+
             {/* Dale The Whale Section */}
             <div className="mb-12">
               <h3 className="text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🐳 Dale The Whale Music & Content 🐳</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Social Media</h4>
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-w-[600px]">
                     <a href="https://www.youtube.com/@DiamondOrca777/featured" target="_blank" rel="noopener noreferrer" 
                       className="flex items-center gap-3 text-white hover:text-[#00ebd6] transition-colors whitespace-nowrap">
                       <img src="/icons/youtube.png" alt="YouTube" className="w-6 h-6" />
@@ -70,7 +70,7 @@ export default function EngagePage() {
                     </a>
                   </div>
                 </div>
-                
+
                 <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
                   <h4 className="text-xl font-bold mb-4 text-[#00ebd6]">Music & Podcast</h4>
                   <div className="space-y-4">
