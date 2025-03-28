@@ -106,34 +106,40 @@ export default function CollaborationPage() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Find Our Music</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Find Our Content</h2>
+          <div className="grid grid-cols-1 gap-6">
             <a
-              href="https://spotify.com/daleloveswhales"
+              href="https://www.youtube.com/@DiamondOrca777/featured"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
+              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <SiSpotify className="text-3xl mr-2" />
-              <span>Spotify</span>
+              <span className="flex flex-col">
+                <span className="font-semibold">Dale's YouTube:</span>
+                <span>@DiamondOrca777</span>
+              </span>
             </a>
             <a
-              href="https://soundcloud.com/daleloveswhales"
+              href="https://www.instagram.com/dalethewhalemusic"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
+              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <SiSoundcloud className="text-3xl mr-2" />
-              <span>SoundCloud</span>
+              <span className="flex flex-col">
+                <span className="font-semibold">Dale's Instagram:</span>
+                <span>@dalethewhalemusic</span>
+              </span>
             </a>
             <a
-              href="https://daleloveswhales.bandcamp.com"
+              href="https://creators.spotify.com/pod/show/dale-ham"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
+              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
             >
-              <SiBandcamp className="text-3xl mr-2" />
-              <span>Bandcamp</span>
+              <span className="flex flex-col">
+                <span className="font-semibold">THE IRIDESCENT DOVE Podcast:</span>
+                <span>Ham</span>
+              </span>
             </a>
           </div>
         </section>
