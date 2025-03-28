@@ -9,15 +9,16 @@ import styles from "./BlogPage.module.css";
 import { useAuth } from "@/hooks/use-auth";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { useEffect, useRef, useCallback } from "react";
+import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 export default function BlogPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const hasShownError = useRef(false);
 
-  const { data: posts, isLoading, error } = useQuery<Post[]>({ 
-    queryKey: ['/api/posts'],
-    retry: 1
+  const { data: posts, isLoading, error } = useQuery<Post[]>({
+    queryKey: ["/api/posts"],
+    retry: 1,
   });
 
   // Handle error outside of render cycle with useRef to prevent multiple toasts
@@ -27,7 +28,7 @@ export default function BlogPage() {
       toast({
         title: "Error",
         description: "Failed to load blog posts",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   }, [error, toast]);
@@ -36,40 +37,42 @@ export default function BlogPage() {
   const handleLoadMore = useCallback(() => {
     toast({
       title: "Coming Soon",
-      description: "More posts will be available soon!"
+      description: "More posts will be available soon!",
     });
   }, [toast]);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in" role="main">
-      <header className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-primary mb-4 animate-slide-in">
-          Feature coming soon
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          Cosmic Chronicles: Dive into Dale's thoughts, stories, and musical journey
-        </p>
-      </header>
+    <>
+      <SpotlightEffect />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Blog</h1>
+        {isLoading ? (
+          <Skeleton className="h-64 w-full" />
+        ) : error ? (
+          <p>Error loading posts.</p>
+        ) : posts && posts.length > 0 ? (
+          posts.map((post) => (
+            <div key={post.id} className="mb-8">
+              <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
+              <p className="text-gray-600 mb-4">{post.content}</p>
+              <p className="text-sm text-gray-500">Published: {formatDisplayDate(post.createdAt)}</p>
+            </div>
+          ))
+        ) : (
+          <p>No posts found.</p>
+        )}
 
-      <section className="relative h-[500px] w-full overflow-hidden rounded-lg"> {/*Replaced blog post section*/}
-        <img
-          src="uploads/Dale Loves Whales with AC32085 festival.jpg"
-          alt="Dale Loves Whales with AC32085"
-          className="w-full h-full object-cover"
-        />
-      </section>
-
-
-      {posts && posts.length > 0 && (
-        <footer className="flex justify-center mt-12">
-          <Button 
-            className="bg-primary text-primary-foreground px-8 py-6 rounded-full transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg"
-            onClick={handleLoadMore}
-          >
-            Load More Posts
-          </Button>
-        </footer>
-      )}
-    </main>
+        {posts && posts.length > 0 && (
+          <footer className="flex justify-center mt-12">
+            <Button
+              className="bg-primary text-primary-foreground px-8 py-6 rounded-full transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg"
+              onClick={handleLoadMore}
+            >
+              Load More Posts
+            </Button>
+          </footer>
+        )}
+      </div>
+    </>
   );
 }

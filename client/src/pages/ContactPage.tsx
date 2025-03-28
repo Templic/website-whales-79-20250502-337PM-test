@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -55,39 +56,40 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Get in Touch</h1>
-      <p className="mb-8">Have a question or want to connect? Drop us a message!</p>
+    <>
+      <SpotlightEffect />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Contact</h1>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
+            <div>
+              <label className="block text-sm font-medium mb-2">Name</label>
+              <Input {...form.register("name")} className="w-full" />
+              {form.formState.errors.name && (
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
+              )}
+            </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-xl">
-          <div>
-            <label className="block text-sm font-medium mb-2">Name</label>
-            <Input {...form.register("name")} className="w-full" />
-            {form.formState.errors.name && (
-              <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
-            )}
-          </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <Input {...form.register("email")} type="email" className="w-full" />
+              {form.formState.errors.email && (
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <Input {...form.register("email")} type="email" className="w-full" />
-            {form.formState.errors.email && (
-              <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
-            )}
-          </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Message</label>
+              <Textarea {...form.register("message")} className="w-full min-h-[150px]" />
+              {form.formState.errors.message && (
+                <p className="text-red-500 text-sm mt-1">{form.formState.errors.message.message}</p>
+              )}
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Message</label>
-            <Textarea {...form.register("message")} className="w-full min-h-[150px]" />
-            {form.formState.errors.message && (
-              <p className="text-red-500 text-sm mt-1">{form.formState.errors.message.message}</p>
-            )}
-          </div>
-
-          <Button type="submit" className="w-full">Send Message</Button>
-        </form>
-      </Form>
-    </div>
+            <Button type="submit" className="w-full">Send Message</Button>
+          </form>
+        </Form>
+      </div>
+    </>
   );
 }
