@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Link } from "wouter";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
@@ -26,6 +27,38 @@ export default function EngagePage() {
                   Share Your Experience
                 </button>
               </a>
+            </div>
+          </section>
+
+          <section className="merchandise bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Featured Merchandise</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <img src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg" alt="Digital Art" className="w-full rounded-lg mb-4" />
+                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
+                <p className="mb-4">$45.00</p>
+                <a
+                  href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+                >
+                  Buy Now
+                </a>
+              </div>
+              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
+                <img src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" />
+                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
+                <p className="mb-4">$45.00</p>
+                <a
+                  href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
+                >
+                  Buy Now
+                </a>
+              </div>
             </div>
           </section>
 
@@ -80,7 +113,7 @@ export default function EngagePage() {
                     </a>
                     <a href="https://open.spotify.com/album/3NDnzf57NDrUwkv7QJ22Th" target="_blank" rel="noopener noreferrer"
                       className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
-                      <div>Music on Spotify</div>
+                      <div>Dale's Music On Spotify</div>
                     </a>
                     <a href="https://creators.spotify.com/pod/show/dale-ham" target="_blank" rel="noopener noreferrer"
                       className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
@@ -100,7 +133,7 @@ export default function EngagePage() {
                   <div className="space-y-4">
                     <a href="https://www.youtube.com/channel/UCewdO8AO3aBVzgWzeMG5paQ" target="_blank" rel="noopener noreferrer"
                       className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
-                      <div>AC3-2085 Channel</div>
+                      <div>AC3-2085 YouTube Channel</div>
                     </a>
                     <a href="https://www.instagram.com/ac3productionsllc" target="_blank" rel="noopener noreferrer"
                       className="block text-white hover:text-[#00ebd6] transition-colors p-2 min-h-[60px]">
@@ -120,38 +153,6 @@ export default function EngagePage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="merchandise bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-            <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Featured Merchandise</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-                <img src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg" alt="Digital Art" className="w-full rounded-lg mb-4" />
-                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
-                <p className="mb-4">$45.00</p>
-                <a
-                  href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
-                >
-                  Buy Now
-                </a>
-              </div>
-              <div className="bg-[rgba(48,52,54,0.5)] p-6 rounded-lg">
-                <img src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" />
-                <h3 className="text-xl font-bold mb-2">Orca Sunrise Cove by Dale The Whale on Etsy.com</h3>
-                <p className="mb-4">$45.00</p>
-                <a
-                  href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-[#00ebd6] text-[#303436] px-4 py-2 rounded-lg hover:bg-[#fe0064] hover:text-white transition-colors w-full"
-                >
-                  Buy Now
-                </a>
               </div>
             </div>
           </section>
