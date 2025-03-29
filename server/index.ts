@@ -9,6 +9,8 @@ import { registerRoutes } from "./routes";
 import { pgPool, initializeDatabase } from "./db";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { initDatabaseOptimization } from "./db-optimize";
+import { initBackgroundServices, shutdownBackgroundServices } from "./db-background";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -75,6 +77,15 @@ async function startServer() {
     // Initialize database connection
     await initializeDatabase();
     
+    // Initialize database optimization and background services
+    await initDatabaseOptimization().catch(err => {
+      console.warn('Database optimization initialization failed, continuing without it:', err);
+    });
+
+    await initBackgroundServices().catch(err => {
+      console.warn('Background database services initialization failed, continuing without them:', err);
+    });
+    
     // Setup authentication first
     setupAuth(app);
 
@@ -116,6 +127,14 @@ async function startServer() {
               resolve();
             });
           });
+
+          // Shutdown background services
+          try {
+            await shutdownBackgroundServices();
+            console.log('Background database services stopped');
+          } catch (err) {
+            console.error('Error shutting down background services:', err);
+          }
 
           console.log('Closing database pool...');
           await pgPool.end();

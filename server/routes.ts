@@ -13,6 +13,7 @@ import {
 } from "@shared/schema";
 import { hashPassword } from "./auth";
 import { createTransport } from "nodemailer";
+import dbMonitorRoutes from './routes/db-monitor';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -903,6 +904,15 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       });
     }
   });
+
+  // Database monitoring routes
+  app.use('/api/admin/db-monitor', (req, res, next) => {
+    // Check authentication and admin role
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+    }
+    next();
+  }, dbMonitorRoutes);
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);

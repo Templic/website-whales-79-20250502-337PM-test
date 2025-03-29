@@ -33,6 +33,7 @@ interface AdminStats {
 
 const UserManagementComponent = lazy(() => import('@/components/admin/UserManagement'));
 const ContentReviewComponent = lazy(() => import('@/components/admin/ContentReview'));
+const DatabaseMonitorComponent = lazy(() => import('@/components/admin/DatabaseMonitor'));
 
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
@@ -258,6 +259,7 @@ export default function AdminPortalPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="content">Content Review</TabsTrigger>
+          <TabsTrigger value="database">Database</TabsTrigger>
           <TabsTrigger value="subscribers">Newsletter</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -340,6 +342,12 @@ export default function AdminPortalPage() {
         <TabsContent value="content">
           <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
             <ContentReviewComponent />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="database">
+          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+            <DatabaseMonitorComponent />
           </Suspense>
         </TabsContent>
 
