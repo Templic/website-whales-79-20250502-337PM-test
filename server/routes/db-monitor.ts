@@ -1,7 +1,7 @@
 import express from 'express';
 import { pool } from '../db';
 import { log } from '../vite';
-import { triggerDatabaseMaintenance } from '../db-background';
+import { triggerDatabaseMaintenance } from '../db-optimize';
 
 const router = express.Router();
 
