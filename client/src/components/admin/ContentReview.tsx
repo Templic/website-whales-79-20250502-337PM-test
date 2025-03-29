@@ -69,21 +69,15 @@ export default function ContentReview() {
   const { data: comments, isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ['unapprovedComments'],
     queryFn: () => {
-      console.log('Attempting to fetch unapproved comments...');
-      // Use the posts/comments/unapproved endpoint that we know works from server logs
+      // Use the posts/comments/unapproved endpoint
       return fetch('/api/posts/comments/unapproved').then(res => {
-        console.log('Comments API response status:', res.status);
         if (!res.ok) throw new Error('Failed to fetch unapproved comments');
         return res.json();
-      }).then(data => {
-        console.log('Received comments data:', data);
-        return data;
       }).catch(err => {
-        console.error('Error fetching comments:', err);
         return [];
       });
     },
-    refetchInterval: 30000 // Increased refresh interval to 30 seconds
+    refetchInterval: 30000 // Refresh interval to 30 seconds
   });
 
   // Fetch recent tracks for review
@@ -95,17 +89,12 @@ export default function ContentReview() {
     })
   });
 
-  // Debug logs
-  console.log('Comments from API:', comments);
-  
   // Create combined content items list
   const allContentItems: ContentItem[] = [
     ...(posts?.map(post => ({ ...post, type: 'post' as const })) || []),
     ...(comments?.map(comment => ({ ...comment, type: 'comment' as const })) || []),
     ...(tracks?.map(track => ({ ...track, type: 'track' as const })) || [])
   ];
-  
-  console.log('All content items:', allContentItems);
 
   // Mutations for different content types
   const approvePostMutation = useMutation({
@@ -130,7 +119,6 @@ export default function ContentReview() {
 
   const approveCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      console.log('Sending approve request for comment:', commentId);
       const response = await fetch(`/api/posts/comments/${commentId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -138,7 +126,6 @@ export default function ContentReview() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error approving comment:', errorText);
         throw new Error(`Failed to approve comment: ${errorText}`);
       }
       
@@ -150,7 +137,6 @@ export default function ContentReview() {
       toast({ title: 'Success', description: 'Comment approved successfully' });
     },
     onError: (error) => {
-      console.error('Error in approve mutation:', error);
       toast({ 
         title: 'Error', 
         description: error instanceof Error ? error.message : 'Failed to approve comment', 
@@ -161,7 +147,6 @@ export default function ContentReview() {
 
   const rejectCommentMutation = useMutation({
     mutationFn: async (commentId: number) => {
-      console.log('Sending reject request for comment:', commentId);
       const response = await fetch(`/api/posts/comments/${commentId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
@@ -169,7 +154,6 @@ export default function ContentReview() {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error rejecting comment:', errorText);
         throw new Error(`Failed to reject comment: ${errorText}`);
       }
       
@@ -180,7 +164,6 @@ export default function ContentReview() {
       toast({ title: 'Success', description: 'Comment rejected successfully' });
     },
     onError: (error) => {
-      console.error('Error in reject mutation:', error);
       toast({ 
         title: 'Error', 
         description: error instanceof Error ? error.message : 'Failed to reject comment', 
@@ -217,7 +200,6 @@ export default function ContentReview() {
         break;
       case 'comment':
         approveCommentMutation.mutate(item.id);
-        console.log('Approving comment:', item);
         break;
       default:
         toast({ 
@@ -273,9 +255,6 @@ export default function ContentReview() {
         </Card>
       );
     }
-
-    const commentItems = items.filter(item => item.type === 'comment');
-    console.log('Unapproved comments in review:', commentItems);
 
     return items.map((item) => (
       <Card key={`${item.type}-${item.id}`}>
@@ -353,16 +332,6 @@ export default function ContentReview() {
 
   return (
     <>
-      {/* Debug information */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="bg-muted p-4 mb-4 rounded-md text-xs">
-          <h4 className="font-semibold mb-2">Debug Info:</h4>
-          <p>Comments API data: {JSON.stringify(comments)}</p>
-          <p className="mt-2">Comments in component: {comments?.length || 0}</p>
-          <p className="mt-2">Comments in all items: {allContentItems.filter(item => item.type === 'comment').length}</p>
-        </div>
-      )}
-      
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All Content ({allContentItems.length})</TabsTrigger>

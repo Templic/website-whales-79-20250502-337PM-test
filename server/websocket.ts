@@ -9,6 +9,11 @@ interface WebSocketMessage {
   payload: any;
 }
 
+// Extend WebSocket to include isAlive property
+interface ExtendedWebSocket extends WebSocket {
+  isAlive?: boolean;
+}
+
 export function setupWebSockets(httpServer: Server) {
   // WebSocket setup with proper configuration
   const wss = new WebSocketServer({ 
@@ -18,9 +23,7 @@ export function setupWebSockets(httpServer: Server) {
     maxPayload: 64 * 1024 // 64kb
   });
 
-  wss.on('connection', (ws: WebSocket) => {
-    log('WebSocket client connected');
-
+  wss.on('connection', (ws: ExtendedWebSocket) => {
     // Setup heartbeat
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
@@ -31,12 +34,11 @@ export function setupWebSockets(httpServer: Server) {
     ws.on('message', (message) => {
       try {
         const data: WebSocketMessage = JSON.parse(message.toString());
-        log(`WebSocket message received: ${JSON.stringify(data)}`);
-
+        
         switch (data.type) {
           case 'file_upload':
             // Handle file upload notifications
-            wss.clients.forEach(client => {
+            wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                   type: 'file_upload',
@@ -48,7 +50,7 @@ export function setupWebSockets(httpServer: Server) {
 
           case 'file_delete':
             // Handle file deletion notifications
-            wss.clients.forEach(client => {
+            wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                   type: 'file_delete',
@@ -60,7 +62,7 @@ export function setupWebSockets(httpServer: Server) {
 
           case 'status_update':
             // Handle status updates
-            wss.clients.forEach(client => {
+            wss.clients.forEach((client: ExtendedWebSocket) => {
               if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                   type: 'status_update',
@@ -90,7 +92,6 @@ export function setupWebSockets(httpServer: Server) {
 
     ws.on('close', () => {
       clearInterval(pingInterval);
-      log('WebSocket client disconnected');
     });
 
     ws.on('pong', () => {
@@ -116,10 +117,7 @@ export function setupWebSockets(httpServer: Server) {
 
   // Handle Socket.IO connections
   io.on('connection', (socket) => {
-    log('Socket.IO client connected');
-
     socket.on('file_event', (data) => {
-      log(`Socket.IO file event received: ${JSON.stringify(data)}`);
       // Broadcast to all other clients
       socket.broadcast.emit('file_event', data);
     });
@@ -128,8 +126,8 @@ export function setupWebSockets(httpServer: Server) {
       console.error('Socket.IO error:', error);
     });
 
-    socket.on('disconnect', (reason) => {
-      log(`Socket.IO client disconnected: ${reason}`);
+    socket.on('disconnect', () => {
+      // Cleanup on disconnect if needed
     });
   });
 

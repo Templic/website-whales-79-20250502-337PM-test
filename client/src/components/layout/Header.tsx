@@ -13,9 +13,6 @@ const navigationItems = [
   { path: "/newsletter", label: "Newsletter" },
   { path: "/blog", label: "Blog" },
   { path: "/collaboration", label: "Collaborate" },
-  // TEMPORARY TEST ITEMS - REMOVE BEFORE DEPLOYMENT
-  { path: "/admin", label: "Admin" },
-  { path: "/admin/analytics", label: "Analytics" },
   { path: "/contact", label: "Contact" }
 ];
 
@@ -32,7 +29,6 @@ export function Header() {
     setTimeout(() => {
       setIsMenuOpen(false);
       navigate(path);
-      console.log("Navigating to:", path); // Debug
     }, 300); // 300ms delay to allow for smooth scroll
   }, [navigate]);
 
@@ -43,9 +39,6 @@ export function Header() {
 
   return (
     <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
-      {/* Debug marker to verify updated component */}
-      <div className="hidden">DEBUG: Header Updated - With Scroll To Top v2</div>
-
       <div className="flex items-center justify-between p-4 container mx-auto">
         <div className="flex items-center gap-4">
           <button
