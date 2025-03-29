@@ -14,6 +14,64 @@ router.get('/status', async (req, res) => {
       return res.status(403).json({ status: 'error', message: 'Unauthorized access' });
     }
 
+    const client = await pool.connect();
+    try {
+      // Get database size
+      const sizeResult = await client.query("SELECT pg_database_size(current_database()) as size");
+      const databaseSize = sizeResult.rows[0].size;
+
+      // Get pool statistics
+      const poolStats = {
+        total: pool.totalCount,
+        active: pool.activeCount,
+        idle: pool.idleCount,
+        waiting: pool.waitingCount
+      };
+
+      // Get table statistics
+      const tableStats = await client.query(`
+        SELECT 
+          relname as table_name,
+          n_live_tup as row_count,
+          pg_size_pretty(pg_total_relation_size(C.oid)) as total_size,
+          pg_size_pretty(pg_table_size(C.oid)) as table_size,
+          pg_size_pretty(pg_indexes_size(C.oid)) as index_size
+        FROM pg_class C
+        LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
+        WHERE nspname NOT IN ('pg_catalog', 'information_schema')
+        AND C.relkind = 'r'
+        ORDER BY pg_total_relation_size(C.oid) DESC
+      `);
+
+      // Get index statistics
+      const indexStats = await client.query(`
+        SELECT
+          schemaname,
+          tablename,
+          indexname,
+          idx_scan as scan_count,
+          idx_tup_read as tuples_read,
+          idx_tup_fetch as tuples_fetched,
+          pg_size_pretty(pg_relation_size(indexrelid)) as index_size
+        FROM pg_stat_user_indexes
+        ORDER BY idx_scan DESC
+      `);
+
+      res.json({
+        status: 'connected',
+        time: new Date().toISOString(),
+        database_size: {
+          size: require('bytes').format(databaseSize),
+          size_bytes: databaseSize
+        },
+        pool_stats: poolStats,
+        table_stats: tableStats.rows,
+        index_stats: indexStats.rows
+      });
+    } finally {
+      client.release();
+    }
+
     // Initialize variables with default empty values
     let dbSizeData = { size: '0 bytes', size_bytes: 0 };
     let tableStatsData = [];
