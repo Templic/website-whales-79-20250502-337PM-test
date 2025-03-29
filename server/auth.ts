@@ -192,6 +192,15 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Current user endpoint
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+    // Return the current authenticated user
+    res.json(req.user);
+  });
+
   // Session analytics endpoint
   app.get("/api/session/status", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);

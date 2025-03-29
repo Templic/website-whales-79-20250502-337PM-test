@@ -46,6 +46,7 @@ interface DatabaseStatus {
 // Types for query statistics
 interface QueryStats {
   status: string;
+  message?: string;  // Optional message for error states
   query_stats: Array<{
     query: string;
     calls: number;
@@ -362,13 +363,12 @@ export default function DatabaseMonitor() {
                 <CardDescription>Statistics about query execution performance</CardDescription>
               </CardHeader>
               <CardContent>
-                {queryStats.status === 'unavailable' ? (
+                {queryStats.status === 'extension_not_available' || queryStats.status === 'extension_error' ? (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Extension Not Available</AlertTitle>
                     <AlertDescription>
-                      The pg_stat_statements extension is not enabled on this database. 
-                      This extension is required to collect query statistics.
+                      {queryStats.message || 'The pg_stat_statements extension is not enabled on this database. This extension is required to collect query statistics.'}
                     </AlertDescription>
                   </Alert>
                 ) : (
