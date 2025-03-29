@@ -175,22 +175,35 @@ export async function executeOptimizedQuery(query: string, params?: any[]) {
 // Connection pooling optimization
 export async function getConnectionPoolStats() {
   try {
-    // @ts-ignore - Accessing internal pool properties for monitoring
-    const totalCount = pgPool.totalCount;
-    // @ts-ignore
-    const idleCount = pgPool.idleCount;
-    // @ts-ignore
-    const waitingCount = pgPool.waitingCount;
+    // Try to get pool stats from pg_stat_activity instead of internal properties
+    const result = await pgPool.query(`
+      SELECT count(*) as total,
+             count(*) FILTER (WHERE state = 'active') as active,
+             count(*) FILTER (WHERE state = 'idle') as idle,
+             count(*) FILTER (WHERE state = 'idle in transaction') as idle_in_transaction,
+             count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
+      FROM pg_stat_activity 
+      WHERE datname = current_database()
+        AND pid <> pg_backend_pid();
+    `);
+    
+    const stats = result.rows[0] || {};
     
     return {
-      total: totalCount || 'unknown',
-      active: (totalCount - idleCount) || 'unknown',
-      idle: idleCount || 'unknown',
-      waiting: waitingCount || 'unknown',
+      total: parseInt(stats.total) || 0,
+      active: parseInt(stats.active) || 0,
+      idle: parseInt(stats.idle) || 0,
+      waiting: parseInt(stats.waiting) || 0,
     };
   } catch (error) {
     console.error('Failed to get connection pool stats:', error);
-    return { error: 'Unable to retrieve pool statistics' };
+    // Return default values instead of error to prevent frontend from crashing
+    return {
+      total: 0,
+      active: 0,
+      idle: 0,
+      waiting: 0
+    };
   }
 }
 
