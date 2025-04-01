@@ -7,7 +7,6 @@ import { CosmicButton } from "../../components/imported/ui/CosmicButton"
 import { Play, Pause, Volume2, VolumeX, Settings, Music, Mic, Brain, Cloud, Wind, Hexagon } from "lucide-react"
 import { BinauralBeatGenerator } from "../../components/imported/audio/BinauralBeatGenerator"
 import { BreathSyncPlayer } from "../../components/imported/audio/BreathSyncPlayer"
-import { SacredGeometry } from "../../components/imported/SacredGeometry"
 import { FrequencyVisualizer3D } from "../../components/audio/FrequencyVisualizer3D"
 import { SpatialAudioExperience } from "../../components/audio/SpatialAudioExperience"
 import { VoiceControlledPlayer } from "../../components/audio/VoiceControlledPlayer"
@@ -64,10 +63,7 @@ export default function AudioComponentsDemo() {
                     <Wind className="mr-2 h-4 w-4" />
                     Breath Sync
                   </TabsTrigger>
-                  <TabsTrigger value="sacred-geometry" className="data-[state=active]:bg-purple-600">
-                    <Hexagon className="mr-2 h-4 w-4" />
-                    Sacred Geometry
-                  </TabsTrigger>
+                  {/* Sacred Geometry tab will be added back once component is ready */}
                 </TabsList>
               </div>
 
@@ -81,7 +77,7 @@ export default function AudioComponentsDemo() {
                     Explore the ethereal geometry of sound with our interactive 3D visualizer. 
                     Experience how different frequencies manifest in visual form.
                   </CosmicText>
-                  
+
                   <div className="mt-8">
                     <FrequencyVisualizer3D 
                       audioUrl="/audio/meditation-alpha.mp3"
@@ -103,7 +99,7 @@ export default function AudioComponentsDemo() {
                     Control your cosmic audio experience with the power of your voice.
                     Simply speak commands to play, pause, adjust volume, and more.
                   </CosmicText>
-                  
+
                   <div className="mt-8">
                     <VoiceControlledPlayer 
                       audioTracks={[
@@ -127,11 +123,11 @@ export default function AudioComponentsDemo() {
                     Create custom binaural beats to enhance meditation, focus, creativity, or sleep.
                     Adjust frequencies precisely to target specific brainwave states.
                   </CosmicText>
-                  
+
                   <div className="mt-8">
                     <BinauralBeatGenerator />
                   </div>
-                  
+
                   <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <CosmicCard>
                       <div className="p-6">
@@ -143,7 +139,7 @@ export default function AudioComponentsDemo() {
                         </CosmicText>
                       </div>
                     </CosmicCard>
-                    
+
                     <CosmicCard>
                       <div className="p-6">
                         <CosmicHeading level={4}>Brainwave States</CosmicHeading>
@@ -185,11 +181,11 @@ export default function AudioComponentsDemo() {
                     Immerse yourself in three-dimensional soundscapes designed to transport your consciousness.
                     Our spatial audio technology creates the sensation of sounds coming from different directions and distances.
                   </CosmicText>
-                  
+
                   <div className="mt-8">
                     <SpatialAudioExperience />
                   </div>
-                  
+
                   <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <CosmicCard>
                       <div className="p-6">
@@ -201,7 +197,7 @@ export default function AudioComponentsDemo() {
                         </CosmicText>
                       </div>
                     </CosmicCard>
-                    
+
                     <CosmicCard>
                       <div className="p-6">
                         <CosmicHeading level={4}>Benefits</CosmicHeading>
@@ -235,11 +231,11 @@ export default function AudioComponentsDemo() {
                     Harness the power of conscious breathing with our guided breath synchronization tool.
                     Customize breathing patterns and audio feedback to enhance your meditation practice.
                   </CosmicText>
-                  
+
                   <div className="mt-8">
                     <BreathSyncPlayer />
                   </div>
-                  
+
                   <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <CosmicCard>
                       <div className="p-6">
@@ -251,7 +247,7 @@ export default function AudioComponentsDemo() {
                         </CosmicText>
                       </div>
                     </CosmicCard>
-                    
+
                     <CosmicCard>
                       <div className="p-6">
                         <CosmicHeading level={4}>Key Benefits</CosmicHeading>
@@ -271,65 +267,6 @@ export default function AudioComponentsDemo() {
                           <div>
                             <h5 className="font-medium text-teal-300">Better Sleep</h5>
                             <p className="text-sm text-white/70">Helps relax the body and mind for improved sleep quality</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CosmicCard>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              {/* Sacred Geometry */}
-              <TabsContent value="sacred-geometry" className="mt-0">
-                <div className="my-8">
-                  <CosmicHeading level={2} align="center" withAccent>
-                    Sacred Geometry Visualizer
-                  </CosmicHeading>
-                  <CosmicText className="mt-2 text-center max-w-2xl mx-auto">
-                    Explore the universal language of sacred geometry—patterns that appear throughout 
-                    nature, art, and spirituality across diverse cultures and time periods.
-                  </CosmicText>
-                  
-                  <div className="mt-8">
-                    <SacredGeometry 
-                      defaultPattern="flowerOfLife"
-                      enableAnimation={true}
-                      interactive={true}
-                    />
-                  </div>
-                  
-                  <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <CosmicCard>
-                      <div className="p-6">
-                        <CosmicHeading level={4}>Sacred Geometry in Nature</CosmicHeading>
-                        <CosmicText className="mt-2">
-                          Sacred geometric patterns are found throughout the natural world—from the spiral of a
-                          seashell to the hexagonal cells of a honeycomb, from the self-similar branching of trees to the
-                          arrangement of petals in a flower. These patterns represent the fundamental organizing principles
-                          of the cosmos.
-                        </CosmicText>
-                      </div>
-                    </CosmicCard>
-                    
-                    <CosmicCard>
-                      <div className="p-6">
-                        <CosmicHeading level={4}>Traditional Uses</CosmicHeading>
-                        <div className="mt-4 space-y-3">
-                          <div>
-                            <h5 className="font-medium text-purple-300">Meditation</h5>
-                            <p className="text-sm text-white/70">Used as focus points to access deeper states of consciousness</p>
-                          </div>
-                          <div>
-                            <h5 className="font-medium text-indigo-300">Sacred Architecture</h5>
-                            <p className="text-sm text-white/70">Incorporated into temples, churches, and spiritual buildings worldwide</p>
-                          </div>
-                          <div>
-                            <h5 className="font-medium text-blue-300">Energy Work</h5>
-                            <p className="text-sm text-white/70">Employed to balance and harmonize energy fields in the body</p>
-                          </div>
-                          <div>
-                            <h5 className="font-medium text-teal-300">Cosmology</h5>
-                            <p className="text-sm text-white/70">Used to map and understand the structure of the universe</p>
                           </div>
                         </div>
                       </div>
