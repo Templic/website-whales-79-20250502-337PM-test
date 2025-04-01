@@ -1,3 +1,7 @@
+/* 
+  The original import is commented out because SacredGeometry doesn't export these components.
+  To fix this error, we would need to either create these components or remove their references.
+
 import {
   HexagonContainer,
   OctagonContainer,
@@ -5,6 +9,7 @@ import {
   TriangleInterlockContainer,
   AdaptiveTextContainer,
 } from "../../components/imported/SacredGeometry"
+*/
 import { CosmicButton } from "../../components/imported/ui/CosmicButton"
 import { CosmicHeading } from "../../components/imported/ui/CosmicHeading"
 import { CosmicText } from "../../components/imported/ui/CosmicText"
@@ -118,7 +123,7 @@ export default function CosmicComponentsDemo() {
             </div>
           </section>
 
-          {/* Sacred Geometry Containers */}
+          {/* Sacred Geometry Containers - Commented out pending implementation of container components
           <section className="mt-16">
             <CosmicHeading level={2} align="center">
               Sacred Geometry Containers
@@ -150,6 +155,7 @@ export default function CosmicComponentsDemo() {
               </TriangleInterlockContainer>
             </div>
           </section>
+          */}
 
           {/* Cosmic Portals */}
           <section className="mt-16 mb-16">

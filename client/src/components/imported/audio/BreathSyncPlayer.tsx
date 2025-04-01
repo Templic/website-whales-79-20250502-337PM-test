@@ -1,1018 +1,856 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import {
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  Volume2,
-  VolumeX,
-  TreePine as Lungs,
-  Timer,
-  Info,
-  ArrowRight,
-  ArrowLeft,
-  ChevronUp,
-  ChevronDown,
-  Maximize,
-  Minimize,
-} from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, Wind, ArrowRight, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface Track {
-  id: number
-  title: string
-  artist: string
-  duration: string
-  audioSrc: string
-  coverArt: string
-  chakra?: string
-  frequency?: number
-}
-
-interface BreathPattern {
-  id: number
-  name: string
-  description: string
-  inhale: number // seconds
-  hold1: number // seconds
-  exhale: number // seconds
-  hold2: number // seconds
-  color: string
-}
-
 interface BreathSyncPlayerProps {
-  tracks?: Track[]
-  defaultVolume?: number
+  className?: string
 }
 
-export function BreathSyncPlayer({
-  tracks = [
-    {
-      id: 1,
-      title: "Root Chakra Alignment",
-      artist: "ASTRA",
-      duration: "6:32",
-      audioSrc: "/placeholder.mp3",
-      coverArt: "/placeholder.svg?height=300&width=300",
-      chakra: "Root",
-      frequency: 396,
-    },
-    {
-      id: 2,
-      title: "Sacral Awakening",
-      artist: "ASTRA",
-      duration: "7:14",
-      audioSrc: "/placeholder.mp3",
-      coverArt: "/placeholder.svg?height=300&width=300",
-      chakra: "Sacral",
-      frequency: 417,
-    },
-    {
-      id: 3,
-      title: "Solar Plexus Activation",
-      artist: "ASTRA",
-      duration: "5:48",
-      audioSrc: "/placeholder.mp3",
-      coverArt: "/placeholder.svg?height=300&width=300",
-      chakra: "Solar Plexus",
-      frequency: 528,
-    },
-    {
-      id: 4,
-      title: "Heart Resonance",
-      artist: "ASTRA",
-      duration: "8:21",
-      audioSrc: "/placeholder.mp3",
-      coverArt: "/placeholder.svg?height=300&width=300",
-      chakra: "Heart",
-      frequency: 639,
-    },
-    {
-      id: 5,
-      title: "Throat Gateway",
-      artist: "ASTRA",
-      duration: "6:05",
-      audioSrc: "/placeholder.mp3",
-      coverArt: "/placeholder.svg?height=300&width=300",
-      chakra: "Throat",
-      frequency: 741,
-    },
-  ],
-  defaultVolume = 80,
-}: BreathSyncPlayerProps) {
-  // Player state
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
+// Breathing pattern types
+type BreathPattern = {
+  name: string
+  inhaleTime: number
+  holdInTime: number
+  exhaleTime: number
+  holdOutTime: number
+  description: string
+}
+
+export function BreathSyncPlayer({ className }: BreathSyncPlayerProps) {
+  // Audio context and oscillators
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const oscillatorRef = useRef<OscillatorNode | null>(null)
+  const gainNodeRef = useRef<GainNode | null>(null)
+  const pannerNodeRef = useRef<StereoPannerNode | null>(null)
+  const filterRef = useRef<BiquadFilterNode | null>(null)
+
+  // Canvas ref for visualization
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const animationRef = useRef<number | null>(null)
+
+  // State variables
   const [isPlaying, setIsPlaying] = useState(false)
-  const [volume, setVolume] = useState(defaultVolume)
+  const [volume, setVolume] = useState(70)
   const [isMuted, setIsMuted] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
+  const [breathPhase, setBreathPhase] = useState<"inhale" | "hold-in" | "exhale" | "hold-out">("inhale")
+  const [phaseProgress, setPhaseProgress] = useState(0) // 0-100%
+  const [cycleCount, setCycleCount] = useState(0)
+  const [ambientSound, setAmbientSound] = useState("ocean") // ocean, forest, cosmic
+  const [showGuide, setShowGuide] = useState(true)
+  const [audioInitialized, setAudioInitialized] = useState(false)
+  const [meditationDuration, setMeditationDuration] = useState(300) // 5 minutes in seconds
+  const [elapsedTime, setElapsedTime] = useState(0)
 
-  // Breath sync state
-  const [isBreathSyncActive, setIsBreathSyncActive] = useState(false)
-  const [currentBreathPhase, setCurrentBreathPhase] = useState<"inhale" | "hold1" | "exhale" | "hold2">("inhale")
-  const [breathProgress, setBreathProgress] = useState(0)
-  const [currentPatternIndex, setCurrentPatternIndex] = useState(0)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [customPattern, setCustomPattern] = useState<BreathPattern>({
-    id: 0,
-    name: "Custom",
-    description: "Your custom breathing pattern",
-    inhale: 4,
-    hold1: 4,
-    exhale: 4,
-    hold2: 0,
-    color: "#9333ea",
-  })
+  // Timer refs
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const phaseTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Session state
-  const [sessionDuration, setSessionDuration] = useState(5) // minutes
-  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(5 * 60) // seconds
-  const [isSessionActive, setIsSessionActive] = useState(false)
-  const [breathCount, setBreathCount] = useState(0)
+  // Selected pattern
+  const [selectedPattern, setSelectedPattern] = useState("box")
 
-  // Refs
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const breathIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const sessionIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Current track
-  const currentTrack = tracks[currentTrackIndex]
-
-  // Breath patterns
-  const breathPatterns: BreathPattern[] = [
-    {
-      id: 1,
+  // Breathing patterns
+  const breathingPatterns: Record<string, BreathPattern> = {
+    box: {
       name: "Box Breathing",
-      description: "Equal inhale, hold, exhale, hold for calm and focus",
-      inhale: 4,
-      hold1: 4,
-      exhale: 4,
-      hold2: 4,
-      color: "#9333ea",
+      inhaleTime: 4,
+      holdInTime: 4,
+      exhaleTime: 4,
+      holdOutTime: 4,
+      description: "Equal parts inhale, hold, exhale, and hold. Calms the nervous system."
     },
-    {
-      id: 2,
-      name: "4-7-8 Breathing",
-      description: "Relaxing breath for stress reduction and sleep",
-      inhale: 4,
-      hold1: 7,
-      exhale: 8,
-      hold2: 0,
-      color: "#3b82f6",
+    relaxing: {
+      name: "Relaxation Breath",
+      inhaleTime: 4,
+      holdInTime: 2,
+      exhaleTime: 6,
+      holdOutTime: 0,
+      description: "Longer exhale promotes parasympathetic response for deep relaxation."
     },
-    {
-      id: 3,
-      name: "Energizing Breath",
-      description: "Quick inhales and long exhales for energy",
-      inhale: 2,
-      hold1: 0,
-      exhale: 4,
-      hold2: 0,
-      color: "#f59e0b",
+    energizing: {
+      name: "Energy Breath",
+      inhaleTime: 6,
+      holdInTime: 2,
+      exhaleTime: 4,
+      holdOutTime: 0,
+      description: "Deeper inhale with shorter exhale to increase energy and alertness."
     },
-    {
-      id: 4,
-      name: "Deep Relaxation",
-      description: "Long, deep breaths for deep relaxation",
-      inhale: 6,
-      hold1: 2,
-      exhale: 8,
-      hold2: 0,
-      color: "#10b981",
+    healing: {
+      name: "Healing Breath",
+      inhaleTime: 5,
+      holdInTime: 2,
+      exhaleTime: 5,
+      holdOutTime: 2,
+      description: "Balanced breath with mild holds for focused healing meditation."
     },
-    {
-      id: 5,
+    4_7_8: {
+      name: "4-7-8 Technique",
+      inhaleTime: 4,
+      holdInTime: 7,
+      exhaleTime: 8,
+      holdOutTime: 0,
+      description: "Dr. Andrew Weil's technique for reducing anxiety and aiding sleep."
+    },
+    custom: {
       name: "Custom",
-      description: "Your custom breathing pattern",
-      inhale: customPattern.inhale,
-      hold1: customPattern.hold1,
-      exhale: customPattern.exhale,
-      hold2: customPattern.hold2,
-      color: customPattern.color,
-    },
-  ]
+      inhaleTime: 4,
+      holdInTime: 4,
+      exhaleTime: 4,
+      holdOutTime: 2,
+      description: "Your personalized breathing pattern."
+    }
+  }
 
-  // Current breath pattern
-  const currentPattern = currentPatternIndex === 4 ? { ...customPattern } : breathPatterns[currentPatternIndex]
+  // Get current pattern
+  const currentPattern = breathingPatterns[selectedPattern]
 
-  // Total breath cycle duration in seconds
-  const breathCycleDuration =
-    currentPattern.inhale + currentPattern.hold1 + currentPattern.exhale + currentPattern.hold2
+  // Custom pattern settings
+  const [customInhale, setCustomInhale] = useState(4)
+  const [customHoldIn, setCustomHoldIn] = useState(4)
+  const [customExhale, setCustomExhale] = useState(4)
+  const [customHoldOut, setCustomHoldOut] = useState(2)
 
-  // Initialize audio playback
+  // Update custom pattern when sliders change
   useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch((error) => {
-          console.error("Audio playback failed:", error)
-          setIsPlaying(false)
-        })
-        startProgressTimer()
-      } else {
-        audioRef.current.pause()
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current)
-        }
+    if (selectedPattern === "custom") {
+      breathingPatterns.custom = {
+        ...breathingPatterns.custom,
+        inhaleTime: customInhale,
+        holdInTime: customHoldIn,
+        exhaleTime: customExhale,
+        holdOutTime: customHoldOut
       }
     }
+  }, [customInhale, customHoldIn, customExhale, customHoldOut, selectedPattern])
 
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current)
-      }
-    }
-  }, [isPlaying, currentTrackIndex])
+  // Initialize audio
+  const initializeAudio = () => {
+    if (audioInitialized) return
 
-  // Handle volume changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume / 100
-    }
-  }, [volume])
-
-  // Handle mute toggle
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.muted = isMuted
-    }
-  }, [isMuted])
-
-  // Handle breath sync
-  useEffect(() => {
-    if (isBreathSyncActive) {
-      startBreathSync()
-    } else {
-      stopBreathSync()
-    }
-
-    return () => {
-      stopBreathSync()
-    }
-  }, [isBreathSyncActive, currentPattern])
-
-  // Handle session timer
-  useEffect(() => {
-    if (isSessionActive && isBreathSyncActive) {
-      startSessionTimer()
-    } else {
-      stopSessionTimer()
-    }
-
-    return () => {
-      stopSessionTimer()
-    }
-  }, [isSessionActive, isBreathSyncActive])
-
-  // Handle fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
-
-    document.addEventListener("fullscreenchange", handleFullscreenChange)
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange)
-    }
-  }, [])
-
-  // Update custom pattern in patterns array
-  useEffect(() => {
-    breathPatterns[4] = { ...customPattern }
-  }, [customPattern])
-
-  // Start progress timer for audio
-  const startProgressTimer = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current)
-    }
-
-    progressIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        if (audioRef.current.ended) {
-          nextTrack()
-        } else {
-          setCurrentTime(audioRef.current.currentTime)
-          setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100)
-        }
-      }
-    }, 1000)
-  }
-
-  // Start breath synchronization
-  const startBreathSync = () => {
-    if (breathIntervalRef.current) {
-      clearInterval(breathIntervalRef.current)
-    }
-
-    // Start with inhale phase
-    setCurrentBreathPhase("inhale")
-    setBreathProgress(0)
-
-    // Update every 100ms for smooth animation
-    breathIntervalRef.current = setInterval(() => {
-      setBreathProgress((prev) => {
-        // Calculate new progress
-        const increment = (0.1 / getCurrentPhaseSeconds()) * 100
-        const newProgress = prev + increment
-
-        // If current phase is complete, move to next phase
-        if (newProgress >= 100) {
-          moveToNextBreathPhase()
-          return 0 // Reset progress for new phase
-        }
-
-        return newProgress
-      })
-    }, 100)
-  }
-
-  // Stop breath synchronization
-  const stopBreathSync = () => {
-    if (breathIntervalRef.current) {
-      clearInterval(breathIntervalRef.current)
-      breathIntervalRef.current = null
+    try {
+      // Create AudioContext
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      // Create oscillator
+      oscillatorRef.current = audioContextRef.current.createOscillator()
+      oscillatorRef.current.type = "sine"
+      oscillatorRef.current.frequency.value = 432 // Base frequency
+      
+      // Create gain node for volume control
+      gainNodeRef.current = audioContextRef.current.createGain()
+      gainNodeRef.current.gain.value = 0 // Start silent
+      
+      // Create stereo panner
+      pannerNodeRef.current = audioContextRef.current.createStereoPanner()
+      
+      // Create filter for sound shaping
+      filterRef.current = audioContextRef.current.createBiquadFilter()
+      filterRef.current.type = "lowpass"
+      filterRef.current.frequency.value = 800
+      filterRef.current.Q.value = 1
+      
+      // Connect the audio graph
+      oscillatorRef.current.connect(gainNodeRef.current)
+      gainNodeRef.current.connect(pannerNodeRef.current)
+      pannerNodeRef.current.connect(filterRef.current)
+      filterRef.current.connect(audioContextRef.current.destination)
+      
+      // Start the oscillator
+      oscillatorRef.current.start()
+      
+      setAudioInitialized(true)
+    } catch (error) {
+      console.error("Error initializing audio:", error)
     }
   }
 
-  // Start session timer
-  const startSessionTimer = () => {
-    if (sessionIntervalRef.current) {
-      clearInterval(sessionIntervalRef.current)
-    }
-
-    setSessionTimeRemaining(sessionDuration * 60)
-
-    sessionIntervalRef.current = setInterval(() => {
-      setSessionTimeRemaining((prev) => {
-        if (prev <= 1) {
-          // Session complete
-          setIsSessionActive(false)
-          setIsBreathSyncActive(false)
-          clearInterval(sessionIntervalRef.current!)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-  }
-
-  // Stop session timer
-  const stopSessionTimer = () => {
-    if (sessionIntervalRef.current) {
-      clearInterval(sessionIntervalRef.current)
-      sessionIntervalRef.current = null
-    }
-  }
-
-  // Get current phase duration in seconds
-  const getCurrentPhaseSeconds = () => {
-    switch (currentBreathPhase) {
-      case "inhale":
-        return currentPattern.inhale
-      case "hold1":
-        return currentPattern.hold1
-      case "exhale":
-        return currentPattern.exhale
-      case "hold2":
-        return currentPattern.hold2
-      default:
-        return 1
-    }
-  }
-
-  // Move to next breath phase
-  const moveToNextBreathPhase = () => {
-    switch (currentBreathPhase) {
-      case "inhale":
-        if (currentPattern.hold1 > 0) {
-          setCurrentBreathPhase("hold1")
-        } else {
-          setCurrentBreathPhase("exhale")
-        }
-        break
-      case "hold1":
-        setCurrentBreathPhase("exhale")
-        break
-      case "exhale":
-        if (currentPattern.hold2 > 0) {
-          setCurrentBreathPhase("hold2")
-        } else {
-          setCurrentBreathPhase("inhale")
-          // Completed one full breath cycle
-          setBreathCount((prev) => prev + 1)
-        }
-        break
-      case "hold2":
-        setCurrentBreathPhase("inhale")
-        // Completed one full breath cycle
-        setBreathCount((prev) => prev + 1)
-        break
-    }
-  }
-
-  // Format time for display
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00"
-
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
-  }
-
-  // Handle metadata loaded
-  const onLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration)
-    }
-  }
-
-  // Player controls
+  // Handle play/pause
   const togglePlay = () => {
-    setIsPlaying(!isPlaying)
+    if (!audioInitialized) {
+      initializeAudio()
+    }
+    
+    if (isPlaying) {
+      pauseBreathing()
+    } else {
+      startBreathing()
+    }
   }
 
+  // Start breathing session
+  const startBreathing = () => {
+    if (!audioInitialized) return
+    
+    setIsPlaying(true)
+    
+    // Resume AudioContext if suspended
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume()
+    }
+    
+    // Reset counters
+    setElapsedTime(0)
+    setCycleCount(0)
+    
+    // Start the breath phase cycle
+    startBreathPhase("inhale")
+    
+    // Start the overall timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+    }
+    
+    timerRef.current = setInterval(() => {
+      setElapsedTime(prev => {
+        if (prev >= meditationDuration - 1) {
+          pauseBreathing()
+          return prev
+        }
+        return prev + 1
+      })
+    }, 1000)
+    
+    // Start visualization
+    if (showGuide) {
+      startVisualization()
+    }
+  }
+
+  // Pause breathing session
+  const pauseBreathing = () => {
+    setIsPlaying(false)
+    
+    // Clear timers
+    if (timerRef.current) {
+      clearInterval(timerRef.current)
+      timerRef.current = null
+    }
+    
+    if (phaseTimerRef.current) {
+      clearInterval(phaseTimerRef.current)
+      phaseTimerRef.current = null
+    }
+    
+    // Fade out sound
+    if (gainNodeRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime
+      gainNodeRef.current.gain.cancelScheduledValues(now)
+      gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, now)
+      gainNodeRef.current.gain.linearRampToValueAtTime(0, now + 0.5)
+    }
+    
+    // Stop visualization
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+  }
+
+  // Start a breath phase
+  const startBreathPhase = (phase: "inhale" | "hold-in" | "exhale" | "hold-out") => {
+    if (!audioInitialized || !gainNodeRef.current || !audioContextRef.current || !pannerNodeRef.current || !oscillatorRef.current || !filterRef.current) return
+    
+    setBreathPhase(phase)
+    setPhaseProgress(0)
+    
+    // Clear any existing timer
+    if (phaseTimerRef.current) {
+      clearInterval(phaseTimerRef.current)
+    }
+    
+    // Get phase duration
+    let duration = 0
+    switch (phase) {
+      case "inhale":
+        duration = currentPattern.inhaleTime
+        break
+      case "hold-in":
+        duration = currentPattern.holdInTime
+        break
+      case "exhale":
+        duration = currentPattern.exhaleTime
+        break
+      case "hold-out":
+        duration = currentPattern.holdOutTime
+        break
+    }
+    
+    // Skip phases with 0 duration
+    if (duration <= 0) {
+      const nextPhase = getNextPhase(phase)
+      startBreathPhase(nextPhase)
+      return
+    }
+    
+    // Set audio parameters based on phase
+    const now = audioContextRef.current.currentTime
+    
+    // Reset values
+    gainNodeRef.current.gain.cancelScheduledValues(now)
+    oscillatorRef.current.frequency.cancelScheduledValues(now)
+    pannerNodeRef.current.pan.cancelScheduledValues(now)
+    filterRef.current.frequency.cancelScheduledValues(now)
+    
+    // Set current values
+    gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, now)
+    oscillatorRef.current.frequency.setValueAtTime(oscillatorRef.current.frequency.value, now)
+    pannerNodeRef.current.pan.setValueAtTime(pannerNodeRef.current.pan.value, now)
+    filterRef.current.frequency.setValueAtTime(filterRef.current.frequency.value, now)
+    
+    // Configure audio parameters based on breath phase
+    switch (phase) {
+      case "inhale":
+        // Increasing frequency and volume during inhale
+        gainNodeRef.current.gain.linearRampToValueAtTime(isMuted ? 0 : volume / 300, now + duration * 0.5)
+        oscillatorRef.current.frequency.linearRampToValueAtTime(432 + 108, now + duration)
+        pannerNodeRef.current.pan.linearRampToValueAtTime(0.5, now + duration)
+        filterRef.current.frequency.linearRampToValueAtTime(1200, now + duration)
+        break
+        
+      case "hold-in":
+        // Stable but slightly fluctuating during hold
+        gainNodeRef.current.gain.linearRampToValueAtTime(isMuted ? 0 : volume / 300, now + duration * 0.2)
+        // Small frequency variations during hold
+        oscillatorRef.current.frequency.linearRampToValueAtTime(432 + 120, now + duration * 0.5)
+        oscillatorRef.current.frequency.linearRampToValueAtTime(432 + 110, now + duration)
+        break
+        
+      case "exhale":
+        // Decreasing frequency and volume during exhale
+        gainNodeRef.current.gain.linearRampToValueAtTime(isMuted ? 0 : volume / 400, now + duration)
+        oscillatorRef.current.frequency.linearRampToValueAtTime(432, now + duration)
+        pannerNodeRef.current.pan.linearRampToValueAtTime(-0.5, now + duration)
+        filterRef.current.frequency.linearRampToValueAtTime(800, now + duration)
+        break
+        
+      case "hold-out":
+        // Almost silent during hold-out
+        gainNodeRef.current.gain.linearRampToValueAtTime(isMuted ? 0 : volume / 500, now + duration)
+        // Low frequency during hold-out
+        oscillatorRef.current.frequency.linearRampToValueAtTime(432 - 20, now + duration)
+        break
+    }
+    
+    // Progress timer
+    const updateInterval = 50 // ms
+    const steps = (duration * 1000) / updateInterval
+    let step = 0
+    
+    phaseTimerRef.current = setInterval(() => {
+      step++
+      const progress = (step / steps) * 100
+      setPhaseProgress(progress > 100 ? 100 : progress)
+      
+      if (step >= steps) {
+        clearInterval(phaseTimerRef.current!)
+        phaseTimerRef.current = null
+        
+        // Move to next phase
+        const nextPhase = getNextPhase(phase)
+        if (nextPhase === "inhale") {
+          // Completed a full cycle
+          setCycleCount(prev => prev + 1)
+        }
+        
+        startBreathPhase(nextPhase)
+      }
+    }, updateInterval)
+  }
+
+  // Get the next breath phase
+  const getNextPhase = (currentPhase: "inhale" | "hold-in" | "exhale" | "hold-out"): "inhale" | "hold-in" | "exhale" | "hold-out" => {
+    switch (currentPhase) {
+      case "inhale":
+        return currentPattern.holdInTime > 0 ? "hold-in" : "exhale"
+      case "hold-in":
+        return "exhale"
+      case "exhale":
+        return currentPattern.holdOutTime > 0 ? "hold-out" : "inhale"
+      case "hold-out":
+        return "inhale"
+    }
+  }
+
+  // Toggle mute
   const toggleMute = () => {
     setIsMuted(!isMuted)
   }
 
-  const prevTrack = () => {
-    setCurrentTrackIndex((prev) => (prev === 0 ? tracks.length - 1 : prev - 1))
-    setProgress(0)
-    setCurrentTime(0)
-    setIsPlaying(true)
-  }
+  // Update volume when changed
+  useEffect(() => {
+    if (!gainNodeRef.current || !audioContextRef.current) return
+    
+    const currentVolume = isMuted ? 0 : volume / 100
+    
+    // Don't abruptly change volume - smooth transition
+    const now = audioContextRef.current.currentTime
+    gainNodeRef.current.gain.cancelScheduledValues(now)
+    gainNodeRef.current.gain.setValueAtTime(gainNodeRef.current.gain.value, now)
+    gainNodeRef.current.gain.linearRampToValueAtTime(
+      currentVolume * (breathPhase === "inhale" ? 0.3 : breathPhase === "exhale" ? 0.25 : 0.2),
+      now + 0.2
+    )
+  }, [volume, isMuted])
 
-  const nextTrack = () => {
-    setCurrentTrackIndex((prev) => (prev === tracks.length - 1 ? 0 : prev + 1))
-    setProgress(0)
-    setCurrentTime(0)
-    setIsPlaying(true)
-  }
-
-  const onProgressChange = (value: number[]) => {
-    if (audioRef.current) {
-      const newTime = (value[0] / 100) * audioRef.current.duration
-      audioRef.current.currentTime = newTime
-      setProgress(value[0])
-      setCurrentTime(newTime)
+  // Handle ambient sound change
+  useEffect(() => {
+    if (!filterRef.current || !oscillatorRef.current) return
+    
+    // Different filter and oscillator settings based on ambient sound
+    switch (ambientSound) {
+      case "ocean":
+        oscillatorRef.current.type = "sine"
+        filterRef.current.type = "lowpass"
+        filterRef.current.Q.value = 1.5
+        break
+      case "forest":
+        oscillatorRef.current.type = "triangle"
+        filterRef.current.type = "bandpass"
+        filterRef.current.Q.value = 2
+        break
+      case "cosmic":
+        oscillatorRef.current.type = "sine"
+        filterRef.current.type = "highpass"
+        filterRef.current.Q.value = 0.8
+        break
     }
-  }
+  }, [ambientSound])
 
-  const onVolumeChange = (value: number[]) => {
-    setVolume(value[0])
-    if (value[0] === 0) {
-      setIsMuted(true)
-    } else if (isMuted) {
-      setIsMuted(false)
-    }
-  }
-
-  // Breath sync controls
-  const toggleBreathSync = () => {
-    setIsBreathSyncActive(!isBreathSyncActive)
-  }
-
-  const selectBreathPattern = (index: number) => {
-    setCurrentPatternIndex(index)
-  }
-
-  const toggleSession = () => {
-    setIsSessionActive(!isSessionActive)
-    if (!isSessionActive) {
-      setBreathCount(0)
-    }
-  }
-
-  // Update custom pattern
-  const updateCustomPattern = (field: keyof BreathPattern, value: number) => {
-    setCustomPattern((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-  }
-
-  // Toggle fullscreen
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return
-
-    if (!isFullscreen) {
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen()
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      pauseBreathing()
+      
+      if (oscillatorRef.current) {
+        oscillatorRef.current.stop()
+        oscillatorRef.current.disconnect()
       }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen()
+      
+      if (gainNodeRef.current) {
+        gainNodeRef.current.disconnect()
+      }
+      
+      if (pannerNodeRef.current) {
+        pannerNodeRef.current.disconnect()
+      }
+      
+      if (filterRef.current) {
+        filterRef.current.disconnect()
+      }
+      
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close()
       }
     }
+  }, [])
+
+  // Visualization
+  const startVisualization = () => {
+    if (!canvasRef.current) return
+    
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    // Set canvas size
+    canvas.width = canvas.clientWidth
+    canvas.height = canvas.clientHeight
+    
+    const centerX = canvas.width / 2
+    const centerY = canvas.height / 2
+    const maxRadius = Math.min(centerX, centerY) * 0.8
+    
+    const animate = () => {
+      animationRef.current = requestAnimationFrame(animate)
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      
+      // Background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      
+      // Draw breath circle
+      const radiusMultiplier = breathPhase === "inhale" || breathPhase === "hold-in" 
+        ? 0.4 + (phaseProgress / 100) * 0.6 
+        : 1 - (phaseProgress / 100) * 0.6
+      
+      const radius = maxRadius * radiusMultiplier
+      
+      // Outer glow
+      const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.7, centerX, centerY, radius * 1.3)
+      gradient.addColorStop(0, 'rgba(138, 43, 226, 0.6)')
+      gradient.addColorStop(1, 'rgba(138, 43, 226, 0)')
+      
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius * 1.2, 0, Math.PI * 2)
+      ctx.fillStyle = gradient
+      ctx.fill()
+      
+      // Main circle
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+      
+      // Color based on phase
+      let circleColor
+      switch (breathPhase) {
+        case "inhale":
+          circleColor = 'rgba(138, 43, 226, 0.8)' // Purple
+          break
+        case "hold-in":
+          circleColor = 'rgba(43, 138, 226, 0.8)' // Blue
+          break
+        case "exhale":
+          circleColor = 'rgba(43, 226, 138, 0.8)' // Teal
+          break
+        case "hold-out":
+          circleColor = 'rgba(226, 138, 43, 0.8)' // Orange
+          break
+      }
+      
+      ctx.fillStyle = circleColor
+      ctx.fill()
+      
+      // Text in center
+      ctx.font = '20px Arial'
+      ctx.fillStyle = 'white'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      
+      const phaseText = breathPhase === "inhale" ? "Breathe In" :
+                        breathPhase === "hold-in" ? "Hold" :
+                        breathPhase === "exhale" ? "Breathe Out" : "Hold"
+      
+      ctx.fillText(phaseText, centerX, centerY)
+      
+      // Progress arc around the circle
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius * 1.1, -Math.PI / 2, -Math.PI / 2 + (phaseProgress / 100) * Math.PI * 2)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'
+      ctx.lineWidth = 3
+      ctx.stroke()
+    }
+    
+    animate()
   }
 
-  // Get chakra color
-  const getChakraColor = (chakra?: string) => {
-    switch (chakra) {
-      case "Root":
-        return "#ff0000"
-      case "Sacral":
-        return "#ff8c00"
-      case "Solar Plexus":
-        return "#ffff00"
-      case "Heart":
-        return "#00ff00"
-      case "Throat":
-        return "#00bfff"
-      case "Third Eye":
-        return "#0000ff"
-      case "Crown":
-        return "#9400d3"
-      default:
-        return "#9333ea"
-    }
-  }
-
-  // Get breath phase instruction
-  const getBreathInstruction = () => {
-    switch (currentBreathPhase) {
-      case "inhale":
-        return "Inhale"
-      case "hold1":
-        return "Hold"
-      case "exhale":
-        return "Exhale"
-      case "hold2":
-        return "Hold"
-    }
-  }
-
-  // Calculate circle size based on breath phase
-  const getCircleSize = () => {
-    if (currentBreathPhase === "inhale") {
-      return 50 + (breathProgress / 100) * 50 // 50% to 100%
-    } else if (currentBreathPhase === "exhale") {
-      return 100 - (breathProgress / 100) * 50 // 100% to 50%
-    } else {
-      return 100 // Hold phases maintain full size
-    }
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   return (
-    <div className="rounded-xl bg-black/30 backdrop-blur-sm border border-purple-500/20 overflow-hidden">
-      <div className="p-4 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
-          >
-            <Lungs className="h-4 w-4 text-white" />
+    <div className={cn("p-6 rounded-xl bg-black/30 backdrop-blur-sm border border-purple-500/20", className)}>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+            <Wind className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-white">Breath-Synchronized Player</h2>
-            <p className="text-xs text-white/60">
-              {isBreathSyncActive
-                ? `${currentPattern.name} • ${getBreathInstruction()}`
-                : "Synchronize music with your breath"}
-            </p>
+            <h3 className="text-lg font-semibold text-white">Breath Synchronization</h3>
+            <p className="text-xs text-white/60">Guide your meditation with breath-synchronized audio</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <Button
-            variant={isBreathSyncActive ? "default" : "outline"}
-            size="sm"
-            onClick={toggleBreathSync}
-            className={cn(
-              isBreathSyncActive
-                ? "bg-purple-500 hover:bg-purple-600 text-white"
-                : "border-white/10 text-white hover:bg-white/5",
-            )}
+            variant="outline"
+            size="icon"
+            onClick={toggleMute}
+            className="border-white/10 text-white hover:bg-white/5"
           >
-            {isBreathSyncActive ? "Sync Active" : "Start Sync"}
+            {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="default"
+            onClick={togglePlay}
+            className={isPlaying ? "bg-purple-600 hover:bg-purple-700" : ""}
+          >
+            {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+            {isPlaying ? "Pause" : "Start"}
           </Button>
         </div>
       </div>
 
-      <div ref={containerRef} className={cn(isFullscreen ? "h-screen" : "")}>
-        <div className="grid md:grid-cols-2 gap-0">
-          <div className="p-6 border-r border-white/10">
-            <div className="space-y-6">
-              {/* Breath Visualization */}
-              <div
-                className="relative aspect-square rounded-lg overflow-hidden bg-black/40 flex items-center justify-center"
-                style={{
-                  background: `radial-gradient(circle at center, ${currentPattern.color}20 0%, rgba(0,0,0,0.6) 70%)`,
-                }}
-              >
-                {/* Breath circle */}
-                <div
-                  className="relative flex items-center justify-center transition-all duration-300"
-                  style={{
-                    width: `${getCircleSize()}%`,
-                    height: `${getCircleSize()}%`,
-                    maxWidth: "80%",
-                    maxHeight: "80%",
-                  }}
-                >
-                  <div
-                    className="absolute inset-0 rounded-full animate-pulse-glow"
-                    style={{
-                      background: `radial-gradient(circle at center, ${currentPattern.color}30 0%, transparent 70%)`,
-                      border: `2px solid ${currentPattern.color}40`,
-                    }}
-                  ></div>
-
-                  {/* Inner circles */}
-                  <div
-                    className="absolute rounded-full w-3/4 h-3/4"
-                    style={{
-                      background: `radial-gradient(circle at center, ${currentPattern.color}20 0%, transparent 70%)`,
-                      border: `1px solid ${currentPattern.color}20`,
-                    }}
-                  ></div>
-
-                  <div
-                    className="absolute rounded-full w-1/2 h-1/2"
-                    style={{
-                      background: `radial-gradient(circle at center, ${currentPattern.color}10 0%, transparent 70%)`,
-                      border: `1px solid ${currentPattern.color}10`,
-                    }}
-                  ></div>
-
-                  {/* Breath instruction */}
-                  <div className="text-center z-10">
-                    <div className="text-2xl md:text-4xl font-bold text-white">
-                      {isBreathSyncActive ? getBreathInstruction() : "Start"}
-                    </div>
-                    {isSessionActive && isBreathSyncActive && (
-                      <div className="mt-2 text-white/80 text-sm">
-                        {breathCount} breaths completed
-                      </div>
-                    )}
-                  </div>
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left column - Visualization */}
+        <div className="flex-1">
+          <div className="relative aspect-square rounded-lg overflow-hidden bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center">
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full"
+            ></canvas>
+            
+            {!isPlaying && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm">
+                <div className="text-center p-6">
+                  <h3 className="text-xl font-semibold text-white mb-3">Breath Guide</h3>
+                  <p className="text-sm text-white/80 mb-6">
+                    Follow the animated circle to sync your breathing.
+                    <br />Click Start to begin the session.
+                  </p>
+                  <Button
+                    variant="default"
+                    className="bg-purple-600 hover:bg-purple-700"
+                    onClick={togglePlay}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Start Session
+                  </Button>
                 </div>
-
-                {/* Session timer (if active) */}
-                {isSessionActive && isBreathSyncActive && (
-                  <div className="absolute top-3 right-3 bg-black/40 px-3 py-1 rounded-full flex items-center text-white/90 text-sm">
-                    <Timer className="h-4 w-4 mr-1" />
-                    {formatTime(sessionTimeRemaining)}
-                  </div>
-                )}
-
-                {/* Fullscreen button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleFullscreen}
-                  className="absolute bottom-3 right-3 text-white/60 hover:text-white hover:bg-black/20"
-                >
-                  {isFullscreen ? (
-                    <Minimize className="h-4 w-4" />
-                  ) : (
-                    <Maximize className="h-4 w-4" />
-                  )}
-                </Button>
               </div>
+            )}
 
-              {/* Breath patterns */}
-              <Tabs defaultValue="patterns" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="patterns">Breath Patterns</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="patterns" className="space-y-4">
-                  <div className="grid grid-cols-1 gap-2">
-                    {breathPatterns.slice(0, 4).map((pattern, index) => (
-                      <div
-                        key={pattern.id}
-                        className={cn(
-                          "relative p-3 rounded-lg cursor-pointer transition-all",
-                          currentPatternIndex === index
-                            ? "bg-black/40 border border-white/10"
-                            : "bg-black/20 hover:bg-black/30"
-                        )}
-                        onClick={() => selectBreathPattern(index)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="h-10 w-10 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: `${pattern.color}20` }}
-                          >
-                            <div
-                              className="h-6 w-6 rounded-full"
-                              style={{ backgroundColor: pattern.color }}
-                            ></div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-white">{pattern.name}</div>
-                            <div className="text-xs text-white/60">{pattern.description}</div>
-                          </div>
-                          {currentPatternIndex === index && (
-                            <div
-                              className="absolute top-0 right-0 h-full w-1 rounded-r-lg"
-                              style={{ backgroundColor: pattern.color }}
-                            ></div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Custom pattern option */}
-                    <div
-                      className={cn(
-                        "relative p-3 rounded-lg cursor-pointer transition-all",
-                        currentPatternIndex === 4
-                          ? "bg-black/40 border border-white/10"
-                          : "bg-black/20 hover:bg-black/30"
-                      )}
-                      onClick={() => selectBreathPattern(4)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="h-10 w-10 rounded-full flex items-center justify-center"
-                          style={{ backgroundColor: `${customPattern.color}20` }}
-                        >
-                          <div
-                            className="h-6 w-6 rounded-full"
-                            style={{ backgroundColor: customPattern.color }}
-                          ></div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-white">Custom Pattern</div>
-                          <div className="text-xs text-white/60">
-                            In: {customPattern.inhale}s, Hold: {customPattern.hold1}s, Out:{" "}
-                            {customPattern.exhale}s
-                            {customPattern.hold2 > 0 ? `, Hold: ${customPattern.hold2}s` : ""}
-                          </div>
-                        </div>
-                        {currentPatternIndex === 4 && (
-                          <div
-                            className="absolute top-0 right-0 h-full w-1 rounded-r-lg"
-                            style={{ backgroundColor: customPattern.color }}
-                          ></div>
-                        )}
-                      </div>
-                    </div>
+            {/* Current pattern diagram */}
+            {!isPlaying && (
+              <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3">
+                <h4 className="text-sm font-medium text-white mb-2">Current Pattern: {currentPattern.name}</h4>
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="bg-purple-600/70 px-2 py-1 rounded text-white">
+                    Inhale {currentPattern.inhaleTime}s
                   </div>
-
-                  {/* Custom pattern controls (if selected) */}
-                  {currentPatternIndex === 4 && (
-                    <div className="mt-4 p-3 rounded-lg bg-black/20 space-y-3">
-                      <h3 className="text-white font-medium">Custom Pattern Settings</h3>
-
-                      {/* Inhale */}
-                      <div className="grid grid-cols-3 gap-2 items-center">
-                        <label className="text-white/80 text-sm">Inhale:</label>
-                        <Slider
-                          value={[customPattern.inhale]}
-                          min={1}
-                          max={10}
-                          step={1}
-                          onValueChange={(value) => updateCustomPattern("inhale", value[0])}
-                          className="col-span-1"
-                        />
-                        <span className="text-white text-right">{customPattern.inhale}s</span>
+                  <ArrowRight className="h-3 w-3 text-white/50" />
+                  {currentPattern.holdInTime > 0 && (
+                    <>
+                      <div className="bg-blue-600/70 px-2 py-1 rounded text-white">
+                        Hold {currentPattern.holdInTime}s
                       </div>
-
-                      {/* Hold 1 */}
-                      <div className="grid grid-cols-3 gap-2 items-center">
-                        <label className="text-white/80 text-sm">Hold:</label>
-                        <Slider
-                          value={[customPattern.hold1]}
-                          min={0}
-                          max={10}
-                          step={1}
-                          onValueChange={(value) => updateCustomPattern("hold1", value[0])}
-                          className="col-span-1"
-                        />
-                        <span className="text-white text-right">{customPattern.hold1}s</span>
-                      </div>
-
-                      {/* Exhale */}
-                      <div className="grid grid-cols-3 gap-2 items-center">
-                        <label className="text-white/80 text-sm">Exhale:</label>
-                        <Slider
-                          value={[customPattern.exhale]}
-                          min={1}
-                          max={10}
-                          step={1}
-                          onValueChange={(value) => updateCustomPattern("exhale", value[0])}
-                          className="col-span-1"
-                        />
-                        <span className="text-white text-right">{customPattern.exhale}s</span>
-                      </div>
-
-                      {/* Hold 2 */}
-                      <div className="grid grid-cols-3 gap-2 items-center">
-                        <label className="text-white/80 text-sm">Final Hold:</label>
-                        <Slider
-                          value={[customPattern.hold2]}
-                          min={0}
-                          max={10}
-                          step={1}
-                          onValueChange={(value) => updateCustomPattern("hold2", value[0])}
-                          className="col-span-1"
-                        />
-                        <span className="text-white text-right">{customPattern.hold2}s</span>
-                      </div>
+                      <ArrowRight className="h-3 w-3 text-white/50" />
+                    </>
+                  )}
+                  <div className="bg-teal-600/70 px-2 py-1 rounded text-white">
+                    Exhale {currentPattern.exhaleTime}s
+                  </div>
+                  <ArrowRight className="h-3 w-3 text-white/50" />
+                  {currentPattern.holdOutTime > 0 && (
+                    <div className="bg-orange-600/70 px-2 py-1 rounded text-white">
+                      Hold {currentPattern.holdOutTime}s
                     </div>
                   )}
-                </TabsContent>
-
-                <TabsContent value="settings" className="space-y-4">
-                  {/* Session settings */}
-                  <div className="p-3 rounded-lg bg-black/20 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-white font-medium">Timed Session</h3>
-                      <Switch
-                        checked={isSessionActive}
-                        onCheckedChange={toggleSession}
-                        disabled={!isBreathSyncActive}
-                      />
-                    </div>
-
-                    {isSessionActive && (
-                      <div className="grid grid-cols-4 gap-2">
-                        {[5, 10, 15, 20].map((mins) => (
-                          <Button
-                            key={mins}
-                            variant={sessionDuration === mins ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSessionDuration(mins)}
-                            className={cn(
-                              "text-sm",
-                              sessionDuration === mins
-                                ? "bg-blue-500 hover:bg-blue-600 text-white"
-                                : "border-white/10 text-white hover:bg-white/5"
-                            )}
-                          >
-                            {mins} min
-                          </Button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="text-xs text-white/60">
-                      Track your breath count and set a timer for your practice.
-                    </div>
-                  </div>
-
-                  {/* Information */}
-                  <div className="p-3 rounded-lg bg-black/20 space-y-3">
-                    <h3 className="text-white font-medium flex items-center">
-                      <Info className="h-4 w-4 mr-2 text-blue-400" />
-                      Benefits of Breath Synchronization
-                    </h3>
-                    <ul className="text-white/80 text-sm space-y-1 list-disc pl-5">
-                      <li>Enhances focus and presence during sound healing</li>
-                      <li>Deepens meditative state and relaxation</li>
-                      <li>Promotes coherence between body, breath, and sound</li>
-                      <li>Increases oxygen and energy flow throughout the body</li>
-                      <li>Reduces stress and anxiety more effectively</li>
-                    </ul>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Session stats */}
+            {isPlaying && (
+              <div className="absolute top-3 left-3 right-3 flex justify-between">
+                <div className="bg-black/70 backdrop-blur-sm px-3 py-1 rounded-md text-xs text-white">
+                  <Clock className="inline h-3 w-3 mr-1" />
+                  {formatTime(elapsedTime)} / {formatTime(meditationDuration)}
+                </div>
+                <div className="bg-black/70 backdrop-blur-sm px-3 py-1 rounded-md text-xs text-white">
+                  Cycles: {cycleCount}
+                </div>
+              </div>
+            )}
           </div>
-          <div className="p-6">
-            <div className="space-y-6">
-              {/* Track info & Cover */}
-              <div className="aspect-square relative overflow-hidden rounded-lg bg-black/40">
-                <img
-                  src={currentTrack.coverArt}
-                  alt={`Cover art for ${currentTrack.title}`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 p-4 w-full">
-                  <h2 className="text-xl font-bold text-white mb-1">{currentTrack.title}</h2>
-                  <p className="text-white/70">{currentTrack.artist}</p>
-                  {currentTrack.chakra && (
-                    <div
-                      className="mt-2 inline-block px-2 py-1 rounded-full text-xs"
-                      style={{
-                        backgroundColor: `${getChakraColor(currentTrack.chakra)}30`,
-                        color: "white",
-                      }}
-                    >
-                      {currentTrack.chakra} Chakra • {currentTrack.frequency} Hz
-                    </div>
-                  )}
-                </div>
+        </div>
+
+        {/* Right column - Controls */}
+        <div className="flex-1 space-y-6">
+          <Tabs defaultValue="patterns" className="w-full">
+            <TabsList className="bg-black/30 border-white/10 w-full">
+              <TabsTrigger value="patterns" className="data-[state=active]:bg-purple-600 flex-1">
+                Patterns
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="data-[state=active]:bg-purple-600 flex-1">
+                Settings
+              </TabsTrigger>
+            </TabsList>
+            
+            {/* Patterns Tab */}
+            <TabsContent value="patterns" className="space-y-6 pt-4">
+              {/* Pattern selection */}
+              <div className="space-y-2">
+                <Label className="text-white">Breathing Pattern</Label>
+                <Select value={selectedPattern} onValueChange={setSelectedPattern}>
+                  <SelectTrigger className="bg-black/30 border-white/10 text-white">
+                    <SelectValue placeholder="Select a pattern" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black border-white/10">
+                    {Object.entries(breathingPatterns).map(([key, pattern]) => (
+                      <SelectItem key={key} value={key} className="text-white hover:bg-white/10">
+                        {pattern.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-white/60">
+                  {currentPattern.description}
+                </p>
               </div>
-
-              {/* Playback controls */}
-              <div className="space-y-3">
-                {/* Progress */}
-                <div className="space-y-1">
-                  <Slider value={[progress]} min={0} max={100} step={0.1} onValueChange={onProgressChange} />
-                  <div className="flex justify-between text-xs text-white/60">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{currentTrack.duration}</span>
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleMute}
-                      className={isMuted ? "text-white/50" : "text-white"}
-                    >
-                      {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                    </Button>
+              
+              {/* Custom pattern controls */}
+              {selectedPattern === "custom" && (
+                <div className="space-y-4 bg-white/5 p-4 rounded-lg">
+                  <h4 className="text-sm font-medium text-white">Custom Pattern</h4>
+                  
+                  {/* Inhale time */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/80 text-xs">Inhale Duration</Label>
+                      <span className="text-sm text-white/80">{customInhale}s</span>
+                    </div>
                     <Slider
-                      value={[volume]}
-                      min={0}
-                      max={100}
+                      min={1}
+                      max={10}
                       step={1}
-                      onValueChange={onVolumeChange}
-                      className="w-24"
+                      value={[customInhale]}
+                      onValueChange={(value) => setCustomInhale(value[0])}
+                      className="cursor-pointer"
                     />
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={prevTrack} className="text-white">
-                      <SkipBack className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="icon"
-                      onClick={togglePlay}
-                      className="h-12 w-12 rounded-full bg-purple-500 hover:bg-purple-600 text-white"
-                    >
-                      {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={nextTrack} className="text-white">
-                      <SkipForward className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <div className="w-24"></div> {/* Spacer to balance layout */}
-                </div>
-              </div>
-
-              {/* Playlist */}
-              <div className="space-y-3">
-                <h3 className="text-white font-medium">Sacred Frequencies</h3>
-                <div className="space-y-1 max-h-[200px] overflow-y-auto pr-2">
-                  {tracks.map((track, index) => (
-                    <div
-                      key={track.id}
-                      className={cn(
-                        "flex items-center p-2 rounded-lg cursor-pointer",
-                        currentTrackIndex === index
-                          ? "bg-purple-500/20 border border-purple-500/30"
-                          : "hover:bg-white/5"
-                      )}
-                      onClick={() => {
-                        setCurrentTrackIndex(index)
-                        setIsPlaying(true)
-                      }}
-                    >
-                      <div
-                        className="h-8 w-8 rounded-full mr-3 flex-shrink-0 flex items-center justify-center"
-                        style={{
-                          backgroundColor: `${getChakraColor(track.chakra)}30`,
-                        }}
-                      >
-                        {currentTrackIndex === index && isPlaying ? (
-                          <Pause className="h-4 w-4 text-white" />
-                        ) : (
-                          <Play className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-white font-medium truncate">{track.title}</div>
-                        <div className="text-white/60 text-xs truncate">{track.artist}</div>
-                      </div>
-                      <div className="text-white/60 text-xs">{track.duration}</div>
+                  
+                  {/* Hold-in time */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/80 text-xs">Hold After Inhale</Label>
+                      <span className="text-sm text-white/80">{customHoldIn}s</span>
                     </div>
-                  ))}
+                    <Slider
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={[customHoldIn]}
+                      onValueChange={(value) => setCustomHoldIn(value[0])}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  
+                  {/* Exhale time */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/80 text-xs">Exhale Duration</Label>
+                      <span className="text-sm text-white/80">{customExhale}s</span>
+                    </div>
+                    <Slider
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={[customExhale]}
+                      onValueChange={(value) => setCustomExhale(value[0])}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                  
+                  {/* Hold-out time */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/80 text-xs">Hold After Exhale</Label>
+                      <span className="text-sm text-white/80">{customHoldOut}s</span>
+                    </div>
+                    <Slider
+                      min={0}
+                      max={10}
+                      step={1}
+                      value={[customHoldOut]}
+                      onValueChange={(value) => setCustomHoldOut(value[0])}
+                      className="cursor-pointer"
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Session duration */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-white">Session Duration</Label>
+                  <span className="text-sm text-white/80">{formatTime(meditationDuration)}</span>
+                </div>
+                <Slider
+                  min={60}
+                  max={1800}
+                  step={60}
+                  value={[meditationDuration]}
+                  onValueChange={(value) => setMeditationDuration(value[0])}
+                  className="cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-white/60">
+                  <span>1 min</span>
+                  <span>15 min</span>
+                  <span>30 min</span>
                 </div>
               </div>
-            </div>
+            </TabsContent>
+            
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="space-y-6 pt-4">
+              {/* Volume control */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-white">Volume</Label>
+                  <span className="text-sm text-white/80">{volume}%</span>
+                </div>
+                <Slider
+                  min={0}
+                  max={100}
+                  value={[volume]}
+                  onValueChange={(value) => setVolume(value[0])}
+                  className="cursor-pointer"
+                />
+              </div>
+              
+              {/* Sound palette */}
+              <div className="space-y-2">
+                <Label className="text-white">Sound Palette</Label>
+                <Select value={ambientSound} onValueChange={setAmbientSound}>
+                  <SelectTrigger className="bg-black/30 border-white/10 text-white">
+                    <SelectValue placeholder="Select sound palette" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black border-white/10">
+                    <SelectItem value="ocean" className="text-white hover:bg-white/10">
+                      Ocean Waves
+                    </SelectItem>
+                    <SelectItem value="forest" className="text-white hover:bg-white/10">
+                      Forest Ambience
+                    </SelectItem>
+                    <SelectItem value="cosmic" className="text-white hover:bg-white/10">
+                      Cosmic Resonance
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-white/60">
+                  Choose the tonal quality of the breath guide sound
+                </p>
+              </div>
+              
+              {/* Visualization toggle */}
+              <div className="space-y-4 bg-white/5 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-white cursor-pointer">Visual Breath Guide</Label>
+                    <p className="text-xs text-white/60">Show animated visual breathing guide</p>
+                  </div>
+                  <Switch
+                    checked={showGuide}
+                    onCheckedChange={setShowGuide}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Information */}
+          <div className="mt-4 p-3 bg-white/5 rounded-lg">
+            <h4 className="text-sm font-medium text-white mb-2">Benefits of Breath Work:</h4>
+            <ul className="text-xs text-white/70 space-y-1 list-disc pl-4">
+              <li>Reduces stress and anxiety by activating the parasympathetic nervous system</li>
+              <li>Improves focus and mental clarity through increased oxygen to the brain</li>
+              <li>Helps regulate emotions and enhance mood</li>
+              <li>Promotes deeper meditation states and mindfulness</li>
+              <li>Supports better sleep quality and relaxation</li>
+            </ul>
           </div>
         </div>
       </div>
-
-      {/* Hidden audio element */}
-      <audio
-        ref={audioRef}
-        src={currentTrack.audioSrc}
-        preload="metadata"
-        onLoadedMetadata={onLoadedMetadata}
-        loop={false}
-      />
     </div>
   )
 }

@@ -4,9 +4,10 @@ import { CosmicText } from "../../components/imported/ui/CosmicText"
 import { CosmicSection } from "../../components/imported/ui/CosmicSection"
 import { CosmicCard } from "../../components/imported/ui/CosmicCard"
 import { CosmicButton } from "../../components/imported/ui/CosmicButton"
-import { Play, Pause, Volume2, VolumeX, Settings, Music, Mic, Brain, Cloud } from "lucide-react"
+import { Play, Pause, Volume2, VolumeX, Settings, Music, Mic, Brain, Cloud, Wind, Hexagon } from "lucide-react"
 import { BinauralBeatGenerator } from "../../components/imported/audio/BinauralBeatGenerator"
 import { BreathSyncPlayer } from "../../components/imported/audio/BreathSyncPlayer"
+import { SacredGeometry } from "../../components/imported/SacredGeometry"
 import { FrequencyVisualizer3D } from "../../components/audio/FrequencyVisualizer3D"
 import { SpatialAudioExperience } from "../../components/audio/SpatialAudioExperience"
 import { VoiceControlledPlayer } from "../../components/audio/VoiceControlledPlayer"
@@ -42,7 +43,7 @@ export default function AudioComponentsDemo() {
           <div className="mt-12">
             <Tabs defaultValue="frequency-visualizer" className="w-full">
               <div className="flex justify-center mb-8">
-                <TabsList className="bg-black/30 backdrop-blur-sm border border-purple-500/20">
+                <TabsList className="bg-black/30 backdrop-blur-sm border border-purple-500/20 flex-wrap">
                   <TabsTrigger value="frequency-visualizer" className="data-[state=active]:bg-purple-600">
                     <Music className="mr-2 h-4 w-4" /> 
                     3D Visualizer
@@ -58,6 +59,14 @@ export default function AudioComponentsDemo() {
                   <TabsTrigger value="spatial-audio" className="data-[state=active]:bg-purple-600">
                     <Cloud className="mr-2 h-4 w-4" />
                     Spatial Audio
+                  </TabsTrigger>
+                  <TabsTrigger value="breath-sync" className="data-[state=active]:bg-purple-600">
+                    <Wind className="mr-2 h-4 w-4" />
+                    Breath Sync
+                  </TabsTrigger>
+                  <TabsTrigger value="sacred-geometry" className="data-[state=active]:bg-purple-600">
+                    <Hexagon className="mr-2 h-4 w-4" />
+                    Sacred Geometry
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -119,59 +128,49 @@ export default function AudioComponentsDemo() {
                     Adjust frequencies precisely to target specific brainwave states.
                   </CosmicText>
                   
+                  <div className="mt-8">
+                    <BinauralBeatGenerator />
+                  </div>
+                  
                   <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <CosmicCard>
-                      <div className="p-6 bg-gradient-to-br from-purple-900/50 to-indigo-900/50">
-                        <CosmicHeading level={3} align="center">Coming Soon</CosmicHeading>
-                        <div className="flex flex-col items-center justify-center min-h-[300px]">
-                          <Brain className="w-16 h-16 text-purple-500/70 mb-4" />
-                          <CosmicText className="text-center">
-                            Our enhanced Binaural Beat Generator will be available in the next update.
-                            It will feature presets for meditation, sleep, focus, and more.
-                          </CosmicText>
-                        </div>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>How Binaural Beats Work</CosmicHeading>
+                        <CosmicText className="mt-2">
+                          Binaural beats occur when two slightly different frequencies are played separately in each ear.
+                          The brain perceives the difference between these frequencies as a third "phantom" beat.
+                          This process, called frequency following response, can help guide your brain into specific states.
+                        </CosmicText>
                       </div>
                     </CosmicCard>
                     
-                    <div className="space-y-6">
-                      <CosmicCard>
-                        <div className="p-6">
-                          <CosmicHeading level={4}>What are Binaural Beats?</CosmicHeading>
-                          <CosmicText className="mt-2">
-                            Binaural beats occur when two slightly different frequencies are played separately in each ear.
-                            The brain perceives the difference between these frequencies as a third "phantom" beat.
-                          </CosmicText>
-                        </div>
-                      </CosmicCard>
-                      
-                      <CosmicCard>
-                        <div className="p-6">
-                          <CosmicHeading level={4}>Brainwave States</CosmicHeading>
-                          <div className="mt-4 space-y-3">
-                            <div>
-                              <h5 className="font-medium text-purple-300">Delta (0.5-4 Hz)</h5>
-                              <p className="text-sm text-white/70">Deep sleep, healing, unconscious mind</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-indigo-300">Theta (4-8 Hz)</h5>
-                              <p className="text-sm text-white/70">Meditation, creativity, dream state</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-blue-300">Alpha (8-13 Hz)</h5>
-                              <p className="text-sm text-white/70">Relaxation, calmness, present awareness</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-green-300">Beta (13-30 Hz)</h5>
-                              <p className="text-sm text-white/70">Focus, alertness, active thinking</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-yellow-300">Gamma (30-100 Hz)</h5>
-                              <p className="text-sm text-white/70">Higher mental activity, insight</p>
-                            </div>
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>Brainwave States</CosmicHeading>
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <h5 className="font-medium text-purple-300">Delta (0.5-4 Hz)</h5>
+                            <p className="text-sm text-white/70">Deep sleep, healing, unconscious mind</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-indigo-300">Theta (4-8 Hz)</h5>
+                            <p className="text-sm text-white/70">Meditation, creativity, dream state</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-blue-300">Alpha (8-13 Hz)</h5>
+                            <p className="text-sm text-white/70">Relaxation, calmness, present awareness</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-green-300">Beta (13-30 Hz)</h5>
+                            <p className="text-sm text-white/70">Focus, alertness, active thinking</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-yellow-300">Gamma (30-100 Hz)</h5>
+                            <p className="text-sm text-white/70">Higher mental activity, insight</p>
                           </div>
                         </div>
-                      </CosmicCard>
-                    </div>
+                      </div>
+                    </CosmicCard>
                   </div>
                 </div>
               </TabsContent>
@@ -187,52 +186,154 @@ export default function AudioComponentsDemo() {
                     Our spatial audio technology creates the sensation of sounds coming from different directions and distances.
                   </CosmicText>
                   
+                  <div className="mt-8">
+                    <SpatialAudioExperience />
+                  </div>
+                  
                   <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <CosmicCard>
-                      <div className="p-6 bg-gradient-to-br from-blue-900/50 to-indigo-900/50">
-                        <CosmicHeading level={3} align="center">Coming Soon</CosmicHeading>
-                        <div className="flex flex-col items-center justify-center min-h-[300px]">
-                          <Cloud className="w-16 h-16 text-purple-500/70 mb-4" />
-                          <CosmicText className="text-center">
-                            Our enhanced Spatial Audio Experience will be available in the next update.
-                            It will feature immersive cosmic soundscapes and 3D audio environments.
-                          </CosmicText>
-                        </div>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>What is Spatial Audio?</CosmicHeading>
+                        <CosmicText className="mt-2">
+                          Spatial audio creates the illusion of three-dimensional sound by carefully controlling how audio
+                          reaches each ear. This allows sounds to appear as if they're coming from specific locations
+                          in space around you, creating a more immersive experience.
+                        </CosmicText>
                       </div>
                     </CosmicCard>
                     
-                    <div className="space-y-6">
-                      <CosmicCard>
-                        <div className="p-6">
-                          <CosmicHeading level={4}>What is Spatial Audio?</CosmicHeading>
-                          <CosmicText className="mt-2">
-                            Spatial audio creates the illusion of three-dimensional sound by carefully controlling how audio
-                            reaches each ear. This allows sounds to appear as if they're coming from specific locations
-                            in space around you, creating a more immersive experience.
-                          </CosmicText>
-                        </div>
-                      </CosmicCard>
-                      
-                      <CosmicCard>
-                        <div className="p-6">
-                          <CosmicHeading level={4}>Benefits</CosmicHeading>
-                          <div className="mt-4 space-y-3">
-                            <div>
-                              <h5 className="font-medium text-purple-300">Enhanced Immersion</h5>
-                              <p className="text-sm text-white/70">Creates a more engaging and present sound experience</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-indigo-300">Deeper Meditation</h5>
-                              <p className="text-sm text-white/70">Helps with focus by creating a surround sound environment</p>
-                            </div>
-                            <div>
-                              <h5 className="font-medium text-blue-300">Sound Healing</h5>
-                              <p className="text-sm text-white/70">Allows for targeted frequency delivery to specific areas</p>
-                            </div>
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>Benefits</CosmicHeading>
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <h5 className="font-medium text-purple-300">Enhanced Immersion</h5>
+                            <p className="text-sm text-white/70">Creates a more engaging and present sound experience</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-indigo-300">Deeper Meditation</h5>
+                            <p className="text-sm text-white/70">Helps with focus by creating a surround sound environment</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-blue-300">Sound Healing</h5>
+                            <p className="text-sm text-white/70">Allows for targeted frequency delivery to specific areas</p>
                           </div>
                         </div>
-                      </CosmicCard>
-                    </div>
+                      </div>
+                    </CosmicCard>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Breath Sync */}
+              <TabsContent value="breath-sync" className="mt-0">
+                <div className="my-8">
+                  <CosmicHeading level={2} align="center" withAccent>
+                    Breath Synchronization
+                  </CosmicHeading>
+                  <CosmicText className="mt-2 text-center max-w-2xl mx-auto">
+                    Harness the power of conscious breathing with our guided breath synchronization tool.
+                    Customize breathing patterns and audio feedback to enhance your meditation practice.
+                  </CosmicText>
+                  
+                  <div className="mt-8">
+                    <BreathSyncPlayer />
+                  </div>
+                  
+                  <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>The Science of Breathwork</CosmicHeading>
+                        <CosmicText className="mt-2">
+                          Controlled breathing directly influences your autonomic nervous system, helping to shift
+                          between sympathetic (fight-or-flight) and parasympathetic (rest-and-digest) states.
+                          Ancient traditions have understood the profound connection between breath and consciousness for millennia.
+                        </CosmicText>
+                      </div>
+                    </CosmicCard>
+                    
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>Key Benefits</CosmicHeading>
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <h5 className="font-medium text-purple-300">Reduced Stress</h5>
+                            <p className="text-sm text-white/70">Activates the parasympathetic nervous system to lower stress hormones</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-indigo-300">Improved Focus</h5>
+                            <p className="text-sm text-white/70">Increases oxygen to the brain enhancing mental clarity and focus</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-blue-300">Emotional Regulation</h5>
+                            <p className="text-sm text-white/70">Creates space between stimulus and response for better self-regulation</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-teal-300">Better Sleep</h5>
+                            <p className="text-sm text-white/70">Helps relax the body and mind for improved sleep quality</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CosmicCard>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              {/* Sacred Geometry */}
+              <TabsContent value="sacred-geometry" className="mt-0">
+                <div className="my-8">
+                  <CosmicHeading level={2} align="center" withAccent>
+                    Sacred Geometry Visualizer
+                  </CosmicHeading>
+                  <CosmicText className="mt-2 text-center max-w-2xl mx-auto">
+                    Explore the universal language of sacred geometry—patterns that appear throughout 
+                    nature, art, and spirituality across diverse cultures and time periods.
+                  </CosmicText>
+                  
+                  <div className="mt-8">
+                    <SacredGeometry 
+                      defaultPattern="flowerOfLife"
+                      enableAnimation={true}
+                      interactive={true}
+                    />
+                  </div>
+                  
+                  <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>Sacred Geometry in Nature</CosmicHeading>
+                        <CosmicText className="mt-2">
+                          Sacred geometric patterns are found throughout the natural world—from the spiral of a
+                          seashell to the hexagonal cells of a honeycomb, from the self-similar branching of trees to the
+                          arrangement of petals in a flower. These patterns represent the fundamental organizing principles
+                          of the cosmos.
+                        </CosmicText>
+                      </div>
+                    </CosmicCard>
+                    
+                    <CosmicCard>
+                      <div className="p-6">
+                        <CosmicHeading level={4}>Traditional Uses</CosmicHeading>
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <h5 className="font-medium text-purple-300">Meditation</h5>
+                            <p className="text-sm text-white/70">Used as focus points to access deeper states of consciousness</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-indigo-300">Sacred Architecture</h5>
+                            <p className="text-sm text-white/70">Incorporated into temples, churches, and spiritual buildings worldwide</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-blue-300">Energy Work</h5>
+                            <p className="text-sm text-white/70">Employed to balance and harmonize energy fields in the body</p>
+                          </div>
+                          <div>
+                            <h5 className="font-medium text-teal-300">Cosmology</h5>
+                            <p className="text-sm text-white/70">Used to map and understand the structure of the universe</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CosmicCard>
                   </div>
                 </div>
               </TabsContent>
