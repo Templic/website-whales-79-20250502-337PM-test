@@ -1,0 +1,251 @@
+export interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  coverArt: string;
+  audioSrc: string;
+}
+
+export interface Playlist {
+  id: string;
+  title: string;
+  description: string;
+  coverArt: string;
+  category: string;
+  mood?: string;
+  frequency?: number;
+  chakra?: string;
+  tracks: Track[];
+}
+
+export const playlists: Playlist[] = [
+  {
+    id: "playlist-1",
+    title: "Chakra Alignment Series",
+    description: "A complete journey through all seven chakras to balance your energy",
+    coverArt: "/placeholder.svg?height=300&width=300",
+    category: "meditation",
+    mood: "balancing",
+    tracks: [
+      {
+        id: "track-1",
+        title: "Root Chakra Grounding",
+        artist: "Cosmic Harmony",
+        duration: "10:30",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/root-chakra.mp3",
+      },
+      {
+        id: "track-2",
+        title: "Sacral Creativity Flow",
+        artist: "Cosmic Harmony",
+        duration: "9:45",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/sacral-chakra.mp3",
+      },
+      {
+        id: "track-3",
+        title: "Solar Plexus Empowerment",
+        artist: "Cosmic Harmony",
+        duration: "8:21",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/solar-plexus.mp3",
+      },
+      {
+        id: "track-4",
+        title: "Heart Chakra Opening",
+        artist: "Cosmic Harmony",
+        duration: "12:15",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/heart-chakra.mp3",
+      },
+      {
+        id: "track-5",
+        title: "Throat Chakra Expression",
+        artist: "Cosmic Harmony",
+        duration: "7:42",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/throat-chakra.mp3",
+      },
+      {
+        id: "track-6",
+        title: "Third Eye Awakening",
+        artist: "Cosmic Harmony",
+        duration: "11:11",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/third-eye.mp3",
+      },
+      {
+        id: "track-7",
+        title: "Crown Connection",
+        artist: "Cosmic Harmony",
+        duration: "14:22",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/crown-chakra.mp3",
+      },
+    ],
+  },
+  {
+    id: "playlist-2",
+    title: "Quantum Healing Frequencies",
+    description: "Precise frequencies based on quantum physics principles for deep cellular healing",
+    coverArt: "/placeholder.svg?height=300&width=300",
+    category: "healing",
+    mood: "restorative",
+    frequency: 528,
+    tracks: [
+      {
+        id: "track-8",
+        title: "DNA Repair",
+        artist: "Cosmic Harmony",
+        duration: "20:33",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/dna-repair.mp3",
+      },
+      {
+        id: "track-9",
+        title: "Cellular Regeneration",
+        artist: "Cosmic Harmony",
+        duration: "18:47",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/cellular-regeneration.mp3",
+      },
+      {
+        id: "track-10",
+        title: "Quantum Field Harmonizer",
+        artist: "Cosmic Harmony",
+        duration: "15:21",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/quantum-field.mp3",
+      },
+      {
+        id: "track-11",
+        title: "Mitochondrial Activation",
+        artist: "Cosmic Harmony",
+        duration: "12:15",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/mitochondrial.mp3",
+      },
+    ],
+  },
+  {
+    id: "playlist-3",
+    title: "Cosmic Sleep Journey",
+    description: "Ambient soundscapes designed to induce deep delta wave sleep patterns",
+    coverArt: "/placeholder.svg?height=300&width=300",
+    category: "sleep",
+    mood: "relaxing",
+    frequency: 432,
+    tracks: [
+      {
+        id: "track-12",
+        title: "Theta Gateway",
+        artist: "Cosmic Harmony",
+        duration: "45:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/theta-gateway.mp3",
+      },
+      {
+        id: "track-13",
+        title: "Delta Dreamscape",
+        artist: "Cosmic Harmony",
+        duration: "60:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/delta-dreamscape.mp3",
+      },
+      {
+        id: "track-14",
+        title: "Nocturnal Neural Reset",
+        artist: "Cosmic Harmony",
+        duration: "90:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/neural-reset.mp3",
+      },
+    ],
+  },
+  {
+    id: "playlist-4",
+    title: "Astral Projection Suite",
+    description: "Carefully crafted frequencies to facilitate out-of-body experiences",
+    coverArt: "/placeholder.svg?height=300&width=300",
+    category: "astral",
+    mood: "transcendent",
+    tracks: [
+      {
+        id: "track-15",
+        title: "Vibrational Tuning",
+        artist: "Cosmic Harmony",
+        duration: "15:30",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/vibrational-tuning.mp3",
+      },
+      {
+        id: "track-16",
+        title: "Silver Cord Activation",
+        artist: "Cosmic Harmony",
+        duration: "22:15",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/silver-cord.mp3",
+      },
+      {
+        id: "track-17",
+        title: "Etheric Separation",
+        artist: "Cosmic Harmony",
+        duration: "30:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/etheric-separation.mp3",
+      },
+      {
+        id: "track-18",
+        title: "Astral Guide",
+        artist: "Cosmic Harmony",
+        duration: "45:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/astral-guide.mp3",
+      },
+    ],
+  },
+  {
+    id: "playlist-5",
+    title: "Sacred Geometry Harmonics",
+    description: "Sound frequencies based on the mathematical ratios of sacred geometry",
+    coverArt: "/placeholder.svg?height=300&width=300",
+    category: "geometry",
+    mood: "enlightening",
+    tracks: [
+      {
+        id: "track-19",
+        title: "Fibonacci Sequence",
+        artist: "Cosmic Harmony",
+        duration: "13:21",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/fibonacci.mp3",
+      },
+      {
+        id: "track-20",
+        title: "Golden Ratio",
+        artist: "Cosmic Harmony",
+        duration: "17:08",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/golden-ratio.mp3",
+      },
+      {
+        id: "track-21",
+        title: "Metatron's Cube",
+        artist: "Cosmic Harmony",
+        duration: "19:19",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/metatron.mp3",
+      },
+      {
+        id: "track-22",
+        title: "Flower of Life",
+        artist: "Cosmic Harmony",
+        duration: "21:00",
+        coverArt: "/placeholder.svg?height=300&width=300",
+        audioSrc: "/audio/flower-of-life.mp3",
+      },
+    ],
+  },
+];

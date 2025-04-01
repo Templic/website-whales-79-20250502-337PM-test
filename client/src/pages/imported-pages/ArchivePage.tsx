@@ -1,11 +1,14 @@
 import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
 import { AlbumShowcase } from "@/components/music/AlbumShowcase";
+import { DynamicPlaylists, RecommendedPlaylists } from "@/components/music/DynamicPlaylists";
+import { playlists } from "@/data/playlists";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Disc, Headphones, Clock, Search } from "lucide-react";
+import { Disc, Headphones, Clock, Search, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CosmicReveal } from "@/components/cosmic/CosmicReveal";
 
 export default function ArchivePage() {
   const { toast } = useToast();
@@ -95,26 +98,35 @@ export default function ArchivePage() {
             <TabsContent value="singles" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6 text-center">Recent Singles</h2>
-                <div className="text-center py-10">
-                  <Headphones className="h-16 w-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60 max-w-md mx-auto">
-                    Our singles collection will be available soon, featuring individual frequency tracks 
-                    and short meditation experiences.
-                  </p>
-                </div>
+                
+                <CosmicReveal delay={0.2}>
+                  <RecommendedPlaylists 
+                    playlists={playlists.filter(p => p.category === 'sleep' || p.category === 'astral')}
+                    onSelect={(playlist) => {
+                      toast({
+                        title: "Playlist Selected",
+                        description: `You've selected the "${playlist.title}" playlist. Audio player coming soon.`,
+                        duration: 3000
+                      });
+                    }}
+                  />
+                </CosmicReveal>
               </div>
             </TabsContent>
             
             <TabsContent value="meditation" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6 text-center">Guided Meditations</h2>
-                <div className="text-center py-10">
-                  <Clock className="h-16 w-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60 max-w-md mx-auto">
-                    Our guided meditation collection will be available soon, featuring journeys for different
-                    purposes from healing to manifestation.
-                  </p>
-                </div>
+                <DynamicPlaylists 
+                  playlists={playlists.filter(p => p.category === 'meditation' || p.category === 'healing')}
+                  onPlay={(trackId) => {
+                    toast({
+                      title: "Audio Feature",
+                      description: `The audio player for track ${trackId} will be implemented soon.`,
+                      duration: 3000
+                    });
+                  }}
+                />
               </div>
             </TabsContent>
           </Tabs>
