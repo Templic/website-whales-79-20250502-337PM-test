@@ -61,7 +61,7 @@ export function TriangleContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white",
+        "relative text-white",
         className
       )}
       style={{
@@ -94,9 +94,12 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      {/* Position content in the lower part of the triangle */}
-      <div className="absolute bottom-4 z-10 max-w-[75%] overflow-y-auto hide-scrollbar text-center">
-        {children}
+      {/* Improved text positioning for triangles */}
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
+        <div className="h-[60%]"></div>
+        <div className="max-w-[75%] overflow-y-auto hide-scrollbar text-center">
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -110,7 +113,7 @@ export function InvertedTriangleContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white",
+        "relative text-white",
         className
       )}
       style={{
@@ -143,15 +146,17 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      {/* Position content in the upper part of the inverted triangle */}
-      <div className="absolute top-4 z-10 max-w-[75%] overflow-y-auto hide-scrollbar text-center">
-        {children}
+      {/* Improved text positioning for inverted triangles */}
+      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
+        <div className="mt-[20px] max-w-[75%] overflow-y-auto hide-scrollbar text-center">
+          {children}
+        </div>
       </div>
     </div>
   )
 }
 
-export function StarOfDavidContainer({
+export function OctagonContainer({
   children,
   className,
   glowColor = "rgba(0, 230, 230, 0.5)",
@@ -163,6 +168,7 @@ export function StarOfDavidContainer({
         className
       )}
       style={{
+        clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -177,56 +183,70 @@ export function StarOfDavidContainer({
           preserveAspectRatio="none"
           className="opacity-20"
         >
-          {/* Static outer frame */}
-          <g>
-            {/* Upward triangle */}
-            <path
-              d="M50 10 L90 70 L10 70 Z"
-              stroke="white"
-              strokeWidth="0.5"
-              fill="none"
-            />
-            {/* Downward triangle */}
-            <path
-              d="M50 90 L10 30 L90 30 Z"
-              stroke="white"
-              strokeWidth="0.5"
-              fill="none"
-            />
-          </g>
-          
-          {/* Rotating inner elements */}
-          <g style={{ animation: "rotate 120s linear infinite" }}>
-            {/* Inner hexagon */}
-            <path
-              d="M50 30 L70 40 L70 60 L50 70 L30 60 L30 40 Z"
-              stroke="white"
-              strokeWidth="0.5"
-              fill="none"
-            />
-            {/* Inner lines */}
-            <line
-              x1="30"
-              y1="40"
-              x2="70"
-              y2="60"
-              stroke="white"
-              strokeWidth="0.25"
-            />
-            <line
-              x1="30"
-              y1="60"
-              x2="70"
-              y2="40"
-              stroke="white"
-              strokeWidth="0.25"
-            />
-          </g>
+          <path
+            d="M30 0 L70 0 L100 30 L100 70 L70 100 L30 100 L0 70 L0 30 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
+          <path
+            d="M35 15 L65 15 L85 35 L85 65 L65 85 L35 85 L15 65 L15 35 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
         </svg>
       </div>
-      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">
-        <div className="flex flex-col items-center">
-          <span className="text-4xl text-white mb-3">&#x2721;</span>
+      <div className="z-10 max-w-[80%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+    </div>
+  )
+}
+
+export function StarburstContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative text-white",
+        className
+      )}
+      style={{
+        clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="opacity-20"
+          style={{ animation: "rotate 180s linear infinite" }}
+        >
+          <path
+            d="M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
+          <path
+            d="M50 20 L57 42 L82 42 L62 57 L69 77 L50 63 L31 77 L38 57 L18 42 L43 42 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
+        </svg>
+      </div>
+      {/* Center text in starburst */}
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div className="max-w-[60%] overflow-y-auto hide-scrollbar text-center">
           {children}
         </div>
       </div>

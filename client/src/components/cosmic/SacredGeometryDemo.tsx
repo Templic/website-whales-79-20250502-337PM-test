@@ -4,7 +4,8 @@ import {
   TriangleContainer, 
   InvertedTriangleContainer,
   CircleContainer, 
-  StarOfDavidContainer,
+  OctagonContainer,
+  StarburstContainer,
   SacredGeometryCss 
 } from "./ui/sacred-geometry"
 import { Button } from "@/components/ui/button"
@@ -77,14 +78,24 @@ export function SacredGeometryDemo() {
           </CircleContainer>
         </div>
 
-        <div className="h-64 md:col-span-2">
-          <StarOfDavidContainer
+        <div className="h-64">
+          <OctagonContainer
             className="w-full h-full"
-            glowColor="rgba(125, 211, 252, 0.5)"
+            glowColor="rgba(8, 145, 178, 0.5)"
           >
-            <h3 className="text-lg font-bold mb-2">Star of David (Merkaba)</h3>
+            <h3 className="text-lg font-bold mb-2">Octagon</h3>
             <p className="text-sm">{textContent[currentText]}</p>
-          </StarOfDavidContainer>
+          </OctagonContainer>
+        </div>
+
+        <div className="h-64">
+          <StarburstContainer
+            className="w-full h-full"
+            glowColor="rgba(147, 51, 234, 0.5)"
+          >
+            <h3 className="text-lg font-bold mb-2">Starburst</h3>
+            <p className="text-sm">{textContent[currentText]}</p>
+          </StarburstContainer>
         </div>
       </div>
     </div>
