@@ -31,6 +31,9 @@ import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
+// Imported Pages
+import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
+
 function Router() {
   const [location] = useLocation();
 
@@ -64,6 +67,7 @@ function Router() {
         <Route path="/sitemap" component={SitemapPage} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

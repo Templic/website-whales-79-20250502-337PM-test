@@ -23,6 +23,7 @@ export function Navigation() {
               <Link href="/engage" className="hover:text-[#00ebd6]">Engage</Link>
               <Link href="/newsletter" className="hover:text-[#00ebd6]">Newsletter</Link>
               <Link href="/blog" className="hover:text-[#00ebd6]">Blog</Link>
+              <Link href="/cosmic-experience" className="hover:text-[#00ebd6] text-[#00ebd6]">Cosmic Experience</Link>
               <Link href="/collaboration" className="hover:text-[#00ebd6]">Collaboration</Link>
               <Link href="/contact" className="hover:text-[#00ebd6]">Contact</Link>
             </div>
