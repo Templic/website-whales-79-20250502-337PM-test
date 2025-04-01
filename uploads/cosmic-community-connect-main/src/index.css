@@ -1,0 +1,282 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 15% 5%;
+    --foreground: 260 10% 95%;
+
+    --card: 260 15% 8%;
+    --card-foreground: 260 10% 95%;
+
+    --popover: 260 15% 8%;
+    --popover-foreground: 260 10% 95%;
+
+    --primary: 260 60% 60%;
+    --primary-foreground: 260 10% 95%;
+
+    --secondary: 260 15% 20%;
+    --secondary-foreground: 260 10% 95%;
+
+    --muted: 260 15% 15%;
+    --muted-foreground: 260 10% 70%;
+
+    --accent: 260 15% 15%;
+    --accent-foreground: 260 10% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 260 10% 95%;
+
+    --border: 260 15% 15%;
+    --input: 260 15% 15%;
+    --ring: 260 60% 60%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 260 15% 5%;
+    --sidebar-foreground: 260 10% 95%;
+    --sidebar-primary: 260 60% 60%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 260 15% 15%;
+    --sidebar-accent-foreground: 260 10% 95%;
+    --sidebar-border: 260 15% 15%;
+    --sidebar-ring: 260 60% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, .cosmic-title {
+    @apply font-orbitron;
+  }
+
+  .cosmic-text {
+    @apply font-rajdhani;
+  }
+
+  .cosmic-card {
+    @apply bg-card/70 backdrop-blur-lg border border-cosmic-primary/10 rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-cosmic-primary/20 hover:border-cosmic-primary/30;
+  }
+
+  .cosmic-input {
+    @apply bg-muted/50 border border-cosmic-primary/20 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cosmic-primary/50 transition-all;
+  }
+
+  .cosmic-button {
+    @apply bg-cosmic-primary hover:bg-cosmic-vivid text-white font-medium px-4 py-2 rounded-md transition-all duration-300 hover:shadow-lg hover:shadow-cosmic-primary/20;
+  }
+
+  .cosmic-container {
+    @apply relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .star {
+    @apply absolute bg-white rounded-full animate-stars-twinkle;
+  }
+  
+  /* Cosmic Animations */
+  .animate-in {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.8s ease forwards;
+  }
+  
+  .cosmic-hover {
+    @apply transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cosmic-primary/30;
+  }
+  
+  .cosmic-pulse {
+    animation: cosmicPulse 3s infinite;
+  }
+  
+  .cosmic-glow {
+    @apply relative;
+  }
+  
+  .cosmic-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-cosmic-primary/20 rounded-lg filter blur-md opacity-0 transition-opacity duration-300;
+  }
+  
+  .cosmic-glow:hover::before {
+    @apply opacity-100;
+  }
+
+  /* Enhanced interactive elements */
+  .cosmic-interactive {
+    @apply relative overflow-hidden isolate;
+  }
+  
+  .cosmic-interactive::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-cosmic-primary/0 via-cosmic-primary/30 to-cosmic-blue/0 opacity-0 transition-opacity duration-500 -z-10;
+    background-size: 200% 100%;
+    animation: hover-shimmer 2s ease infinite paused;
+  }
+  
+  .cosmic-interactive:hover::before {
+    @apply opacity-100;
+    animation-play-state: running;
+  }
+  
+  .nebula-text {
+    @apply bg-clip-text text-transparent bg-nebula-gradient;
+  }
+}
+
+.wave-animation {
+  background: linear-gradient(45deg, rgba(155,135,245,0.4) 0%, rgba(126,105,171,0.2) 100%);
+  position: absolute;
+  width: 100%;
+  height: 150px;
+  bottom: 0;
+  left: 0;
+  opacity: 0.3;
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0v46.29c47.79 22.2 103.59 32.17 158 28 70.36-5.37 136.33-33.31 206.8-37.5 73.84-4.36 147.54 16.88 218.2 35.26 69.27 18.17 138.3 24.88 209.4 13.08 36.15-6 69.85-17.84 104.45-29.34C989.49 25 1113-14.29 1200 52.47V0z' opacity='.25'/%3E%3Cpath d='M0 0v15.81c13 21.11 27.64 41.05 47.69 56.24C99.41 111.27 165 111 224.58 91.58c31.15-10.15 60.09-26.07 89.67-39.8 40.92-19 84.73-46 130.83-49.67 36.26-2.85 70.9 9.42 98.6 31.56 31.77 25.39 62.32 62 103.63 73 40.44 10.79 81.35-6.69 119.13-24.28s75.16-39 116.92-43.05c59.73-5.85 113.28 22.88 168.9 38.84 30.2 8.66 59 6.17 87.09-7.5 22.43-10.89 48-26.93 60.65-49.24V0z' opacity='.5'/%3E%3Cpath d='M0 0v5.63C149.93 59 314.09 71.32 475.83 42.57c43-7.64 84.23-20.12 127.61-26.46 59-8.63 112.48 12.24 165.56 35.4C827.93 77.22 886 95.24 951.2 90c86.53-7 172.46-45.71 248.8-84.81V0z'/%3E%3C/svg%3E");
+  mask-size: cover;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  animation: wave 15s linear infinite;
+}
+
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cosmicPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(155, 135, 245, 0);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(155, 135, 245, 0.5);
+  }
+}
+
+.stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Enhanced star animation */
+.star:nth-child(3n) {
+  animation-duration: 3.5s;
+}
+
+.star:nth-child(3n+1) {
+  animation-duration: 5s;
+}
+
+.star:nth-child(5n) {
+  animation-duration: 6s;
+}
+
+/* Cosmic particles */
+.cosmic-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  animation: particleFade 4s ease-out;
+}
+
+.cosmic-particle.dust {
+  animation-duration: 3s;
+}
+
+.cosmic-particle.wave {
+  animation-duration: 5s;
+}
+
+.cosmic-particle.burst {
+  animation-duration: 2s;
+}
+
+@keyframes particleFade {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+/* Constellation lines */
+.constellation-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(155,135,245,0.7), rgba(51,195,240,0.7));
+  transform-origin: left center;
+  opacity: 0.3;
+  animation: fadeIn 0.5s ease-out forwards, fadeOut 1.5s ease-in 0.5s forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Digital collectible styles */
+.nft-card {
+  @apply bg-cosmic-dark/60 backdrop-blur-lg border border-cosmic-primary/40 rounded-lg overflow-hidden;
+  box-shadow: 0 4px 20px rgba(155, 135, 245, 0.2);
+}
+
+.nft-glow {
+  @apply relative;
+}
+
+.nft-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(155, 135, 245, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.nft-glow:hover::after {
+  opacity: 1;
+}
