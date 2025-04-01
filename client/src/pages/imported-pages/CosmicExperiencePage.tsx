@@ -8,6 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs } from "lucide-react";
 
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { Navigation } from "@/components/Navigation";
+
 export default function CosmicExperiencePage() {
   const [backgroundType, setBackgroundType] = useState<"cosmic" | "particles">("cosmic");
   const [tracks, setTracks] = useState<any[]>([]);
@@ -55,6 +59,8 @@ export default function CosmicExperiencePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
+      <Header />
+      <Navigation />
       {/* Dynamic Background */}
       {backgroundType === "cosmic" ? <CosmicBackground /> : <ParticleBackground />}
       
@@ -203,6 +209,7 @@ export default function CosmicExperiencePage() {
       </div>
       
       <div className="py-12"></div>
+      <Footer />
     </div>
   );
 }
