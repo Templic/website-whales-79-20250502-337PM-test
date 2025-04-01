@@ -6,7 +6,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu } from "lucide-react";
+import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -105,6 +105,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Blog
           </Button>
         </Link>
+        <Link href="/cosmic-experience">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Cosmic Experience
+          </Button>
+        </Link>
         <Link href="/collaboration">
           <Button 
             variant="ghost" 
@@ -189,6 +199,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/engage" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Engage</Link></li>
                 <li><Link href="/newsletter" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Newsletter</Link></li>
                 <li><Link href="/blog" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Blog</Link></li>
+                <li><Link href="/cosmic-experience" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Cosmic Experience</Link></li>
                 <li><Link href="/collaboration" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Collaboration</Link></li>
                 <li><Link href="/contact" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
               </ul>

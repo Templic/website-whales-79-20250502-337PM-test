@@ -8,15 +8,19 @@ const BYPASS_AUTHENTICATION = false;
 export function ProtectedRoute({
   path,
   component: Component,
+  children,
 }: {
   path: string;
-  component: () => React.JSX.Element;
+  component?: () => React.JSX.Element;
+  children?: (params: any) => React.ReactNode;
 }) {
   const { user, isLoading } = useAuth();
 
   // For testing - bypass authentication check
   if (BYPASS_AUTHENTICATION) {
-    return <Route path={path} component={Component} />;
+    return Component ? 
+      <Route path={path} component={Component} /> : 
+      <Route path={path}>{children}</Route>;
   }
 
   if (isLoading) {
@@ -37,5 +41,7 @@ export function ProtectedRoute({
     );
   }
 
-  return <Route path={path} component={Component} />;
+  return Component ? 
+    <Route path={path} component={Component} /> : 
+    <Route path={path}>{children}</Route>;
 }

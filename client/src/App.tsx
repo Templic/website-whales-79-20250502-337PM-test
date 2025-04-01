@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
-import { lazy } from 'react';
+// import { lazy } from 'react';
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -34,6 +34,11 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 // Imported Pages
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
 
+// Admin Pages
+import UsersPage from "@/pages/admin/UsersPage";
+import PostsPage from "@/pages/admin/PostsPage";
+import MusicPage from "@/pages/admin/MusicPage";
+
 function Router() {
   const [location] = useLocation();
 
@@ -57,9 +62,9 @@ function Router() {
         <Route path="/contact" component={ContactPage} />
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
         <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
-        <ProtectedRoute path="/admin/users" component={lazy(() => import('./pages/admin/UsersPage'))} />
-        <ProtectedRoute path="/admin/posts" component={lazy(() => import('./pages/admin/PostsPage'))} />
-        <ProtectedRoute path="/admin/music" component={lazy(() => import('./pages/admin/MusicPage'))} />
+        <ProtectedRoute path="/admin/users" component={UsersPage} />
+        <ProtectedRoute path="/admin/posts" component={PostsPage} />
+        <ProtectedRoute path="/admin/music" component={MusicPage} />
         <ProtectedRoute path="/portal" component={UserPortal} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/recover-password" component={PasswordRecoveryPage} />

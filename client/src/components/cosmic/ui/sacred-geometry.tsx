@@ -23,6 +23,8 @@ export function HexagonContainer({
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
@@ -68,6 +70,8 @@ export function TriangleContainer({
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
@@ -117,6 +121,8 @@ export function CircleContainer({
         backgroundColor: "rgba(0, 0, 0, 0.4)",
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
