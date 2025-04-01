@@ -94,7 +94,10 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      {/* Position content in the lower part of the triangle */}
+      <div className="absolute bottom-4 z-10 max-w-[75%] overflow-y-auto hide-scrollbar text-center">
+        {children}
+      </div>
     </div>
   )
 }
@@ -140,7 +143,10 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      {/* Position content in the upper part of the inverted triangle */}
+      <div className="absolute top-4 z-10 max-w-[75%] overflow-y-auto hide-scrollbar text-center">
+        {children}
+      </div>
     </div>
   )
 }
@@ -218,7 +224,12 @@ export function StarOfDavidContainer({
           </g>
         </svg>
       </div>
-      <div className="z-10 max-w-[60%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">
+        <div className="flex flex-col items-center">
+          <span className="text-4xl text-white mb-3">&#x2721;</span>
+          {children}
+        </div>
+      </div>
     </div>
   )
 }
