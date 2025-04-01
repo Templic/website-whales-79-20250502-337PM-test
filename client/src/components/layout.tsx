@@ -6,7 +6,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap } from "lucide-react";
+import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -125,6 +125,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Immersive
           </Button>
         </Link>
+        <Link href="/music-archive">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Disc className="h-4 w-4 mr-2" />
+            Music Archive
+          </Button>
+        </Link>
         <Link href="/collaboration">
           <Button 
             variant="ghost" 
@@ -211,6 +221,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/blog" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Blog</Link></li>
                 <li><Link href="/cosmic-experience" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Cosmic Experience</Link></li>
                 <li><Link href="/immersive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Immersive</Link></li>
+                <li><Link href="/music-archive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Music Archive</Link></li>
                 <li><Link href="/collaboration" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Collaboration</Link></li>
                 <li><Link href="/contact" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
               </ul>
