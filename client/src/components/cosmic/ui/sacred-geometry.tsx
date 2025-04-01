@@ -94,11 +94,13 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      {/* Improved text positioning for triangles */}
+      {/* Optimized text positioning for triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="h-[60%]"></div>
-        <div className="max-w-[75%] overflow-y-auto hide-scrollbar text-center">
-          {children}
+        <div className="mt-[20px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
+          <h3 className="text-lg font-bold">{children.props.children[0].props.children}</h3>
+        </div>
+        <div className="mt-auto mb-[40px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
+          <p className="text-sm">{children.props.children[2].props.children}</p>
         </div>
       </div>
     </div>
@@ -148,8 +150,11 @@ export function InvertedTriangleContainer({
       </div>
       {/* Optimized text positioning for inverted triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[40px] max-w-[65%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">
-          {children}
+        <div className="mt-[30px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
+          <p className="text-sm">{children.props.children[2].props.children}</p>
+        </div>
+        <div className="mt-auto mb-[30px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
+          <h3 className="text-lg font-bold">{children.props.children[0].props.children}</h3>
         </div>
       </div>
     </div>
