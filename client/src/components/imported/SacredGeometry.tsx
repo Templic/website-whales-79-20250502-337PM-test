@@ -858,3 +858,22 @@ export function SacredGeometry({
     </div>
   )
 }
+
+import { memo } from 'react'
+
+export const HexagonContainer = memo(({ children, className = '' }: { children: React.ReactNode; className?: string }) => {
+  return (
+    <div className={`relative ${className}`}>
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" fill="none">
+        <path
+          d="M50 0L93.3 25V75L50 100L6.7 75V25L50 0Z"
+          className="stroke-purple-500/20 fill-black/20"
+          strokeWidth="0.5"
+        />
+      </svg>
+      <div className="relative z-10">{children}</div>
+    </div>
+  )
+})
+
+HexagonContainer.displayName = 'HexagonContainer'
