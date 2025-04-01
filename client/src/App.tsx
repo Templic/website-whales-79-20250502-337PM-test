@@ -33,6 +33,7 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 
 // Imported Pages
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
+import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
 
 // Admin Pages
 import UsersPage from "@/pages/admin/UsersPage";
@@ -73,6 +74,7 @@ function Router() {
         <Route path="/terms" component={TermsOfService} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
+        <Route path="/immersive" component={ImmersivePage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

@@ -4,9 +4,10 @@ import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
 import { CosmicButton } from "@/components/cosmic/CosmicButton";
 import { BreathSyncPlayer } from "@/components/audio/BreathSyncPlayer";
+import { BinauralBeatGenerator } from "@/components/audio/BinauralBeatGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs } from "lucide-react";
+import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs, Brain } from "lucide-react";
 
 // Note: We don't need to import Header & Footer since they're part of the Layout component
 
@@ -90,6 +91,17 @@ export default function CosmicExperiencePage() {
               </p>
               
               <BreathSyncPlayer tracks={tracks} />
+            </div>
+            
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
+              <h2 className="text-2xl font-semibold mb-4">Binaural Beat Generator</h2>
+              <p className="text-gray-300 mb-6">
+                Generate custom binaural beats to induce specific states of consciousness. 
+                Binaural beats occur when two slightly different frequencies are played separately in each ear, 
+                creating a third "beat" frequency that can influence brain waves.
+              </p>
+              
+              <BinauralBeatGenerator />
             </div>
           </TabsContent>
           
