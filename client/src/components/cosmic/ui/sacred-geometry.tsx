@@ -95,8 +95,8 @@ export function TriangleContainer({
         </svg>
       </div>
       {/* Text positioning for triangles */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[20px] max-w-[80%] max-h-[75%] overflow-y-auto hide-scrollbar text-center">
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center" style={{ transform: 'translateY(10%)' }}>
           {children}
         </div>
       </div>
@@ -146,8 +146,8 @@ export function InvertedTriangleContainer({
         </svg>
       </div>
       {/* Text positioning for inverted triangles */}
-      <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[30px] max-w-[80%] max-h-[75%] overflow-y-auto hide-scrollbar text-center">
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center" style={{ transform: 'translateY(-10%)' }}>
           {children}
         </div>
       </div>
