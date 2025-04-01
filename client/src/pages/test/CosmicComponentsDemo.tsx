@@ -1,195 +1,187 @@
-import { useState } from 'react';
-import { CosmicBackground } from '@/components/imported/CosmicBackground';
-import { ParticleBackground } from '@/components/imported/ParticleBackground';
-import { CosmicIcon } from '@/components/imported/CosmicIcons';
-import { CosmicCard } from '@/components/imported/CosmicCard';
-import { 
-  CosmicParallax, 
-  CosmicReveal, 
-  CosmicMagnetic, 
-  CosmicTextScramble 
-} from '@/components/imported/CosmicInteractiveEffects';
-import { 
+import {
   HexagonContainer,
   OctagonContainer,
   PentagonContainer,
   TriangleInterlockContainer,
-  FlowerOfLifePattern,
-  MetatronsCube,
-  SacredGeometryBackground
-} from '@/components/imported/SacredGeometry';
+  AdaptiveTextContainer,
+} from "../../components/imported/SacredGeometry"
+import { CosmicButton } from "../../components/imported/ui/CosmicButton"
+import { CosmicHeading } from "../../components/imported/ui/CosmicHeading"
+import { CosmicText } from "../../components/imported/ui/CosmicText"
+import { CosmicCard } from "../../components/imported/ui/CosmicCard"
+import { CosmicSection } from "../../components/imported/ui/CosmicSection"
+import { CosmicPortal } from "../../components/imported/ui/CosmicPortal"
+import { Star, Moon, Sun, Sparkles } from "lucide-react"
 
 export default function CosmicComponentsDemo() {
-  const [backgroundType, setBackgroundType] = useState<'cosmic' | 'particle'>('cosmic');
-
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background */}
-      {backgroundType === 'cosmic' ? (
-        <CosmicBackground opacity={0.8} />
-      ) : (
-        <ParticleBackground colorScheme="purple" density="medium" />
-      )}
+    <div className="min-h-screen bg-black text-white">
+      <CosmicSection variant="gradient">
+        <div className="max-w-5xl mx-auto">
+          <CosmicHeading level={1} align="center" withAccent glow>
+            Cosmic Components Demo
+          </CosmicHeading>
+          <CosmicText className="mt-4 text-center" delay={0.5}>
+            This page showcases the various cosmic-themed UI components imported from v0
+          </CosmicText>
 
-      {/* Sacred Geometry Background */}
-      <SacredGeometryBackground />
-
-      {/* Container */}
-      <div className="container mx-auto px-4 py-20">
-        <header className="mb-12 text-center">
-          <CosmicTextScramble text="Cosmic Components Demo" className="text-3xl md:text-5xl font-bold text-white mb-4" />
-          <p className="text-lg text-white/80 mb-6">
-            Interactive demonstration of imported cosmic components
-          </p>
-          <div className="flex justify-center gap-4">
-            <button 
-              className={`px-4 py-2 rounded-full ${backgroundType === 'cosmic' ? 'bg-purple-600' : 'bg-purple-600/30'}`}
-              onClick={() => setBackgroundType('cosmic')}
-            >
-              Cosmic Background
-            </button>
-            <button 
-              className={`px-4 py-2 rounded-full ${backgroundType === 'particle' ? 'bg-blue-600' : 'bg-blue-600/30'}`}
-              onClick={() => setBackgroundType('particle')}
-            >
-              Particle Background
-            </button>
-          </div>
-        </header>
-
-        {/* Icons */}
-        <section className="mb-16">
-          <CosmicReveal>
-            <h2 className="text-2xl font-bold text-white mb-6">Cosmic Icons</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-9 gap-4 justify-items-center">
-              {Object.keys(cosmicIconNames).map(name => (
-                <CosmicMagnetic key={name} className="flex flex-col items-center">
-                  <div className="bg-purple-900/30 p-4 rounded-full mb-2">
-                    <CosmicIcon name={name as any} size={32} className="text-white" />
-                  </div>
-                  <span className="text-xs text-white/70">{name}</span>
-                </CosmicMagnetic>
-              ))}
+          {/* Cosmic Buttons */}
+          <section className="mt-16">
+            <CosmicHeading level={2} align="center">
+              Cosmic Buttons
+            </CosmicHeading>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <CosmicButton variant="primary" icon={<Sparkles />}>
+                Primary Button
+              </CosmicButton>
+              <CosmicButton variant="secondary" icon={<Moon />}>
+                Secondary Button
+              </CosmicButton>
+              <CosmicButton variant="outline" icon={<Sun />}>
+                Outline Button
+              </CosmicButton>
+              <CosmicButton variant="ghost" icon={<Star />}>
+                Ghost Button
+              </CosmicButton>
             </div>
-          </CosmicReveal>
-        </section>
+          </section>
 
-        {/* Sacred Geometry */}
-        <section className="mb-16">
-          <CosmicReveal direction="up">
-            <h2 className="text-2xl font-bold text-white mb-8">Sacred Geometry</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <HexagonContainer glowColor="rgba(139, 92, 246, 0.8)" className="aspect-square">
-                <h3 className="text-xl font-bold text-white mb-2">Hexagon</h3>
-                <p className="text-white/80">Harmony and balance</p>
-              </HexagonContainer>
-              
-              <OctagonContainer glowColor="rgba(20, 184, 166, 0.8)" className="aspect-square">
-                <h3 className="text-xl font-bold text-white mb-2">Octagon</h3>
-                <p className="text-white/80">Rebirth and transition</p>
-              </OctagonContainer>
-              
-              <PentagonContainer glowColor="rgba(217, 70, 239, 0.8)" className="aspect-square">
-                <h3 className="text-xl font-bold text-white mb-2">Pentagon</h3>
-                <p className="text-white/80">Health and vitality</p>
-              </PentagonContainer>
-
-              <TriangleInterlockContainer glowColor="rgba(14, 165, 233, 0.8)" className="aspect-square">
-                <h3 className="text-xl font-bold text-white mb-2">Triangle</h3>
-                <p className="text-white/80">Ascension and balance</p>
-              </TriangleInterlockContainer>
+          {/* Cosmic Headings */}
+          <section className="mt-16">
+            <CosmicHeading level={2} align="center">
+              Cosmic Headings
+            </CosmicHeading>
+            <div className="mt-8 space-y-4">
+              <CosmicHeading level={1}>Level 1 Heading</CosmicHeading>
+              <CosmicHeading level={2}>Level 2 Heading</CosmicHeading>
+              <CosmicHeading level={3}>Level 3 Heading</CosmicHeading>
+              <CosmicHeading level={4}>Level 4 Heading</CosmicHeading>
+              <CosmicHeading level={5}>Level 5 Heading</CosmicHeading>
+              <CosmicHeading level={6}>Level 6 Heading</CosmicHeading>
             </div>
-          </CosmicReveal>
-        </section>
+          </section>
 
-        {/* Cards and Effects */}
-        <section className="mb-16">
-          <CosmicReveal direction="up">
-            <h2 className="text-2xl font-bold text-white mb-8">Cosmic Cards</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <CosmicParallax direction="y" speed={0.5}>
-                <CosmicCard glowColor="rgba(139, 92, 246, 0.5)" className="h-full p-6">
-                  <div className="text-center">
-                    <CosmicIcon name="star" size={48} className="text-purple-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Parallax Effect</h3>
-                    <p className="text-white/80">This card has a subtle parallax effect when you scroll</p>
-                  </div>
-                </CosmicCard>
-              </CosmicParallax>
-              
-              <CosmicMagnetic strength={20}>
-                <CosmicCard glowColor="rgba(14, 165, 233, 0.5)" className="h-full p-6">
-                  <div className="text-center">
-                    <CosmicIcon name="atom" size={48} className="text-blue-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-bold text-white mb-2">Magnetic Effect</h3>
-                    <p className="text-white/80">This card follows your cursor with a magnetic effect</p>
-                  </div>
-                </CosmicCard>
-              </CosmicMagnetic>
-              
-              <CosmicCard glowColor="rgba(20, 184, 166, 0.5)" variant="outline" className="h-full p-6">
-                <div className="text-center relative">
-                  <MetatronsCube className="opacity-30" />
-                  <CosmicIcon name="sparkles" size={48} className="text-teal-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">Sacred Overlay</h3>
-                  <p className="text-white/80">This card has a sacred geometry overlay pattern</p>
+          {/* Cosmic Text */}
+          <section className="mt-16">
+            <CosmicHeading level={2} align="center">
+              Cosmic Text
+            </CosmicHeading>
+            <div className="mt-8 space-y-4">
+              <CosmicText size="xs">Extra Small Text</CosmicText>
+              <CosmicText size="sm">Small Text</CosmicText>
+              <CosmicText size="md">Medium Text</CosmicText>
+              <CosmicText size="lg">Large Text</CosmicText>
+              <CosmicText size="xl">Extra Large Text</CosmicText>
+              <CosmicText color="muted">Muted Text</CosmicText>
+              <CosmicText color="accent">Accent Text</CosmicText>
+            </div>
+          </section>
+
+          {/* Cosmic Cards */}
+          <section className="mt-16">
+            <CosmicHeading level={2} align="center">
+              Cosmic Card
+            </CosmicHeading>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <CosmicCard variant="default" glowColor="rgba(139, 92, 246, 0.5)">
+                <div className="p-6">
+                  <CosmicHeading level={3}>Default Card</CosmicHeading>
+                  <CosmicText className="mt-4">
+                    This is a default variant card with a purple glow effect.
+                  </CosmicText>
+                </div>
+              </CosmicCard>
+              <CosmicCard variant="subtle" glowColor="rgba(239, 68, 68, 0.5)">
+                <div className="p-6">
+                  <CosmicHeading level={3}>Subtle Card</CosmicHeading>
+                  <CosmicText className="mt-4">
+                    This is a subtle variant card with a red glow effect.
+                  </CosmicText>
+                </div>
+              </CosmicCard>
+              <CosmicCard variant="outline" glowColor="rgba(16, 185, 129, 0.5)">
+                <div className="p-6">
+                  <CosmicHeading level={3}>Outline Card</CosmicHeading>
+                  <CosmicText className="mt-4">
+                    This is an outline variant card with a green glow effect.
+                  </CosmicText>
+                </div>
+              </CosmicCard>
+              <CosmicCard glowColor="rgba(59, 130, 246, 0.5)" delay={0.2}>
+                <div className="p-6">
+                  <CosmicHeading level={3}>Delayed Card</CosmicHeading>
+                  <CosmicText className="mt-4">
+                    This card has a slight animation delay and blue glow effect.
+                  </CosmicText>
                 </div>
               </CosmicCard>
             </div>
-          </CosmicReveal>
-        </section>
-        
-        {/* Reveal Effect Demo */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-white mb-8">Reveal Effects</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {["up", "down", "left", "right"].map((direction, index) => (
-              <CosmicReveal key={direction} direction={direction as any} delay={index * 0.1}>
-                <CosmicCard 
-                  glowColor={glowColors[index]} 
-                  className="p-6"
-                  delay={index * 0.1}
-                >
-                  <h3 className="text-xl font-bold text-white mb-2 text-center">
-                    {direction.charAt(0).toUpperCase() + direction.slice(1)} Direction
-                  </h3>
-                  <p className="text-white/80 text-center">
-                    This element reveals from the {direction} direction
-                  </p>
-                </CosmicCard>
-              </CosmicReveal>
-            ))}
-          </div>
-        </section>
-      </div>
+          </section>
+
+          {/* Sacred Geometry Containers */}
+          <section className="mt-16">
+            <CosmicHeading level={2} align="center">
+              Sacred Geometry Containers
+            </CosmicHeading>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <HexagonContainer>
+                <CosmicHeading level={3}>Hexagon</CosmicHeading>
+                <CosmicText className="mt-2">
+                  This is a hexagonal container with a pulsing glow effect.
+                </CosmicText>
+              </HexagonContainer>
+              <OctagonContainer>
+                <CosmicHeading level={3}>Octagon</CosmicHeading>
+                <CosmicText className="mt-2">
+                  This is an octagonal container with a pulsing glow effect.
+                </CosmicText>
+              </OctagonContainer>
+              <PentagonContainer>
+                <CosmicHeading level={3}>Pentagon</CosmicHeading>
+                <CosmicText className="mt-2">
+                  This is a pentagonal container with a pulsing glow effect.
+                </CosmicText>
+              </PentagonContainer>
+              <TriangleInterlockContainer>
+                <CosmicHeading level={3}>Interlocked Triangles</CosmicHeading>
+                <CosmicText className="mt-2">
+                  This container has interlocked triangles with a pulsing glow effect.
+                </CosmicText>
+              </TriangleInterlockContainer>
+            </div>
+          </section>
+
+          {/* Cosmic Portals */}
+          <section className="mt-16 mb-16">
+            <CosmicHeading level={2} align="center">
+              Cosmic Portals
+            </CosmicHeading>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+              <CosmicPortal
+                title="Music Portal"
+                description="Explore cosmic music and frequencies"
+                imageSrc="https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+                destination="/music"
+                color="from-purple-500 to-indigo-600"
+              />
+              <CosmicPortal
+                title="Meditation Portal"
+                description="Immerse yourself in guided meditations"
+                imageSrc="https://images.unsplash.com/photo-1549576490-b0b4831ef60a"
+                destination="/meditation"
+                color="from-blue-500 to-teal-600"
+              />
+              <CosmicPortal
+                title="Journey Portal"
+                description="Begin your cosmic journey"
+                imageSrc="https://images.unsplash.com/photo-1539321908154-04927596ed74"
+                destination="/journey"
+                color="from-pink-500 to-purple-600"
+              />
+            </div>
+          </section>
+        </div>
+      </CosmicSection>
     </div>
-  );
+  )
 }
-
-const cosmicIconNames = {
-  waveform: true,
-  waves: true,
-  music: true,
-  headphones: true,
-  radio: true,
-  mic: true,
-  volume: true,
-  mute: true,
-  disc: true,
-  sparkles: true,
-  star: true,
-  moon: true,
-  sun: true,
-  zap: true,
-  orbit: true,
-  satellite: true,
-  rocket: true,
-  atom: true
-};
-
-const glowColors = [
-  "rgba(139, 92, 246, 0.5)",
-  "rgba(14, 165, 233, 0.5)",
-  "rgba(20, 184, 166, 0.5)",
-  "rgba(236, 72, 153, 0.5)"
-];

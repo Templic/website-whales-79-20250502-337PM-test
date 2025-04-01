@@ -245,6 +245,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/sitemap" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Sitemap</Link></li>
                 {user && <li><Link href="/portal" className="nav-link" onClick={() => window.scrollTo(0, 0)}>My Dashboard</Link></li>}
                 {user?.role === "admin" && <li><Link href="/admin" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Admin Portal</Link></li>}
+                <li className="mt-4 pt-3 border-t"><Link href="/test/cosmic" className="nav-link text-primary/70" onClick={() => window.scrollTo(0, 0)}>Cosmic UI Demo</Link></li>
+                <li><Link href="/test/audio" className="nav-link text-primary/70" onClick={() => window.scrollTo(0, 0)}>Audio Components Demo</Link></li>
               </ul>
             </div>
           </div>

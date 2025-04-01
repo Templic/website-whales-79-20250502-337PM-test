@@ -30,21 +30,21 @@ export function HexagonContainer({
     >
       {/* Container with clip path */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 animate-pulse-glow"
         style={{
           clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
           background: "rgba(0, 0, 0, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: `0 0 30px ${glowColor}`,
         }}
       />
 
       {/* Glow effect */}
       <div
-        className="absolute inset-2 -z-10 opacity-20"
+        className="absolute inset-2 -z-10 opacity-30"
         style={{
           clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
-          background: `linear-gradient(45deg, ${glowColor} 0%, transparent 100%)`,
+          background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
         }}
       />
 
@@ -71,21 +71,21 @@ export function OctagonContainer({
     >
       {/* Container with clip path */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 animate-pulse-glow"
         style={{
           clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
           background: "rgba(0, 0, 0, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: `0 0 30px ${glowColor}`,
         }}
       />
 
       {/* Glow effect */}
       <div
-        className="absolute inset-2 -z-10 opacity-20"
+        className="absolute inset-2 -z-10 opacity-30"
         style={{
           clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
-          background: `linear-gradient(45deg, ${glowColor} 0%, transparent 100%)`,
+          background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
         }}
       />
 
@@ -112,21 +112,21 @@ export function PentagonContainer({
     >
       {/* Container with clip path */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 animate-pulse-glow"
         style={{
           clipPath: "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)",
           background: "rgba(0, 0, 0, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: `0 0 30px ${glowColor}`,
         }}
       />
 
       {/* Glow effect */}
       <div
-        className="absolute inset-2 -z-10 opacity-20"
+        className="absolute inset-2 -z-10 opacity-30"
         style={{
           clipPath: "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)",
-          background: `linear-gradient(45deg, ${glowColor} 0%, transparent 100%)`,
+          background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
         }}
       />
 
@@ -153,12 +153,12 @@ export function TriangleInterlockContainer({
     >
       {/* First triangle */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 animate-pulse-glow"
         style={{
           clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
           background: "rgba(0, 0, 0, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: `0 0 30px ${glowColor}`,
         }}
       />
 
@@ -167,7 +167,7 @@ export function TriangleInterlockContainer({
         className="absolute inset-0 -z-10 opacity-30"
         style={{
           clipPath: "polygon(50% 100%, 100% 0%, 0% 0%)",
-          background: `linear-gradient(45deg, ${glowColor} 0%, transparent 100%)`,
+          background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
           border: "1px solid rgba(255, 255, 255, 0.05)",
         }}
       />
@@ -333,21 +333,21 @@ export function AdaptiveTextContainer({
     >
       {/* Container with clip path */}
       <div
-        className="absolute inset-0 -z-10"
+        className="absolute inset-0 -z-10 animate-pulse-glow"
         style={{
           clipPath,
           background: "rgba(0, 0, 0, 0.7)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: `0 0 20px ${glowColor}`,
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: `0 0 30px ${glowColor}`,
         }}
       />
 
       {/* Glow effect */}
       <div
-        className="absolute inset-2 -z-10 opacity-20"
+        className="absolute inset-2 -z-10 opacity-30"
         style={{
           clipPath,
-          background: `linear-gradient(45deg, ${glowColor} 0%, transparent 100%)`,
+          background: `radial-gradient(circle at center, ${glowColor} 0%, transparent 70%)`,
         }}
       />
 
