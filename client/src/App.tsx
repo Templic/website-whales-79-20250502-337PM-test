@@ -37,6 +37,7 @@ import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
 import ArchivePage from "@/pages/imported-pages/ArchivePage";
 import CommunityPage from "@/pages/imported-pages/CommunityPage";
 import CosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
+import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 
 // Admin Pages
 import UsersPage from "@/pages/admin/UsersPage";
@@ -81,6 +82,7 @@ function Router() {
         <Route path="/music-archive" component={ArchivePage} />
         <Route path="/community" component={CommunityPage} />
         <Route path="/test/cosmic" component={CosmicComponentsDemo} />
+        <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
