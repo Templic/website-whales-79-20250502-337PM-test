@@ -146,9 +146,9 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      {/* Improved text positioning for inverted triangles */}
+      {/* Optimized text positioning for inverted triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[20px] max-w-[75%] overflow-y-auto hide-scrollbar text-center">
+        <div className="mt-[40px] max-w-[65%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">
           {children}
         </div>
       </div>
