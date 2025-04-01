@@ -6,8 +6,8 @@ export function SacredGeometryDemo() {
   const [textContent, setTextContent] = useState({
     short: "Sacred geometry is the blueprint of creation and the genesis of all form.",
     medium:
-      "Sacred geometry is the blueprint of creation and the genesis of all form. It is an ancient science that explores and explains the energy patterns that create and unify all things.",
-    long: "Sacred geometry is the blueprint of creation and the genesis of all form. It is an ancient science that explores and explains the energy patterns that create and unify all things and reveals the precise way that the energy of creation organizes itself. Every natural pattern of growth or movement conforms inevitably to one or more geometric shapes.",
+      "Sacred geometry explores and explains the energy patterns that create and unify all things. It reveals how the energy of creation organizes itself.",
+    long: "Sacred geometry reveals the relationships between universal energy patterns. It shows how the basic building blocks of existence arise from simple geometric shapes and proportion.",
   })
 
   const [currentText, setCurrentText] = useState<"short" | "medium" | "long">("medium")
