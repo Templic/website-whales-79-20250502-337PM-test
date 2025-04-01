@@ -15,7 +15,7 @@ export function HexagonContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white overflow-hidden",
+        "relative flex items-center justify-center p-6 text-white",
         className
       )}
       style={{
@@ -24,7 +24,6 @@ export function HexagonContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
@@ -49,7 +48,7 @@ export function HexagonContainer({
           />
         </svg>
       </div>
-      <div className="z-10 overflow-auto hide-scrollbar max-h-full">{children}</div>
+      <div className="z-10 max-w-[85%] overflow-y-auto hide-scrollbar text-center">{children}</div>
     </div>
   )
 }
@@ -62,7 +61,7 @@ export function TriangleContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white overflow-hidden",
+        "relative flex items-center justify-center p-6 text-white",
         className
       )}
       style={{
@@ -71,7 +70,6 @@ export function TriangleContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
@@ -96,7 +94,131 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      <div className="z-10 overflow-auto hide-scrollbar max-h-full">{children}</div>
+      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+    </div>
+  )
+}
+
+export function InvertedTriangleContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center p-6 text-white",
+        className
+      )}
+      style={{
+        clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="opacity-20"
+        >
+          <path
+            d="M10 10 L90 10 L50 90 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
+          <path
+            d="M30 30 L70 30 L50 70 Z"
+            stroke="white"
+            strokeWidth="0.5"
+            fill="none"
+          />
+        </svg>
+      </div>
+      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+    </div>
+  )
+}
+
+export function StarOfDavidContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center p-6 text-white",
+        className
+      )}
+      style={{
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="opacity-20"
+        >
+          {/* Static outer frame */}
+          <g>
+            {/* Upward triangle */}
+            <path
+              d="M50 10 L90 70 L10 70 Z"
+              stroke="white"
+              strokeWidth="0.5"
+              fill="none"
+            />
+            {/* Downward triangle */}
+            <path
+              d="M50 90 L10 30 L90 30 Z"
+              stroke="white"
+              strokeWidth="0.5"
+              fill="none"
+            />
+          </g>
+          
+          {/* Rotating inner elements */}
+          <g style={{ animation: "rotate 120s linear infinite" }}>
+            {/* Inner hexagon */}
+            <path
+              d="M50 30 L70 40 L70 60 L50 70 L30 60 L30 40 Z"
+              stroke="white"
+              strokeWidth="0.5"
+              fill="none"
+            />
+            {/* Inner lines */}
+            <line
+              x1="30"
+              y1="40"
+              x2="70"
+              y2="60"
+              stroke="white"
+              strokeWidth="0.25"
+            />
+            <line
+              x1="30"
+              y1="60"
+              x2="70"
+              y2="40"
+              stroke="white"
+              strokeWidth="0.25"
+            />
+          </g>
+        </svg>
+      </div>
+      <div className="z-10 max-w-[60%] overflow-y-auto hide-scrollbar text-center">{children}</div>
     </div>
   )
 }
@@ -114,7 +236,7 @@ export function CircleContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white overflow-hidden rounded-full",
+        "relative flex items-center justify-center p-6 text-white rounded-full",
         className
       )}
       style={{
@@ -122,7 +244,6 @@ export function CircleContainer({
         boxShadow: `0 0 15px ${glowColor}`,
         border: "1px solid rgba(255, 255, 255, 0.1)",
         minHeight: "250px",
-        overflow: "auto"
       }}
     >
       <div className="absolute inset-0 opacity-10">
@@ -177,7 +298,7 @@ export function CircleContainer({
           />
         </svg>
       </div>
-      <div className="z-10 overflow-auto hide-scrollbar max-h-full">{children}</div>
+      <div className="z-10 max-w-[65%] overflow-y-auto hide-scrollbar text-center">{children}</div>
     </div>
   )
 }
