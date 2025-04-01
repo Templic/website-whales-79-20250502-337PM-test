@@ -24,6 +24,7 @@ export function Footer() {
                 <li><Link href="/about" className="text-[#e8e6e3] hover:text-[#00ebd6]">About</Link></li>
                 <li><Link href="/music" className="text-[#e8e6e3] hover:text-[#00ebd6]">Music</Link></li>
                 <li><Link href="/tour" className="text-[#e8e6e3] hover:text-[#00ebd6]">Tour</Link></li>
+                <li><Link href="/cosmic-experience" className="text-[#e8e6e3] hover:text-[#00ebd6]">Cosmic Experience</Link></li>
                 <li><Link href="/contact" className="text-[#e8e6e3] hover:text-[#00ebd6]">Contact</Link></li>
                 <li><Link href="/collaboration" className="text-[#e8e6e3] hover:text-[#00ebd6]">Collaboration</Link></li>
                 <li><Link href="/gifts-and-sponsorships" className="text-[#e8e6e3] hover:text-[#00ebd6]">Gifts and Sponsorships</Link></li>
