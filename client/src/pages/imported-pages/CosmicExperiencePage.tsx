@@ -8,59 +8,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs } from "lucide-react";
 
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { Navigation } from "@/components/Navigation";
+// Note: We don't need to import Header & Footer since they're part of the Layout component
 
 export default function CosmicExperiencePage() {
   const [backgroundType, setBackgroundType] = useState<"cosmic" | "particles">("cosmic");
   const [tracks, setTracks] = useState<any[]>([]);
   const { toast } = useToast();
   
-  // Fetch available tracks
+  // This is a placeholder for the tracks since we don't have actual audio files yet
   useEffect(() => {
-    // In a real implementation, this would fetch from your API
-    // For now, we'll use sample data that matches the expected format
-    const mockTracks = [
-      {
-        id: 1,
-        title: "Cosmic Echoes",
-        artist: "Cosmic Artist",
-        duration: "3:42",
-        audioSrc: "/uploads/cosmic-echoes.mp3",
-        coverArt: "/uploads/album cover for feels so good song.png",
-        chakra: "Heart",
-        frequency: 528,
-      },
-      {
-        id: 2,
-        title: "Oceanic Dreams",
-        artist: "Cosmic Artist",
-        duration: "4:18",
-        audioSrc: "/uploads/oceanic-dreams.mp3",
-        coverArt: "/uploads/album cover for feels so good song.png",
-        chakra: "Throat",
-        frequency: 741,
-      },
-      {
-        id: 3,
-        title: "Feels So Good",
-        artist: "Cosmic Artist",
-        duration: "5:03",
-        audioSrc: "/uploads/feels-so-good.mp3",
-        coverArt: "/uploads/album cover for feels so good song.png",
-        chakra: "Root",
-        frequency: 396,
-      },
-    ];
+    // We're not setting any tracks since we don't have audio files yet
+    // The BreathSyncPlayer component will display a placeholder
+    setTracks([]);
     
-    setTracks(mockTracks);
-  }, []);
+    // Display a friendly message to the user about the audio files
+    toast({
+      title: "Audio files not available",
+      description: "The breath synchronization feature works without music. Actual audio files will be added in a future update.",
+      duration: 5000
+    });
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
-      <Header />
-      <Navigation />
       {/* Dynamic Background */}
       {backgroundType === "cosmic" ? <CosmicBackground /> : <ParticleBackground />}
       
@@ -209,7 +179,6 @@ export default function CosmicExperiencePage() {
       </div>
       
       <div className="py-12"></div>
-      <Footer />
     </div>
   );
 }

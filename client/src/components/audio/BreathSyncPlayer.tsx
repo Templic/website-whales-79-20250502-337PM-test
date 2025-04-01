@@ -13,6 +13,7 @@ import {
   Timer,
   Leaf as Lungs, // Use Leaf icon instead of Lungs (which doesn't exist)
   Info,
+  Music,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -133,7 +134,8 @@ export function BreathSyncPlayer({
 
   // Initialize audio playback
   useEffect(() => {
-    if (audioRef.current) {
+    // Only attempt audio playback if we have tracks
+    if (audioRef.current && tracks.length > 0) {
       if (isPlaying) {
         audioRef.current.play().catch((error) => {
           console.error("Audio playback failed:", error)
@@ -153,7 +155,7 @@ export function BreathSyncPlayer({
         clearInterval(progressIntervalRef.current)
       }
     }
-  }, [isPlaying, currentTrackIndex])
+  }, [isPlaying, currentTrackIndex, tracks.length])
 
   // Handle volume changes
   useEffect(() => {
@@ -461,7 +463,7 @@ export function BreathSyncPlayer({
           </div>
 
           {/* Audio Player Controls */}
-          {tracks.length > 0 && (
+          {tracks.length > 0 ? (
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <button onClick={prevTrack} className="text-white/70 hover:text-white">
@@ -524,6 +526,16 @@ export function BreathSyncPlayer({
                 onLoadedMetadata={onLoadedMetadata}
                 preload="metadata"
               />
+            </div>
+          ) : (
+            <div className="bg-cyan-500/10 rounded-lg p-4 border border-cyan-500/30 mt-6">
+              <div className="flex flex-col items-center text-center">
+                <Music className="h-10 w-10 text-cyan-500 mb-2" />
+                <h3 className="text-white font-medium mb-1">Music tracks coming soon</h3>
+                <p className="text-white/70 text-sm">
+                  Focus on the breath synchronization for now. Music tracks will be added in a future update.
+                </p>
+              </div>
             </div>
           )}
         </div>
