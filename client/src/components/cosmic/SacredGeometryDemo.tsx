@@ -23,7 +23,7 @@ export function SacredGeometryDemo() {
   return (
     <div className="space-y-8 py-8">
       <SacredGeometryCss />
-      
+
       <div className="flex justify-center space-x-4 mb-8">
         <Button
           onClick={() => setCurrentText("short")}

@@ -97,10 +97,10 @@ export function TriangleContainer({
       {/* Optimized text positioning for triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
         <div className="mt-[20px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
-          <h3 className="text-lg font-bold">{children.props.children[0].props.children}</h3>
+          {children}
         </div>
         <div className="mt-auto mb-[40px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
-          <p className="text-sm">{children.props.children[2].props.children}</p>
+          <p className="text-sm">Discover the harmony of universal patterns</p>
         </div>
       </div>
     </div>
@@ -151,10 +151,10 @@ export function InvertedTriangleContainer({
       {/* Optimized text positioning for inverted triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
         <div className="mt-[30px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
-          <p className="text-sm">{children.props.children[2].props.children}</p>
+          {children}
         </div>
         <div className="mt-auto mb-[30px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
-          <h3 className="text-lg font-bold">{children.props.children[0].props.children}</h3>
+          <p className="text-sm">Discover the harmony of universal patterns</p>
         </div>
       </div>
     </div>
@@ -349,11 +349,11 @@ const styles = `
       transform: rotate(360deg);
     }
   }
-  
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
