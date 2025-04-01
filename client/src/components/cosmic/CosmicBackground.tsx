@@ -37,6 +37,16 @@ export function CosmicBackground() {
             ["rgba(20, 184, 166, 0.04)", "rgba(15, 118, 110, 0.06)"],
           ],
         }
+      case "/cosmic-experience":
+        return {
+          bgColor: "rgba(3, 9, 21, 0.8)",
+          starColors: ["#ffffff", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"],
+          nebulaColors: [
+            ["rgba(2, 132, 199, 0.04)", "rgba(3, 105, 161, 0.06)"],
+            ["rgba(8, 145, 178, 0.03)", "rgba(14, 116, 144, 0.05)"],
+            ["rgba(16, 185, 129, 0.03)", "rgba(5, 150, 105, 0.05)"],
+          ],
+        }
       case "/archived-music":
         return {
           bgColor: "rgba(5, 10, 24, 0.8)",
