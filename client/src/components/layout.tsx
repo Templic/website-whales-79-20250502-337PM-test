@@ -135,6 +135,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Music Archive
           </Button>
         </Link>
+        <Link href="/community">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Community
+          </Button>
+        </Link>
         <Link href="/collaboration">
           <Button 
             variant="ghost" 
@@ -222,6 +232,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/cosmic-experience" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Cosmic Experience</Link></li>
                 <li><Link href="/immersive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Immersive</Link></li>
                 <li><Link href="/music-archive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Music Archive</Link></li>
+                <li><Link href="/community" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Community</Link></li>
                 <li><Link href="/collaboration" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Collaboration</Link></li>
                 <li><Link href="/contact" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
               </ul>

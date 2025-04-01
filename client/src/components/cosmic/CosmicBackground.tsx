@@ -19,7 +19,11 @@ interface Nebula {
   opacity: number
 }
 
-export function CosmicBackground() {
+interface CosmicBackgroundProps {
+  opacity?: number;
+}
+
+export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
@@ -163,8 +167,16 @@ export function CosmicBackground() {
       const deltaTime = time - lastTime
       lastTime = time
 
-      // Clear canvas
-      ctx.fillStyle = colorScheme.bgColor
+      // Clear canvas with custom opacity
+      const bgColorParts = colorScheme.bgColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/)
+      if (bgColorParts) {
+        const r = parseInt(bgColorParts[1], 10)
+        const g = parseInt(bgColorParts[2], 10)
+        const b = parseInt(bgColorParts[3], 10)
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`
+      } else {
+        ctx.fillStyle = colorScheme.bgColor
+      }
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       // Draw nebulae
@@ -228,7 +240,7 @@ export function CosmicBackground() {
     return () => {
       cancelAnimationFrame(animationFrameIdRef.current)
     }
-  }, [dimensions, mousePosition, location, getColorScheme])
+  }, [dimensions, mousePosition, location, getColorScheme, opacity])
 
   return <canvas ref={canvasRef} className="fixed inset-0 -z-10 h-full w-full" style={{ pointerEvents: "none" }} />
 }
