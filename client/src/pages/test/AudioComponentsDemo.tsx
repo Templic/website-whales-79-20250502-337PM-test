@@ -5,6 +5,11 @@ import { CosmicSection } from "../../components/imported/ui/CosmicSection"
 import { CosmicCard } from "../../components/imported/ui/CosmicCard"
 import { CosmicButton } from "../../components/imported/ui/CosmicButton"
 import { Play, Pause, Volume2, VolumeX, Settings } from "lucide-react"
+import { BinauralBeatGenerator } from "../../components/imported/audio/BinauralBeatGenerator"
+import { BreathSyncPlayer } from "../../components/imported/audio/BreathSyncPlayer"
+import { FrequencyVisualizer3D } from "../../components/audio/FrequencyVisualizer3D"
+import { SpatialAudioExperience } from "../../components/audio/SpatialAudioExperience"
+import { MoodBasedPlayer } from "../../components/audio/MoodBasedPlayer"
 
 export default function AudioComponentsDemo() {
   const [isPlaying, setIsPlaying] = useState(false)
@@ -105,7 +110,7 @@ export default function AudioComponentsDemo() {
                   </CosmicText>
                 </div>
               </CosmicCard>
-              
+
               <CosmicCard variant="outline">
                 <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
                   <Settings className="w-12 h-12 text-white/50 mb-4" />
@@ -115,7 +120,7 @@ export default function AudioComponentsDemo() {
                   </CosmicText>
                 </div>
               </CosmicCard>
-              
+
               <CosmicCard variant="outline">
                 <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
                   <Settings className="w-12 h-12 text-white/50 mb-4" />
@@ -125,7 +130,7 @@ export default function AudioComponentsDemo() {
                   </CosmicText>
                 </div>
               </CosmicCard>
-              
+
               <CosmicCard variant="outline">
                 <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
                   <Settings className="w-12 h-12 text-white/50 mb-4" />
