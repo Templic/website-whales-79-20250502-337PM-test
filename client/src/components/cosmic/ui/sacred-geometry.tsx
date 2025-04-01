@@ -94,13 +94,10 @@ export function TriangleContainer({
           />
         </svg>
       </div>
-      {/* Optimized text positioning for triangles */}
+      {/* Text positioning for triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[20px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
+        <div className="mt-[20px] max-w-[80%] max-h-[75%] overflow-y-auto hide-scrollbar text-center">
           {children}
-        </div>
-        <div className="mt-auto mb-[40px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
-          <p className="text-sm">Discover the harmony of universal patterns</p>
         </div>
       </div>
     </div>
@@ -148,13 +145,10 @@ export function InvertedTriangleContainer({
           />
         </svg>
       </div>
-      {/* Optimized text positioning for inverted triangles */}
+      {/* Text positioning for inverted triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center">
-        <div className="mt-[30px] max-w-[80%] max-h-[45%] overflow-y-auto hide-scrollbar text-center">
+        <div className="mt-[30px] max-w-[80%] max-h-[75%] overflow-y-auto hide-scrollbar text-center">
           {children}
-        </div>
-        <div className="mt-auto mb-[30px] max-w-[50%] max-h-[20%] overflow-y-auto hide-scrollbar text-center">
-          <p className="text-sm">Discover the harmony of universal patterns</p>
         </div>
       </div>
     </div>
