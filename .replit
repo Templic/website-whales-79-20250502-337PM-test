@@ -83,5 +83,23 @@ mode = "sequential"
 task = "shell.exec"
 args = "NODE_ENV=development node server/audio-processor.js"
 
+[[workflows.workflow]]
+name = "Storybook"
+author = 38189967
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run storybook"
+
+[[workflows.workflow]]
+name = "Storybook"
+author = 38189967
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run storybook"
+
 [objectStorage]
 defaultBucketID = "replit-objstore-93771c52-e543-454e-b546-e170eacb4202"
