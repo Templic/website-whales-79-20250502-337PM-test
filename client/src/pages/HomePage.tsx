@@ -13,23 +13,7 @@ export default function HomePage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        {/* Temporary Admin Access (FOR TESTING ONLY - REMOVE BEFORE DEPLOYMENT) */}
-        <div className="fixed top-16 left-0 right-0 z-50 flex justify-center">
-          <div className="flex gap-2 bg-black/75 p-2 rounded-md">
-            <Link href="/admin">
-              <Button variant="default" className="bg-amber-500 hover:bg-amber-600 text-black">
-                <UsersRound className="w-4 h-4 mr-2" />
-                Admin Portal (Test Only)
-              </Button>
-            </Link>
-            <Link href="/admin/analytics">
-              <Button variant="default" className="bg-violet-500 hover:bg-violet-600 text-white">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Analytics Dashboard (Test Only)
-              </Button>
-            </Link>
-          </div>
-        </div>
+        
 
         {/* Hero Section */}
         <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8"
