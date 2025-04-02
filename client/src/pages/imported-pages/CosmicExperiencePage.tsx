@@ -59,10 +59,6 @@ export default function CosmicExperiencePage() {
               <Infinity className="h-4 w-4 mr-2" />
               Sacred Geometry
             </TabsTrigger>
-            <TabsTrigger value="components">
-              <PanelTop className="h-4 w-4 mr-2" />
-              UI Components
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="music" className="space-y-8">
@@ -97,77 +93,6 @@ export default function CosmicExperiencePage() {
               </p>
               
               <SacredGeometryDemo />
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="components" className="space-y-8">
-            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
-              <h2 className="text-2xl font-semibold mb-4">Cosmic UI Components</h2>
-              <p className="text-gray-300 mb-6">
-                A showcase of UI components designed with cosmic aesthetics, featuring glowing effects,
-                gradient colors, and animated interactions.
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                <div className="space-y-6">
-                  <h3 className="text-xl font-medium">Cosmic Buttons</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <CosmicButton>Primary</CosmicButton>
-                    <CosmicButton variant="secondary">Secondary</CosmicButton>
-                    <CosmicButton variant="outline">Outline</CosmicButton>
-                    <CosmicButton variant="ghost">Ghost</CosmicButton>
-                  </div>
-                  
-                  <h3 className="text-xl font-medium">With Icons</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <CosmicButton icon={<Music className="h-4 w-4" />}>
-                      Music
-                    </CosmicButton>
-                    <CosmicButton 
-                      variant="secondary" 
-                      icon={<Waves className="h-4 w-4" />}
-                    >
-                      Waves
-                    </CosmicButton>
-                  </div>
-                  
-                  <h3 className="text-xl font-medium">Sizes</h3>
-                  <div className="flex flex-wrap gap-4 items-center">
-                    <CosmicButton size="sm">Small</CosmicButton>
-                    <CosmicButton size="md">Medium</CosmicButton>
-                    <CosmicButton size="lg">Large</CosmicButton>
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <h3 className="text-xl font-medium">Custom Glow Colors</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <CosmicButton glowColor="rgba(6, 182, 212, 0.6)">
-                      Cyan Glow
-                    </CosmicButton>
-                    <CosmicButton glowColor="rgba(20, 184, 166, 0.6)">
-                      Teal Glow
-                    </CosmicButton>
-                    <CosmicButton glowColor="rgba(14, 165, 233, 0.6)">
-                      Sky Glow
-                    </CosmicButton>
-                  </div>
-                  
-                  <h3 className="text-xl font-medium">Interactive Example</h3>
-                  <div className="flex flex-wrap gap-4">
-                    <CosmicButton
-                      onClick={() => {
-                        toast({
-                          title: "Cosmic Event Triggered",
-                          description: "You've activated a cosmic interaction!",
-                        })
-                      }}
-                    >
-                      Click Me
-                    </CosmicButton>
-                  </div>
-                </div>
-              </div>
             </div>
           </TabsContent>
         </Tabs>

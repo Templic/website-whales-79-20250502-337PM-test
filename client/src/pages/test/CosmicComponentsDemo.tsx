@@ -7,9 +7,12 @@ import { CosmicCard } from "../../components/imported/ui/CosmicCard"
 import { CosmicSection } from "../../components/imported/ui/CosmicSection"
 import { CosmicPortal } from "../../components/imported/ui/CosmicPortal"
 import { AccessibilityControls } from "../../components/imported/AccessibilityControls"
-import { Star, Moon, Sun, Sparkles } from "lucide-react"
+import { Star, Moon, Sun, Sparkles, Music, Waves } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function CosmicComponentsDemo() {
+  const { toast } = useToast()
+  
   useEffect(() => {
     document.title = "Cosmic UI Components Demo"
   }, [])
@@ -25,73 +28,87 @@ export default function CosmicComponentsDemo() {
             A showcase of UI components designed with cosmic aesthetics, featuring glowing effects, gradient colors, and animated interactions.
           </CosmicText>
 
-          {/* Cosmic Buttons */}
-          <section className="mt-16">
-            <CosmicHeading level={2} align="center">
-              Cosmic Buttons
-            </CosmicHeading>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <CosmicButton variant="primary" icon={<Sparkles />}>
-                Primary Button
-              </CosmicButton>
-              <CosmicButton variant="secondary" icon={<Moon />}>
-                Secondary Button
-              </CosmicButton>
-              <CosmicButton variant="outline" icon={<Sun />}>
-                Outline Button
-              </CosmicButton>
-              <CosmicButton variant="ghost" icon={<Star />}>
-                Ghost Button
-              </CosmicButton>
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <h3 className="text-xl font-medium">Cosmic Buttons</h3>
+              <div className="flex flex-wrap gap-4">
+                <CosmicButton>Primary</CosmicButton>
+                <CosmicButton variant="secondary">Secondary</CosmicButton>
+                <CosmicButton variant="outline">Outline</CosmicButton>
+                <CosmicButton variant="ghost">Ghost</CosmicButton>
+              </div>
+              
+              <h3 className="text-xl font-medium">With Icons</h3>
+              <div className="flex flex-wrap gap-4">
+                <CosmicButton icon={<Music className="h-4 w-4" />}>
+                  Music
+                </CosmicButton>
+                <CosmicButton 
+                  variant="secondary" 
+                  icon={<Waves className="h-4 w-4" />}
+                >
+                  Waves
+                </CosmicButton>
+              </div>
+              
+              <h3 className="text-xl font-medium">Sizes</h3>
+              <div className="flex flex-wrap gap-4 items-center">
+                <CosmicButton size="sm">Small</CosmicButton>
+                <CosmicButton size="md">Medium</CosmicButton>
+                <CosmicButton size="lg">Large</CosmicButton>
+              </div>
             </div>
-          </section>
+            
+            <div className="space-y-6">
+              <h3 className="text-xl font-medium">Custom Glow Colors</h3>
+              <div className="flex flex-wrap gap-4">
+                <CosmicButton glowColor="rgba(6, 182, 212, 0.6)">
+                  Cyan Glow
+                </CosmicButton>
+                <CosmicButton glowColor="rgba(20, 184, 166, 0.6)">
+                  Teal Glow
+                </CosmicButton>
+                <CosmicButton glowColor="rgba(14, 165, 233, 0.6)">
+                  Sky Glow
+                </CosmicButton>
+              </div>
+              
+              <h3 className="text-xl font-medium">Interactive Example</h3>
+              <div className="flex flex-wrap gap-4">
+                <CosmicButton
+                  onClick={() => {
+                    toast({
+                      title: "Cosmic Event Triggered",
+                      description: "You've activated a cosmic interaction!",
+                    })
+                  }}
+                >
+                  Click Me
+                </CosmicButton>
+              </div>
+            </div>
+          </div>
 
-          {/* Cosmic Cards */}
-          <section className="mt-16">
-            <CosmicHeading level={2} align="center">
-              Cosmic Cards
-            </CosmicHeading>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Additional Components */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-semibold mb-8">Other Cosmic Components</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <CosmicCard>
-                <CosmicHeading level={3}>Feature Card</CosmicHeading>
+                <CosmicHeading level={3}>Cosmic Card</CosmicHeading>
                 <CosmicText>Experience the cosmic design system</CosmicText>
               </CosmicCard>
+              
               <CosmicCard variant="glow">
                 <CosmicHeading level={3}>Glowing Card</CosmicHeading>
                 <CosmicText>With ethereal glow effects</CosmicText>
               </CosmicCard>
+              
+              <CosmicCard>
+                <CosmicHeading level={3}>Interactive Card</CosmicHeading>
+                <CosmicText>Hover for cosmic animations</CosmicText>
+              </CosmicCard>
             </div>
-          </section>
-
-          {/* Cosmic Portals */}
-          <section className="mt-16 mb-16">
-            <CosmicHeading level={2} align="center">
-              Cosmic Portals
-            </CosmicHeading>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-              <CosmicPortal
-                title="Journey Portal"
-                description="Begin your cosmic journey"
-                imageSrc="/images/cosmic-journeys.jpg"
-                destination="/journey"
-                color="from-purple-500 to-indigo-600"
-              />
-              <CosmicPortal
-                title="Experience Portal"
-                description="Immerse in cosmic experiences"
-                imageSrc="/images/oceanic-collection.jpg"
-                destination="/experience"
-                color="from-blue-500 to-teal-600"
-              />
-              <CosmicPortal
-                title="Archive Portal"
-                description="Explore the cosmic archives"
-                imageSrc="/images/generated-icon.png"
-                destination="/archive"
-                color="from-pink-500 to-purple-600"
-              />
-            </div>
-          </section>
+          </div>
         </div>
       </CosmicSection>
     </div>
