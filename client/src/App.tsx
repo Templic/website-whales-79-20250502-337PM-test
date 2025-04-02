@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "./pages/not-found";
 import { useEffect } from "react";
 import { initializeGA, trackPageView } from "@/lib/analytics";
+import { ErrorBoundary } from "react-error-boundary";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -91,6 +92,17 @@ function Router() {
   );
 }
 
+function ErrorFallback({error}: {error: Error}) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center p-8">
+        <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
+        <pre className="text-sm">{error.message}</pre>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   useEffect(() => {
     initializeGA();
@@ -99,8 +111,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <Router />
+          <Toaster />
+        </ErrorBoundary>
       </AuthProvider>
     </QueryClientProvider>
   );

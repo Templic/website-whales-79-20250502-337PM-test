@@ -9,14 +9,15 @@ export const initializeGA = () => {
     ReactGA.initialize(GA_MEASUREMENT_ID);
     console.log('Google Analytics initialized');
   } else {
-    console.warn('Google Analytics Measurement ID not found in environment variables');
+    console.warn('Google Analytics Measurement ID not found in environment variables. Analytics will be disabled.');
+    return;
   }
 };
 
 // Track page view
 export const trackPageView = (path: string) => {
   if (!GA_MEASUREMENT_ID) return;
-  
+
   ReactGA.send({
     hitType: 'pageview',
     page: path,
@@ -31,7 +32,7 @@ export const trackEvent = (
   value?: number
 ) => {
   if (!GA_MEASUREMENT_ID) return;
-  
+
   ReactGA.event({
     category,
     action,
@@ -48,7 +49,7 @@ export const trackTiming = (
   label?: string
 ) => {
   if (!GA_MEASUREMENT_ID) return;
-  
+
   ReactGA.gtag('event', 'timing_complete', {
     name: variable,
     value,
@@ -60,6 +61,6 @@ export const trackTiming = (
 // Set user properties
 export const setUserProperties = (properties: Record<string, any>) => {
   if (!GA_MEASUREMENT_ID) return;
-  
+
   ReactGA.gtag('set', 'user_properties', properties);
 };
