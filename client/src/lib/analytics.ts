@@ -5,12 +5,15 @@ const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
 
 // Initialize Google Analytics
 export const initializeGA = () => {
-  if (GA_MEASUREMENT_ID) {
-    ReactGA.initialize(GA_MEASUREMENT_ID);
-    console.log('Google Analytics initialized');
-  } else {
-    console.warn('Google Analytics Measurement ID not found in environment variables. Analytics will be disabled.');
-    return;
+  try {
+    if (GA_MEASUREMENT_ID) {
+      ReactGA.initialize(GA_MEASUREMENT_ID);
+      console.log('Google Analytics initialized');
+    } else {
+      console.warn('Analytics disabled: No GA Measurement ID');
+    }
+  } catch (error) {
+    console.warn('Analytics initialization failed:', error);
   }
 };
 
