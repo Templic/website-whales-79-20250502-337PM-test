@@ -46,24 +46,7 @@ export default function CosmicExperiencePage() {
             This showcase brings together components from our cosmic music artist experience.
           </p>
           
-          <div className="flex justify-center mt-6 space-x-4">
-            <CosmicButton
-              variant={backgroundType === "cosmic" ? "primary" : "secondary"}
-              size="sm"
-              icon={<Moon className="h-4 w-4" />}
-              onClick={() => setBackgroundType("cosmic")}
-            >
-              Cosmic Background
-            </CosmicButton>
-            <CosmicButton
-              variant={backgroundType === "particles" ? "primary" : "secondary"}
-              size="sm"
-              icon={<Waves className="h-4 w-4" />}
-              onClick={() => setBackgroundType("particles")}
-            >
-              Particle Background
-            </CosmicButton>
-          </div>
+          
         </div>
         
         <Tabs defaultValue="music" className="max-w-5xl mx-auto">

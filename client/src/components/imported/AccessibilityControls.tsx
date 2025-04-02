@@ -194,6 +194,50 @@ export function AccessibilityControls() {
                 </div>
               </div>
 
+              {/* Background Type */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-purple-400"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2a7 7 0 0 0 7 7"></path>
+                  </svg>
+                  <h3 className="font-medium text-white">Background Style</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      // You'll need to implement global state management
+                      // to handle background type changes
+                      window.dispatchEvent(new CustomEvent('setBackgroundType', { detail: 'cosmic' }))
+                    }}
+                    className="flex flex-col items-center gap-2 rounded-lg border border-white/10 bg-black/20 p-3 hover:border-white/30"
+                  >
+                    <Moon className="h-6 w-6 text-purple-400" />
+                    <span className="text-xs font-medium text-white">Cosmic</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('setBackgroundType', { detail: 'particles' }))
+                    }}
+                    className="flex flex-col items-center gap-2 rounded-lg border border-white/10 bg-black/20 p-3 hover:border-white/30"
+                  >
+                    <Waves className="h-6 w-6 text-purple-400" />
+                    <span className="text-xs font-medium text-white">Particles</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Motion & Animation */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
