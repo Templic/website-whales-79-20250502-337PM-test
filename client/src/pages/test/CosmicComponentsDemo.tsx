@@ -1,3 +1,4 @@
+
 import { useEffect } from "react"
 import { CosmicButton } from "../../components/imported/ui/CosmicButton"
 import { CosmicHeading } from "../../components/imported/ui/CosmicHeading"
@@ -9,10 +10,12 @@ import { AccessibilityControls } from "../../components/imported/AccessibilityCo
 import { Star, Moon, Sun, Sparkles } from "lucide-react"
 
 export default function CosmicComponentsDemo() {
+  useEffect(() => {
+    document.title = "Cosmic UI Components Demo"
+  }, [])
+
   return (
     <div className="min-h-screen bg-black text-white">
-      <AccessibilityControls className="fixed top-4 right-4 z-50" />
-
       <CosmicSection variant="gradient">
         <div className="max-w-5xl mx-auto px-4">
           <CosmicHeading level={1} align="center" withAccent glow>

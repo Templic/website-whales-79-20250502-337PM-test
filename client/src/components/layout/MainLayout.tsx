@@ -15,7 +15,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="fixed top-4 right-4 z-[100] transition-all duration-300 hover:scale-105">
         <ThemeToggle />
       </div>
-      <AccessibilityControls className="fixed top-4 right-4 z-50" />
+      <AccessibilityControls />
       <Header />
       <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 transition-all duration-300 ease-in-out">
         <div className="max-w-7xl mx-auto w-full">
