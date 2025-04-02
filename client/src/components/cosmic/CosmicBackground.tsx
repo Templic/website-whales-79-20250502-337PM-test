@@ -46,9 +46,9 @@ export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
           bgColor: "rgba(3, 9, 21, 0.8)",
           starColors: ["#ffffff", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"],
           nebulaColors: [
-            ["rgba(2, 132, 199, 0.04)", "rgba(3, 105, 161, 0.06)"],
-            ["rgba(8, 145, 178, 0.03)", "rgba(14, 116, 144, 0.05)"],
-            ["rgba(16, 185, 129, 0.03)", "rgba(5, 150, 105, 0.05)"],
+            ["rgba(2, 132, 199, 0.06)", "rgba(3, 105, 161, 0.1)"], // Increased opacity for better contrast
+            ["rgba(8, 145, 178, 0.05)", "rgba(14, 116, 144, 0.07)"], // Increased opacity for better contrast
+            ["rgba(16, 185, 129, 0.05)", "rgba(5, 150, 105, 0.07)"], // Increased opacity for better contrast
           ],
         }
       case "/archived-music":
@@ -155,7 +155,7 @@ export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
         radius: Math.random() * 300 + 200,
         color1: colorPair[0],
         color2: colorPair[1],
-        opacity: Math.random() * 0.3 + 0.1,
+        opacity: Math.random() * 0.3 + 0.2, // Increased opacity for better contrast
       })
     }
 
@@ -167,7 +167,7 @@ export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
       const deltaTime = time - lastTime
       lastTime = time
 
-      // Clear canvas with custom opacity
+      // Clear canvas with custom opacity and blend mode
       const bgColorParts = colorScheme.bgColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/)
       if (bgColorParts) {
         const r = parseInt(bgColorParts[1], 10)
@@ -178,6 +178,7 @@ export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
         ctx.fillStyle = colorScheme.bgColor
       }
       ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.globalCompositeOperation = 'overlay'; // Apply blend mode for better contrast
 
       // Draw nebulae
       nebulae.forEach((nebula) => {
@@ -194,6 +195,7 @@ export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
 
       // Reset global alpha
       ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = 'source-over'; // Reset blend mode
 
       // Calculate mouse influence (parallax effect)
       const mouseXRatio = mousePosition.x / dimensions.width

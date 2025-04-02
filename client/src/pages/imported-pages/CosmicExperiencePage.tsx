@@ -15,13 +15,13 @@ export default function CosmicExperiencePage() {
   const [backgroundType, setBackgroundType] = useState<"cosmic" | "particles">("cosmic");
   const [tracks, setTracks] = useState<any[]>([]);
   const { toast } = useToast();
-  
+
   // This is a placeholder for the tracks since we don't have actual audio files yet
   useEffect(() => {
     // We're not setting any tracks since we don't have audio files yet
     // The BreathSyncPlayer component will display a placeholder
     setTracks([]);
-    
+
     // Display a friendly message to the user about the audio files
     toast({
       title: "Audio files not available",
@@ -34,7 +34,7 @@ export default function CosmicExperiencePage() {
     <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white">
       {/* Dynamic Background */}
       {backgroundType === "cosmic" ? <CosmicBackground /> : <ParticleBackground />}
-      
+
       {/* Header */}
       <div className="container mx-auto pt-8 px-4">
         <div className="text-center mb-8">
@@ -45,10 +45,10 @@ export default function CosmicExperiencePage() {
             Explore the cosmic elements of music, sacred geometry, breath synchronization, and more.
             This showcase brings together components from our cosmic music artist experience.
           </p>
-          
-          
+
+
         </div>
-        
+
         <Tabs defaultValue="music" className="max-w-5xl mx-auto">
           <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/20 backdrop-blur-sm">
             <TabsTrigger value="music">
@@ -60,44 +60,44 @@ export default function CosmicExperiencePage() {
               Sacred Geometry
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="music" className="space-y-8">
-            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-gradient-to-br from-black/60 via-purple-900/30 to-black/60 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/5">
               <h2 className="text-2xl font-semibold mb-4">Synchronized Breath & Music Player</h2>
               <p className="text-gray-300 mb-6">
                 This player synchronizes breathing patterns with music playback, creating a deeply immersive experience.
                 Select different breathing patterns and follow the visual cues to synchronize your breath.
               </p>
-              
+
               <BreathSyncPlayer tracks={tracks} />
             </div>
-            
-            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
+
+            <div className="bg-gradient-to-br from-black/60 via-purple-900/30 to-black/60 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/5">
               <h2 className="text-2xl font-semibold mb-4">Binaural Beat Generator</h2>
               <p className="text-gray-300 mb-6">
                 Generate custom binaural beats to induce specific states of consciousness. 
                 Binaural beats occur when two slightly different frequencies are played separately in each ear, 
                 creating a third "beat" frequency that can influence brain waves.
               </p>
-              
+
               <BinauralBeatGenerator />
             </div>
           </TabsContent>
-          
+
           <TabsContent value="sacred" className="space-y-8">
-            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
+            <div className="bg-gradient-to-br from-black/60 via-purple-900/30 to-black/60 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/5">
               <h2 className="text-2xl font-semibold mb-4">Sacred Geometry Visualizations</h2>
               <p className="text-gray-300 mb-6">
                 Sacred geometry patterns reveal the mathematical principles that govern our universe.
                 Explore these interactive containers shaped in various sacred forms.
               </p>
-              
+
               <SacredGeometryDemo />
             </div>
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <div className="py-12"></div>
     </div>
   );
