@@ -144,7 +144,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
             <CosmicButton 
               className="w-full" 
               size="lg" 
-              onClick={handleCheckout} // Updated onClick handler
+              onClick={() => setLocation('/checkout')}
               variant="cosmic"
             >
               Checkout

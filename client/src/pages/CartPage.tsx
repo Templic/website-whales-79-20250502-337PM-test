@@ -34,15 +34,17 @@ export default function CartPage() {
 
   // Fetch cart items
   const { 
-    data: cartItems = [] as CartItem[], 
+    data: cartData, 
     isLoading, 
     isError,
     refetch
   } = useQuery({
     queryKey: ['/api/cart'],
-    queryFn: () => apiRequest('/api/cart', {credentials: 'include'}), // Updated queryFn to use apiRequest
+    queryFn: () => apiRequest('/api/cart', {credentials: 'include'}),
     enabled: isClientLoaded,
   });
+
+  const cartItems = cartData?.items || [];
 
   // Update item quantity mutation
   const updateQuantityMutation = useMutation({
