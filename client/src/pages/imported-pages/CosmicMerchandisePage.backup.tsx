@@ -438,45 +438,44 @@ export default function CosmicMerchandisePage() {
                             <span>${priceRange[0]}</span>
                             <span>${priceRange[1]}</span>
                           </div>
-                          {/* Price range slider would go here */}
-                          <div className="h-1 bg-muted rounded-full relative">
-                            <div 
-                              className="absolute h-full bg-purple-500 rounded-full"
-                              style={{ 
-                                left: `${(priceRange[0] / 200) * 100}%`, 
-                                width: `${((priceRange[1] - priceRange[0]) / 200) * 100}%` 
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium mb-3">Availability</h4>
-                        <div className="flex gap-2">
-                          <Badge variant="outline" className="cursor-pointer">
-                            In Stock Only
-                          </Badge>
-                          <Badge variant="outline" className="cursor-pointer">
-                            New Arrivals
-                          </Badge>
-                          <Badge variant="outline" className="cursor-pointer">
-                            On Sale
-                          </Badge>
+                        {/* Price range slider would go here */}
+                        <div className="h-1 bg-muted rounded-full relative">
+                          <div 
+                            className="absolute h-full bg-purple-500 rounded-full"
+                            style={{ 
+                              left: `${(priceRange[0] / 200) * 100}%`, 
+                              width: `${((priceRange[1] - priceRange[0]) / 200) * 100}%` 
+                            }}
+                          ></div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex justify-between mt-6">
-                      <Button variant="outline" onClick={() => {
-                        setCategoryFilter([]);
-                        setPriceRange([0, 200]);
-                      }}>
-                        Reset Filters
-                      </Button>
-                      <Button>Apply Filters</Button>
+                    <div>
+                      <h4 className="font-medium mb-3">Availability</h4>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="cursor-pointer">
+                          In Stock Only
+                        </Badge>
+                        <Badge variant="outline" className="cursor-pointer">
+                          New Arrivals
+                        </Badge>
+                        <Badge variant="outline" className="cursor-pointer">
+                          On Sale
+                        </Badge>
+                      </div>
                     </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
+                  </div>
+                  <div className="flex justify-between mt-6">
+                    <Button variant="outline" onClick={() => {
+                      setCategoryFilter([]);
+                      setPriceRange([0, 200]);
+                    }}>
+                      Reset Filters
+                    </Button>
+                    <Button>Apply Filters</Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
           
@@ -705,7 +704,7 @@ export default function CosmicMerchandisePage() {
                         <div className="flex flex-wrap gap-1 mb-2">
                           {product.categories.map((category, idx) => (
                             <span 
-                              key={`${product.id}-list-cat-${idx}`}
+                              key={`${product.id}-cat-${idx}`}
                               className="text-xs bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded-full"
                             >
                               {category}
@@ -713,8 +712,8 @@ export default function CosmicMerchandisePage() {
                           ))}
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">{product.description}</p>
-                        <div className="mt-auto flex justify-between items-center">
-                          <div>
+                        <div className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between">
+                          <div className="mb-2 sm:mb-0">
                             {product.discountPercent ? (
                               <div className="flex items-center gap-2">
                                 <span className="text-xl font-bold">${(product.price * (1 - product.discountPercent / 100)).toFixed(2)}</span>
@@ -724,13 +723,21 @@ export default function CosmicMerchandisePage() {
                               <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
                             )}
                           </div>
-                          <Button 
-                            className="btn-cosmic-glow"
-                            disabled={!product.inStock}
-                            onClick={() => addToCart(product)}
-                          >
-                            Add to Cart
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline"
+                              onClick={() => handleProductView(product.id)}
+                            >
+                              View Details
+                            </Button>
+                            <Button 
+                              className="btn-cosmic-glow"
+                              disabled={!product.inStock}
+                              onClick={() => addToCart(product)}
+                            >
+                              Add to Cart
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -740,128 +747,107 @@ export default function CosmicMerchandisePage() {
             )}
           </div>
           
-          {/* Cosmic Collectibles Section - Featured Products */}
-          <div className="mb-12 cosmic-fade-in">
-            <CosmicCollectibles 
-              onAddToCart={addToCart} 
-              userPoints={userPoints}
-            />
+          {/* Collectibles Section - From Lovable.dev */}
+          <div className="mb-12 cosmic-scale">
+            <CosmicCollectibles userPoints={userPoints} onAddToCart={addToCart} />
           </div>
           
-          {/* Enhanced Shopping Experience */}
-          <div className="mb-12 cosmic-fade-in">
-            <EnhancedShoppingExperience />
-          </div>
-        </div>
-      </div>
-      
-      {/* Floating Cart Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button 
-              size="lg" 
-              className="h-14 w-14 rounded-full shadow-lg cart-floating-button btn-cosmic-glow relative"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {cart.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold cart-badge-pulse">
-                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="w-full sm:max-w-md">
-            <SheetHeader>
-              <SheetTitle>Your Cart</SheetTitle>
-              <SheetDescription>
-                Review your items before checkout
-              </SheetDescription>
-            </SheetHeader>
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-1">Your cart is empty</h3>
-                <p className="text-sm text-muted-foreground mb-6 text-center">
-                  Browse our cosmic collection and find something that resonates with your energy.
-                </p>
-                <Button onClick={() => document.querySelector("button[aria-label='Close']")?.click()}>
-                  Start Shopping
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-6">
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="flex gap-4 py-2 border-b border-border last:border-none">
-                      <div className="w-20 h-20 rounded overflow-hidden shrink-0">
-                        <img 
-                          src={item.product.image} 
-                          alt={item.product.name} 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between mb-1">
-                          <h4 className="font-medium">{item.product.name}</h4>
-                          <div className="font-medium">
-                            {item.product.discountPercent ? (
-                              <span>${((item.product.price * (1 - item.product.discountPercent / 100)) * item.quantity).toFixed(2)}</span>
-                            ) : (
-                              <span>${(item.product.price * item.quantity).toFixed(2)}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                          <div className="flex items-center space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-7 w-7"
-                              onClick={() => removeFromCart(item.product.id)}
-                            >
-                              <span>-</span>
-                            </Button>
-                            <span className="text-sm">{item.quantity}</span>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-7 w-7"
-                              onClick={() => addToCart(item.product)}
-                            >
-                              <span>+</span>
-                            </Button>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            ${item.product.discountPercent ? 
-                               (item.product.price * (1 - item.product.discountPercent / 100)).toFixed(2) : 
-                               item.product.price.toFixed(2)
-                             } each
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+          {/* Shopping Cart Sheet */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="fixed bottom-4 right-4 z-10 rounded-full w-16 h-16 flex flex-col items-center justify-center shadow-lg border-purple-500/30 cart-floating-button btn-cosmic-glow"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {cart.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 rounded-full bg-purple-500 px-2 min-w-[1.5rem] h-6 flex items-center justify-center badge-pulse">
+                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-md">
+              <SheetHeader>
+                <SheetTitle>Your Shopping Cart</SheetTitle>
+                <SheetDescription>
+                  {cart.length === 0
+                    ? "Your cart is empty. Add some cosmic items!"
+                    : `You have ${cart.reduce((total, item) => total + item.quantity, 0)} items in your cart.`}
+                </SheetDescription>
+              </SheetHeader>
+              
+              {cart.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-6">Your cosmic cart awaits new treasures</p>
+                  <Button>Browse Products</Button>
                 </div>
-                
-                <div className="mt-6 pt-4 border-t border-border">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal</span>
+              ) : (
+                <div className="py-6">
+                  <div className="space-y-4 mb-6">
+                    {cart.map((item) => (
+                      <div key={item.product.id} className="flex gap-4">
+                        <div className="h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
+                          <img 
+                            src={item.product.image} 
+                            alt={item.product.name} 
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-grow">
+                          <h4 className="font-medium line-clamp-1">{item.product.name}</h4>
+                          <div className="flex justify-between">
+                            <div className="flex items-center mt-1">
+                              <Button 
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => removeFromCart(item.product.id)}
+                              >
+                                -
+                              </Button>
+                              <span className="mx-2">{item.quantity}</span>
+                              <Button 
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0"
+                                onClick={() => addToCart(item.product)}
+                              >
+                                +
+                              </Button>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">
+                                ${(item.product.price * item.quantity).toFixed(2)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                ${item.product.price.toFixed(2)} each
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t pt-4 mb-6">
+                    <div className="flex justify-between mb-2">
+                      <span>Subtotal</span>
                       <span>${cartTotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span>Free</span>
+                    <div className="flex justify-between mb-2 text-muted-foreground">
+                      <span>Shipping</span>
+                      <span>Calculated at checkout</span>
                     </div>
-                    <div className="flex justify-between font-medium text-lg pt-2 border-t border-border">
+                    <div className="flex justify-between font-bold text-lg">
                       <span>Total</span>
                       <span>${cartTotal.toFixed(2)}</span>
                     </div>
                   </div>
                   
-                  <div className="mt-6 flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
-                    <Button variant="outline" className="flex-1" onClick={() => document.querySelector("button[aria-label='Close']")?.click()}>
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1">
                       Continue Shopping
                     </Button>
                     <Button className="flex-1">
@@ -874,10 +860,10 @@ export default function CosmicMerchandisePage() {
                     <span>You'll earn {Math.round(cartTotal)} loyalty points with this purchase</span>
                   </div>
                 </div>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+              )}
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </div>
   );
