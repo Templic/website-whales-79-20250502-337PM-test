@@ -1,3 +1,5 @@
+import { Product, ProductCategory } from '@shared/schema';
+
 export interface Track {
   id: string;
   title: string;
@@ -248,4 +250,70 @@ export const playlists: Playlist[] = [
       },
     ],
   },
+];
+
+export const defaultProducts: Product[] = [
+  {
+    id: 1,
+    name: "Orca Sunrise Cove Digital Art",
+    slug: "orca-sunrise-cove",
+    description: "Dale The Whale's signature digital art piece capturing the serene beauty of orcas at sunrise.",
+    shortDescription: "Signature digital art print",
+    price: "45.00",
+    images: ["https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg"],
+    inventory: 100,
+    featured: true,
+    categoryId: 1
+  },
+  {
+    id: 2,
+    name: "Divine Cosmic Digital Art",
+    slug: "divine-cosmic-art",
+    description: "A mesmerizing digital art piece featuring cosmic themes and sacred geometry.",
+    shortDescription: "Cosmic themed digital art",
+    price: "45.00",
+    images: ["https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg"],
+    inventory: 100,
+    featured: true,
+    categoryId: 1
+  },
+  {
+    id: 3,
+    name: "Cosmic Healing Vinyl",
+    slug: "cosmic-healing-vinyl",
+    description: "Limited edition vinyl featuring Dale's cosmic healing frequencies.",
+    shortDescription: "Limited edition vinyl",
+    price: "30.00",
+    images: ["/images/cosmic-journeys.jpg"],
+    inventory: 50,
+    featured: true,
+    categoryId: 2
+  },
+  {
+    id: 4,
+    name: "Meditation Guide Bundle",
+    slug: "meditation-guide-bundle",
+    description: "Complete meditation guide bundle with frequency attunement tracks.",
+    shortDescription: "Digital meditation bundle",
+    price: "25.00",
+    images: ["/images/oceanic-collection.jpg"],
+    inventory: 200,
+    featured: false,
+    categoryId: 2
+  }
+];
+
+export const productCategories: ProductCategory[] = [
+  {
+    id: 1,
+    name: "Digital Art",
+    slug: "digital-art",
+    description: "Digital art prints and collections"
+  },
+  {
+    id: 2,
+    name: "Music & Meditation",
+    slug: "music-meditation",
+    description: "Music releases and meditation guides"
+  }
 ];

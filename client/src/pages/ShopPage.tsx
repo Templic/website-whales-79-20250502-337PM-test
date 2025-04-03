@@ -30,14 +30,17 @@ export default function ShopPage() {
   }, []);
 
   // Fetch products based on filters
-  const { 
+  import { defaultProducts, productCategories } from '@/data/playlists';
+
+const { 
     data: products, 
     isLoading: productsLoading, 
     isError: productsError 
   } = useQuery({
     queryKey: ['/api/shop/products', filters],
     queryFn: async () => {
-      const queryParams = new URLSearchParams();
+      try {
+        const queryParams = new URLSearchParams();
       if (filters.categories.length > 0) {
         filters.categories.forEach(catId => 
           queryParams.append('category', catId.toString())
@@ -52,6 +55,16 @@ export default function ShopPage() {
       
       const response = await apiRequest<Product[]>(`/api/shop/products?${queryParams.toString()}`);
       return response;
+      } catch (error) {
+        // Fallback to default products if API fails
+        return defaultProducts.filter(product => {
+          if (filters.categories.length > 0 && !filters.categories.includes(product.categoryId)) return false;
+          if (filters.inStock && product.inventory <= 0) return false;
+          if (filters.featured && !product.featured) return false;
+          const price = parseFloat(product.price);
+          return price >= filters.priceRange[0] && price <= filters.priceRange[1];
+        });
+      }
     },
     enabled: true,
   });
