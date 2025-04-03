@@ -2,17 +2,19 @@ import React, { useRef, useEffect } from 'react';
 
 interface CosmicBackgroundProps {
   opacity?: number;
-  color?: 'purple' | 'blue' | 'green';
+  color?: 'purple' | 'blue' | 'green' | 'dark-purple';
   speed?: number;
   particleCount?: number;
+  nebulaEffect?: boolean;
   className?: string;
 }
 
 export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
   opacity = 0.5,
-  color = 'purple',
+  color = 'dark-purple',
   speed = 1,
   particleCount = 150,
+  nebulaEffect = true,
   className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -25,20 +27,30 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
         return {
           background: '#080E21',
           stars: ['#3AA0FF', '#95C5FF', '#68B8FF', '#FFFFFF'],
-          glow: 'rgba(58, 160, 255, 0.8)'
+          glow: 'rgba(58, 160, 255, 0.8)',
+          nebula: ['rgba(58, 160, 255, 0.05)', 'rgba(95, 197, 255, 0.05)']
         };
       case 'green':
         return {
           background: '#0C1E11',
           stars: ['#3AFF7A', '#95FFBF', '#68FFB6', '#FFFFFF'],
-          glow: 'rgba(58, 255, 122, 0.8)'
+          glow: 'rgba(58, 255, 122, 0.8)',
+          nebula: ['rgba(58, 255, 122, 0.05)', 'rgba(95, 255, 191, 0.05)']
         };
       case 'purple':
-      default:
         return {
           background: '#16091D',
           stars: ['#9C3AFF', '#CE95FF', '#B668FF', '#FFFFFF'],
-          glow: 'rgba(156, 58, 255, 0.8)'
+          glow: 'rgba(156, 58, 255, 0.8)',
+          nebula: ['rgba(156, 58, 255, 0.05)', 'rgba(206, 149, 255, 0.05)']
+        };
+      case 'dark-purple':
+      default:
+        return {
+          background: '#0A0A14',
+          stars: ['#9C3AFF', '#CE95FF', '#B668FF', '#FFFFFF', '#30C7F0'],
+          glow: 'rgba(156, 58, 255, 0.8)',
+          nebula: ['rgba(156, 58, 255, 0.03)', 'rgba(75, 0, 130, 0.03)', 'rgba(30, 144, 255, 0.03)']
         };
     }
   };
@@ -73,8 +85,31 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
       twinkleSpeed: number;
     };
 
-    const stars: Star[] = [];
+    type NebulaPatch = {
+      x: number;
+      y: number;
+      radius: number;
+      color: string;
+      opacity: number;
+    };
 
+    const stars: Star[] = [];
+    const nebulae: NebulaPatch[] = [];
+
+    // Create nebula patches
+    if (nebulaEffect) {
+      for (let i = 0; i < 8; i++) {
+        nebulae.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 300 + 200,
+          color: colorPalette.nebula[Math.floor(Math.random() * colorPalette.nebula.length)],
+          opacity: Math.random() * 0.2 + 0.05
+        });
+      }
+    }
+
+    // Create stars
     for (let i = 0; i < particleCount; i++) {
       const radius = Math.random() * 2 + 0.5;
       
@@ -90,11 +125,65 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
       });
     }
 
+    // Add some bright fixed stars (immobile)
+    for (let i = 0; i < 15; i++) {
+      const radius = Math.random() * 3 + 1.5;
+      
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius,
+        color: '#FFFFFF',
+        velocity: 0, // Fixed stars
+        alpha: Math.random() * 0.3 + 0.7,
+        direction: Math.random() > 0.5 ? 1 : -1,
+        twinkleSpeed: Math.random() * 0.005 + 0.002
+      });
+    }
+
     // Animation function
     const animate = () => {
       ctx.globalAlpha = opacity;
       ctx.fillStyle = colorPalette.background;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw nebula patches
+      if (nebulaEffect) {
+        nebulae.forEach(nebula => {
+          ctx.beginPath();
+          ctx.globalAlpha = nebula.opacity * opacity;
+          
+          const gradient = ctx.createRadialGradient(
+            nebula.x, nebula.y, 0, 
+            nebula.x, nebula.y, nebula.radius
+          );
+          gradient.addColorStop(0, nebula.color);
+          gradient.addColorStop(1, 'transparent');
+          
+          ctx.fillStyle = gradient;
+          ctx.arc(nebula.x, nebula.y, nebula.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // Draw constellation lines (subtle connections between some stars)
+      if (stars.length > 10) {
+        ctx.strokeStyle = 'rgba(120, 100, 200, 0.1)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        
+        for (let i = 0; i < 8; i++) {
+          const startIdx = Math.floor(Math.random() * stars.length);
+          const endIdx = Math.floor(Math.random() * stars.length);
+          
+          if (startIdx !== endIdx) {
+            ctx.moveTo(stars[startIdx].x, stars[startIdx].y);
+            ctx.lineTo(stars[endIdx].x, stars[endIdx].y);
+          }
+        }
+        
+        ctx.stroke();
+      }
 
       // Draw stars
       stars.forEach(star => {
@@ -121,7 +210,9 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
         ctx.fill();
 
         // Move stars
-        star.y += star.velocity;
+        if (star.velocity > 0) {
+          star.y += star.velocity;
+        }
         
         // Twinkle effect
         star.alpha += star.twinkleSpeed * star.direction;
@@ -133,7 +224,7 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
         }
 
         // Reset position when off screen
-        if (star.y > canvas.height) {
+        if (star.y > canvas.height && star.velocity > 0) {
           star.y = 0;
           star.x = Math.random() * canvas.width;
         }
@@ -149,7 +240,7 @@ export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
       window.removeEventListener('resize', resizeCanvas);
       cancelAnimationFrame(animationRef.current);
     };
-  }, [opacity, color, speed, particleCount]);
+  }, [opacity, color, speed, particleCount, nebulaEffect]);
 
   return (
     <canvas
