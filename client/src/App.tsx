@@ -45,6 +45,8 @@ import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
 import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
 import ArchivePage from "@/pages/imported-pages/ArchivePage";
+import ArchivePageOld from "@/pages/imported-pages/ArchivePage_old";
+import MusicArchivePageOld from "@/pages/MusicArchivePage_old";
 import CommunityPage from "@/pages/imported-pages/CommunityPage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
@@ -121,6 +123,10 @@ function Router() {
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
+        
+        {/* Legacy Archive Pages */}
+        <Route path="/pages/archived-music/old" component={MusicArchivePageOld} />
+        <Route path="/pages/music-archive/old" component={ArchivePageOld} />
         
         {/* 404 Route */}
         <Route component={NotFound} />
