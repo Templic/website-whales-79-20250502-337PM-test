@@ -240,6 +240,7 @@ export const CartSummary = ({
             onClick={onCheckout}
             className="w-full bg-cosmic-primary hover:bg-cosmic-primary/90 text-white font-medium cosmic-hover-glow"
             disabled={items.length === 0}
+            onClick={() => setLocation('/shop/checkout')}
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Proceed to Checkout

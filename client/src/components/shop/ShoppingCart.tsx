@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import CosmicButton from '@/components/ui/cosmic-button';
+import {useLocation} from 'react-router-dom'; // Added import for useLocation
 
 interface CartItem {
   product: Product;
@@ -40,6 +41,12 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
     onUpdateQuantity(productId, newQuantity);
   };
 
+  const [, setLocation] = useLocation(); // Added useLocation hook
+
+  const handleCheckout = () => {
+    setLocation('/shop/checkout');
+  };
+
   return (
     <div className="flex flex-col h-full cosmic-cart">
       {cartItems.length === 0 ? (
@@ -66,7 +73,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  
+
                   <div className="flex flex-col flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium truncate">{product.name}</h3>
@@ -79,11 +86,11 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                    
+
                     <span className="text-sm text-muted-foreground mb-2 cosmic-price">
                       {formatCurrency(product.price)}
                     </span>
-                    
+
                     <div className="flex justify-between items-center">
                       <div className="flex items-center border rounded-md">
                         <Button
@@ -104,7 +111,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      
+
                       <span className="font-medium cosmic-price">
                         {formatCurrency(product.price * quantity)}
                       </span>
@@ -114,10 +121,10 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
               ))}
             </div>
           </ScrollArea>
-          
+
           <div className="pt-4 space-y-4">
             <Separator />
-            
+
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
@@ -133,11 +140,11 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
                 <span className="cosmic-gradient-text">{formatCurrency(total)}</span>
               </div>
             </div>
-            
+
             <CosmicButton 
               className="w-full" 
               size="lg" 
-              onClick={onCheckout}
+              onClick={handleCheckout} // Updated onClick handler
               variant="cosmic"
             >
               Checkout
