@@ -20,6 +20,13 @@ export default function SitemapPage() {
             <li><Link href="/contact">Contact</Link></li>
             <li><Link href="/tour">Tour</Link></li>
           </ul>
+
+          <h2 className="text-2xl font-semibold mb-4 mt-8">Demo Pages</h2>
+          <ul className="space-y-2">
+            <li><Link href="/test/cosmic">Cosmic UI Demo</Link></li>
+            <li><Link href="/test/audio">Audio Components</Link></li>
+            <li><Link href="/test/new">New Components</Link></li>
+          </ul>
         </section>
 
         <section>

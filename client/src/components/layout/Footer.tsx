@@ -30,6 +30,10 @@ export function Footer() {
                 <li><Link href="/gifts-and-sponsorships" className="text-[#e8e6e3] hover:text-[#00ebd6]">Gifts and Sponsorships</Link></li>
                 <li><Link href="/blog" className="text-[#e8e6e3] hover:text-[#00ebd6]">Blog</Link></li>
                 <li><Link href="/newsletter" className="text-[#e8e6e3] hover:text-[#00ebd6]">Newsletter</Link></li>
+                <li><hr className="border-[#00ebd6]/20 my-2" /></li>
+                <li><Link href="/test/cosmic" className="text-[#00ebd6]/70 hover:text-[#00ebd6]">Cosmic UI Demo</Link></li>
+                <li><Link href="/test/audio" className="text-[#00ebd6]/70 hover:text-[#00ebd6]">Audio Components</Link></li>
+                <li><Link href="/test/new" className="text-[#00ebd6]/70 hover:text-[#00ebd6]">New Components</Link></li>
                 {(user?.role === 'admin' || user?.role === 'super_admin') && (
                   <li>
                     <Link 
