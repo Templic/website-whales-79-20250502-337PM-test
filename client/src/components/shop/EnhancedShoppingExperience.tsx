@@ -183,9 +183,12 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                 
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
-                  <Button size="sm">
+                  <Button 
+                    size="sm"
+                    onClick={() => onProductView && onProductView(product.id)}
+                  >
                     <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
+                    View Product
                   </Button>
                 </div>
               </div>
