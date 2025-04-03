@@ -55,7 +55,7 @@ export const CartSummary = ({
   const [isApplying, setIsApplying] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
   const { toast } = useToast();
-  
+
   // Add animation effect after component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,12 +63,12 @@ export const CartSummary = ({
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-  
+
   // Calculate totals
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
   const tax = subtotal * 0.07; // 7% tax
-  
+
   // Apply coupon discount if present
   let discountAmount = 0;
   if (appliedCoupon && appliedCoupon.isValid) {
@@ -76,17 +76,17 @@ export const CartSummary = ({
       ? subtotal * (appliedCoupon.discount / 100)
       : appliedCoupon.discount;
   }
-  
+
   const total = subtotal + shipping + tax - discountAmount;
-  
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim() || !onApplyCoupon) return;
-    
+
     setIsApplying(true);
-    
+
     try {
       const coupon = await onApplyCoupon(couponCode);
-      
+
       if (coupon && coupon.isValid) {
         setAppliedCoupon(coupon);
         toast({
@@ -111,7 +111,7 @@ export const CartSummary = ({
       setIsApplying(false);
     }
   };
-  
+
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponCode('');
@@ -120,7 +120,7 @@ export const CartSummary = ({
       description: 'The coupon has been removed from your order.',
     });
   };
-  
+
   return (
     <div className={`cosmic-slide-in ${isAnimated ? 'in' : ''}`}>
       <Card className="cosmic-glass-card cosmic-box-shadow">
@@ -131,14 +131,14 @@ export const CartSummary = ({
             Order Summary
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           <div className="space-y-3 p-3 rounded-lg bg-background/60 backdrop-blur-sm shadow-inner">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
               <span className="font-medium">{formatCurrency(subtotal)}</span>
             </div>
-            
+
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Shipping</span>
               <span className="font-medium">
@@ -152,12 +152,12 @@ export const CartSummary = ({
                 )}
               </span>
             </div>
-            
+
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Tax (7%)</span>
               <span className="font-medium">{formatCurrency(tax)}</span>
             </div>
-            
+
             {appliedCoupon && appliedCoupon.isValid && (
               <div className="flex justify-between text-sm font-medium text-green-500">
                 <span className="flex items-center">
@@ -177,14 +177,14 @@ export const CartSummary = ({
               </div>
             )}
           </div>
-          
+
           <Separator className="cosmic-divider" />
-          
+
           <div className="flex justify-between font-medium text-lg p-2 rounded-lg bg-background/60">
             <span>Total</span>
             <span className="cosmic-gradient-text font-bold animate-pulse-gentle">{formatCurrency(total)}</span>
           </div>
-          
+
           {onApplyCoupon && (
             <div className="pt-3">
               <div className="flex items-center space-x-2 mb-2">
@@ -214,7 +214,7 @@ export const CartSummary = ({
               </div>
             </div>
           )}
-          
+
           <div className="grid grid-cols-2 gap-2 px-2 text-xs text-muted-foreground mt-2">
             <div className="flex items-center">
               <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
@@ -234,13 +234,12 @@ export const CartSummary = ({
             </div>
           </div>
         </CardContent>
-        
+
         <CardFooter>
           <Button
             onClick={onCheckout}
             className="w-full bg-cosmic-primary hover:bg-cosmic-primary/90 text-white font-medium cosmic-hover-glow"
             disabled={items.length === 0}
-            onClick={() => setLocation('/shop/checkout')}
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Proceed to Checkout

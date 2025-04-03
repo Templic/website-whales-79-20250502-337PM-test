@@ -148,7 +148,7 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    setLocation('/shop/checkout');
+    setLocation('/checkout');
   };
 
   const handleContinueShopping = () => {
