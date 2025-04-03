@@ -4,7 +4,7 @@ import ChatRoom from './ChatRoom';
 import JoinRoomPanel from './JoinRoomPanel';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 
 interface CollaborativeShoppingRoomProps {
   roomId: string;
@@ -203,7 +203,7 @@ export const CollaborativeShoppingRoom = ({
   const [participants, setParticipants] = useState<RoomParticipant[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   
   useEffect(() => {
     // Connect to mock socket
@@ -261,7 +261,7 @@ export const CollaborativeShoppingRoom = ({
     if (username && roomId) {
       mockSocket.leaveRoom(roomId, username);
       setIsJoined(false);
-      navigate('/shop');
+      setLocation('/shop');
     }
   };
   

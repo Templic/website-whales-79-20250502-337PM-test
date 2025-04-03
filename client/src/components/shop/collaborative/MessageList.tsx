@@ -12,38 +12,28 @@ interface MessageListProps {
 export const MessageList = ({ 
   messages, 
   username,
-  onProductView 
+  onProductView
 }: MessageListProps) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
-  // Auto-scroll to bottom on new messages
+  // Scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
   
   return (
-    <ScrollArea 
-      className="h-[calc(100%-100px)] py-4 px-4 mt-2 cosmic-stagger-children in"
-      ref={scrollRef}
-    >
-      {messages.length === 0 ? (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-muted-foreground text-sm">
-            No messages yet. Start the conversation!
-          </p>
-        </div>
-      ) : (
-        messages.map((message) => (
+    <ScrollArea className="flex-1 h-[calc(100%-80px)]">
+      <div className="p-4 space-y-4">
+        {messages.map((message) => (
           <ChatMessage
             key={message.id}
             message={message}
-            currentUsername={username}
+            isCurrentUser={message.username === username}
             onProductView={onProductView}
           />
-        ))
-      )}
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
     </ScrollArea>
   );
 };

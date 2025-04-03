@@ -1,91 +1,70 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 /**
- * Combines multiple class values using clsx and tailwind-merge
- * This util function helps to avoid class conflicts and overlaps
+ * Combines class names with tailwind CSS, handling conflicts
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Generalized button variant styles for cosmic UI components
+ * Generates a random string ID
  */
-export const buttonVariants = {
-  variants: {
-    variant: {
-      default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-      destructive:
-        "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-      outline:
-        "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
-      secondary:
-        "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-      ghost: "hover:bg-accent hover:text-accent-foreground",
-      link: "text-primary underline-offset-4 hover:underline",
-      primary: 
-        "bg-cosmic-primary text-white shadow-sm hover:bg-cosmic-primary/90 transition duration-300",
-      cosmic:
-        "bg-cosmic-primary/20 border border-cosmic-primary/30 text-white shadow-sm hover:bg-cosmic-primary/30 transition duration-300 backdrop-blur-sm relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-full before:h-full before:bg-gradient-to-r before:from-transparent before:via-cosmic-secondary/30 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-500 hover:shadow-cosmic-primary/20 hover:shadow-lg",
-      highlight:
-        "bg-cosmic-highlight/20 border border-cosmic-highlight/30 text-white shadow-sm hover:bg-cosmic-highlight/30 transition duration-300 backdrop-blur-sm",
-    },
-    size: {
-      default: "h-9 px-4 py-2",
-      sm: "h-8 rounded-md px-3 text-xs",
-      lg: "h-10 rounded-md px-8",
-      icon: "h-9 w-9",
-    },
-  },
-  defaultVariants: {
-    variant: "default",
-    size: "default",
-  },
-};
-
-/**
- * Generate random number between min and max
- */
-export function randomBetween(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+export function generateId(length = 6): string {
+  return Math.random().toString(36).substring(2, 2 + length);
 }
 
 /**
- * Format a date string to a more readable format
+ * Safely parses JSON without throwing
  */
-export function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
+export function safeJsonParse<T>(json: string, fallback: T): T {
+  try {
+    return JSON.parse(json) as T;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 /**
- * Truncate a string to a certain length
+ * Debounces a function
  */
-export function truncateString(str: string, length: number) {
-  if (str.length <= length) return str;
-  return str.slice(0, length) + "...";
+export function debounce<T extends (...args: any[]) => any>(
+  fn: T,
+  delay: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout;
+  return function(this: any, ...args: Parameters<T>) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  };
 }
 
 /**
- * Check if the app is running on mobile
+ * Returns a random item from an array
  */
-export function isMobile() {
-  return window.innerWidth < 768;
+export function getRandomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 /**
- * Format a number as currency
+ * Creates a deep copy of an object
  */
-export function formatCurrency(amount: number, currencyCode: string = 'USD', locale: string = 'en-US') {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+export function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+/**
+ * Truncates text with ellipsis
+ */
+export function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "...";
+}
+
+/**
+ * Sleeps for the specified milliseconds
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

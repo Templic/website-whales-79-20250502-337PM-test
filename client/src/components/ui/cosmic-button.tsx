@@ -1,26 +1,26 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
-import { Link } from "wouter";
+import React, { forwardRef } from 'react';
+import { cn } from '@/lib/utils';
+import { Button, ButtonProps } from '@/components/ui/button';
+import { cva, type VariantProps } from 'class-variance-authority';
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+// Extend the ButtonProps to include cosmic variants
+const cosmicButtonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        cosmic: "bg-cosmic-primary text-white hover:bg-cosmic-primary/90",
-        success: "bg-green-500 text-white hover:bg-green-600",
-        warning: "bg-yellow-500 text-white hover:bg-yellow-600",
-        danger: "bg-red-500 text-white hover:bg-red-600",
-        primary: "bg-blue-500 text-white hover:bg-blue-600",
-        glow: "bg-cosmic-primary text-white hover:bg-cosmic-primary/90 shadow-[0_0_15px_rgba(155,135,245,0.5)] hover:shadow-[0_0_25px_rgba(155,135,245,0.7)] hover:-translate-y-1 transition-all duration-300",
+        cosmic: "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow",
+        energetic: "bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600 cosmic-hover-glow",
+        ethereal: "bg-gradient-to-r from-teal-400 to-blue-500 text-white hover:from-teal-500 hover:to-blue-600 cosmic-hover-glow",
+        moonlight: "bg-gradient-to-r from-gray-700 to-slate-800 text-white hover:from-gray-800 hover:to-slate-900 cosmic-hover-glow",
+        stardust: "border border-purple-300 bg-black/20 backdrop-blur-sm text-white hover:bg-black/30 cosmic-glass-effect",
+        nebula: "border border-indigo-300/30 bg-indigo-950/30 backdrop-blur-md text-white hover:bg-indigo-900/40 cosmic-glass-effect",
+        default: "",
+        destructive: "",
+        outline: "",
+        secondary: "",
+        ghost: "",
+        link: "",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -36,58 +36,41 @@ const buttonVariants = cva(
   }
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export interface CosmicButtonProps 
+  extends ButtonProps, 
+    VariantProps<typeof cosmicButtonVariants> {
+  children: React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button";
+const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(
+  ({ className, variant, size, ...props }, ref) => {
+    // Use the standard Button component for non-cosmic variants
+    if (variant === 'default' || 
+        variant === 'destructive' || 
+        variant === 'outline' || 
+        variant === 'secondary' || 
+        variant === 'ghost' || 
+        variant === 'link') {
+      return <Button 
+        className={className} 
+        variant={variant} 
+        size={size} 
+        ref={ref}
+        {...props} 
+      />;
+    }
+    
+    // Use our custom cosmic styling for cosmic variants
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+      <button
+        className={cn(cosmicButtonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
       />
     );
   }
 );
-Button.displayName = "Button";
 
-// Cosmic Button with Link support
-interface CosmicButtonProps extends ButtonProps {
-  href?: string;
-}
+CosmicButton.displayName = 'CosmicButton';
 
-const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProps>(
-  ({ href, children, className, variant, size, ...props }, ref) => {
-    const classes = cn(buttonVariants({ variant, size, className }));
-    
-    if (href) {
-      return (
-        <Link to={href} className={classes}>
-          {children}
-        </Link>
-      );
-    }
-    
-    return (
-      <Button 
-        ref={ref}
-        variant={variant} 
-        size={size}
-        className={className}
-        {...props}
-      >
-        {children}
-      </Button>
-    );
-  }
-);
-
-CosmicButton.displayName = "CosmicButton";
-
-export { Button, CosmicButton, buttonVariants };
 export default CosmicButton;

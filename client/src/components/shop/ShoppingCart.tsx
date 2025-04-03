@@ -1,181 +1,151 @@
 import React from 'react';
-import { X, ShoppingBag, Trash2, Plus, Minus } from 'lucide-react';
-import CosmicModal from '../ui/cosmic-modal';
-import CosmicButton from '../ui/cosmic-button';
-import CosmicHeading from '../ui/cosmic-heading';
-import { CartItem, Product } from '@shared/schema';
-import { formatCurrency } from '@/lib/utils';
+import { Product } from '@/pages/ShopPage';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import CosmicButton from '@/components/ui/cosmic-button';
 
-export interface ShoppingCartProps {
-  cartItems: (CartItem & { product: Product })[];
-  isOpen: boolean;
-  onClose: () => void;
-  onRemoveItem: (itemId: number) => void;
-  onUpdateQuantity: (itemId: number, quantity: number) => void;
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
+
+interface ShoppingCartProps {
+  cartItems: CartItem[];
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemoveItem: (productId: string) => void;
   onCheckout: () => void;
+  total: number;
 }
 
 const ShoppingCart: React.FC<ShoppingCartProps> = ({
   cartItems,
-  isOpen,
-  onClose,
-  onRemoveItem,
   onUpdateQuantity,
+  onRemoveItem,
   onCheckout,
+  total
 }) => {
-  const isEmpty = cartItems.length === 0;
-  
-  // Calculate totals
-  const subtotal = cartItems.reduce((total, item) => {
-    const price = item.product.salePrice || item.product.price;
-    return total + (Number(price) * item.quantity);
-  }, 0);
-  
-  const tax = subtotal * 0.08; // 8% tax for demo
-  const shipping = subtotal > 0 ? 10 : 0; // $10 shipping if cart not empty
-  const total = subtotal + tax + shipping;
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = (productId: string, delta: number, currentQuantity: number) => {
+    const newQuantity = Math.max(1, currentQuantity + delta);
+    onUpdateQuantity(productId, newQuantity);
+  };
 
   return (
-    <CosmicModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Your Shopping Cart"
-      size="md"
-      variant="cosmic"
-    >
-      <div className="flex flex-col h-full">
-        {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="bg-gray-800 p-4 rounded-full mb-4">
-              <ShoppingBag className="w-8 h-8 text-gray-400" />
-            </div>
-            <CosmicHeading as="h3" size="lg" className="mb-2">Your cart is empty</CosmicHeading>
-            <p className="text-gray-400 mb-6">Looks like you haven't added any products to your cart yet.</p>
-            <CosmicButton variant="cosmic" onClick={onClose}>
-              Continue Shopping
-            </CosmicButton>
-          </div>
-        ) : (
-          <>
-            <div className="flex-grow overflow-y-auto max-h-[60vh] space-y-4 pr-2">
-              {cartItems.map((item) => {
-                const { product } = item;
-                const price = product.salePrice || product.price;
-                const totalPrice = Number(price) * item.quantity;
-                
-                return (
-                  <div key={item.id} className="flex border-b border-gray-800 pb-4">
-                    <div className="w-20 h-20 flex-shrink-0">
-                      {Array.isArray(product.images) && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-800 rounded-md flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-gray-600" />
-                        </div>
-                      )}
+    <div className="flex flex-col h-full cosmic-cart">
+      {cartItems.length === 0 ? (
+        <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
+          <ShoppingBag className="h-16 w-16 mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-medium mb-2">Your cart is empty</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Add some products to your cart and they will appear here.
+          </p>
+          <Button variant="outline" asChild className="cosmic-btn-outline">
+            <a href="/shop">Continue Shopping</a>
+          </Button>
+        </div>
+      ) : (
+        <>
+          <ScrollArea className="flex-1 pr-4">
+            <div className="space-y-4 pt-4">
+              {cartItems.map(({ product, quantity }) => (
+                <div key={product.id} className="flex gap-3 py-2 cosmic-hover-glow p-2 rounded-md">
+                  <div className="h-16 w-16 rounded overflow-hidden shrink-0">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium truncate">{product.name}</h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => onRemoveItem(product.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                     
-                    <div className="ml-4 flex-grow">
-                      <div className="flex justify-between">
-                        <h4 className="font-medium">{product.name}</h4>
-                        <button
-                          onClick={() => onRemoveItem(item.id)}
-                          className="text-gray-400 hover:text-red-400 transition-colors"
-                          aria-label={`Remove ${product.name} from cart`}
+                    <span className="text-sm text-muted-foreground mb-2 cosmic-price">
+                      {formatCurrency(product.price)}
+                    </span>
+                    
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center border rounded-md">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-none"
+                          onClick={() => handleQuantityChange(product.id, -1, quantity)}
                         >
-                          <X className="w-4 h-4" />
-                        </button>
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center">{quantity}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-none"
+                          onClick={() => handleQuantityChange(product.id, 1, quantity)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
                       </div>
                       
-                      <div className="text-sm text-gray-400 mb-2">
-                        {formatCurrency(Number(price))} each
-                      </div>
-                      
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center border border-gray-700 rounded-md">
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800 rounded-l-md transition-colors"
-                            aria-label="Decrease quantity"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <button
-                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-800 rounded-r-md transition-colors"
-                            aria-label="Increase quantity"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                        
-                        <div className="font-medium">
-                          {formatCurrency(totalPrice)}
-                        </div>
-                      </div>
+                      <span className="font-medium cosmic-price">
+                        {formatCurrency(product.price * quantity)}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+          
+          <div className="pt-4 space-y-4">
+            <Separator />
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Shipping</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-medium text-lg">
+                <span>Total</span>
+                <span className="cosmic-gradient-text">{formatCurrency(total)}</span>
+              </div>
             </div>
             
-            <div className="mt-6 space-y-4">
-              <div className="bg-gray-900/50 rounded-lg p-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Tax (8%)</span>
-                    <span>{formatCurrency(tax)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Shipping</span>
-                    <span>{formatCurrency(shipping)}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-gray-800 font-medium text-base">
-                    <span>Total</span>
-                    <span>{formatCurrency(total)}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex gap-3">
-                <CosmicButton
-                  variant="outline"
-                  onClick={onClose}
-                  className="flex-1"
-                >
-                  Continue Shopping
-                </CosmicButton>
-                
-                <CosmicButton
-                  variant="cosmic"
-                  onClick={onCheckout}
-                  className="flex-1"
-                >
-                  Checkout
-                </CosmicButton>
-              </div>
-              
-              <button
-                onClick={() => cartItems.forEach(item => onRemoveItem(item.id))}
-                className="flex items-center justify-center w-full text-gray-400 hover:text-red-400 transition-colors text-sm py-2"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear Cart
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </CosmicModal>
+            <CosmicButton 
+              className="w-full" 
+              size="lg" 
+              onClick={onCheckout}
+              variant="cosmic"
+            >
+              Checkout
+            </CosmicButton>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

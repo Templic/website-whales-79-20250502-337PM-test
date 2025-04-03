@@ -1,268 +1,137 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Eye, ShoppingCart, Heart, Star } from 'lucide-react';
-import CosmicCard from '../ui/cosmic-card';
-import { CosmicButton } from '../ui/cosmic-button';
-import CosmicBadge from '../ui/cosmic-badge';
-import { Product } from '@shared/schema';
-import { formatCurrency } from '@/lib/utils';
+import { Product } from '@/pages/ShopPage';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Star, Heart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export interface ProductCardProps {
+interface ProductCardProps {
   product: Product;
-  variant?: 'grid' | 'list';
-  onQuickView?: () => void;
-  onAddToCart?: () => void;
-  onAddToWishlist?: () => void;
-  className?: string;
+  onAddToCart: (product: Product, quantity?: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({
-  product,
-  variant = 'grid',
-  onQuickView,
-  onAddToCart,
-  onAddToWishlist,
-  className = '',
-}) => {
-  const hasDiscount = product.salePrice !== null && parseFloat(product.salePrice as string) < parseFloat(product.price as string);
-  const discountPercentage = hasDiscount 
-    ? Math.round(((parseFloat(product.price as string) - parseFloat(product.salePrice as string)) / parseFloat(product.price as string)) * 100) 
-    : 0;
-  
-  const isOutOfStock = product.inventory <= 0;
-  const isFeatured = product.featured === true;
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+  const {
+    id,
+    name,
+    description,
+    price,
+    image,
+    rating,
+    categories,
+    inStock,
+    featured,
+    new: isNew,
+    discountPercent
+  } = product;
 
-  // Format the image URL - if it's an array, take the first image
-  const productImage = Array.isArray(product.images) && product.images.length > 0
-    ? product.images[0]
-    : '/placeholder-product.jpg';
+  const formattedPrice = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(price);
 
-  if (variant === 'list') {
-    return (
-      <CosmicCard
-        variant="interactive"
-        className="flex flex-col md:flex-row gap-4 overflow-hidden transition-all duration-300"
-      >
-        <div className="relative h-[200px] md:w-[200px] flex-shrink-0">
-          <Link href={`/shop/product/${product.slug}`}>
-            <img 
-              src={productImage}
-              alt={product.name}
-              className="w-full h-full object-cover"
+  const discountedPrice = discountPercent
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(price * (1 - discountPercent / 100))
+    : null;
+
+  return (
+    <Card className="overflow-hidden cosmic-glass-card cosmic-scale in">
+      <div className="relative">
+        <Link href={`/shop/product/${id}`}>
+          <div className="overflow-hidden aspect-square relative group cursor-pointer">
+            <img
+              src={image}
+              alt={name}
+              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
             />
-          </Link>
-          
-          {hasDiscount && (
-            <div className="absolute top-2 left-2 z-10">
-              <CosmicBadge variant="destructive">
-                {discountPercentage}% OFF
-              </CosmicBadge>
-            </div>
-          )}
-          
-          {isOutOfStock && (
-            <div className="absolute top-2 right-2 z-10">
-              <CosmicBadge variant="outline">Out of Stock</CosmicBadge>
-            </div>
-          )}
-          
-          {isFeatured && !hasDiscount && !isOutOfStock && (
-            <div className="absolute top-2 left-2 z-10">
-              <CosmicBadge variant="cosmic">Featured</CosmicBadge>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex flex-col flex-grow p-4">
-          <div className="flex items-center mb-1">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className="w-3 h-3 text-yellow-400"
-                  fill="currentColor"
-                />
+            {(featured || isNew || discountPercent) && (
+              <div className="absolute top-2 right-2 flex flex-col gap-2">
+                {featured && (
+                  <Badge variant="default" className="cosmic-badge">
+                    Featured
+                  </Badge>
+                )}
+                {isNew && (
+                  <Badge variant="outline" className="bg-primary/20 cosmic-badge">
+                    New
+                  </Badge>
+                )}
+                {discountPercent && (
+                  <Badge variant="destructive" className="cosmic-badge-highlight">
+                    -{discountPercent}%
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
+        </Link>
+
+        <Button
+          size="icon"
+          variant="secondary"
+          className="absolute top-2 left-2 h-8 w-8 rounded-full opacity-70 hover:opacity-100 cosmic-btn-icon"
+        >
+          <Heart className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <CardContent className="p-4">
+        <div className="flex justify-between mb-2">
+          <div className="space-y-1">
+            <Link href={`/shop/product/${id}`}>
+              <h3 className="font-medium cosmic-hover-text cursor-pointer">{name}</h3>
+            </Link>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              {categories.slice(0, 1).map((category) => (
+                <Link key={category} href={`/shop/${category.toLowerCase()}`}>
+                  <span className="cosmic-hover-text cursor-pointer">{category}</span>
+                </Link>
               ))}
             </div>
-            <span className="text-xs text-gray-400 ml-2">(12 reviews)</span>
           </div>
-          
-          <Link href={`/shop/product/${product.slug}`}>
-            <h3 className="text-lg font-medium hover:text-cosmic-primary transition-colors">
-              {product.name}
-            </h3>
-          </Link>
-          
-          <p className="text-gray-400 text-sm line-clamp-2 my-2">
-            {product.shortDescription || product.description}
-          </p>
-          
-          <div className="flex items-baseline mt-auto">
-            {hasDiscount ? (
-              <>
-                <span className="text-red-400 font-bold text-lg">
-                  {formatCurrency(parseFloat(product.salePrice as string))}
-                </span>
-                <span className="text-gray-400 line-through text-sm ml-2">
-                  {formatCurrency(parseFloat(product.price as string))}
-                </span>
-              </>
-            ) : (
-              <span className="text-white font-bold text-lg">
-                {formatCurrency(parseFloat(product.price as string))}
-              </span>
-            )}
-          </div>
-          
-          <div className="flex flex-wrap mt-4 gap-2">
-            {!isOutOfStock && onAddToCart && (
-              <CosmicButton
-                variant="cosmic"
-                size="sm"
-                onClick={onAddToCart}
-                className="flex-grow"
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Add to Cart
-              </CosmicButton>
-            )}
-            
-            {onQuickView && (
-              <CosmicButton
-                variant="outline"
-                size="sm"
-                onClick={onQuickView}
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Quick View
-              </CosmicButton>
-            )}
-            
-            {onAddToWishlist && (
-              <CosmicButton
-                variant="outline"
-                size="sm"
-                onClick={onAddToWishlist}
-              >
-                <Heart className="w-4 h-4" />
-              </CosmicButton>
-            )}
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm">{rating.toFixed(1)}</span>
           </div>
         </div>
-      </CosmicCard>
-    );
-  }
 
-  // Grid variant (default)
-  return (
-    <CosmicCard
-      variant="glow"
-      glowColor="rgba(var(--cosmic-primary-rgb), 0.15)"
-      className="overflow-hidden transition-all duration-300 group h-full flex flex-col"
-    >
-      <div className="relative h-[260px] overflow-hidden">
-        <Link href={`/shop/product/${product.slug}`}>
-          <img 
-            src={productImage}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          />
-        </Link>
-        
-        {hasDiscount && (
-          <div className="absolute top-2 left-2 z-10">
-            <CosmicBadge variant="destructive">
-              {discountPercentage}% OFF
-            </CosmicBadge>
-          </div>
-        )}
-        
-        {isOutOfStock && (
-          <div className="absolute top-2 right-2 z-10">
-            <CosmicBadge variant="outline">Out of Stock</CosmicBadge>
-          </div>
-        )}
-        
-        {isFeatured && !hasDiscount && !isOutOfStock && (
-          <div className="absolute top-2 left-2 z-10">
-            <CosmicBadge variant="cosmic">Featured</CosmicBadge>
-          </div>
-        )}
-        
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
-          {!isOutOfStock && onAddToCart && (
-            <CosmicButton
-              variant="cosmic"
-              size="sm"
-              onClick={onAddToCart}
-              className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
-            >
-              <ShoppingCart className="w-4 h-4" />
-            </CosmicButton>
-          )}
-          
-          {onQuickView && (
-            <CosmicButton
-              variant="outline"
-              size="sm"
-              onClick={onQuickView}
-              className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75"
-            >
-              <Eye className="w-4 h-4" />
-            </CosmicButton>
-          )}
-          
-          {onAddToWishlist && (
-            <CosmicButton
-              variant="outline"
-              size="sm"
-              onClick={onAddToWishlist}
-              className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-150"
-            >
-              <Heart className="w-4 h-4" />
-            </CosmicButton>
-          )}
+        <div className="truncate text-sm text-muted-foreground mb-4">
+          {description}
         </div>
-      </div>
-      
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="flex items-center mb-1">
-          <div className="flex">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className="w-3 h-3 text-yellow-400"
-                fill="currentColor"
-              />
-            ))}
-          </div>
-          <span className="text-xs text-gray-400 ml-2">(12 reviews)</span>
-        </div>
-        
-        <Link href={`/shop/product/${product.slug}`}>
-          <h3 className="text-md font-medium hover:text-cosmic-primary transition-colors line-clamp-1">
-            {product.name}
-          </h3>
-        </Link>
-        
-        <div className="mt-auto pt-2">
-          {hasDiscount ? (
-            <div className="flex items-center">
-              <span className="text-red-400 font-bold">
-                {formatCurrency(parseFloat(product.salePrice as string))}
+      </CardContent>
+
+      <CardFooter className="p-4 pt-0 flex items-center justify-between">
+        <div className="flex flex-col">
+          {discountedPrice ? (
+            <>
+              <span className="text-muted-foreground line-through text-sm">
+                {formattedPrice}
               </span>
-              <span className="text-gray-400 line-through text-sm ml-2">
-                {formatCurrency(parseFloat(product.price as string))}
-              </span>
-            </div>
+              <span className="font-semibold text-primary">{discountedPrice}</span>
+            </>
           ) : (
-            <span className="text-white font-bold">
-              {formatCurrency(parseFloat(product.price as string))}
-            </span>
+            <span className="font-semibold cosmic-price">{formattedPrice}</span>
           )}
         </div>
-      </div>
-    </CosmicCard>
+        <Button
+          size="sm"
+          className={cn(
+            "cosmic-btn",
+            !inStock && "opacity-50 cursor-not-allowed"
+          )}
+          disabled={!inStock}
+          onClick={() => onAddToCart(product)}
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          {inStock ? "Add to Cart" : "Out of Stock"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

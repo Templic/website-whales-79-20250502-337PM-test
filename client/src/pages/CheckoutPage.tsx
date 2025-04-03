@@ -1,357 +1,359 @@
-import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, CreditCard, Loader2, LockIcon, Package, Truck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-import { CartItem, Product } from '@shared/schema';
-import { formatCurrency } from '@/lib/utils';
-import { apiRequest } from '@/lib/queryClient';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import CosmicHeading from '@/components/ui/cosmic-heading';
-import { CosmicButton } from '@/components/ui/cosmic-button';
-import CosmicCard from '@/components/ui/cosmic-card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { apiRequest } from '@/lib/queryClient';
+import { CartItem, ShippingInfo } from '@/types/cart';
+import { formatCurrency } from '@/lib/format';
+import { useToast } from '@/hooks/use-toast';
+
+// UI Components
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, ShoppingCart, CreditCard, ArrowLeft } from 'lucide-react';
+import CosmicButton from '@/components/ui/cosmic-button';
 
-interface CartWithItems {
-  id: number;
-  userId: number | null;
-  sessionId: string | null;
-  createdAt: string;
-  updatedAt: string | null;
-  items: (CartItem & { product: Product })[];
-}
+// This is a placeholder for the Stripe component
+// You would import the actual Stripe Elements from @stripe/react-stripe-js
+const StripeElements = ({ onSubmit }: { onSubmit: () => void }) => (
+  <div className="space-y-4">
+    <div className="border rounded-md p-4 bg-muted/30">
+      <p className="text-center text-sm text-muted-foreground">
+        Stripe payment integration would be implemented here
+      </p>
+    </div>
+    <Button onClick={onSubmit} className="w-full cosmic-hover-glow">
+      Pay Securely
+    </Button>
+  </div>
+);
 
-// Form schemas
 const shippingFormSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters" }),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters" }),
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number" }),
-  address: z.string().min(5, { message: "Please enter a valid address" }),
-  city: z.string().min(2, { message: "Please enter a valid city" }),
-  state: z.string().min(2, { message: "Please enter a valid state" }),
-  zipCode: z.string().min(5, { message: "Please enter a valid zip code" }),
-  country: z.string().min(2, { message: "Please enter a valid country" }),
-  saveAddress: z.boolean().optional(),
+  firstName: z.string().min(2, 'First name is required'),
+  lastName: z.string().min(2, 'Last name is required'),
+  address: z.string().min(5, 'Address is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+  postalCode: z.string().min(3, 'Postal code is required'),
+  country: z.string().min(2, 'Country is required'),
+  phone: z.string().optional(),
+  email: z.string().email('Valid email is required'),
+  useShippingForBilling: z.boolean().default(true),
 });
 
-const paymentFormSchema = z.object({
-  cardholderName: z.string().min(3, { message: "Cardholder name must be at least 3 characters" }),
-  cardNumber: z.string().refine(
-    (val) => /^\d{16}$/.test(val.replace(/\s/g, '')), 
-    { message: "Please enter a valid 16-digit card number" }
-  ),
-  expiryDate: z.string().refine(
-    (val) => /^(0[1-9]|1[0-2])\/\d{2}$/.test(val), 
-    { message: "Please enter a valid expiry date (MM/YY)" }
-  ),
-  cvc: z.string().refine(
-    (val) => /^\d{3,4}$/.test(val), 
-    { message: "Please enter a valid CVC code (3-4 digits)" }
-  ),
-  saveCard: z.boolean().optional(),
-});
+type ShippingFormValues = z.infer<typeof shippingFormSchema>;
 
 export default function CheckoutPage() {
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>("shipping");
-  const [orderComplete, setOrderComplete] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const [activeTab, setActiveTab] = useState('shipping');
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
-
-  // Form setup
-  const shippingForm = useForm<z.infer<typeof shippingFormSchema>>({
+  
+  // Create form
+  const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingFormSchema),
     defaultValues: {
-      firstName: user?.firstName || "",
-      lastName: user?.lastName || "",
-      email: user?.email || "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "United States",
-      saveAddress: false,
+      firstName: '',
+      lastName: '',
+      address: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'US',
+      phone: '',
+      email: '',
+      useShippingForBilling: true,
     },
   });
-
-  const paymentForm = useForm<z.infer<typeof paymentFormSchema>>({
-    resolver: zodResolver(paymentFormSchema),
-    defaultValues: {
-      cardholderName: "",
-      cardNumber: "",
-      expiryDate: "",
-      cvc: "",
-      saveCard: false,
-    },
-  });
-
-  // Update shipping form when user data loads
+  
   useEffect(() => {
-    if (user) {
-      shippingForm.setValue('firstName', user.firstName || "");
-      shippingForm.setValue('lastName', user.lastName || "");
-      shippingForm.setValue('email', user.email || "");
-    }
-  }, [user, shippingForm]);
-
-  useEffect(() => {
-    document.title = "Checkout - Dale Loves Whales Shop";
+    setIsClientLoaded(true);
+    document.title = 'Checkout - Dale Loves Whales';
   }, []);
-
-  // Fetch cart and items
+  
+  // Fetch cart items
   const { 
-    data: cart, 
-    isLoading: cartLoading, 
-    isError: cartError 
-  } = useQuery({
-    queryKey: ['/api/shop/cart'],
-    queryFn: async () => {
-      const response = await apiRequest<CartWithItems>('/api/shop/cart');
-      return response;
-    },
-    enabled: !orderComplete,
+    data: cartData, 
+    isLoading: isCartLoading, 
+    isError: isCartError,
+  } = useQuery<{ cart: any; items: CartItem[] }>({
+    queryKey: ['/api/cart'],
+    enabled: isClientLoaded,
   });
-
+  
+  // Get cart items and calculate totals
+  const cartItems = cartData?.items || [];
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
+  const tax = subtotal * 0.07; // 7% tax
+  const total = subtotal + shipping + tax;
+  
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: async (data: {
-      shippingDetails: z.infer<typeof shippingFormSchema>;
-      paymentMethod: string;
-      paymentDetails: Record<string, any>;
-    }) => {
-      return apiRequest('/api/shop/orders', {
+    mutationFn: async (data: any) => {
+      return await apiRequest('/api/orders', {
         method: 'POST',
-        data
+        data,
       });
     },
     onSuccess: (data) => {
+      setOrderPlaced(true);
+      setOrderId(data.id);
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       toast({
-        title: "Order placed",
-        description: "Your order has been successfully placed",
-        variant: "success",
+        title: 'Order Placed',
+        description: `Your order #${data.orderNumber} has been placed successfully.`,
       });
-      setOrderId(data.orderId);
-      setOrderComplete(true);
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Error",
-        description: "Failed to place your order. Please try again",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to place order. Please try again.',
+        variant: 'destructive',
       });
-    }
+    },
   });
-
-  // Calculate cart totals
-  const calculateSubtotal = () => {
-    if (!cart?.items || cart.items.length === 0) return 0;
+  
+  // Handle shipping form submission
+  const onShippingSubmit = (data: ShippingFormValues) => {
+    // Move to payment tab if shipping form is valid
+    setActiveTab('payment');
+  };
+  
+  // Handle payment submission
+  const onPaymentSubmit = () => {
+    const shippingData = form.getValues();
     
-    return cart.items.reduce((sum, item) => {
-      const price = item.product.salePrice 
-        ? parseFloat(item.product.salePrice as string) 
-        : parseFloat(item.product.price as string);
-      return sum + (price * item.quantity);
-    }, 0);
-  };
-
-  const subtotal = calculateSubtotal();
-  const shipping = 5.99; // Fixed shipping for now
-  const tax = subtotal * 0.07; // 7% tax rate
-  const total = subtotal + shipping + tax;
-
-  // Form submission handlers
-  const onShippingSubmit = (data: z.infer<typeof shippingFormSchema>) => {
-    // Save shipping information and move to payment tab
-    setActiveTab("payment");
-  };
-
-  const onPaymentSubmit = (data: z.infer<typeof paymentFormSchema>) => {
-    // Create order with shipping and payment details
-    createOrderMutation.mutate({
-      shippingDetails: shippingForm.getValues(),
-      paymentMethod: "credit_card",
-      paymentDetails: {
-        ...data,
-        // Don't send full card number to backend in a real implementation
-        // This would be handled by a payment processor like Stripe
-        cardNumber: data.cardNumber.replace(/\d(?=\d{4})/g, "*"), 
-      }
-    });
-  };
-
-  // Loading state
-  if (cartLoading || authLoading) {
-    return (
-      <div className="container mx-auto px-4 py-16 flex justify-center">
-        <Loader2 className="h-12 w-12 animate-spin" />
-      </div>
-    );
-  }
-
-  // Empty cart redirect
-  if ((!cart?.items || cart.items.length === 0) && !orderComplete) {
-    useEffect(() => {
-      navigate('/shop/cart');
-    }, []);
+    const orderData = {
+      billingAddress: shippingData.useShippingForBilling
+        ? {
+            firstName: shippingData.firstName,
+            lastName: shippingData.lastName,
+            address1: shippingData.address,
+            city: shippingData.city,
+            state: shippingData.state,
+            postalCode: shippingData.postalCode,
+            country: shippingData.country,
+            email: shippingData.email,
+            phone: shippingData.phone,
+          }
+        : {
+            // If different billing address is used, you would have another form for this
+            firstName: shippingData.firstName,
+            lastName: shippingData.lastName,
+            address1: shippingData.address,
+            city: shippingData.city,
+            state: shippingData.state,
+            postalCode: shippingData.postalCode,
+            country: shippingData.country,
+            email: shippingData.email,
+            phone: shippingData.phone,
+          },
+      shippingAddress: {
+        firstName: shippingData.firstName,
+        lastName: shippingData.lastName,
+        address1: shippingData.address,
+        city: shippingData.city,
+        state: shippingData.state,
+        postalCode: shippingData.postalCode,
+        country: shippingData.country,
+        email: shippingData.email,
+        phone: shippingData.phone,
+      },
+      paymentMethod: 'credit_card',
+      paymentId: 'payment_' + Date.now(), // This would be replaced by the actual payment ID from your payment processor
+    };
     
+    createOrderMutation.mutate(orderData);
+  };
+  
+  // Navigate to cart
+  const handleBackToCart = () => {
+    setLocation('/shop/cart');
+  };
+  
+  // Navigate to shop
+  const handleContinueShopping = () => {
+    setLocation('/shop');
+  };
+  
+  // Navigate to order details
+  const handleViewOrder = () => {
+    if (orderId) {
+      setLocation(`/shop/orders/${orderId}`);
+    }
+  };
+  
+  // If still loading
+  if (!isClientLoaded || isCartLoading) {
     return (
-      <div className="container mx-auto px-4 py-16 flex justify-center">
-        <Loader2 className="h-12 w-12 animate-spin" />
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin mb-4 text-primary" />
+        <p className="text-lg">Loading checkout...</p>
       </div>
     );
   }
-
-  // Order Complete View
-  if (orderComplete) {
+  
+  // If error loading cart
+  if (isCartError) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <CosmicCard variant="glow" className="max-w-3xl mx-auto p-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-900 bg-opacity-20 mb-6">
-              <Package className="h-10 w-10 text-green-500" />
-            </div>
-            
-            <CosmicHeading as="h1" size="2xl" weight="bold" className="mb-2">
-              Order Confirmed
-            </CosmicHeading>
-            
-            <p className="text-lg mb-2">
-              Thank you for your purchase!
-            </p>
-            
-            <p className="text-muted-foreground mb-8">
-              Your order #{orderId} has been placed and is being processed.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
-              <Link href="/shop">
-                <CosmicButton variant="outline">
-                  Continue Shopping
-                </CosmicButton>
-              </Link>
-              
-              <Link href={`/shop/orders/${orderId}`}>
-                <CosmicButton variant="cosmic">
-                  View Order Details
-                </CosmicButton>
-              </Link>
-            </div>
-          </div>
-          
-          <Separator className="my-8" />
-          
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              A confirmation email has been sent to your email address. 
-              If you have any questions, please contact our customer support team.
-            </p>
-          </div>
-        </CosmicCard>
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load cart data</p>
+          <Button onClick={handleBackToCart} className="cosmic-hover-glow">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Cart
+          </Button>
+        </div>
       </div>
     );
   }
-
-  // Error state
-  if (cartError) {
+  
+  // If cart is empty
+  if (cartItems.length === 0 && !orderPlaced) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <CosmicHeading as="h1" size="2xl" weight="bold" className="mb-4">
-          Something went wrong
-        </CosmicHeading>
-        <p className="mb-8 text-muted-foreground">
-          We couldn't load your cart information. Please try again.
-        </p>
-        <Link href="/shop/cart">
-          <CosmicButton variant="cosmic">
-            Return to Cart
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md">
+          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text">Your Cart is Empty</h1>
+          <p className="text-muted-foreground mb-6">
+            You need to add items to your cart before checkout.
+          </p>
+          <CosmicButton onClick={handleContinueShopping} variant="cosmic">
+            Continue Shopping
           </CosmicButton>
-        </Link>
+        </div>
       </div>
     );
   }
-
+  
+  // If order has been placed successfully
+  if (orderPlaced) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              className="h-8 w-8 text-green-600" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              stroke="currentColor"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M5 13l4 4L19 7" 
+              />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text">Order Confirmed!</h1>
+          <p className="text-muted-foreground mb-6">
+            Thank you for your purchase. Your order has been placed successfully.
+            {orderId && <span> Order ID: {orderId}</span>}
+          </p>
+          <div className="space-y-4">
+            {orderId && (
+              <Button onClick={handleViewOrder} className="w-full cosmic-hover-glow">
+                View Order Details
+              </Button>
+            )}
+            <Button onClick={handleContinueShopping} variant="outline" className="w-full">
+              Continue Shopping
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      <CosmicHeading as="h1" size="2xl" weight="bold" className="mb-8">
-        Checkout
-      </CosmicHeading>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold cosmic-gradient-text">Checkout</h1>
+        <p className="text-muted-foreground">Complete your purchase</p>
+      </div>
       
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Checkout Form */}
-        <div className="lg:w-2/3">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="shipping" className="data-[state=active]:bg-cosmic-primary">
-                <Truck className="mr-2 h-4 w-4" />
-                Shipping
-              </TabsTrigger>
-              <TabsTrigger 
-                value="payment" 
-                className="data-[state=active]:bg-cosmic-primary"
-                disabled={!shippingForm.formState.isValid || activeTab !== "payment"}
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
+      <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+        <div className="lg:col-span-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="shipping">Shipping</TabsTrigger>
+              <TabsTrigger value="payment" disabled={!form.formState.isValid}>
                 Payment
               </TabsTrigger>
             </TabsList>
             
             <TabsContent value="shipping">
-              <CosmicCard variant="glow" className="p-6">
-                <CosmicHeading as="h2" size="lg" weight="medium" className="mb-6">
-                  Shipping Information
-                </CosmicHeading>
-                
-                <Form {...shippingForm}>
-                  <form onSubmit={shippingForm.handleSubmit(onShippingSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={shippingForm.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Shipping Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onShippingSubmit)} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="John" {...field} className="cosmic-glass-field" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Doe" {...field} className="cosmic-glass-field" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
                       <FormField
-                        control={shippingForm.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={shippingForm.control}
+                        control={form.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address</FormLabel>
+                            <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="your.email@example.com" 
+                                {...field}
+                                className="cosmic-glass-field"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -359,43 +361,106 @@ export default function CheckoutPage() {
                       />
                       
                       <FormField
-                        control={shippingForm.control}
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="123 Main St" 
+                                {...field}
+                                className="cosmic-glass-field"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>City</FormLabel>
+                              <FormControl>
+                                <Input placeholder="New York" {...field} className="cosmic-glass-field" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>State / Province</FormLabel>
+                              <FormControl>
+                                <Input placeholder="NY" {...field} className="cosmic-glass-field" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="postalCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Postal Code</FormLabel>
+                              <FormControl>
+                                <Input placeholder="10001" {...field} className="cosmic-glass-field" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="country"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Country</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger className="cosmic-glass-field">
+                                    <SelectValue placeholder="Select a country" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="US">United States</SelectItem>
+                                  <SelectItem value="CA">Canada</SelectItem>
+                                  <SelectItem value="GB">United Kingdom</SelectItem>
+                                  <SelectItem value="AU">Australia</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
+                            <FormLabel>Phone (optional)</FormLabel>
                             <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={shippingForm.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Street Address</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <FormField
-                        control={shippingForm.control}
-                        name="city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>City</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
+                              <Input 
+                                type="tel" 
+                                placeholder="(123) 456-7890" 
+                                {...field}
+                                className="cosmic-glass-field"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -403,54 +468,10 @@ export default function CheckoutPage() {
                       />
                       
                       <FormField
-                        control={shippingForm.control}
-                        name="state"
+                        control={form.control}
+                        name="useShippingForBilling"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>State / Province</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={shippingForm.control}
-                        name="zipCode"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ZIP / Postal Code</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <FormField
-                      control={shippingForm.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {user && (
-                      <FormField
-                        control={shippingForm.control}
-                        name="saveAddress"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                             <FormControl>
                               <Checkbox
                                 checked={field.value}
@@ -458,259 +479,112 @@ export default function CheckoutPage() {
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel>Save this address for future orders</FormLabel>
+                              <FormLabel>Use shipping address for billing</FormLabel>
                             </div>
                           </FormItem>
                         )}
                       />
-                    )}
-                    
-                    <div className="flex justify-between pt-4">
-                      <Link href="/shop/cart">
-                        <CosmicButton variant="outline" type="button">
-                          <ChevronLeft className="mr-2 h-4 w-4" />
-                          Back to Cart
-                        </CosmicButton>
-                      </Link>
                       
-                      <CosmicButton 
-                        variant="cosmic" 
-                        type="submit"
-                      >
-                        Continue to Payment
-                      </CosmicButton>
-                    </div>
-                  </form>
-                </Form>
-              </CosmicCard>
+                      <div className="flex justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          onClick={handleBackToCart}
+                          className="cosmic-hover-glow"
+                        >
+                          <ArrowLeft className="h-4 w-4 mr-2" />
+                          Back to Cart
+                        </Button>
+                        <CosmicButton type="submit" variant="cosmic">
+                          Continue to Payment
+                        </CosmicButton>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
             </TabsContent>
             
             <TabsContent value="payment">
-              <CosmicCard variant="glow" className="p-6">
-                <CosmicHeading as="h2" size="lg" weight="medium" className="mb-6">
-                  Payment Method
-                </CosmicHeading>
-                
-                <div className="flex items-center mb-6">
-                  <LockIcon className="h-4 w-4 mr-2 text-green-500" />
-                  <span className="text-sm text-muted-foreground">
-                    Your payment information is secured with SSL encryption
-                  </span>
-                </div>
-                
-                <Form {...paymentForm}>
-                  <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)} className="space-y-6">
-                    <FormField
-                      control={paymentForm.control}
-                      name="cardholderName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Cardholder Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={paymentForm.control}
-                      name="cardNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Card Number</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              placeholder="1234 5678 9012 3456"
-                              onChange={(e) => {
-                                // Format card number with spaces
-                                const value = e.target.value.replace(/\s/g, '');
-                                const formattedValue = value
-                                  .replace(/\D/g, '')
-                                  .replace(/(\d{4})(?=\d)/g, '$1 ');
-                                field.onChange(formattedValue);
-                              }}
-                              maxLength={19} // 16 digits + 3 spaces
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormField
-                        control={paymentForm.control}
-                        name="expiryDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Expiry Date (MM/YY)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                placeholder="MM/YY"
-                                onChange={(e) => {
-                                  // Format expiry date
-                                  const value = e.target.value.replace(/\D/g, '');
-                                  if (value.length <= 2) {
-                                    field.onChange(value);
-                                  } else {
-                                    field.onChange(`${value.slice(0, 2)}/${value.slice(2, 4)}`);
-                                  }
-                                }}
-                                maxLength={5} // MM/YY
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={paymentForm.control}
-                        name="cvc"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>CVC</FormLabel>
-                            <FormControl>
-                              <Input 
-                                {...field} 
-                                type="text"
-                                inputMode="numeric"
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/\D/g, '');
-                                  field.onChange(value);
-                                }}
-                                maxLength={4}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {user && (
-                      <FormField
-                        control={paymentForm.control}
-                        name="saveCard"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Save this card for future payments</FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    
-                    <div className="flex justify-between pt-4">
-                      <CosmicButton 
-                        variant="outline" 
-                        type="button"
-                        onClick={() => setActiveTab("shipping")}
-                      >
-                        <ChevronLeft className="mr-2 h-4 w-4" />
-                        Back to Shipping
-                      </CosmicButton>
-                      
-                      <CosmicButton 
-                        variant="cosmic" 
-                        type="submit"
-                        disabled={createOrderMutation.isPending}
-                      >
-                        {createOrderMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            Complete Order
-                          </>
-                        )}
-                      </CosmicButton>
-                    </div>
-                  </form>
-                </Form>
-              </CosmicCard>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment Method</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Credit or Debit Card</span>
+                  </div>
+                  
+                  <StripeElements onSubmit={onPaymentSubmit} />
+                  
+                  <div className="text-sm text-muted-foreground">
+                    <p>Your payment information is secure and encrypted.</p>
+                  </div>
+                  
+                  <div className="flex justify-between mt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setActiveTab('shipping')}
+                      className="cosmic-hover-glow"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Shipping
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
         
-        {/* Order Summary */}
-        <div className="lg:w-1/3">
-          <CosmicCard variant="glow" className="p-6 sticky top-24">
-            <CosmicHeading as="h2" size="lg" weight="bold" className="mb-4">
-              Order Summary
-            </CosmicHeading>
-            
-            <div className="space-y-4 mb-6">
-              {cart?.items.map((item) => {
-                const price = item.product.salePrice 
-                  ? parseFloat(item.product.salePrice as string) 
-                  : parseFloat(item.product.price as string);
-                
-                return (
-                  <div key={item.id} className="flex justify-between items-start">
-                    <div className="flex items-center">
-                      <div className="h-12 w-12 overflow-hidden rounded border border-gray-700 mr-3">
-                        <img 
-                          src={Array.isArray(item.product.images) && item.product.images.length > 0
-                            ? item.product.images[0]
-                            : '/placeholder-product.jpg'
-                          }
-                          alt={item.product.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="font-medium truncate max-w-[150px]">{item.product.name}</p>
-                        <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                      </div>
+        <div className="mt-8 lg:mt-0">
+          <Card className="cosmic-glass-card">
+            <CardHeader>
+              <CardTitle className="cosmic-gradient-text">Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="flex justify-between text-sm py-2">
+                    <div className="flex-1">
+                      <p>{item.name} <span className="text-muted-foreground">× {item.quantity}</span></p>
                     </div>
-                    <span className="font-medium">
-                      {formatCurrency(price * item.quantity)}
-                    </span>
+                    <div className="font-medium">
+                      {formatCurrency(item.price * item.quantity)}
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-            
-            <Separator className="my-4" />
-            
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
+                ))}
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span>{formatCurrency(shipping)}</span>
-              </div>
+              <Separator />
               
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tax (7%)</span>
-                <span>{formatCurrency(tax)}</span>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-700">
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span className="text-cosmic-primary">{formatCurrency(total)}</span>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(subtotal)}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span>Shipping</span>
+                  <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span>Tax (7%)</span>
+                  <span>{formatCurrency(tax)}</span>
                 </div>
               </div>
-            </div>
-          </CosmicCard>
+              
+              <Separator />
+              
+              <div className="flex justify-between font-medium text-lg">
+                <span>Total</span>
+                <span className="cosmic-gradient-text font-bold">{formatCurrency(total)}</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
