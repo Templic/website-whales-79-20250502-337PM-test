@@ -167,10 +167,14 @@ export default function CommunityPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-4 mt-4">
               <Link href="/collaboration">
-                <Button size="lg">Collaborate With Us</Button>
+                <Button size="lg" asChild>
+                  <span>Collaborate With Us</span>
+                </Button>
               </Link>
               <Link href="/contact">
-                <Button size="lg" variant="outline">Contact Us</Button>
+                <Button size="lg" variant="outline" asChild>
+                  <span>Contact Us</span>
+                </Button>
               </Link>
             </div>
           </div>
@@ -213,7 +217,7 @@ export default function CommunityPage() {
                   <div>
                     <span className="block font-medium">Full Moon Meditation</span>
                     <span className="text-muted-foreground text-sm">Join our global synchronized meditation during the next full moon.</span>
-                    <Button variant="link" size="sm" className="p-0 h-auto text-cyan-500">
+                    <Button variant="link" size="sm" className="p-0 h-auto text-cyan-500" asChild>
                       <span className="flex items-center">Learn more <ChevronRight className="h-3 w-3 ml-1" /></span>
                     </Button>
                   </div>
