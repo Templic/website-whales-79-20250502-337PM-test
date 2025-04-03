@@ -29,6 +29,8 @@ import { CosmicSlider } from '../components/ui/cosmic-slider';
 import { CosmicSidebar } from '../components/ui/cosmic-sidebar';
 import { CosmicMediaPlayer } from '../components/ui/cosmic-media-player';
 import CosmicMarkdown from '../components/ui/cosmic-markdown';
+import { CosmicMasonry, CosmicMasonryItem } from '../components/ui/cosmic-masonry';
+import CosmicStepper from '../components/ui/cosmic-stepper';
 import { 
   CosmicForm, 
   CosmicFormGroup, 
@@ -92,6 +94,9 @@ export default function CosmicComponentsDemo() {
   
   // State for sidebar
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  
+  // State for stepper
+  const [currentStep, setCurrentStep] = useState<number>(0);
   
   // State for media player
   const [demoTracks] = useState([
@@ -2003,6 +2008,265 @@ export default function CosmicComponentsDemo() {
                     compact
                     hideArtwork
                   />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Stepper Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Stepper
+            </CosmicHeading>
+            <div className="space-y-6">
+              <p className="text-sm mb-4">
+                The CosmicStepper component provides a multi-step interface with cosmic styling.
+              </p>
+              
+              <div className="space-y-12">
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Default Stepper</CosmicHeading>
+                  <CosmicStepper
+                    variant="default"
+                    currentStep={currentStep}
+                    onStepChange={setCurrentStep}
+                    steps={[
+                      {
+                        id: 'step1',
+                        title: 'Personal Info',
+                        description: 'Basic personal information',
+                        content: (
+                          <div>
+                            <p className="mb-4">This is the content for step 1.</p>
+                            <CosmicInput 
+                              placeholder="Your name" 
+                              className="mb-2"
+                            />
+                            <CosmicInput 
+                              placeholder="Your email" 
+                              type="email"
+                            />
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'step2',
+                        title: 'Account Details',
+                        description: 'Setup your account',
+                        content: (
+                          <div>
+                            <p className="mb-4">This is the content for step 2.</p>
+                            <CosmicInput 
+                              placeholder="Choose a username" 
+                              className="mb-2"
+                            />
+                            <CosmicInput 
+                              placeholder="Password" 
+                              type="password"
+                            />
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'step3',
+                        title: 'Preferences',
+                        description: 'Set your preferences',
+                        content: (
+                          <div>
+                            <p className="mb-4">This is the content for step 3.</p>
+                            <CosmicToggle 
+                              label="Receive notifications" 
+                              checked={true}
+                              className="mb-2"
+                            />
+                            <CosmicToggle 
+                              label="Dark mode" 
+                              checked={true}
+                            />
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'step4',
+                        title: 'Confirmation',
+                        description: 'Complete setup',
+                        content: (
+                          <div>
+                            <p className="mb-4">This is the content for step 4.</p>
+                            <p>All steps have been completed successfully!</p>
+                          </div>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+                
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Cosmic Stepper</CosmicHeading>
+                  <CosmicStepper
+                    variant="cosmic"
+                    currentStep={0}
+                    orientation="horizontal"
+                    layout="expanded"
+                    steps={[
+                      {
+                        id: 'cosmic1',
+                        title: 'Connect',
+                        description: 'Connect to cosmic energy',
+                        content: (
+                          <div>
+                            <p className="mb-4">Begin your journey by connecting to cosmic energy.</p>
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'cosmic2',
+                        title: 'Explore',
+                        description: 'Explore the cosmic realms',
+                        content: (
+                          <div>
+                            <p className="mb-4">Explore the vast cosmic realms and discover new insights.</p>
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'cosmic3',
+                        title: 'Transform',
+                        description: 'Transform your consciousness',
+                        content: (
+                          <div>
+                            <p className="mb-4">Transform your consciousness through cosmic awareness.</p>
+                          </div>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+                
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Vertical Nebula Stepper</CosmicHeading>
+                  <CosmicStepper
+                    variant="nebula"
+                    orientation="vertical"
+                    currentStep={1}
+                    steps={[
+                      {
+                        id: 'nebula1',
+                        title: 'Star Birth',
+                        content: (
+                          <div>
+                            <p className="mb-4">The birth of stars in cosmic nebulae.</p>
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'nebula2',
+                        title: 'Galactic Formation',
+                        content: (
+                          <div>
+                            <p className="mb-4">The formation of galaxies from cosmic dust.</p>
+                          </div>
+                        ),
+                      },
+                      {
+                        id: 'nebula3',
+                        title: 'Universal Expansion',
+                        content: (
+                          <div>
+                            <p className="mb-4">The expansion of the universe through cosmic time.</p>
+                          </div>
+                        ),
+                      },
+                    ]}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Masonry Grid Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Masonry
+            </CosmicHeading>
+            <div className="space-y-6">
+              <p className="text-sm mb-4">
+                The CosmicMasonry component provides responsive grid layouts with cosmic styling.
+              </p>
+              
+              <div className="space-y-8">
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Default Masonry</CosmicHeading>
+                  <CosmicMasonry variant="default" columns={3} className="mb-8">
+                    <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Item 1</CosmicHeading>
+                      <p className="text-sm">This is a basic masonry item with default styling.</p>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Item 2</CosmicHeading>
+                      <p className="text-sm">Masonry automatically handles different size items.</p>
+                      <div className="mt-4 rounded bg-gray-700/50 h-32"></div>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Item 3</CosmicHeading>
+                      <p className="text-sm">Items will flow into available space based on their size.</p>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Item 4</CosmicHeading>
+                      <p className="text-sm">Responsive grid adapts to different screen sizes.</p>
+                      <div className="mt-4 rounded bg-gray-700/50 h-16"></div>
+                    </CosmicMasonryItem>
+                  </CosmicMasonry>
+                </div>
+                
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Cosmic Variant</CosmicHeading>
+                  <CosmicMasonry variant="cosmic" columns={3} animated className="mb-8">
+                    <CosmicMasonryItem variant="cosmic" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Cosmic Item</CosmicHeading>
+                      <p className="text-sm">Items can have the cosmic styling variant.</p>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem variant="cosmic" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Interactive</CosmicHeading>
+                      <p className="text-sm">These items have hover and animation effects.</p>
+                      <div className="mt-4 rounded bg-cosmic-primary/10 h-24"></div>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem variant="cosmic" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" className="mb-2">Cosmic Glow</CosmicHeading>
+                      <p className="text-sm">Hover over to see the subtle glow effect.</p>
+                    </CosmicMasonryItem>
+                  </CosmicMasonry>
+                </div>
+                
+                <div>
+                  <CosmicHeading as="h3" size="lg" className="mb-4">Nebula Variant</CosmicHeading>
+                  <CosmicMasonry variant="nebula" columns={4} animated className="mb-8">
+                    <CosmicMasonryItem variant="nebula" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Nebula Item</CosmicHeading>
+                      <p className="text-sm">The nebula variant has a purple to pink gradient.</p>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem variant="nebula" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Gallery Item</CosmicHeading>
+                      <div className="mt-2 rounded bg-cosmic-secondary/20 h-40"></div>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem variant="nebula" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Content Card</CosmicHeading>
+                      <p className="text-sm">Perfect for image galleries or content cards.</p>
+                      <div className="mt-2 rounded bg-cosmic-accent/20 h-20"></div>
+                    </CosmicMasonryItem>
+                    
+                    <CosmicMasonryItem variant="nebula" animated hoverable>
+                      <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Responsive</CosmicHeading>
+                      <p className="text-sm">The grid automatically adjusts based on screen size.</p>
+                    </CosmicMasonryItem>
+                  </CosmicMasonry>
                 </div>
               </div>
             </div>
