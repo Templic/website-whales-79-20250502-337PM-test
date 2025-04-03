@@ -3,6 +3,7 @@ import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "../../components/shop/EnhancedShoppingExperience";
 import CosmicCollectibles from "../../components/shop/CosmicCollectibles";
 import ProductComparison from "../../components/shop/ProductComparison";
+import "../../components/shop/shop-animations.css";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,13 +165,22 @@ export default function CosmicMerchandisePage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(sampleProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    // Load cart from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const savedCart = localStorage.getItem('cosmic-cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    }
+    return [];
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [sortOrder, setSortOrder] = useState<string>("featured");
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
   const [userPoints, setUserPoints] = useState(1200); // Sample loyalty points for the user
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Animation effect for elements
   useEffect(() => {
@@ -181,6 +191,15 @@ export default function CosmicMerchandisePage() {
       }, index * 100);
     });
   }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('cosmic-cart', JSON.stringify(cart));
+    } else {
+      localStorage.removeItem('cosmic-cart');
+    }
+  }, [cart]);
 
   // Extract all categories from products
   const allCategories = Array.from(
@@ -257,6 +276,15 @@ export default function CosmicMerchandisePage() {
       description: `${product.name} has been added to your cart.`,
     });
     
+    // Add an animation to the cart button
+    const cartButton = document.querySelector('.cart-floating-button');
+    if (cartButton) {
+      cartButton.classList.add('cart-bump');
+      setTimeout(() => {
+        cartButton.classList.remove('cart-bump');
+      }, 300);
+    }
+    
     // Add points for each item added to cart (in a real app this would happen on purchase)
     setUserPoints((prev) => prev + Math.round(product.price));
   };
@@ -304,6 +332,40 @@ export default function CosmicMerchandisePage() {
       <CosmicBackground opacity={0.4} />
       
       <div className="container mx-auto px-4 py-8">
+        {loading && (
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-8">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error loading products</h3>
+                <div className="mt-2 text-sm text-red-700 dark:text-red-300">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-sm text-red-600 dark:text-red-400"
+                    onClick={() => setError(null)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="max-w-7xl mx-auto">
           {/* Hero Section */}
           <div className="text-center mb-12 cosmic-slide-up">
@@ -561,7 +623,7 @@ export default function CosmicMerchandisePage() {
                           </div>
                         </div>
                         <Button 
-                          className="w-full"
+                          className="w-full btn-cosmic-glow"
                           disabled={!product.inStock}
                           onClick={() => addToCart(product)}
                         >
@@ -644,6 +706,7 @@ export default function CosmicMerchandisePage() {
                               View Details
                             </Button>
                             <Button 
+                              className="btn-cosmic-glow"
                               disabled={!product.inStock}
                               onClick={() => addToCart(product)}
                             >
@@ -669,11 +732,11 @@ export default function CosmicMerchandisePage() {
             <SheetTrigger asChild>
               <Button 
                 variant="outline" 
-                className="fixed bottom-4 right-4 z-10 rounded-full w-16 h-16 flex flex-col items-center justify-center shadow-lg border-purple-500/30"
+                className="fixed bottom-4 right-4 z-10 rounded-full w-16 h-16 flex flex-col items-center justify-center shadow-lg border-purple-500/30 cart-floating-button btn-cosmic-glow"
               >
                 <ShoppingCart className="h-6 w-6" />
                 {cart.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 rounded-full bg-purple-500 px-2 min-w-[1.5rem] h-6 flex items-center justify-center">
+                  <Badge className="absolute -top-2 -right-2 rounded-full bg-purple-500 px-2 min-w-[1.5rem] h-6 flex items-center justify-center badge-pulse">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
                   </Badge>
                 )}
