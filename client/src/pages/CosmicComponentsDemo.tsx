@@ -7,6 +7,8 @@ import SacredGeometry from '../components/ui/sacred-geometry';
 import Stars from '../components/cosmic/Stars';
 import CosmicCard from '../components/ui/cosmic-card';
 import CosmicHeading from '../components/ui/cosmic-heading';
+import CosmicContainer from '../components/ui/cosmic-container';
+import CosmicLink from '../components/ui/cosmic-link';
 
 export default function CosmicComponentsDemo() {
   const [starSettings, setStarSettings] = useState({
@@ -255,6 +257,65 @@ export default function CosmicComponentsDemo() {
           </div>
         </div>
         
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Containers
+          </CosmicHeading>
+          <div className="space-y-8">
+            <CosmicContainer variant="default" className="p-4">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Default Container</CosmicHeading>
+              <p className="text-sm">Basic container with standard styling</p>
+            </CosmicContainer>
+
+            <CosmicContainer variant="cosmic" className="p-4">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Cosmic Container</CosmicHeading>
+              <p className="text-sm">Cosmic nebula background with blur effect</p>
+            </CosmicContainer>
+
+            <CosmicContainer variant="nebula" className="p-4">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Nebula Container</CosmicHeading>
+              <p className="text-sm">Gradient background with cosmic border</p>
+            </CosmicContainer>
+
+            <CosmicContainer variant="minimal" className="p-4">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Minimal Container</CosmicHeading>
+              <p className="text-sm">Subtle minimal styling with just a light border</p>
+            </CosmicContainer>
+          </div>
+        </div>
+
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Links
+          </CosmicHeading>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <div>
+                <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Standard Link Styles</CosmicHeading>
+                <div className="flex flex-col gap-3">
+                  <CosmicLink href="#" variant="default">Default Link</CosmicLink>
+                  <CosmicLink href="#" variant="subtle">Subtle Link</CosmicLink>
+                  <CosmicLink href="#" variant="glow">Glowing Link</CosmicLink>
+                  <CosmicLink href="#" variant="nav">Navigation Link</CosmicLink>
+                  <CosmicLink href="#" variant="nav-active">Active Navigation Link</CosmicLink>
+                  <CosmicLink href="#" variant="footer">Footer Link</CosmicLink>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Link Variations</CosmicHeading>
+                <div className="flex flex-col gap-3">
+                  <CosmicLink href="#" variant="default" underline>Underlined Link</CosmicLink>
+                  <CosmicLink href="https://replit.com" variant="glow" external>External Link</CosmicLink>
+                  <CosmicLink href="#" variant="default" onClick={() => alert('Clicked!')}>Link with Click Handler</CosmicLink>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-center">
           <Link href="/">
             <span className="text-cosmic-primary hover:text-cosmic-primary/80 cursor-pointer">← Back to Home</span>
