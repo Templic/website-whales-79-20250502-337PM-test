@@ -15,14 +15,14 @@ export const getQueryFn = <T>(url: string) =>
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({
         message: response.statusText,
       }));
       throw new Error(error.message || 'An error occurred');
     }
-    
+
     return response.json();
   };
 
@@ -32,7 +32,7 @@ export async function apiRequest(
   options: ApiRequestOptions = {}
 ) {
   const { method = 'GET', data, headers = {} } = options;
-  
+
   const config: RequestInit = {
     method,
     headers: {
@@ -41,32 +41,37 @@ export async function apiRequest(
     },
     credentials: 'include',
   };
-  
+
   if (data) {
     config.body = JSON.stringify(data);
   }
-  
-  const response = await fetch(endpoint, config);
-  
-  // Handle HTTP errors
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: response.statusText,
-    }));
-    throw new Error(error.message || 'An error occurred');
-  }
-  
-  // Return null for empty responses
-  if (response.status === 204) {
-    return null;
-  }
-  
-  // Parse JSON response
+
   try {
-    return await response.json();
+    const response = await fetch(endpoint, config);
+
+    // Handle HTTP errors
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: response.statusText,
+      }));
+      throw new Error(error.message || 'An error occurred');
+    }
+
+    // Return null for empty responses
+    if (response.status === 204) {
+      return null;
+    }
+
+    // Parse JSON response
+    try {
+      return await response.json();
+    } catch (error) {
+      // Return raw response if JSON parsing fails
+      return response;
+    }
   } catch (error) {
-    // Return raw response if JSON parsing fails
-    return response;
+    console.error("API request failed:", error); // Log the error for debugging
+    throw new Error("Failed to fetch data from API."); // Throw a more user-friendly error
   }
 }
 

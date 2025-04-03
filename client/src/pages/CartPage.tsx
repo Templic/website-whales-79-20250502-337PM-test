@@ -15,48 +15,35 @@ export default function CartPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // State for animations and data loading
   const [isClientLoaded, setIsClientLoaded] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
-  
+
   useEffect(() => {
     setIsClientLoaded(true);
     document.title = 'Shopping Cart - Dale Loves Whales';
-    
+
     // Add delay for entrance animation
     const timer = setTimeout(() => {
       setIsAnimated(true);
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   // Fetch cart items
   const { 
     data: cartItems = [] as CartItem[], 
     isLoading, 
     isError,
     refetch
-  } = useQuery<CartItem[]>({
+  } = useQuery({
     queryKey: ['/api/cart'],
-    queryFn: async () => {
-      const response = await fetch('/api/cart', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch cart');
-      }
-      
-      return response.json();
-    },
+    queryFn: () => apiRequest('/api/cart', {credentials: 'include'}), // Updated queryFn to use apiRequest
     enabled: isClientLoaded,
   });
-  
+
   // Update item quantity mutation
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ itemId, quantity }: { itemId: string, quantity: number }) => {
@@ -76,7 +63,7 @@ export default function CartPage() {
       });
     }
   });
-  
+
   // Remove item mutation
   const removeItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -99,7 +86,7 @@ export default function CartPage() {
       });
     }
   });
-  
+
   // Apply coupon mutation
   const applyCouponMutation = useMutation({
     mutationFn: async (code: string) => {
@@ -118,7 +105,7 @@ export default function CartPage() {
       return null;
     }
   });
-  
+
   // Clear cart mutation
   const clearCartMutation = useMutation({
     mutationFn: async () => {
@@ -141,33 +128,33 @@ export default function CartPage() {
       });
     }
   });
-  
+
   // Handlers
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     updateQuantityMutation.mutate({ itemId, quantity });
   };
-  
+
   const handleRemoveItem = (itemId: string) => {
     removeItemMutation.mutate(itemId);
   };
-  
+
   const handleApplyCoupon = async (code: string) => {
     const result = await applyCouponMutation.mutateAsync(code);
     return result;
   };
-  
+
   const handleClearCart = () => {
     clearCartMutation.mutate();
   };
-  
+
   const handleCheckout = () => {
     setLocation('/shop/checkout');
   };
-  
+
   const handleContinueShopping = () => {
     setLocation('/shop');
   };
-  
+
   // If still loading
   if (!isClientLoaded || isLoading) {
     return (
@@ -183,7 +170,7 @@ export default function CartPage() {
       </div>
     );
   }
-  
+
   // If error loading cart
   if (isError) {
     return (
@@ -201,7 +188,7 @@ export default function CartPage() {
       </div>
     );
   }
-  
+
   // If cart is empty
   if (cartItems.length === 0) {
     return (
@@ -226,7 +213,7 @@ export default function CartPage() {
       </div>
     );
   }
-  
+
   return (
     <div className={`container mx-auto px-4 py-8 cosmic-fade-in ${isAnimated ? 'in' : ''}`}>
       <div className="mb-8">
@@ -238,7 +225,7 @@ export default function CartPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Continue Shopping
         </Button>
-        
+
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold cosmic-gradient-text flex items-center">
             <Sparkles className="h-6 w-6 mr-2 opacity-80" />
@@ -247,7 +234,7 @@ export default function CartPage() {
               {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
             </span>
           </h1>
-          
+
           {cartItems.length > 0 && (
             <Button
               variant="ghost"
@@ -263,10 +250,10 @@ export default function CartPage() {
             </Button>
           )}
         </div>
-        
+
         <Separator className="mt-4 cosmic-divider" />
       </div>
-      
+
       <div className="lg:grid lg:grid-cols-3 lg:gap-8">
         <div className="lg:col-span-2 cosmic-stagger-children in">
           <div className="space-y-4">
@@ -280,14 +267,14 @@ export default function CartPage() {
             ))}
           </div>
         </div>
-        
+
         <div className="mt-8 lg:mt-0">
           <CartSummary
             items={cartItems}
             onApplyCoupon={handleApplyCoupon}
             onCheckout={handleCheckout}
           />
-          
+
           <div className="mt-6 p-4 cosmic-glass-panel rounded-lg">
             <div className="flex items-center text-sm text-cosmic-primary mb-2">
               <Package className="h-4 w-4 mr-2" />
