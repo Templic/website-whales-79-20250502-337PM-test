@@ -20,6 +20,16 @@ import CosmicTooltip from '../components/ui/cosmic-tooltip';
 import CosmicDropdown from '../components/ui/cosmic-dropdown';
 import CosmicCarousel from '../components/ui/cosmic-carousel';
 import CosmicModal from '../components/ui/cosmic-modal';
+import CosmicSelect from '../components/ui/cosmic-select';
+import CosmicCheckbox from '../components/ui/cosmic-checkbox';
+import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../components/ui/cosmic-radio';
+import CosmicToggle from '../components/ui/cosmic-toggle';
+import { 
+  CosmicForm, 
+  CosmicFormGroup, 
+  CosmicFormLabel, 
+  CosmicFormHelperText 
+} from '../components/ui/cosmic-form';
 import { 
   CosmicTable, 
   CosmicTableContainer, 
@@ -57,6 +67,15 @@ export default function CosmicComponentsDemo() {
   const [showAlert, setShowAlert] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentModal, setCurrentModal] = useState<'default' | 'cosmic' | 'glow' | 'frosted' | 'nebula'>('default');
+  
+  // State for form components
+  const [checkboxValue, setCheckboxValue] = useState<boolean>(false);
+  const [radioValue, setRadioValue] = useState<string>('option1');
+  const [radioCardValue, setRadioCardValue] = useState<string>('card1');
+  const [toggleValue, setToggleValue] = useState<boolean>(false);
+  const [selectValue, setSelectValue] = useState<string>('');
+  const [formTermsValue, setFormTermsValue] = useState<boolean>(false);
+  const [formNewsletterValue, setFormNewsletterValue] = useState<boolean>(false);
 
   return (
     <div className="bg-gradient-to-b from-black to-gray-900 min-h-screen text-white p-8">
@@ -1230,6 +1249,401 @@ export default function CosmicComponentsDemo() {
           <Link to="/">
             <span className="text-cosmic-primary hover:text-cosmic-primary/80 cursor-pointer">← Back to Home</span>
           </Link>
+        </div>
+        
+        {/* Form Components Section */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Form Components
+          </CosmicHeading>
+          
+          <div className="space-y-12">
+            {/* Form Container Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Form Containers</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
+                  <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Default Form</CosmicHeading>
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="name-1">Name</CosmicFormLabel>
+                    <CosmicInput id="name-1" placeholder="Enter your name" />
+                  </CosmicFormGroup>
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="email-1">Email</CosmicFormLabel>
+                    <CosmicInput id="email-1" type="email" placeholder="Enter your email" />
+                  </CosmicFormGroup>
+                  <CosmicButton variant="primary" className="mt-2">Submit</CosmicButton>
+                </CosmicForm>
+                
+                <CosmicForm variant="cosmic">
+                  <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Cosmic Form</CosmicHeading>
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="name-2" variant="cosmic" required>Name</CosmicFormLabel>
+                    <CosmicInput id="name-2" placeholder="Enter your name" variant="cosmic" />
+                    <CosmicFormHelperText>Enter your full name</CosmicFormHelperText>
+                  </CosmicFormGroup>
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="email-2" variant="cosmic" required>Email</CosmicFormLabel>
+                    <CosmicInput id="email-2" type="email" placeholder="Enter your email" variant="cosmic" />
+                    <CosmicFormHelperText>We'll never share your email</CosmicFormHelperText>
+                  </CosmicFormGroup>
+                  <CosmicButton variant="cosmic" className="mt-2">Submit</CosmicButton>
+                </CosmicForm>
+              </div>
+            </div>
+            
+            {/* Form States Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Form States</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="normal">Normal Input</CosmicFormLabel>
+                    <CosmicInput id="normal" placeholder="Normal state" />
+                  </CosmicFormGroup>
+                </CosmicForm>
+                
+                <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
+                  <CosmicFormGroup error="This field is required">
+                    <CosmicFormLabel htmlFor="error">Error Input</CosmicFormLabel>
+                    <CosmicInput id="error" placeholder="Error state" error />
+                  </CosmicFormGroup>
+                </CosmicForm>
+                
+                <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
+                  <CosmicFormGroup success="Looks good!">
+                    <CosmicFormLabel htmlFor="success">Success Input</CosmicFormLabel>
+                    <CosmicInput id="success" placeholder="Success state" success />
+                  </CosmicFormGroup>
+                </CosmicForm>
+              </div>
+            </div>
+            
+            {/* Select Component Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Select</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                  <CosmicFormLabel htmlFor="select-default">Default Select</CosmicFormLabel>
+                  <CosmicSelect 
+                    id="select-default"
+                    value={selectValue}
+                    onChange={(e) => setSelectValue(e.target.value)}
+                  >
+                    <option value="">Select an option</option>
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                  </CosmicSelect>
+                  <p className="mt-2 text-sm text-gray-400">Selected option: {selectValue || 'None'}</p>
+                </div>
+                
+                <div>
+                  <CosmicFormLabel htmlFor="select-cosmic" variant="cosmic">Cosmic Select</CosmicFormLabel>
+                  <CosmicSelect id="select-cosmic" variant="cosmic">
+                    <option value="">Select an option</option>
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                  </CosmicSelect>
+                </div>
+                
+                <div>
+                  <CosmicFormLabel htmlFor="select-frosted">Frosted Select</CosmicFormLabel>
+                  <CosmicSelect 
+                    id="select-frosted" 
+                    variant="frosted" 
+                    icon={<Search className="h-4 w-4 text-gray-400" />}
+                  >
+                    <option value="">Select an option</option>
+                    <option value="option1">Option 1</option>
+                    <option value="option2">Option 2</option>
+                    <option value="option3">Option 3</option>
+                  </CosmicSelect>
+                </div>
+              </div>
+            </div>
+            
+            {/* Checkbox Component Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Checkbox</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <CosmicCheckbox 
+                    id="checkbox-default" 
+                    label="Default Checkbox"
+                    checked={checkboxValue}
+                    onChange={(e) => setCheckboxValue(e.target.checked)}
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-cosmic" 
+                    label="Cosmic Checkbox" 
+                    variant="cosmic"
+                    labelVariant="cosmic"
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-filled" 
+                    label="Filled Checkbox" 
+                    variant="filled"
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-glow" 
+                    label="Animated Checkbox" 
+                    variant="cosmic"
+                    animation="glow"
+                  />
+                  
+                  <p className="text-sm text-gray-400">Checkbox state: {checkboxValue ? 'Checked' : 'Unchecked'}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <CosmicCheckbox 
+                    id="checkbox-disabled" 
+                    label="Disabled Checkbox" 
+                    disabled
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-error" 
+                    label="Error Checkbox" 
+                    error
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-success" 
+                    label="Success Checkbox" 
+                    success
+                  />
+                  
+                  <CosmicCheckbox 
+                    id="checkbox-reversed" 
+                    label="Reversed Direction" 
+                    direction="rowReverse"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Radio Component Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Radio</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Radio Buttons</CosmicHeading>
+                  <CosmicRadioGroup 
+                    value={radioValue} 
+                    onChange={(value) => setRadioValue(value)} 
+                    name="radio-demo"
+                  >
+                    <CosmicRadio 
+                      value="option1" 
+                      label="Default Radio Option" 
+                    />
+                    
+                    <CosmicRadio 
+                      value="option2" 
+                      label="Cosmic Radio Option" 
+                      variant="cosmic"
+                      labelVariant="cosmic"
+                    />
+                    
+                    <CosmicRadio 
+                      value="option3" 
+                      label="Filled Radio Option" 
+                      variant="filled"
+                    />
+                    
+                    <CosmicRadio 
+                      value="option4" 
+                      label="Disabled Radio Option" 
+                      disabled
+                    />
+                  </CosmicRadioGroup>
+                  <p className="mt-2 text-sm text-gray-400">Selected value: {radioValue}</p>
+                </div>
+                
+                <div>
+                  <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Radio Cards</CosmicHeading>
+                  <CosmicRadioGroup 
+                    variant="card" 
+                    value={radioCardValue} 
+                    onChange={(value) => setRadioCardValue(value)} 
+                    name="radio-card-demo"
+                  >
+                    <CosmicRadioCard
+                      value="card1"
+                      label="Default Radio Card"
+                      description="This is a radio option presented as a card"
+                    />
+                    
+                    <CosmicRadioCard
+                      value="card2"
+                      label="Cosmic Radio Card"
+                      description="Cosmic styled radio card option"
+                      variant="cosmic"
+                    />
+                  </CosmicRadioGroup>
+                  <p className="mt-2 text-sm text-gray-400">Selected card: {radioCardValue}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Toggle Component Demo */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Toggle</CosmicHeading>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <CosmicToggle 
+                    id="toggle-default" 
+                    label="Default Toggle"
+                    checked={toggleValue}
+                    onChange={(e) => setToggleValue(e.target.checked)}
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-cosmic" 
+                    label="Cosmic Toggle" 
+                    variant="cosmic"
+                    labelVariant="cosmic"
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-minimal" 
+                    label="Minimal Toggle" 
+                    variant="minimal"
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-frosted" 
+                    label="Frosted Toggle" 
+                    variant="frosted"
+                  />
+                  
+                  <p className="text-sm text-gray-400">Toggle state: {toggleValue ? 'On' : 'Off'}</p>
+                </div>
+                
+                <div className="space-y-6">
+                  <CosmicToggle 
+                    id="toggle-disabled" 
+                    label="Disabled Toggle" 
+                    disabled
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-glow" 
+                    label="Glowing Toggle" 
+                    variant="cosmic"
+                    animation="glow"
+                    thumbGlow
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-error" 
+                    label="Error Toggle" 
+                    error
+                  />
+                  
+                  <CosmicToggle 
+                    id="toggle-left" 
+                    label="Label on Left" 
+                    labelPosition="left"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Complete Form Example */}
+            <div>
+              <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Complete Form Example</CosmicHeading>
+              <CosmicForm variant="cosmic">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="full-name" variant="cosmic" required>Full Name</CosmicFormLabel>
+                    <CosmicInput id="full-name" placeholder="Enter your name" variant="cosmic" />
+                  </CosmicFormGroup>
+                  
+                  <CosmicFormGroup>
+                    <CosmicFormLabel htmlFor="contact-email" variant="cosmic" required>Email Address</CosmicFormLabel>
+                    <CosmicInput id="contact-email" type="email" placeholder="Enter your email" variant="cosmic" icon={<Mail className="h-4 w-4 text-gray-400" />} />
+                  </CosmicFormGroup>
+                </div>
+                
+                <CosmicFormGroup>
+                  <CosmicFormLabel htmlFor="subject" variant="cosmic">Subject</CosmicFormLabel>
+                  <CosmicSelect id="subject" variant="cosmic">
+                    <option value="">Select a subject</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="support">Technical Support</option>
+                    <option value="feedback">Feedback</option>
+                    <option value="other">Other</option>
+                  </CosmicSelect>
+                </CosmicFormGroup>
+                
+                <CosmicFormGroup>
+                  <CosmicFormLabel htmlFor="message" variant="cosmic" required>Message</CosmicFormLabel>
+                  <textarea 
+                    id="message" 
+                    rows={4} 
+                    className="w-full bg-gray-900 border border-cosmic-primary/30 text-white rounded-md focus:outline-none focus:border-cosmic-primary focus:ring-1 focus:ring-cosmic-primary/50 p-3"
+                    placeholder="Enter your message"
+                  ></textarea>
+                </CosmicFormGroup>
+                
+                <div className="mt-4 space-y-4">
+                  <CosmicCheckbox
+                    id="terms"
+                    label="I agree to the terms and conditions"
+                    variant="cosmic"
+                    checked={formTermsValue}
+                    onChange={(e) => setFormTermsValue(e.target.checked)}
+                  />
+                  
+                  <CosmicToggle
+                    id="newsletter"
+                    label="Subscribe to newsletter"
+                    variant="cosmic"
+                    checked={formNewsletterValue}
+                    onChange={(e) => setFormNewsletterValue(e.target.checked)}
+                  />
+                  
+                  <p className="text-sm text-gray-400">
+                    Form state: 
+                    {formTermsValue ? ' Agreed to terms' : ' Not agreed to terms'}, 
+                    {formNewsletterValue ? ' Subscribed to newsletter' : ' Not subscribed to newsletter'}
+                  </p>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-4">
+                  <CosmicButton 
+                    variant="outline"
+                    onClick={() => {
+                      setFormTermsValue(false);
+                      setFormNewsletterValue(false);
+                    }}
+                  >
+                    Cancel
+                  </CosmicButton>
+                  
+                  <CosmicButton 
+                    variant="cosmic"
+                    onClick={() => {
+                      if (!formTermsValue) {
+                        alert('Please agree to the terms and conditions');
+                      } else {
+                        alert('Form submitted successfully! Newsletter subscription: ' + 
+                          (formNewsletterValue ? 'Yes' : 'No'));
+                      }
+                    }}
+                  >
+                    Submit Form
+                  </CosmicButton>
+                </div>
+              </CosmicForm>
+            </div>
+          </div>
         </div>
       </div>
     </div>

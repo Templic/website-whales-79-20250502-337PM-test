@@ -8,6 +8,8 @@ export interface CosmicInputProps
   variant?: 'default' | 'filled' | 'outline' | 'cosmic';
   error?: boolean;
   errorMessage?: string;
+  success?: boolean;
+  successMessage?: string;
 }
 
 const CosmicInput = forwardRef<HTMLInputElement, CosmicInputProps>(
@@ -20,6 +22,8 @@ const CosmicInput = forwardRef<HTMLInputElement, CosmicInputProps>(
       variant = 'default',
       error = false,
       errorMessage,
+      success = false,
+      successMessage,
       ...props
     },
     ref
@@ -35,10 +39,13 @@ const CosmicInput = forwardRef<HTMLInputElement, CosmicInputProps>(
       cosmic: 'cosmic-glass-field rounded-md px-3 py-2 text-sm text-cosmic-text'
     };
 
-    // Error styles
-    const errorStyles = error 
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' 
-      : '';
+    // Determine the state (error takes precedence over success)
+    let stateStyles = '';
+    if (error) {
+      stateStyles = 'border-red-500 focus:border-red-500 focus:ring-red-500/30';
+    } else if (success) {
+      stateStyles = 'border-green-500 focus:border-green-500 focus:ring-green-500/30';
+    }
 
     // Glowing effect
     const glowStyles = glowing 
@@ -49,7 +56,7 @@ const CosmicInput = forwardRef<HTMLInputElement, CosmicInputProps>(
     const inputClassName = cn(
       baseStyles,
       variantStyles[variant],
-      errorStyles,
+      stateStyles,
       glowStyles,
       className
     );
@@ -70,6 +77,9 @@ const CosmicInput = forwardRef<HTMLInputElement, CosmicInputProps>(
         />
         {error && errorMessage && (
           <p className="mt-1 text-xs text-red-500">{errorMessage}</p>
+        )}
+        {!error && success && successMessage && (
+          <p className="mt-1 text-xs text-green-500">{successMessage}</p>
         )}
       </div>
     );
