@@ -14,6 +14,14 @@ const paymentIntentSchema = z.object({
   metadata: z.record(z.string()).optional(),
 });
 
+// Helper function to initialize Stripe
+function getStripeClient() {
+  if (!stripeApiKey) {
+    throw new Error('Stripe API key is not configured');
+  }
+  return new Stripe(stripeApiKey);
+}
+
 // Create payment intent
 router.post('/create-intent', async (req: Request, res: Response) => {
   try {
@@ -25,10 +33,8 @@ router.post('/create-intent', async (req: Request, res: Response) => {
       });
     }
 
-    // Initialize Stripe with API key
-    const stripe = new Stripe(stripeApiKey, {
-      apiVersion: '2025-02-24.acacia',
-    });
+    // Initialize Stripe
+    const stripe = getStripeClient();
 
     // Validate request data
     const validationResult = paymentIntentSchema.safeParse(req.body);
@@ -77,10 +83,8 @@ router.post('/confirm', async (req: Request, res: Response) => {
       });
     }
 
-    // Initialize Stripe with API key
-    const stripe = new Stripe(stripeApiKey, {
-      apiVersion: '2025-02-24.acacia',
-    });
+    // Initialize Stripe
+    const stripe = getStripeClient();
 
     const { paymentMethodId, orderId } = req.body;
 

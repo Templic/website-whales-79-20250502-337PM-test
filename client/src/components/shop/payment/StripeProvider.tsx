@@ -57,37 +57,32 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
   }
 
   // Set up options based on whether clientSecret is available
-  const options: StripeElementsOptions = clientSecret
-    ? {
-        clientSecret,
-        appearance: {
-          theme: 'stripe' as const,
-          variables: {
-            colorPrimary: '#6366f1',
-            colorBackground: 'rgba(255, 255, 255, 0.15)',
-            colorText: '#1a1a1a',
-            colorDanger: '#df1b41',
-            fontFamily: 'system-ui, sans-serif',
-            spacingUnit: '4px',
-            borderRadius: '8px',
-          },
-        },
-      }
-    : {
-        mode: 'setup' as const,
-        appearance: {
-          theme: 'stripe' as const,
-          variables: {
-            colorPrimary: '#6366f1',
-            colorBackground: 'rgba(255, 255, 255, 0.15)',
-            colorText: '#1a1a1a',
-            colorDanger: '#df1b41',
-            fontFamily: 'system-ui, sans-serif',
-            spacingUnit: '4px',
-            borderRadius: '8px',
-          },
-        },
-      };
+  const options: StripeElementsOptions = {
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#6366f1',
+        colorBackground: 'rgba(255, 255, 255, 0.15)',
+        colorText: '#1a1a1a',
+        colorDanger: '#df1b41',
+        fontFamily: 'system-ui, sans-serif',
+        spacingUnit: '4px',
+        borderRadius: '8px',
+      },
+    },
+  };
+  
+  // Add clientSecret if available
+  if (clientSecret) {
+    options.clientSecret = clientSecret;
+  } else {
+    // We need a client secret to initialize Elements with a PaymentIntent
+    return (
+      <div className="text-destructive p-4 border border-destructive/20 bg-destructive/10 rounded-lg">
+        Payment initialization failed. Please try again.
+      </div>
+    );
+  }
 
   return (
     <Elements stripe={stripePromise} options={options}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
@@ -12,12 +12,20 @@ export default function StripeElements({ onSubmit }: StripeElementsProps) {
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Wait until elements is ready
+  useEffect(() => {
+    if (elements) {
+      setIsReady(true);
+    }
+  }, [elements]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      // Stripe.js hasn't loaded yet
+      setError('Payment system not ready. Please try again.');
       return;
     }
 
@@ -46,11 +54,21 @@ export default function StripeElements({ onSubmit }: StripeElementsProps) {
         setError('Payment failed. Please try again.');
       }
     } catch (err: any) {
+      console.error('Payment error:', err);
       setError(err.message || 'An unexpected error occurred');
     } finally {
       setProcessing(false);
     }
   };
+
+  if (!isReady) {
+    return (
+      <div className="flex justify-center items-center py-6">
+        <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+        <span>Loading payment form...</span>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

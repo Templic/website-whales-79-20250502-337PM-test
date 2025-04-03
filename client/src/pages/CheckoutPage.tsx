@@ -27,7 +27,8 @@ import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, ShoppingCart, CreditCard, ArrowLeft } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle } from 'lucide-react';
 import CosmicButton from '@/components/ui/cosmic-button';
 
 import StripeElements from '@/components/shop/payment/StripeElements';
@@ -57,6 +58,8 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | undefined>();
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [shippingInfo, setShippingInfo] = useState<ShippingFormValues | null>(null);
   
   // Create form
   const form = useForm<ShippingFormValues>({
@@ -125,6 +128,12 @@ export default function CheckoutPage() {
   
   // Handle shipping form submission
   const onShippingSubmit = async (data: ShippingFormValues) => {
+    // Skip if already processing
+    if (isCreatingPaymentIntent) return;
+    
+    // Clear previous errors
+    setPaymentError(null);
+    
     // Create a payment intent when moving to payment
     try {
       setIsCreatingPaymentIntent(true);
@@ -139,13 +148,22 @@ export default function CheckoutPage() {
         }
       });
       
+      if (!paymentIntentResponse.clientSecret) {
+        throw new Error('Failed to initialize payment: Missing client secret');
+      }
+      
+      // Store client secret and shipping info
       setClientSecret(paymentIntentResponse.clientSecret);
+      setShippingInfo(data);
+      
       // Move to payment tab if shipping form is valid
       setActiveTab('payment');
     } catch (error: any) {
+      console.error('Payment intent error:', error);
+      setPaymentError(error.message || 'Failed to initialize payment system');
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to initialize payment system',
+        title: 'Payment Error',
+        description: error.message || 'Failed to initialize payment system. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -559,6 +577,13 @@ export default function CheckoutPage() {
                   <CardTitle>Payment Method</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {paymentError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Payment Error</AlertTitle>
+                      <AlertDescription>{paymentError}</AlertDescription>
+                    </Alert>
+                  )}
                   <div className="flex items-center space-x-2">
                     <CreditCard className="h-5 w-5" />
                     <span>Credit or Debit Card</span>
@@ -569,10 +594,14 @@ export default function CheckoutPage() {
                       <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
                       <span>Preparing payment form...</span>
                     </div>
-                  ) : (
+                  ) : clientSecret ? (
                     <StripeProvider clientSecret={clientSecret}>
                       <StripeElements onSubmit={onPaymentSubmit} />
                     </StripeProvider>
+                  ) : (
+                    <div className="text-destructive p-3 bg-destructive/10 rounded-md mb-4">
+                      Failed to initialize payment. Please try again.
+                    </div>
                   )}
                   
                   <div className="text-sm text-muted-foreground">
