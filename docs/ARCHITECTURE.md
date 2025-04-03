@@ -18,32 +18,54 @@
    - Spatial Audio Processing
    - Frequency Visualization
    - Voice Control Integration
+   - Breath Synchronization
+   - Mood-Based Playback
 
 2. **Community Features**
    - User Profiles
    - Community Feedback Loop
    - Collaborative Sessions
    - Real-time Chat
+   - Interactive Events
 
 3. **Admin Portal**
    - Content Management
    - User Management
    - Analytics Dashboard
    - Music Upload System
+   - Database Monitoring
+   - Content Review System
 
 ## Component Architecture
+
+### Test & Demo Components
+Located in `src/pages/test/`:
+- `AudioComponentsDemo`: Audio processing features demo
+- `CosmicComponentsDemo`: UI components showcase
+- `NewComponentsDemo`: Latest feature demonstrations
 
 ### Core UI Components
 Located in `src/components/ui/`:
 - Button, Card, Dialog, etc. (shadcn/ui based)
 - Custom Cosmic-themed components
+- Sacred Geometry elements
+- Interactive effects
 
 ### Feature Components
 Located in `src/components/`:
 - `audio/`: Audio processing components
+  - BinauralBeatGenerator
+  - BreathSyncPlayer
+  - FrequencyVisualizer3D
+  - SpatialAudioExperience
+  - VoiceControlledPlayer
 - `cosmic/`: Cosmic-themed UI elements
 - `community/`: Community interaction components
 - `admin/`: Administration components
+  - ContentReview
+  - DatabaseMonitor
+  - ToDoList
+  - UserManagement
 
 ### Layout Components
 Located in `src/components/layout/`:
@@ -52,17 +74,28 @@ Located in `src/components/layout/`:
 - Footer
 - Navigation
 
+## New Pages
+Located in `src/pages/`:
+- BlogPage
+- PrivacyPolicy
+- TermsOfService
+- CollaborativeShopping
+- MusicArchive
+- NewsletterPage
+
 ## Styling Architecture
 
 1. **Design System**
    - Custom Tailwind configuration
    - CSS Variables for theming
    - Responsive design utilities
+   - Cosmic-specific animations
 
 2. **Theme Structure**
    - Dark/Light mode support
    - Cosmic theme variables
    - Animation presets
+   - Sacred geometry patterns
 
 ## Data Flow
 
@@ -70,11 +103,13 @@ Located in `src/components/layout/`:
    - React Query for server state
    - React Context for global UI state
    - Local component state
+   - Real-time updates
 
 2. **API Integration**
    - REST endpoints
    - WebSocket connections
    - Audio streaming
+   - Database monitoring
 
 ## Performance Optimization
 
@@ -82,11 +117,13 @@ Located in `src/components/layout/`:
    - Route-based splitting
    - Component lazy loading
    - Dynamic imports
+   - Asset optimization
 
-2. **Asset Optimization**
+2. **Asset Management**
    - Image optimization
    - Audio streaming
    - Lazy loading
+   - Caching strategies
 
 ## Development Guidelines
 
@@ -108,8 +145,8 @@ Located in `src/components/layout/`:
    - Implement proper error boundaries
    - Handle loading states
 
-4. **Performance Guidelines**
-   - Implement proper memoization
-   - Optimize re-renders
-   - Use proper image formats
-   - Implement proper caching
+4. **Testing Strategy**
+   - Component testing
+   - Integration testing
+   - Audio processing validation
+   - Performance benchmarking
