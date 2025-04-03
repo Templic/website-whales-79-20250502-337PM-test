@@ -2,7 +2,12 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./client/index.html", 
+    "./client/src/**/*.{js,jsx,ts,tsx}",
+    "./templates/**/*.html",
+    "./static/**/*.css"
+  ],
   theme: {
     extend: {
       borderRadius: {
@@ -61,6 +66,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Cosmic theme colors
+        cosmic: {
+          dark: "#0b0a14",
+          primary: "#9b87f5",
+          secondary: "#33c3f0",
+          accent: "#ff61d8",
+          highlight: "#00ebd6",
+          vivid: "#8a74e8",
+          light: "#d6bcfa",
+          blue: "#33c3f0",
+          pink: "#ff61d8",
+          teal: "#00ebd6",
+          purple: "#8a74e8",
+          foreground: "#f8f9fa",
+          background: "#0b0a14",
+          "background-light": "#121024"
+        },
       },
       keyframes: {
         "accordion-down": {
@@ -100,6 +122,22 @@ export default {
           "50%": { transform: "scale(1.05)", opacity: "0.9" },
           "100%": { transform: "scale(0.95)", opacity: "0.5" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "glow": {
+          "0%, 100%": { boxShadow: "0 0 5px rgba(155, 135, 245, 0.3)" },
+          "50%": { boxShadow: "0 0 20px rgba(155, 135, 245, 0.7)" },
+        },
+        "spin-very-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "hover-shimmer": {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -111,6 +149,13 @@ export default {
         "pulse-fast": "pulse-fast 1s ease-in-out infinite",
         "stars-twinkle": "stars-twinkle 3s ease-in-out infinite",
         "cosmic-pulse": "cosmic-pulse 4s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
+        "glow": "glow 3s ease-in-out infinite",
+        "spin-very-slow": "spin-very-slow 30s linear infinite",
+        "hover-shimmer": "hover-shimmer 2s ease infinite",
+      },
+      backgroundImage: {
+        "nebula-gradient": "linear-gradient(45deg, #9b87f5, #33c3f0)",
       },
     },
   },

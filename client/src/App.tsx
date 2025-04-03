@@ -31,13 +31,15 @@ import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import CosmicTest from "@/pages/CosmicTest";
+import CosmicComponentsDemo from "@/pages/CosmicComponentsDemo";
 
 // Imported Pages
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
 import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
 import ArchivePage from "@/pages/imported-pages/ArchivePage";
 import CommunityPage from "@/pages/imported-pages/CommunityPage";
-import CosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
+import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 import { NewComponentsDemo } from "@/pages/test/NewComponentsDemo";
 
@@ -83,9 +85,11 @@ function Router() {
         <Route path="/immersive" component={ImmersivePage} />
         <Route path="/music-archive" component={ArchivePage} />
         <Route path="/community" component={CommunityPage} />
-        <Route path="/test/cosmic" component={CosmicComponentsDemo} />
+        <Route path="/test/cosmic" component={TestCosmicComponentsDemo} />
+        <Route path="/cosmic-components" component={CosmicComponentsDemo} />
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
+        <Route path="/cosmic-test" component={CosmicTest} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
