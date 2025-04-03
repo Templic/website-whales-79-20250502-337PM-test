@@ -15,7 +15,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
 import NewMusicPage from "@/pages/MusicReleasePage";
-import ArchivedMusicPage from "@/pages/MusicArchivePage";
+import ArchivedMusicPage from "@/pages/ArchivedMusic";
 import TourPage from "@/pages/TourPage";
 import EngagePage from "@/pages/EngagePage";
 import NewsletterPage from "@/pages/NewsletterPage";
@@ -78,7 +78,7 @@ function Router() {
         {/* Music & Experience */}
         <Route path="/music-release" component={NewMusicPage} />
         <Route path="/archived-music" component={ArchivedMusicPage} />
-        <Route path="/music-archive" component={ArchivePage} />
+        <Route path="/music-archive" component={ArchivedMusicPage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route path="/immersive" component={ImmersivePage} />
 
