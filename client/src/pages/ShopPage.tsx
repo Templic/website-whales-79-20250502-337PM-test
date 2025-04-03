@@ -16,11 +16,12 @@ export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [filters, setFilters] = useState({
-    category: '',
-    minPrice: '',
-    maxPrice: '',
-    sortBy: 'featured',
-    searchQuery: ''
+    categories: [] as number[],
+    priceRange: [0, 1000] as [number, number],
+    inStock: false,
+    onSale: false,
+    featured: false,
+    sortBy: 'newest' as 'newest' | 'price-low-high' | 'price-high-low' | 'name-a-z' | 'name-z-a'
   });
   const { toast } = useToast();
 
@@ -37,11 +38,17 @@ export default function ShopPage() {
     queryKey: ['/api/shop/products', filters],
     queryFn: async () => {
       const queryParams = new URLSearchParams();
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.minPrice) queryParams.append('minPrice', filters.minPrice);
-      if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice);
-      if (filters.sortBy) queryParams.append('sortBy', filters.sortBy);
-      if (filters.searchQuery) queryParams.append('search', filters.searchQuery);
+      if (filters.categories.length > 0) {
+        filters.categories.forEach(catId => 
+          queryParams.append('category', catId.toString())
+        );
+      }
+      queryParams.append('minPrice', filters.priceRange[0].toString());
+      queryParams.append('maxPrice', filters.priceRange[1].toString());
+      if (filters.inStock) queryParams.append('inStock', 'true');
+      if (filters.onSale) queryParams.append('onSale', 'true');
+      if (filters.featured) queryParams.append('featured', 'true');
+      queryParams.append('sortBy', filters.sortBy);
       
       const response = await apiRequest<Product[]>(`/api/shop/products?${queryParams.toString()}`);
       return response;
@@ -141,8 +148,10 @@ export default function ShopPage() {
               ) : (
                 <ProductFilter 
                   categories={categories || []} 
-                  currentFilters={filters}
+                  initialFilters={filters}
                   onFilterChange={handleFilterChange}
+                  minPrice={0}
+                  maxPrice={1000}
                 />
               )}
             </div>
@@ -171,8 +180,10 @@ export default function ShopPage() {
                 ) : (
                   <ProductFilter 
                     categories={categories || []} 
-                    currentFilters={filters}
+                    initialFilters={filters}
                     onFilterChange={handleFilterChange}
+                    minPrice={0}
+                    maxPrice={1000}
                   />
                 )}
               </div>
@@ -208,11 +219,12 @@ export default function ShopPage() {
               <CosmicButton 
                 variant="outline" 
                 onClick={() => setFilters({
-                  category: '',
-                  minPrice: '',
-                  maxPrice: '',
-                  sortBy: 'featured',
-                  searchQuery: ''
+                  categories: [],
+                  priceRange: [0, 1000] as [number, number],
+                  inStock: false,
+                  onSale: false,
+                  featured: false,
+                  sortBy: 'newest'
                 })}
               >
                 Reset Filters

@@ -64,7 +64,7 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
-// Use port 5000 as required by the workflow
+// Use port 5000 to match Replit workflow configuration
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
 
 // Add session cleanup interval
