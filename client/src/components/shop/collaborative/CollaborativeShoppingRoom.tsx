@@ -1,417 +1,322 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import {
-  Users,
-  Send,
-  ShoppingBag,
-  Clock,
-  X,
-  Heart,
-  UserPlus,
-  Share2,
-  Settings,
-  LucideIcon,
-} from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useState, useEffect } from 'react';
+import { Room, RoomMessage, RoomParticipant, ProductViewHandler } from './types';
+import ChatRoom from './ChatRoom';
+import JoinRoomPanel from './JoinRoomPanel';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { RoomMessage, RoomParticipant } from './types';
-
-// This is a placeholder for actual socket/WebSocket connection
-// In a real implementation, this would be replaced with proper WebSocket setup
-const useMockWebSocket = (roomId: string) => {
-  // This would be replaced with actual WebSocket implementation
-  const mockSendMessage = (content: string) => {
-    console.log(`[MockWebSocket] Sending message to room ${roomId}:`, content);
-    return {
-      id: `msg-${Date.now()}`,
-      senderId: 'current-user',
-      senderName: 'You',
-      content,
-      timestamp: new Date(),
-      type: 'text' as const,
-    };
-  };
-
-  return {
-    sendMessage: mockSendMessage,
-    isConnected: true,
-  };
-};
+import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'wouter';
 
 interface CollaborativeShoppingRoomProps {
   roomId: string;
-  onClose: () => void;
-  currentUser: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  initialParticipants?: RoomParticipant[];
-  initialMessages?: RoomMessage[];
-  onShareProduct?: (productId: string) => void;
-  onAddToSharedCart?: (productId: string, quantity: number) => void;
+  onProductView?: ProductViewHandler;
 }
 
-export default function CollaborativeShoppingRoom({
-  roomId,
-  onClose,
-  currentUser,
-  initialParticipants = [],
-  initialMessages = [],
-  onShareProduct,
-  onAddToSharedCart,
-}: CollaborativeShoppingRoomProps) {
-  const [messages, setMessages] = useState<RoomMessage[]>(initialMessages);
-  const [participants, setParticipants] = useState<RoomParticipant[]>(initialParticipants);
-  const [inputMessage, setInputMessage] = useState('');
-  const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { sendMessage, isConnected } = useMockWebSocket(roomId);
+// Generate a random avatar
+const getRandomAvatar = () => `https://avatars.dicebear.com/api/identicon/${Math.random()}.svg`;
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !isConnected) return;
-
-    const newMessage = sendMessage(inputMessage);
-    setMessages([...messages, newMessage]);
-    setInputMessage('');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
+// Mock socket connection for demo purposes - in production would use a real socket connection
+class MockSocketConnection {
+  private callbacks: Record<string, Function[]> = {};
+  private roomMessages: Record<string, RoomMessage[]> = {};
+  private roomParticipants: Record<string, RoomParticipant[]> = {};
+  
+  constructor() {
+    // Initialize with some mock data
+    this.roomMessages = {};
+    this.roomParticipants = {};
+  }
+  
+  connect() {
+    this.emit('connected', {});
+  }
+  
+  joinRoom(roomId: string, username: string) {
+    if (!this.roomParticipants[roomId]) {
+      this.roomParticipants[roomId] = [];
     }
-  };
-
-  const inviteParticipant = () => {
-    // In a real implementation, this would generate and copy an invite link
-    // For now, we'll just simulate it
     
-    // Generate mock room link
-    const roomLink = `${window.location.origin}/shop/collaborative/join/${roomId}`;
-
-    // Copy to clipboard
-    navigator.clipboard.writeText(roomLink).then(
-      () => {
-        toast({
-          title: 'Invite Link Copied!',
-          description: 'Share this link with friends to shop together.',
+    if (!this.roomMessages[roomId]) {
+      this.roomMessages[roomId] = [];
+      
+      // Add system welcome message
+      this.roomMessages[roomId].push({
+        id: uuidv4(),
+        username: 'system',
+        avatar: '',
+        message: `Room created. Welcome to the shopping room!`,
+        timestamp: new Date(),
+        isSystem: true
+      });
+    }
+    
+    const existingParticipant = this.roomParticipants[roomId].find(
+      p => p.username === username
+    );
+    
+    if (existingParticipant) {
+      existingParticipant.isActive = true;
+      existingParticipant.lastActive = new Date();
+    } else {
+      const newParticipant: RoomParticipant = {
+        id: uuidv4(),
+        username,
+        avatar: getRandomAvatar(),
+        isActive: true,
+        lastActive: new Date()
+      };
+      
+      this.roomParticipants[roomId].push(newParticipant);
+      
+      // Add system message for new participant
+      this.roomMessages[roomId].push({
+        id: uuidv4(),
+        username: 'system',
+        avatar: '',
+        message: `${username} has joined the room`,
+        timestamp: new Date(),
+        isSystem: true
+      });
+    }
+    
+    this.emit('room:joined', {
+      roomId,
+      messages: this.roomMessages[roomId],
+      participants: this.roomParticipants[roomId]
+    });
+  }
+  
+  leaveRoom(roomId: string, username: string) {
+    if (this.roomParticipants[roomId]) {
+      const participantIndex = this.roomParticipants[roomId].findIndex(
+        p => p.username === username
+      );
+      
+      if (participantIndex >= 0) {
+        const participant = this.roomParticipants[roomId][participantIndex];
+        participant.isActive = false;
+        
+        // Add system message for participant leaving
+        this.roomMessages[roomId].push({
+          id: uuidv4(),
+          username: 'system',
+          avatar: '',
+          message: `${username} has left the room`,
+          timestamp: new Date(),
+          isSystem: true
         });
-      },
-      (err) => {
-        console.error('Could not copy invite link:', err);
-        toast({
-          title: 'Failed to Copy Link',
-          description: 'Please try again or manually share the URL.',
-          variant: 'destructive',
+        
+        this.emit('room:updated', {
+          roomId,
+          messages: this.roomMessages[roomId],
+          participants: this.roomParticipants[roomId]
         });
       }
-    );
-  };
-
-  function ParticipantItem({ participant }: { participant: RoomParticipant }) {
-    return (
-      <div className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={participant.avatar} />
-              <AvatarFallback>
-                {participant.username.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div
-              className={`absolute bottom-0 right-0 h-2 w-2 rounded-full border border-background ${
-                participant.status === 'online'
-                  ? 'bg-green-500'
-                  : participant.status === 'away'
-                  ? 'bg-yellow-500'
-                  : 'bg-gray-500'
-              }`}
-            />
-          </div>
-          <div className="text-sm font-medium">{participant.username}</div>
-        </div>
-        {participant.isHost && (
-          <Badge variant="outline" className="text-xs">
-            Host
-          </Badge>
-        )}
-      </div>
-    );
+    }
   }
-
-  function ChatMessage({ message }: { message: RoomMessage }) {
-    const isCurrentUser = message.senderId === currentUser.id;
-    const isSystem = message.type === 'system';
-    const isProduct = message.type === 'product';
-
-    if (isSystem) {
-      return (
-        <div className="my-2 px-4 py-1 text-center">
-          <span className="text-xs text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-            {message.content}
-          </span>
-        </div>
+  
+  sendMessage(roomId: string, message: string, username: string) {
+    if (this.roomMessages[roomId]) {
+      const participant = this.roomParticipants[roomId].find(
+        p => p.username === username
       );
+      
+      if (participant) {
+        const newMessage: RoomMessage = {
+          id: uuidv4(),
+          username,
+          avatar: participant.avatar,
+          message,
+          timestamp: new Date()
+        };
+        
+        this.roomMessages[roomId].push(newMessage);
+        
+        this.emit('room:message', {
+          roomId,
+          messages: this.roomMessages[roomId]
+        });
+      }
     }
-
-    if (isProduct && message.productData) {
-      const { productData } = message;
-      return (
-        <div
-          className={`flex items-start gap-2 my-2 ${
-            isCurrentUser ? 'justify-end' : ''
-          }`}
-        >
-          {!isCurrentUser && (
-            <Avatar className="h-6 w-6">
-              <AvatarFallback>
-                {message.senderName.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          )}
-          <div className={`flex flex-col ${isCurrentUser ? 'items-end' : ''}`}>
-            {!isCurrentUser && (
-              <span className="text-xs text-muted-foreground">
-                {message.senderName}
-              </span>
-            )}
-            <div className="flex flex-col p-2 rounded-lg bg-muted/30 border border-border">
-              <div className="text-xs text-muted-foreground mb-1">
-                Shared a product:
-              </div>
-              <div className="flex items-center gap-2">
-                {productData.image && (
-                  <img
-                    src={productData.image}
-                    alt={productData.name}
-                    className="h-10 w-10 object-cover rounded"
-                  />
-                )}
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{productData.name}</div>
-                  <div className="text-xs">{productData.price}</div>
-                </div>
-                <div className="flex gap-1">
-                  <Button size="icon" variant="ghost" className="h-7 w-7">
-                    <Heart className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    onClick={() =>
-                      onAddToSharedCart?.(productData.id, 1)
-                    }
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-            <span className="text-xs text-muted-foreground mt-1">
-              {new Date(message.timestamp).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={`flex items-start gap-2 my-2 ${
-          isCurrentUser ? 'justify-end' : ''
-        }`}
-      >
-        {!isCurrentUser && (
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={""} />
-            <AvatarFallback>
-              {message.senderName.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        )}
-        <div className={`flex flex-col ${isCurrentUser ? 'items-end' : ''}`}>
-          {!isCurrentUser && (
-            <span className="text-xs text-muted-foreground">
-              {message.senderName}
-            </span>
-          )}
-          <div
-            className={`px-3 py-2 rounded-lg ${
-              isCurrentUser
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted border border-border'
-            }`}
-          >
-            {message.content}
-          </div>
-          <span className="text-xs text-muted-foreground mt-1">
-            {new Date(message.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </span>
-        </div>
-      </div>
-    );
   }
-
-  // Dummy data for demonstration purposes
-  useEffect(() => {
-    if (initialParticipants.length === 0) {
-      // Add some sample participants if none were provided
-      setParticipants([
-        {
-          id: currentUser.id,
-          username: currentUser.name,
-          avatar: currentUser.avatar,
-          isHost: true,
-          joinedAt: new Date(),
-          status: 'online',
-        },
-        {
-          id: 'user2',
-          username: 'Cosmic Friend',
-          isHost: false,
-          joinedAt: new Date(Date.now() - 300000), // 5 minutes ago
-          status: 'online',
-        },
-      ]);
-    }
-
-    if (initialMessages.length === 0) {
-      // Add a welcome message if no messages were provided
-      setMessages([
-        {
-          id: 'welcome',
-          senderId: 'system',
-          senderName: 'System',
-          content: 'Welcome to the collaborative shopping room! Share products and shop together.',
+  
+  shareProduct(roomId: string, username: string, productId: string, productName: string) {
+    if (this.roomMessages[roomId]) {
+      const participant = this.roomParticipants[roomId].find(
+        p => p.username === username
+      );
+      
+      if (participant) {
+        const newMessage: RoomMessage = {
+          id: uuidv4(),
+          username,
+          avatar: participant.avatar,
+          message: `Check out this product: ${productName}`,
           timestamp: new Date(),
-          type: 'system',
-        },
-      ]);
+          productRef: productId
+        };
+        
+        this.roomMessages[roomId].push(newMessage);
+        
+        this.emit('room:message', {
+          roomId,
+          messages: this.roomMessages[roomId]
+        });
+      }
     }
-  }, [currentUser, initialParticipants, initialMessages]);
-
-  return (
-    <Card className="w-full max-w-md h-[600px] flex flex-col">
-      <CardHeader className="px-4 py-3 flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Shopping Room</CardTitle>
-          <Badge variant="secondary" className="ml-1">
-            {participants.length}
-          </Badge>
-        </div>
-        <div className="flex gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={inviteParticipant}>
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Invite Friends</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Room Settings</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Close Room</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </CardHeader>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Participants List */}
-        <div className="w-1/3 border-r border-border">
-          <div className="p-3 border-b border-border">
-            <div className="text-sm font-medium flex items-center gap-1">
-              <Users className="h-4 w-4" /> Participants
-            </div>
-          </div>
-          <ScrollArea className="h-[calc(600px-117px)]">
-            <div className="py-2 px-1">
-              {participants.map((participant) => (
-                <ParticipantItem
-                  key={participant.id}
-                  participant={participant}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 p-3">
-            <div className="space-y-1">
-              {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-
-          <Separator />
-
-          {/* Message Input */}
-          <div className="p-3 flex items-center gap-2">
-            <Input
-              placeholder="Type a message..."
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={handleKeyPress}
-              className="flex-1"
-            />
-            <Button
-              size="icon"
-              onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || !isConnected}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
+  }
+  
+  on(event: string, callback: Function) {
+    if (!this.callbacks[event]) {
+      this.callbacks[event] = [];
+    }
+    
+    this.callbacks[event].push(callback);
+  }
+  
+  off(event: string, callback: Function) {
+    if (this.callbacks[event]) {
+      this.callbacks[event] = this.callbacks[event].filter(cb => cb !== callback);
+    }
+  }
+  
+  emit(event: string, data: any) {
+    if (this.callbacks[event]) {
+      this.callbacks[event].forEach(callback => {
+        setTimeout(() => {
+          callback(data);
+        }, 100); // Simulate network delay
+      });
+    }
+  }
 }
+
+const mockSocket = new MockSocketConnection();
+
+export const CollaborativeShoppingRoom = ({ 
+  roomId,
+  onProductView 
+}: CollaborativeShoppingRoomProps) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
+  const [username, setUsername] = useState('');
+  const [messages, setMessages] = useState<RoomMessage[]>([]);
+  const [participants, setParticipants] = useState<RoomParticipant[]>([]);
+  const [isCopied, setIsCopied] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Connect to mock socket
+    mockSocket.connect();
+    
+    const handleConnected = () => {
+      setIsConnected(true);
+    };
+    
+    const handleRoomJoined = (data: any) => {
+      if (data.roomId === roomId) {
+        setMessages(data.messages);
+        setParticipants(data.participants);
+        setIsJoined(true);
+      }
+    };
+    
+    const handleRoomUpdated = (data: any) => {
+      if (data.roomId === roomId) {
+        setParticipants(data.participants);
+      }
+    };
+    
+    const handleRoomMessage = (data: any) => {
+      if (data.roomId === roomId) {
+        setMessages(data.messages);
+      }
+    };
+    
+    mockSocket.on('connected', handleConnected);
+    mockSocket.on('room:joined', handleRoomJoined);
+    mockSocket.on('room:updated', handleRoomUpdated);
+    mockSocket.on('room:message', handleRoomMessage);
+    
+    return () => {
+      // Cleanup
+      mockSocket.off('connected', handleConnected);
+      mockSocket.off('room:joined', handleRoomJoined);
+      mockSocket.off('room:updated', handleRoomUpdated);
+      mockSocket.off('room:message', handleRoomMessage);
+      
+      if (isJoined && username) {
+        mockSocket.leaveRoom(roomId, username);
+      }
+    };
+  }, [roomId, isJoined, username]);
+  
+  const joinRoom = () => {
+    if (username && roomId) {
+      mockSocket.joinRoom(roomId, username);
+    }
+  };
+  
+  const leaveRoom = () => {
+    if (username && roomId) {
+      mockSocket.leaveRoom(roomId, username);
+      setIsJoined(false);
+      navigate('/shop');
+    }
+  };
+  
+  const sendMessage = (message: string) => {
+    if (username && roomId) {
+      mockSocket.sendMessage(roomId, message, username);
+    }
+  };
+  
+  const copyRoomId = () => {
+    navigator.clipboard.writeText(roomId);
+    setIsCopied(true);
+    
+    toast({
+      title: 'Room ID copied',
+      description: 'The room ID has been copied to your clipboard. Share it with your friends!',
+    });
+    
+    setTimeout(() => {
+      setIsCopied(false);
+    }, 2000);
+  };
+  
+  const handleProductView = (productId: string) => {
+    onProductView?.(productId);
+  };
+  
+  return (
+    <div className="w-full h-full min-h-[600px]">
+      {isConnected && !isJoined ? (
+        <JoinRoomPanel
+          roomId={roomId}
+          username={username}
+          setUsername={setUsername}
+          joinRoom={joinRoom}
+          isCopied={isCopied}
+          copyRoomId={copyRoomId}
+        />
+      ) : isConnected && isJoined ? (
+        <ChatRoom
+          username={username}
+          roomId={roomId}
+          messages={messages}
+          participants={participants}
+          onSendMessage={sendMessage}
+          onProductView={handleProductView}
+          onLeaveRoom={leaveRoom}
+        />
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <p>Connecting to collaborative shopping...</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default CollaborativeShoppingRoom;
