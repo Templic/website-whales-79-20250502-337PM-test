@@ -18,6 +18,7 @@ export default function SitemapPage() {
             <li><Link href="/">Home</Link></li>
             <li><Link href="/about">About</Link></li>
             <li><Link href="/contact">Contact</Link></li>
+            <li><Link href="/tour">Tour</Link></li>
           </ul>
         </section>
 
@@ -25,8 +26,8 @@ export default function SitemapPage() {
           <h2 className="text-2xl font-semibold mb-4">Music</h2>
           <ul className="space-y-2">
             <li><Link href="/music-release">New Music</Link></li>
-            <li><Link href="/archived-music">Archived Music</Link></li>
-            <li><Link href="/tour">Tour</Link></li>
+            <li><Link href="/music-archive">Archived Music</Link></li>
+            <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
           </ul>
         </section>
 
@@ -41,20 +42,20 @@ export default function SitemapPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Account</h2>
+          <h2 className="text-2xl font-semibold mb-4">Shop</h2>
           <ul className="space-y-2">
-            <li><Link href="/auth">Login/Register</Link></li>
-            <li><Link href="/user-portal">User Dashboard</Link></li>
-            <li><Link href="/admin">Admin Portal</Link></li>
-            <li><Link href="/password-recovery">Password Recovery</Link></li>
+            <li><Link href="/shop">Shop Home</Link></li>
+            <li><Link href="/shop/merchandise">Merchandise</Link></li>
+            <li><Link href="/shop/collectibles">Collectibles</Link></li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Experience</h2>
+          <h2 className="text-2xl font-semibold mb-4">Account</h2>
           <ul className="space-y-2">
-            <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
-            <li><Link href="/immersive">Immersive Journey</Link></li>
+            <li><Link href="/auth">Login/Register</Link></li>
+            <li><Link href="/user-portal">User Dashboard</Link></li>
+            <li><Link href="/password-recovery">Password Recovery</Link></li>
           </ul>
         </section>
 
