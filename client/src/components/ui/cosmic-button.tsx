@@ -61,35 +61,33 @@ interface CosmicButtonProps extends ButtonProps {
   href?: string;
 }
 
-const CosmicButton: React.FC<CosmicButtonProps> = ({ 
-  href, 
-  children, 
-  className, 
-  variant, 
-  size, 
-  ...props 
-}) => {
-  const classes = cn(buttonVariants({ variant, size, className }));
-  
-  if (href) {
+const CosmicButton = React.forwardRef<HTMLButtonElement, CosmicButtonProps>(
+  ({ href, children, className, variant, size, ...props }, ref) => {
+    const classes = cn(buttonVariants({ variant, size, className }));
+    
+    if (href) {
+      return (
+        <Link to={href} className={classes}>
+          {children}
+        </Link>
+      );
+    }
+    
     return (
-      <Link to={href} className={classes}>
+      <Button 
+        ref={ref}
+        variant={variant} 
+        size={size}
+        className={className}
+        {...props}
+      >
         {children}
-      </Link>
+      </Button>
     );
   }
-  
-  return (
-    <Button 
-      variant={variant} 
-      size={size}
-      className={className}
-      {...props}
-    >
-      {children}
-    </Button>
-  );
-};
+);
+
+CosmicButton.displayName = "CosmicButton";
 
 export { Button, CosmicButton, buttonVariants };
 export default CosmicButton;

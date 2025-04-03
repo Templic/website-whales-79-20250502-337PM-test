@@ -53,8 +53,8 @@ const {
       if (filters.featured) queryParams.append('featured', 'true');
       queryParams.append('sortBy', filters.sortBy);
       
-      const response = await apiRequest<Product[]>(`/api/shop/products?${queryParams.toString()}`);
-      return response;
+      const response = await apiRequest('GET', `/api/shop/products?${queryParams.toString()}`);
+      return await response.json() as Product[];
       } catch (error) {
         // Fallback to default products if API fails
         return defaultProducts.filter(product => {
@@ -76,26 +76,23 @@ const {
   } = useQuery({
     queryKey: ['/api/shop/categories'],
     queryFn: async () => {
-      const response = await apiRequest<ProductCategory[]>('/api/shop/categories');
-      return response;
+      const response = await apiRequest('GET', '/api/shop/categories');
+      return await response.json() as ProductCategory[];
     }
   });
 
   // Handle add to cart
   const handleAddToCart = async (productId: number, quantity: number = 1) => {
     try {
-      await apiRequest('/api/shop/cart/items', {
-        method: 'POST',
-        data: {
-          productId,
-          quantity
-        }
+      await apiRequest('POST', '/api/shop/cart/items', {
+        productId,
+        quantity
       });
       
       toast({
         title: "Added to cart",
         description: "Item successfully added to your cart",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       toast({
