@@ -70,11 +70,11 @@
                0 0 30px rgba(139, 92, 246, 0.3);
 }
 
+@import url('./cosmic-styles.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('./cosmic-styles.css');
 
 @layer base {
   * {

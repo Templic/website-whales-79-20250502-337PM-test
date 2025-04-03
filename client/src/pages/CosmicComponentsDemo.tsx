@@ -5,6 +5,8 @@ import { Link } from 'wouter';
 import TestNav from '../components/cosmic/TestNav';
 import SacredGeometry from '../components/ui/sacred-geometry';
 import Stars from '../components/cosmic/Stars';
+import CosmicCard from '../components/ui/cosmic-card';
+import CosmicHeading from '../components/ui/cosmic-heading';
 
 export default function CosmicComponentsDemo() {
   const [starSettings, setStarSettings] = useState({
@@ -27,11 +29,15 @@ export default function CosmicComponentsDemo() {
       <TestNav />
       
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 animate-cosmic">Cosmic Components Demo</h1>
+        <CosmicHeading as="h1" variant="cosmic" size="4xl" animate className="mb-8 text-center">
+          Cosmic Components Demo
+        </CosmicHeading>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10">
-            <h2 className="text-2xl font-bold mb-4">Cosmic Button Component</h2>
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Button Component
+            </CosmicHeading>
             <div className="space-y-4">
               <CosmicButton variant="default">Default Button</CosmicButton>
               <CosmicButton variant="primary">Primary Button</CosmicButton>
@@ -45,7 +51,9 @@ export default function CosmicComponentsDemo() {
           </div>
           
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10">
-            <h2 className="text-2xl font-bold mb-4">Original Button Component</h2>
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Original Button Component
+            </CosmicHeading>
             <div className="space-y-4">
               <Button variant="default">Default Button</Button>
               <Button variant="primary">Primary Button</Button>
@@ -62,7 +70,9 @@ export default function CosmicComponentsDemo() {
         </div>
         
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
-          <h2 className="text-2xl font-bold mb-4">Sacred Geometry</h2>
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Sacred Geometry
+          </CosmicHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {SacredGeometry && (
               <>
@@ -96,7 +106,9 @@ export default function CosmicComponentsDemo() {
         </div>
 
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
-          <h2 className="text-2xl font-bold mb-4">Stars Background</h2>
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Stars Background
+          </CosmicHeading>
           <p className="mb-4">Adjust the star background settings:</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -157,10 +169,95 @@ export default function CosmicComponentsDemo() {
             </div>
           </div>
         </div>
+
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Headings
+          </CosmicHeading>
+          <div className="space-y-6">
+            <CosmicHeading as="h1" variant="default" size="4xl">
+              Default Heading (H1)
+            </CosmicHeading>
+            
+            <CosmicHeading as="h2" variant="gradient" size="3xl">
+              Gradient Heading (H2)
+            </CosmicHeading>
+            
+            <CosmicHeading as="h3" variant="glow" size="2xl">
+              Glow Effect Heading (H3)
+            </CosmicHeading>
+            
+            <CosmicHeading as="h4" variant="outlined" size="xl">
+              Outlined Heading (H4)
+            </CosmicHeading>
+            
+            <CosmicHeading as="h5" variant="cosmic" size="lg" animate>
+              Cosmic Animated Heading (H5)
+            </CosmicHeading>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <CosmicHeading as="h6" align="left" size="base">
+                Left Aligned
+              </CosmicHeading>
+              
+              <CosmicHeading as="h6" align="center" size="base">
+                Center Aligned
+              </CosmicHeading>
+              
+              <CosmicHeading as="h6" align="right" size="base">
+                Right Aligned
+              </CosmicHeading>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Cards
+          </CosmicHeading>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <CosmicCard variant="default" className="h-48 flex flex-col items-center justify-center">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Default Card</CosmicHeading>
+              <p className="text-sm text-center">Basic cosmic card with standard styling</p>
+            </CosmicCard>
+
+            <CosmicCard variant="glow" animate={true} className="h-48 flex flex-col items-center justify-center">
+              <CosmicHeading as="h3" size="base" weight="medium" variant="glow" className="mb-2">Glowing Card</CosmicHeading>
+              <p className="text-sm text-center">Animated glowing effect around the card</p>
+            </CosmicCard>
+
+            <CosmicCard variant="frosted" className="h-48 flex flex-col items-center justify-center">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Frosted Card</CosmicHeading>
+              <p className="text-sm text-center">Frosted glass effect with backdrop blur</p>
+            </CosmicCard>
+
+            <CosmicCard variant="highlighted" className="h-48 flex flex-col items-center justify-center">
+              <CosmicHeading as="h3" size="base" weight="medium" variant="gradient" className="mb-2">Highlighted Card</CosmicHeading>
+              <p className="text-sm text-center">Special highlighted border and styling</p>
+            </CosmicCard>
+
+            <CosmicCard variant="interactive" className="h-48 flex flex-col items-center justify-center">
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Interactive Card</CosmicHeading>
+              <p className="text-sm text-center">Hover over to see the interactive effect</p>
+            </CosmicCard>
+
+            <CosmicCard 
+              variant="glow" 
+              glowColor="cosmic-accent" 
+              borderRadius="lg" 
+              padding="lg"
+              elevation="lg"
+              className="h-48 flex flex-col items-center justify-center"
+            >
+              <CosmicHeading as="h3" size="base" weight="medium" variant="cosmic" animate className="mb-2">Custom Card</CosmicHeading>
+              <p className="text-sm text-center">Customized styling and properties</p>
+            </CosmicCard>
+          </div>
+        </div>
         
         <div className="flex justify-center">
           <Link href="/">
-            <a className="text-cosmic-primary hover:text-cosmic-primary/80">← Back to Home</a>
+            <span className="text-cosmic-primary hover:text-cosmic-primary/80 cursor-pointer">← Back to Home</span>
           </Link>
         </div>
       </div>

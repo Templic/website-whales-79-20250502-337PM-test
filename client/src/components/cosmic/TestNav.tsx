@@ -20,14 +20,12 @@ const TestNav: React.FC = () => {
       <nav className="flex space-x-4 bg-gray-800/50 backdrop-blur-md p-2 rounded-full">
         {navItems.map((item) => (
           <Link key={item.path} href={item.path}>
-            <a>
-              <CosmicButton
-                variant={isActive(item.path) ? "cosmic" : "ghost"}
-                size="sm"
-              >
-                {item.label}
-              </CosmicButton>
-            </a>
+            <CosmicButton
+              variant={isActive(item.path) ? "cosmic" : "ghost"}
+              size="sm"
+            >
+              {item.label}
+            </CosmicButton>
           </Link>
         ))}
       </nav>
