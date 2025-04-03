@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { Eye, ShoppingCart, Heart, Star } from 'lucide-react';
 import CosmicCard from '../ui/cosmic-card';
-import CosmicButton from '../ui/cosmic-button';
+import { CosmicButton } from '../ui/cosmic-button';
 import CosmicBadge from '../ui/cosmic-badge';
 import { Product } from '@shared/schema';
 import { formatCurrency } from '@/lib/utils';
