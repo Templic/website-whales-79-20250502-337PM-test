@@ -162,12 +162,12 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
       steps.map((_, index) => index === currentStep ? 'active' : 'inactive')
     );
     const [errors, setErrors] = useState<{[key: string]: string}>({});
-    
+
     // Update the active step when currentStep prop changes
     useEffect(() => {
       if (currentStep !== undefined && currentStep !== activeStep) {
         setActiveStep(currentStep);
-        
+
         // Update step states
         setStepStates(prev => 
           prev.map((state, idx) => 
@@ -180,13 +180,13 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
         );
       }
     }, [currentStep]);
-    
+
     // Handle step change
     const handleStepChange = async (newStep: number) => {
       if (newStep < 0 || newStep >= steps.length) return;
-      
+
       const currentStepData = steps[activeStep];
-      
+
       // Run validation if going forward
       if (newStep > activeStep && validationMode === 'onNext') {
         const isValid = currentStepData.validate ? await currentStepData.validate() : true;
@@ -203,19 +203,19 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
           return;
         }
       }
-      
+
       // Call onExit handler if present
       if (currentStepData.onExit) {
         const canExit = await currentStepData.onExit();
         if (!canExit) return;
       }
-      
+
       // Call onEnter handler for the next step
       const nextStepData = steps[newStep];
       if (nextStepData.onEnter) {
         nextStepData.onEnter();
       }
-      
+
       // Update states
       setActiveStep(newStep);
       setStepStates(prev => 
@@ -227,20 +227,20 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
               : 'inactive'
         )
       );
-      
+
       // Call the onStepChange handler
       if (onStepChange) {
         onStepChange(newStep);
       }
     };
-    
+
     // Handle completing the stepper
     const handleComplete = async () => {
       // Run validation on the final step if needed
       if (validationMode === 'onComplete' || validationMode === 'onNext') {
         const currentStepData = steps[activeStep];
         const isValid = currentStepData.validate ? await currentStepData.validate() : true;
-        
+
         if (!isValid) {
           setStepStates(prev => {
             const updated = [...prev];
@@ -254,19 +254,19 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
           return;
         }
       }
-      
+
       // Set all steps to completed
       setStepStates(prev => prev.map(() => 'completed'));
-      
+
       // Call the onComplete handler
       if (onComplete) {
         onComplete();
       }
     };
-    
+
     // Determine if we're on the final step
     const isLastStep = activeStep === steps.length - 1;
-    
+
     // Build step content
     const renderStepContent = () => {
       const currentStepData = steps[activeStep];
@@ -281,14 +281,14 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
           )}
         >
           {currentStepData.content}
-          
+
           {/* Error message */}
           {stepStates[activeStep] === 'error' && errors[currentStepData.id] && (
             <div className="mt-2 text-red-400 text-sm">
               {errors[currentStepData.id]}
             </div>
           )}
-          
+
           {/* Controls */}
           {showControls && (
             <div className={cn(
@@ -306,7 +306,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
                     {controlLabels.previous}
                   </CosmicButton>
                 )}
-                
+
                 {allowSkip && !isLastStep && steps[activeStep].optional && (
                   <CosmicButton 
                     variant="ghost" 
@@ -317,7 +317,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
                   </CosmicButton>
                 )}
               </div>
-              
+
               <CosmicButton 
                 variant="cosmic" 
                 size="sm"
@@ -330,7 +330,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
         </div>
       );
     };
-    
+
     return (
       <div 
         ref={ref}
@@ -377,7 +377,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
                     )
                   )}
                 </div>
-                
+
                 {/* Step label - only shown when layout is not minimal */}
                 {layout !== 'minimal' && (
                   <div 
@@ -395,7 +395,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
                   </div>
                 )}
               </div>
-              
+
               {/* Connector line between steps */}
               {showConnectors && index < steps.length - 1 && (
                 <div 
@@ -415,7 +415,7 @@ export const CosmicStepper = React.forwardRef<HTMLDivElement, CosmicStepperProps
             </React.Fragment>
           ))}
         </div>
-        
+
         {/* Step content */}
         <div className={cn(
           "w-full",

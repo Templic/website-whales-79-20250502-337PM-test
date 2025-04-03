@@ -36,6 +36,7 @@ export const CosmicSlider = React.forwardRef<
           "relative flex w-full touch-none select-none items-center",
           className
         )}
+        value={Array.isArray(props.value) ? props.value : [props.value]}
         {...props}
       >
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
