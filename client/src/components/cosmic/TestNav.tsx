@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
-import CosmicButton from '../ui/cosmic-button';
+import { CosmicButton } from '../ui/cosmic-button';
 
 const TestNav: React.FC = () => {
   const [location] = useLocation();
