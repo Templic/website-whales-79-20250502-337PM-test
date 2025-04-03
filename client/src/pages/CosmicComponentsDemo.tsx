@@ -24,6 +24,10 @@ import CosmicSelect from '../components/ui/cosmic-select';
 import CosmicCheckbox from '../components/ui/cosmic-checkbox';
 import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../components/ui/cosmic-radio';
 import CosmicToggle from '../components/ui/cosmic-toggle';
+import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../components/ui/cosmic-toast';
+import { CosmicSlider } from '../components/ui/cosmic-slider';
+import { CosmicSidebar } from '../components/ui/cosmic-sidebar';
+import { CosmicMediaPlayer } from '../components/ui/cosmic-media-player';
 import { 
   CosmicForm, 
   CosmicFormGroup, 
@@ -76,6 +80,41 @@ export default function CosmicComponentsDemo() {
   const [selectValue, setSelectValue] = useState<string>('');
   const [formTermsValue, setFormTermsValue] = useState<boolean>(false);
   const [formNewsletterValue, setFormNewsletterValue] = useState<boolean>(false);
+  
+  // State for toast
+  const [toastOpen, setToastOpen] = useState<boolean>(false);
+  
+  // State for slider
+  const [sliderValue, setSliderValue] = useState<number>(50);
+  const [rangeSliderValue, setRangeSliderValue] = useState<number>(75);
+  
+  // State for sidebar
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  
+  // State for media player
+  const [demoTracks] = useState([
+    {
+      id: '1',
+      title: 'Cosmic Dreams',
+      artist: 'Stellar Vibrations',
+      src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      artwork: 'https://via.placeholder.com/300/6366f1/ffffff?text=Cosmic+Dreams',
+    },
+    {
+      id: '2',
+      title: 'Astral Journey',
+      artist: 'Nebula Explorers',
+      src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      artwork: 'https://via.placeholder.com/300/8b5cf6/ffffff?text=Astral+Journey',
+    },
+    {
+      id: '3',
+      title: 'Quantum Waves',
+      artist: 'Galaxy Collective',
+      src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+      artwork: 'https://via.placeholder.com/300/ec4899/ffffff?text=Quantum+Waves',
+    }
+  ]);
 
   return (
     <div className="bg-gradient-to-b from-black to-gray-900 min-h-screen text-white p-8">
@@ -1642,6 +1681,312 @@ export default function CosmicComponentsDemo() {
                   </CosmicButton>
                 </div>
               </CosmicForm>
+            </div>
+          </div>
+          
+          {/* Toast Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Toast
+            </CosmicHeading>
+            <div className="space-y-4">
+              <p className="text-sm mb-4">
+                The CosmicToast component provides feedback to users through non-intrusive messages.
+              </p>
+              
+              {/* Toast Demos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Toast Variants</CosmicHeading>
+                  <div className="flex flex-wrap gap-3">
+                    <CosmicButton variant="default" onClick={() => showSuccessToast('Operation completed successfully')}>
+                      Success Toast
+                    </CosmicButton>
+                    <CosmicButton variant="default" onClick={() => showErrorToast('An error occurred')}>
+                      Error Toast
+                    </CosmicButton>
+                    <CosmicButton variant="default" onClick={() => showWarningToast('Proceed with caution')}>
+                      Warning Toast
+                    </CosmicButton>
+                    <CosmicButton variant="default" onClick={() => showInfoToast('For your information')}>
+                      Info Toast
+                    </CosmicButton>
+                    <CosmicButton variant="cosmic" onClick={() => showCosmicToast('Cosmic energy detected')}>
+                      Cosmic Toast
+                    </CosmicButton>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Custom Toast</CosmicHeading>
+                  <div className="space-y-3">
+                    <CosmicToast
+                      open={toastOpen}
+                      onClose={() => setToastOpen(false)}
+                      variant="cosmic"
+                      title="Custom Toast"
+                      message="This is a custom toast with configurable options"
+                      showProgress
+                      duration={5000}
+                      position="bottom-right"
+                      animation="slide"
+                    />
+                    <CosmicButton variant="cosmic" onClick={() => setToastOpen(true)}>
+                      Show Custom Toast
+                    </CosmicButton>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <CosmicHeading as="h3" size="lg" className="mb-2">Toast Manager</CosmicHeading>
+                <p className="text-sm mb-2">
+                  The ToastManager component handles multiple toasts and their positioning.
+                </p>
+                <ToastManager position="top-right" autoClose />
+              </div>
+            </div>
+          </div>
+          
+          {/* Slider Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Slider
+            </CosmicHeading>
+            <div className="space-y-6">
+              <p className="text-sm mb-4">
+                The CosmicSlider component allows users to select a value within a specified range.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Basic Sliders</CosmicHeading>
+                  
+                  <div className="space-y-8">
+                    <div>
+                      <CosmicSlider
+                        variant="default"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={sliderValue}
+                        onChange={(e) => setSliderValue(parseInt(e.target.value))}
+                        label="Default Slider"
+                        showValue
+                      />
+                    </div>
+                    
+                    <div>
+                      <CosmicSlider
+                        variant="cosmic"
+                        thumbVariant="glowing"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={rangeSliderValue}
+                        onChange={(e) => setRangeSliderValue(parseInt(e.target.value))}
+                        label="Cosmic Slider"
+                        showValue
+                        valueSuffix="%"
+                        trackHeight="thick"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Advanced Sliders</CosmicHeading>
+                  
+                  <div className="space-y-8">
+                    <div>
+                      <CosmicSlider
+                        variant="nebula"
+                        thumbVariant="cosmic"
+                        min={0}
+                        max={100}
+                        step={10}
+                        value={sliderValue}
+                        onChange={(e) => setSliderValue(parseInt(e.target.value))}
+                        label="Slider with Ticks"
+                        showValue
+                        valueSuffix=" units"
+                        showTicks
+                        ticks={[0, 25, 50, 75, 100]}
+                        tickLabels={['Min', '25%', 'Half', '75%', 'Max']}
+                      />
+                    </div>
+                    
+                    <div>
+                      <CosmicSlider
+                        variant="glow"
+                        thumbVariant="pulsing"
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={rangeSliderValue}
+                        onChange={(e) => setRangeSliderValue(parseInt(e.target.value))}
+                        label="Glowing Slider with Tooltip"
+                        showTooltip
+                        tooltipPosition="top"
+                        formatValue={(value) => `${value}% complete`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <p className="text-sm text-gray-400">
+                  Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Sidebar Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Sidebar
+            </CosmicHeading>
+            <div className="space-y-4">
+              <p className="text-sm mb-4">
+                The CosmicSidebar component provides navigation and organizational structure.
+              </p>
+              
+              <div className="flex justify-center">
+                <CosmicButton 
+                  variant="cosmic" 
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  Open Cosmic Sidebar
+                </CosmicButton>
+              </div>
+              
+              <CosmicSidebar
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                variant="cosmic"
+                title="Cosmic Navigation"
+                logo={<SacredGeometry type="merkaba" className="w-8 h-8 text-cosmic-primary" />}
+                sections={[
+                  {
+                    title: "Main Navigation",
+                    items: [
+                      {
+                        id: "home",
+                        label: "Home",
+                        icon: <Home className="w-5 h-5" />,
+                        href: "#"
+                      },
+                      {
+                        id: "music",
+                        label: "Music",
+                        icon: <Music className="w-5 h-5" />,
+                        href: "#",
+                        badge: "New"
+                      },
+                      {
+                        id: "settings",
+                        label: "Settings",
+                        icon: <Settings className="w-5 h-5" />,
+                        items: [
+                          {
+                            id: "profile",
+                            label: "Profile Settings",
+                            icon: <User className="w-5 h-5" />,
+                            href: "#"
+                          },
+                          {
+                            id: "account",
+                            label: "Account Settings",
+                            icon: <Settings className="w-5 h-5" />,
+                            href: "#"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    title: "Media",
+                    items: [
+                      {
+                        id: "albums",
+                        label: "Albums",
+                        icon: <Music className="w-5 h-5" />,
+                        href: "#"
+                      },
+                      {
+                        id: "photos",
+                        label: "Photos",
+                        icon: <Image className="w-5 h-5" />,
+                        href: "#"
+                      },
+                      {
+                        id: "favorites",
+                        label: "Favorites",
+                        icon: <Heart className="w-5 h-5" />,
+                        href: "#",
+                        badge: "5",
+                        badgeColor: "bg-cosmic-secondary/20 text-cosmic-secondary"
+                      }
+                    ]
+                  }
+                ]}
+                footer={
+                  <div className="flex items-center justify-between">
+                    <CosmicButton variant="ghost" size="sm">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </CosmicButton>
+                    <CosmicButton variant="ghost" size="sm">
+                      <HelpCircle className="w-4 h-4" />
+                    </CosmicButton>
+                  </div>
+                }
+                activeItemId="home"
+                collapsible
+                closeOnNavigation
+              />
+            </div>
+          </div>
+          
+          {/* Media Player Component */}
+          <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+            <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+              Cosmic Media Player
+            </CosmicHeading>
+            <div className="space-y-6">
+              <p className="text-sm mb-4">
+                The CosmicMediaPlayer component provides audio playback with cosmic styling.
+              </p>
+              
+              <div className="grid grid-cols-1 gap-8">
+                <div className="space-y-4">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Default Media Player</CosmicHeading>
+                  <CosmicMediaPlayer
+                    tracks={demoTracks}
+                    initialTrackIndex={0}
+                    variant="cosmic"
+                    showPlaylist
+                    showControls
+                    showVolumeControl
+                    allowDownload
+                    allowSharing
+                    visualizer
+                  />
+                </div>
+                
+                <div className="space-y-4">
+                  <CosmicHeading as="h3" size="lg" className="mb-2">Compact Media Player</CosmicHeading>
+                  <CosmicMediaPlayer
+                    tracks={demoTracks}
+                    initialTrackIndex={1}
+                    variant="default"
+                    compact
+                    hideArtwork
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
