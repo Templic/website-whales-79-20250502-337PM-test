@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import CosmicButton from '@/components/ui/cosmic-button';
-import {useLocation} from 'react-router-dom'; // Added import for useLocation
+import {useLocation} from 'wouter'; // Using wouter instead of react-router-dom
 
 interface CartItem {
   product: Product;
