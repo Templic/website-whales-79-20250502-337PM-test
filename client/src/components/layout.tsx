@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // Handle scroll effect
   useEffect(() => {
@@ -21,6 +22,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   const NavLinks = () => {
     return (
@@ -161,6 +170,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* DialogProvider should likely be placed here */}
+      {/* <DialogProvider> */}
       <header 
         className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ${
           isScrolled ? 'shadow-md' : ''
@@ -259,6 +270,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
+      {/* </DialogProvider> */}
     </div>
   );
 }
