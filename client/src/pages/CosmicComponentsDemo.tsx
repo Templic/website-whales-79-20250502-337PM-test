@@ -14,7 +14,16 @@ import CosmicBadge from '../components/ui/cosmic-badge';
 import CosmicAlert from '../components/ui/cosmic-alert';
 import CosmicDrawer from '../components/ui/cosmic-drawer';
 import CosmicTabs from '../components/ui/cosmic-tabs';
-import { Search, Mail, Info, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import CosmicAvatar from '../components/ui/cosmic-avatar';
+import CosmicProgressBar from '../components/ui/cosmic-progress-bar';
+import CosmicTooltip from '../components/ui/cosmic-tooltip';
+import CosmicDropdown from '../components/ui/cosmic-dropdown';
+import CosmicCarousel from '../components/ui/cosmic-carousel';
+import { 
+  Search, Mail, Info, AlertTriangle, CheckCircle, X, 
+  Settings, User, LogOut, Home, Music, Star, HelpCircle,
+  ChevronRight, Image, Heart
+} from 'lucide-react';
 
 export default function CosmicComponentsDemo() {
   const [starSettings, setStarSettings] = useState({
@@ -610,8 +619,248 @@ export default function CosmicComponentsDemo() {
           </CosmicDrawer>
         </div>
 
+        {/* Cosmic Avatar Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Avatar
+          </CosmicHeading>
+          <div className="flex flex-wrap gap-8 justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <CosmicAvatar 
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                alt="Avatar 1"
+                variant="default"
+                size="lg"
+              />
+              <span className="text-sm">Circular Large</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <CosmicAvatar 
+                src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                alt="Avatar 2"
+                variant="glow"
+                size="md"
+                animation="pulse"
+              />
+              <span className="text-sm">Rounded Medium (Glow)</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <CosmicAvatar 
+                alt="Avatar 3"
+                variant="nebula"
+                size="sm"
+                initials="AB"
+              />
+              <span className="text-sm">Squared Small (Icon)</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <CosmicAvatar 
+                src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+                alt="Avatar 4"
+                variant="cosmic"
+                size="xl"
+                animation="cosmic"
+              />
+              <span className="text-sm">Cosmic XL (Border)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Cosmic Progress Bar Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Progress Bar
+          </CosmicHeading>
+          <div className="space-y-8">
+            <div>
+              <p className="mb-2">Default Progress Bar (45%)</p>
+              <CosmicProgressBar progress={45} />
+            </div>
+            <div>
+              <p className="mb-2">Gradient Progress Bar (70%)</p>
+              <CosmicProgressBar progress={70} barVariant="cosmic" />
+            </div>
+            <div>
+              <p className="mb-2">Cosmic Progress Bar (90%)</p>
+              <CosmicProgressBar progress={90} variant="cosmic" />
+            </div>
+            <div>
+              <p className="mb-2">Animated Progress Bar (60%)</p>
+              <CosmicProgressBar progress={60} animation="pulse" />
+            </div>
+            <div>
+              <p className="mb-2">Custom Size and Style (80%)</p>
+              <CosmicProgressBar 
+                progress={80} 
+                size="lg"
+                barVariant="rainbow" 
+                showPercentage
+                border="thin"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cosmic Tooltip Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Tooltip
+          </CosmicHeading>
+          <div className="flex flex-wrap gap-8 justify-center">
+            <CosmicTooltip content="Default tooltip style">
+              <Button>Hover Me (Default)</Button>
+            </CosmicTooltip>
+            
+            <CosmicTooltip 
+              content="Cosmic styled tooltip with gradient background"
+              variant="cosmic"
+              showDelay={200}
+              hideDelay={500}
+            >
+              <Button>Hover Me (Cosmic)</Button>
+            </CosmicTooltip>
+            
+            <CosmicTooltip 
+              content={
+                <div className="flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  <span>Rich content tooltip</span>
+                </div>
+              }
+              variant="nebula"
+              effect="glow"
+              maxWidth="200px"
+            >
+              <Button>Hover Me (Rich Content)</Button>
+            </CosmicTooltip>
+            
+            <CosmicTooltip 
+              content="Click me to toggle the tooltip"
+              variant="frosted"
+              trigger="click"
+            >
+              <Button>Click Me (Toggle)</Button>
+            </CosmicTooltip>
+            
+            <CosmicTooltip 
+              content="This tooltip is always visible"
+              variant="dark"
+              effect="pulse"
+              always
+            >
+              <Button>Always Visible</Button>
+            </CosmicTooltip>
+          </div>
+        </div>
+
+        {/* Cosmic Dropdown Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Dropdown
+          </CosmicHeading>
+          <div className="flex flex-wrap gap-8 justify-center">
+            <CosmicDropdown 
+              buttonText="Menu"
+              buttonVariant="default"
+              items={[
+                { id: '1', label: 'Profile', icon: <User className="h-4 w-4" />, onClick: () => console.log('Profile clicked') },
+                { id: '2', label: 'Settings', icon: <Settings className="h-4 w-4" />, onClick: () => console.log('Settings clicked') },
+                { id: '3', label: 'Logout', icon: <LogOut className="h-4 w-4" />, onClick: () => console.log('Logout clicked') }
+              ]}
+            />
+            
+            <CosmicDropdown 
+              buttonText="Cosmic Menu"
+              buttonVariant="cosmic"
+              variant="cosmic"
+              showArrow
+              items={[
+                { id: '1', label: 'Home', icon: <Home className="h-4 w-4" />, onClick: () => console.log('Home clicked') },
+                { id: '2', label: 'Music', icon: <Music className="h-4 w-4" />, onClick: () => console.log('Music clicked') },
+                { id: '3', label: 'Favorites', icon: <Star className="h-4 w-4" />, onClick: () => console.log('Favorites clicked') }
+              ]}
+            />
+            
+            <CosmicDropdown 
+              buttonIcon={<HelpCircle className="h-4 w-4" />}
+              buttonVariant="outline"
+              buttonSize="icon"
+              variant="cosmic"
+              items={[
+                { id: '1', label: 'FAQ', onClick: () => console.log('FAQ clicked') },
+                { id: '2', label: 'Support', onClick: () => console.log('Support clicked') },
+                { id: '3', label: 'About', onClick: () => console.log('About clicked') }
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Cosmic Carousel Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Carousel
+          </CosmicHeading>
+          <CosmicCarousel 
+            variant="cosmic"
+            items={[
+              { 
+                id: '1', 
+                content: (
+                  <CosmicCard variant="glow" className="h-40 flex items-center justify-center">
+                    <div className="text-center">
+                      <Image className="h-8 w-8 mx-auto mb-2" />
+                      <h3 className="text-lg font-medium">Cosmic Images</h3>
+                    </div>
+                  </CosmicCard>
+                ) 
+              },
+              { 
+                id: '2', 
+                content: (
+                  <CosmicCard variant="frosted" className="h-40 flex items-center justify-center">
+                    <div className="text-center">
+                      <Music className="h-8 w-8 mx-auto mb-2" />
+                      <h3 className="text-lg font-medium">Cosmic Music</h3>
+                    </div>
+                  </CosmicCard>
+                ) 
+              },
+              { 
+                id: '3', 
+                content: (
+                  <CosmicCard variant="highlighted" className="h-40 flex items-center justify-center">
+                    <div className="text-center">
+                      <Star className="h-8 w-8 mx-auto mb-2" />
+                      <h3 className="text-lg font-medium">Cosmic Stars</h3>
+                    </div>
+                  </CosmicCard>
+                ) 
+              },
+              { 
+                id: '4', 
+                content: (
+                  <CosmicCard variant="interactive" className="h-40 flex items-center justify-center">
+                    <div className="text-center">
+                      <Heart className="h-8 w-8 mx-auto mb-2" />
+                      <h3 className="text-lg font-medium">Cosmic Love</h3>
+                    </div>
+                  </CosmicCard>
+                ) 
+              }
+            ]}
+            autoPlay
+            interval={3000}
+            pauseOnHover
+            loop
+            showArrows
+            showDots
+            arrowSize="md"
+            dotSize="sm"
+          />
+        </div>
+
         <div className="flex justify-center">
-          <Link href="/">
+          <Link to="/">
             <span className="text-cosmic-primary hover:text-cosmic-primary/80 cursor-pointer">← Back to Home</span>
           </Link>
         </div>

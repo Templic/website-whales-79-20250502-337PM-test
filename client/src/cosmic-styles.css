@@ -223,3 +223,88 @@
 .font-space {
   font-family: 'Space Grotesk', sans-serif;
 }
+
+/* Animations for new components */
+
+/* CosmicProgressBar indeterminate animation */
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-indeterminate {
+  animation: indeterminate 1.5s infinite linear;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+/* Shadow effects for components */
+.shadow-glow-sm {
+  box-shadow: 0 0 10px rgba(155, 135, 245, 0.5);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(155, 135, 245, 0.7);
+}
+
+.shadow-glow-lg {
+  box-shadow: 0 0 30px rgba(155, 135, 245, 0.9);
+}
+
+/* CosmicAvatar animations */
+@keyframes cosmic-avatar-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes cosmic-avatar-orbit {
+  0% {
+    box-shadow: 0 0 0 0 rgba(155, 135, 245, 0.4),
+                0 0 0 0 rgba(51, 195, 240, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(155, 135, 245, 0),
+                0 0 0 20px rgba(51, 195, 240, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 20px rgba(155, 135, 245, 0),
+                0 0 0 40px rgba(51, 195, 240, 0);
+  }
+}
+
+.cosmic-avatar-animate {
+  animation: cosmic-avatar-pulse 3s infinite ease-in-out, 
+             cosmic-avatar-orbit 4s infinite ease-out;
+}
+
+/* Animation for spin effect */
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
