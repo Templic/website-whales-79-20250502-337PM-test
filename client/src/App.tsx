@@ -34,6 +34,12 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import CosmicTest from "@/pages/CosmicTest";
 import CosmicComponentsDemo from "@/pages/CosmicComponentsDemo";
 
+// Shop Pages
+import ShopPage from "@/pages/ShopPage";
+import ProductPage from "@/pages/ProductPage";
+import CartPage from "@/pages/CartPage";
+import CheckoutPage from "@/pages/CheckoutPage";
+
 // Imported Pages
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
 import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
@@ -90,6 +96,13 @@ function Router() {
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
+        
+        {/* Shop Routes */}
+        <Route path="/shop" component={ShopPage} />
+        <Route path="/shop/product/:slug" component={ProductPage} />
+        <Route path="/shop/cart" component={CartPage} />
+        <Route path="/shop/checkout" component={CheckoutPage} />
+        
         <Route component={NotFound} />
       </Switch>
     </Layout>
