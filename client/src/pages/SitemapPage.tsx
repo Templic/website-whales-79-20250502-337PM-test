@@ -22,13 +22,15 @@ export default function SitemapPage() {
             <li><Link href="/engage">Engage</Link></li>
             <li><Link href="/newsletter">Newsletter</Link></li>
             <li><Link href="/collaboration">Collaboration</Link></li>
+            <li><Link href="/community">Community</Link></li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Music</h2>
+          <h2 className="text-2xl font-semibold mb-4">Music & Experience</h2>
           <ul className="space-y-2">
             <li><Link href="/music-release">New Music</Link></li>
+            <li><Link href="/archived-music">Archived Music</Link></li>
             <li><Link href="/music-archive">Music Archive</Link></li>
             <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
             <li><Link href="/immersive">Immersive Experience</Link></li>
@@ -42,6 +44,7 @@ export default function SitemapPage() {
             <li><Link href="/cart">Shopping Cart</Link></li>
             <li><Link href="/checkout">Checkout</Link></li>
             <li><Link href="/collaborative-shopping">Group Shopping</Link></li>
+            <li><Link href="/shop/collaborative">Collaborative Shopping</Link></li>
           </ul>
         </section>
 
@@ -51,6 +54,18 @@ export default function SitemapPage() {
             <li><Link href="/auth">Login/Register</Link></li>
             <li><Link href="/portal">User Dashboard</Link></li>
             <li><Link href="/recover-password">Password Recovery</Link></li>
+            <li><Link href="/reset-password">Reset Password</Link></li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Admin</h2>
+          <ul className="space-y-2">
+            <li><Link href="/admin">Admin Portal</Link></li>
+            <li><Link href="/admin/analytics">Analytics</Link></li>
+            <li><Link href="/admin/users">Users</Link></li>
+            <li><Link href="/admin/posts">Posts</Link></li>
+            <li><Link href="/admin/music">Music</Link></li>
           </ul>
         </section>
 
@@ -60,6 +75,17 @@ export default function SitemapPage() {
             <li><Link href="/privacy">Privacy Policy</Link></li>
             <li><Link href="/terms">Terms of Service</Link></li>
             <li><Link href="/sitemap">Sitemap</Link></li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="text-2xl font-semibold mb-4">Demo Pages</h2>
+          <ul className="space-y-2">
+            <li><Link href="/test/cosmic">Cosmic UI Demo</Link></li>
+            <li><Link href="/test/audio">Audio Components Demo</Link></li>
+            <li><Link href="/test/new">New Components Demo</Link></li>
+            <li><Link href="/cosmic-components">Cosmic Components</Link></li>
+            <li><Link href="/cosmic-test">Cosmic Test</Link></li>
           </ul>
         </section>
       </div>

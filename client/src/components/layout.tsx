@@ -6,7 +6,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc } from "lucide-react";
+import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -164,6 +164,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
             Collaborate
           </Button>
         </Link>
+        <Link href="/shop">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <ShoppingBag className="h-4 w-4 mr-2" />
+            Shop
+          </Button>
+        </Link>
+        <Link href="/contact">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Contact
+          </Button>
+        </Link>
       </>
     );
   };
@@ -246,6 +266,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <li><Link href="/community" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Community</Link></li>
                 <li><Link href="/collaboration" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Collaboration</Link></li>
                 <li><Link href="/contact" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">Shop</h3>
+              <ul className="space-y-2">
+                <li><Link href="/shop" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Shop Home</Link></li>
+                <li><Link href="/cart" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Your Cart</Link></li>
+                <li><Link href="/collaborative-shopping" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Group Shopping</Link></li>
               </ul>
             </div>
             <div>

@@ -65,58 +65,64 @@ function Router() {
   return (
     <Layout>
       <Switch>
+        {/* Main Pages */}
         <Route path="/" component={HomePage} />
         <Route path="/about" component={AboutPage} />
-        <Route path="/music-release" component={NewMusicPage} />
-        <Route path="/music-archive" component={ArchivedMusicPage} />
+        <Route path="/contact" component={ContactPage} />
         <Route path="/tour" component={TourPage} />
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />
-        <Route path="/blog" component={BlogPage} />
-        <Route path="/blog/:id" component={BlogPostPage} />
         <Route path="/collaboration" component={CollaborationPage} />
-        <Route path="/contact" component={ContactPage} />
+        <Route path="/community" component={CommunityPage} />
+
+        {/* Music & Experience */}
+        <Route path="/music-release" component={NewMusicPage} />
+        <Route path="/archived-music" component={ArchivedMusicPage} />
+        <Route path="/music-archive" component={ArchivePage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route path="/immersive" component={ImmersivePage} />
-        <Route path="/shop" component={ShopPage} />
-        <Route path="/cart" component={CartPage} />
-        <Route path="/checkout" component={CheckoutPage} />
-        <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
-        <Route path="/newsletter" component={NewsletterPage} />
+
+        {/* Blog */}
         <Route path="/blog" component={BlogPage} />
         <Route path="/blog/:id" component={BlogPostPage} />
-        <Route path="/collaboration" component={CollaborationPage} />
-        <Route path="/contact" component={ContactPage} />
+
+        {/* Shop Routes */}
+        <Route path="/shop" component={ShopPage} />
+        <Route path="/shop/product/:slug" component={ProductPage} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/shop/cart" component={CartPage} />
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/shop/checkout" component={CheckoutPage} />
+        <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
+        <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
+        <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
+
+        {/* User Account */}
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/recover-password" component={PasswordRecoveryPage} />
+        <Route path="/reset-password" component={PasswordRecoveryPage} />
+        <ProtectedRoute path="/portal" component={UserPortal} />
+
+        {/* Admin Routes */}
         <ProtectedRoute path="/admin" component={AdminPortalPage} />
         <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
         <ProtectedRoute path="/admin/users" component={UsersPage} />
         <ProtectedRoute path="/admin/posts" component={PostsPage} />
         <ProtectedRoute path="/admin/music" component={MusicPage} />
-        <ProtectedRoute path="/portal" component={UserPortal} />
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/recover-password" component={PasswordRecoveryPage} />
-        <Route path="/reset-password" component={PasswordRecoveryPage} />
+
+        {/* Legal & Info */}
         <Route path="/sitemap" component={SitemapPage} />
         <Route path="/terms" component={TermsOfService} />
         <Route path="/privacy" component={PrivacyPolicy} />
-        <Route path="/cosmic-experience" component={CosmicExperiencePage} />
-        <Route path="/immersive" component={ImmersivePage} />
-        <Route path="/music-archive" component={ArchivePage} />
-        <Route path="/community" component={CommunityPage} />
+
+        {/* Demo Pages */}
         <Route path="/test/cosmic" component={TestCosmicComponentsDemo} />
         <Route path="/cosmic-components" component={CosmicComponentsDemo} />
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
         
-        {/* Shop Routes */}
-        <Route path="/shop" component={ShopPage} />
-        <Route path="/shop/product/:slug" component={ProductPage} />
-        <Route path="/shop/cart" component={CartPage} />
-        <Route path="/shop/checkout" component={CheckoutPage} />
-        <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
-        <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
-        
+        {/* 404 Route */}
         <Route component={NotFound} />
       </Switch>
     </Layout>
