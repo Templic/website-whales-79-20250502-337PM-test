@@ -1,248 +1,163 @@
-import { useEffect, useRef, useState, useCallback } from "react"
-import { useLocation } from "wouter"
-
-interface Star {
-  x: number
-  y: number
-  z: number
-  size: number
-  opacity: number
-  color: string
-}
-
-interface Nebula {
-  x: number
-  y: number
-  radius: number
-  color1: string
-  color2: string
-  opacity: number
-}
+import React, { useRef, useEffect } from 'react';
 
 interface CosmicBackgroundProps {
   opacity?: number;
+  color?: 'purple' | 'blue' | 'green';
+  speed?: number;
+  particleCount?: number;
+  className?: string;
 }
 
-export function CosmicBackground({ opacity = 0.8 }: CosmicBackgroundProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const [location] = useLocation()
+export const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
+  opacity = 0.5,
+  color = 'purple',
+  speed = 1,
+  particleCount = 150,
+  className = '',
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number>(0);
 
-  // Generate different color schemes based on the current page
-  const getColorScheme = useCallback(() => {
-    switch (location) {
-      case "/":
+  // Get color palette based on selected color
+  const getColorPalette = () => {
+    switch (color) {
+      case 'blue':
         return {
-          bgColor: "rgba(8, 3, 21, 0.8)",
-          starColors: ["#ffffff", "#C4F1F9", "#9DECF9", "#76E4F7", "#38BDF8"],
-          nebulaColors: [
-            ["rgba(14, 165, 233, 0.03)", "rgba(2, 132, 199, 0.05)"],
-            ["rgba(20, 184, 166, 0.04)", "rgba(15, 118, 110, 0.06)"],
-          ],
-        }
-      case "/cosmic-experience":
+          background: '#080E21',
+          stars: ['#3AA0FF', '#95C5FF', '#68B8FF', '#FFFFFF'],
+          glow: 'rgba(58, 160, 255, 0.8)'
+        };
+      case 'green':
         return {
-          bgColor: "rgba(3, 9, 21, 0.8)",
-          starColors: ["#ffffff", "#BAE6FD", "#7DD3FC", "#38BDF8", "#0EA5E9"],
-          nebulaColors: [
-            ["rgba(2, 132, 199, 0.06)", "rgba(3, 105, 161, 0.1)"], // Increased opacity for better contrast
-            ["rgba(8, 145, 178, 0.05)", "rgba(14, 116, 144, 0.07)"], // Increased opacity for better contrast
-            ["rgba(16, 185, 129, 0.05)", "rgba(5, 150, 105, 0.07)"], // Increased opacity for better contrast
-          ],
-        }
-      case "/archived-music":
-        return {
-          bgColor: "rgba(5, 10, 24, 0.8)",
-          starColors: ["#ffffff", "#F5D0FE", "#F0ABFC", "#E879F9", "#D946EF"],
-          nebulaColors: [
-            ["rgba(192, 38, 211, 0.03)", "rgba(162, 28, 175, 0.05)"],
-            ["rgba(134, 25, 143, 0.04)", "rgba(112, 26, 117, 0.06)"],
-          ],
-        }
-      case "/music-release":
-        return {
-          bgColor: "rgba(10, 3, 15, 0.8)",
-          starColors: ["#ffffff", "#CCFBF1", "#99F6E4", "#5EEAD4", "#2DD4BF"],
-          nebulaColors: [
-            ["rgba(20, 184, 166, 0.03)", "rgba(13, 148, 136, 0.05)"],
-            ["rgba(15, 118, 110, 0.04)", "rgba(17, 94, 89, 0.06)"],
-          ],
-        }
-      case "/tour":
-        return {
-          bgColor: "rgba(3, 15, 15, 0.8)",
-          starColors: ["#ffffff", "#C4F1F9", "#76E4F7", "#0EA5E9", "#0284C7"],
-          nebulaColors: [
-            ["rgba(14, 165, 233, 0.03)", "rgba(2, 132, 199, 0.05)"],
-            ["rgba(3, 106, 161, 0.04)", "rgba(7, 89, 133, 0.06)"],
-          ],
-        }
+          background: '#0C1E11',
+          stars: ['#3AFF7A', '#95FFBF', '#68FFB6', '#FFFFFF'],
+          glow: 'rgba(58, 255, 122, 0.8)'
+        };
+      case 'purple':
       default:
         return {
-          bgColor: "rgba(8, 3, 21, 0.8)",
-          starColors: ["#ffffff", "#C4F1F9", "#9DECF9", "#76E4F7", "#38BDF8"],
-          nebulaColors: [
-            ["rgba(14, 165, 233, 0.03)", "rgba(2, 132, 199, 0.05)"],
-            ["rgba(20, 184, 166, 0.04)", "rgba(15, 118, 110, 0.06)"],
-          ],
-        }
+          background: '#16091D',
+          stars: ['#9C3AFF', '#CE95FF', '#B668FF', '#FFFFFF'],
+          glow: 'rgba(156, 58, 255, 0.8)'
+        };
     }
-  }, [location])
+  };
 
   useEffect(() => {
-    const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: e.clientX,
-        y: e.clientY,
-      })
-    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-    window.addEventListener("resize", handleResize)
-    window.addEventListener("mousemove", handleMouseMove)
-    handleResize()
+    // Set canvas dimensions to match window
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
 
-    return () => {
-      window.removeEventListener("resize", handleResize)
-      window.removeEventListener("mousemove", handleMouseMove)
-    }
-  }, [])
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    // Create stars
+    const colorPalette = getColorPalette();
+    
+    type Star = {
+      x: number;
+      y: number;
+      radius: number;
+      color: string;
+      velocity: number;
+      alpha: number;
+      direction: number;
+      twinkleSpeed: number;
+    };
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const stars: Star[] = [];
 
-    // Set canvas dimensions
-    canvas.width = dimensions.width
-    canvas.height = dimensions.height
-
-    // Generate stars
-    const starCount = Math.min(Math.floor((dimensions.width * dimensions.height) / 5000), 500)
-    const stars: Star[] = []
-
-    const colorScheme = getColorScheme()
-
-    for (let i = 0; i < starCount; i++) {
+    for (let i = 0; i < particleCount; i++) {
+      const radius = Math.random() * 2 + 0.5;
+      
       stars.push({
-        x: Math.random() * dimensions.width,
-        y: Math.random() * dimensions.height,
-        z: Math.random() * 1000,
-        size: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.8 + 0.2,
-        color: colorScheme.starColors[Math.floor(Math.random() * colorScheme.starColors.length)],
-      })
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius,
+        color: colorPalette.stars[Math.floor(Math.random() * colorPalette.stars.length)],
+        velocity: (Math.random() * 0.05 + 0.01) * speed,
+        alpha: Math.random() * 0.6 + 0.4,
+        direction: Math.random() > 0.5 ? 1 : -1,
+        twinkleSpeed: Math.random() * 0.01 + 0.003
+      });
     }
 
-    // Generate nebulae
-    const nebulaCount = Math.min(Math.floor((dimensions.width * dimensions.height) / 300000), 5)
-    const nebulae: Nebula[] = []
+    // Animation function
+    const animate = () => {
+      ctx.globalAlpha = opacity;
+      ctx.fillStyle = colorPalette.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < nebulaCount; i++) {
-      const colorPair = colorScheme.nebulaColors[Math.floor(Math.random() * colorScheme.nebulaColors.length)]
-      nebulae.push({
-        x: Math.random() * dimensions.width,
-        y: Math.random() * dimensions.height,
-        radius: Math.random() * 300 + 200,
-        color1: colorPair[0],
-        color2: colorPair[1],
-        opacity: Math.random() * 0.3 + 0.2, // Increased opacity for better contrast
-      })
-    }
+      // Draw stars
+      stars.forEach(star => {
+        ctx.beginPath();
+        ctx.globalAlpha = star.alpha * opacity;
+        
+        // Create gradient for glow effect
+        const gradient = ctx.createRadialGradient(
+          star.x, star.y, 0, 
+          star.x, star.y, star.radius * 4
+        );
+        gradient.addColorStop(0, star.color);
+        gradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = gradient;
+        ctx.arc(star.x, star.y, star.radius * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Smaller, bright center
+        ctx.beginPath();
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = star.color;
+        ctx.arc(star.x, star.y, star.radius * 0.5, 0, Math.PI * 2);
+        ctx.fill();
 
-    // Animation loop
-    const animationFrameIdRef = { current: 0 }
-    let lastTime = 0
-
-    const render = (time: number) => {
-      const deltaTime = time - lastTime
-      lastTime = time
-
-      // Clear canvas with custom opacity and blend mode
-      const bgColorParts = colorScheme.bgColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/)
-      if (bgColorParts) {
-        const r = parseInt(bgColorParts[1], 10)
-        const g = parseInt(bgColorParts[2], 10)
-        const b = parseInt(bgColorParts[3], 10)
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`
-      } else {
-        ctx.fillStyle = colorScheme.bgColor
-      }
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.globalCompositeOperation = 'overlay'; // Apply blend mode for better contrast
-
-      // Draw nebulae
-      nebulae.forEach((nebula) => {
-        const gradient = ctx.createRadialGradient(nebula.x, nebula.y, 0, nebula.x, nebula.y, nebula.radius)
-        gradient.addColorStop(0, nebula.color1)
-        gradient.addColorStop(1, nebula.color2)
-
-        ctx.globalAlpha = nebula.opacity
-        ctx.fillStyle = gradient
-        ctx.beginPath()
-        ctx.arc(nebula.x, nebula.y, nebula.radius, 0, Math.PI * 2)
-        ctx.fill()
-      })
-
-      // Reset global alpha
-      ctx.globalAlpha = 1
-      ctx.globalCompositeOperation = 'source-over'; // Reset blend mode
-
-      // Calculate mouse influence (parallax effect)
-      const mouseXRatio = mousePosition.x / dimensions.width
-      const mouseYRatio = mousePosition.y / dimensions.height
-      const offsetX = (mouseXRatio - 0.5) * 20
-      const offsetY = (mouseYRatio - 0.5) * 20
-
-      // Draw stars with parallax effect
-      stars.forEach((star) => {
-        // Update star position based on z-depth (parallax)
-        const parallaxFactor = star.z / 1000
-        const parallaxX = offsetX * parallaxFactor
-        const parallaxY = offsetY * parallaxFactor
-
-        // Apply subtle twinkling effect
-        const twinkle = Math.sin(time * 0.001 + star.z) * 0.1 + 0.9
-
-        ctx.fillStyle = star.color
-        ctx.globalAlpha = star.opacity * twinkle
-        ctx.beginPath()
-        ctx.arc(star.x + parallaxX, star.y + parallaxY, star.size, 0, Math.PI * 2)
-        ctx.fill()
-
-        // Add subtle glow to some stars
-        if (star.size > 1.2) {
-          ctx.globalAlpha = star.opacity * 0.4 * twinkle
-          ctx.beginPath()
-          ctx.arc(star.x + parallaxX, star.y + parallaxY, star.size * 2, 0, Math.PI * 2)
-          ctx.fill()
+        // Move stars
+        star.y += star.velocity;
+        
+        // Twinkle effect
+        star.alpha += star.twinkleSpeed * star.direction;
+        
+        if (star.alpha > 0.9) {
+          star.direction = -1;
+        } else if (star.alpha < 0.4) {
+          star.direction = 1;
         }
-      })
 
-      // Reset global alpha
-      ctx.globalAlpha = 1
+        // Reset position when off screen
+        if (star.y > canvas.height) {
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
+        }
+      });
 
-      // Only request next frame if component is still mounted
-      if (canvas.isConnected) {
-        animationFrameIdRef.current = requestAnimationFrame(render)
-      }
-    }
+      animationRef.current = requestAnimationFrame(animate);
+    };
 
-    animationFrameIdRef.current = requestAnimationFrame(render)
+    animate();
 
+    // Cleanup
     return () => {
-      cancelAnimationFrame(animationFrameIdRef.current)
-    }
-  }, [dimensions, mousePosition, location, getColorScheme, opacity])
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [opacity, color, speed, particleCount]);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 -z-10 h-full w-full" style={{ pointerEvents: "none" }} />
-}
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`fixed top-0 left-0 w-full h-full -z-10 ${className}`}
+      style={{ pointerEvents: 'none' }}
+    />
+  );
+};
+
+export default CosmicBackground;

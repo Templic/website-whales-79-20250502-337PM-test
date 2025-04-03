@@ -1,5 +1,5 @@
 import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
-import { CommunityFeedbackLoop, FeedbackStatistics } from "@/components/community/CommunityFeedbackLoop";
+import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -133,7 +133,7 @@ export default function CommunityPage() {
     setFeedbackItems((prev) => [newFeedback, ...prev]);
   };
 
-  const handleComment = (id: string, comment: string) => {
+  const handleComment = (id: string) => {
     setFeedbackItems((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -184,7 +184,24 @@ export default function CommunityPage() {
               <Star className="mr-2 h-5 w-5 text-amber-400" />
               Community Impact
             </h2>
-            <FeedbackStatistics className="mb-4" />
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                <p className="text-3xl font-bold text-amber-400">48</p>
+                <p className="text-sm text-muted-foreground">Implemented</p>
+              </div>
+              <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                <p className="text-3xl font-bold text-blue-400">23</p>
+                <p className="text-sm text-muted-foreground">Under Review</p>
+              </div>
+              <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                <p className="text-3xl font-bold text-purple-400">154</p>
+                <p className="text-sm text-muted-foreground">Feedback Items</p>
+              </div>
+              <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                <p className="text-3xl font-bold text-emerald-400">92%</p>
+                <p className="text-sm text-muted-foreground">Success Rate</p>
+              </div>
+            </div>
             <p className="text-center text-muted-foreground mt-4">
               Your ideas shape our evolution. We've implemented <span className="font-medium text-emerald-500">48</span> community suggestions in the last year!
             </p>
