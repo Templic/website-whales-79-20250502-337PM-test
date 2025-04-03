@@ -166,18 +166,12 @@ export default function CommunityPage() {
               Connect with fellow cosmic travelers, share your experiences, and help us shape the future of cosmic music and consciousness exploration.
             </p>
             <div className="flex flex-wrap justify-center gap-4 mt-4">
-              <Button size="lg" asChild>
-                <Link href="/collaboration">
-                  <Users className="mr-2 h-5 w-5" />
-                  Collaborate With Us
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">
-                  <MessageSquare className="mr-2 h-5 w-5" />
-                  Contact Us
-                </Link>
-              </Button>
+              <Link href="/collaboration">
+                <Button size="lg">Collaborate With Us</Button>
+              </Link>
+              <Link href="/contact">
+                <Button size="lg" variant="outline">Contact Us</Button>
+              </Link>
             </div>
           </div>
 
@@ -220,7 +214,7 @@ export default function CommunityPage() {
                     <span className="block font-medium">Full Moon Meditation</span>
                     <span className="text-muted-foreground text-sm">Join our global synchronized meditation during the next full moon.</span>
                     <Button variant="link" size="sm" className="p-0 h-auto text-cyan-500">
-                      Learn more <ChevronRight className="h-3 w-3 ml-1" />
+                      <span className="flex items-center">Learn more <ChevronRight className="h-3 w-3 ml-1" /></span>
                     </Button>
                   </div>
                 </li>
@@ -232,7 +226,7 @@ export default function CommunityPage() {
                     <span className="block font-medium">Sound Healing Workshop</span>
                     <span className="text-muted-foreground text-sm">Online workshop exploring the power of frequency for healing.</span>
                     <Button variant="link" size="sm" className="p-0 h-auto text-purple-500">
-                      Learn more <ChevronRight className="h-3 w-3 ml-1" />
+                      <span className="flex items-center">Learn more <ChevronRight className="h-3 w-3 ml-1" /></span>
                     </Button>
                   </div>
                 </li>
@@ -244,7 +238,7 @@ export default function CommunityPage() {
                     <span className="block font-medium">Cosmic Creator Showcase</span>
                     <span className="text-muted-foreground text-sm">Monthly virtual gathering featuring community artists.</span>
                     <Button variant="link" size="sm" className="p-0 h-auto text-amber-500">
-                      Learn more <ChevronRight className="h-3 w-3 ml-1" />
+                      <span className="flex items-center">Learn more <ChevronRight className="h-3 w-3 ml-1" /></span>
                     </Button>
                   </div>
                 </li>
