@@ -28,6 +28,7 @@ import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoTo
 import { CosmicSlider } from '../components/ui/cosmic-slider';
 import { CosmicSidebar } from '../components/ui/cosmic-sidebar';
 import { CosmicMediaPlayer } from '../components/ui/cosmic-media-player';
+import CosmicMarkdown from '../components/ui/cosmic-markdown';
 import { 
   CosmicForm, 
   CosmicFormGroup, 
@@ -87,6 +88,7 @@ export default function CosmicComponentsDemo() {
   // State for slider
   const [sliderValue, setSliderValue] = useState<number>(50);
   const [rangeSliderValue, setRangeSliderValue] = useState<number>(75);
+  const [volumeValue, setVolumeValue] = useState<number>(5.0);
   
   // State for sidebar
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -1831,13 +1833,29 @@ export default function CosmicComponentsDemo() {
                         formatValue={(value) => `${value}% complete`}
                       />
                     </div>
+                    
+                    <div>
+                      <CosmicSlider
+                        variant="nebula"
+                        thumbVariant="nebula"
+                        min={0}
+                        max={10}
+                        step={0.1}
+                        value={volumeValue}
+                        onChange={(e) => setVolumeValue(parseFloat(e.target.value))}
+                        label="Nebula Volume Control"
+                        showValue
+                        valuePrefix="Vol: "
+                        formatValue={(value) => value.toFixed(1)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
               
               <div className="mt-4">
                 <p className="text-sm text-gray-400">
-                  Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}
+                  Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}, Volume: {volumeValue.toFixed(1)}
                 </p>
               </div>
             </div>

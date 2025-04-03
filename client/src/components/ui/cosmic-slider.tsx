@@ -13,6 +13,7 @@ const sliderTrackVariants = cva(
         frosted: 'bg-gray-800/60 backdrop-blur-sm',
         minimal: 'bg-gray-900',
         glow: 'bg-gray-800 shadow-cosmic shadow-cosmic-primary/20',
+        nebula: 'bg-gray-900 border border-purple-500/20',
       },
     },
     defaultVariants: {
@@ -32,6 +33,7 @@ const sliderFillVariants = cva(
         frosted: 'bg-white/80 backdrop-blur-sm',
         minimal: 'bg-cosmic-primary',
         glow: 'bg-cosmic-primary shadow-glow shadow-cosmic-primary/50',
+        nebula: 'bg-gradient-to-r from-purple-500 to-pink-500',
       },
       animate: {
         true: 'transition-all duration-200 ease-out',
@@ -56,6 +58,16 @@ const sliderThumbVariants = cva(
         frosted: 'w-5 h-5 bg-white/90 rounded-full backdrop-blur-sm top-1/2 -translate-y-1/2',
         minimal: 'w-3 h-3 bg-cosmic-primary rounded-full top-1/2 -translate-y-1/2',
         glow: 'w-4 h-4 bg-cosmic-primary rounded-full shadow-glow shadow-cosmic-primary/50 top-1/2 -translate-y-1/2',
+        nebula: 'w-4 h-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border border-white/20 top-1/2 -translate-y-1/2',
+      },
+      thumbVariant: {
+        default: '',
+        cosmic: 'bg-cosmic-primary border border-cosmic-secondary',
+        glowing: 'bg-cosmic-primary shadow-glow shadow-cosmic-primary/50',
+        pulsing: 'bg-cosmic-primary shadow-glow shadow-cosmic-primary/50 animate-pulse',
+        nebula: 'bg-gradient-to-r from-purple-500 to-pink-500 border border-white/20',
+        frosted: 'bg-white/90 backdrop-blur-sm',
+        minimal: 'bg-white border-none'
       },
       size: {
         sm: 'w-3 h-3',
@@ -69,6 +81,7 @@ const sliderThumbVariants = cva(
     },
     defaultVariants: {
       variant: 'default',
+      thumbVariant: 'default',
       size: 'md',
       animate: true,
     },
@@ -86,6 +99,7 @@ const sliderLabelVariants = cva(
         frosted: 'text-white',
         minimal: 'text-gray-300',
         glow: 'text-cosmic-primary',
+        nebula: 'text-purple-300',
       },
     },
     defaultVariants: {
@@ -105,6 +119,7 @@ const sliderValueVariants = cva(
         frosted: 'text-white/80',
         minimal: 'text-gray-400',
         glow: 'text-cosmic-primary',
+        nebula: 'text-pink-300',
       },
     },
     defaultVariants: {
@@ -115,9 +130,11 @@ const sliderValueVariants = cva(
 
 // Main component type
 export interface CosmicSliderProps 
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'>,
-    VariantProps<typeof sliderTrackVariants>,
-    VariantProps<typeof sliderThumbVariants> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'type'> {
+  variant?: 'default' | 'cosmic' | 'frosted' | 'minimal' | 'glow' | 'nebula';
+  thumbVariant?: 'default' | 'cosmic' | 'glowing' | 'pulsing' | 'nebula' | 'frosted' | 'minimal';
+  size?: 'sm' | 'md' | 'lg';
+  animate?: boolean;
   label?: React.ReactNode;
   showValue?: boolean;
   valuePrefix?: string;
@@ -134,6 +151,7 @@ export interface CosmicSliderProps
 export const CosmicSlider: React.FC<CosmicSliderProps> = ({
   label,
   variant = 'default',
+  thumbVariant = 'default',
   size = 'md',
   min = 0,
   max = 100,
@@ -321,7 +339,7 @@ export const CosmicSlider: React.FC<CosmicSliderProps> = ({
       {/* Visible thumb */}
       <div 
         className={cn(
-          sliderThumbVariants({ variant, size, animate }),
+          sliderThumbVariants({ variant: 'default', thumbVariant, size, animate }),
           disabled && "opacity-50 cursor-not-allowed"
         )}
         style={{ 
