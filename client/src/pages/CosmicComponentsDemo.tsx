@@ -19,10 +19,27 @@ import CosmicProgressBar from '../components/ui/cosmic-progress-bar';
 import CosmicTooltip from '../components/ui/cosmic-tooltip';
 import CosmicDropdown from '../components/ui/cosmic-dropdown';
 import CosmicCarousel from '../components/ui/cosmic-carousel';
+import CosmicModal from '../components/ui/cosmic-modal';
+import { 
+  CosmicTable, 
+  CosmicTableContainer, 
+  CosmicTableHeader,
+  CosmicTableBody, 
+  CosmicTableFooter,
+  CosmicTableRow,
+  CosmicTableCell,
+  CosmicTableHeadCell 
+} from '../components/ui/cosmic-table';
+import {
+  CosmicAccordion,
+  CosmicAccordionItem,
+  CosmicAccordionTrigger,
+  CosmicAccordionContent
+} from '../components/ui/cosmic-accordion';
 import { 
   Search, Mail, Info, AlertTriangle, CheckCircle, X, 
   Settings, User, LogOut, Home, Music, Star, HelpCircle,
-  ChevronRight, Image, Heart
+  ChevronRight, ChevronDown, Image, Heart, FileText, Calendar, DollarSign
 } from 'lucide-react';
 
 export default function CosmicComponentsDemo() {
@@ -38,6 +55,8 @@ export default function CosmicComponentsDemo() {
   const [inputValue, setInputValue] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentModal, setCurrentModal] = useState<'default' | 'cosmic' | 'glow' | 'frosted' | 'nebula'>('default');
 
   return (
     <div className="bg-gradient-to-b from-black to-gray-900 min-h-screen text-white p-8">
@@ -857,6 +876,354 @@ export default function CosmicComponentsDemo() {
             arrowSize="md"
             dotSize="sm"
           />
+        </div>
+
+        {/* Cosmic Modal Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Modal
+          </CosmicHeading>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CosmicButton 
+              variant="cosmic" 
+              onClick={() => {
+                setCurrentModal('default');
+                setIsModalOpen(true);
+              }}
+            >
+              Open Default Modal
+            </CosmicButton>
+            
+            <CosmicButton 
+              variant="primary" 
+              onClick={() => {
+                setCurrentModal('cosmic');
+                setIsModalOpen(true);
+              }}
+            >
+              Open Cosmic Modal
+            </CosmicButton>
+            
+            <CosmicButton 
+              variant="secondary" 
+              onClick={() => {
+                setCurrentModal('glow');
+                setIsModalOpen(true);
+              }}
+            >
+              Open Glowing Modal
+            </CosmicButton>
+            
+            <CosmicButton 
+              variant="outline" 
+              onClick={() => {
+                setCurrentModal('frosted');
+                setIsModalOpen(true);
+              }}
+            >
+              Open Frosted Modal
+            </CosmicButton>
+            
+            <CosmicButton 
+              variant="ghost" 
+              onClick={() => {
+                setCurrentModal('nebula');
+                setIsModalOpen(true);
+              }}
+            >
+              Open Nebula Modal
+            </CosmicButton>
+          </div>
+
+          {/* Default Modal */}
+          <CosmicModal
+            isOpen={isModalOpen && currentModal === 'default'}
+            onClose={() => setIsModalOpen(false)}
+            variant="default"
+            overlay="dark"
+            animation="fade"
+            size="md"
+            position="center"
+            rounded="lg"
+          >
+            <div className="p-6">
+              <CosmicHeading as="h3" size="lg" className="mb-4">Default Modal</CosmicHeading>
+              <p className="mb-4">This is a default styled modal with a dark overlay and fade animation.</p>
+              <div className="flex justify-end">
+                <CosmicButton variant="primary" onClick={() => setIsModalOpen(false)}>
+                  Close Modal
+                </CosmicButton>
+              </div>
+            </div>
+          </CosmicModal>
+
+          {/* Cosmic Modal */}
+          <CosmicModal
+            isOpen={isModalOpen && currentModal === 'cosmic'}
+            onClose={() => setIsModalOpen(false)}
+            variant="cosmic"
+            overlay="cosmic"
+            animation="zoom"
+            size="md"
+            position="center"
+            rounded="lg"
+          >
+            <div className="p-6">
+              <CosmicHeading as="h3" size="lg" variant="gradient" className="mb-4">Cosmic Modal</CosmicHeading>
+              <p className="mb-4">This modal has a cosmic theme with a special overlay and zoom animation.</p>
+              <div className="flex justify-end">
+                <CosmicButton variant="cosmic" onClick={() => setIsModalOpen(false)}>
+                  Close Modal
+                </CosmicButton>
+              </div>
+            </div>
+          </CosmicModal>
+
+          {/* Glow Modal */}
+          <CosmicModal
+            isOpen={isModalOpen && currentModal === 'glow'}
+            onClose={() => setIsModalOpen(false)}
+            variant="glow"
+            overlay="nebula"
+            animation="slide"
+            size="md"
+            position="center"
+            rounded="xl"
+          >
+            <div className="p-6">
+              <CosmicHeading as="h3" size="lg" variant="glow" className="mb-4">Glowing Modal</CosmicHeading>
+              <p className="mb-4">This modal has a glowing border with nebula overlay and slide animation.</p>
+              <div className="flex justify-end">
+                <CosmicButton variant="cosmic" onClick={() => setIsModalOpen(false)}>
+                  Close Modal
+                </CosmicButton>
+              </div>
+            </div>
+          </CosmicModal>
+
+          {/* Frosted Modal */}
+          <CosmicModal
+            isOpen={isModalOpen && currentModal === 'frosted'}
+            onClose={() => setIsModalOpen(false)}
+            variant="frosted"
+            overlay="blur"
+            animation="fade"
+            size="md"
+            position="center"
+            rounded="lg"
+          >
+            <div className="p-6">
+              <CosmicHeading as="h3" size="lg" className="mb-4">Frosted Modal</CosmicHeading>
+              <p className="mb-4">This modal has a frosted glass effect with blur overlay.</p>
+              <div className="flex justify-end">
+                <CosmicButton variant="primary" onClick={() => setIsModalOpen(false)}>
+                  Close Modal
+                </CosmicButton>
+              </div>
+            </div>
+          </CosmicModal>
+
+          {/* Nebula Modal */}
+          <CosmicModal
+            isOpen={isModalOpen && currentModal === 'nebula'}
+            onClose={() => setIsModalOpen(false)}
+            variant="nebula"
+            overlay="nebula"
+            animation="zoom"
+            size="md"
+            position="center"
+            rounded="lg"
+          >
+            <div className="p-6">
+              <CosmicHeading as="h3" size="lg" variant="cosmic" animate className="mb-4">Nebula Modal</CosmicHeading>
+              <p className="mb-4">This modal has a nebula gradient background with matching overlay.</p>
+              <div className="flex justify-end">
+                <CosmicButton variant="cosmic" onClick={() => setIsModalOpen(false)}>
+                  Close Modal
+                </CosmicButton>
+              </div>
+            </div>
+          </CosmicModal>
+        </div>
+
+        {/* Cosmic Table Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Table
+          </CosmicHeading>
+          
+          <CosmicTableContainer variant="cosmic" padding="md" maxHeight="md" className="mb-8">
+            <CosmicTable variant="cosmic" textAlign="left" size="md">
+              <CosmicTableHeader variant="cosmic" sticky>
+                <CosmicTableRow>
+                  <CosmicTableHeadCell>Name</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Type</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Date</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Value</CosmicTableHeadCell>
+                </CosmicTableRow>
+              </CosmicTableHeader>
+              <CosmicTableBody>
+                <CosmicTableRow variant="cosmic">
+                  <CosmicTableCell>Cosmic Harmony</CosmicTableCell>
+                  <CosmicTableCell>Music</CosmicTableCell>
+                  <CosmicTableCell>2025-04-01</CosmicTableCell>
+                  <CosmicTableCell>$120.00</CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="cosmic">
+                  <CosmicTableCell>Astral Projection</CosmicTableCell>
+                  <CosmicTableCell>Experience</CosmicTableCell>
+                  <CosmicTableCell>2025-04-15</CosmicTableCell>
+                  <CosmicTableCell>$250.00</CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="cosmic">
+                  <CosmicTableCell>Galaxy Art</CosmicTableCell>
+                  <CosmicTableCell>Visual</CosmicTableCell>
+                  <CosmicTableCell>2025-05-01</CosmicTableCell>
+                  <CosmicTableCell>$180.00</CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="cosmic">
+                  <CosmicTableCell>Meditation Journey</CosmicTableCell>
+                  <CosmicTableCell>Practice</CosmicTableCell>
+                  <CosmicTableCell>2025-05-10</CosmicTableCell>
+                  <CosmicTableCell>$75.00</CosmicTableCell>
+                </CosmicTableRow>
+              </CosmicTableBody>
+              <CosmicTableFooter>
+                <CosmicTableRow>
+                  <CosmicTableCell colSpan={3}>Total</CosmicTableCell>
+                  <CosmicTableCell>$625.00</CosmicTableCell>
+                </CosmicTableRow>
+              </CosmicTableFooter>
+            </CosmicTable>
+          </CosmicTableContainer>
+          
+          <CosmicTableContainer variant="frosted" padding="md" className="mb-8">
+            <CosmicTable variant="default" textAlign="center" size="sm">
+              <CosmicTableHeader variant="gradient" sticky>
+                <CosmicTableRow>
+                  <CosmicTableHeadCell>Icon</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Feature</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Description</CosmicTableHeadCell>
+                  <CosmicTableHeadCell>Status</CosmicTableHeadCell>
+                </CosmicTableRow>
+              </CosmicTableHeader>
+              <CosmicTableBody>
+                <CosmicTableRow variant="stripedCosmic">
+                  <CosmicTableCell><Music className="h-5 w-5 mx-auto" /></CosmicTableCell>
+                  <CosmicTableCell>Cosmic Audio</CosmicTableCell>
+                  <CosmicTableCell>Immersive spatial audio experience</CosmicTableCell>
+                  <CosmicTableCell><CosmicBadge variant="success">Active</CosmicBadge></CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="stripedCosmic">
+                  <CosmicTableCell><FileText className="h-5 w-5 mx-auto" /></CosmicTableCell>
+                  <CosmicTableCell>Documentation</CosmicTableCell>
+                  <CosmicTableCell>Comprehensive cosmic knowledge base</CosmicTableCell>
+                  <CosmicTableCell><CosmicBadge variant="primary">In Progress</CosmicBadge></CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="stripedCosmic">
+                  <CosmicTableCell><Calendar className="h-5 w-5 mx-auto" /></CosmicTableCell>
+                  <CosmicTableCell>Events</CosmicTableCell>
+                  <CosmicTableCell>Cosmic community gatherings</CosmicTableCell>
+                  <CosmicTableCell><CosmicBadge variant="warning">Upcoming</CosmicBadge></CosmicTableCell>
+                </CosmicTableRow>
+                <CosmicTableRow variant="stripedCosmic">
+                  <CosmicTableCell><DollarSign className="h-5 w-5 mx-auto" /></CosmicTableCell>
+                  <CosmicTableCell>Cosmic Shop</CosmicTableCell>
+                  <CosmicTableCell>Purchase cosmic merchandise</CosmicTableCell>
+                  <CosmicTableCell><CosmicBadge variant="secondary">Planned</CosmicBadge></CosmicTableCell>
+                </CosmicTableRow>
+              </CosmicTableBody>
+            </CosmicTable>
+          </CosmicTableContainer>
+        </div>
+        
+        {/* Cosmic Accordion Component */}
+        <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
+          <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
+            Cosmic Accordion
+          </CosmicHeading>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-4">
+                Default Accordion
+              </CosmicHeading>
+              
+              <CosmicAccordion variant="default">
+                <CosmicAccordionItem value="item-1">
+                  <CosmicAccordionTrigger variant="default">
+                    What is Cosmic Consciousness?
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="default">
+                    Cosmic Consciousness is an elevated state of awareness that transcends ordinary perception,
+                    allowing individuals to experience a profound connection with the universe and all of existence.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+                
+                <CosmicAccordionItem value="item-2">
+                  <CosmicAccordionTrigger variant="default">
+                    How can I experience Cosmic energies?
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="default">
+                    Experiencing cosmic energies often involves practices like meditation, mindfulness, energy work,
+                    and connecting with nature. Regular practice can help you become more sensitive to subtle energies.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+                
+                <CosmicAccordionItem value="item-3">
+                  <CosmicAccordionTrigger variant="default">
+                    What is Sacred Geometry?
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="default">
+                    Sacred geometry involves geometric patterns found throughout nature that are believed to be the
+                    fundamental templates for all creation. These patterns reveal the mathematical principles that
+                    govern the universe and can be used for spiritual and creative purposes.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+              </CosmicAccordion>
+            </div>
+            
+            <div>
+              <CosmicHeading as="h3" size="base" weight="medium" className="mb-4">
+                Cosmic Styled Accordion
+              </CosmicHeading>
+              
+              <CosmicAccordion variant="cosmicBordered" allowMultiple>
+                <CosmicAccordionItem value="cosmic-1" variant="cosmic">
+                  <CosmicAccordionTrigger variant="cosmicGradient">
+                    Cosmic Music Experience
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="cosmic" animation="fade">
+                    Our cosmic music is specially designed to resonate with the frequencies of the universe,
+                    creating an immersive experience that can help elevate consciousness and promote deep relaxation.
+                    Each composition is carefully crafted to align with specific cosmic energies.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+                
+                <CosmicAccordionItem value="cosmic-2" variant="cosmic">
+                  <CosmicAccordionTrigger variant="cosmicGradient">
+                    Galactic Light Language
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="cosmic" animation="fade">
+                    Galactic Light Language is a form of communication that transcends ordinary language,
+                    using sounds, tones, and vibrations to convey information directly to the soul.
+                    It activates dormant DNA and facilitates healing on multiple levels.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+                
+                <CosmicAccordionItem value="cosmic-3" variant="cosmic">
+                  <CosmicAccordionTrigger variant="cosmicGradient">
+                    Starseed Origins
+                  </CosmicAccordionTrigger>
+                  <CosmicAccordionContent variant="cosmic" animation="fade">
+                    Starseeds are believed to be souls who have experienced life on other planets or star systems
+                    before incarnating on Earth. Their purpose often involves bringing higher consciousness
+                    and specialized knowledge to assist humanity during times of transformation.
+                  </CosmicAccordionContent>
+                </CosmicAccordionItem>
+              </CosmicAccordion>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-center">

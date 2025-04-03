@@ -308,3 +308,95 @@
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
+
+/* Accordion animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.3s ease-in-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.3s ease-in-out;
+}
+
+/* Additional animation variants for accordion */
+@keyframes slide-down {
+  from {
+    height: 0;
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-in-out;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.3s ease-in-out;
+}
