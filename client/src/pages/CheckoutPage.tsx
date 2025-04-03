@@ -28,10 +28,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import CosmicButton from '@/components/ui/cosmic-button';
 
 import StripeElements from '@/components/shop/payment/StripeElements';
+import PaymentSelector from '@/components/shop/payment/PaymentSelector';
 
 const shippingFormSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -60,6 +61,7 @@ export default function CheckoutPage() {
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shippingInfo, setShippingInfo] = useState<ShippingFormValues | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>('stripe');
   
   // Create form
   const form = useForm<ShippingFormValues>({
@@ -572,35 +574,61 @@ export default function CheckoutPage() {
             </TabsContent>
             
             <TabsContent value="payment">
-              <Card>
+              <Card className="cosmic-glass-card cosmic-box-shadow">
                 <CardHeader>
-                  <CardTitle>Payment Method</CardTitle>
+                  <div className="h-1.5 w-full bg-gradient-to-r from-cosmic-primary/20 via-cosmic-primary to-cosmic-primary/20 rounded-full mb-2 animate-pulse-slow" />
+                  <CardTitle className="cosmic-gradient-text flex items-center">
+                    <Sparkles className="h-5 w-5 mr-2 opacity-80" />
+                    Payment Method
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {paymentError && (
-                    <Alert variant="destructive" className="mb-4">
+                    <Alert variant="destructive" className="mb-4 border-destructive/30 bg-destructive/10">
                       <AlertCircle className="h-4 w-4" />
                       <AlertTitle>Payment Error</AlertTitle>
                       <AlertDescription>{paymentError}</AlertDescription>
                     </Alert>
                   )}
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Credit or Debit Card</span>
-                  </div>
                   
-                  {isCreatingPaymentIntent ? (
-                    <div className="flex justify-center items-center py-6">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
-                      <span>Preparing payment form...</span>
-                    </div>
-                  ) : clientSecret ? (
-                    <StripeProvider clientSecret={clientSecret}>
-                      <StripeElements onSubmit={onPaymentSubmit} />
-                    </StripeProvider>
-                  ) : (
-                    <div className="text-destructive p-3 bg-destructive/10 rounded-md mb-4">
-                      Failed to initialize payment. Please try again.
+                  {/* Payment Method Selector */}
+                  <PaymentSelector 
+                    paymentType={paymentMethod} 
+                    onValueChange={setPaymentMethod} 
+                  />
+                  
+                  {/* Only show the Stripe payment form for the stripe payment method */}
+                  {paymentMethod === 'stripe' && (
+                    <>
+                      {isCreatingPaymentIntent ? (
+                        <div className="flex justify-center items-center py-6 cosmic-glass-panel rounded-lg p-4">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-cosmic-primary rounded-full opacity-10 animate-ping"></div>
+                            <div className="absolute inset-4 bg-cosmic-primary rounded-full opacity-20"></div>
+                            <Loader2 className="h-6 w-6 animate-spin text-cosmic-primary mr-2 relative z-10" />
+                          </div>
+                          <span className="ml-2 cosmic-text">Preparing payment form...</span>
+                        </div>
+                      ) : clientSecret ? (
+                        <StripeProvider clientSecret={clientSecret}>
+                          <StripeElements onSubmit={onPaymentSubmit} />
+                        </StripeProvider>
+                      ) : (
+                        <div className="text-destructive p-3 bg-destructive/10 rounded-md mb-4">
+                          Failed to initialize payment. Please try again.
+                        </div>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Show disabled forms for other payment methods */}
+                  {paymentMethod !== 'stripe' && (
+                    <div className="cosmic-glass-panel p-4 rounded-lg border border-cosmic-primary/20">
+                      <div className="flex justify-center items-center py-6">
+                        <p className="text-center text-muted-foreground">
+                          This payment method is coming soon. Please use Stripe for now.
+                        </p>
+                      </div>
                     </div>
                   )}
                   
