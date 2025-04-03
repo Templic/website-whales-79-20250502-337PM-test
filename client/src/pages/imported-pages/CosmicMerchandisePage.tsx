@@ -3,6 +3,7 @@ import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "../../components/shop/EnhancedShoppingExperience";
 import CosmicCollectibles from "../../components/shop/CosmicCollectibles";
 import ProductComparison from "../../components/shop/ProductComparison";
+import EnhancedShoppingVenn from "../../components/shop/EnhancedShoppingVenn";
 import "../../components/shop/shop-animations.css";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -464,11 +465,21 @@ export default function CosmicMerchandisePage() {
             </div>
           </div>
           
-          {/* Enhanced Shopping Experience - From Lovable.dev */}
+          {/* Enhanced Shopping Experience - From the images */}
           <div className="mb-12 cosmic-scale">
-            <EnhancedShoppingExperience 
-              onProductView={handleProductView}
-              products={products}
+            <EnhancedShoppingVenn 
+              onStartSession={() => {
+                toast({
+                  title: "Collaborative Shopping",
+                  description: "Starting a collaborative shopping session.",
+                });
+              }}
+              onCreateDesign={() => {
+                toast({
+                  title: "Co-Design Studio",
+                  description: "Opening the co-design studio tool.",
+                });
+              }}
             />
           </div>
           

@@ -108,19 +108,20 @@ const collectionItems: CollectionItem[] = [
 const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, userPoints }) => {
   return (
     <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 mb-2">
-          Cosmic Collectibles Collection
+      <div className="flex items-center gap-3 mb-8 cosmic-glass-card px-6 py-4 rounded-xl">
+        <CosmicIcon name="star" size={24} className="text-purple-400" />
+        <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 cosmic-text-glow">
+          Cosmic Collectibles & Rewards
         </h2>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Explore our curated collection of cosmic treasures designed to elevate your consciousness and enhance your spiritual journey.
-        </p>
-        {userPoints !== undefined && (
-          <div className="mt-4 inline-flex items-center px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
-            <span className="mr-2">✨</span>
-            <span className="font-medium">{userPoints} Cosmic Points Available</span>
-          </div>
-        )}
+        <div className="ml-auto bg-indigo-900/80 px-6 py-2 rounded-md flex items-center">
+          <span className="mr-2 text-sm text-purple-200">1250 Points</span>
+          <Button 
+            variant="link" 
+            className="text-purple-300 hover:text-purple-100 p-0 h-auto text-sm"
+          >
+            View Collectibles
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="all" className="w-full">
