@@ -8,6 +8,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { CartItem, ShippingInfo } from '@/types/cart';
 import { formatCurrency } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
+import { createPaymentIntent, processOrder } from '@/lib/paymentService';
+import StripeProvider from '@/components/shop/payment/StripeProvider';
 
 // UI Components
 import {
@@ -28,20 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, ShoppingCart, CreditCard, ArrowLeft } from 'lucide-react';
 import CosmicButton from '@/components/ui/cosmic-button';
 
-// This is a placeholder for the Stripe component
-// You would import the actual Stripe Elements from @stripe/react-stripe-js
-const StripeElements = ({ onSubmit }: { onSubmit: () => void }) => (
-  <div className="space-y-4">
-    <div className="border rounded-md p-4 bg-muted/30">
-      <p className="text-center text-sm text-muted-foreground">
-        Stripe payment integration would be implemented here
-      </p>
-    </div>
-    <Button onClick={onSubmit} className="w-full cosmic-hover-glow">
-      Pay Securely
-    </Button>
-  </div>
-);
+import StripeElements from '@/components/shop/payment/StripeElements';
 
 const shippingFormSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -66,6 +55,8 @@ export default function CheckoutPage() {
   const [activeTab, setActiveTab] = useState('shipping');
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | undefined>();
+  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
   
   // Create form
   const form = useForm<ShippingFormValues>({
@@ -133,13 +124,37 @@ export default function CheckoutPage() {
   });
   
   // Handle shipping form submission
-  const onShippingSubmit = (data: ShippingFormValues) => {
-    // Move to payment tab if shipping form is valid
-    setActiveTab('payment');
+  const onShippingSubmit = async (data: ShippingFormValues) => {
+    // Create a payment intent when moving to payment
+    try {
+      setIsCreatingPaymentIntent(true);
+      
+      // Create payment intent
+      const paymentIntentResponse = await createPaymentIntent({
+        amount: Math.round(total * 100), // Convert to cents
+        currency: 'usd',
+        metadata: {
+          customer_email: data.email,
+          customer_name: `${data.firstName} ${data.lastName}`
+        }
+      });
+      
+      setClientSecret(paymentIntentResponse.clientSecret);
+      // Move to payment tab if shipping form is valid
+      setActiveTab('payment');
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to initialize payment system',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingPaymentIntent(false);
+    }
   };
   
   // Handle payment submission
-  const onPaymentSubmit = () => {
+  const onPaymentSubmit = async (paymentMethodId: string): Promise<void> => {
     const shippingData = form.getValues();
     
     const orderData = {
@@ -179,10 +194,37 @@ export default function CheckoutPage() {
         phone: shippingData.phone,
       },
       paymentMethod: 'credit_card',
-      paymentId: 'payment_' + Date.now(), // This would be replaced by the actual payment ID from your payment processor
+      paymentMethodId: paymentMethodId,
+      amount: total,
+      items: cartItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price
+      }))
     };
     
-    createOrderMutation.mutate(orderData);
+    try {
+      const result = await processOrder(orderData, paymentMethodId);
+      
+      if (result.success) {
+        setOrderId(result.orderId);
+        setOrderPlaced(true);
+        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+        toast({
+          title: 'Order Placed',
+          description: `Your order has been placed successfully.`,
+        });
+      } else {
+        throw new Error('Failed to process order');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Payment Error',
+        description: error.message || 'Failed to process payment',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw to let Stripe Elements handle the error UI
+    }
   };
   
   // Navigate to cart
@@ -522,7 +564,16 @@ export default function CheckoutPage() {
                     <span>Credit or Debit Card</span>
                   </div>
                   
-                  <StripeElements onSubmit={onPaymentSubmit} />
+                  {isCreatingPaymentIntent ? (
+                    <div className="flex justify-center items-center py-6">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                      <span>Preparing payment form...</span>
+                    </div>
+                  ) : (
+                    <StripeProvider clientSecret={clientSecret}>
+                      <StripeElements onSubmit={onPaymentSubmit} />
+                    </StripeProvider>
+                  )}
                   
                   <div className="text-sm text-muted-foreground">
                     <p>Your payment information is secure and encrypted.</p>

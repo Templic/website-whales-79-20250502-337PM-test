@@ -40,6 +40,20 @@ export default function CartPage() {
     refetch
   } = useQuery<CartItem[]>({
     queryKey: ['/api/cart'],
+    queryFn: async () => {
+      const response = await fetch('/api/cart', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch cart');
+      }
+      
+      return response.json();
+    },
     enabled: isClientLoaded,
   });
   
