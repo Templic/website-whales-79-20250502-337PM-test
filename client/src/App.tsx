@@ -68,9 +68,20 @@ function Router() {
         <Route path="/" component={HomePage} />
         <Route path="/about" component={AboutPage} />
         <Route path="/music-release" component={NewMusicPage} />
-        <Route path="/archived-music" component={ArchivedMusicPage} />
+        <Route path="/music-archive" component={ArchivedMusicPage} />
         <Route path="/tour" component={TourPage} />
         <Route path="/engage" component={EngagePage} />
+        <Route path="/newsletter" component={NewsletterPage} />
+        <Route path="/blog" component={BlogPage} />
+        <Route path="/blog/:id" component={BlogPostPage} />
+        <Route path="/collaboration" component={CollaborationPage} />
+        <Route path="/contact" component={ContactPage} />
+        <Route path="/cosmic-experience" component={CosmicExperiencePage} />
+        <Route path="/immersive" component={ImmersivePage} />
+        <Route path="/shop" component={ShopPage} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
         <Route path="/newsletter" component={NewsletterPage} />
         <Route path="/blog" component={BlogPage} />
         <Route path="/blog/:id" component={BlogPostPage} />

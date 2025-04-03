@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Link } from "wouter";
 
@@ -19,29 +18,6 @@ export default function SitemapPage() {
             <li><Link href="/about">About</Link></li>
             <li><Link href="/contact">Contact</Link></li>
             <li><Link href="/tour">Tour</Link></li>
-            <li><Link href="/shop">Shop</Link></li>
-          </ul>
-
-          <h2 className="text-2xl font-semibold mb-4 mt-8">Demo Pages</h2>
-          <ul className="space-y-2">
-            <li><Link href="/test/cosmic">Cosmic UI Demo</Link></li>
-            <li><Link href="/test/audio">Audio Components</Link></li>
-            <li><Link href="/test/new">New Components</Link></li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Music</h2>
-          <ul className="space-y-2">
-            <li><Link href="/music-release">New Music</Link></li>
-            <li><Link href="/music-archive">Archived Music</Link></li>
-            <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">Community</h2>
-          <ul className="space-y-2">
             <li><Link href="/blog">Blog</Link></li>
             <li><Link href="/engage">Engage</Link></li>
             <li><Link href="/newsletter">Newsletter</Link></li>
@@ -50,25 +26,36 @@ export default function SitemapPage() {
         </section>
 
         <section>
+          <h2 className="text-2xl font-semibold mb-4">Music</h2>
+          <ul className="space-y-2">
+            <li><Link href="/music-release">New Music</Link></li>
+            <li><Link href="/music-archive">Music Archive</Link></li>
+            <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
+            <li><Link href="/immersive">Immersive Experience</Link></li>
+          </ul>
+        </section>
+
+        <section>
           <h2 className="text-2xl font-semibold mb-4">Shop</h2>
           <ul className="space-y-2">
             <li><Link href="/shop">Shop Home</Link></li>
-            <li><Link href="/shop/merchandise">Merchandise</Link></li>
-            <li><Link href="/shop/collectibles">Collectibles</Link></li>
+            <li><Link href="/cart">Shopping Cart</Link></li>
+            <li><Link href="/checkout">Checkout</Link></li>
+            <li><Link href="/collaborative-shopping">Group Shopping</Link></li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Account</h2>
+          <h2 className="text-2xl font-semibold mb-4">User Account</h2>
           <ul className="space-y-2">
             <li><Link href="/auth">Login/Register</Link></li>
-            <li><Link href="/user-portal">User Dashboard</Link></li>
-            <li><Link href="/password-recovery">Password Recovery</Link></li>
+            <li><Link href="/portal">User Dashboard</Link></li>
+            <li><Link href="/recover-password">Password Recovery</Link></li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold mb-4">Legal</h2>
+          <h2 className="text-2xl font-semibold mb-4">Legal & Info</h2>
           <ul className="space-y-2">
             <li><Link href="/privacy">Privacy Policy</Link></li>
             <li><Link href="/terms">Terms of Service</Link></li>
