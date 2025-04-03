@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
-import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
-import CosmicCollectibles from "@/components/shop/CosmicCollectibles";
-import ProductComparison from "@/components/shop/ProductComparison";
+import EnhancedShoppingExperience from "../../components/shop/EnhancedShoppingExperience";
+import CosmicCollectibles from "../../components/shop/CosmicCollectibles";
+import ProductComparison from "../../components/shop/ProductComparison";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -661,7 +661,7 @@ export default function CosmicMerchandisePage() {
           
           {/* Collectibles Section - From Lovable.dev */}
           <div className="mb-12 cosmic-scale">
-            <CosmicCollectibles userPoints={userPoints} />
+            <CosmicCollectibles userPoints={userPoints} onAddToCart={addToCart} />
           </div>
           
           {/* Shopping Cart Sheet */}

@@ -24,6 +24,11 @@ interface FeaturedProduct {
   limited?: boolean;
 }
 
+interface EnhancedShoppingExperienceProps {
+  onProductView?: (productId: string) => void;
+  products?: any[]; // Accept products from parent component
+}
+
 const shoppingFeatures: ProductFeature[] = [
   {
     id: "feature-1",
@@ -85,7 +90,7 @@ const featuredProducts: FeaturedProduct[] = [
   }
 ];
 
-const EnhancedShoppingExperience: React.FC = () => {
+const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({ onProductView, products }) => {
   return (
     <div className="space-y-12">
       {/* Hero section */}

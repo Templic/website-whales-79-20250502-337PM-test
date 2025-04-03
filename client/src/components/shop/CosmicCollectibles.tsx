@@ -28,6 +28,12 @@ interface CollectionItem {
   discount?: number;
 }
 
+// Props interface
+interface CosmicCollectiblesProps {
+  onAddToCart?: (product: any) => void;
+  userPoints?: number;
+}
+
 // Sample collection items data
 const collectionItems: CollectionItem[] = [
   {
@@ -99,7 +105,7 @@ const collectionItems: CollectionItem[] = [
   }
 ];
 
-const CosmicCollectibles: React.FC = () => {
+const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, userPoints }) => {
   return (
     <div className="space-y-8">
       <div className="text-center mb-8">
@@ -109,6 +115,12 @@ const CosmicCollectibles: React.FC = () => {
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Explore our curated collection of cosmic treasures designed to elevate your consciousness and enhance your spiritual journey.
         </p>
+        {userPoints !== undefined && (
+          <div className="mt-4 inline-flex items-center px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+            <span className="mr-2">✨</span>
+            <span className="font-medium">{userPoints} Cosmic Points Available</span>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="all" className="w-full">
@@ -124,7 +136,7 @@ const CosmicCollectibles: React.FC = () => {
         <TabsContent value="all" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {collectionItems.map((item) => (
-              <CollectibleCard key={item.id} item={item} />
+              <CollectibleCard key={item.id} item={item} onAddToCart={onAddToCart} />
             ))}
           </div>
         </TabsContent>
@@ -135,7 +147,7 @@ const CosmicCollectibles: React.FC = () => {
               {collectionItems
                 .filter((item) => item.category === category)
                 .map((item) => (
-                  <CollectibleCard key={item.id} item={item} />
+                  <CollectibleCard key={item.id} item={item} onAddToCart={onAddToCart} />
                 ))}
             </div>
           </TabsContent>
@@ -152,7 +164,7 @@ const CosmicCollectibles: React.FC = () => {
 };
 
 // Card component for collection items
-const CollectibleCard: React.FC<{ item: CollectionItem }> = ({ item }) => {
+const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: any) => void }> = ({ item, onAddToCart }) => {
   return (
     <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20">
       <div className="relative">
@@ -221,7 +233,11 @@ const CollectibleCard: React.FC<{ item: CollectionItem }> = ({ item }) => {
             )}
           </div>
           
-          <Button size="sm" className="gap-1">
+          <Button 
+            size="sm" 
+            className="gap-1"
+            onClick={() => onAddToCart && onAddToCart(item)}
+          >
             <ShoppingCart className="h-4 w-4" />
             Add
           </Button>

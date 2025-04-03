@@ -22,6 +22,12 @@ interface Product {
   bestValue?: boolean;
 }
 
+// Props interface
+interface ProductComparisonProps {
+  products?: any[];
+  onAddToCart?: (product: any) => void;
+}
+
 // Products data for comparison
 const crystalProducts: Product[] = [
   {
@@ -154,7 +160,7 @@ const soundProducts: Product[] = [
   }
 ];
 
-const ProductComparison: React.FC = () => {
+const ProductComparison: React.FC<ProductComparisonProps> = ({ products: externalProducts, onAddToCart }) => {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>(crystalProducts);
 
   return (
@@ -182,11 +188,11 @@ const ProductComparison: React.FC = () => {
         </TabsList>
 
         <TabsContent value="crystals" className="mt-6">
-          <ComparisonTable products={crystalProducts} />
+          <ComparisonTable products={crystalProducts} onAddToCart={onAddToCart} />
         </TabsContent>
 
         <TabsContent value="sound" className="mt-6">
-          <ComparisonTable products={soundProducts} />
+          <ComparisonTable products={soundProducts} onAddToCart={onAddToCart} />
         </TabsContent>
       </Tabs>
 
@@ -224,7 +230,7 @@ const ProductComparison: React.FC = () => {
 };
 
 // Comparison table component
-const ComparisonTable: React.FC<{ products: Product[] }> = ({ products }) => {
+const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: any) => void }> = ({ products, onAddToCart }) => {
   // Get all unique feature keys from all products
   const allFeatures = Array.from(
     new Set(
@@ -273,7 +279,11 @@ const ComparisonTable: React.FC<{ products: Product[] }> = ({ products }) => {
                     )}
                   </div>
                   
-                  <Button size="sm" className="mt-2">
+                  <Button 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => onAddToCart && onAddToCart(product)}
+                  >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Add to Cart
                   </Button>
