@@ -1,3 +1,4 @@
+
 # Cosmic Community Connect - Architecture Documentation
 
 ## Technology Stack
@@ -35,39 +36,7 @@
    - Database Monitoring
    - Content Review System
 
-## Project Architecture
-
-## Component Reuse Philosophy
-Before creating new UI components, developers should check existing components in our test and demo pages. This prevents duplication and maintains consistency.
-
-### Demo & Test Pages
-- `/test/cosmic` - Main Cosmic UI components showcase
-- `/test/audio` - Audio processing components demo
-- `/test/new` - Latest features and components
-- `/cosmic-components` - Additional cosmic-themed components
-- `/cosmic-test` - Test environment for cosmic effects
-
-### Existing Component Libraries
-1. **Core UI Components** (`src/components/ui/`)
-   - Button, Card, Dialog variants
-   - Cosmic-themed components
-   - Sacred Geometry elements
-
-2. **Feature Components** (`src/components/`)
-   - Audio processing components
-   - Cosmic-themed UI elements
-   - Community interaction components
-   - Admin components
-
-3. **Demo Components** (`src/pages/test/`)
-   - CosmicComponentsDemo
-   - AudioComponentsDemo
-   - NewComponentsDemo
-
-### Theme Guidelines
-- Both cyan (original) and purple (imported) themes are acceptable
-- Site will eventually align with demo page aesthetics
-- Use existing cosmic effects and animations
+## Component Architecture
 
 ### Test & Demo Components Integration
 Located in `src/pages/test/`:
@@ -105,6 +74,30 @@ Located in `src/pages/test/`:
      - AlbumShowcase integrates with MusicArchivePage
      - CosmicCollectibles enhances ShopPage
 
+### Demo Pages Implementation Guide
+
+1. **Component Import Pattern**
+```typescript
+import { BinauralBeatGenerator } from '@/components/audio/BinauralBeatGenerator'
+import { CosmicButton } from '@/components/cosmic/CosmicButton'
+```
+
+2. **Integration Example**
+```typescript
+const MusicPage = () => {
+  return (
+    <div>
+      <BinauralBeatGenerator />
+      <AlbumShowcase albums={albumData} />
+    </div>
+  )
+}
+```
+
+3. **Component Props Documentation**
+   - Each demo component includes TypeScript interfaces
+   - Props are documented with JSDoc comments
+   - Examples provided in component stories
 
 ### Core UI Components
 Located in `src/components/ui/`:

@@ -32,7 +32,7 @@ import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import CosmicTest from "@/pages/CosmicTest";
-import CosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
+import CosmicComponentsDemo from "@/pages/CosmicComponentsDemo";
 
 // Shop Pages
 import ShopPage from "@/pages/ShopPage";
