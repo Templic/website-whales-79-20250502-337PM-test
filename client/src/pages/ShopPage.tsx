@@ -12,6 +12,7 @@ import CosmicHeading from '@/components/ui/cosmic-heading';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { CosmicButton } from '@/components/ui/cosmic-button';
 import { apiRequest } from '@/lib/queryClient';
+import { Link } from 'wouter';
 
 export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -139,14 +140,9 @@ const {
             <p className="max-w-2xl text-lg mb-4 text-shadow shadow-blue-500">
               Explore our exclusive merchandise and collectibles to take a piece of the cosmic journey home with you.
             </p>
-            <CosmicButton 
-              variant="glow" 
-              size="lg" 
-              href="/shop/collaborative"
-              className="mt-2"
-            >
+            <Link to="/shop/collaborative" className="inline-flex items-center justify-center h-11 rounded-md px-8 text-sm font-medium bg-cosmic-primary text-white hover:bg-cosmic-primary/90 shadow-[0_0_15px_rgba(155,135,245,0.5)] hover:shadow-[0_0_25px_rgba(155,135,245,0.7)] hover:-translate-y-1 transition-all duration-300 mt-2">
               Shop Together with Friends
-            </CosmicButton>
+            </Link>
           </div>
         </div>
       </section>

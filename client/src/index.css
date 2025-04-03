@@ -1,5 +1,6 @@
 
 @import url('./cosmic-styles.css');
+@import url('./components/cosmic/cosmic-animations.css');
 
 @keyframes cosmic {
   0%, 100% {
