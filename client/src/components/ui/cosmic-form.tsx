@@ -1,25 +1,51 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { useForm, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form';
+import * as React from "react";
+import { cn } from "@/lib/utils";
+import { 
+  useForm, 
+  UseFormReturn, 
+  FieldValues,
+  UseFormProps,
+  SubmitHandler
+} from "react-hook-form";
 
-// CosmicForm
-export interface CosmicFormProps<TFormValues extends FieldValues = FieldValues>
-  extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit'> {
+export interface CosmicFormProps<TFormValues extends FieldValues> {
   form: UseFormReturn<TFormValues>;
   onSubmit: SubmitHandler<TFormValues>;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export interface CosmicFormGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  className?: string;
+  isError?: boolean;
+  isSuccess?: boolean;
+}
+
+export interface CosmicFormLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  children: React.ReactNode;
+  className?: string;
+  required?: boolean;
+}
+
+export interface CosmicFormHelperTextProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  children: React.ReactNode;
+  className?: string;
+  isError?: boolean;
+  isSuccess?: boolean;
 }
 
 export const CosmicForm = <TFormValues extends FieldValues>({
-  form,
-  onSubmit,
-  children,
-  className,
+  form, 
+  onSubmit, 
+  children, 
+  className, 
   ...props
 }: CosmicFormProps<TFormValues>) => {
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
-      className={cn('space-y-4', className)}
+      className={cn("space-y-4", className)}
       {...props}
     >
       {children}
@@ -27,57 +53,62 @@ export const CosmicForm = <TFormValues extends FieldValues>({
   );
 };
 
-// CosmicFormGroup
-export interface CosmicFormGroupProps extends React.HTMLAttributes<HTMLDivElement> {}
-
 export const CosmicFormGroup: React.FC<CosmicFormGroupProps> = ({
-  className,
   children,
+  className,
+  isError,
+  isSuccess,
   ...props
 }) => {
   return (
-    <div className={cn('space-y-2', className)} {...props}>
+    <div
+      className={cn(
+        "space-y-2",
+        isError && "cosmic-form-group-error",
+        isSuccess && "cosmic-form-group-success",
+        className
+      )}
+      {...props}
+    >
       {children}
     </div>
   );
 };
 
-// CosmicFormLabel
-export interface CosmicFormLabelProps
-  extends React.LabelHTMLAttributes<HTMLLabelElement> {}
-
 export const CosmicFormLabel: React.FC<CosmicFormLabelProps> = ({
-  className,
   children,
+  className,
+  required,
   ...props
 }) => {
   return (
     <label
-      className={cn('block text-sm font-medium', className)}
+      className={cn(
+        "block text-sm font-medium leading-6 text-foreground",
+        className
+      )}
       {...props}
     >
       {children}
+      {required && <span className="ml-1 text-destructive">*</span>}
     </label>
   );
 };
 
-// CosmicFormHelperText
-export interface CosmicFormHelperTextProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {
-  isError?: boolean;
-}
-
 export const CosmicFormHelperText: React.FC<CosmicFormHelperTextProps> = ({
-  className,
   children,
-  isError = false,
+  className,
+  isError,
+  isSuccess,
   ...props
 }) => {
   return (
     <p
       className={cn(
-        'text-xs mt-1',
-        isError ? 'text-red-400' : 'text-gray-400',
+        "mt-2 text-sm",
+        isError && "text-destructive",
+        isSuccess && "text-green-600",
+        !isError && !isSuccess && "text-muted-foreground",
         className
       )}
       {...props}
@@ -87,4 +118,12 @@ export const CosmicFormHelperText: React.FC<CosmicFormHelperTextProps> = ({
   );
 };
 
-export default { CosmicForm, CosmicFormGroup, CosmicFormLabel, CosmicFormHelperText };
+// Also export a default object for backward compatibility
+const CosmicFormComponents = {
+  CosmicForm,
+  CosmicFormGroup,
+  CosmicFormLabel,
+  CosmicFormHelperText
+};
+
+export default CosmicFormComponents;

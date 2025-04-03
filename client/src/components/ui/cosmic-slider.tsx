@@ -28,6 +28,11 @@ export const CosmicSlider = React.forwardRef<
     primary: "bg-blue-500"
   };
 
+  // Ensure we have a default value
+  const defaultValue = props.defaultValue || [0];
+  const value = props.value || defaultValue;
+  const safeValue = Array.isArray(value) ? value : [0];
+
   return (
     <div className="space-y-2">
       <SliderPrimitive.Root
@@ -36,22 +41,22 @@ export const CosmicSlider = React.forwardRef<
           "relative flex w-full touch-none select-none items-center",
           className
         )}
-        value={Array.isArray(props.value) ? props.value : [props.value]}
+        defaultValue={defaultValue}
         {...props}
       >
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
           <SliderPrimitive.Range className={cn("absolute h-full", variantClasses[variant])} />
         </SliderPrimitive.Track>
-        {props.value?.map((_, index) => (
+        {safeValue.map((_, index) => (
           <SliderPrimitive.Thumb
             key={index}
             className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
           />
         ))}
       </SliderPrimitive.Root>
-      {showValue && props.value && (
+      {showValue && safeValue && (
         <div className="text-center text-xs text-muted-foreground">
-          {formatValue(props.value)}
+          {formatValue(safeValue)}
         </div>
       )}
     </div>
