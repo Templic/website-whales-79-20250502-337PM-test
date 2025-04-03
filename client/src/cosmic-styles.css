@@ -1,402 +1,277 @@
-/* Cosmic-specific styles */
+/**
+ * Cosmic Theme - Core Styles
+ * Main styling system for cosmic-themed components
+ */
 
-/* Font treatments */
-.font-cosmic {
-  font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+/* Core Color Variables */
+:root {
+  --cosmic-primary: #9b87f5;
+  --cosmic-primary-light: #b8a9f8;
+  --cosmic-primary-dark: #6d5aa8;
+  --cosmic-secondary: #7E69AB;
+  --cosmic-background: #1A1F2C;
+  --cosmic-background-light: #2A2F3C;
+  --cosmic-accent: #1EAEDB;
+  --cosmic-text: #ffffff;
+  --cosmic-text-muted: #8E9196;
+  --cosmic-success: #10B981;
+  --cosmic-warning: #FBBF24;
+  --cosmic-error: #EF4444;
 }
 
-/* Animations */
-@keyframes cosmic-glow {
-  0%, 100% {
-    text-shadow: 0 0 10px #00ebd6,
-                 0 0 20px #00ebd6,
-                 0 0 30px #ff61d8,
-                 0 0 40px #ff61d8;
-  }
-  50% {
-    text-shadow: 0 0 20px #ff61d8,
-                 0 0 30px #ff61d8,
-                 0 0 40px #00ebd6,
-                 0 0 50px #00ebd6;
-  }
-}
-
-.animate-cosmic-glow {
-  animation: cosmic-glow 3s ease-in-out infinite;
-}
-
-/* Background treatments */
-.bg-cosmic-gradient {
-  background: linear-gradient(to bottom right, #0b0a14, #121024);
-}
-
-.bg-cosmic-nebula {
-  background: linear-gradient(45deg, rgba(11, 10, 20, 0.9), rgba(18, 16, 36, 0.95)),
-              url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='smallGrid' width='10' height='10' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 10 0 L 0 0 0 10' fill='none' stroke='rgba(155, 135, 245, 0.1)' stroke-width='0.5'/%3E%3C/pattern%3E%3Cpattern id='grid' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Crect width='100' height='100' fill='url(%23smallGrid)'/%3E%3Cpath d='M 100 0 L 0 0 0 100' fill='none' stroke='rgba(155, 135, 245, 0.2)' stroke-width='1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)' /%3E%3C/svg%3E");
-}
-
-/* Card treatments */
-.card-cosmic {
-  background: rgba(11, 10, 20, 0.7);
-  border: 1px solid rgba(155, 135, 245, 0.2);
+/* Card & Container Styles */
+.cosmic-container {
+  @apply p-6 rounded-lg;
+  background: rgba(26, 31, 44, 0.7);
   backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 
-              0 0 15px rgba(155, 135, 245, 0.1);
+  border: 1px solid rgba(155, 135, 245, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.cosmic-card {
+  @apply rounded-lg overflow-hidden;
+  background: rgba(26, 31, 44, 0.8);
+  border: 1px solid rgba(155, 135, 245, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
 }
 
-.card-cosmic:hover {
+.cosmic-card:hover {
   border-color: rgba(155, 135, 245, 0.4);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 
-              0 0 20px rgba(155, 135, 245, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(155, 135, 245, 0.15);
 }
 
-/* Button treatments */
-.button-cosmic {
-  background: rgba(155, 135, 245, 0.2);
+.cosmic-card.glow {
   border: 1px solid rgba(155, 135, 245, 0.3);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(5px);
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 500;
-}
-
-.button-cosmic::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(155, 135, 245, 0.3),
-    transparent
-  );
-  transition: all 0.6s ease;
-}
-
-.button-cosmic:hover {
-  background: rgba(155, 135, 245, 0.3);
-  border-color: rgba(155, 135, 245, 0.5);
   box-shadow: 0 0 15px rgba(155, 135, 245, 0.3);
 }
 
-.button-cosmic:hover::before {
-  left: 100%;
+.cosmic-card.glow:hover {
+  box-shadow: 0 0 25px rgba(155, 135, 245, 0.5);
 }
 
-/* Input styling */
-.input-cosmic {
-  background: rgba(11, 10, 20, 0.6);
-  border: 1px solid rgba(155, 135, 245, 0.2);
-  border-radius: 8px;
+/* Button Styles */
+.cosmic-button {
+  @apply inline-flex items-center justify-center h-10 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200;
+  background-color: var(--cosmic-primary);
   color: white;
-  padding: 10px 15px;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 10px rgba(155, 135, 245, 0.3);
 }
 
-.input-cosmic:focus {
-  border-color: rgba(155, 135, 245, 0.5);
-  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.2);
+.cosmic-button:hover {
+  background-color: var(--cosmic-primary-light);
+  box-shadow: 0 4px 15px rgba(155, 135, 245, 0.5);
+  transform: translateY(-1px);
+}
+
+.cosmic-button:active {
+  transform: translateY(1px);
+}
+
+.cosmic-button.outline {
+  background-color: transparent;
+  border: 1px solid var(--cosmic-primary);
+  color: var(--cosmic-primary);
+}
+
+.cosmic-button.outline:hover {
+  background-color: rgba(155, 135, 245, 0.1);
+}
+
+.cosmic-button.ghost {
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--cosmic-primary);
+}
+
+.cosmic-button.ghost:hover {
+  background-color: rgba(155, 135, 245, 0.1);
+  box-shadow: none;
+}
+
+/* Text Styles */
+.cosmic-heading {
+  @apply font-bold mb-2;
+  color: var(--cosmic-text);
+}
+
+.cosmic-heading.gradient {
+  background: linear-gradient(90deg, var(--cosmic-primary), var(--cosmic-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cosmic-text {
+  color: var(--cosmic-text);
+}
+
+.cosmic-text.muted {
+  color: var(--cosmic-text-muted);
+}
+
+/* Form Element Styles */
+.cosmic-input {
+  @apply px-3 py-2 rounded-md;
+  background-color: rgba(30, 30, 40, 0.4);
+  border: 1px solid rgba(155, 135, 245, 0.15);
+  color: var(--cosmic-text);
+  transition: all 0.2s ease;
+}
+
+.cosmic-input:focus {
   outline: none;
+  background-color: rgba(30, 30, 40, 0.6);
+  border-color: rgba(155, 135, 245, 0.4);
+  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.15);
 }
 
-/* Divider styling */
-.divider-cosmic {
+.cosmic-input::placeholder {
+  color: var(--cosmic-text-muted);
+}
+
+.cosmic-label {
+  @apply block text-sm font-medium mb-1;
+  color: var(--cosmic-text);
+}
+
+/* Table Styles */
+.cosmic-table {
+  @apply w-full;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.cosmic-table th {
+  @apply px-4 py-3 text-left text-xs font-medium uppercase tracking-wider;
+  background-color: rgba(30, 30, 40, 0.6);
+  color: var(--cosmic-text-muted);
+  border-bottom: 1px solid rgba(155, 135, 245, 0.2);
+}
+
+.cosmic-table td {
+  @apply px-4 py-3 text-sm;
+  border-bottom: 1px solid rgba(155, 135, 245, 0.1);
+}
+
+.cosmic-table tr:hover td {
+  background-color: rgba(155, 135, 245, 0.05);
+}
+
+/* Navigation Styles */
+.cosmic-nav-item {
+  @apply px-4 py-2 rounded-md text-sm font-medium transition-all duration-200;
+  color: var(--cosmic-text-muted);
+}
+
+.cosmic-nav-item:hover {
+  color: var(--cosmic-text);
+  background-color: rgba(155, 135, 245, 0.1);
+}
+
+.cosmic-nav-item.active {
+  color: var(--cosmic-primary);
+  background-color: rgba(155, 135, 245, 0.15);
+}
+
+/* Layout Utilities */
+.cosmic-divider {
   height: 1px;
   background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(155, 135, 245, 0.5),
-    transparent
+    to right,
+    rgba(155, 135, 245, 0),
+    rgba(155, 135, 245, 0.3),
+    rgba(155, 135, 245, 0)
   );
-  margin: 2rem 0;
+  margin: 1.5rem 0;
 }
 
-/* Scrollbar styling */
-.scrollbar-cosmic::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.scrollbar-cosmic::-webkit-scrollbar-track {
-  background: rgba(11, 10, 20, 0.6);
-}
-
-.scrollbar-cosmic::-webkit-scrollbar-thumb {
-  background: rgba(155, 135, 245, 0.3);
-  border-radius: 3px;
-}
-
-.scrollbar-cosmic::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 135, 245, 0.5);
-}
-
-/* Overlay styling */
-.overlay-cosmic {
-  background: radial-gradient(
-    circle at center,
-    rgba(11, 10, 20, 0.7),
-    rgba(11, 10, 20, 0.9)
-  );
-  backdrop-filter: blur(10px);
-}
-
-/* Text effects */
-.text-cosmic-gradient {
-  background: linear-gradient(to right, #9b87f5, #33c3f0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Animations for cards */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .cosmic-container {
+    @apply p-4;
   }
-  50% {
-    transform: translateY(-10px);
+  
+  .cosmic-button {
+    @apply h-9 px-3;
   }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+/* Status Indicators */
+.cosmic-badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
 }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(155, 135, 245, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(155, 135, 245, 0.5);
-  }
+.cosmic-badge.primary {
+  background-color: rgba(155, 135, 245, 0.2);
+  color: var(--cosmic-primary-light);
 }
 
-.animate-glow {
-  animation: glow 3s ease-in-out infinite;
+.cosmic-badge.success {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: var(--cosmic-success);
 }
 
-/* Shadow effects */
-.drop-shadow-glow {
-  filter: drop-shadow(0 0 8px rgba(155, 135, 245, 0.6));
+.cosmic-badge.warning {
+  background-color: rgba(251, 191, 36, 0.2);
+  color: var(--cosmic-warning);
 }
 
-/* Background gradients */
-.bg-nebula-gradient {
-  background: linear-gradient(to right, #9b87f5, #33c3f0, #ff61d8);
+.cosmic-badge.error {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--cosmic-error);
 }
 
-/* Animation for the cosmic heading */
-@keyframes cosmic {
-  0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(155, 135, 245, 0.6));
-  }
-  50% {
-    filter: drop-shadow(0 0 15px rgba(255, 97, 216, 0.8));
-  }
+/* Special Elements */
+.cosmic-avatar {
+  @apply inline-flex items-center justify-center overflow-hidden;
+  background-color: rgba(155, 135, 245, 0.2);
+  color: var(--cosmic-primary-light);
 }
 
-.animate-cosmic {
-  animation: cosmic 4s ease-in-out infinite;
+.cosmic-avatar.ring {
+  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.5);
 }
 
-/* Font families */
-.font-orbitron {
-  font-family: 'Orbitron', sans-serif;
+/* Tooltip */
+.cosmic-tooltip {
+  @apply absolute z-50 px-2 py-1 text-xs rounded shadow-lg;
+  background-color: rgba(26, 31, 44, 0.95);
+  border: 1px solid rgba(155, 135, 245, 0.3);
+  color: var(--cosmic-text);
+  max-width: 300px;
 }
 
-.font-rajdhani {
-  font-family: 'Rajdhani', sans-serif;
+/* Tailwind Utility Extensions */
+.bg-cosmic-primary {
+  background-color: var(--cosmic-primary);
 }
 
-.font-space {
-  font-family: 'Space Grotesk', sans-serif;
+.bg-cosmic-background {
+  background-color: var(--cosmic-background);
 }
 
-/* Animations for new components */
-
-/* CosmicProgressBar indeterminate animation */
-@keyframes indeterminate {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
+.bg-cosmic-card {
+  background-color: rgba(26, 31, 44, 0.8);
 }
 
-.animate-indeterminate {
-  animation: indeterminate 1.5s infinite linear;
+.text-cosmic-primary {
+  color: var(--cosmic-primary);
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -100% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+.text-cosmic-muted {
+  color: var(--cosmic-text-muted);
 }
 
-.animate-shimmer {
-  animation: shimmer 2s infinite linear;
+.border-cosmic {
+  border-color: rgba(155, 135, 245, 0.3);
 }
 
-/* Shadow effects for components */
-.shadow-glow-sm {
-  box-shadow: 0 0 10px rgba(155, 135, 245, 0.5);
+.shadow-cosmic {
+  box-shadow: 0 4px 20px rgba(155, 135, 245, 0.15);
 }
 
-.shadow-glow {
-  box-shadow: 0 0 20px rgba(155, 135, 245, 0.7);
-}
-
-.shadow-glow-lg {
-  box-shadow: 0 0 30px rgba(155, 135, 245, 0.9);
-}
-
-/* CosmicAvatar animations */
-@keyframes cosmic-avatar-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.9;
-  }
-}
-
-@keyframes cosmic-avatar-orbit {
-  0% {
-    box-shadow: 0 0 0 0 rgba(155, 135, 245, 0.4),
-                0 0 0 0 rgba(51, 195, 240, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(155, 135, 245, 0),
-                0 0 0 20px rgba(51, 195, 240, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 20px rgba(155, 135, 245, 0),
-                0 0 0 40px rgba(51, 195, 240, 0);
-  }
-}
-
-.cosmic-avatar-animate {
-  animation: cosmic-avatar-pulse 3s infinite ease-in-out, 
-             cosmic-avatar-orbit 4s infinite ease-out;
-}
-
-/* Animation for spin effect */
-@keyframes spin-slow {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 8s linear infinite;
-}
-
-/* Accordion animations */
-@keyframes accordion-down {
-  from {
-    height: 0;
-    opacity: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-    opacity: 1;
-  }
-}
-
-@keyframes accordion-up {
-  from {
-    height: var(--radix-accordion-content-height);
-    opacity: 1;
-  }
-  to {
-    height: 0;
-    opacity: 0;
-  }
-}
-
-.animate-accordion-down {
-  animation: accordion-down 0.3s ease-in-out;
-}
-
-.animate-accordion-up {
-  animation: accordion-up 0.3s ease-in-out;
-}
-
-/* Additional animation variants for accordion */
-@keyframes slide-down {
-  from {
-    height: 0;
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slide-up {
-  from {
-    height: var(--radix-accordion-content-height);
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    height: 0;
-    transform: translateY(-10px);
-    opacity: 0;
-  }
-}
-
-.animate-slide-down {
-  animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.animate-slide-up {
-  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.3s ease-in-out;
-}
-
-.animate-fade-out {
-  animation: fade-out 0.3s ease-in-out;
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

@@ -1,49 +1,32 @@
-export interface RoomParticipant {
-  id: string;
-  username: string;
-  avatar?: string;
-  isHost: boolean;
-  joinedAt: Date;
-  status: 'online' | 'away' | 'busy';
-}
+// Collaborative Shopping Types
 
 export interface RoomMessage {
   id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
+  username: string;
+  avatar: string;
+  message: string;
   timestamp: Date;
-  type: 'text' | 'system' | 'product';
-  productData?: {
-    id: string;
-    name: string;
-    image?: string;
-    price: string;
-  };
+  isSystem?: boolean;
+  productRef?: string;
+}
+
+export interface RoomParticipant {
+  id: string;
+  username: string;
+  avatar: string;
+  isActive: boolean;
+  lastActive: Date;
 }
 
 export interface Room {
   id: string;
   name: string;
-  hostId: string;
-  hostName: string;
-  participantCount: number;
+  participants: RoomParticipant[];
   createdAt: Date;
+  createdBy: string;
   isPrivate: boolean;
-  password?: string;
-  description?: string;
 }
 
-export interface SharedCart {
-  id: string;
-  roomId: string;
-  items: SharedCartItem[];
-  lastUpdated: Date;
-}
-
-export interface SharedCartItem {
-  productId: string;
-  quantity: number;
-  addedBy: string;
-  addedAt: Date;
-}
+export type MessageHandler = (message: string) => void;
+export type ProductViewHandler = (productId: string) => void;
+export type RoomJoinHandler = (roomId: string) => void;
