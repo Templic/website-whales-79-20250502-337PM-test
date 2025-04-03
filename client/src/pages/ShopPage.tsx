@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2, SlidersHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Product, ProductCategory } from '@shared/schema';
+import { defaultProducts, productCategories } from '@/data/playlists';
 import ProductGrid from '@/components/shop/ProductGrid';
 import ProductFilter from '@/components/shop/ProductFilter';
 import ProductQuickView from '@/components/shop/ProductQuickView';
@@ -30,8 +31,6 @@ export default function ShopPage() {
   }, []);
 
   // Fetch products based on filters
-  import { defaultProducts, productCategories } from '@/data/playlists';
-
 const { 
     data: products, 
     isLoading: productsLoading, 
