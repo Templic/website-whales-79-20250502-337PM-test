@@ -6,6 +6,26 @@ interface ApiRequestOptions {
   headers?: Record<string, string>;
 }
 
+// Default fetch function for React Query
+export const getQueryFn = <T>(url: string) => 
+  async (): Promise<T> => {
+    const response = await fetch(url, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: response.statusText,
+      }));
+      throw new Error(error.message || 'An error occurred');
+    }
+    
+    return response.json();
+  };
+
 // Default fetch function for API requests
 export async function apiRequest(
   endpoint: string,

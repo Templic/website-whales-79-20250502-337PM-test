@@ -1,277 +1,189 @@
-/**
- * Cosmic Theme - Core Styles
- * Main styling system for cosmic-themed components
- */
+/* Cosmic UI Elements and Animations */
 
-/* Core Color Variables */
+/* Base cosmic styles */
 :root {
-  --cosmic-primary: #9b87f5;
-  --cosmic-primary-light: #b8a9f8;
-  --cosmic-primary-dark: #6d5aa8;
-  --cosmic-secondary: #7E69AB;
-  --cosmic-background: #1A1F2C;
-  --cosmic-background-light: #2A2F3C;
-  --cosmic-accent: #1EAEDB;
-  --cosmic-text: #ffffff;
-  --cosmic-text-muted: #8E9196;
-  --cosmic-success: #10B981;
-  --cosmic-warning: #FBBF24;
-  --cosmic-error: #EF4444;
+  --cosmic-primary: rgba(138, 43, 226, 1);    /* Blueviolet */
+  --cosmic-primary-light: rgba(138, 43, 226, 0.6);
+  --cosmic-primary-dim: rgba(138, 43, 226, 0.3);
+  --cosmic-vivid: rgba(147, 112, 219, 1);     /* MediumPurple */
+  --cosmic-accent: rgba(255, 105, 180, 1);    /* HotPink */
+  --cosmic-accent-dim: rgba(255, 105, 180, 0.4);
+  --cosmic-glow: rgba(255, 255, 255, 0.8);
+  --cosmic-dark: rgba(25, 25, 35, 1);
+  --cosmic-shadow: rgba(0, 0, 0, 0.2);
+  --cosmic-glass: rgba(255, 255, 255, 0.1);
 }
 
-/* Card & Container Styles */
-.cosmic-container {
-  @apply p-6 rounded-lg;
-  background: rgba(26, 31, 44, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(155, 135, 245, 0.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-}
-
-.cosmic-card {
-  @apply rounded-lg overflow-hidden;
-  background: rgba(26, 31, 44, 0.8);
-  border: 1px solid rgba(155, 135, 245, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-}
-
-.cosmic-card:hover {
-  border-color: rgba(155, 135, 245, 0.4);
-  box-shadow: 0 8px 30px rgba(155, 135, 245, 0.15);
-}
-
-.cosmic-card.glow {
-  border: 1px solid rgba(155, 135, 245, 0.3);
-  box-shadow: 0 0 15px rgba(155, 135, 245, 0.3);
-}
-
-.cosmic-card.glow:hover {
-  box-shadow: 0 0 25px rgba(155, 135, 245, 0.5);
-}
-
-/* Button Styles */
-.cosmic-button {
-  @apply inline-flex items-center justify-center h-10 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200;
-  background-color: var(--cosmic-primary);
-  color: white;
-  border: none;
-  box-shadow: 0 2px 10px rgba(155, 135, 245, 0.3);
-}
-
-.cosmic-button:hover {
-  background-color: var(--cosmic-primary-light);
-  box-shadow: 0 4px 15px rgba(155, 135, 245, 0.5);
-  transform: translateY(-1px);
-}
-
-.cosmic-button:active {
-  transform: translateY(1px);
-}
-
-.cosmic-button.outline {
-  background-color: transparent;
-  border: 1px solid var(--cosmic-primary);
-  color: var(--cosmic-primary);
-}
-
-.cosmic-button.outline:hover {
-  background-color: rgba(155, 135, 245, 0.1);
-}
-
-.cosmic-button.ghost {
-  background-color: transparent;
-  box-shadow: none;
-  color: var(--cosmic-primary);
-}
-
-.cosmic-button.ghost:hover {
-  background-color: rgba(155, 135, 245, 0.1);
-  box-shadow: none;
-}
-
-/* Text Styles */
-.cosmic-heading {
-  @apply font-bold mb-2;
-  color: var(--cosmic-text);
-}
-
-.cosmic-heading.gradient {
-  background: linear-gradient(90deg, var(--cosmic-primary), var(--cosmic-accent));
+/* Cosmic text effects */
+.cosmic-gradient-text {
+  background: linear-gradient(135deg, var(--cosmic-primary), var(--cosmic-accent));
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 5px var(--cosmic-primary-dim);
 }
 
 .cosmic-text {
-  color: var(--cosmic-text);
+  position: relative;
+  z-index: 1;
 }
 
 .cosmic-text.muted {
-  color: var(--cosmic-text-muted);
+  opacity: 0.8;
 }
 
-/* Form Element Styles */
-.cosmic-input {
-  @apply px-3 py-2 rounded-md;
-  background-color: rgba(30, 30, 40, 0.4);
-  border: 1px solid rgba(155, 135, 245, 0.15);
-  color: var(--cosmic-text);
-  transition: all 0.2s ease;
+.cosmic-text.glowing {
+  text-shadow: 0 0 5px var(--cosmic-primary-light);
 }
 
-.cosmic-input:focus {
-  outline: none;
-  background-color: rgba(30, 30, 40, 0.6);
-  border-color: rgba(155, 135, 245, 0.4);
-  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.15);
+/* Cosmic containers and cards */
+.cosmic-glass-card {
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
-.cosmic-input::placeholder {
-  color: var(--cosmic-text-muted);
+.cosmic-glass-panel {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
-.cosmic-label {
-  @apply block text-sm font-medium mb-1;
-  color: var(--cosmic-text);
+.cosmic-box-shadow {
+  box-shadow: 
+    0 4px 20px rgba(138, 43, 226, 0.1), 
+    0 8px 16px rgba(0, 0, 0, 0.05),
+    0 0 0 1px rgba(138, 43, 226, 0.1);
 }
 
-/* Table Styles */
-.cosmic-table {
-  @apply w-full;
-  border-collapse: separate;
-  border-spacing: 0;
+.cosmic-glass-field {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
 }
 
-.cosmic-table th {
-  @apply px-4 py-3 text-left text-xs font-medium uppercase tracking-wider;
-  background-color: rgba(30, 30, 40, 0.6);
-  color: var(--cosmic-text-muted);
-  border-bottom: 1px solid rgba(155, 135, 245, 0.2);
-}
-
-.cosmic-table td {
-  @apply px-4 py-3 text-sm;
-  border-bottom: 1px solid rgba(155, 135, 245, 0.1);
-}
-
-.cosmic-table tr:hover td {
-  background-color: rgba(155, 135, 245, 0.05);
-}
-
-/* Navigation Styles */
-.cosmic-nav-item {
-  @apply px-4 py-2 rounded-md text-sm font-medium transition-all duration-200;
-  color: var(--cosmic-text-muted);
-}
-
-.cosmic-nav-item:hover {
-  color: var(--cosmic-text);
-  background-color: rgba(155, 135, 245, 0.1);
-}
-
-.cosmic-nav-item.active {
-  color: var(--cosmic-primary);
-  background-color: rgba(155, 135, 245, 0.15);
-}
-
-/* Layout Utilities */
 .cosmic-divider {
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    rgba(155, 135, 245, 0),
-    rgba(155, 135, 245, 0.3),
-    rgba(155, 135, 245, 0)
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--cosmic-primary-dim), 
+    transparent
   );
-  margin: 1.5rem 0;
+  height: 1px;
+  border: none;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 640px) {
-  .cosmic-container {
-    @apply p-4;
+/* Cosmic animations */
+.cosmic-hover-glow {
+  transition: all 0.3s ease;
+}
+
+.cosmic-hover-glow:hover:not(:disabled) {
+  box-shadow: 0 0 12px 2px var(--cosmic-primary-dim);
+}
+
+.cosmic-active-scale {
+  transition: transform 0.2s ease;
+}
+
+.cosmic-active-scale:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 3s infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s infinite;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
   }
-  
-  .cosmic-button {
-    @apply h-9 px-3;
+  50% {
+    opacity: 0.8;
   }
 }
 
-/* Status Indicators */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Cosmic entrance animations */
+.cosmic-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cosmic-slide-up.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cosmic-slide-in {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.cosmic-slide-in.in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cosmic-fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.cosmic-fade-in.in {
+  opacity: 1;
+}
+
+/* 3D effect for cards */
+.cosmic-3d-card {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.cosmic-3d-card:hover {
+  transform: rotateY(5deg) rotateX(5deg);
+}
+
+/* Cosmic badge */
 .cosmic-badge {
-  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  background: linear-gradient(135deg, var(--cosmic-primary), var(--cosmic-accent));
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: 0 0 10px var(--cosmic-primary-dim);
 }
 
-.cosmic-badge.primary {
-  background-color: rgba(155, 135, 245, 0.2);
-  color: var(--cosmic-primary-light);
-}
-
-.cosmic-badge.success {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: var(--cosmic-success);
-}
-
-.cosmic-badge.warning {
-  background-color: rgba(251, 191, 36, 0.2);
-  color: var(--cosmic-warning);
-}
-
-.cosmic-badge.error {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: var(--cosmic-error);
-}
-
-/* Special Elements */
-.cosmic-avatar {
-  @apply inline-flex items-center justify-center overflow-hidden;
-  background-color: rgba(155, 135, 245, 0.2);
-  color: var(--cosmic-primary-light);
-}
-
-.cosmic-avatar.ring {
-  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.5);
-}
-
-/* Tooltip */
-.cosmic-tooltip {
-  @apply absolute z-50 px-2 py-1 text-xs rounded shadow-lg;
-  background-color: rgba(26, 31, 44, 0.95);
-  border: 1px solid rgba(155, 135, 245, 0.3);
-  color: var(--cosmic-text);
-  max-width: 300px;
-}
-
-/* Tailwind Utility Extensions */
-.bg-cosmic-primary {
-  background-color: var(--cosmic-primary);
-}
-
-.bg-cosmic-background {
-  background-color: var(--cosmic-background);
-}
-
-.bg-cosmic-card {
-  background-color: rgba(26, 31, 44, 0.8);
-}
-
-.text-cosmic-primary {
-  color: var(--cosmic-primary);
-}
-
-.text-cosmic-muted {
-  color: var(--cosmic-text-muted);
-}
-
-.border-cosmic {
-  border-color: rgba(155, 135, 245, 0.3);
-}
-
-.shadow-cosmic {
-  box-shadow: 0 4px 20px rgba(155, 135, 245, 0.15);
-}
-
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+/* Item count bubble */
+.cosmic-item-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--cosmic-accent);
+  color: white;
+  border-radius: 9999px;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px var(--cosmic-accent-dim);
+  animation: pulse-gentle 2s infinite;
 }

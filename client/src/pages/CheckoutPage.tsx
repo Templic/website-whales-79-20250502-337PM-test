@@ -237,9 +237,12 @@ export default function CheckoutPage() {
           <p className="text-muted-foreground mb-6">
             You need to add items to your cart before checkout.
           </p>
-          <CosmicButton onClick={handleContinueShopping} variant="cosmic">
+          <Button 
+            onClick={handleContinueShopping}
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow"
+          >
             Continue Shopping
-          </CosmicButton>
+          </Button>
         </div>
       </div>
     );
@@ -495,9 +498,12 @@ export default function CheckoutPage() {
                           <ArrowLeft className="h-4 w-4 mr-2" />
                           Back to Cart
                         </Button>
-                        <CosmicButton type="submit" variant="cosmic">
+                        <Button 
+                          type="submit"
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow"
+                        >
                           Continue to Payment
-                        </CosmicButton>
+                        </Button>
                       </div>
                     </form>
                   </Form>

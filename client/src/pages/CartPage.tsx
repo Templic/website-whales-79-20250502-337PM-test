@@ -6,21 +6,30 @@ import { apiRequest } from '@/lib/queryClient';
 import { CartItem, Coupon } from '@/types/cart';
 import CartItemComponent from '@/components/shop/cart/CartItem';
 import CartSummary from '@/components/shop/cart/CartSummary';
-import { ShoppingCart, Loader2, RefreshCw, ShoppingBag } from 'lucide-react';
+import { ShoppingCart, Loader2, RefreshCw, ShoppingBag, Package, ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import CosmicButton from '@/components/ui/cosmic-button';
+import { Separator } from '@/components/ui/separator';
 
 export default function CartPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for server data loading
+  // State for animations and data loading
   const [isClientLoaded, setIsClientLoaded] = useState(false);
+  const [isAnimated, setIsAnimated] = useState(false);
   
   useEffect(() => {
     setIsClientLoaded(true);
     document.title = 'Shopping Cart - Dale Loves Whales';
+    
+    // Add delay for entrance animation
+    const timer = setTimeout(() => {
+      setIsAnimated(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Fetch cart items
@@ -149,8 +158,14 @@ export default function CartPage() {
   if (!isClientLoaded || isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-12 w-12 animate-spin mb-4 text-primary" />
-        <p className="text-lg">Loading your cart...</p>
+        <div className="cosmic-glass-panel p-8 rounded-lg flex flex-col items-center animate-pulse-gentle">
+          <div className="relative">
+            <div className="absolute inset-0 bg-cosmic-primary rounded-full opacity-10 animate-ping"></div>
+            <div className="absolute inset-4 bg-cosmic-primary rounded-full opacity-20"></div>
+            <Loader2 className="h-12 w-12 animate-spin mb-4 text-cosmic-primary relative z-10" />
+          </div>
+          <p className="text-lg mt-4 cosmic-text">Loading your cosmic cart...</p>
+        </div>
       </div>
     );
   }
@@ -159,9 +174,12 @@ export default function CartPage() {
   if (isError) {
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load cart data</p>
-          <Button onClick={() => refetch()} className="cosmic-hover-glow">
+        <div className="cosmic-glass-panel p-8 rounded-lg text-center">
+          <p className="text-destructive mb-4">There was a problem connecting to the cosmic database</p>
+          <Button 
+            onClick={() => refetch()} 
+            className="cosmic-hover-glow bg-cosmic-primary hover:bg-cosmic-primary/90 text-white"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
@@ -174,39 +192,54 @@ export default function CartPage() {
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text">Your Cart is Empty</h1>
+        <div className={`cosmic-glass-panel p-8 rounded-lg text-center max-w-md cosmic-slide-up ${isAnimated ? 'in' : ''}`}>
+          <div className="relative w-24 h-24 mx-auto mb-6">
+            <div className="absolute inset-0 bg-cosmic-primary/20 rounded-full animate-pulse-slow"></div>
+            <ShoppingCart className="h-16 w-16 absolute inset-0 m-auto text-cosmic-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text animate-pulse-gentle">Your Cosmic Cart is Empty</h1>
           <p className="text-muted-foreground mb-6">
-            Looks like you haven't added any items to your cart yet.
+            Your journey through our cosmic collection has just begun. Add items to create your unique constellation.
           </p>
-          <CosmicButton onClick={handleContinueShopping} variant="cosmic">
+          <Button
+            onClick={handleContinueShopping}
+            className="bg-cosmic-primary hover:bg-cosmic-primary/90 text-white cosmic-hover-glow"
+          >
             <ShoppingBag className="h-4 w-4 mr-2" />
-            Continue Shopping
-          </CosmicButton>
+            Explore Our Collection
+          </Button>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold cosmic-gradient-text">Shopping Cart</h1>
-        <div className="flex space-x-4">
-          <Button
-            variant="outline"
-            onClick={handleContinueShopping}
-            className="cosmic-hover-glow"
-          >
-            Continue Shopping
-          </Button>
+    <div className={`container mx-auto px-4 py-8 cosmic-fade-in ${isAnimated ? 'in' : ''}`}>
+      <div className="mb-8">
+        <Button
+          variant="ghost"
+          onClick={handleContinueShopping}
+          className="mb-4 text-cosmic-primary hover:text-cosmic-primary/80 hover:bg-cosmic-primary/10"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Continue Shopping
+        </Button>
+        
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold cosmic-gradient-text flex items-center">
+            <Sparkles className="h-6 w-6 mr-2 opacity-80" />
+            Your Cosmic Cart
+            <span className="ml-3 text-sm bg-cosmic-primary/10 text-cosmic-primary px-2 py-1 rounded-full">
+              {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+            </span>
+          </h1>
+          
           {cartItems.length > 0 && (
             <Button
               variant="ghost"
               onClick={handleClearCart}
               disabled={clearCartMutation.isPending}
-              className="text-muted-foreground hover:text-destructive"
+              className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
               {clearCartMutation.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -216,12 +249,14 @@ export default function CartPage() {
             </Button>
           )}
         </div>
+        
+        <Separator className="mt-4 cosmic-divider" />
       </div>
       
       <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 cosmic-stagger-children in">
           <div className="space-y-4">
-            {cartItems.map((item: CartItem) => (
+            {cartItems.map((item: CartItem, index) => (
               <CartItemComponent
                 key={item.id}
                 item={item}
@@ -238,6 +273,16 @@ export default function CartPage() {
             onApplyCoupon={handleApplyCoupon}
             onCheckout={handleCheckout}
           />
+          
+          <div className="mt-6 p-4 cosmic-glass-panel rounded-lg">
+            <div className="flex items-center text-sm text-cosmic-primary mb-2">
+              <Package className="h-4 w-4 mr-2" />
+              <span className="font-medium">Shipping Information</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              All orders are processed within 24 hours. Cosmic deliveries typically arrive within 3-5 business days. Tracking information will be provided via email once your order ships.
+            </p>
+          </div>
         </div>
       </div>
     </div>

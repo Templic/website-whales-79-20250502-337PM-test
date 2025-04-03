@@ -70,15 +70,14 @@ export const JoinRoomPanel = ({
           />
         </div>
         
-        <CosmicButton
+        <Button
           onClick={joinRoom}
           disabled={!username.trim()}
-          className="w-full"
-          variant="cosmic"
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow"
         >
           Join Room
           <ArrowRight className="ml-2 h-4 w-4" />
-        </CosmicButton>
+        </Button>
       </CardContent>
     </Card>
   );

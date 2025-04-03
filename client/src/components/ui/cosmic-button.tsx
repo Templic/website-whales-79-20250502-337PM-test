@@ -1,9 +1,24 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Button, ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-// Extend the ButtonProps to include cosmic variants
+// Create a specialized type for our cosmic variants
+type CosmicVariant = 
+  | 'cosmic'
+  | 'energetic'
+  | 'ethereal'
+  | 'moonlight'
+  | 'stardust'
+  | 'nebula'
+  | 'default'
+  | 'destructive'
+  | 'outline'
+  | 'secondary'
+  | 'ghost'
+  | 'link';
+
+// Define the cosmic button variants
 const cosmicButtonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
@@ -15,12 +30,12 @@ const cosmicButtonVariants = cva(
         moonlight: "bg-gradient-to-r from-gray-700 to-slate-800 text-white hover:from-gray-800 hover:to-slate-900 cosmic-hover-glow",
         stardust: "border border-purple-300 bg-black/20 backdrop-blur-sm text-white hover:bg-black/30 cosmic-glass-effect",
         nebula: "border border-indigo-300/30 bg-indigo-950/30 backdrop-blur-md text-white hover:bg-indigo-900/40 cosmic-glass-effect",
-        default: "",
-        destructive: "",
-        outline: "",
-        secondary: "",
-        ghost: "",
-        link: "",
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",
@@ -36,31 +51,19 @@ const cosmicButtonVariants = cva(
   }
 );
 
-export interface CosmicButtonProps 
-  extends ButtonProps, 
-    VariantProps<typeof cosmicButtonVariants> {
+// Define our custom props interface
+export interface CosmicButtonProps extends 
+  React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: CosmicVariant;
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
   children: React.ReactNode;
 }
 
+// Create our CosmicButton component
 const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
-    // Use the standard Button component for non-cosmic variants
-    if (variant === 'default' || 
-        variant === 'destructive' || 
-        variant === 'outline' || 
-        variant === 'secondary' || 
-        variant === 'ghost' || 
-        variant === 'link') {
-      return <Button 
-        className={className} 
-        variant={variant} 
-        size={size} 
-        ref={ref}
-        {...props} 
-      />;
-    }
-    
-    // Use our custom cosmic styling for cosmic variants
+  ({ className, variant = "default", size = "default", ...props }, ref) => {
+    // Return a styled button using our cosmic variants
     return (
       <button
         className={cn(cosmicButtonVariants({ variant, size, className }))}
@@ -73,4 +76,5 @@ const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(
 
 CosmicButton.displayName = 'CosmicButton';
 
+export { CosmicButton };
 export default CosmicButton;
