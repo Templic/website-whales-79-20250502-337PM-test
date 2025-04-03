@@ -139,6 +139,14 @@ const {
             <p className="max-w-2xl text-lg mb-4 text-shadow shadow-blue-500">
               Explore our exclusive merchandise and collectibles to take a piece of the cosmic journey home with you.
             </p>
+            <CosmicButton 
+              variant="glow" 
+              size="lg" 
+              href="/shop/collaborative"
+              className="mt-2"
+            >
+              Shop Together with Friends
+            </CosmicButton>
           </div>
         </div>
       </section>

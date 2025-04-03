@@ -39,6 +39,7 @@ import ShopPage from "@/pages/ShopPage";
 import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
 import CheckoutPage from "@/pages/CheckoutPage";
+import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
 
 // Imported Pages
 import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
@@ -102,6 +103,8 @@ function Router() {
         <Route path="/shop/product/:slug" component={ProductPage} />
         <Route path="/shop/cart" component={CartPage} />
         <Route path="/shop/checkout" component={CheckoutPage} />
+        <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
+        <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
         
         <Route component={NotFound} />
       </Switch>
