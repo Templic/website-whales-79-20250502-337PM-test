@@ -64,9 +64,9 @@ const CosmicLink: React.FC<CosmicLinkProps> = ({
     </a>
   ) : (
     <Link href={href}>
-      <a className={linkClassName} onClick={onClick}>
+      <span className={linkClassName} onClick={onClick}>
         {children}
-      </a>
+      </span>
     </Link>
   );
 };
