@@ -77,3 +77,15 @@ export function truncateString(str: string, length: number) {
 export function isMobile() {
   return window.innerWidth < 768;
 }
+
+/**
+ * Format a number as currency
+ */
+export function formatCurrency(amount: number, currencyCode: string = 'USD', locale: string = 'en-US') {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}

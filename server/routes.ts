@@ -14,6 +14,7 @@ import {
 import { hashPassword } from "./auth";
 import { createTransport } from "nodemailer";
 import dbMonitorRoutes from './routes/db-monitor';
+import shopRoutes from './shop-routes';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -913,6 +914,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
     next();
   }, dbMonitorRoutes);
+
+  // Shop routes
+  app.use('/api/shop', shopRoutes);
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
