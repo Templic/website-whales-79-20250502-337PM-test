@@ -101,7 +101,7 @@ function Router() {
         <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
         <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
         <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
-        <Route path="/cosmic-shop" component={CosmicMerchandisePage} />
+        {/* Cosmic Shop is now integrated into the main ShopPage */}
 
         {/* User Account */}
         <Route path="/auth" component={AuthPage} />
