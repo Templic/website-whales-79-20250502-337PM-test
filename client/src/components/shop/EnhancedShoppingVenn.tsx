@@ -13,10 +13,14 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
 }) => {
   return (
     <div className="relative py-16 w-full max-w-6xl mx-auto cosmic-slide-up in">
-      {/* Octagon background with transparency - matches the design in the image */}
-      <div className="absolute inset-0 bg-indigo-950/20 backdrop-blur-sm border border-purple-500/20 
-                      rounded-lg overflow-hidden transform rotate-45 -mx-12">
-        <div className="absolute inset-0 transform -rotate-45"></div>
+      {/* Octagon background with proper clip-path polygon */}
+      <div 
+        className="absolute inset-0 bg-indigo-950/20 backdrop-blur-sm border border-purple-500/20 overflow-hidden"
+        style={{
+          clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+          backgroundColor: "rgba(155, 135, 245, 0.05)"
+        }}
+      >
       </div>
       
       {/* Content container */}
@@ -31,7 +35,7 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
           </p>
         </div>
         
-        {/* Venn Diagram */}
+        {/* Venn Diagram - just two overlapping circles */}
         <div className="relative h-[24rem] md:h-[32rem]">
           {/* Left Circle - Shop Together */}
           <div className="absolute h-[90%] aspect-square rounded-full border border-purple-400/30 
@@ -75,12 +79,7 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
             </Button>
           </div>
           
-          {/* Intersection of circles - visual effect only */}
-          <div className="absolute h-[90%] aspect-square rounded-full border-none
-                        left-[50%] top-[5%] -translate-x-1/2 
-                        bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur-sm
-                        z-[-1]">
-          </div>
+          {/* No extra circle in the middle - Venn diagram is just two overlapping circles */}
         </div>
       </div>
     </div>
