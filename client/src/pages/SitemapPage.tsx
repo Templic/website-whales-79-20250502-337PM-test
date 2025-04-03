@@ -19,6 +19,7 @@ export default function SitemapPage() {
             <li><Link href="/about">About</Link></li>
             <li><Link href="/contact">Contact</Link></li>
             <li><Link href="/tour">Tour</Link></li>
+            <li><Link href="/shop">Shop</Link></li>
           </ul>
 
           <h2 className="text-2xl font-semibold mb-4 mt-8">Demo Pages</h2>

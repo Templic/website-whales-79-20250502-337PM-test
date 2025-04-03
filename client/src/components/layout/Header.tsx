@@ -9,6 +9,7 @@ const navigationItems = [
   { path: "/music-release", label: "New Music" },
   { path: "/archived-music", label: "Archived Music" },
   { path: "/tour", label: "Tour" },
+  { path: "/shop", label: "Shop" },
   { path: "/engage", label: "Engage" },
   { path: "/newsletter", label: "Newsletter" },
   { path: "/blog", label: "Blog" },
