@@ -1,146 +1,357 @@
-/* Cosmic animations for the enhanced space theme */
+/* Cosmic-themed Animations CSS for "Feels So Good" album aesthetic */
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+/* Cosmic pulse animation */
+@keyframes cosmic-pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+/* Nebula glow with breathing effect */
+@keyframes nebula-glow {
+  0% {
+    box-shadow: 0 0 5px 0px rgba(0, 235, 214, 0.3),
+                0 0 10px 2px rgba(124, 58, 237, 0.2);
   }
   50% {
-    transform: translateY(-10px);
+    box-shadow: 0 0 10px 3px rgba(0, 235, 214, 0.5),
+                0 0 20px 8px rgba(124, 58, 237, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 5px 0px rgba(0, 235, 214, 0.3),
+                0 0 10px 2px rgba(124, 58, 237, 0.2);
   }
 }
 
-.cosmic-float {
-  animation: float 6s ease-in-out infinite;
+/* Subtle floating effect */
+@keyframes cosmic-float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(0.95);
-  }
+/* Twinkling stars */
+@keyframes twinkle {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
 }
 
-.cosmic-pulse {
-  animation: pulse 4s ease-in-out infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.cosmic-rotate {
-  animation: rotate 12s linear infinite;
-}
-
-.cosmic-rotate-reverse {
-  animation: rotate 12s linear infinite reverse;
-}
-
+/* Shimmering effect for borders */
 @keyframes shimmer {
   0% {
-    background-position: -200% 0;
+    background-position: -100% 0;
   }
   100% {
-    background-position: 200% 0;
+    background-position: 100% 0;
   }
 }
 
-.cosmic-shimmer {
-  background: linear-gradient(90deg, 
-    rgba(0, 235, 214, 0), 
-    rgba(0, 235, 214, 0.2), 
-    rgba(0, 235, 214, 0)
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
+/* Rotating galaxy effect */
+@keyframes galaxy-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes cosmic-glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(0, 235, 214, 0.5),
-                0 0 20px rgba(0, 235, 214, 0.3);
+/* Space dust particles flow */
+@keyframes space-dust {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
   }
   50% {
-    box-shadow: 0 0 15px rgba(0, 235, 214, 0.7),
-                0 0 30px rgba(0, 235, 214, 0.5);
-  }
-}
-
-.cosmic-glow-animation {
-  animation: cosmic-glow 4s ease-in-out infinite;
-}
-
-@keyframes orbit {
-  0% {
-    transform: rotate(0deg) translateX(100px) rotate(0deg);
+    opacity: 0.5;
   }
   100% {
-    transform: rotate(360deg) translateX(100px) rotate(-360deg);
+    transform: translateY(-30px) translateX(20px);
+    opacity: 0;
   }
 }
 
-.cosmic-orbit {
-  animation: orbit 20s linear infinite;
+/* Color shift for gradient elements */
+@keyframes cosmic-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
-@keyframes fade-in-out {
-  0%, 100% {
+/* Holo reveal effect */
+@keyframes holo-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    filter: blur(10px) brightness(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
+/* Astral projection effect */
+@keyframes astral-project {
+  0% {
+    transform: translateZ(0) rotateX(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateZ(50px) rotateX(10deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateZ(0) rotateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animation utility classes */
+.animate-cosmic-pulse {
+  animation: cosmic-pulse 3s infinite ease-in-out;
+}
+
+.animate-nebula-glow {
+  animation: nebula-glow 4s infinite ease-in-out;
+}
+
+.animate-cosmic-float {
+  animation: cosmic-float 5s infinite ease-in-out;
+}
+
+.animate-twinkle {
+  animation: twinkle 2s infinite ease-in-out;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    to right,
+    rgba(0, 235, 214, 0.1) 20%,
+    rgba(124, 58, 237, 0.2) 40%,
+    rgba(251, 146, 60, 0.2) 60%,
+    rgba(0, 235, 214, 0.1) 80%
+  );
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
+
+.animate-galaxy-rotate {
+  animation: galaxy-rotate 120s linear infinite;
+}
+
+/* Animation delays for staggered effects */
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-400 {
+  animation-delay: 0.4s;
+}
+
+.delay-500 {
+  animation-delay: 0.5s;
+}
+
+/* Special Effects Elements */
+
+/* Space dust particle */
+.space-dust {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: space-dust 15s infinite linear;
+}
+
+/* Star field background */
+.star-field {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  perspective: 500px;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* Star effect */
+.star {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  animation: twinkle var(--twinkle-duration, 3s) infinite ease-in-out;
+  animation-delay: var(--twinkle-delay, 0s);
+}
+
+/* Glowing orb effect */
+.cosmic-orb {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(0, 235, 214, 0.7) 0%, 
+    rgba(124, 58, 237, 0.5) 50%, 
+    rgba(251, 146, 60, 0.3) 100%);
+  filter: blur(2px);
+  animation: nebula-glow 4s infinite ease-in-out, 
+             cosmic-float 6s infinite ease-in-out;
+}
+
+/* Portal effect for modals or featured content */
+.cosmic-portal {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.cosmic-portal::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    rgba(0, 235, 214, 0.3),
+    rgba(124, 58, 237, 0.3),
+    rgba(251, 146, 60, 0.3),
+    rgba(225, 85, 84, 0.3),
+    rgba(0, 235, 214, 0.3)
+  );
+  animation: galaxy-rotate 20s linear infinite;
+  z-index: -1;
+}
+
+/* Reveal animation for content that appears */
+.cosmic-reveal {
+  animation: holo-reveal 0.8s ease-out forwards;
+}
+
+/* Shooting star animation */
+@keyframes shooting-star {
+  0% {
+    transform: translate(0, 0) rotate(135deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-100vw), calc(100vh)) rotate(135deg);
+    opacity: 0;
+  }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 3px;
+  height: 80px;
+  background: linear-gradient(to bottom, 
+    rgba(255, 255, 255, 0), 
+    rgba(0, 235, 214, 0.8) 20%, 
+    rgba(124, 58, 237, 0.8) 60%, 
+    rgba(0, 235, 214, 0.4) 100%);
+  animation: shooting-star 8s ease-out infinite;
+  opacity: 0;
+  border-radius: 100px;
+  filter: blur(1px);
+  z-index: -1;
+  transform-origin: top left;
+}
+
+/* Energy beam effect */
+@keyframes energy-beam {
+  0% {
+    height: 0;
     opacity: 0.3;
   }
   50% {
-    opacity: 1;
-  }
-}
-
-.cosmic-fade {
-  animation: fade-in-out 4s ease-in-out infinite;
-}
-
-@keyframes warp-speed {
-  0% {
-    transform: scale(0) translateZ(-500px);
-    opacity: 0;
-  }
-  80% {
-    opacity: 1;
+    height: 100%;
+    opacity: 0.8;
   }
   100% {
-    transform: scale(2) translateZ(1000px);
-    opacity: 0;
+    height: 0;
+    opacity: 0.3;
   }
 }
 
-.cosmic-warp {
-  animation: warp-speed 8s linear infinite;
+.energy-beam {
+  position: absolute;
+  width: 2px;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(to top, 
+    rgba(0, 235, 214, 1), 
+    rgba(124, 58, 237, 0.8), 
+    rgba(0, 0, 0, 0));
+  animation: energy-beam 4s ease-in-out infinite;
+  z-index: -1;
 }
 
-@keyframes levitate {
+/* 3D perspective hover effect */
+.cosmic-hover-3d {
+  transition: transform 0.3s ease-out;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.cosmic-hover-3d:hover {
+  transform: rotateX(5deg) rotateY(5deg) translateZ(10px);
+}
+
+/* Reactive button effect */
+.btn-reactive {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-reactive::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.btn-reactive:active::after {
+  opacity: 0.3;
+  animation: ripple 0.4s ease-out;
+}
+
+@keyframes ripple {
   0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  25% {
-    transform: translateY(-5px) rotate(2deg);
-  }
-  50% {
-    transform: translateY(0) rotate(0deg);
-  }
-  75% {
-    transform: translateY(5px) rotate(-2deg);
+    transform: scale(0, 0);
+    opacity: 0.5;
   }
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: scale(20, 20);
+    opacity: 0;
   }
-}
-
-.cosmic-levitate {
-  animation: levitate 8s ease-in-out infinite;
 }

@@ -18,13 +18,14 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // Cosmic variants
-        cosmic: "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700",
-        energetic: "bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600",
-        ethereal: "bg-gradient-to-r from-teal-400 to-blue-500 text-white hover:from-teal-500 hover:to-blue-600",
-        moonlight: "bg-gradient-to-r from-gray-700 to-slate-800 text-white hover:from-gray-800 hover:to-slate-900",
-        stardust: "border border-purple-300 bg-black/20 backdrop-blur-sm text-white hover:bg-black/30",
-        nebula: "border border-indigo-300/30 bg-indigo-950/30 backdrop-blur-md text-white hover:bg-indigo-900/40",
+        // Cosmic variants based on "Feels So Good" album colors
+        cosmic: "bg-gradient-to-r from-[#00ebd6] to-[#7c3aed] text-white hover:from-[#00ebd6]/90 hover:to-[#7c3aed]/90 shadow-[0_0_15px_rgba(0,235,214,0.3)] hover:shadow-[0_0_20px_rgba(0,235,214,0.5)] transition-all",
+        energetic: "bg-gradient-to-r from-[#fb923c] to-[#e15554] text-white hover:from-[#fb923c]/90 hover:to-[#e15554]/90 shadow-[0_0_15px_rgba(251,146,60,0.3)] hover:shadow-[0_0_20px_rgba(251,146,60,0.5)] transition-all",
+        ethereal: "border border-[#00ebd6]/30 bg-[#030110]/60 backdrop-blur-md text-[#00ebd6] hover:bg-[#050215]/80 hover:border-[#00ebd6]/50 shadow-[0_0_10px_rgba(0,235,214,0.2)] hover:shadow-[0_0_15px_rgba(0,235,214,0.3)] transition-all",
+        sunbeam: "bg-gradient-to-r from-[#fb923c] to-[#fcd34d] text-white hover:from-[#fb923c]/90 hover:to-[#fcd34d]/90 shadow-[0_0_15px_rgba(251,146,60,0.3)] hover:shadow-[0_0_20px_rgba(251,146,60,0.5)] transition-all",
+        stardust: "border border-[#00ebd6]/20 bg-black/30 backdrop-blur-sm text-white hover:bg-black/40 hover:border-[#00ebd6]/30 transition-all",
+        nebula: "border border-[#7c3aed]/20 bg-[#170b3b]/40 backdrop-blur-md text-white hover:bg-[#170b3b]/50 hover:border-[#7c3aed]/30 shadow-[0_0_15px_rgba(124,58,237,0.2)] hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all",
+        nova: "bg-gradient-to-r from-[#e15554] to-[#7c3aed] text-white hover:from-[#e15554]/90 hover:to-[#7c3aed]/90 shadow-[0_0_15px_rgba(225,85,84,0.3)] hover:shadow-[0_0_20px_rgba(225,85,84,0.5)] transition-all",
       },
       size: {
         default: "h-10 px-4 py-2",

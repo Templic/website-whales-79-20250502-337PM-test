@@ -9,7 +9,7 @@
       "foreground": "hsl(218, 25%, 10%)"
     },
     "dark": {
-      "background": "hsl(225, 43%, 5%)",
+      "background": "hsl(225, 50%, 3%)",
       "foreground": "hsl(180, 100%, 96%)",
       "card": "hsl(225, 70%, 8%, 0.8)",
       "popover": "hsl(225, 70%, 8%, 0.95)",
@@ -20,11 +20,13 @@
       "border": "hsl(180, 100%, 46%, 0.2)",
       "input": "hsl(225, 30%, 15%)",
       "primary": "hsl(180, 100%, 46%)",
-      "primary-foreground": "hsl(225, 43%, 5%)",
-      "secondary": "hsl(225, 30%, 12%)",
-      "secondary-foreground": "hsl(180, 100%, 46%)",
-      "destructive": "hsl(350, 89%, 60%)",
+      "primary-foreground": "hsl(225, 50%, 3%)",
+      "secondary": "hsl(270, 79%, 58%)",
+      "secondary-foreground": "hsl(0, 0%, 100%)",
+      "destructive": "hsl(0, 64%, 60%)",
       "destructive-foreground": "hsl(0, 0%, 100%)",
+      "warning": "hsl(25, 95%, 61%)",
+      "warning-foreground": "hsl(0, 0%, 100%)",
       "ring": "hsl(180, 100%, 46%, 0.3)"
     }
   }
