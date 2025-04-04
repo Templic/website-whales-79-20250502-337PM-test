@@ -32,9 +32,9 @@ import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
-import CosmicTest from "@/pages/CosmicTest";
-import CosmicComponentsDemo from "@/pages/CosmicComponentsDemo";
-import ButtonDemo from "@/pages/ButtonDemo";
+import CosmicTest from "@/pages/test/CosmicTest";
+import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
+import ButtonDemo from "@/pages/test/ButtonDemo";
 
 // Shop Pages
 import ShopPage from "@/pages/ShopPage";
@@ -57,7 +57,8 @@ import CosmicMerchandisePage from "@/pages/imported-pages/CosmicMerchandisePage"
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 import { NewComponentsDemo } from "@/pages/test/NewComponentsDemo";
-import ComponentsCatalog from "@/pages/ComponentsCatalog";
+import ComponentsCatalog from "@/pages/test/demo/ComponentsCatalog";
+
 
 // Admin Pages
 import UsersPage from "@/pages/admin/UsersPage";
@@ -136,11 +137,11 @@ function Router() {
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
         <Route path="/button-demo" component={ButtonDemo} />
-        
+
         {/* Legacy Archive Pages */}
         <Route path="/pages/archived-music/old" component={MusicArchivePageOld} />
         <Route path="/pages/music-archive/old" component={ArchivePageOld} />
-        
+
         {/* 404 Route */}
         <Route component={NotFound} />
       </Switch>
