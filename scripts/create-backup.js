@@ -59,7 +59,7 @@ function createBackup() {
 }
 
 // Run the function if called directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('=== Repository Backup Process ===');
   const backupPath = createBackup();
   console.log(`Backup created at: ${backupPath}`);
