@@ -88,6 +88,7 @@ function Router() {
         <Route path="/music-release" component={NewMusicPage} />
         <Route path="/archived-music" component={ArchivedMusicPage} />
         <Route path="/music-archive" component={ArchivedMusicPage} />
+        {/* Cosmic Connectivity - Main route for frequency healing experience */}
         <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePageOld} />
         <Route path="/immersive" component={ImmersivePageOld} />

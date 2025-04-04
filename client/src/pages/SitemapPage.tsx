@@ -32,6 +32,7 @@ export default function SitemapPage() {
             <li><Link href="/music-release">New Music</Link></li>
             <li><Link href="/archived-music">Archived Music</Link> <span className="text-sm text-cyan-400">(recommended)</span></li>
             <li><Link href="/music-archive">Music Archive</Link> <span className="text-sm text-gray-400">(redirects to Archived Music)</span></li>
+            <li><Link href="/cosmic-connectivity">Cosmic Connectivity</Link></li>
             <li><Link href="/cosmic-experience">Cosmic Experience</Link></li>
             <li><Link href="/immersive">Immersive Experience</Link></li>
           </ul>

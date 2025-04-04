@@ -8,8 +8,8 @@ const navigationItems = [
   { path: "/about", label: "About" },
   { path: "/music-release", label: "New Music" },
   { path: "/archived-music", label: "Archived Music" },
-  // Archive menu with dropdown will be added later
   { path: "/cosmic-connectivity", label: "Cosmic Connectivity" },
+  { path: "/cosmic-experience", label: "Cosmic Experience" },
   { path: "/tour", label: "Tour" },
   { path: "/shop", label: "Shop" },
   { path: "/engage", label: "Engage" },
