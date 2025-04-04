@@ -95,8 +95,8 @@ export function TriangleContainer({
         </svg>
       </div>
       {/* Text positioning for triangles */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center" style={{ transform: 'translateY(25%)' }}>
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(25%)' }}>
           {children}
         </div>
       </div>
@@ -146,8 +146,8 @@ export function InvertedTriangleContainer({
         </svg>
       </div>
       {/* Text positioning for inverted triangles */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center" style={{ transform: 'translateY(-25%)' }}>
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(-25%)' }}>
           {children}
         </div>
       </div>
@@ -244,7 +244,7 @@ export function StarburstContainer({
         </svg>
       </div>
       {/* Center text in starburst */}
-      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
+      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
         <div className="max-w-[60%] overflow-y-auto hide-scrollbar text-center">
           {children}
         </div>
