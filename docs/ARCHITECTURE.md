@@ -71,9 +71,10 @@ Main Pages:
 - About Page: /about
 - New Music Page: /music-release
 - Archived Music Page: /archived-music
-- Music Archive Page: /music-archive
+- Archive Page: /archive
 - Cosmic Connectivity Page: /cosmic-connectivity  
 - Cosmic Experience Page: /cosmic-experience
+- Immersive Page: /immersive
 - Tour Page: /tour
 - Shop Page: /shop
 - Engage Page: /engage

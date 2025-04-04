@@ -45,14 +45,9 @@ import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
 
 // Imported Pages
 import CosmicConnectivityPage from "@/pages/imported-pages/CosmicConnectivityPage";
-import CosmicExperienceImmersivePage from "@/pages/imported-pages/CosmicExperienceImmersivePage";
-import CosmicExperiencePageOld from "@/pages/imported-pages/CosmicExperiencePage_old";
-import ImmersivePageOld from "@/pages/imported-pages/ImmersivePage_old";
+import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage"; // Assumed corrected import
+import ImmersivePage from "@/pages/imported-pages/ImmersivePage"; // Assumed corrected import
 import ArchivePage from "@/pages/imported-pages/ArchivePage";
-import ArchivePageOld from "@/pages/imported-pages/ArchivePage_old";
-import MusicArchivePageOld from "@/pages/MusicArchivePage_old";
-import CommunityPage from "@/pages/imported-pages/CommunityPage";
-import EnhancedCommunityPage from "@/pages/imported-pages/EnhancedCommunityPage";
 import CosmicMerchandisePage from "@/pages/imported-pages/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
@@ -90,10 +85,11 @@ function Router() {
         <Route path="/music-release" component={NewMusicPage} />
         <Route path="/archived-music" component={ArchivedMusicPage} />
         <Route path="/music-archive" component={ArchivedMusicPage} />
-        {/* Cosmic Connectivity - Main route for frequency healing experience */}
+        {/* Experience Routes */}
         <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
-        <Route path="/cosmic-experience" component={CosmicExperiencePageOld} />
-        <Route path="/immersive" component={ImmersivePageOld} />
+        <Route path="/cosmic-experience" component={CosmicExperiencePage} />
+        <Route path="/immersive" component={ImmersivePage} />
+        <Route path="/archive" component={ArchivePage} />
 
         {/* Blog */}
         <Route path="/blog" component={BlogPage} />
@@ -138,9 +134,6 @@ function Router() {
         <Route path="/cosmic-test" component={CosmicTest} />
         <Route path="/button-demo" component={ButtonDemo} />
 
-        {/* Legacy Archive Pages */}
-        <Route path="/pages/archived-music/old" component={MusicArchivePageOld} />
-        <Route path="/pages/music-archive/old" component={ArchivePageOld} />
 
         {/* 404 Route */}
         <Route component={NotFound} />
