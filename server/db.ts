@@ -36,9 +36,9 @@ export const initializeDatabase = async () => {
 // Export pool to be able to end it when the server closes
 export const pgPool = pool;
 import { sql } from 'drizzle-orm';
-import { text, timestamp, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 
-export const contactFormEntries = sqliteTable('contact_form_entries', {
+export const contactFormEntries = pgTable('contact_form_entries', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull(),

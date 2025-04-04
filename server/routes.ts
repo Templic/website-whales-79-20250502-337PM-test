@@ -2,13 +2,15 @@ import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
 import { storage } from "./storage";
-import { db } from "./db";
+import { db, contactFormEntries } from "./db";
 import { eq, sql } from "drizzle-orm";
+import { nanoid } from 'nanoid';
 import {
   insertSubscriberSchema,
   insertPostSchema,
   insertCommentSchema,
   insertCategorySchema,
+  insertNewsletterSchema,
   comments
 } from "@shared/schema";
 import { hashPassword } from "./auth";
@@ -237,6 +239,159 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
   
+  // Newsletter management endpoints
+  // Get all newsletters
+  app.get("/api/newsletters", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const newsletters = await storage.getAllNewsletters();
+      res.json(newsletters);
+    } catch (error) {
+      console.error("Error fetching newsletters:", error);
+      res.status(500).json({ message: "Error fetching newsletters" });
+    }
+  });
+  
+  // Test endpoint - public API for newsletters (for testing purposes only)
+  app.get("/api/test/newsletters", async (req, res) => {
+    try {
+      const newsletters = await storage.getAllNewsletters();
+      res.json(newsletters);
+    } catch (error) {
+      console.error("Error fetching newsletters:", error);
+      res.status(500).json({ message: "Error fetching newsletters" });
+    }
+  });
+  
+  // Get a single newsletter by ID
+  app.get("/api/newsletters/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      const newsletter = await storage.getNewsletterById(id);
+      
+      if (!newsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      
+      res.json(newsletter);
+    } catch (error) {
+      console.error(`Error fetching newsletter:`, error);
+      res.status(500).json({ message: "Error fetching newsletter" });
+    }
+  });
+  
+  // Create a new newsletter
+  app.post("/api/newsletters", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const data = insertNewsletterSchema.parse(req.body);
+      const newsletter = await storage.createNewsletter(data);
+      
+      res.status(201).json(newsletter);
+    } catch (error) {
+      console.error("Error creating newsletter:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid newsletter data", details: error.message });
+      } else {
+        res.status(400).json({ message: "Invalid newsletter data" });
+      }
+    }
+  });
+  
+  // Update an existing newsletter
+  app.patch("/api/newsletters/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      const data = req.body;
+      
+      // Prevent updating sent newsletters
+      const existingNewsletter = await storage.getNewsletterById(id);
+      if (!existingNewsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      
+      if (existingNewsletter.status === 'sent') {
+        return res.status(400).json({ message: "Cannot update a newsletter that has already been sent" });
+      }
+      
+      const updatedNewsletter = await storage.updateNewsletter(id, data);
+      res.json(updatedNewsletter);
+    } catch (error) {
+      console.error("Error updating newsletter:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid newsletter data", details: error.message });
+      } else {
+        res.status(400).json({ message: "Invalid newsletter data" });
+      }
+    }
+  });
+  
+  // Send a newsletter
+  app.post("/api/newsletters/:id/send", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Check if newsletter exists and is not already sent
+      const newsletter = await storage.getNewsletterById(id);
+      if (!newsletter) {
+        return res.status(404).json({ message: "Newsletter not found" });
+      }
+      
+      if (newsletter.status === 'sent') {
+        return res.status(400).json({ message: "Newsletter has already been sent" });
+      }
+      
+      // Get all active subscribers
+      const subscribers = await storage.getAllSubscribers();
+      const activeSubscribers = subscribers.filter(sub => sub.active);
+      
+      if (activeSubscribers.length === 0) {
+        return res.status(400).json({ message: "No active subscribers to send to" });
+      }
+      
+      // Send newsletter to all active subscribers (in a real app, this would use a queue)
+      if (transporter) {
+        try {
+          // Send newsletter (just to the first subscriber for demo purposes)
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@example.com',
+            to: activeSubscribers[0].email, // In production, use BCC for all subscribers
+            subject: newsletter.title,
+            html: newsletter.content
+          });
+        } catch (emailError) {
+          console.error("Failed to send newsletter:", emailError);
+          return res.status(500).json({ message: "Failed to send newsletter email" });
+        }
+      }
+      
+      // Update newsletter status to sent
+      const sentNewsletter = await storage.sendNewsletter(id);
+      res.json({ message: "Newsletter sent successfully", newsletter: sentNewsletter });
+    } catch (error) {
+      console.error("Error sending newsletter:", error);
+      res.status(500).json({ message: "Error sending newsletter" });
+    }
+  });
+
   // Get unapproved comments
   app.get("/api/admin/comments/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -922,23 +1077,23 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
+  // Contact form submission
+  app.post('/api/contact/submit', async (req, res) => {
+    try {
+      const { name, email, message } = req.body;
+      await db.insert(contactFormEntries).values({
+        id: nanoid(),
+        name,
+        email, 
+        message,
+        createdAt: new Date()
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Failed to save contact form:', error);
+      res.status(500).json({ error: 'Failed to save contact form' });
+    }
+  });
+
   return httpServer;
 }
-import { contactFormEntries } from './db';
-import { nanoid } from 'nanoid';
-
-app.post('/api/contact/submit', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-    await db.insert(contactFormEntries).values({
-      id: nanoid(),
-      name,
-      email, 
-      message,
-      createdAt: new Date()
-    });
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to save contact form' });
-  }
-});

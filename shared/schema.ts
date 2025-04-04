@@ -24,6 +24,17 @@ export const subscribers = pgTable("subscribers", {
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
 
+// Newsletters table
+export const newsletters = pgTable("newsletters", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  status: text("status", { enum: ["draft", "sent"] }).notNull().default("draft"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+});
+
 // Blog posts table with author relation
 export const posts = pgTable("posts", {
   id: serial("id").primaryKey(),
@@ -83,6 +94,13 @@ export const insertSubscriberSchema = createInsertSchema(subscribers)
   .extend({
     email: z.string().email("Invalid email address"),
     name: z.string().min(2, "Name must be at least 2 characters")
+  });
+
+export const insertNewsletterSchema = createInsertSchema(newsletters)
+  .omit({ id: true, createdAt: true, updatedAt: true, sentAt: true })
+  .extend({
+    content: z.string().min(10, "Content must be at least 10 characters"),
+    title: z.string().min(3, "Title must be at least 3 characters")
   });
 
 export const insertPostSchema = createInsertSchema(posts)
@@ -158,6 +176,9 @@ export type User = typeof users.$inferSelect;
 
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;
+
+export type InsertNewsletter = z.infer<typeof insertNewsletterSchema>;
+export type Newsletter = typeof newsletters.$inferSelect;
 
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof posts.$inferSelect;

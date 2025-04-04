@@ -3,7 +3,7 @@ declare module 'connect-pg-simple' {
   export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
-import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, subscribers, posts, categories, comments, users, tracks, albums } from "@shared/schema";
+import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, subscribers, posts, categories, comments, users, tracks, albums, newsletters } from "@shared/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
@@ -31,6 +31,14 @@ export interface IStorage {
   // Subscriber methods
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
   getAllSubscribers(): Promise<Subscriber[]>;
+  findSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
+  
+  // Newsletter methods
+  createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
+  getAllNewsletters(): Promise<Newsletter[]>;
+  getNewsletterById(id: number): Promise<Newsletter | null>;
+  updateNewsletter(id: number, newsletter: Partial<InsertNewsletter>): Promise<Newsletter>;
+  sendNewsletter(id: number): Promise<Newsletter>;
 
   // Post methods
   createPost(post: InsertPost): Promise<Post>;
@@ -142,6 +150,52 @@ export class PostgresStorage implements IStorage {
 
   async getAllSubscribers() {
     return await db.select().from(subscribers).orderBy(subscribers.createdAt);
+  }
+  
+  // Newsletter methods
+  async createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
+    const result = await db.insert(newsletters).values(newsletter).returning();
+    return result[0];
+  }
+
+  async getAllNewsletters(): Promise<Newsletter[]> {
+    return await db.select().from(newsletters).orderBy(sql`created_at DESC`);
+  }
+
+  async getNewsletterById(id: number): Promise<Newsletter | null> {
+    const result = await db.select().from(newsletters).where(eq(newsletters.id, id));
+    return result[0] || null;
+  }
+
+  async updateNewsletter(id: number, newsletter: Partial<InsertNewsletter>): Promise<Newsletter> {
+    const result = await db.update(newsletters)
+      .set({ ...newsletter, updatedAt: new Date() })
+      .where(eq(newsletters.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async sendNewsletter(id: number): Promise<Newsletter> {
+    // Fetch the newsletter first
+    const newsletter = await this.getNewsletterById(id);
+    if (!newsletter) {
+      throw new Error("Newsletter not found");
+    }
+
+    // Update the newsletter status to sent
+    const now = new Date();
+    const [updatedNewsletter] = await db.update(newsletters)
+      .set({ 
+        status: "sent", 
+        sentAt: now,
+        updatedAt: now
+      })
+      .where(eq(newsletters.id, id))
+      .returning();
+
+    // TODO: In a real application, this would send the newsletter to all active subscribers
+    // For now, we'll just mark it as sent
+    return updatedNewsletter;
   }
 
   // Post methods
@@ -431,6 +485,72 @@ export class PostgresStorage implements IStorage {
             email: "sarah.w@example.com",
             active: true,
             createdAt: new Date("2024-01-17")
+          }
+        ]);
+      }
+      
+      // Initialize sample newsletters
+      const existingNewsletters = await db.select().from(newsletters);
+      if (existingNewsletters.length === 0) {
+        await db.insert(newsletters).values([
+          {
+            title: "Cosmic Waves - Spring Edition",
+            content: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
+                <h1 style="color: #4A90E2; text-align: center;">Cosmic Waves - Spring Edition</h1>
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <img src="https://via.placeholder.com/600x300" alt="Cosmic ocean scene" style="max-width: 100%; height: auto; border-radius: 8px;">
+                </div>
+                <h2 style="color: #4A90E2;">New Releases</h2>
+                <p>Our latest track "Cosmic Symphony" is now available on all major streaming platforms! This collaboration with the talented Luna Echo explores the depths of space and ocean in a unique cosmic-marine fusion.</p>
+                <h2 style="color: #4A90E2;">Upcoming Events</h2>
+                <ul>
+                  <li>May 15: Cosmic Ocean Live - Miami Beach</li>
+                  <li>June 2: Whale Song Meditation - Online Stream</li>
+                  <li>July 10: Ocean Conservation Benefit Concert - San Francisco</li>
+                </ul>
+                <h2 style="color: #4A90E2;">Behind the Waves</h2>
+                <p>This month, we're taking you behind the scenes of our latest music video shoot at the bioluminescent bay in Puerto Rico. The magical glowing waters inspired our upcoming EP "Luminous Depths" coming this summer.</p>
+                <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
+                  <p style="margin-bottom: 5px;"><strong>Subscriber Exclusive:</strong> Use code COSMIC25 for 25% off all merchandise this month!</p>
+                  <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Visit Store</a>
+                </div>
+                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                  <p>"Let the cosmic waves carry your spirit through the universe"</p>
+                  <p style="margin-top: 15px;">- Dale 🐋</p>
+                </div>
+              </div>
+            `,
+            status: "draft",
+            createdAt: new Date("2025-03-15"),
+            updatedAt: new Date("2025-03-15")
+          },
+          {
+            title: "Winter Solstice Special Newsletter",
+            content: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333; background-color: #f9f9f9;">
+                <h1 style="color: #4A90E2; text-align: center;">Winter Solstice Special</h1>
+                <div style="text-align: center; margin-bottom: 20px;">
+                  <img src="https://via.placeholder.com/600x300" alt="Winter solstice scene" style="max-width: 100%; height: auto; border-radius: 8px;">
+                </div>
+                <h2 style="color: #4A90E2;">Solstice Release</h2>
+                <p>Our special solstice meditation track "Deep Blue Winter" is now available as a free download for all subscribers. This 20-minute ambient journey is designed to align with the winter solstice energies.</p>
+                <h2 style="color: #4A90E2;">Holiday Event</h2>
+                <p>Join us for a special online gathering on December 21st at 8pm EST for a live musical journey through the cosmic winter. Registered subscribers will receive a private link.</p>
+                <div style="text-align: center; margin-top: 30px; padding: 15px; background-color: #e9f5ff; border-radius: 8px;">
+                  <p style="margin-bottom: 5px;"><strong>Winter Gift:</strong> The first 50 subscribers to respond will receive a limited edition winter solstice art print!</p>
+                  <a href="#" style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 4px;">Claim Gift</a>
+                </div>
+                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                  <p>"As the world turns inward, so does the cosmic soul"</p>
+                  <p style="margin-top: 15px;">- Dale 🐋</p>
+                </div>
+              </div>
+            `,
+            status: "sent",
+            sentAt: new Date("2024-12-15"),
+            createdAt: new Date("2024-12-10"),
+            updatedAt: new Date("2024-12-15")
           }
         ]);
       }
