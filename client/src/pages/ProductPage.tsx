@@ -142,7 +142,12 @@ export default function ProductPage() {
   const isOutOfStock = product.inventory <= 0;
   const productImages = Array.isArray(product.images) && product.images.length > 0
     ? product.images
-    : ['/placeholder-product.jpg'];
+    : [`/images/products/${product.id === 'prod-1' ? 'crystal-bowl.jpg' : 
+        product.id === 'prod-2' ? 'energy-pendant.jpg' : 
+        product.id === 'prod-3' ? 'cosmic-frequency-album.png' : 
+        product.id === 'prod-4' ? 'meditation-cushion.jpg' : 
+        product.id === 'prod-5' ? 'sacred-geometry.jpg' : 
+        'cosmic-journal.jpg'}`];
 
   return (
     <div className="container mx-auto px-4 py-8">
