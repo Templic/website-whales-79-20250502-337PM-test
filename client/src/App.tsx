@@ -10,6 +10,7 @@ import NotFound from "./pages/not-found";
 import { useEffect } from "react";
 import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
+import StarBackground from "@/components/cosmic/StarBackground";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -171,6 +172,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <StarBackground starCount={150} />
           <Router />
           <Toaster />
         </ErrorBoundary>

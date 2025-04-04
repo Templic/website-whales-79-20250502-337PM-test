@@ -9,10 +9,40 @@ import {
 import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc, ShoppingBag } from "lucide-react";
 import { useState, useEffect } from "react";
 
+// Define types for navigation items
+interface NavItem {
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+// Top and Bottom navigation items defined separately for better organization
+const topNavItems: NavItem[] = [
+  { path: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
+  { path: "/about", label: "About", icon: <Info className="h-4 w-4 mr-2" /> },
+  { path: "/music-release", label: "New Music", icon: <Music className="h-4 w-4 mr-2" /> },
+  { path: "/archived-music", label: "Archived Music", icon: <Archive className="h-4 w-4 mr-2" /> },
+  { path: "/tour", label: "Tour", icon: <Calendar className="h-4 w-4 mr-2" /> },
+  { path: "/engage", label: "Engage", icon: <Heart className="h-4 w-4 mr-2" /> },
+  { path: "/newsletter", label: "Newsletter", icon: <Mail className="h-4 w-4 mr-2" /> },
+  { path: "/blog", label: "Blog", icon: <BookOpen className="h-4 w-4 mr-2" /> },
+];
+
+const bottomNavItems: NavItem[] = [
+  { path: "/cosmic-experience", label: "Cosmic Experience", icon: <Sparkles className="h-4 w-4 mr-2" /> },
+  { path: "/immersive", label: "Immersive", icon: <Zap className="h-4 w-4 mr-2" /> },
+  { path: "/music-archive", label: "Music Archive", icon: <Disc className="h-4 w-4 mr-2" /> },
+  { path: "/community", label: "Community", icon: <Users className="h-4 w-4 mr-2" /> },
+  { path: "/collaboration", label: "Collaborate", icon: <Users className="h-4 w-4 mr-2" /> },
+  { path: "/shop", label: "Shop", icon: <ShoppingBag className="h-4 w-4 mr-2" /> },
+  { path: "/contact", label: "Contact", icon: <MessageSquare className="h-4 w-4 mr-2" /> },
+];
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [currentPath, setCurrentPath] = useState("/");
 
   // Handle scroll effect
   useEffect(() => {
@@ -25,295 +55,228 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
+    setCurrentPath(window.location.pathname);
   }, []);
 
   if (!mounted) {
     return null;
   }
 
-  const NavLinks = () => {
+  // Combined all navigation items for mobile view
+  const allNavItems = [...topNavItems, ...bottomNavItems];
+
+  interface NavButtonProps {
+    item: NavItem;
+    isMobile?: boolean;
+  }
+
+  const NavButton = ({ item, isMobile = false }: NavButtonProps) => {
+    const isActive = currentPath === item.path;
+    
     return (
-      <>
-        <Link href="/">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-        </Link>
-        <Link href="/about">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Info className="h-4 w-4 mr-2" />
-            About
-          </Button>
-        </Link>
-        <Link href="/music-release">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Music className="h-4 w-4 mr-2" />
-            New Music
-          </Button>
-        </Link>
-        <Link href="/archived-music">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            Archived Music
-          </Button>
-        </Link>
-        <Link href="/tour">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            Tour
-          </Button>
-        </Link>
-        <Link href="/engage">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Heart className="h-4 w-4 mr-2" />
-            Engage
-          </Button>
-        </Link>
-        <Link href="/newsletter">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Newsletter
-          </Button>
-        </Link>
-        <Link href="/blog">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            Blog
-          </Button>
-        </Link>
-        <Link href="/cosmic-experience">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Cosmic Experience
-          </Button>
-        </Link>
-        <Link href="/immersive">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            Immersive
-          </Button>
-        </Link>
-        <Link href="/music-archive">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Disc className="h-4 w-4 mr-2" />
-            Music Archive
-          </Button>
-        </Link>
-        <Link href="/community">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Community
-          </Button>
-        </Link>
-        <Link href="/collaboration">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Collaborate
-          </Button>
-        </Link>
-        <Link href="/shop">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <ShoppingBag className="h-4 w-4 mr-2" />
-            Shop
-          </Button>
-        </Link>
-        <Link href="/contact">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Contact
-          </Button>
-        </Link>
-      </>
+      <Link href={item.path}>
+        <Button 
+          variant="ghost"
+          size="sm" 
+          className={`
+            ${isMobile ? 'w-full justify-start' : 'h-9 px-3'} 
+            nav-link text-[#00ebd6] transition-all duration-300 
+            ${isActive ? 'bg-[#00ebd610] border-b-2 border-[#00ebd6] font-medium' : ''}
+            hover:bg-transparent hover:text-white
+          `}
+          onClick={() => {
+            setCurrentPath(item.path);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        >
+          {item.icon}
+          <span className={isActive ? 'font-medium' : ''}>{item.label}</span>
+        </Button>
+      </Link>
     );
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* DialogProvider should likely be placed here */}
-      {/* <DialogProvider> */}
+    <div className="min-h-screen flex flex-col bg-[#0a0a14]">
+      {/* Main Navigation Header */}
       <header 
-        className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300 ${
-          isScrolled ? 'shadow-md' : ''
+        className={`sticky top-0 z-50 w-full bg-black transition-all duration-300 ${
+          isScrolled ? 'shadow-md shadow-[#00ebd6]/10' : ''
         }`}
       >
-        <div className="container mx-auto">
-          <div className="flex h-[72px] items-center justify-between px-4">
-            {/* Mobile Menu with enhanced transitions */}
-            <div className="sm:hidden">
+        <div className="mx-auto">
+          <div className="flex flex-col px-4">
+            {/* Mobile Menu */}
+            <div className="md:hidden flex items-center justify-between py-3">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="nav-link transition-all duration-300 hover:rotate-180"
+                    className="nav-link transition-all duration-300 hover:rotate-180 text-[#00ebd6]"
                   >
                     <Menu className="h-6 w-6" />
                     <span className="sr-only">Toggle menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px]">
+                <SheetContent side="left" className="w-[300px] bg-[#0a1e3c] border-r border-[#00ebd6]/20 text-white">
+                  <div className="font-orbitron text-xl text-[#00ebd6] mb-6 pt-2">Dale Loves Whales</div>
                   <nav className="flex flex-col gap-2">
-                    <NavLinks />
-                    <div className="my-4 h-[1px] bg-border" />
-                    <AuthLinks />
+                    {allNavItems.map((item) => (
+                      <NavButton key={item.path} item={item} isMobile={true} />
+                    ))}
+                    <div className="my-4 h-[1px] bg-[#00ebd6]/20" />
+                    <AuthLinks isMobile={true} />
                   </nav>
                 </SheetContent>
               </Sheet>
+              
+              {/* Logo for Mobile */}
+              <div className="font-orbitron text-xl text-[#00ebd6]">
+                Dale Loves Whales
+              </div>
+              
+              {/* Auth Icon for Mobile */}
+              <Link href={user ? "/portal" : "/auth"}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="nav-link text-[#00ebd6]"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </Link>
             </div>
 
-            {/* Desktop Navigation with enhanced animations */}
-            <nav className="hidden sm:flex w-full justify-center">
-              <div className="flex flex-wrap items-center gap-1 py-2 max-w-[900px]">
-                <NavLinks />
+            {/* Desktop Navigation - Two Rows */}
+            <div className="hidden md:flex flex-col w-full">
+              {/* Top Navigation Row */}
+              <div className="flex items-center justify-center space-x-1 py-2 w-full bg-black text-[#00ebd6]">
+                {topNavItems.map((item) => (
+                  <NavButton key={item.path} item={item} />
+                ))}
+                
+                {/* Auth Links for Desktop - Top Right */}
+                <div className="absolute right-4">
+                  <AuthLinks />
+                </div>
               </div>
-            </nav>
-
-            {/* Auth Links */}
-            <div className="hidden sm:flex items-center gap-x-2 ml-4">
-              <AuthLinks />
+              
+              {/* Bottom Navigation Row */}
+              <div className="flex items-center justify-center space-x-1 py-2 w-full bg-[#05050a] border-t border-b border-[#333]">
+                {bottomNavItems.map((item) => (
+                  <NavButton key={item.path} item={item} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 text-white">
         {children}
       </main>
 
-      <footer className="border-t py-8 bg-muted/50 transition-colors duration-300">
+      <footer className="border-t border-[#00ebd6]/20 py-8 bg-[#0a1e3c]/80 text-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-semibold mb-4">Quick Links</h3>
+              <h3 className="font-orbitron text-[#00ebd6] mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                <li><Link href="/" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Home</Link></li>
-                <li><Link href="/about" className="nav-link" onClick={() => window.scrollTo(0, 0)}>About</Link></li>
-                <li><Link href="/music-release" className="nav-link" onClick={() => window.scrollTo(0, 0)}>New Music</Link></li>
-                <li><Link href="/archived-music" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Archived Music</Link></li>
-                <li><Link href="/tour" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Tour</Link></li>
+                {topNavItems.slice(0, 5).map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      href={item.path} 
+                      className="text-white hover:text-[#00ebd6] transition-colors duration-300" 
+                      onClick={() => window.scrollTo(0, 0)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Community</h3>
+              <h3 className="font-orbitron text-[#00ebd6] mb-4">Community</h3>
               <ul className="space-y-2">
-                <li><Link href="/engage" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Engage</Link></li>
-                <li><Link href="/newsletter" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Newsletter</Link></li>
-                <li><Link href="/blog" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Blog</Link></li>
-                <li><Link href="/cosmic-experience" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Cosmic Experience</Link></li>
-                <li><Link href="/immersive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Immersive</Link></li>
-                <li><Link href="/music-archive" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Music Archive</Link></li>
-                <li><Link href="/community" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Community</Link></li>
-                <li><Link href="/collaboration" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Collaboration</Link></li>
-                <li><Link href="/contact" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Contact</Link></li>
+                {[...topNavItems.slice(5), ...bottomNavItems.slice(0, 3)].map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      href={item.path} 
+                      className="text-white hover:text-[#00ebd6] transition-colors duration-300" 
+                      onClick={() => window.scrollTo(0, 0)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Shop</h3>
+              <h3 className="font-orbitron text-[#00ebd6] mb-4">Connect</h3>
               <ul className="space-y-2">
-                <li><Link href="/shop" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Shop Home</Link></li>
-                <li><Link href="/cart" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Your Cart</Link></li>
-                <li><Link href="/collaborative-shopping" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Group Shopping</Link></li>
+                {bottomNavItems.slice(3).map((item) => (
+                  <li key={item.path}>
+                    <Link 
+                      href={item.path} 
+                      className="text-white hover:text-[#00ebd6] transition-colors duration-300" 
+                      onClick={() => window.scrollTo(0, 0)}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+                <li><Link href="/cart" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>Your Cart</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Account & Legal</h3>
+              <h3 className="font-orbitron text-[#00ebd6] mb-4">Account & Legal</h3>
               <ul className="space-y-2">
-                <li><Link href="/privacy" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Privacy Policy</Link></li>
-                <li><Link href="/terms" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Terms of Service</Link></li>
-                <li><Link href="/sitemap" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Sitemap</Link></li>
-                {user && <li><Link href="/portal" className="nav-link" onClick={() => window.scrollTo(0, 0)}>My Dashboard</Link></li>}
-                {user?.role === "admin" && <li><Link href="/admin" className="nav-link" onClick={() => window.scrollTo(0, 0)}>Admin Portal</Link></li>}
-                <li className="mt-4 pt-3 border-t"><Link href="/test/cosmic" className="nav-link text-primary/70" onClick={() => window.scrollTo(0, 0)}>Cosmic UI Demo</Link></li>
-                <li><Link href="/test/audio" className="nav-link text-primary/70" onClick={() => window.scrollTo(0, 0)}>Audio Components Demo</Link></li>
-                <li><Link href="/test/new" className="nav-link text-primary/70" onClick={() => window.scrollTo(0, 0)}>New Components Demo</Link></li>
+                <li><Link href="/privacy" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>Privacy Policy</Link></li>
+                <li><Link href="/terms" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>Terms of Service</Link></li>
+                <li><Link href="/sitemap" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>Sitemap</Link></li>
+                {user && <li><Link href="/portal" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>My Dashboard</Link></li>}
+                {user?.role === "admin" && <li><Link href="/admin" className="text-white hover:text-[#00ebd6] transition-colors duration-300" onClick={() => window.scrollTo(0, 0)}>Admin Portal</Link></li>}
               </ul>
             </div>
           </div>
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          
+          {/* Footer Copyright Notices */}
+          <div className="mt-8 text-center text-sm text-white/60">
             © {new Date().getFullYear()} Web App Copyright Claim By Lee Swan All rights reserved.
           </div>
-          <div className="mt-8 text-center text-sm text-muted-foreground">
+          <div className="mt-2 text-center text-sm text-white/60">
             © {new Date().getFullYear()} Language Copyright Claim By Dale Ham. All rights reserved.
           </div>
+          
+          {/* Cosmic footer accent */}
+          <div className="mt-8 h-1 w-full bg-gradient-to-r from-purple-600/30 via-[#00ebd6]/50 to-indigo-600/30"></div>
         </div>
       </footer>
-      {/* </DialogProvider> */}
     </div>
   );
 }
 
-const AuthLinks = () => {
+interface AuthLinksProps {
+  isMobile?: boolean;
+}
+
+const AuthLinks = ({ isMobile = false }: AuthLinksProps) => {
   const { user } = useAuth();
+  
+  const buttonClasses = isMobile 
+    ? "w-full justify-start text-white hover:text-[#00ebd6]" 
+    : "h-9 text-white hover:text-[#00ebd6]";
+  
   return (
     <>
       {user ? (
         <>
           <Link href="/portal">
             <Button 
-              variant="ghost" 
+              variant="cosmic" 
               size="sm" 
-              className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+              className={buttonClasses}
             >
               <User className="h-4 w-4 mr-2" />
               Dashboard
@@ -324,7 +287,7 @@ const AuthLinks = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+                className={buttonClasses}
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Admin
@@ -335,9 +298,9 @@ const AuthLinks = () => {
       ) : (
         <Link href="/auth">
           <Button 
-            variant="ghost" 
+            variant="cosmic" 
             size="sm" 
-            className="h-9 nav-link transition-all duration-300 hover:translate-y-[-2px] hover:text-primary"
+            className={buttonClasses}
           >
             <User className="h-4 w-4 mr-2" />
             Login

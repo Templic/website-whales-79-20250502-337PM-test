@@ -1,16 +1,31 @@
 {
   "variant": "vibrant",
-  "primary": "hsl(180, 100%, 50%)",
-  "appearance": "system",
+  "primary": "hsl(180, 100%, 46%)",
+  "appearance": "dark",
   "radius": 0.5,
   "themes": {
     "light": {
-      "background": "hsl(210, 30%, 99%)",
-      "foreground": "hsl(210, 25%, 10%)"
+      "background": "hsl(218, 30%, 99%)",
+      "foreground": "hsl(218, 25%, 10%)"
     },
     "dark": {
-      "background": "hsl(210, 30%, 8%)",
-      "foreground": "hsl(210, 25%, 98%)"
+      "background": "hsl(225, 43%, 5%)",
+      "foreground": "hsl(180, 100%, 96%)",
+      "card": "hsl(225, 70%, 8%, 0.8)",
+      "popover": "hsl(225, 70%, 8%, 0.95)",
+      "muted": "hsl(225, 30%, 12%)",
+      "muted-foreground": "hsl(215, 20%, 65%)",
+      "accent": "hsl(225, 30%, 12%)",
+      "accent-foreground": "hsl(180, 100%, 46%)",
+      "border": "hsl(180, 100%, 46%, 0.2)",
+      "input": "hsl(225, 30%, 15%)",
+      "primary": "hsl(180, 100%, 46%)",
+      "primary-foreground": "hsl(225, 43%, 5%)",
+      "secondary": "hsl(225, 30%, 12%)",
+      "secondary-foreground": "hsl(180, 100%, 46%)",
+      "destructive": "hsl(350, 89%, 60%)",
+      "destructive-foreground": "hsl(0, 0%, 100%)",
+      "ring": "hsl(180, 100%, 46%, 0.3)"
     }
   }
 }

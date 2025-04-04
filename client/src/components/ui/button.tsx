@@ -18,6 +18,13 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        // Cosmic variants
+        cosmic: "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700",
+        energetic: "bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600",
+        ethereal: "bg-gradient-to-r from-teal-400 to-blue-500 text-white hover:from-teal-500 hover:to-blue-600",
+        moonlight: "bg-gradient-to-r from-gray-700 to-slate-800 text-white hover:from-gray-800 hover:to-slate-900",
+        stardust: "border border-purple-300 bg-black/20 backdrop-blur-sm text-white hover:bg-black/30",
+        nebula: "border border-indigo-300/30 bg-indigo-950/30 backdrop-blur-md text-white hover:bg-indigo-900/40",
       },
       size: {
         default: "h-10 px-4 py-2",
