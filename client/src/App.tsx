@@ -78,8 +78,9 @@ function Router() {
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />
         <Route path="/collaboration" component={CollaborationPage} />
-        <Route path="/community" component={CommunityPage} />
-        <Route path="/enhanced-community" component={EnhancedCommunityPage} />
+        {/* These routes require components that are not yet implemented */}
+        {/* <Route path="/community" component={CommunityPage} /> */}
+        {/* <Route path="/enhanced-community" component={EnhancedCommunityPage} /> */}
 
         {/* Music & Experience */}
         <Route path="/music-release" component={NewMusicPage} />

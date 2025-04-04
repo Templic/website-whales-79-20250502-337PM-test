@@ -1,42 +1,42 @@
 import React, { useState } from 'react';
-import CosmicButton from '../components/ui/cosmic-button';
-import { Button } from '../components/ui/button';
+import CosmicButton from '../../../components/ui/cosmic-button';
+import { Button } from '../../../components/ui/button';
 import { Link } from 'wouter';
-import TestNav from '../components/cosmic/TestNav';
-import SacredGeometry from '../components/ui/sacred-geometry';
-import Stars from '../components/cosmic/Stars';
-import CosmicCard from '../components/ui/cosmic-card';
-import CosmicHeading from '../components/ui/cosmic-heading';
-import CosmicContainer from '../components/ui/cosmic-container';
-import CosmicLink from '../components/ui/cosmic-link';
-import CosmicInput from '../components/ui/cosmic-input';
-import CosmicBadge from '../components/ui/cosmic-badge';
-import CosmicAlert from '../components/ui/cosmic-alert';
-import CosmicDrawer from '../components/ui/cosmic-drawer';
-import CosmicTabs from '../components/ui/cosmic-tabs';
-import CosmicAvatar from '../components/ui/cosmic-avatar';
-import CosmicProgressBar from '../components/ui/cosmic-progress-bar';
-import CosmicTooltip from '../components/ui/cosmic-tooltip';
-import CosmicDropdown from '../components/ui/cosmic-dropdown';
-import CosmicCarousel from '../components/ui/cosmic-carousel';
-import CosmicModal from '../components/ui/cosmic-modal';
-import CosmicSelect from '../components/ui/cosmic-select';
-import CosmicCheckbox from '../components/ui/cosmic-checkbox';
-import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../components/ui/cosmic-radio';
-import CosmicToggle from '../components/ui/cosmic-toggle';
-import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../components/ui/cosmic-toast';
-import { CosmicSlider } from '../components/ui/cosmic-slider';
-import { CosmicSidebar } from '../components/ui/cosmic-sidebar';
-import { CosmicMediaPlayer } from '../components/ui/cosmic-media-player';
-import CosmicMarkdown from '../components/ui/cosmic-markdown';
-import { CosmicMasonry, CosmicMasonryItem } from '../components/ui/cosmic-masonry';
-import CosmicStepper from '../components/ui/cosmic-stepper';
+import TestNav from '../../../components/cosmic/TestNav';
+import SacredGeometry from '../../../components/ui/sacred-geometry';
+import Stars from '../../../components/cosmic/Stars';
+import CosmicCard from '../../../components/ui/cosmic-card';
+import CosmicHeading from '../../../components/ui/cosmic-heading';
+import CosmicContainer from '../../../components/ui/cosmic-container';
+import CosmicLink from '../../../components/ui/cosmic-link';
+import CosmicInput from '../../../components/ui/cosmic-input';
+import CosmicBadge from '../../../components/ui/cosmic-badge';
+import CosmicAlert from '../../../components/ui/cosmic-alert';
+import CosmicDrawer from '../../../components/ui/cosmic-drawer';
+import CosmicTabs from '../../../components/ui/cosmic-tabs';
+import CosmicAvatar from '../../../components/ui/cosmic-avatar';
+import CosmicProgressBar from '../../../components/ui/cosmic-progress-bar';
+import CosmicTooltip from '../../../components/ui/cosmic-tooltip';
+import CosmicDropdown from '../../../components/ui/cosmic-dropdown';
+import CosmicCarousel from '../../../components/ui/cosmic-carousel';
+import CosmicModal from '../../../components/ui/cosmic-modal';
+import CosmicSelect from '../../../components/ui/cosmic-select';
+import CosmicCheckbox from '../../../components/ui/cosmic-checkbox';
+import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../../../components/ui/cosmic-radio';
+import CosmicToggle from '../../../components/ui/cosmic-toggle';
+import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../../../components/ui/cosmic-toast';
+import { CosmicSlider } from '../../../components/ui/cosmic-slider';
+import { CosmicSidebar } from '../../../components/ui/cosmic-sidebar';
+import { CosmicMediaPlayer } from '../../../components/ui/cosmic-media-player';
+import CosmicMarkdown from '../../../components/ui/cosmic-markdown';
+import { CosmicMasonry, CosmicMasonryItem } from '../../../components/ui/cosmic-masonry';
+import CosmicStepper from '../../../components/ui/cosmic-stepper';
 import { 
   CosmicForm, 
   CosmicFormGroup, 
   CosmicFormLabel, 
   CosmicFormHelperText 
-} from '../components/ui/cosmic-form';
+} from '../../../components/ui/cosmic-form';
 import { 
   CosmicTable, 
   CosmicTableContainer, 
@@ -46,13 +46,13 @@ import {
   CosmicTableRow,
   CosmicTableCell,
   CosmicTableHeadCell 
-} from '../components/ui/cosmic-table';
+} from '../../../components/ui/cosmic-table';
 import {
   CosmicAccordion,
   CosmicAccordionItem,
   CosmicAccordionTrigger,
   CosmicAccordionContent
-} from '../components/ui/cosmic-accordion';
+} from '../../../components/ui/cosmic-accordion';
 import { 
   Search, Mail, Info, AlertTriangle, CheckCircle, X, 
   Settings, User, LogOut, Home, Music, Star, HelpCircle,
@@ -91,9 +91,9 @@ export default function CosmicComponentsDemo() {
   const [toastOpen, setToastOpen] = useState<boolean>(false);
 
   // State for slider
-  const [sliderValue, setSliderValue] = useState<number>(50);
-  const [rangeSliderValue, setRangeSliderValue] = useState<number>(75);
-  const [volumeValue, setVolumeValue] = useState<number>(5.0);
+  const [sliderValue, setSliderValue] = useState<number[]>([50]);
+  const [rangeSliderValue, setRangeSliderValue] = useState<number[]>([75]);
+  const [volumeValue, setVolumeValue] = useState<number[]>([5.0]);
 
   // State for sidebar
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -1790,7 +1790,7 @@ export default function CosmicComponentsDemo() {
                         max={100}
                         step={1}
                         value={sliderValue}
-                        onChange={(e) => setSliderValue(parseInt(e.target.value))}
+                        onChange={(value) => setSliderValue(value)}
                         label="Default Slider"
                         showValue
                       />
@@ -1804,7 +1804,7 @@ export default function CosmicComponentsDemo() {
                         max={100}
                         step={1}
                         value={rangeSliderValue}
-                        onChange={(e) => setRangeSliderValue(parseInt(e.target.value))}
+                        onChange={(value) => setRangeSliderValue(value)}
                         label="Cosmic Slider"
                         showValue
                         valueSuffix="%"
@@ -1826,7 +1826,7 @@ export default function CosmicComponentsDemo() {
                         max={100}
                         step={10}
                         value={sliderValue}
-                        onChange={(e) => setSliderValue(parseInt(e.target.value))}
+                        onChange={(value) => setSliderValue(value)}
                         label="Slider with Ticks"
                         showValue
                         valueSuffix=" units"
@@ -1844,7 +1844,7 @@ export default function CosmicComponentsDemo() {
                         max={100}
                         step={1}
                         value={rangeSliderValue}
-                        onChange={(e) => setRangeSliderValue(parseInt(e.target.value))}
+                        onChange={(value) => setRangeSliderValue(value)}
                         label="Glowing Slider with Tooltip"
                         showTooltip
                         tooltipPosition="top"
@@ -1860,11 +1860,11 @@ export default function CosmicComponentsDemo() {
                         max={10}
                         step={0.1}
                         value={volumeValue}
-                        onChange={(e) => setVolumeValue(parseFloat(e.target.value))}
+                        onChange={(value) => setVolumeValue(value)}
                         label="Nebula Volume Control"
                         showValue
                         valuePrefix="Vol: "
-                        formatValue={(value) => value.toFixed(1)}
+                        formatValue={(value) => value[0].toFixed(1)}
                       />
                     </div>
                   </div>
@@ -1873,7 +1873,7 @@ export default function CosmicComponentsDemo() {
 
               <div className="mt-4">
                 <p className="text-sm text-gray-400">
-                  Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}, Volume: {volumeValue.toFixed(1)}
+                  Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}, Volume: {volumeValue[0]?.toFixed(1)}
                 </p>
               </div>
             </div>

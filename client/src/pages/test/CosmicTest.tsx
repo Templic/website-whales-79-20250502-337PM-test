@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import Stars from '../components/cosmic/Stars';
-import SacredGeometry from '../components/ui/sacred-geometry';
-import { Button } from '../components/ui/button';
-import TestNav from '../components/cosmic/TestNav';
-import '../cosmic-styles.css';
+import Stars from '../../components/cosmic/Stars';
+import SacredGeometry from '../../components/ui/sacred-geometry';
+import { Button } from '../../components/ui/button';
+import TestNav from '../../components/cosmic/TestNav';
+import '../../cosmic-styles.css';
 
 interface TestCardProps {
   title: string;
@@ -105,7 +105,7 @@ const CosmicTest: React.FC = () => {
           <TestCard title="Cosmic Buttons">
             <div className="flex flex-wrap gap-3">
               <Button variant="default">Default</Button>
-              <Button variant="primary">Primary</Button>
+              <Button variant="default">Primary</Button>
               <Button variant="secondary">Secondary</Button>
               <Button variant="outline">Outline</Button>
               <Button variant="ghost">Ghost</Button>
@@ -113,7 +113,7 @@ const CosmicTest: React.FC = () => {
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
               <Button variant="cosmic" size="sm">Small</Button>
-              <Button variant="cosmic" size="md">Medium</Button>
+              <Button variant="cosmic">Medium</Button>
               <Button variant="cosmic" size="lg">Large</Button>
             </div>
             <div className="mt-4 flex flex-wrap gap-3">
@@ -140,12 +140,15 @@ const CosmicTest: React.FC = () => {
         <div className="mb-12">
           <TestCard title="Sacred Geometry with Content">
             <div className="flex justify-center mb-6">
-              <SacredGeometry variant="hexagon" size="lg" intensity="medium" animated={true}>
-                <div className="text-center p-8">
-                  <h3 className="cosmic-gradient-text text-xl font-bold mb-2">Universal Harmony</h3>
-                  <p className="text-cosmic-light/80">Explore the interconnected patterns of the cosmos</p>
+              <div className="relative">
+                <SacredGeometry variant="hexagon" size="lg" intensity="medium" animated={true} />
+                <div className="absolute inset-0 flex items-center justify-center text-center p-8">
+                  <div>
+                    <h3 className="cosmic-gradient-text text-xl font-bold mb-2">Universal Harmony</h3>
+                    <p className="text-cosmic-light/80">Explore the interconnected patterns of the cosmos</p>
+                  </div>
                 </div>
-              </SacredGeometry>
+              </div>
             </div>
           </TestCard>
         </div>
