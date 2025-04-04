@@ -3,12 +3,15 @@ import { Footer } from "./Footer";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { AccessibilityControls } from "../imported/AccessibilityControls";
+import { useIsMobile } from "./use-mobile"; // Added import
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
       <ScrollProgress />
@@ -17,8 +20,8 @@ export function MainLayout({ children }: MainLayoutProps) {
         <ThemeToggle />
       </div>
       <Header />
-      <main className="flex-grow w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 transition-all duration-300 ease-in-out">
-        <div className="max-w-7xl mx-auto w-full">
+      <main className={`flex-grow w-full py-6 sm:py-8 lg:py-12 transition-all duration-300 ease-in-out ${isMobile ? 'px-4 sm:px-6' : 'px-8'}`}> {/* Added responsive padding */}
+        <div className={`max-w-7xl mx-auto w-full ${isMobile ? 'space-y-4' : 'space-y-8'}`}> {/* Added responsive spacing */}
           {children}
         </div>
       </main>

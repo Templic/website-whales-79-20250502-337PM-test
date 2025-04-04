@@ -65,6 +65,20 @@
   border-left: 2px solid #7c3aed;
 }
 
+/* Responsive layout utilities */
+.cosmic-responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .cosmic-responsive-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+}
+
 /* Mobile nav styles */
 .cosmic-mobile-nav {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
