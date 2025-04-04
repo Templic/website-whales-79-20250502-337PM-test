@@ -10,14 +10,14 @@ import { CosmicButton } from "@/components/cosmic/CosmicButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { 
-  Music, 
-  Infinity, 
-  Waves, 
+import {
+  Music,
+  Infinity,
+  Waves,
   ArrowRight,
-  Globe, 
-  Zap, 
-  Star
+  Globe,
+  Zap,
+  Star,
 } from "lucide-react";
 
 export default function CosmicConnectivityPage() {
@@ -26,20 +26,21 @@ export default function CosmicConnectivityPage() {
 
   useEffect(() => {
     setTracks([]);
-    
+
     toast({
       title: "Welcome to Cosmic Connectivity",
-      description: "Experience the fusion of sound healing and cosmic consciousness technologies.",
-      duration: 5000
+      description:
+        "Experience the fusion of sound healing and cosmic consciousness technologies.",
+      duration: 5000,
     });
   }, [toast]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-indigo-950/20 to-purple-950/30 text-white relative">
       {/* Dynamic Background with cosmic purple, cyan, and red theme */}
-      <CosmicBackground 
-        color="dark-purple" 
-        nebulaEffect={true} 
+      <CosmicBackground
+        color="dark-purple"
+        nebulaEffect={true}
         particleCount={200}
         opacity={0.7}
       />
@@ -51,9 +52,10 @@ export default function CosmicConnectivityPage() {
             Cosmic Connectivity
           </h1>
           <p className="text-gray-300 max-w-2xl mx-auto text-lg">
-            Explore the integrated cosmic sound healing experience that connects your consciousness 
-            to healing frequencies through advanced personalization, breath synchronization, and
-            multidimensional sound journeys.
+            Explore the integrated cosmic sound healing experience that connects
+            your consciousness to healing frequencies through advanced
+            personalization, breath synchronization, and multidimensional sound
+            journeys.
           </p>
         </div>
 
@@ -68,12 +70,15 @@ export default function CosmicConnectivityPage() {
               </div>
             </div>
             <div className="text-center sm:text-left">
-              <h3 className="text-xl font-medium text-white mb-1">Powered by the Frequencies from</h3>
+              <h3 className="text-xl font-medium text-white mb-1">
+                Powered by the Frequencies from
+              </h3>
               <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-purple-400">
                 "Feels So Good"
               </h2>
               <p className="text-sm text-gray-300 mt-2">
-                Immerse yourself in the healing vibrations of Dale the Whale's consciousness-expanding soundscapes
+                Immerse yourself in the healing vibrations of Dale the Whale's
+                consciousness-expanding soundscapes
               </p>
             </div>
           </div>
@@ -103,23 +108,29 @@ export default function CosmicConnectivityPage() {
           {/* Frequency Attunement Tab */}
           <TabsContent value="frequency" className="space-y-8">
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-cyan-500/10">
-              <h2 className="text-2xl font-semibold mb-6 text-white">Frequency Attunement Chamber</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-white">
+                Frequency Attunement Chamber
+              </h2>
               <FrequencyAttunementChamber />
               <div className="mt-4 text-center">
                 <p className="text-gray-300 max-w-2xl mx-auto">
-                  Attune your consciousness to specific vibrational states. The chamber adapts to your energetic needs and
-                  allows you to blend environmental resonances for a more immersive experience.
+                  Attune your consciousness to specific vibrational states. The
+                  chamber adapts to your energetic needs and allows you to blend
+                  environmental resonances for a more immersive experience.
                 </p>
               </div>
             </div>
-            
+
             {/* Binaural Beat Generator */}
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-cyan-500/10">
-              <h2 className="text-2xl font-semibold mb-4">Binaural Beat Generator</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Binaural Beat Generator
+              </h2>
               <p className="text-gray-300 mb-6">
-                Generate custom binaural beats to induce specific states of consciousness. 
-                Binaural beats occur when two slightly different frequencies are played separately in each ear, 
-                creating a third "beat" frequency that can influence brain waves.
+                Generate custom binaural beats to induce specific states of
+                consciousness. Binaural beats occur when two slightly different
+                frequencies are played separately in each ear, creating a third
+                "beat" frequency that can influence brain waves.
               </p>
               <BinauralBeatGenerator />
             </div>
@@ -128,22 +139,29 @@ export default function CosmicConnectivityPage() {
           {/* Breath Synchronization Tab */}
           <TabsContent value="breath" className="space-y-8">
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-red-500/10">
-              <h2 className="text-2xl font-semibold mb-6 text-white">Breath Synchronization Ceremony</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-white">
+                Breath Synchronization Ceremony
+              </h2>
               <BreathSynchronizationCeremony />
               <div className="mt-4 text-center">
                 <p className="text-gray-300 max-w-2xl mx-auto">
-                  Harmonize your life force with cosmic rhythms. Choose from ancient breathing patterns or create your own
-                  sacred rhythm to deepen your connection with universal consciousness.
+                  Harmonize your life force with cosmic rhythms. Choose from
+                  ancient breathing patterns or create your own sacred rhythm to
+                  deepen your connection with universal consciousness.
                 </p>
               </div>
             </div>
-            
+
             {/* Synchronized Breath & Music Player */}
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-red-500/10">
-              <h2 className="text-2xl font-semibold mb-4">Synchronized Breath & Music Player</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Synchronized Breath & Music Player
+              </h2>
               <p className="text-gray-300 mb-6">
-                This player synchronizes breathing patterns with music playback, creating a deeply immersive experience.
-                Select different breathing patterns and follow the visual cues to synchronize your breath.
+                This player synchronizes breathing patterns with music playback,
+                creating a deeply immersive experience. Select different
+                breathing patterns and follow the visual cues to synchronize
+                your breath.
               </p>
               <BreathSyncPlayer tracks={tracks} />
             </div>
@@ -152,12 +170,15 @@ export default function CosmicConnectivityPage() {
           {/* Sound Journey Tab */}
           <TabsContent value="sound" className="space-y-8">
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-purple-500/10">
-              <h2 className="text-2xl font-semibold mb-6 text-white">Multidimensional Sound Journey</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-white">
+                Multidimensional Sound Journey
+              </h2>
               <MultidimensionalSoundJourney />
               <div className="mt-4 text-center">
                 <p className="text-gray-300 max-w-2xl mx-auto">
-                  Experience healing frequencies across dimensions. Sound spirals around your consciousness, creating a portal
-                  to deeper states of awareness and cosmic connection.
+                  Experience healing frequencies across dimensions. Sound
+                  spirals around your consciousness, creating a portal to deeper
+                  states of awareness and cosmic connection.
                 </p>
               </div>
             </div>
@@ -166,10 +187,13 @@ export default function CosmicConnectivityPage() {
           {/* Sacred Geometry Tab */}
           <TabsContent value="sacred" className="space-y-8">
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-purple-500/10">
-              <h2 className="text-2xl font-semibold mb-4">Sacred Geometry Visualizations</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Sacred Geometry Visualizations
+              </h2>
               <p className="text-gray-300 mb-6">
-                Sacred geometry patterns reveal the mathematical principles that govern our universe.
-                Explore these interactive containers shaped in various sacred forms.
+                Sacred geometry patterns reveal the mathematical principles that
+                govern our universe. Explore these interactive containers shaped
+                in various sacred forms.
               </p>
               <SacredGeometryDemo />
             </div>
@@ -182,15 +206,18 @@ export default function CosmicConnectivityPage() {
         <div className="bg-gradient-to-r from-black/60 via-purple-900/20 to-black/60 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
           <div className="grid gap-4 lg:grid-cols-2 items-center">
             <div>
-              <h2 className="text-2xl font-semibold mb-3 text-white">Begin Your Transformation</h2>
+              <h2 className="text-2xl font-semibold mb-3 text-white">
+                Begin Your Transformation
+              </h2>
               <p className="text-gray-300">
-                Experience a comprehensive journey through cosmic consciousness technologies with our
-                integrated tools designed to elevate your vibrational state and connect you with universal energy.
+                Experience a comprehensive journey through cosmic consciousness
+                technologies with our integrated tools designed to elevate your
+                vibrational state and connect you with universal energy.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
               <Link href="/shop">
-                <CosmicButton 
+                <CosmicButton
                   variant="secondary"
                   className="bg-gradient-to-r from-cyan-700/80 to-cyan-900/80 hover:from-cyan-600/80 hover:to-cyan-800/80"
                 >
@@ -198,7 +225,7 @@ export default function CosmicConnectivityPage() {
                 </CosmicButton>
               </Link>
               <Link href="/music-release">
-                <CosmicButton 
+                <CosmicButton
                   variant="primary"
                   icon={<ArrowRight className="h-4 w-4" />}
                   className="bg-gradient-to-r from-purple-700/80 to-purple-900/80 hover:from-purple-600/80 hover:to-purple-800/80"
