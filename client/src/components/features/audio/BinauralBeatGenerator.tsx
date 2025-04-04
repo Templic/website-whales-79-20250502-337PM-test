@@ -4,7 +4,50 @@
  * Component Type: feature
  * Migrated as part of the repository reorganization.
  * Enhanced with pulse detection, heart rate synchronization, and visual feedback.
+ * 
+ * Features:
+ * - Binaural beat generation with adjustable frequencies
+ * - Heart rate detection and binaural beat synchronization
+ * - Immersive visualization with dynamic feedback
+ * - Multiple wave forms: sine, square, triangle, sawtooth
+ * - Timer functionality with auto-shutdown
+ * - Pre-defined presets for various mental states
+ * - Custom preset saving capability
  */
+
+// Add CSS animation for the ripple effect
+const rippleAnimation = `
+@keyframes ripple {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+`;
+
+// Add the animation to the document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = rippleAnimation;
+  document.head.appendChild(style);
+}
 "use client"
 
 import { useState, useRef, useEffect } from "react";
@@ -536,12 +579,19 @@ export function BinauralBeatGenerator({
               }}
             >
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-r from-cyan-500/20 to-cyan-300/10 flex items-center justify-center">
+                <div 
+                  className="w-24 h-24 rounded-full bg-gradient-to-r flex items-center justify-center"
+                  style={{
+                    background: `radial-gradient(circle, ${brainWave.color}30 0%, rgba(0,0,0,0.2) 70%)`,
+                    animation: isPlaying ? 'pulse 2s infinite' : 'none',
+                  }}
+                >
                   <div
                     className="w-16 h-16 rounded-full flex items-center justify-center text-white font-semibold"
                     style={{
                       background: `linear-gradient(to right, ${brainWave.color}40, ${brainWave.color}90)`,
-                      boxShadow: `0 0 15px ${brainWave.color}50`,
+                      boxShadow: `0 0 ${isPlaying ? '20px' : '10px'} ${brainWave.color}50`,
+                      transition: 'all 0.5s ease',
                     }}
                   >
                     {beatFrequency.toFixed(1)}
@@ -549,10 +599,33 @@ export function BinauralBeatGenerator({
                   </div>
                 </div>
               </div>
+              
+              {/* Frequency waves visualization */}
+              {isPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                  <div 
+                    className="w-full h-full absolute" 
+                    style={{
+                      backgroundImage: `
+                        radial-gradient(circle at center, transparent 30%, ${brainWave.color} 70%, transparent 70%)
+                      `,
+                      backgroundSize: `${15 + beatFrequency * 2}px ${15 + beatFrequency * 2}px`,
+                      animation: `ripple ${(1/beatFrequency) * 2}s infinite linear`,
+                    }}
+                  />
+                </div>
+              )}
 
               <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-xs text-white">
                 {brainWave.name}: {brainWave.description}
               </div>
+              
+              {heartRate && isSyncingToHeartRate && (
+                <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white flex items-center">
+                  <Heart className="h-3 w-3 mr-1 text-red-400" /> 
+                  Synced to Heart Rate: {heartRate} BPM
+                </div>
+              )}
             </div>
 
             {/* Controls */}

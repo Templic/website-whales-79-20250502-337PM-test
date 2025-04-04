@@ -5,7 +5,40 @@
  * Migrated as part of the repository reorganization.
  * Enhanced with improved visualization, customizable breath patterns, and chakra
  * color integration.
+ * 
+ * Features:
+ * - Synchronized breathing guide with visual animation
+ * - Customizable breath patterns (inhale, hold, exhale)
+ * - Chakra-based color integration with frequency display
+ * - Audio playback with chakra-specific tracks
+ * - Session timer for timed meditation practice
+ * - Fullscreen immersive experience
  */
+
+// Add CSS animation for the breath pulse effect
+const breathPulseAnimation = `
+@keyframes breathPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+}
+`;
+
+// Add the animation to the document
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = breathPulseAnimation;
+  document.head.appendChild(style);
+}
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -635,27 +668,75 @@ export function BreathSyncPlayer({
           {/* Breath Visualization */}
           <div
             className="relative aspect-square rounded-lg overflow-hidden bg-black/40 flex items-center justify-center mb-6"
+            style={{
+              background: currentTrack.chakra 
+                ? `radial-gradient(circle, ${getChakraColor(currentTrack.chakra)}20 0%, rgba(0,0,0,0.8) 80%)`
+                : `radial-gradient(circle, ${currentPattern.color}20 0%, rgba(0,0,0,0.8) 80%)`
+            }}
           >
             <div
               className="absolute w-full h-full flex items-center justify-center transition-all duration-300"
               style={{ transform: `scale(${getCircleSize() / 100})` }}
             >
               <div
-                className="rounded-full animate-pulse transition-colors"
+                className="rounded-full transition-colors"
                 style={{
                   width: "180px",
                   height: "180px",
-                  backgroundColor: `${currentPattern.color}30`,
-                  boxShadow: `0 0 40px ${currentPattern.color}30`,
+                  backgroundColor: currentTrack.chakra 
+                    ? `${getChakraColor(currentTrack.chakra)}20`
+                    : `${currentPattern.color}20`,
+                  boxShadow: currentTrack.chakra 
+                    ? `0 0 40px ${getChakraColor(currentTrack.chakra)}40`
+                    : `0 0 40px ${currentPattern.color}40`,
+                  animation: isBreathSyncActive 
+                    ? `breathPulse ${getCurrentPhaseSeconds()}s ${currentBreathPhase === 'inhale' ? 'ease-in' : currentBreathPhase === 'exhale' ? 'ease-out' : 'ease'} infinite` 
+                    : 'none',
                 }}
               ></div>
             </div>
-            <div className="absolute inset-0 flex items-center justify-center text-white text-2xl font-medium">
-              {getBreathInstruction()}
+            
+            {/* Phase rays */}
+            {isBreathSyncActive && (
+              <div className="absolute inset-0 pointer-events-none">
+                {[...Array(8)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className="absolute top-1/2 left-1/2 w-full h-0.5 -translate-x-1/2 -translate-y-1/2 opacity-20"
+                    style={{
+                      transform: `translate(-50%, -50%) rotate(${i * 45}deg)`,
+                      background: currentTrack.chakra 
+                        ? `linear-gradient(90deg, transparent, ${getChakraColor(currentTrack.chakra)})`
+                        : `linear-gradient(90deg, transparent, ${currentPattern.color})`,
+                      opacity: currentBreathPhase === 'inhale' ? 0.1 + (breathProgress / 100) * 0.3 : 
+                               currentBreathPhase === 'exhale' ? 0.4 - (breathProgress / 100) * 0.3 : 0.2,
+                      width: `${getCircleSize()}%`,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            
+            <div 
+              className="absolute inset-0 flex items-center justify-center text-white font-medium transition-all"
+              style={{
+                fontSize: isBreathSyncActive ? '1.75rem' : '1.25rem',
+                opacity: isBreathSyncActive ? 1 : 0.6,
+              }}
+            >
+              {isBreathSyncActive ? getBreathInstruction() : "Press 'Start Sync' to begin"}
             </div>
-            <div className="absolute bottom-4 left-4 text-white text-xs opacity-60">
+            
+            <div className="absolute bottom-4 left-4 bg-black/40 px-2 py-1 rounded text-white text-xs flex items-center gap-1">
+              <Lungs className="h-3 w-3 opacity-70" />
               Breaths: {breathCount}
             </div>
+            
+            {currentTrack.chakra && currentTrack.frequency && (
+              <div className="absolute top-4 right-4 bg-black/40 px-2 py-1 rounded text-xs" style={{ color: getChakraColor(currentTrack.chakra) }}>
+                {currentTrack.chakra} • {currentTrack.frequency} Hz
+              </div>
+            )}
           </div>
 
           {/* Breath Pattern Selection */}
