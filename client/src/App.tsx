@@ -35,6 +35,8 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import CosmicTest from "@/pages/test/CosmicTest";
 import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
+import CommunityPage from "@/pages/CommunityPage";
+import EnhancedCommunityPage from "@/pages/EnhancedCommunityPage";
 
 // Shop Pages
 import ShopPage from "@/pages/ShopPage";
@@ -78,9 +80,9 @@ function Router() {
         <Route path="/engage" component={EngagePage} />
         <Route path="/newsletter" component={NewsletterPage} />
         <Route path="/collaboration" component={CollaborationPage} />
-        {/* These routes require components that are not yet implemented */}
-        {/* <Route path="/community" component={CommunityPage} /> */}
-        {/* <Route path="/enhanced-community" component={EnhancedCommunityPage} /> */}
+        {/* Community Pages */}
+        <Route path="/community" component={CommunityPage} />
+        <Route path="/enhanced-community" component={EnhancedCommunityPage} />
 
         {/* Music & Experience */}
         <Route path="/music-release" component={NewMusicPage} />
