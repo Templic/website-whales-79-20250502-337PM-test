@@ -924,3 +924,21 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   const httpServer = createServer(app);
   return httpServer;
 }
+import { contactFormEntries } from './db';
+import { nanoid } from 'nanoid';
+
+app.post('/api/contact/submit', async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+    await db.insert(contactFormEntries).values({
+      id: nanoid(),
+      name,
+      email, 
+      message,
+      createdAt: new Date()
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save contact form' });
+  }
+});

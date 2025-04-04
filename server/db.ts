@@ -35,3 +35,13 @@ export const initializeDatabase = async () => {
 
 // Export pool to be able to end it when the server closes
 export const pgPool = pool;
+import { sql } from 'drizzle-orm';
+import { text, timestamp, sqliteTable } from 'drizzle-orm/sqlite-core';
+
+export const contactFormEntries = sqliteTable('contact_form_entries', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
+});

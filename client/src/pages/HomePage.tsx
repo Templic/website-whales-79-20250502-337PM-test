@@ -16,7 +16,7 @@ export default function HomePage() {
         
 
         {/* Hero Section */}
-        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8"
+        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8 border-t-4 border-[#00ebd6]"
           style={{
             background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8)),
               url(https://onlyinhawaii.org/wp-content/uploads/2011/03/Rainbow-Falls.jpg)

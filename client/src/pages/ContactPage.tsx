@@ -30,7 +30,7 @@ export default function ContactPage() {
 
   const onSubmit = async (data: ContactForm) => {
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch("/api/contact/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
