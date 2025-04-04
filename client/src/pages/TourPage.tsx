@@ -1,6 +1,7 @@
 
 import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
+import GeometricSection from "@/components/cosmic/GeometricSection";
 
 export default function TourPage() {
   useEffect(() => {
@@ -13,12 +14,13 @@ export default function TourPage() {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Tour Dates</h1>
         
-        <section className="upcoming-dates bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)] mb-8">
-          <div className="section-header text-center mb-8">
-            <h2 className="text-4xl font-bold text-[#00ebd6] mb-4">Upcoming Tour Dates</h2>
-            <p className="text-xl">Join Dale Loves Whales on an unforgettable cosmic journey. Find your city and grab your tickets now!</p>
-          </div>
-
+        <GeometricSection 
+          variant="secondary" 
+          shape="trapezoid" 
+          title="Upcoming Tour Dates"
+          subtitle="Join Dale Loves Whales on an unforgettable cosmic journey. Find your city and grab your tickets now!"
+          alignment="center"
+        >
           <div className="tour-items space-y-6">
             <div className="tour-item bg-[rgba(48,52,54,0.5)] p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
               <div className="tour-details">
@@ -52,14 +54,15 @@ export default function TourPage() {
               </div>
             </div>
           </div>
-        </section>
+        </GeometricSection>
 
-        <section className="past-shows bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)] mb-8">
-          <div className="section-header text-center mb-8">
-            <h2 className="text-4xl font-bold text-[#00ebd6] mb-4">Past Shows</h2>
-            <p className="text-xl">Look back at memorable performances and dive into the cosmic memories.</p>
-          </div>
-
+        <GeometricSection 
+          variant="primary" 
+          shape="hexagon" 
+          title="Past Shows"
+          subtitle="Look back at memorable performances and dive into the cosmic memories."
+          alignment="center"
+        >
           <div className="grid md:grid-cols-2 gap-6">
             <div className="past-show bg-[rgba(48,52,54,0.5)] rounded-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
               <img src="/uploads/dale with flowers and staff.jpg" alt="Maui Show" className="w-full h-48 object-cover" />
@@ -77,14 +80,15 @@ export default function TourPage() {
               </div>
             </div>
           </div>
-        </section>
+        </GeometricSection>
 
-        <section className="map-container bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)]">
-          <div className="section-header text-center mb-8">
-            <h2 className="text-4xl font-bold text-[#00ebd6] mb-4">Tour Locations</h2>
-            <p className="text-xl">Explore the map to view all past and upcoming cosmic tour stops.</p>
-          </div>
-
+        <GeometricSection 
+          variant="cosmic" 
+          shape="wave" 
+          title="Tour Locations"
+          subtitle="Explore the map to view all past and upcoming cosmic tour stops."
+          alignment="center"
+        >
           <div className="relative w-full h-[450px] rounded-lg overflow-hidden">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1883097.0233626748!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
@@ -94,7 +98,7 @@ export default function TourPage() {
               title="Tour Map"
             />
           </div>
-        </section>
+        </GeometricSection>
       </div>
     </>
   );
