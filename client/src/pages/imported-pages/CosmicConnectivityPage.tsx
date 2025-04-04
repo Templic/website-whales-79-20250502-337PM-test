@@ -86,7 +86,7 @@ export default function CosmicConnectivityPage() {
 
         {/* Main Cosmic Tabs */}
         <Tabs defaultValue="frequency" className="max-w-6xl mx-auto">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl">
             <TabsTrigger value="frequency">
               <Zap className="h-4 w-4 mr-2" />
               Frequency Attunement
@@ -98,10 +98,6 @@ export default function CosmicConnectivityPage() {
             <TabsTrigger value="sound">
               <Music className="h-4 w-4 mr-2" />
               Sound Journey
-            </TabsTrigger>
-            <TabsTrigger value="sacred">
-              <Infinity className="h-4 w-4 mr-2" />
-              Sacred Geometry
             </TabsTrigger>
           </TabsList>
 
@@ -181,21 +177,6 @@ export default function CosmicConnectivityPage() {
                   states of awareness and cosmic connection.
                 </p>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Sacred Geometry Tab */}
-          <TabsContent value="sacred" className="space-y-8">
-            <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-purple-500/10">
-              <h2 className="text-2xl font-semibold mb-4">
-                Sacred Geometry Visualizations
-              </h2>
-              <p className="text-gray-300 mb-6">
-                Sacred geometry patterns reveal the mathematical principles that
-                govern our universe. Explore these interactive containers shaped
-                in various sacred forms.
-              </p>
-              <SacredGeometryDemo />
             </div>
           </TabsContent>
         </Tabs>

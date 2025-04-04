@@ -59,6 +59,9 @@ import {
   ChevronRight, ChevronDown, Image, Heart, FileText, Calendar, DollarSign
 } from 'lucide-react';
 
+// Placeholder component - replace with actual implementation
+const SacredGeometryDemo = () => <div>Sacred Geometry Demo Component</div>;
+
 export default function CosmicComponentsDemo() {
   const [starSettings, setStarSettings] = useState({
     count: 200,
@@ -67,14 +70,14 @@ export default function CosmicComponentsDemo() {
     backgroundColor: 'transparent',
     maxSize: 2
   });
-  
+
   // State for interactive components
   const [inputValue, setInputValue] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentModal, setCurrentModal] = useState<'default' | 'cosmic' | 'glow' | 'frosted' | 'nebula'>('default');
-  
+
   // State for form components
   const [checkboxValue, setCheckboxValue] = useState<boolean>(false);
   const [radioValue, setRadioValue] = useState<string>('option1');
@@ -83,21 +86,21 @@ export default function CosmicComponentsDemo() {
   const [selectValue, setSelectValue] = useState<string>('');
   const [formTermsValue, setFormTermsValue] = useState<boolean>(false);
   const [formNewsletterValue, setFormNewsletterValue] = useState<boolean>(false);
-  
+
   // State for toast
   const [toastOpen, setToastOpen] = useState<boolean>(false);
-  
+
   // State for slider
   const [sliderValue, setSliderValue] = useState<number>(50);
   const [rangeSliderValue, setRangeSliderValue] = useState<number>(75);
   const [volumeValue, setVolumeValue] = useState<number>(5.0);
-  
+
   // State for sidebar
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  
+
   // State for stepper
   const [currentStep, setCurrentStep] = useState<number>(0);
-  
+
   // State for media player
   const [demoTracks] = useState([
     {
@@ -133,12 +136,12 @@ export default function CosmicComponentsDemo() {
         maxSize={starSettings.maxSize}
       />
       <TestNav />
-      
+
       <div className="max-w-4xl mx-auto">
         <CosmicHeading as="h1" variant="cosmic" size="4xl" animate className="mb-8 text-center">
           Cosmic Components Demo
         </CosmicHeading>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -155,7 +158,7 @@ export default function CosmicComponentsDemo() {
               <CosmicButton variant="destructive">Destructive Button</CosmicButton>
             </div>
           </div>
-          
+
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
               Original Button Component
@@ -174,10 +177,20 @@ export default function CosmicComponentsDemo() {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
-            Sacred Geometry
+            Sacred Geometry Visualizations
+          </CosmicHeading>
+          <p className="text-gray-300 mb-6">
+            Sacred geometry patterns reveal the mathematical principles that govern our universe. Explore these interactive containers shaped in various sacred forms.
+          </p>
+          <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-purple-500/10 mb-8">
+            <SacredGeometryDemo />
+          </div>
+
+          <CosmicHeading as="h3" variant="gradient" size="lg" className="mb-4">
+            Basic Sacred Geometry Shapes
           </CosmicHeading>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {SacredGeometry && (
@@ -216,7 +229,7 @@ export default function CosmicComponentsDemo() {
             Stars Background
           </CosmicHeading>
           <p className="mb-4">Adjust the star background settings:</p>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">
@@ -231,7 +244,7 @@ export default function CosmicComponentsDemo() {
                 className="w-full"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 Star Speed: {starSettings.speed}
@@ -246,7 +259,7 @@ export default function CosmicComponentsDemo() {
                 className="w-full"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 Star Color
@@ -258,7 +271,7 @@ export default function CosmicComponentsDemo() {
                 className="w-full h-10"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 Max Star Size: {starSettings.maxSize}
@@ -284,39 +297,39 @@ export default function CosmicComponentsDemo() {
             <CosmicHeading as="h1" variant="default" size="4xl">
               Default Heading (H1)
             </CosmicHeading>
-            
+
             <CosmicHeading as="h2" variant="gradient" size="3xl">
               Gradient Heading (H2)
             </CosmicHeading>
-            
+
             <CosmicHeading as="h3" variant="glow" size="2xl">
               Glow Effect Heading (H3)
             </CosmicHeading>
-            
+
             <CosmicHeading as="h4" variant="outlined" size="xl">
               Outlined Heading (H4)
             </CosmicHeading>
-            
+
             <CosmicHeading as="h5" variant="cosmic" size="lg" animate>
               Cosmic Animated Heading (H5)
             </CosmicHeading>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
               <CosmicHeading as="h6" align="left" size="base">
                 Left Aligned
               </CosmicHeading>
-              
+
               <CosmicHeading as="h6" align="center" size="base">
                 Center Aligned
               </CosmicHeading>
-              
+
               <CosmicHeading as="h6" align="right" size="base">
                 Right Aligned
               </CosmicHeading>
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Cards
@@ -360,7 +373,7 @@ export default function CosmicComponentsDemo() {
             </CosmicCard>
           </div>
         </div>
-        
+
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Containers
@@ -427,7 +440,7 @@ export default function CosmicComponentsDemo() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Input Variants</CosmicHeading>
-              
+
               <div className="space-y-4">
                 <CosmicInput 
                   placeholder="Default input" 
@@ -435,45 +448,45 @@ export default function CosmicComponentsDemo() {
                   onChange={(e) => setInputValue(e.target.value)} 
                   variant="default"
                 />
-                
+
                 <CosmicInput 
                   placeholder="Filled input" 
                   variant="filled"
                 />
-                
+
                 <CosmicInput 
                   placeholder="Outline input" 
                   variant="outline"
                 />
-                
+
                 <CosmicInput 
                   placeholder="Cosmic input" 
                   variant="cosmic"
                 />
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-2">Special Input Features</CosmicHeading>
-              
+
               <div className="space-y-4">
                 <CosmicInput 
                   placeholder="Input with icon" 
                   icon={<Search size={16} />}
                 />
-                
+
                 <CosmicInput 
                   placeholder="Email input" 
                   type="email" 
                   icon={<Mail size={16} />}
                 />
-                
+
                 <CosmicInput 
                   placeholder="Glowing input" 
                   glowing
                   variant="cosmic"
                 />
-                
+
                 <CosmicInput 
                   placeholder="Input with error" 
                   error 
@@ -488,7 +501,7 @@ export default function CosmicComponentsDemo() {
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Badges
           </CosmicHeading>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-3">Badge Variants</CosmicHeading>
@@ -502,7 +515,7 @@ export default function CosmicComponentsDemo() {
                 <CosmicBadge variant="cosmic">Cosmic</CosmicBadge>
               </div>
             </div>
-            
+
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-3">Badge Sizes</CosmicHeading>
               <div className="flex flex-wrap items-center gap-2">
@@ -511,7 +524,7 @@ export default function CosmicComponentsDemo() {
                 <CosmicBadge variant="cosmic" size="lg">Large</CosmicBadge>
               </div>
             </div>
-            
+
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-3">Special Features</CosmicHeading>
               <div className="flex flex-wrap gap-2">
@@ -527,7 +540,7 @@ export default function CosmicComponentsDemo() {
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Alerts
           </CosmicHeading>
-          
+
           <div className="space-y-4">
             {showAlert && (
               <CosmicAlert 
@@ -540,7 +553,7 @@ export default function CosmicComponentsDemo() {
                 This is a cosmic themed alert that can be dismissed.
               </CosmicAlert>
             )}
-            
+
             <CosmicAlert 
               variant="info"
               title="Information"
@@ -548,7 +561,7 @@ export default function CosmicComponentsDemo() {
             >
               This is an informational alert with an icon.
             </CosmicAlert>
-            
+
             <CosmicAlert 
               variant="success"
               title="Success"
@@ -556,7 +569,7 @@ export default function CosmicComponentsDemo() {
             >
               Your action was completed successfully.
             </CosmicAlert>
-            
+
             <CosmicAlert 
               variant="warning"
               title="Warning"
@@ -564,7 +577,7 @@ export default function CosmicComponentsDemo() {
             >
               Be careful, this action might have consequences.
             </CosmicAlert>
-            
+
             <CosmicAlert 
               variant="error"
               title="Error"
@@ -574,12 +587,12 @@ export default function CosmicComponentsDemo() {
             </CosmicAlert>
           </div>
         </div>
-        
+
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Tabs
           </CosmicHeading>
-          
+
           <div className="space-y-12">
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-3">Default Tabs</CosmicHeading>
@@ -618,7 +631,7 @@ export default function CosmicComponentsDemo() {
                 ]}
               />
             </div>
-            
+
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-3">Cosmic Style Tabs</CosmicHeading>
               <CosmicTabs 
@@ -662,18 +675,18 @@ export default function CosmicComponentsDemo() {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Drawer
           </CosmicHeading>
-          
+
           <div className="flex justify-center">
             <CosmicButton variant="cosmic" onClick={() => setIsDrawerOpen(true)}>
               Open Cosmic Drawer
             </CosmicButton>
           </div>
-          
+
           <CosmicDrawer
             isOpen={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
@@ -685,12 +698,12 @@ export default function CosmicComponentsDemo() {
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-4">
                 Drawer Content
               </CosmicHeading>
-              
+
               <p className="text-sm">
                 This is a cosmic drawer component that slides in from the side. 
                 It can be used for additional content, settings, or navigation.
               </p>
-              
+
               <div className="grid grid-cols-2 gap-2 mt-6">
                 <CosmicButton variant="outline" size="sm" onClick={() => setIsDrawerOpen(false)}>
                   Cancel
@@ -794,7 +807,7 @@ export default function CosmicComponentsDemo() {
             <CosmicTooltip content="Default tooltip style">
               <Button>Hover Me (Default)</Button>
             </CosmicTooltip>
-            
+
             <CosmicTooltip 
               content="Cosmic styled tooltip with gradient background"
               variant="cosmic"
@@ -803,7 +816,7 @@ export default function CosmicComponentsDemo() {
             >
               <Button>Hover Me (Cosmic)</Button>
             </CosmicTooltip>
-            
+
             <CosmicTooltip 
               content={
                 <div className="flex items-center gap-2">
@@ -817,7 +830,7 @@ export default function CosmicComponentsDemo() {
             >
               <Button>Hover Me (Rich Content)</Button>
             </CosmicTooltip>
-            
+
             <CosmicTooltip 
               content="Click me to toggle the tooltip"
               variant="frosted"
@@ -825,7 +838,7 @@ export default function CosmicComponentsDemo() {
             >
               <Button>Click Me (Toggle)</Button>
             </CosmicTooltip>
-            
+
             <CosmicTooltip 
               content="This tooltip is always visible"
               variant="dark"
@@ -852,7 +865,7 @@ export default function CosmicComponentsDemo() {
                 { id: '3', label: 'Logout', icon: <LogOut className="h-4 w-4" />, onClick: () => console.log('Logout clicked') }
               ]}
             />
-            
+
             <CosmicDropdown 
               buttonText="Cosmic Menu"
               buttonVariant="cosmic"
@@ -864,7 +877,7 @@ export default function CosmicComponentsDemo() {
                 { id: '3', label: 'Favorites', icon: <Star className="h-4 w-4" />, onClick: () => console.log('Favorites clicked') }
               ]}
             />
-            
+
             <CosmicDropdown 
               buttonIcon={<HelpCircle className="h-4 w-4" />}
               buttonVariant="outline"
@@ -958,7 +971,7 @@ export default function CosmicComponentsDemo() {
             >
               Open Default Modal
             </CosmicButton>
-            
+
             <CosmicButton 
               variant="primary" 
               onClick={() => {
@@ -968,7 +981,7 @@ export default function CosmicComponentsDemo() {
             >
               Open Cosmic Modal
             </CosmicButton>
-            
+
             <CosmicButton 
               variant="secondary" 
               onClick={() => {
@@ -978,7 +991,7 @@ export default function CosmicComponentsDemo() {
             >
               Open Glowing Modal
             </CosmicButton>
-            
+
             <CosmicButton 
               variant="outline" 
               onClick={() => {
@@ -988,7 +1001,7 @@ export default function CosmicComponentsDemo() {
             >
               Open Frosted Modal
             </CosmicButton>
-            
+
             <CosmicButton 
               variant="ghost" 
               onClick={() => {
@@ -1116,7 +1129,7 @@ export default function CosmicComponentsDemo() {
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Table
           </CosmicHeading>
-          
+
           <CosmicTableContainer variant="cosmic" padding="md" maxHeight="md" className="mb-8">
             <CosmicTable variant="cosmic" textAlign="left" size="md">
               <CosmicTableHeader variant="cosmic" sticky>
@@ -1161,7 +1174,7 @@ export default function CosmicComponentsDemo() {
               </CosmicTableFooter>
             </CosmicTable>
           </CosmicTableContainer>
-          
+
           <CosmicTableContainer variant="frosted" padding="md" className="mb-8">
             <CosmicTable variant="default" textAlign="center" size="sm">
               <CosmicTableHeader variant="gradient" sticky>
@@ -1201,19 +1214,19 @@ export default function CosmicComponentsDemo() {
             </CosmicTable>
           </CosmicTableContainer>
         </div>
-        
+
         {/* Cosmic Accordion Component */}
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Accordion
           </CosmicHeading>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-4">
                 Default Accordion
               </CosmicHeading>
-              
+
               <CosmicAccordion variant="default">
                 <CosmicAccordionItem value="item-1">
                   <CosmicAccordionTrigger variant="default">
@@ -1224,7 +1237,7 @@ export default function CosmicComponentsDemo() {
                     allowing individuals to experience a profound connection with the universe and all of existence.
                   </CosmicAccordionContent>
                 </CosmicAccordionItem>
-                
+
                 <CosmicAccordionItem value="item-2">
                   <CosmicAccordionTrigger variant="default">
                     How can I experience Cosmic energies?
@@ -1234,7 +1247,7 @@ export default function CosmicComponentsDemo() {
                     and connecting with nature. Regular practice can help you become more sensitive to subtle energies.
                   </CosmicAccordionContent>
                 </CosmicAccordionItem>
-                
+
                 <CosmicAccordionItem value="item-3">
                   <CosmicAccordionTrigger variant="default">
                     What is Sacred Geometry?
@@ -1247,12 +1260,12 @@ export default function CosmicComponentsDemo() {
                 </CosmicAccordionItem>
               </CosmicAccordion>
             </div>
-            
+
             <div>
               <CosmicHeading as="h3" size="base" weight="medium" className="mb-4">
                 Cosmic Styled Accordion
               </CosmicHeading>
-              
+
               <CosmicAccordion variant="cosmicBordered" allowMultiple>
                 <CosmicAccordionItem value="cosmic-1" variant="cosmic">
                   <CosmicAccordionTrigger variant="cosmicGradient">
@@ -1264,7 +1277,7 @@ export default function CosmicComponentsDemo() {
                     Each composition is carefully crafted to align with specific cosmic energies.
                   </CosmicAccordionContent>
                 </CosmicAccordionItem>
-                
+
                 <CosmicAccordionItem value="cosmic-2" variant="cosmic">
                   <CosmicAccordionTrigger variant="cosmicGradient">
                     Galactic Light Language
@@ -1275,7 +1288,7 @@ export default function CosmicComponentsDemo() {
                     It activates dormant DNA and facilitates healing on multiple levels.
                   </CosmicAccordionContent>
                 </CosmicAccordionItem>
-                
+
                 <CosmicAccordionItem value="cosmic-3" variant="cosmic">
                   <CosmicAccordionTrigger variant="cosmicGradient">
                     Starseed Origins
@@ -1296,13 +1309,13 @@ export default function CosmicComponentsDemo() {
             <span className="text-cosmic-primary hover:text-cosmic-primary/80 cursor-pointer">← Back to Home</span>
           </Link>
         </div>
-        
+
         {/* Form Components Section */}
         <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
           <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
             Cosmic Form Components
           </CosmicHeading>
-          
+
           <div className="space-y-12">
             {/* Form Container Demo */}
             <div>
@@ -1320,7 +1333,7 @@ export default function CosmicComponentsDemo() {
                   </CosmicFormGroup>
                   <CosmicButton variant="primary" className="mt-2">Submit</CosmicButton>
                 </CosmicForm>
-                
+
                 <CosmicForm variant="cosmic">
                   <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Cosmic Form</CosmicHeading>
                   <CosmicFormGroup>
@@ -1337,7 +1350,7 @@ export default function CosmicComponentsDemo() {
                 </CosmicForm>
               </div>
             </div>
-            
+
             {/* Form States Demo */}
             <div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Form States</CosmicHeading>
@@ -1348,14 +1361,14 @@ export default function CosmicComponentsDemo() {
                     <CosmicInput id="normal" placeholder="Normal state" />
                   </CosmicFormGroup>
                 </CosmicForm>
-                
+
                 <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
                   <CosmicFormGroup error="This field is required">
                     <CosmicFormLabel htmlFor="error">Error Input</CosmicFormLabel>
                     <CosmicInput id="error" placeholder="Error state" error />
                   </CosmicFormGroup>
                 </CosmicForm>
-                
+
                 <CosmicForm variant="default" className="border border-gray-700 p-4 rounded-md">
                   <CosmicFormGroup success="Looks good!">
                     <CosmicFormLabel htmlFor="success">Success Input</CosmicFormLabel>
@@ -1364,7 +1377,7 @@ export default function CosmicComponentsDemo() {
                 </CosmicForm>
               </div>
             </div>
-            
+
             {/* Select Component Demo */}
             <div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Select</CosmicHeading>
@@ -1383,7 +1396,7 @@ export default function CosmicComponentsDemo() {
                   </CosmicSelect>
                   <p className="mt-2 text-sm text-gray-400">Selected option: {selectValue || 'None'}</p>
                 </div>
-                
+
                 <div>
                   <CosmicFormLabel htmlFor="select-cosmic" variant="cosmic">Cosmic Select</CosmicFormLabel>
                   <CosmicSelect id="select-cosmic" variant="cosmic">
@@ -1393,7 +1406,7 @@ export default function CosmicComponentsDemo() {
                     <option value="option3">Option 3</option>
                   </CosmicSelect>
                 </div>
-                
+
                 <div>
                   <CosmicFormLabel htmlFor="select-frosted">Frosted Select</CosmicFormLabel>
                   <CosmicSelect 
@@ -1409,7 +1422,7 @@ export default function CosmicComponentsDemo() {
                 </div>
               </div>
             </div>
-            
+
             {/* Checkbox Component Demo */}
             <div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Checkbox</CosmicHeading>
@@ -1421,49 +1434,49 @@ export default function CosmicComponentsDemo() {
                     checked={checkboxValue}
                     onChange={(e) => setCheckboxValue(e.target.checked)}
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-cosmic" 
                     label="Cosmic Checkbox" 
                     variant="cosmic"
                     labelVariant="cosmic"
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-filled" 
                     label="Filled Checkbox" 
                     variant="filled"
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-glow" 
                     label="Animated Checkbox" 
                     variant="cosmic"
                     animation="glow"
                   />
-                  
+
                   <p className="text-sm text-gray-400">Checkbox state: {checkboxValue ? 'Checked' : 'Unchecked'}</p>
                 </div>
-                
+
                 <div className="space-y-4">
                   <CosmicCheckbox 
                     id="checkbox-disabled" 
                     label="Disabled Checkbox" 
                     disabled
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-error" 
                     label="Error Checkbox" 
                     error
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-success" 
                     label="Success Checkbox" 
                     success
                   />
-                  
+
                   <CosmicCheckbox 
                     id="checkbox-reversed" 
                     label="Reversed Direction" 
@@ -1472,7 +1485,7 @@ export default function CosmicComponentsDemo() {
                 </div>
               </div>
             </div>
-            
+
             {/* Radio Component Demo */}
             <div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Radio</CosmicHeading>
@@ -1488,20 +1501,20 @@ export default function CosmicComponentsDemo() {
                       value="option1" 
                       label="Default Radio Option" 
                     />
-                    
+
                     <CosmicRadio 
                       value="option2" 
                       label="Cosmic Radio Option" 
                       variant="cosmic"
                       labelVariant="cosmic"
                     />
-                    
+
                     <CosmicRadio 
                       value="option3" 
                       label="Filled Radio Option" 
                       variant="filled"
                     />
-                    
+
                     <CosmicRadio 
                       value="option4" 
                       label="Disabled Radio Option" 
@@ -1510,7 +1523,7 @@ export default function CosmicComponentsDemo() {
                   </CosmicRadioGroup>
                   <p className="mt-2 text-sm text-gray-400">Selected value: {radioValue}</p>
                 </div>
-                
+
                 <div>
                   <CosmicHeading as="h4" size="base" weight="medium" className="mb-3">Radio Cards</CosmicHeading>
                   <CosmicRadioGroup 
@@ -1524,7 +1537,7 @@ export default function CosmicComponentsDemo() {
                       label="Default Radio Card"
                       description="This is a radio option presented as a card"
                     />
-                    
+
                     <CosmicRadioCard
                       value="card2"
                       label="Cosmic Radio Card"
@@ -1536,7 +1549,7 @@ export default function CosmicComponentsDemo() {
                 </div>
               </div>
             </div>
-            
+
             {/* Toggle Component Demo */}
             <div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Cosmic Toggle</CosmicHeading>
@@ -1548,36 +1561,36 @@ export default function CosmicComponentsDemo() {
                     checked={toggleValue}
                     onChange={(e) => setToggleValue(e.target.checked)}
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-cosmic" 
                     label="Cosmic Toggle" 
                     variant="cosmic"
                     labelVariant="cosmic"
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-minimal" 
                     label="Minimal Toggle" 
                     variant="minimal"
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-frosted" 
                     label="Frosted Toggle" 
                     variant="frosted"
                   />
-                  
+
                   <p className="text-sm text-gray-400">Toggle state: {toggleValue ? 'On' : 'Off'}</p>
                 </div>
-                
+
                 <div className="space-y-6">
                   <CosmicToggle 
                     id="toggle-disabled" 
                     label="Disabled Toggle" 
                     disabled
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-glow" 
                     label="Glowing Toggle" 
@@ -1585,13 +1598,13 @@ export default function CosmicComponentsDemo() {
                     animation="glow"
                     thumbGlow
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-error" 
                     label="Error Toggle" 
                     error
                   />
-                  
+
                   <CosmicToggle 
                     id="toggle-left" 
                     label="Label on Left" 
@@ -1600,9 +1613,9 @@ export default function CosmicComponentsDemo() {
                 </div>
               </div>
             </div>
-            
+
             {/* Complete Form Example */}
-            <div>
+            <div><div>
               <CosmicHeading as="h3" size="lg" weight="medium" className="mb-4">Complete Form Example</CosmicHeading>
               <CosmicForm variant="cosmic">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1610,13 +1623,13 @@ export default function CosmicComponentsDemo() {
                     <CosmicFormLabel htmlFor="full-name" variant="cosmic" required>Full Name</CosmicFormLabel>
                     <CosmicInput id="full-name" placeholder="Enter your name" variant="cosmic" />
                   </CosmicFormGroup>
-                  
+
                   <CosmicFormGroup>
                     <CosmicFormLabel htmlFor="contact-email" variant="cosmic" required>Email Address</CosmicFormLabel>
                     <CosmicInput id="contact-email" type="email" placeholder="Enter your email" variant="cosmic" icon={<Mail className="h-4 w-4 text-gray-400" />} />
                   </CosmicFormGroup>
                 </div>
-                
+
                 <CosmicFormGroup>
                   <CosmicFormLabel htmlFor="subject" variant="cosmic">Subject</CosmicFormLabel>
                   <CosmicSelect id="subject" variant="cosmic">
@@ -1627,7 +1640,7 @@ export default function CosmicComponentsDemo() {
                     <option value="other">Other</option>
                   </CosmicSelect>
                 </CosmicFormGroup>
-                
+
                 <CosmicFormGroup>
                   <CosmicFormLabel htmlFor="message" variant="cosmic" required>Message</CosmicFormLabel>
                   <textarea 
@@ -1637,7 +1650,7 @@ export default function CosmicComponentsDemo() {
                     placeholder="Enter your message"
                   ></textarea>
                 </CosmicFormGroup>
-                
+
                 <div className="mt-4 space-y-4">
                   <CosmicCheckbox
                     id="terms"
@@ -1646,7 +1659,7 @@ export default function CosmicComponentsDemo() {
                     checked={formTermsValue}
                     onChange={(e) => setFormTermsValue(e.target.checked)}
                   />
-                  
+
                   <CosmicToggle
                     id="newsletter"
                     label="Subscribe to newsletter"
@@ -1654,14 +1667,14 @@ export default function CosmicComponentsDemo() {
                     checked={formNewsletterValue}
                     onChange={(e) => setFormNewsletterValue(e.target.checked)}
                   />
-                  
+
                   <p className="text-sm text-gray-400">
                     Form state: 
                     {formTermsValue ? ' Agreed to terms' : ' Not agreed to terms'}, 
                     {formNewsletterValue ? ' Subscribed to newsletter' : ' Not subscribed to newsletter'}
                   </p>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end space-x-4">
                   <CosmicButton 
                     variant="outline"
@@ -1672,7 +1685,7 @@ export default function CosmicComponentsDemo() {
                   >
                     Cancel
                   </CosmicButton>
-                  
+
                   <CosmicButton 
                     variant="cosmic"
                     onClick={() => {
@@ -1690,7 +1703,7 @@ export default function CosmicComponentsDemo() {
               </CosmicForm>
             </div>
           </div>
-          
+
           {/* Toast Component */}
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -1700,7 +1713,7 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicToast component provides feedback to users through non-intrusive messages.
               </p>
-              
+
               {/* Toast Demos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -1723,7 +1736,7 @@ export default function CosmicComponentsDemo() {
                     </CosmicButton>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <CosmicHeading as="h3" size="lg" className="mb-2">Custom Toast</CosmicHeading>
                   <div className="space-y-3">
@@ -1744,7 +1757,7 @@ export default function CosmicComponentsDemo() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4">
                 <CosmicHeading as="h3" size="lg" className="mb-2">Toast Manager</CosmicHeading>
                 <p className="text-sm mb-2">
@@ -1754,7 +1767,7 @@ export default function CosmicComponentsDemo() {
               </div>
             </div>
           </div>
-          
+
           {/* Slider Component */}
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -1764,11 +1777,11 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicSlider component allows users to select a value within a specified range.
               </p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <CosmicHeading as="h3" size="lg" className="mb-2">Basic Sliders</CosmicHeading>
-                  
+
                   <div className="space-y-8">
                     <div>
                       <CosmicSlider
@@ -1782,7 +1795,7 @@ export default function CosmicComponentsDemo() {
                         showValue
                       />
                     </div>
-                    
+
                     <div>
                       <CosmicSlider
                         variant="cosmic"
@@ -1800,10 +1813,10 @@ export default function CosmicComponentsDemo() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-6">
                   <CosmicHeading as="h3" size="lg" className="mb-2">Advanced Sliders</CosmicHeading>
-                  
+
                   <div className="space-y-8">
                     <div>
                       <CosmicSlider
@@ -1822,7 +1835,7 @@ export default function CosmicComponentsDemo() {
                         tickLabels={['Min', '25%', 'Half', '75%', 'Max']}
                       />
                     </div>
-                    
+
                     <div>
                       <CosmicSlider
                         variant="glow"
@@ -1838,7 +1851,7 @@ export default function CosmicComponentsDemo() {
                         formatValue={(value) => `${value}% complete`}
                       />
                     </div>
-                    
+
                     <div>
                       <CosmicSlider
                         variant="nebula"
@@ -1857,7 +1870,7 @@ export default function CosmicComponentsDemo() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4">
                 <p className="text-sm text-gray-400">
                   Basic slider value: {sliderValue}, Advanced slider value: {rangeSliderValue}, Volume: {volumeValue.toFixed(1)}
@@ -1865,7 +1878,7 @@ export default function CosmicComponentsDemo() {
               </div>
             </div>
           </div>
-          
+
           {/* Sidebar Component */}
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -1875,7 +1888,7 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicSidebar component provides navigation and organizational structure.
               </p>
-              
+
               <div className="flex justify-center">
                 <CosmicButton 
                   variant="cosmic" 
@@ -1884,7 +1897,7 @@ export default function CosmicComponentsDemo() {
                   Open Cosmic Sidebar
                 </CosmicButton>
               </div>
-              
+
               <CosmicSidebar
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
@@ -1972,7 +1985,7 @@ export default function CosmicComponentsDemo() {
               />
             </div>
           </div>
-          
+
           {/* Media Player Component */}
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -1982,7 +1995,7 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicMediaPlayer component provides audio playback with cosmic styling.
               </p>
-              
+
               <div className="grid grid-cols-1 gap-8">
                 <div className="space-y-4">
                   <CosmicHeading as="h3" size="lg" className="mb-2">Default Media Player</CosmicHeading>
@@ -1998,7 +2011,7 @@ export default function CosmicComponentsDemo() {
                     visualizer
                   />
                 </div>
-                
+
                 <div className="space-y-4">
                   <CosmicHeading as="h3" size="lg" className="mb-2">Compact Media Player</CosmicHeading>
                   <CosmicMediaPlayer
@@ -2012,7 +2025,7 @@ export default function CosmicComponentsDemo() {
               </div>
             </div>
           </div>
-          
+
           {/* Stepper Component */}
           <div className="bg-gray-800/50 rounded-lg p-6 backdrop-blur-sm border border-white/10 mb-12">
             <CosmicHeading as="h2" variant="gradient" size="xl" className="mb-4">
@@ -2022,7 +2035,7 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicStepper component provides a multi-step interface with cosmic styling.
               </p>
-              
+
               <div className="space-y-12">
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Default Stepper</CosmicHeading>
@@ -2100,7 +2113,7 @@ export default function CosmicComponentsDemo() {
                     ]}
                   />
                 </div>
-                
+
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Cosmic Stepper</CosmicHeading>
                   <CosmicStepper
@@ -2142,7 +2155,7 @@ export default function CosmicComponentsDemo() {
                     ]}
                   />
                 </div>
-                
+
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Vertical Nebula Stepper</CosmicHeading>
                   <CosmicStepper
@@ -2193,7 +2206,7 @@ export default function CosmicComponentsDemo() {
               <p className="text-sm mb-4">
                 The CosmicMasonry component provides responsive grid layouts with cosmic styling.
               </p>
-              
+
               <div className="space-y-8">
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Default Masonry</CosmicHeading>
@@ -2202,18 +2215,18 @@ export default function CosmicComponentsDemo() {
                       <CosmicHeading as="h4" size="sm" className="mb-2">Item 1</CosmicHeading>
                       <p className="text-sm">This is a basic masonry item with default styling.</p>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
                       <CosmicHeading as="h4" size="sm" className="mb-2">Item 2</CosmicHeading>
                       <p className="text-sm">Masonry automatically handles different size items.</p>
                       <div className="mt-4 rounded bg-gray-700/50 h-32"></div>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
                       <CosmicHeading as="h4" size="sm" className="mb-2">Item 3</CosmicHeading>
                       <p className="text-sm">Items will flow into available space based on their size.</p>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem className="p-4 bg-gray-800/50 rounded-lg">
                       <CosmicHeading as="h4" size="sm" className="mb-2">Item 4</CosmicHeading>
                       <p className="text-sm">Responsive grid adapts to different screen sizes.</p>
@@ -2221,7 +2234,7 @@ export default function CosmicComponentsDemo() {
                     </CosmicMasonryItem>
                   </CosmicMasonry>
                 </div>
-                
+
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Cosmic Variant</CosmicHeading>
                   <CosmicMasonry variant="cosmic" columns={3} animated className="mb-8">
@@ -2229,20 +2242,20 @@ export default function CosmicComponentsDemo() {
                       <CosmicHeading as="h4" size="sm" className="mb-2">Cosmic Item</CosmicHeading>
                       <p className="text-sm">Items can have the cosmic styling variant.</p>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem variant="cosmic" animated hoverable>
                       <CosmicHeading as="h4" size="sm" className="mb-2">Interactive</CosmicHeading>
                       <p className="text-sm">These items have hover and animation effects.</p>
                       <div className="mt-4 rounded bg-cosmic-primary/10 h-24"></div>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem variant="cosmic" animated hoverable>
                       <CosmicHeading as="h4" size="sm" className="mb-2">Cosmic Glow</CosmicHeading>
                       <p className="text-sm">Hover over to see the subtle glow effect.</p>
                     </CosmicMasonryItem>
                   </CosmicMasonry>
                 </div>
-                
+
                 <div>
                   <CosmicHeading as="h3" size="lg" className="mb-4">Nebula Variant</CosmicHeading>
                   <CosmicMasonry variant="nebula" columns={4} animated className="mb-8">
@@ -2250,18 +2263,18 @@ export default function CosmicComponentsDemo() {
                       <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Nebula Item</CosmicHeading>
                       <p className="text-sm">The nebula variant has a purple to pink gradient.</p>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem variant="nebula" animated hoverable>
                       <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Gallery Item</CosmicHeading>
                       <div className="mt-2 rounded bg-cosmic-secondary/20 h-40"></div>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem variant="nebula" animated hoverable>
                       <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Content Card</CosmicHeading>
                       <p className="text-sm">Perfect for image galleries or content cards.</p>
                       <div className="mt-2 rounded bg-cosmic-accent/20 h-20"></div>
                     </CosmicMasonryItem>
-                    
+
                     <CosmicMasonryItem variant="nebula" animated hoverable>
                       <CosmicHeading as="h4" size="sm" variant="gradient" className="mb-2">Responsive</CosmicHeading>
                       <p className="text-sm">The grid automatically adjusts based on screen size.</p>
