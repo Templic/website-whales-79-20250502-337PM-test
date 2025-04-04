@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cosmic-sea-50: #f0f9ff;
+  --cosmic-sea-100: #e0f2fe;
+  --cosmic-sea-200: #bae6fd;
+  --cosmic-sea-300: #7dd3fc;
+  --cosmic-sea-400: #38bdf8;
+  --cosmic-sea-500: #0ea5e9;
+  --cosmic-sea-600: #0284c7;
+  --cosmic-sea-700: #0369a1;
+  --cosmic-sea-800: #075985;
+  --cosmic-sea-900: #0c4a6e;
+  --cosmic-sea-950: #082f49;
+
+  --cosmic-purple-50: #faf5ff;
+  --cosmic-purple-100: #f3e8ff;
+  --cosmic-purple-200: #e9d5ff;
+  --cosmic-purple-300: #d8b4fe;
+  --cosmic-purple-400: #c084fc;
+  --cosmic-purple-500: #a855f7;
+  --cosmic-purple-600: #9333ea;
+  --cosmic-purple-700: #7e22ce;
+  --cosmic-purple-800: #6b21a8;
+  --cosmic-purple-900: #581c87;
+  --cosmic-purple-950: #3b0764;
+
+  --cosmic-sunset-50: #fff7ed;
+  --cosmic-sunset-100: #ffedd5;
+  --cosmic-sunset-200: #fed7aa;
+  --cosmic-sunset-300: #fdba74;
+  --cosmic-sunset-400: #fb923c;
+  --cosmic-sunset-500: #f97316;
+  --cosmic-sunset-600: #ea580c;
+  --cosmic-sunset-700: #c2410c;
+  --cosmic-sunset-800: #9a3412;
+  --cosmic-sunset-900: #7c2d12;
+  --cosmic-sunset-950: #431407;
+}
+
+@layer base {
+  :root {
+    --background: 260 15% 5%;
+    --foreground: 0 0% 100%;
+    --card: 260 15% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 260 15% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 260 15% 15%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 260 15% 15%;
+    --input: 260 15% 15%;
+    --ring: 262 83% 58%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-black text-white antialiased;
+  }
+}
+
+/* Custom font variables */
+:root {
+  --font-orbitron: var(--font-orbitron);
+  --font-space-grotesk: var(--font-space-grotesk);
+  --font-inter: var(--font-inter);
+  --font-nebula: var(--font-nebula);
+}
+
+/* Font utility classes */
+.font-orbitron {
+  font-family: var(--font-orbitron);
+}
+
+.font-space-grotesk {
+  font-family: var(--font-space-grotesk);
+}
+
+.font-nebula {
+  font-family: var(--font-nebula);
+}
+
+/* Custom animations */
+@keyframes soundwave {
+  0%,
+  100% {
+    height: 30%;
+  }
+  50% {
+    height: 100%;
+  }
+}
+
+.animate-soundwave {
+  animation: soundwave 1.5s ease-in-out infinite;
+}
+
+/* Text glow effect */
+.drop-shadow-glow {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+/* 3D perspective */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}
+
+/* Selection styling */
+::selection {
+  background-color: rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+/* Base styles */
+body {
+  @apply bg-background text-foreground font-inter;
+  background-color: #080315;
+  color: #f8fafc;
+}
+
+/* Container width */
+.container {
+  @apply mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 1400px;
+}
+
+@layer components {
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .has-sacred-geometry {
+    background-image: radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15) 0%, transparent 20%),
+      radial-gradient(circle at 80% 70%, rgba(14, 165, 233, 0.15) 0%, transparent 20%),
+      radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.1) 0%, transparent 30%);
+  }
+}
+
