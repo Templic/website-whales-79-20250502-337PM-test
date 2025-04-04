@@ -62,34 +62,58 @@
 - CollaborativeShopping
 - AdminPortalPage
 - AuthPage
-## list of all the pages in your app based on the codebase:
 
- Home Page: /
- About Page: /about
- New Music Page: /music-release
- Archived Music Page: /archived-music
- Music Archive Page: /music-archive
- Cosmic Connectivity Page: /cosmic-connectivity
- Cosmic Experience Page: /cosmic-experience
- Immersive Experience Page: /immersive
- Tour Page: /tour
- Shop Page: /shop
- Engage Page: /engage
- Newsletter Page: /newsletter
- Blog Page: /blog
- Collaboration Page: /collaboration
- Contact Page: /contact
- Auth Page: /auth
- Admin Portal Page: /admin
- Analytics Page: /analytics
- Password Recovery Page: /password-recovery
- User Portal Page: /user-portal
- Sitemap Page: /sitemap
- Terms of Service: /terms-of-service
- Privacy Policy: /privacy-policy
- Cosmic Test Page: /cosmic-test
- Cosmic Components Demo Page: /cosmic-components-demo
 
+## List of Current Pages
+
+Main Pages:
+- Home Page: /
+- About Page: /about
+- New Music Page: /music-release
+- Archived Music Page: /archived-music
+- Music Archive Page: /music-archive
+- Cosmic Connectivity Page: /cosmic-connectivity  
+- Cosmic Experience Page: /cosmic-experience
+- Tour Page: /tour
+- Shop Page: /shop
+- Engage Page: /engage
+- Newsletter Page: /newsletter
+- Blog Page: /blog
+- Collaboration Page: /collaboration
+- Contact Page: /contact
+
+User Account:
+- Auth Page: /auth
+- User Portal: /portal
+- Password Recovery: /recover-password
+
+Shopping:
+- Product Page: /shop/product/:slug
+- Cart Page: /cart
+- Checkout Page: /checkout
+- Collaborative Shopping: /collaborative-shopping
+
+Admin:
+- Admin Portal: /admin
+- Analytics Dashboard: /admin/analytics
+- Users Management: /admin/users
+- Posts Management: /admin/posts
+- Music Management: /admin/music
+
+Support Pages:
+- Sitemap: /sitemap
+- Terms of Service: /terms
+- Privacy Policy: /privacy
+
+## Page Organization
+
+The pages are organized in the following directory structure:
+```
+client/src/pages/
+├── admin/              # Admin portal pages
+├── old-pages/          # Archived/legacy pages
+└── [main pages]        # All current production pages
+```
 
 ## Styling Architecture
 
