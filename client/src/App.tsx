@@ -53,6 +53,7 @@ import CosmicMerchandisePage from "@/pages/imported-pages/CosmicMerchandisePage"
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 import { NewComponentsDemo } from "@/pages/test/NewComponentsDemo";
+import ComponentsCatalog from "@/pages/ComponentsCatalog";
 
 // Admin Pages
 import UsersPage from "@/pages/admin/UsersPage";
@@ -122,6 +123,7 @@ function Router() {
         <Route path="/privacy" component={PrivacyPolicy} />
 
         {/* Demo Pages */}
+        <Route path="/components" component={ComponentsCatalog} />
         <Route path="/test/cosmic" component={TestCosmicComponentsDemo} />
         <Route path="/cosmic-components" component={CosmicComponentsDemo} />
         <Route path="/test/audio" component={AudioComponentsDemo} />

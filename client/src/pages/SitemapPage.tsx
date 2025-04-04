@@ -87,6 +87,7 @@ export default function SitemapPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Demo Pages</h2>
           <ul className="space-y-2">
+            <li><Link href="/components">Components Catalog</Link> <span className="text-sm text-cyan-400">(recommended)</span></li>
             <li><Link href="/test/cosmic">Cosmic UI Demo</Link></li>
             <li><Link href="/test/audio">Audio Components Demo</Link></li>
             <li><Link href="/test/new">New Components Demo</Link></li>
