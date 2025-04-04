@@ -101,7 +101,7 @@ const soundProducts: Product[] = [
     name: "Crystal Singing Bowl - Crown Chakra",
     price: 149.99,
     image: "/placeholder.svg?height=100&width=100&text=Bowl",
-    rating: 4.8,
+    rating: 5.0,
     description: "Clear quartz singing bowl tuned to the frequency of the Crown Chakra (B note).",
     features: {
       "Material": "Clear Quartz",
@@ -121,8 +121,8 @@ const soundProducts: Product[] = [
     id: "sound-2",
     name: "Koshi Chimes - Earth Element",
     price: 89.99,
-    image: "/placeholder.svg?height=100&width=100&text=Chimes",
-    rating: 4.6,
+    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80",
+    rating: 4.5,
     description: "Handcrafted Koshi Chimes tuned to the Earth element for grounding and calm.",
     features: {
       "Material": "Bamboo & Metal",
@@ -265,7 +265,7 @@ const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: a
                     ))}
                   </div>
                   <p className="text-lg font-bold">${product.price.toFixed(2)}</p>
-                  
+
                   <div className="flex flex-col gap-2">
                     {product.recommended && (
                       <Badge className="bg-purple-500 text-white mx-auto w-fit">
@@ -278,7 +278,7 @@ const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: a
                       </Badge>
                     )}
                   </div>
-                  
+
                   <Button 
                     size="sm" 
                     className="mt-2"
@@ -301,7 +301,7 @@ const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: a
               </TableCell>
             ))}
           </TableRow>
-          
+
           {allFeatures.map((feature) => (
             <TableRow key={feature}>
               <TableCell className="font-medium">{feature}</TableCell>
@@ -323,17 +323,17 @@ const renderFeatureValue = (value: any) => {
   if (value === undefined) {
     return <HelpCircle className="h-5 w-5 text-muted-foreground mx-auto" />;
   }
-  
+
   if (typeof value === 'boolean') {
     return value ? 
       <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" /> : 
       <XCircle className="h-5 w-5 text-red-400 mx-auto" />;
   }
-  
+
   if (value === null || value === '') {
     return <CircleSlash className="h-5 w-5 text-muted-foreground mx-auto" />;
   }
-  
+
   return <span>{value}</span>;
 };
 

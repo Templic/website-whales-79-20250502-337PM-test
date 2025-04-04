@@ -64,7 +64,7 @@ const sampleProducts: Product[] = [
     name: "Celestial Crystal Sound Bowl",
     description: "Hand-crafted crystal bowl tuned to 432Hz frequency for deep healing vibrations. Each bowl is cleansed and charged under the full moon.",
     price: 129.99,
-    image: "https://images.unsplash.com/photo-1568219656418-15c329312bf1?auto=format&fit=crop&w=500&q=80",
+    image: "https://images.unsplash.com/photo-1602067120380-4ba6137e0025?auto=format&fit=crop&w=500&q=80", // Crystal singing bowl
     rating: 4.8,
     inStock: true,
     categories: ["Healing Tools", "Sound Therapy", "Premium"],
@@ -384,7 +384,7 @@ export default function ShopPage() {
             
             {/* Hero content */}
             <div className="relative z-10 text-center">
-              <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 mb-4 cosmic-text-glow">
+              <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 mb-4 cosmic-text-glow relative z-10">
                 Shop Our Cosmic Collection
               </h1>
               <p className="text-lg max-w-2xl mx-auto text-muted-foreground mb-8">

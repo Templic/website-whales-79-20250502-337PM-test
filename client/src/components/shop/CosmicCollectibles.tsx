@@ -111,7 +111,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
       {/* Pentagon background for Cosmic Collectibles & Rewards */}
       <div className="relative mb-8">
         <div 
-          className="absolute inset-0 z-0 bg-indigo-950/20 backdrop-blur-sm border border-purple-500/20 overflow-hidden"
+          className="absolute inset-0 -z-10 bg-indigo-950/20 backdrop-blur-sm border border-purple-500/20 overflow-hidden"
           style={{
             clipPath: "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)",
             backgroundColor: "rgba(155, 135, 245, 0.05)"
@@ -194,13 +194,13 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
               className="w-full h-full object-cover"
             />
           </div>
-          
+
           {/* Purple border overlay */}
           <div 
             className="absolute inset-0 border border-purple-500/30 pointer-events-none"
             style={{ borderRadius: "50%" }}
           ></div>
-          
+
           {/* Heart button */}
           <div className="absolute top-2 right-4 z-10">
             <Button 
@@ -211,7 +211,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
               <Heart className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* Badges */}
           <div className="absolute left-4 top-2 flex flex-col gap-2 z-10">
             {item.isExclusive && (
@@ -231,11 +231,11 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             )}
           </div>
         </div>
-        
+
         <div className="w-full text-center">
           <h3 className="text-lg font-semibold mb-2 line-clamp-1">{item.name}</h3>
           <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{item.description}</p>
-          
+
           <div className="flex items-center justify-center mb-3">
             <div className="flex items-center">
               <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
@@ -244,7 +244,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             <span className="mx-2 text-muted-foreground">·</span>
             <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <div>
               {item.discount ? (
@@ -260,7 +260,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
                 <span className="text-xl font-bold">${item.price.toFixed(2)}</span>
               )}
             </div>
-            
+
             <Button 
               size="sm" 
               className="gap-1 ml-auto"

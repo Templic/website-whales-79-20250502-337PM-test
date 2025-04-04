@@ -46,7 +46,7 @@ const EnhancedShopping = ({ onProductView, products }: EnhancedShoppingProps) =>
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-6 px-4 md:px-8">
         <EnhancedShoppingFeature
           icon={<Users className="h-6 w-6 text-cosmic-primary" />}
           title="Shop Together"
