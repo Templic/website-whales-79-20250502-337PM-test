@@ -258,36 +258,64 @@ export const playlists: Playlist[] = [
     ],
   },
   {
-    id: 1,
-    title: "Ethereal Meditation",
+    id: "playlist-simple-1",
+    title: "Ethereal Meditation Ambient",
     description: "Ambient soundscapes for deep meditation",
     category: "meditation",
     image: "/images/products/sacred-geometry.jpg",
-    duration: "45:00"
+    coverArt: "/images/products/sacred-geometry.jpg",
+    duration: "45:00",
+    tracks: []
   },
   {
-    id: 2,
+    id: "playlist-simple-2",
     title: "Astral Projection Suite",
-    description: "Binaural beats for astral travel",
+    description: "Binaural beats for astral travel and lucid dreaming",
     category: "astral",
     image: "/images/products/crystal-bowl.jpg",
-    duration: "30:00"
+    coverArt: "/images/products/crystal-bowl.jpg",
+    duration: "30:00",
+    tracks: []
   },
   {
-    id: 3,
+    id: "playlist-simple-3",
     title: "Chakra Alignment Series",
     description: "Frequency-tuned meditation for chakra balancing",
     category: "healing",
     image: "/images/products/sacred-geometry.jpg",
-    duration: "60:00"
+    coverArt: "/images/products/sacred-geometry.jpg",
+    duration: "60:00",
+    tracks: []
   },
   {
-    id: 4,
-    title: "Cosmic Harmony",
+    id: "playlist-simple-4",
+    title: "Cosmic Harmony Meditation",
     description: "Sacred geometry sound healing",
     category: "meditation",
     image: "/images/products/meditation-cushion.jpg",
-    duration: "40:00"
+    coverArt: "/images/products/meditation-cushion.jpg",
+    duration: "40:00",
+    tracks: []
+  },
+  {
+    id: "playlist-simple-5",
+    title: "Delta Wave Sleep Journey",
+    description: "Deep sleep frequency entrainment",
+    category: "sleep",
+    image: "/images/products/cosmic-frequency-album.png",
+    coverArt: "/images/products/cosmic-frequency-album.png",
+    duration: "60:00",
+    tracks: []
+  },
+  {
+    id: "playlist-simple-6",
+    title: "Quantum Resonance Field",
+    description: "Harmonic frequencies aligned with universal constants",
+    category: "healing",
+    image: "/images/products/cosmic-frequency-album.png",
+    coverArt: "/images/products/cosmic-frequency-album.png",
+    duration: "55:00",
+    tracks: []
   },
 ];
 

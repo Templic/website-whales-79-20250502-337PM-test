@@ -99,7 +99,7 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                   <div className="flex items-center gap-3">
                     <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
                       <img
-                        src={playlist.coverArt || "/placeholder.svg"}
+                        src={playlist.coverArt || "/images/products/meditation-cushion.jpg"}
                         alt={playlist.title}
                         className="h-full w-full object-cover"
                       />
@@ -130,7 +130,7 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                   {/* Playlist header */}
                   <div className="relative h-48 md:h-64">
                     <img
-                      src={activePlaylist.coverArt || "/placeholder.svg"}
+                      src={activePlaylist.coverArt || "/images/products/sacred-geometry.jpg"}
                       alt={activePlaylist.title}
                       className="h-full w-full object-cover"
                     />
@@ -179,7 +179,7 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                           <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 rounded overflow-hidden flex-shrink-0">
                               <img
-                                src={track.coverArt || "/placeholder.svg"}
+                                src={track.coverArt || "/images/products/sacred-geometry.jpg"}
                                 alt={track.title}
                                 className="h-full w-full object-cover"
                               />
@@ -245,7 +245,7 @@ export function RecommendedPlaylists({
             <CosmicCard className="p-0 overflow-hidden h-full">
               <div className="relative aspect-square">
                 <img
-                  src={playlist.coverArt || "/placeholder.svg"}
+                  src={playlist.coverArt || "/images/products/cosmic-frequency-album.png"}
                   alt={playlist.title}
                   className="h-full w-full object-cover transition-transform hover:scale-105 duration-500"
                 />
