@@ -1,0 +1,9 @@
+These placeholder audio files are expected by the BreathSyncPlayer component:
+
+1. meditation-alpha.mp3 - Alpha waves for meditation
+2. theta-waves.mp3 - Theta waves for relaxation
+3. delta-waves.mp3 - Delta waves for deep sleep
+4. alpha-focus.mp3 - Alpha waves for focus
+
+If you have access to these audio files, please place them in this directory.
+Otherwise, the component will still function but without actual audio playback.
