@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import GeometricContainer from './cosmic/GeometricContainer';
 import StarBackground from './cosmic/StarBackground';
+import CosmicShape from './cosmic/CosmicShapesFixed';
+import SacredGeometry from './cosmic/SacredGeometry';
 import { 
   Home, 
   Info, 
@@ -20,7 +22,8 @@ import {
   ShoppingBag, 
   MessageSquare,
   Menu,
-  X
+  X,
+  LogIn
 } from 'lucide-react';
 
 interface MainNavItem {
@@ -31,24 +34,24 @@ interface MainNavItem {
 }
 
 const topNavItems: MainNavItem[] = [
-  { title: 'Home', href: '/', icon: <Home className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'About', href: '/about', icon: <Info className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'New Music', href: '/new-music', icon: <Music className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Archived Music', href: '/archived-music', icon: <Archive className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'Tour', href: '/tour', icon: <CalendarDays className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Engage', href: '/engage', icon: <Heart className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'Newsletter', href: '/newsletter', icon: <Mail className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Blog', href: '/blog', icon: <BookOpen className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Home', href: '/', icon: <Home className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'About', href: '/about', icon: <Info className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'New Music', href: '/music-release', icon: <Music className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Archived Music', href: '/archived-music', icon: <Archive className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Tour', href: '/tour', icon: <CalendarDays className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Engage', href: '/engage', icon: <Heart className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Newsletter', href: '/newsletter', icon: <Mail className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Blog', href: '/blog', icon: <BookOpen className="h-5 w-5" />, color: '#7c3aed' },
 ];
 
 const bottomNavItems: MainNavItem[] = [
-  { title: 'Cosmic Experience', href: '/cosmic-experience', icon: <Goal className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Immersive', href: '/immersive', icon: <Zap className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'Music Archive', href: '/music-archive', icon: <Disc className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Community', href: '/community', icon: <Users className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'Collaborate', href: '/collaborate', icon: <MessageSquare className="h-4 w-4" />, color: '#00ebd6' },
-  { title: 'Shop', href: '/shop', icon: <ShoppingBag className="h-4 w-4" />, color: '#7c3aed' },
-  { title: 'Contact', href: '/contact', icon: <Mail className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Cosmic Experience', href: '/cosmic-experience', icon: <Goal className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Immersive', href: '/immersive', icon: <Zap className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Music Archive', href: '/music-archive', icon: <Disc className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Community', href: '/community', icon: <Users className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Collaborate', href: '/collaboration', icon: <MessageSquare className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Shop', href: '/shop', icon: <ShoppingBag className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Contact', href: '/contact', icon: <Mail className="h-5 w-5" />, color: '#00ebd6' },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -80,90 +83,34 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         isScrolled ? "bg-[#0a0a14]/80 backdrop-blur-md border-b border-[#7c3aed]/20" : "bg-transparent"
       )}>
         {/* Top Navigation Bar */}
-        <div className="container flex justify-between items-center h-16 px-4">
-          <Link href="/">
-            <div className="font-orbitron text-xl text-white hover:text-[#00ebd6] transition-colors flex items-center space-x-2 cursor-pointer">
-              <span className="cosmic-text-cyan glow-breathe-cyan">Dale</span>
-              <span className="cosmic-text-purple">Loves</span>
-              <span className="cosmic-text-orange">Whales</span>
-            </div>
-          </Link>
-
-          {/* Desktop Top Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
-            {topNavItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <div className={cn(
-                  "nav-item flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                  location === item.href
-                    ? "text-white bg-[#7c3aed]/20 border border-[#7c3aed]/30"
-                    : "text-gray-300 hover:text-white hover:bg-[#7c3aed]/10"
-                )}>
-                  {item.icon}
-                  <span>{item.title}</span>
-                </div>
-              </Link>
-            ))}
-          </nav>
-
-          {/* Login Button */}
-          <div className="flex items-center space-x-4">
-            <Button variant="cosmic" size="sm" className="hidden sm:inline-flex cosmic-glow-cyan">
-              <span>Login</span>
-            </Button>
-
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMobileMenu}
-              className="md:hidden"
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </Button>
+        <div className="cosmic-nav-container">
+          {/* Cosmic shapes for decoration */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <SacredGeometry type="hexagon" className="absolute top-0 right-0" color="#7c3aed" strokeWidth={1} size={80} />
+            <CosmicShape type="circle" className="absolute bottom-0 left-0" color="#00ebd6" strokeWidth={1} size={60} />
           </div>
-        </div>
+          
+          <div className="container flex justify-between items-center h-16 px-4 relative z-10">
+            <Link href="/">
+              <div className="font-orbitron text-xl text-white hover:text-[#00ebd6] transition-all flex items-center space-x-2 cursor-pointer">
+                <span className="cosmic-text-cyan glow-breathe-cyan">Dale</span>
+                <span className="cosmic-text-purple">Loves</span>
+                <span className="cosmic-text-orange">Whales</span>
+              </div>
+            </Link>
 
-        {/* Bottom Navigation Bar */}
-        <div className="border-t border-[#7c3aed]/20 bg-[#080810]/90 backdrop-blur-md">
-          <div className="container hidden md:flex items-center h-12 px-4">
-            <nav className="flex items-center space-x-1">
-              {bottomNavItems.map((item) => (
+            {/* Desktop Top Navigation */}
+            <nav className="hidden md:flex items-center space-x-4">
+              {topNavItems.map((item, index) => (
                 <Link key={item.href} href={item.href}>
-                  <div className={cn(
-                    "nav-item flex items-center space-x-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer",
-                    location === item.href
-                      ? "text-white bg-[#7c3aed]/20 border border-[#7c3aed]/30"
-                      : "text-gray-300 hover:text-white hover:bg-[#7c3aed]/10"
-                  )}>
-                    {item.icon}
-                    <span>{item.title}</span>
-                  </div>
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Menu */}
-        <div
-          className={cn(
-            "absolute top-16 inset-x-0 bg-[#080810]/95 backdrop-blur-md border-b border-[#7c3aed]/20 transition-all duration-300 overflow-hidden md:hidden",
-            isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
-          )}
-        >
-          <div className="container px-4 py-4 space-y-6">
-            <nav className="grid grid-cols-2 gap-2">
-              {topNavItems.map((item) => (
-                <Link key={item.href} href={item.href}>
-                  <div
+                  <div 
                     className={cn(
-                      "flex items-center space-x-2 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                      "cosmic-nav-item flex items-center space-x-2 px-3 py-1.5 text-sm font-medium transition-all duration-300 cursor-pointer",
+                      index % 2 === 0 ? "cosmic-glow-cyan" : "cosmic-glow-purple",
                       location === item.href
-                        ? "bg-[#7c3aed]/20 border border-[#7c3aed]/30 text-white"
-                        : "text-gray-300 hover:bg-[#7c3aed]/10 hover:text-white"
+                        ? index % 2 === 0 ? "active-nav-cyan" : "active-nav-purple"
+                        : "hover:translate-y-[-2px]"
                     )}
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {item.icon}
                     <span>{item.title}</span>
@@ -172,21 +119,50 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               ))}
             </nav>
 
-            <div className="border-t border-[#7c3aed]/20 pt-4">
-              <h4 className="px-3 mb-2 text-xs uppercase tracking-wider text-gray-400">
-                Explore More
-              </h4>
-              <nav className="grid grid-cols-2 gap-2">
-                {bottomNavItems.map((item) => (
+            {/* Login Button */}
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="hidden sm:inline-flex items-center space-x-1 cosmic-login-btn"
+              >
+                <LogIn className="h-4 w-4" />
+                <span>Login</span>
+              </Button>
+
+              {/* Mobile Menu Toggle */}
+              <Button
+                variant="cosmic"
+                size="icon"
+                onClick={toggleMobileMenu}
+                className="md:hidden"
+              >
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Navigation Bar */}
+        <div className="border-t border-[#090914] bg-[#050510]/80 backdrop-blur-md">
+          <div className="relative">
+            {/* Cosmic pattern decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
+              <div className="cosmic-pattern-subtle w-full h-full"></div>
+            </div>
+            
+            <div className="container hidden md:flex items-center h-14 px-4 relative z-10">
+              <nav className="flex items-center space-x-4 w-full">
+                {bottomNavItems.map((item, index) => (
                   <Link key={item.href} href={item.href}>
-                    <div
+                    <div 
                       className={cn(
-                        "flex items-center space-x-2 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                        "cosmic-nav-item flex items-center space-x-2 px-3 py-1.5 text-sm font-medium transition-all duration-300 cursor-pointer",
+                        index % 2 === 0 ? "cosmic-glow-cyan" : "cosmic-glow-purple",
                         location === item.href
-                          ? "bg-[#7c3aed]/20 border border-[#7c3aed]/30 text-white"
-                          : "text-gray-300 hover:bg-[#7c3aed]/10 hover:text-white"
+                          ? index % 2 === 0 ? "active-nav-cyan" : "active-nav-purple"
+                          : "hover:translate-y-[-2px]"
                       )}
-                      onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.icon}
                       <span>{item.title}</span>
@@ -195,10 +171,73 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 ))}
               </nav>
             </div>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        <div
+          className={cn(
+            "absolute top-16 inset-x-0 bg-[#050510]/95 backdrop-blur-xl border-b border-[#090914] transition-all duration-300 overflow-hidden md:hidden cosmic-mobile-nav",
+            isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          {/* Cosmic background patterns */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <SacredGeometry type="hexagon" className="absolute top-5 right-5" color="#7c3aed" strokeWidth={1} size={60} />
+            <SacredGeometry type="merkaba" className="absolute bottom-5 left-5" color="#00ebd6" strokeWidth={1} size={60} />
+            <div className="cosmic-stars-subtle absolute inset-0 opacity-20"></div>
+          </div>
+          
+          <div className="container px-4 py-6 space-y-6 relative z-10">
+            <nav className="grid grid-cols-2 gap-3">
+              {topNavItems.map((item, index) => (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className={cn(
+                      "cosmic-mobile-nav-item flex items-center space-x-2 px-3 py-2.5 rounded-lg transition-all duration-300 cursor-pointer",
+                      index % 2 === 0 ? "cosmic-glow-cyan-mobile" : "cosmic-glow-purple-mobile",
+                      location === item.href
+                        ? index % 2 === 0 ? "active-nav-cyan-mobile" : "active-nav-purple-mobile"
+                        : ""
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.icon}
+                    <span className="text-sm font-medium">{item.title}</span>
+                  </div>
+                </Link>
+              ))}
+            </nav>
+
+            <div className="pt-4 p-4 backdrop-blur-sm bg-black/20 rounded-lg border border-purple-800/30">
+              <h4 className="px-3 mb-3 text-sm uppercase tracking-wider font-orbitron cosmic-text-gradient">
+                Explore More
+              </h4>
+              <nav className="grid grid-cols-2 gap-3">
+                {bottomNavItems.map((item, index) => (
+                  <Link key={item.href} href={item.href}>
+                    <div
+                      className={cn(
+                        "cosmic-mobile-nav-item flex items-center space-x-2 px-3 py-2.5 rounded-lg transition-all duration-300 cursor-pointer",
+                        index % 2 === 0 ? "cosmic-glow-cyan-mobile" : "cosmic-glow-purple-mobile",
+                        location === item.href
+                          ? index % 2 === 0 ? "active-nav-cyan-mobile" : "active-nav-purple-mobile"
+                          : ""
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.icon}
+                      <span className="text-sm font-medium">{item.title}</span>
+                    </div>
+                  </Link>
+                ))}
+              </nav>
+            </div>
             
-            <div className="border-t border-[#7c3aed]/20 pt-4 flex justify-center">
-              <Button variant="cosmic" className="w-full sm:w-auto">
-                Login
+            <div className="pt-4 flex justify-center">
+              <Button variant="cosmic" size="lg" className="w-full sm:w-auto cosmic-login-btn-mobile">
+                <LogIn className="h-4 w-4 mr-2" />
+                <span>Login</span>
               </Button>
             </div>
           </div>

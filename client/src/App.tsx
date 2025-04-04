@@ -34,6 +34,7 @@ import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import CosmicTest from "@/pages/CosmicTest";
 import CosmicComponentsDemo from "@/pages/CosmicComponentsDemo";
+import ButtonDemo from "@/pages/ButtonDemo";
 
 // Shop Pages
 import ShopPage from "@/pages/ShopPage";
@@ -134,6 +135,7 @@ function Router() {
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
+        <Route path="/button-demo" component={ButtonDemo} />
         
         {/* Legacy Archive Pages */}
         <Route path="/pages/archived-music/old" component={MusicArchivePageOld} />
