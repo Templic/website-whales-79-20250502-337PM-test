@@ -1,436 +1,358 @@
-import { Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc, ShoppingBag, ShoppingCart, ShieldAlert, FileText, Map as MapIcon } from "lucide-react";
-import { useState, useEffect } from "react";
-import { GeometricContainer } from "@/components/cosmic/GeometricContainer";
-import { StarBackground, NebulaBackground } from "@/components/cosmic/StarBackground";
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'wouter';
+import { cn } from '@/lib/utils';
+import { Button } from './ui/button';
+import GeometricContainer from './cosmic/GeometricContainer';
+import StarBackground from './cosmic/StarBackground';
+import { 
+  Home, 
+  Info, 
+  Music, 
+  Archive, 
+  CalendarDays, 
+  Heart, 
+  Mail, 
+  BookOpen,
+  Users, 
+  Zap, 
+  Disc, 
+  Goal, 
+  ShoppingBag, 
+  MessageSquare,
+  Menu,
+  X
+} from 'lucide-react';
 
-// Define types for navigation items
-interface NavItem {
-  path: string;
-  label: string;
+interface MainNavItem {
+  title: string;
+  href: string;
   icon: React.ReactNode;
+  color?: string;
 }
 
-// Top and Bottom navigation items defined separately for better organization
-const topNavItems: NavItem[] = [
-  { path: "/", label: "Home", icon: <Home className="h-4 w-4 mr-2" /> },
-  { path: "/about", label: "About", icon: <Info className="h-4 w-4 mr-2" /> },
-  { path: "/music-release", label: "New Music", icon: <Music className="h-4 w-4 mr-2" /> },
-  { path: "/archived-music", label: "Archived Music", icon: <Archive className="h-4 w-4 mr-2" /> },
-  { path: "/tour", label: "Tour", icon: <Calendar className="h-4 w-4 mr-2" /> },
-  { path: "/engage", label: "Engage", icon: <Heart className="h-4 w-4 mr-2" /> },
-  { path: "/newsletter", label: "Newsletter", icon: <Mail className="h-4 w-4 mr-2" /> },
-  { path: "/blog", label: "Blog", icon: <BookOpen className="h-4 w-4 mr-2" /> },
+const topNavItems: MainNavItem[] = [
+  { title: 'Home', href: '/', icon: <Home className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'About', href: '/about', icon: <Info className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'New Music', href: '/new-music', icon: <Music className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Archived Music', href: '/archived-music', icon: <Archive className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Tour', href: '/tour', icon: <CalendarDays className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Engage', href: '/engage', icon: <Heart className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Newsletter', href: '/newsletter', icon: <Mail className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Blog', href: '/blog', icon: <BookOpen className="h-4 w-4" />, color: '#7c3aed' },
 ];
 
-const bottomNavItems: NavItem[] = [
-  { path: "/cosmic-experience", label: "Cosmic Experience", icon: <Sparkles className="h-4 w-4 mr-2" /> },
-  { path: "/immersive", label: "Immersive", icon: <Zap className="h-4 w-4 mr-2" /> },
-  { path: "/music-archive", label: "Music Archive", icon: <Disc className="h-4 w-4 mr-2" /> },
-  { path: "/community", label: "Community", icon: <Users className="h-4 w-4 mr-2" /> },
-  { path: "/collaboration", label: "Collaborate", icon: <Users className="h-4 w-4 mr-2" /> },
-  { path: "/shop", label: "Shop", icon: <ShoppingBag className="h-4 w-4 mr-2" /> },
-  { path: "/contact", label: "Contact", icon: <MessageSquare className="h-4 w-4 mr-2" /> },
+const bottomNavItems: MainNavItem[] = [
+  { title: 'Cosmic Experience', href: '/cosmic-experience', icon: <Goal className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Immersive', href: '/immersive', icon: <Zap className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Music Archive', href: '/music-archive', icon: <Disc className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Community', href: '/community', icon: <Users className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Collaborate', href: '/collaborate', icon: <MessageSquare className="h-4 w-4" />, color: '#00ebd6' },
+  { title: 'Shop', href: '/shop', icon: <ShoppingBag className="h-4 w-4" />, color: '#7c3aed' },
+  { title: 'Contact', href: '/contact', icon: <Mail className="h-4 w-4" />, color: '#00ebd6' },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [location] = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [currentPath, setCurrentPath] = useState("/");
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    setMounted(true);
-    setCurrentPath(window.location.pathname);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  // Combined all navigation items for mobile view
-  const allNavItems = [...topNavItems, ...bottomNavItems];
-
-  interface NavButtonProps {
-    item: NavItem;
-    isMobile?: boolean;
-  }
-
-  const NavButton = ({ item, isMobile = false }: NavButtonProps) => {
-    const isActive = currentPath === item.path;
-    
-    return (
-      <Link href={item.path}>
-        <Button 
-          variant="ghost"
-          size="sm" 
-          className={`
-            ${isMobile ? 'w-full justify-start' : 'h-9 px-3'} 
-            nav-link text-[#00ebd6] transition-all duration-300 
-            ${isActive ? 'bg-[#00ebd610] border-b-2 border-[#00ebd6] font-medium' : ''}
-            hover:bg-transparent hover:text-white
-          `}
-          onClick={() => {
-            setCurrentPath(item.path);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
-        >
-          {item.icon}
-          <span className={isActive ? 'font-medium' : ''}>{item.label}</span>
-        </Button>
-      </Link>
-    );
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a14] relative">
-      {/* Cosmic Background */}
-      <StarBackground 
-        starCount={150} 
-        density="medium" 
-        colors={['#00ebd6', '#7c3aed', '#e15554', '#fb923c', '#ffffff']}
-        twinkle={true}
-        shooting={true}
-        opacity={0.6}
-      />
-      <NebulaBackground variant="cosmic" opacity={0.08} />
-      
-      {/* Main Navigation Header */}
-      <header 
-        className={`sticky top-0 z-50 w-full bg-black transition-all duration-300 ${
-          isScrolled ? 'shadow-md shadow-[#00ebd6]/10' : ''
-        }`}
-      >
-        <div className="mx-auto">
-          <div className="flex flex-col px-4">
-            {/* Mobile Menu */}
-            <div className="md:hidden flex items-center justify-between py-3">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="nav-link transition-all duration-300 hover:rotate-180 text-[#00ebd6]"
-                  >
-                    <Menu className="h-6 w-6" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] bg-[#0a1e3c] border-r border-[#00ebd6]/20 text-white">
-                  <div className="font-orbitron text-xl text-[#00ebd6] mb-6 pt-2">Dale Loves Whales</div>
-                  <nav className="flex flex-col gap-2">
-                    {allNavItems.map((item) => (
-                      <NavButton key={item.path} item={item} isMobile={true} />
-                    ))}
-                    <div className="my-4 h-[1px] bg-[#00ebd6]/20" />
-                    <AuthLinks isMobile={true} />
-                  </nav>
-                </SheetContent>
-              </Sheet>
-              
-              {/* Logo for Mobile */}
-              <div className="font-orbitron text-xl text-[#00ebd6]">
-                Dale Loves Whales
-              </div>
-              
-              {/* Auth Icon for Mobile */}
-              <Link href={user ? "/portal" : "/auth"}>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="nav-link text-[#00ebd6]"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
+    <div className="flex flex-col min-h-screen bg-[#0a0a14]">
+      {/* Star Background for cosmic theme */}
+      <StarBackground colorScheme="multi" opacity={0.7} />
 
-            {/* Desktop Navigation - Two Rows */}
-            <div className="hidden md:flex flex-col w-full">
-              {/* Top Navigation Row */}
-              <div className="flex items-center justify-center space-x-1 py-2 w-full bg-black text-[#00ebd6]">
-                {topNavItems.map((item) => (
-                  <NavButton key={item.path} item={item} />
-                ))}
-                
-                {/* Auth Links for Desktop - Top Right */}
-                <div className="absolute right-4">
-                  <AuthLinks />
+      {/* Header with both nav sections */}
+      <header className={cn(
+        "fixed top-0 inset-x-0 z-40 transition-all duration-300",
+        isScrolled ? "bg-[#0a0a14]/80 backdrop-blur-md border-b border-[#7c3aed]/20" : "bg-transparent"
+      )}>
+        {/* Top Navigation Bar */}
+        <div className="container flex justify-between items-center h-16 px-4">
+          <Link href="/">
+            <div className="font-orbitron text-xl text-white hover:text-[#00ebd6] transition-colors flex items-center space-x-2 cursor-pointer">
+              <span className="cosmic-text-cyan glow-breathe-cyan">Dale</span>
+              <span className="cosmic-text-purple">Loves</span>
+              <span className="cosmic-text-orange">Whales</span>
+            </div>
+          </Link>
+
+          {/* Desktop Top Navigation */}
+          <nav className="hidden md:flex items-center space-x-4">
+            {topNavItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <div className={cn(
+                  "nav-item flex items-center space-x-1 px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                  location === item.href
+                    ? "text-white bg-[#7c3aed]/20 border border-[#7c3aed]/30"
+                    : "text-gray-300 hover:text-white hover:bg-[#7c3aed]/10"
+                )}>
+                  {item.icon}
+                  <span>{item.title}</span>
                 </div>
-              </div>
-              
-              {/* Bottom Navigation Row */}
-              <div className="flex items-center justify-center space-x-1 py-2 w-full bg-[#05050a] border-t border-b border-[#333]">
+              </Link>
+            ))}
+          </nav>
+
+          {/* Login Button */}
+          <div className="flex items-center space-x-4">
+            <Button variant="cosmic" size="sm" className="hidden sm:inline-flex cosmic-glow-cyan">
+              <span>Login</span>
+            </Button>
+
+            {/* Mobile Menu Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileMenu}
+              className="md:hidden"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Bottom Navigation Bar */}
+        <div className="border-t border-[#7c3aed]/20 bg-[#080810]/90 backdrop-blur-md">
+          <div className="container hidden md:flex items-center h-12 px-4">
+            <nav className="flex items-center space-x-1">
+              {bottomNavItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <div className={cn(
+                    "nav-item flex items-center space-x-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors cursor-pointer",
+                    location === item.href
+                      ? "text-white bg-[#7c3aed]/20 border border-[#7c3aed]/30"
+                      : "text-gray-300 hover:text-white hover:bg-[#7c3aed]/10"
+                  )}>
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </div>
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        <div
+          className={cn(
+            "absolute top-16 inset-x-0 bg-[#080810]/95 backdrop-blur-md border-b border-[#7c3aed]/20 transition-all duration-300 overflow-hidden md:hidden",
+            isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+          )}
+        >
+          <div className="container px-4 py-4 space-y-6">
+            <nav className="grid grid-cols-2 gap-2">
+              {topNavItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className={cn(
+                      "flex items-center space-x-2 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                      location === item.href
+                        ? "bg-[#7c3aed]/20 border border-[#7c3aed]/30 text-white"
+                        : "text-gray-300 hover:bg-[#7c3aed]/10 hover:text-white"
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </div>
+                </Link>
+              ))}
+            </nav>
+
+            <div className="border-t border-[#7c3aed]/20 pt-4">
+              <h4 className="px-3 mb-2 text-xs uppercase tracking-wider text-gray-400">
+                Explore More
+              </h4>
+              <nav className="grid grid-cols-2 gap-2">
                 {bottomNavItems.map((item) => (
-                  <NavButton key={item.path} item={item} />
+                  <Link key={item.href} href={item.href}>
+                    <div
+                      className={cn(
+                        "flex items-center space-x-2 px-3 py-2 rounded-md transition-colors cursor-pointer",
+                        location === item.href
+                          ? "bg-[#7c3aed]/20 border border-[#7c3aed]/30 text-white"
+                          : "text-gray-300 hover:bg-[#7c3aed]/10 hover:text-white"
+                      )}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </div>
+                  </Link>
                 ))}
-              </div>
+              </nav>
+            </div>
+            
+            <div className="border-t border-[#7c3aed]/20 pt-4 flex justify-center">
+              <Button variant="cosmic" className="w-full sm:w-auto">
+                Login
+              </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-8 text-white">
-        {children}
+      {/* Main Content */}
+      <main className="flex-grow pt-28 pb-16">
+        <div className="container px-4">
+          {children}
+        </div>
       </main>
 
-      <footer className="cosmic-section py-8 bg-black/80 text-white relative overflow-hidden">
-        <div className="absolute inset-0 nebula-triadic opacity-10"></div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="relative z-10">
-              <GeometricContainer 
-                variant="simple" 
-                borderGlow="cyan"
-                className="p-4 h-full"
-              >
-                <h3 className="font-orbitron text-[#00ebd6] mb-4 animate-cosmic flex items-center">
-                  <span className="mr-2 h-4 w-4 bg-[#00ebd6] opacity-60 rounded-full cosmic-glow-cyan"></span>
-                  Quick Links
-                </h3>
-                <ul className="space-y-2">
-                  {topNavItems.slice(0, 5).map((item) => (
-                    <li key={item.path}>
-                      <Link 
-                        href={item.path} 
-                        className="text-white hover:text-[#00ebd6] transition-colors duration-300 flex items-center" 
-                        onClick={() => window.scrollTo(0, 0)}
-                      >
-                        {item.icon}
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </GeometricContainer>
-            </div>
-            <div className="relative z-10">
-              <GeometricContainer 
-                variant="sacred" 
-                borderGlow="purple"
-                className="p-4 h-full"
-              >
-                <h3 className="font-orbitron text-[#7c3aed] mb-4 animate-cosmic flex items-center">
-                  <span className="mr-2 h-4 w-4 bg-[#7c3aed] opacity-60 rounded-full cosmic-glow-purple"></span>
-                  Community
-                </h3>
-                <ul className="space-y-2">
-                  {[...topNavItems.slice(5), ...bottomNavItems.slice(0, 3)].map((item) => (
-                    <li key={item.path}>
-                      <Link 
-                        href={item.path} 
-                        className="text-white hover:text-[#7c3aed] transition-colors duration-300 flex items-center" 
-                        onClick={() => window.scrollTo(0, 0)}
-                      >
-                        {item.icon}
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </GeometricContainer>
-            </div>
-            <div className="relative z-10">
-              <GeometricContainer 
-                variant="complex" 
-                borderGlow="orange"
-                className="p-4 h-full"
-              >
-                <h3 className="font-orbitron text-[#e15554] mb-4 animate-cosmic flex items-center">
-                  <span className="mr-2 h-4 w-4 bg-[#e15554] opacity-60 rounded-full cosmic-glow-orange"></span>
-                  Connect
-                </h3>
-                <ul className="space-y-2">
-                  {bottomNavItems.slice(3).map((item) => (
-                    <li key={item.path}>
-                      <Link 
-                        href={item.path} 
-                        className="text-white hover:text-[#e15554] transition-colors duration-300 flex items-center" 
-                        onClick={() => window.scrollTo(0, 0)}
-                      >
-                        {item.icon}
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                  <li>
-                    <Link 
-                      href="/cart" 
-                      className="text-white hover:text-[#e15554] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      <ShoppingCart className="h-4 w-4 mr-2" />
-                      Your Cart
-                    </Link>
-                  </li>
-                </ul>
-              </GeometricContainer>
-            </div>
-            <div className="relative z-10">
-              <GeometricContainer 
-                variant="ethereal" 
-                borderGlow="multi"
-                className="p-4 h-full"
-              >
-                <h3 className="font-orbitron text-[#fb923c] mb-4 animate-cosmic flex items-center">
-                  <span className="mr-2 h-4 w-4 bg-[#fb923c] opacity-60 rounded-full cosmic-glow-orange"></span>
-                  Account & Legal
-                </h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link 
-                      href="/privacy" 
-                      className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      <ShieldAlert className="h-4 w-4 mr-2" />
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      href="/terms" 
-                      className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Terms of Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
-                      href="/sitemap" 
-                      className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      <MapIcon className="h-4 w-4 mr-2" />
-                      Sitemap
-                    </Link>
-                  </li>
-                  {user && 
-                    <li>
-                      <Link 
-                        href="/portal" 
-                        className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                        onClick={() => window.scrollTo(0, 0)}
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        My Dashboard
-                      </Link>
-                    </li>
-                  }
-                  {user?.role === "admin" && 
-                    <li>
-                      <Link 
-                        href="/admin" 
-                        className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                        onClick={() => window.scrollTo(0, 0)}
-                      >
-                        <Settings className="h-4 w-4 mr-2" />
-                        Admin Portal
-                      </Link>
-                    </li>
-                  }
-                </ul>
-              </GeometricContainer>
-            </div>
-          </div>
-          
-          {/* Footer Copyright Notices */}
-          <div className="mt-8 relative z-10">
-            <GeometricContainer 
-              variant="minimal" 
-              borderGlow="multi"
-              className="p-4 text-center"
+      {/* Footer */}
+      <footer className="bg-[#080810]/90 border-t border-[#7c3aed]/20 pt-12 pb-6">
+        <div className="container px-4">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <GeometricContainer
+              variant="primary"
+              geometryVariant="cosmic-corners"
+              className="p-6"
             >
-              <div className="text-sm text-white/60">
-                © {new Date().getFullYear()} Web App Copyright Claim By Lee Swan All rights reserved.
+              <div className="space-y-3">
+                <h3 className="font-orbitron text-lg font-semibold cosmic-text-cyan">About</h3>
+                <nav className="flex flex-col space-y-2">
+                  <Link href="/about">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">About Dale</div>
+                  </Link>
+                  <Link href="/journey">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Music Journey</div>
+                  </Link>
+                  <Link href="/mission">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Mission & Vision</div>
+                  </Link>
+                  <Link href="/press">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Press Kit</div>
+                  </Link>
+                </nav>
               </div>
-              <div className="mt-2 text-sm text-white/60">
-                © {new Date().getFullYear()} Language Copyright Claim By Dale Ham. All rights reserved.
+            </GeometricContainer>
+
+            <GeometricContainer
+              variant="secondary"
+              geometryVariant="cosmic-corners"
+              className="p-6"
+            >
+              <div className="space-y-3">
+                <h3 className="font-orbitron text-lg font-semibold cosmic-text-cyan">Music</h3>
+                <nav className="flex flex-col space-y-2">
+                  <Link href="/new-music">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Latest Releases</div>
+                  </Link>
+                  <Link href="/archived-music">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Music Archive</div>
+                  </Link>
+                  <Link href="/collaborations">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Collaborations</div>
+                  </Link>
+                  <Link href="/licensing">
+                    <div className="hover-glow-cyan text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Licensing</div>
+                  </Link>
+                </nav>
+              </div>
+            </GeometricContainer>
+
+            <GeometricContainer
+              variant="accent"
+              geometryVariant="cosmic-corners"
+              className="p-6"
+            >
+              <div className="space-y-3">
+                <h3 className="font-orbitron text-lg font-semibold cosmic-text-orange">Connect</h3>
+                <nav className="flex flex-col space-y-2">
+                  <Link href="/tour">
+                    <div className="hover-glow-orange text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Tour Dates</div>
+                  </Link>
+                  <Link href="/engage">
+                    <div className="hover-glow-orange text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Fan Engagement</div>
+                  </Link>
+                  <Link href="/newsletter">
+                    <div className="hover-glow-orange text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Newsletter</div>
+                  </Link>
+                  <Link href="/contact">
+                    <div className="hover-glow-orange text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Contact</div>
+                  </Link>
+                </nav>
+              </div>
+            </GeometricContainer>
+
+            <GeometricContainer
+              variant="cosmic"
+              geometryVariant="cosmic-corners"
+              className="p-6"
+            >
+              <div className="space-y-3">
+                <h3 className="font-orbitron text-lg font-semibold cosmic-text-red">Resources</h3>
+                <nav className="flex flex-col space-y-2">
+                  <Link href="/blog">
+                    <div className="hover-glow-red text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Blog</div>
+                  </Link>
+                  <Link href="/faq">
+                    <div className="hover-glow-red text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">FAQ</div>
+                  </Link>
+                  <Link href="/terms">
+                    <div className="hover-glow-red text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Terms of Service</div>
+                  </Link>
+                  <Link href="/privacy">
+                    <div className="hover-glow-red text-sm text-gray-300 hover:text-white transition-colors cursor-pointer">Privacy Policy</div>
+                  </Link>
+                </nav>
               </div>
             </GeometricContainer>
           </div>
-          
-          {/* Cosmic footer accents */}
-          <div className="mt-8 grid grid-cols-4 gap-1">
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#00ebd6]/70 to-transparent cosmic-glow-cyan"></div>
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#7c3aed]/70 to-transparent cosmic-glow-purple"></div>
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#e15554]/70 to-transparent"></div>
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#fb923c]/70 to-transparent cosmic-glow-orange"></div>
+
+          <div className="mt-12 border-t border-[#7c3aed]/20 pt-6">
+            <GeometricContainer
+              variant="minimal"
+              geometryVariant="shapes-trio"
+              className="p-4 flex flex-col sm:flex-row justify-between items-center"
+            >
+              <p className="text-sm text-gray-400 mb-4 sm:mb-0">
+                © {new Date().getFullYear()} Dale Loves Whales. All rights reserved.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-white hover-glow-purple transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white hover-glow-cyan transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white hover-glow-orange transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white hover-glow-red transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                    <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                  </svg>
+                </a>
+              </div>
+            </GeometricContainer>
           </div>
         </div>
       </footer>
     </div>
   );
-}
-
-interface AuthLinksProps {
-  isMobile?: boolean;
-}
-
-const AuthLinks = ({ isMobile = false }: AuthLinksProps) => {
-  const { user } = useAuth();
-  
-  const buttonClasses = isMobile 
-    ? "w-full justify-start text-white hover:text-[#00ebd6]" 
-    : "h-9 text-white hover:text-[#00ebd6]";
-  
-  return (
-    <>
-      {user ? (
-        <>
-          <Link href="/portal">
-            <Button 
-              variant="cosmic" 
-              size="sm" 
-              className={buttonClasses}
-            >
-              <User className="h-4 w-4 mr-2" />
-              Dashboard
-            </Button>
-          </Link>
-          {(user.role === "admin" || user.role === "super_admin") && (
-            <Link href="/admin">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className={buttonClasses}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Admin
-              </Button>
-            </Link>
-          )}
-        </>
-      ) : (
-        <Link href="/auth">
-          <Button 
-            variant="cosmic" 
-            size="sm" 
-            className={buttonClasses}
-          >
-            <User className="h-4 w-4 mr-2" />
-            Login
-          </Button>
-        </Link>
-      )}
-    </>
-  );
 };
+
+export default Layout;

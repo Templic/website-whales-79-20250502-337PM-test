@@ -1,262 +1,212 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import './cosmic-animations.css';
-import { CosmicHexagon, CosmicCircle, CosmicEllipse, CosmicTriangle, CosmicPentagon } from './CosmicShapes';
-import { FlowerOfLife, SeedOfLife, GoldenSpiral } from './SacredGeometry';
+import SacredGeometry from './SacredGeometry';
+import CosmicShape, { CosmicShapeGroup } from './CosmicShapesFixed';
 
 interface GeometricContainerProps {
-  children: React.ReactNode;
+  children: ReactNode;
+  variant?: 'primary' | 'secondary' | 'accent' | 'cosmic' | 'minimal';
   className?: string;
   style?: React.CSSProperties;
-  variant?: 'simple' | 'sacred' | 'complex' | 'minimal' | 'ethereal';
-  backgroundColor?: string;
-  backgroundOpacity?: number;
-  includeShapes?: boolean;
-  borderGlow?: 'cyan' | 'purple' | 'orange' | 'red' | 'multi' | 'none';
+  backgroundVariant?: 'none' | 'nebula' | 'grid' | 'glow';
+  geometryVariant?: 
+    'flower-of-life' | 
+    'metatron-cube' | 
+    'merkaba' | 
+    'pentagon-star' | 
+    'hexagon' | 
+    'sri-yantra' | 
+    'shapes-trio' | 
+    'cosmic-corners';
+  animateGeometry?: boolean;
+  color?: string;
+  glowColor?: string;
+  glowIntensity?: 'light' | 'medium' | 'strong';
 }
 
-/**
- * GeometricContainer - A container with cosmic geometric shapes and glassmorphism effects
- * 
- * Variants:
- * - simple: Basic shapes as decoration
- * - sacred: Sacred geometry patterns
- * - complex: Multiple overlapping shapes and patterns
- * - minimal: Subtle border and minimal decoration
- * - ethereal: Subtle glow and floating elements
- */
-export const GeometricContainer: React.FC<GeometricContainerProps> = ({
+const GeometricContainer: React.FC<GeometricContainerProps> = ({
   children,
-  className = "",
+  variant = 'primary',
+  className = '',
   style = {},
-  variant = 'simple',
-  backgroundColor = "rgba(5, 2, 21, 0.4)",
-  backgroundOpacity = 0.6,
-  includeShapes = true,
-  borderGlow = 'cyan'
+  backgroundVariant = 'nebula',
+  geometryVariant = 'flower-of-life',
+  animateGeometry = true,
+  color,
+  glowColor,
+  glowIntensity = 'medium',
 }) => {
-  // Get border styles based on borderGlow prop
-  const borderStyles = getBorderStyles(borderGlow);
+  // Define color palettes from the Feels So Good album
+  const colors = {
+    primary: { main: '#7c3aed', glow: 'rgba(124, 58, 237, 0.4)' },
+    secondary: { main: '#00ebd6', glow: 'rgba(0, 235, 214, 0.4)' },
+    accent: { main: '#fb923c', glow: 'rgba(251, 146, 60, 0.4)' },
+    cosmic: { main: '#e15554', glow: 'rgba(225, 85, 84, 0.4)' },
+    minimal: { main: '#ffffff', glow: 'rgba(255, 255, 255, 0.3)' },
+  };
   
+  // Set colors based on variant or props
+  const mainColor = color || colors[variant].main;
+  const mainGlowColor = glowColor || colors[variant].glow;
+  
+  // Adjust glow intensity
+  const glowIntensityMap = {
+    light: '0.3',
+    medium: '0.5',
+    strong: '0.7',
+  };
+  
+  const intensityValue = glowIntensityMap[glowIntensity];
+  const adjustedGlowColor = mainGlowColor.replace(/[\d\.]+\)$/, `${intensityValue})`);
+  
+  // Set container background classes based on variant
+  const containerBackgroundClass = cn(
+    'relative overflow-hidden rounded-lg',
+    backgroundVariant === 'nebula' && 'cosmic-nebula',
+    backgroundVariant === 'grid' && 'cosmic-grid',
+    backgroundVariant === 'glow' && 'cosmic-glow-purple',
+    variant === 'primary' && 'border border-[#7c3aed]/30 bg-[#0a0a14]/60 backdrop-blur-md',
+    variant === 'secondary' && 'border border-[#00ebd6]/30 bg-[#0a0a14]/60 backdrop-blur-md',
+    variant === 'accent' && 'border border-[#fb923c]/30 bg-[#0a0a14]/60 backdrop-blur-md',
+    variant === 'cosmic' && 'border border-[#e15554]/30 bg-[#0a0a14]/60 backdrop-blur-md',
+    variant === 'minimal' && 'border border-white/10 bg-[#0a0a14]/40 backdrop-blur-sm',
+    className
+  );
+
+  // Render the appropriate sacred geometry based on the variant
+  const renderGeometry = () => {
+    switch (geometryVariant) {
+      case 'flower-of-life':
+      case 'metatron-cube':
+      case 'merkaba':
+      case 'pentagon-star':
+      case 'hexagon':
+      case 'sri-yantra':
+        return (
+          <div className="absolute -z-10 opacity-30 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <SacredGeometry
+              type={geometryVariant}
+              color={mainColor}
+              glowColor={adjustedGlowColor}
+              size={300}
+              animate={animateGeometry}
+              animationDuration={60}
+            />
+          </div>
+        );
+      
+      case 'shapes-trio':
+        return (
+          <div className="absolute inset-0 -z-10 overflow-hidden">
+            <CosmicShapeGroup
+              shapes={[
+                {
+                  type: 'circle',
+                  size: 120,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.03,
+                  animate: animateGeometry,
+                  animationDuration: 70,
+                  position: { top: '-20px', left: '-20px' }
+                },
+                {
+                  type: 'polygon',
+                  sides: 6,
+                  size: 100,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.02,
+                  animate: animateGeometry,
+                  animationDuration: 80,
+                  position: { bottom: '-30px', right: '-30px' }
+                },
+                {
+                  type: 'ellipse',
+                  size: 150,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.01,
+                  animate: animateGeometry,
+                  animationDuration: 90,
+                  position: { bottom: '30%', left: '50%', transform: 'translateX(-50%)' }
+                }
+              ]}
+            />
+          </div>
+        );
+      
+      case 'cosmic-corners':
+        return (
+          <div className="absolute inset-0 -z-10 overflow-hidden">
+            <CosmicShapeGroup
+              shapes={[
+                // Top left
+                {
+                  type: 'polygon',
+                  sides: 3,
+                  size: 60,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.03,
+                  animate: animateGeometry,
+                  animationDuration: 60,
+                  position: { top: '10px', left: '10px' }
+                },
+                // Top right
+                {
+                  type: 'circle',
+                  size: 80,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.02,
+                  animate: animateGeometry,
+                  animationDuration: 70,
+                  position: { top: '5px', right: '5px' }
+                },
+                // Bottom left
+                {
+                  type: 'starburst',
+                  points: 5,
+                  size: 70,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.02,
+                  animate: animateGeometry,
+                  animationDuration: 80,
+                  position: { bottom: '10px', left: '10px' }
+                },
+                // Bottom right
+                {
+                  type: 'polygon',
+                  sides: 6,
+                  size: 60,
+                  color: mainColor,
+                  glowColor: adjustedGlowColor,
+                  fillOpacity: 0.03,
+                  animate: animateGeometry,
+                  animationDuration: 65,
+                  position: { bottom: '5px', right: '5px' }
+                },
+              ]}
+            />
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div 
-      className={`relative rounded-lg overflow-hidden backdrop-blur-md ${className}`}
-      style={{
-        background: backgroundColor,
-        backdropFilter: 'blur(10px)',
-        ...borderStyles,
-        ...style,
-      }}
-    >
-      {/* Container content */}
-      <div className="relative z-10 p-5">
+    <div className={containerBackgroundClass} style={style}>
+      {renderGeometry()}
+      <div className="relative z-10">
         {children}
       </div>
-      
-      {/* Decorative shapes based on variant */}
-      {includeShapes && (
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          {variant === 'simple' && <SimpleVariantShapes opacity={backgroundOpacity} />}
-          {variant === 'sacred' && <SacredVariantShapes opacity={backgroundOpacity} />}
-          {variant === 'complex' && <ComplexVariantShapes opacity={backgroundOpacity} />}
-          {variant === 'minimal' && <MinimalVariantShapes opacity={backgroundOpacity} />}
-          {variant === 'ethereal' && <EtherealVariantShapes opacity={backgroundOpacity} />}
-        </div>
-      )}
     </div>
   );
 };
 
-// Simple variant with basic shapes
-const SimpleVariantShapes: React.FC<{opacity: number}> = ({opacity}) => {
-  return (
-    <>
-      <div className="absolute -top-10 -left-10 opacity-20" style={{opacity: opacity * 0.8}}>
-        <CosmicHexagon 
-          className="w-40 h-40" 
-          animate={true} 
-          glowColor="cyan" 
-        />
-      </div>
-      <div className="absolute -bottom-16 -right-16 opacity-20" style={{opacity: opacity * 0.8}}>
-        <CosmicCircle 
-          className="w-52 h-52" 
-          animate={true} 
-          glowColor="purple" 
-        />
-      </div>
-      <div className="absolute top-1/2 -right-12 transform -translate-y-1/2 opacity-10" style={{opacity: opacity * 0.5}}>
-        <CosmicTriangle 
-          className="w-32 h-32" 
-          animate={true} 
-          glowColor="orange" 
-        />
-      </div>
-    </>
-  );
-};
-
-// Sacred variant with sacred geometry patterns
-const SacredVariantShapes: React.FC<{opacity: number}> = ({opacity}) => {
-  return (
-    <>
-      <div className="absolute -top-10 -left-10 opacity-20" style={{opacity: opacity * 0.7}}>
-        <FlowerOfLife 
-          className="w-72 h-72" 
-          animate={true} 
-          glowColor="multi" 
-          opacity={0.3}
-        />
-      </div>
-      <div className="absolute -bottom-16 -right-16 opacity-15" style={{opacity: opacity * 0.6}}>
-        <SeedOfLife 
-          className="w-48 h-48" 
-          animate={true} 
-          glowColor="purple" 
-          opacity={0.3}
-        />
-      </div>
-    </>
-  );
-};
-
-// Complex variant with multiple shapes
-const ComplexVariantShapes: React.FC<{opacity: number}> = ({opacity}) => {
-  return (
-    <>
-      <div className="absolute -top-20 -left-20 opacity-20" style={{opacity: opacity * 0.7}}>
-        <FlowerOfLife 
-          className="w-80 h-80" 
-          animate={true} 
-          glowColor="cyan" 
-          opacity={0.3}
-        />
-      </div>
-      <div className="absolute -bottom-10 -right-10 opacity-20" style={{opacity: opacity * 0.7}}>
-        <CosmicPentagon 
-          className="w-40 h-40" 
-          animate={true} 
-          glowColor="purple" 
-        />
-      </div>
-      <div className="absolute top-1/4 -right-20 opacity-15" style={{opacity: opacity * 0.6}}>
-        <CosmicEllipse 
-          className="w-52 h-30" 
-          animate={true} 
-          glowColor="orange" 
-        />
-      </div>
-      <div className="absolute bottom-1/4 -left-10 opacity-10" style={{opacity: opacity * 0.5}}>
-        <CosmicTriangle 
-          className="w-32 h-32" 
-          animate={true} 
-          glowColor="red" 
-        />
-      </div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-5" style={{opacity: opacity * 0.3}}>
-        <GoldenSpiral 
-          className="w-full h-full" 
-          animate={true} 
-          glowColor="multi" 
-          opacity={0.2}
-        />
-      </div>
-    </>
-  );
-};
-
-// Minimal variant with subtle shapes
-const MinimalVariantShapes: React.FC<{opacity: number}> = ({opacity}) => {
-  return (
-    <>
-      <div className="absolute top-0 right-0 opacity-10" style={{opacity: opacity * 0.4}}>
-        <CosmicCircle 
-          className="w-20 h-20" 
-          animate={false} 
-          glowColor="cyan" 
-        />
-      </div>
-      <div className="absolute bottom-0 left-0 opacity-10" style={{opacity: opacity * 0.4}}>
-        <CosmicHexagon 
-          className="w-16 h-16" 
-          animate={false} 
-          glowColor="purple" 
-        />
-      </div>
-    </>
-  );
-};
-
-// Ethereal variant with floating elements
-const EtherealVariantShapes: React.FC<{opacity: number}> = ({opacity}) => {
-  return (
-    <>
-      <div className="absolute inset-0 opacity-5" style={{opacity: opacity * 0.3}}>
-        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-cyan-400 rounded-full animate-cosmic-pulse"></div>
-        <div className="absolute top-3/4 left-1/2 w-2 h-2 bg-purple-400 rounded-full animate-cosmic-pulse delay-300"></div>
-        <div className="absolute top-1/2 left-3/4 w-1 h-1 bg-orange-400 rounded-full animate-cosmic-pulse delay-100"></div>
-        <div className="absolute top-1/3 left-1/6 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-cosmic-pulse delay-200"></div>
-        <div className="absolute top-2/3 left-5/6 w-1 h-1 bg-purple-300 rounded-full animate-cosmic-pulse delay-400"></div>
-      </div>
-      <div className="absolute -bottom-16 -right-16 opacity-10" style={{opacity: opacity * 0.5}}>
-        <GoldenSpiral 
-          className="w-52 h-52" 
-          animate={true} 
-          glowColor="multi" 
-          opacity={0.2} 
-        />
-      </div>
-    </>
-  );
-};
-
-// Helper function to get border styles based on glow color
-function getBorderStyles(glowColor: string): React.CSSProperties {
-  if (glowColor === 'none') {
-    return {
-      border: '1px solid rgba(124, 58, 237, 0.2)',
-    };
-  }
-  
-  const baseStyles = {
-    border: '1px solid',
-    boxShadow: '',
-  };
-  
-  switch (glowColor) {
-    case 'cyan':
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(0, 235, 214, 0.3)',
-        boxShadow: '0 0 10px rgba(0, 235, 214, 0.2), inset 0 0 5px rgba(0, 235, 214, 0.1)',
-      };
-    case 'purple':
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(124, 58, 237, 0.3)',
-        boxShadow: '0 0 10px rgba(124, 58, 237, 0.2), inset 0 0 5px rgba(124, 58, 237, 0.1)',
-      };
-    case 'orange':
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(251, 146, 60, 0.3)',
-        boxShadow: '0 0 10px rgba(251, 146, 60, 0.2), inset 0 0 5px rgba(251, 146, 60, 0.1)',
-      };
-    case 'red':
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(225, 85, 84, 0.3)',
-        boxShadow: '0 0 10px rgba(225, 85, 84, 0.2), inset 0 0 5px rgba(225, 85, 84, 0.1)',
-      };
-    case 'multi':
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(124, 58, 237, 0.3)',
-        boxShadow: '0 0 10px rgba(0, 235, 214, 0.2), 0 0 15px rgba(124, 58, 237, 0.1), inset 0 0 5px rgba(251, 146, 60, 0.1)',
-      };
-    default:
-      return {
-        ...baseStyles,
-        borderColor: 'rgba(124, 58, 237, 0.2)',
-      };
-  }
-}
+export default GeometricContainer;
