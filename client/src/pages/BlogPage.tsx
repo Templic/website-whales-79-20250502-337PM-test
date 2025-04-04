@@ -11,6 +11,13 @@ export default function BlogPage() {
   const { toast } = useToast();
   const { data: posts, isLoading, error } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
+    queryFn: async () => {
+      const res = await fetch("/api/posts");
+      if (!res.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      return res.json();
+    },
     retry: 1,
   });
 
