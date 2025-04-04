@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import './cosmic-animations.css';
 import SacredGeometry from './SacredGeometry';
 import CosmicShape, { CosmicShapeGroup } from './CosmicShapesFixed';
+import useIsMobile from './useIsMobile'; // Assuming this hook exists
 
 interface GeometricSectionProps {
   children: ReactNode;
@@ -77,7 +78,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         return 'bg-[#0a0a14]/60 backdrop-blur-md border';
     }
   };
-  
+
   // Get border class based on variant without template literals that don't work with Tailwind
   const getBorderClass = () => {
     switch (variant) {
@@ -94,9 +95,9 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         return 'border-white/10';
     }
   };
-  
+
   const borderClass = getBorderClass();
-    
+
   // Combined background classes
   const backgroundClasses = {
     solid: `${getBgClasses('solid')} ${borderClass}`,
@@ -221,7 +222,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             ]}
           />
         )}
-        
+
         {(shape === 'symmetric-hexagon') && (
           <SacredGeometry
             type="hexagon"
@@ -231,7 +232,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10"
           />
         )}
-        
+
         {(shape === 'shield') && (
           <div className="absolute inset-0 opacity-20">
             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full border-2 border-[#00ebd6]/30"></div>
@@ -239,7 +240,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             <div className="absolute bottom-20 right-20 w-14 h-14 rounded-full border-2 border-[#e15554]/30"></div>
           </div>
         )}
-        
+
         {(shape === 'pentagram' || shape === 'pointed-pentagon') && (
           <SacredGeometry
             type="pentagon-star" 
@@ -258,7 +259,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     if (typeof contentWidth === 'number') {
       return `${contentWidth}px`;
     }
-    
+
     // Default widths based on shape type if textContained is true
     if (textContained) {
       switch(shape) {
@@ -285,7 +286,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           return '80%'; // Default safe value for any shape
       }
     }
-    
+
     // If textContained is false or contentWidth is explicitly set
     switch(contentWidth) {
       case 'narrow':
@@ -303,7 +304,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   // Calculate padding based on shape to ensure text doesn't overflow
   const getPaddingStyle = () => {
     if (!textContained) return {};
-    
+
     switch(shape) {
       case 'diamond':
       case 'rounded-diamond':
@@ -331,13 +332,16 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     }
   };
 
+  const isMobile = useIsMobile();
+
   return (
     <section 
       className={cn(
         'relative mb-8 shadow-lg overflow-hidden', 
         backgroundClasses[backgroundStyle],
         alignmentClasses[alignment],
-        className
+        className,
+        isMobile ? 'geometric-section-mobile' : '' // Add mobile class conditionally
       )}
       style={{ 
         clipPath: clipPaths[shape],
@@ -346,7 +350,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
       }}
     >
       {renderDecorativeShapes()}
-      
+
       <div className="relative z-10" style={{ 
         maxWidth: getContentWidthStyle(),
         margin: alignment === 'center' ? '0 auto' : 
@@ -363,7 +367,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             {subtitle && <p className="text-xl">{subtitle}</p>}
           </div>
         )}
-        
+
         <div className="section-content">
           {children}
         </div>
