@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc, ShoppingBag, ShoppingCart, ShieldAlert, FileText, Map as MapIcon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { GeometricContainer } from "@/components/cosmic/GeometricContainer";
 
 // Define types for navigation items
 interface NavItem {
@@ -181,148 +182,178 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="absolute inset-0 nebula-triadic opacity-10"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="cosmic-card p-4">
-              <h3 className="font-orbitron text-[#00ebd6] mb-4 animate-cosmic flex items-center">
-                <span className="mr-2 h-4 w-4 bg-[#00ebd6] opacity-60 rounded-full cosmic-glow-cyan"></span>
-                Quick Links
-              </h3>
-              <ul className="space-y-2">
-                {topNavItems.slice(0, 5).map((item) => (
-                  <li key={item.path}>
-                    <Link 
-                      href={item.path} 
-                      className="text-white hover:text-[#00ebd6] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <div className="relative z-10">
+              <GeometricContainer 
+                variant="simple" 
+                borderGlow="cyan"
+                className="p-4 h-full"
+              >
+                <h3 className="font-orbitron text-[#00ebd6] mb-4 animate-cosmic flex items-center">
+                  <span className="mr-2 h-4 w-4 bg-[#00ebd6] opacity-60 rounded-full cosmic-glow-cyan"></span>
+                  Quick Links
+                </h3>
+                <ul className="space-y-2">
+                  {topNavItems.slice(0, 5).map((item) => (
+                    <li key={item.path}>
+                      <Link 
+                        href={item.path} 
+                        className="text-white hover:text-[#00ebd6] transition-colors duration-300 flex items-center" 
+                        onClick={() => window.scrollTo(0, 0)}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </GeometricContainer>
             </div>
-            <div className="cosmic-card p-4">
-              <h3 className="font-orbitron text-[#7c3aed] mb-4 animate-cosmic flex items-center">
-                <span className="mr-2 h-4 w-4 bg-[#7c3aed] opacity-60 rounded-full cosmic-glow-purple"></span>
-                Community
-              </h3>
-              <ul className="space-y-2">
-                {[...topNavItems.slice(5), ...bottomNavItems.slice(0, 3)].map((item) => (
-                  <li key={item.path}>
-                    <Link 
-                      href={item.path} 
-                      className="text-white hover:text-[#7c3aed] transition-colors duration-300 flex items-center" 
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      {item.icon}
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+            <div className="relative z-10">
+              <GeometricContainer 
+                variant="sacred" 
+                borderGlow="purple"
+                className="p-4 h-full"
+              >
+                <h3 className="font-orbitron text-[#7c3aed] mb-4 animate-cosmic flex items-center">
+                  <span className="mr-2 h-4 w-4 bg-[#7c3aed] opacity-60 rounded-full cosmic-glow-purple"></span>
+                  Community
+                </h3>
+                <ul className="space-y-2">
+                  {[...topNavItems.slice(5), ...bottomNavItems.slice(0, 3)].map((item) => (
+                    <li key={item.path}>
+                      <Link 
+                        href={item.path} 
+                        className="text-white hover:text-[#7c3aed] transition-colors duration-300 flex items-center" 
+                        onClick={() => window.scrollTo(0, 0)}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </GeometricContainer>
             </div>
-            <div className="cosmic-card p-4">
-              <h3 className="font-orbitron text-[#e15554] mb-4 animate-cosmic flex items-center">
-                <span className="mr-2 h-4 w-4 bg-[#e15554] opacity-60 rounded-full cosmic-glow-orange"></span>
-                Connect
-              </h3>
-              <ul className="space-y-2">
-                {bottomNavItems.slice(3).map((item) => (
-                  <li key={item.path}>
+            <div className="relative z-10">
+              <GeometricContainer 
+                variant="complex" 
+                borderGlow="orange"
+                className="p-4 h-full"
+              >
+                <h3 className="font-orbitron text-[#e15554] mb-4 animate-cosmic flex items-center">
+                  <span className="mr-2 h-4 w-4 bg-[#e15554] opacity-60 rounded-full cosmic-glow-orange"></span>
+                  Connect
+                </h3>
+                <ul className="space-y-2">
+                  {bottomNavItems.slice(3).map((item) => (
+                    <li key={item.path}>
+                      <Link 
+                        href={item.path} 
+                        className="text-white hover:text-[#e15554] transition-colors duration-300 flex items-center" 
+                        onClick={() => window.scrollTo(0, 0)}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                  <li>
                     <Link 
-                      href={item.path} 
+                      href="/cart" 
                       className="text-white hover:text-[#e15554] transition-colors duration-300 flex items-center" 
                       onClick={() => window.scrollTo(0, 0)}
                     >
-                      {item.icon}
-                      {item.label}
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Your Cart
                     </Link>
                   </li>
-                ))}
-                <li>
-                  <Link 
-                    href="/cart" 
-                    className="text-white hover:text-[#e15554] transition-colors duration-300 flex items-center" 
-                    onClick={() => window.scrollTo(0, 0)}
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Your Cart
-                  </Link>
-                </li>
-              </ul>
+                </ul>
+              </GeometricContainer>
             </div>
-            <div className="cosmic-card p-4">
-              <h3 className="font-orbitron text-[#fb923c] mb-4 animate-cosmic flex items-center">
-                <span className="mr-2 h-4 w-4 bg-[#fb923c] opacity-60 rounded-full cosmic-glow-orange"></span>
-                Account & Legal
-              </h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link 
-                    href="/privacy" 
-                    className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                    onClick={() => window.scrollTo(0, 0)}
-                  >
-                    <ShieldAlert className="h-4 w-4 mr-2" />
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    href="/terms" 
-                    className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                    onClick={() => window.scrollTo(0, 0)}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link 
-                    href="/sitemap" 
-                    className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
-                    onClick={() => window.scrollTo(0, 0)}
-                  >
-                    <MapIcon className="h-4 w-4 mr-2" />
-                    Sitemap
-                  </Link>
-                </li>
-                {user && 
+            <div className="relative z-10">
+              <GeometricContainer 
+                variant="ethereal" 
+                borderGlow="multi"
+                className="p-4 h-full"
+              >
+                <h3 className="font-orbitron text-[#fb923c] mb-4 animate-cosmic flex items-center">
+                  <span className="mr-2 h-4 w-4 bg-[#fb923c] opacity-60 rounded-full cosmic-glow-orange"></span>
+                  Account & Legal
+                </h3>
+                <ul className="space-y-2">
                   <li>
                     <Link 
-                      href="/portal" 
+                      href="/privacy" 
                       className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
                       onClick={() => window.scrollTo(0, 0)}
                     >
-                      <User className="h-4 w-4 mr-2" />
-                      My Dashboard
+                      <ShieldAlert className="h-4 w-4 mr-2" />
+                      Privacy Policy
                     </Link>
                   </li>
-                }
-                {user?.role === "admin" && 
                   <li>
                     <Link 
-                      href="/admin" 
+                      href="/terms" 
                       className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
                       onClick={() => window.scrollTo(0, 0)}
                     >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Admin Portal
+                      <FileText className="h-4 w-4 mr-2" />
+                      Terms of Service
                     </Link>
                   </li>
-                }
-              </ul>
+                  <li>
+                    <Link 
+                      href="/sitemap" 
+                      className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
+                      onClick={() => window.scrollTo(0, 0)}
+                    >
+                      <MapIcon className="h-4 w-4 mr-2" />
+                      Sitemap
+                    </Link>
+                  </li>
+                  {user && 
+                    <li>
+                      <Link 
+                        href="/portal" 
+                        className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
+                        onClick={() => window.scrollTo(0, 0)}
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        My Dashboard
+                      </Link>
+                    </li>
+                  }
+                  {user?.role === "admin" && 
+                    <li>
+                      <Link 
+                        href="/admin" 
+                        className="text-white hover:text-[#fb923c] transition-colors duration-300 flex items-center" 
+                        onClick={() => window.scrollTo(0, 0)}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Admin Portal
+                      </Link>
+                    </li>
+                  }
+                </ul>
+              </GeometricContainer>
             </div>
           </div>
           
           {/* Footer Copyright Notices */}
-          <div className="mt-8 cosmic-card p-4 text-center">
-            <div className="text-sm text-white/60">
-              © {new Date().getFullYear()} Web App Copyright Claim By Lee Swan All rights reserved.
-            </div>
-            <div className="mt-2 text-sm text-white/60">
-              © {new Date().getFullYear()} Language Copyright Claim By Dale Ham. All rights reserved.
-            </div>
+          <div className="mt-8 relative z-10">
+            <GeometricContainer 
+              variant="minimal" 
+              borderGlow="multi"
+              className="p-4 text-center"
+            >
+              <div className="text-sm text-white/60">
+                © {new Date().getFullYear()} Web App Copyright Claim By Lee Swan All rights reserved.
+              </div>
+              <div className="mt-2 text-sm text-white/60">
+                © {new Date().getFullYear()} Language Copyright Claim By Dale Ham. All rights reserved.
+              </div>
+            </GeometricContainer>
           </div>
           
           {/* Cosmic footer accents */}
