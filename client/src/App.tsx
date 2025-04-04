@@ -44,11 +44,11 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
 
 // Imported Pages
-import CosmicConnectivityPage from "@/pages/imported-pages/CosmicConnectivityPage";
-import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage"; // Assumed corrected import
-import ImmersivePage from "@/pages/imported-pages/ImmersivePage"; // Assumed corrected import
-import ArchivePage from "@/pages/imported-pages/ArchivePage";
-import CosmicMerchandisePage from "@/pages/imported-pages/CosmicMerchandisePage";
+import CosmicConnectivityPage from "@/pages/CosmicConnectivityPage";
+import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
+import ImmersivePage from "@/pages/ImmersivePage";
+import ArchivePage from "@/pages/ArchivePage";
+import CosmicMerchandisePage from "@/pages/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 import { NewComponentsDemo } from "@/pages/test/NewComponentsDemo";
