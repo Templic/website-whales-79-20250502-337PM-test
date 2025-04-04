@@ -3,7 +3,8 @@
  * 
  * Component Type: feature
  * Migrated as part of the repository reorganization.
- * Enhanced with additional features from lovable version.
+ * Enhanced with improved visualization, customizable breath patterns, and chakra
+ * color integration.
  */
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
@@ -59,7 +60,58 @@ interface BreathSyncPlayerProps {
 }
 
 export function BreathSyncPlayer({
-  tracks = [],
+  tracks = [
+    {
+      id: 1,
+      title: "Root Chakra Alignment",
+      artist: "ASTRA",
+      duration: "6:32",
+      audioSrc: "/audio/meditation-alpha.mp3",  // Using available audio
+      coverArt: "/placeholder.svg",
+      chakra: "Root",
+      frequency: 396,
+    },
+    {
+      id: 2,
+      title: "Sacral Awakening",
+      artist: "ASTRA",
+      duration: "7:14",
+      audioSrc: "/audio/theta-waves.mp3", // Using available audio
+      coverArt: "/placeholder.svg",
+      chakra: "Sacral",
+      frequency: 417,
+    },
+    {
+      id: 3,
+      title: "Solar Plexus Activation",
+      artist: "ASTRA",
+      duration: "5:48",
+      audioSrc: "/audio/delta-waves.mp3", // Using available audio
+      coverArt: "/placeholder.svg",
+      chakra: "Solar Plexus",
+      frequency: 528,
+    },
+    {
+      id: 4,
+      title: "Heart Resonance",
+      artist: "ASTRA",
+      duration: "8:21",
+      audioSrc: "/audio/alpha-focus.mp3", // Using available audio
+      coverArt: "/placeholder.svg",
+      chakra: "Heart",
+      frequency: 639,
+    },
+    {
+      id: 5,
+      title: "Throat Gateway",
+      artist: "ASTRA",
+      duration: "6:05",
+      audioSrc: "/audio/meditation-alpha.mp3", // Using available audio
+      coverArt: "/placeholder.svg",
+      chakra: "Throat",
+      frequency: 741,
+    },
+  ],
   defaultVolume = 80,
 }: BreathSyncPlayerProps) {
   // Player state
@@ -475,6 +527,28 @@ export function BreathSyncPlayer({
       return 100 // Hold phases maintain full size
     }
   }
+  
+  // Get chakra color
+  const getChakraColor = (chakra?: string) => {
+    switch (chakra) {
+      case "Root":
+        return "#ff0000"
+      case "Sacral":
+        return "#ff8c00"
+      case "Solar Plexus":
+        return "#ffff00"
+      case "Heart":
+        return "#00ff00"
+      case "Throat":
+        return "#00bfff"
+      case "Third Eye":
+        return "#0000ff"
+      case "Crown":
+        return "#9400d3"
+      default:
+        return "#00e6e6" // Cyan color to match our theme
+    }
+  }
 
   return (
     <div 
@@ -488,7 +562,7 @@ export function BreathSyncPlayer({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "#00e6e6" }}
+            style={{ backgroundColor: currentTrack.chakra ? getChakraColor(currentTrack.chakra) : "#00e6e6" }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -497,7 +571,9 @@ export function BreathSyncPlayer({
             <p className="text-xs text-white/60">
               {isBreathSyncActive
                 ? `${currentPattern.name} • ${getBreathInstruction()}`
-                : "Synchronize music with your breath"}
+                : currentTrack.chakra && currentTrack.frequency 
+                  ? `${currentTrack.chakra} Chakra • ${currentTrack.frequency} Hz`
+                  : "Synchronize music with your breath"}
             </p>
           </div>
         </div>

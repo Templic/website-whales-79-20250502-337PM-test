@@ -3,6 +3,7 @@
  * 
  * Component Type: feature
  * Migrated as part of the repository reorganization.
+ * Enhanced with pulse detection, heart rate synchronization, and visual feedback.
  */
 "use client"
 
@@ -492,10 +493,26 @@ export function BinauralBeatGenerator({
             <h2 className="text-lg font-bold text-white">Binaural Beat Generator</h2>
             <p className="text-xs text-white/60">
               {beatFrequency.toFixed(1)} Hz • {brainWave.name} Waves
+              {heartRate && isSyncingToHeartRate && ` • Synced to ${heartRate} BPM`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {heartRate && (
+            <Button
+              variant={isSyncingToHeartRate ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIsSyncingToHeartRate(!isSyncingToHeartRate)}
+              className={cn(
+                isSyncingToHeartRate
+                  ? "bg-cyan-500 hover:bg-cyan-600 text-white"
+                  : "border-white/10 text-white hover:bg-white/5"
+              )}
+            >
+              <Heart className={cn("mr-1 h-4 w-4", isSyncingToHeartRate && "text-white")} />
+              {isSyncingToHeartRate ? "Synced" : "Sync to Heart"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
