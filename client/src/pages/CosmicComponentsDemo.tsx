@@ -2285,6 +2285,7 @@ export default function CosmicComponentsDemo() {
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
   );
