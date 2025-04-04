@@ -1,10 +1,9 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { XCircle } from "lucide-react";
+//import { useToast } from "@/hooks/use-toast"; // Removed as not needed anymore
+//import { Button } from "@/components/ui/button"; // Removed as not needed anymore
+//import { XCircle } from "lucide-react"; // Removed as not needed anymore
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 
 interface Track {
@@ -18,7 +17,7 @@ interface Track {
 export default function MusicReleasePage() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const { user } = useAuth();
-  const { toast } = useToast();
+  //const { toast } = useToast(); // Removed as not needed anymore
 
   useEffect(() => {
     document.title = "New Music - Dale Loves Whales";
@@ -34,22 +33,7 @@ export default function MusicReleasePage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    try {
-      await axios.delete(`/api/tracks/${id}`);
-      setTracks(tracks.filter(track => track.id !== id));
-      toast({
-        title: "Success",
-        description: "Track deleted successfully"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete track",
-        variant: "destructive"
-      });
-    }
-  };
+  //handleDelete function removed
 
   return (
     <>
@@ -57,10 +41,12 @@ export default function MusicReleasePage() {
       <div className="space-y-8">
         <section className="flex flex-col md:flex-row gap-8 items-start relative">
           <div className="w-full md:w-1/2">
-            <img 
-              src="uploads/album cover for feels so good song.png"
-              alt="Album Cover - Feels So Good" 
-              className="w-full rounded-lg shadow-xl"
+            <iframe
+              src="https://www.youtube.com/embed/jzpvkq3Krjg"
+              title="Feels So Good - Music Video"
+              className="w-full aspect-video rounded-lg shadow-xl"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
           <div className="w-full md:w-1/2 space-y-6">
@@ -73,31 +59,7 @@ export default function MusicReleasePage() {
                 Featuring: AC3-2085
               </p>
 
-              <div className="music-player mt-6 p-6 bg-[rgba(10,50,92,0.6)] rounded-lg shadow-lg backdrop-blur-sm text-center relative">
-                {user?.role === 'admin' || user?.role === 'super_admin' ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
-                    onClick={() => handleDelete(1)}
-                  >
-                    <XCircle className="h-6 w-6" />
-                  </Button>
-                ) : null}
-                <h3 className="text-2xl font-semibold mb-4 text-[var(--fill-color)]">Listen Now</h3>
-                <audio 
-                  controls 
-                  className="w-full focus:outline-none mt-2"
-                  style={{
-                    height: '40px',
-                    filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)',
-                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.5)'
-                  }}
-                >
-                  <source src="/uploads/feels-so-good.mp3" type="audio/mpeg" />
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
+              {/*Removed Music Player div*/}
             </div>
           </div>
         </section>
