@@ -25,8 +25,7 @@ export function Footer() {
                 <li><Link href="/music-release" className="text-[#e8e6e3] hover:text-[#00ebd6]">New Music</Link></li>
                 <li><Link href="/archived-music" className="text-[#e8e6e3] hover:text-[#00ebd6]">Archived Music</Link></li>
                 <li><Link href="/tour" className="text-[#e8e6e3] hover:text-[#00ebd6]">Tour</Link></li>
-                <li><Link href="/cosmic-experience" className="text-[#e8e6e3] hover:text-[#00ebd6]">Cosmic Experience</Link></li>
-                <li><Link href="/immersive" className="text-[#e8e6e3] hover:text-[#00ebd6]">Immersive</Link></li>
+                <li><Link href="/cosmic-experience-immersive" className="text-[#e8e6e3] hover:text-[#00ebd6]">Cosmic Experience & Immersive</Link></li>
                 <li><Link href="/shop" className="text-[#e8e6e3] hover:text-[#00ebd6]">Shop</Link></li>
                 <li><Link href="/blog" className="text-[#e8e6e3] hover:text-[#00ebd6]">Blog</Link></li>
                 <li><Link href="/contact" className="text-[#e8e6e3] hover:text-[#00ebd6]">Contact</Link></li>

@@ -43,9 +43,8 @@ import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
 
 // Imported Pages
 import CosmicConnectivityPage from "@/pages/imported-pages/CosmicConnectivityPage";
-import CosmicExperiencePage from "@/pages/imported-pages/CosmicExperiencePage";
+import CosmicExperienceImmersivePage from "@/pages/imported-pages/CosmicExperienceImmersivePage";
 import CosmicExperiencePageOld from "@/pages/imported-pages/CosmicExperiencePage_old";
-import ImmersivePage from "@/pages/imported-pages/ImmersivePage";
 import ImmersivePageOld from "@/pages/imported-pages/ImmersivePage_old";
 import ArchivePage from "@/pages/imported-pages/ArchivePage";
 import ArchivePageOld from "@/pages/imported-pages/ArchivePage_old";
