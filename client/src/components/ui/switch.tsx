@@ -1,3 +1,9 @@
+/**
+ * switch.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
 

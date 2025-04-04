@@ -1,3 +1,9 @@
+/**
+ * navigation-menu.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"

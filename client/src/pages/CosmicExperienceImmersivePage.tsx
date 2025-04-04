@@ -1,13 +1,13 @@
 
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
 import { ImmersiveHeader } from "@/components/immersive/ImmersiveHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
-import { BinauralBeatGenerator } from "@/components/audio/BinauralBeatGenerator";
-import { BreathSyncPlayer } from "@/components/audio/BreathSyncPlayer";
+import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatGenerator";
+import { BreathSyncPlayer } from "@/components/features/audio/BreathSyncPlayer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, Waves, Brain } from "lucide-react";

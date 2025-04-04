@@ -1,4 +1,4 @@
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

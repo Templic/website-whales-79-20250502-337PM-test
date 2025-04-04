@@ -1,3 +1,9 @@
+/**
+ * resizable.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import { GripVertical } from "lucide-react"
 import * as ResizablePrimitive from "react-resizable-panels"
 

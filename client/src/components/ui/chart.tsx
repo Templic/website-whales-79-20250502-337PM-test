@@ -1,3 +1,9 @@
+/**
+ * chart.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 

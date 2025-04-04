@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
 import CosmicCollectibles from "@/components/shop/CosmicCollectibles";
 import ProductComparison from "@/components/shop/ProductComparison";

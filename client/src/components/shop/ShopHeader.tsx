@@ -11,7 +11,7 @@ import {
   Home,
   ShoppingBag
 } from 'lucide-react';
-import CosmicButton from '@/components/ui/cosmic-button';
+import CosmicButton from '@/components/features/cosmic/cosmic-button';
 
 // Voice recognition types
 interface SpeechRecognitionEvent extends Event {

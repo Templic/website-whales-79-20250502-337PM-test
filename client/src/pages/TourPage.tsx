@@ -1,3 +1,8 @@
+/**
+ * TourPage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 
 import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";

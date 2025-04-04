@@ -1,3 +1,9 @@
+/**
+ * toaster.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,

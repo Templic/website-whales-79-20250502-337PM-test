@@ -1,5 +1,5 @@
 import React from 'react';
-import { Product } from '@/pages/ShopPage';
+import { Product } from '@/pages/shop/ShopPage';
 import { Grid } from '@/components/ui/grid';
 import ProductCard from './ProductCard';
 

@@ -1,0 +1,273 @@
+/* Cosmic Animation Effects */
+
+/* Twinkling Stars */
+@keyframes twinkle {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.twinkle {
+  animation: twinkle var(--twinkle-duration, 4s) ease-in-out infinite;
+  animation-delay: var(--twinkle-delay, 0s);
+}
+
+/* Shooting Stars */
+@keyframes shooting-star {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(var(--shooting-distance-x, 300px)) 
+               translateY(var(--shooting-distance-y, 300px)) 
+               rotate(var(--shooting-rotation, 45deg));
+    opacity: 0;
+  }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px white);
+  animation: shooting-star var(--shooting-duration, 3s) linear infinite;
+  animation-delay: var(--shooting-delay, 0s);
+}
+
+.shooting-star::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--trail-width, 40px);
+  height: 1px;
+  background: linear-gradient(to left, rgba(255,255,255,0.7), transparent);
+  right: 1px;
+}
+
+/* Cosmic Pulse Effect */
+@keyframes cosmic-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3);
+  }
+  70% {
+    transform: scale(1.03);
+    opacity: 0.9;
+    box-shadow: 0 0 0 15px rgba(124, 58, 237, 0);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0);
+  }
+}
+
+.cosmic-pulse {
+  animation: cosmic-pulse 4s ease-in-out infinite;
+}
+
+@keyframes cosmic-pulse-cyan {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba(0, 235, 214, 0.3);
+  }
+  70% {
+    transform: scale(1.03);
+    opacity: 0.9;
+    box-shadow: 0 0 0 15px rgba(0, 235, 214, 0);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba(0, 235, 214, 0);
+  }
+}
+
+.cosmic-pulse-cyan {
+  animation: cosmic-pulse-cyan 4s ease-in-out infinite;
+}
+
+/* Geometric Rotation */
+@keyframes slow-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.slow-rotate {
+  animation: slow-rotate var(--rotation-duration, 60s) linear infinite;
+}
+
+@keyframes reverse-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+.reverse-rotate {
+  animation: reverse-rotate var(--rotation-duration, 45s) linear infinite;
+}
+
+/* Cosmic Glow Breathing */
+@keyframes glow-breathe {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(124, 58, 237, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(124, 58, 237, 0.6));
+  }
+  100% {
+    filter: drop-shadow(0 0 5px rgba(124, 58, 237, 0.3));
+  }
+}
+
+.glow-breathe {
+  animation: glow-breathe 6s ease-in-out infinite;
+}
+
+@keyframes glow-breathe-cyan {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(0, 235, 214, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(0, 235, 214, 0.6));
+  }
+  100% {
+    filter: drop-shadow(0 0 5px rgba(0, 235, 214, 0.3));
+  }
+}
+
+.glow-breathe-cyan {
+  animation: glow-breathe-cyan 6s ease-in-out infinite;
+}
+
+/* Hover glow effects */
+.hover-glow-cyan {
+  transition: filter 0.3s ease;
+}
+
+.hover-glow-cyan:hover {
+  filter: drop-shadow(0 0 8px rgba(0, 235, 214, 0.5)) brightness(1.1);
+}
+
+.hover-glow-purple {
+  transition: filter 0.3s ease;
+}
+
+.hover-glow-purple:hover {
+  filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.5)) brightness(1.1);
+}
+
+.hover-glow-orange {
+  transition: filter 0.3s ease;
+}
+
+.hover-glow-orange:hover {
+  filter: drop-shadow(0 0 8px rgba(251, 146, 60, 0.5)) brightness(1.1);
+}
+
+.hover-glow-red {
+  transition: filter 0.3s ease;
+}
+
+.hover-glow-red:hover {
+  filter: drop-shadow(0 0 8px rgba(225, 85, 84, 0.5)) brightness(1.1);
+}
+
+/* Additional Animation Effects for Nav Elements */
+@keyframes nav-pulse {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+.nav-pulse {
+  animation: nav-pulse 4s ease-in-out infinite;
+}
+
+/* Animated background gradient */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(270deg, #00ebd6, #7c3aed, #e15554);
+  background-size: 600% 600%;
+  animation: gradient-shift 10s ease infinite;
+}
+
+/* Specific animation for geometric nav elements */
+@keyframes nav-geometry-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.nav-geometry {
+  animation: nav-geometry-rotate 45s linear infinite;
+}
+
+/* Hover effects for nav items */
+.nav-item {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(to right, #00ebd6, #7c3aed);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.nav-item:hover::after {
+  width: 80%;
+}
+
+.nav-item.active::after {
+  width: 80%;
+}

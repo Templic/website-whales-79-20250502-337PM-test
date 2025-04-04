@@ -1,3 +1,9 @@
+/**
+ * popover.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 

@@ -8,7 +8,7 @@ import CartItemComponent from '@/components/shop/cart/CartItem';
 import CartSummary from '@/components/shop/cart/CartSummary';
 import { ShoppingCart, Loader2, RefreshCw, ShoppingBag, Package, ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import CosmicButton from '@/components/ui/cosmic-button';
+import CosmicButton from '@/components/features/cosmic/cosmic-button';
 import { Separator } from '@/components/ui/separator';
 
 export default function CartPage() {

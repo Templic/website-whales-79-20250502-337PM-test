@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
-import { CosmicButton } from "@/components/cosmic/CosmicButton";
-import { BreathSyncPlayer } from "@/components/audio/BreathSyncPlayer";
-import { BinauralBeatGenerator } from "@/components/audio/BinauralBeatGenerator";
+import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
+import { BreathSyncPlayer } from "@/components/features/audio/BreathSyncPlayer";
+import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatGenerator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs, Brain } from "lucide-react";

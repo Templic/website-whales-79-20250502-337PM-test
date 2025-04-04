@@ -1,3 +1,8 @@
+/**
+ * HomePage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { UsersRound, BarChart3 } from "lucide-react";

@@ -1,3 +1,9 @@
+/**
+ * progress.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 "use client"
 
 import * as React from "react"

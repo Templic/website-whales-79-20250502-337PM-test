@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
 import EnhancedFeaturedContent from "@/components/community/EnhancedFeaturedContent";
 import { useToast } from "@/hooks/use-toast";

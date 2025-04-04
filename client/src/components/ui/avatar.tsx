@@ -1,3 +1,9 @@
+/**
+ * avatar.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
 

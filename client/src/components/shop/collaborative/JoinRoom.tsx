@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
-import CosmicButton from '@/components/ui/cosmic-button';
+import CosmicButton from '@/components/features/cosmic/cosmic-button';
 
 interface JoinRoomProps {
   onJoinRoom: RoomJoinHandler;

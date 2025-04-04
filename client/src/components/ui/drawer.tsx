@@ -1,3 +1,9 @@
+/**
+ * drawer.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 

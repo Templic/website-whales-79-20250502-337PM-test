@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
-import { BreathSyncPlayer } from "@/components/audio/BreathSyncPlayer";
-import { BinauralBeatGenerator } from "@/components/audio/BinauralBeatGenerator";
-import { CosmicButton } from "@/components/cosmic/CosmicButton";
+import { BreathSyncPlayer } from "@/components/features/audio/BreathSyncPlayer";
+import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatGenerator";
+import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";

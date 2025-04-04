@@ -1,3 +1,8 @@
+/**
+ * TermsOfService.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import React from 'react';
 
 const TermsEffectiveDate: React.FC = () => {

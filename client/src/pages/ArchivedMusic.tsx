@@ -6,13 +6,13 @@ import { X, Disc, Headphones, Clock, Search, Play } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { AlbumShowcase } from "@/components/music/AlbumShowcase";
 import { DynamicPlaylists, RecommendedPlaylists } from "@/components/music/DynamicPlaylists";
 import { playlists } from "@/data/playlists";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CosmicReveal } from "@/components/cosmic/CosmicReveal";
+import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal";
 
 interface ArchivedMusicProps {}
 

@@ -7,9 +7,9 @@ import { Product } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
 import { formatCurrency } from '@/lib/utils';
 import CosmicHeading from '@/components/ui/cosmic-heading';
-import { CosmicButton } from '@/components/ui/cosmic-button';
-import CosmicBadge from '@/components/ui/cosmic-badge';
-import CosmicCard from '@/components/ui/cosmic-card';
+import { CosmicButton } from '@/components/features/cosmic/cosmic-button';
+import CosmicBadge from '@/components/features/cosmic/cosmic-badge';
+import CosmicCard from '@/components/features/cosmic/cosmic-card';
 import ProductGrid from '@/components/shop/ProductGrid';
 
 export default function ProductPage() {

@@ -1,9 +1,9 @@
-import { CosmicBackground } from "@/components/cosmic/CosmicBackground";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ImmersiveHeader } from "@/components/immersive/ImmersiveHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
-import { CosmicButton } from "@/components/cosmic/CosmicButton";
+import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 

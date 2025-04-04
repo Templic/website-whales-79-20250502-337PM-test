@@ -1,3 +1,8 @@
+/**
+ * user-portal.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

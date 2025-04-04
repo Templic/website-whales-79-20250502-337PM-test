@@ -1,3 +1,8 @@
+/**
+ * CollaborationPage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

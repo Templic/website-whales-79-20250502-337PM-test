@@ -15,18 +15,18 @@ import StarBackground from "@/components/cosmic/StarBackground";
 // Pages
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
-import NewMusicPage from "@/pages/MusicReleasePage";
-import ArchivedMusicPage from "@/pages/ArchivedMusic";
+import NewMusicPage from "@/pages/music/MusicReleasePage";
+import ArchivedMusicPage from "@/pages/music/ArchivedMusic";
 import TourPage from "@/pages/TourPage";
 import EngagePage from "@/pages/EngagePage";
 import NewsletterPage from "@/pages/NewsletterPage";
-import BlogPage from "@/pages/BlogPage";
-import BlogPostPage from "@/pages/BlogPostPage";
+import BlogPage from "@/pages/blog/BlogPage";
+import BlogPostPage from "@/pages/blog/BlogPostPage";
 import CollaborationPage from "@/pages/CollaborationPage";
 import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
-import AdminPortalPage from "@/pages/AdminPortalPage";
-import AnalyticsPage from "@/pages/AnalyticsPage";
+import AdminPortalPage from "@/pages/admin/AdminPortalPage";
+import AnalyticsPage from "@/pages/admin/AnalyticsPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
@@ -35,22 +35,22 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import CosmicTest from "@/pages/test/CosmicTest";
 import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
-import CommunityPage from "@/pages/CommunityPage";
-import EnhancedCommunityPage from "@/pages/EnhancedCommunityPage";
+import CommunityPage from "@/pages/community/CommunityPage";
+import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
 
 // Shop Pages
-import ShopPage from "@/pages/ShopPage";
-import ProductPage from "@/pages/ProductPage";
-import CartPage from "@/pages/CartPage";
-import CheckoutPage from "@/pages/CheckoutPage";
-import CollaborativeShoppingPage from "@/pages/CollaborativeShoppingPage";
+import ShopPage from "@/pages/shop/ShopPage";
+import ProductPage from "@/pages/shop/ProductPage";
+import CartPage from "@/pages/shop/CartPage";
+import CheckoutPage from "@/pages/shop/CheckoutPage";
+import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 
 // Imported Pages
-import CosmicConnectivityPage from "@/pages/CosmicConnectivityPage";
-import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
-import ImmersivePage from "@/pages/ImmersivePage";
+import CosmicConnectivityPage from "@/pages/experience/CosmicConnectivityPage";
+import CosmicExperiencePage from "@/pages/experience/CosmicExperiencePage";
+import ImmersivePage from "@/pages/experience/ImmersivePage";
 import ArchivePage from "@/pages/ArchivePage";
-import CosmicMerchandisePage from "@/pages/CosmicMerchandisePage";
+import CosmicMerchandisePage from "@/pages/shop/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
 import AudioComponentsDemo from "@/pages/test/AudioComponentsDemo";
 import { NewComponentsDemo } from "@/pages/test/NewComponentsDemo";
@@ -92,7 +92,8 @@ function Router() {
         <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route path="/immersive" component={ImmersivePage} />
-        <Route path="/archive" component={ArchivePage} />
+        {/* Archived Page - /archive */}
+        {/* <Route path="/archive" component={ArchivePage} /> */}
 
         {/* Blog */}
         <Route path="/blog" component={BlogPage} />
@@ -135,7 +136,8 @@ function Router() {
         <Route path="/test/audio" component={AudioComponentsDemo} />
         <Route path="/test/new" component={NewComponentsDemo} />
         <Route path="/cosmic-test" component={CosmicTest} />
-        <Route path="/button-demo" component={ButtonDemo} />
+        {/* Archived Page - /button-demo */}
+        {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
 
         {/* 404 Route */}

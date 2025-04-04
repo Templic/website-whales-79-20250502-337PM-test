@@ -1,3 +1,8 @@
+/**
+ * PrivacyPolicy.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 
 import React from 'react';
 

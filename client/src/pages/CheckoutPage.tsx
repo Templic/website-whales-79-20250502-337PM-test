@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
-import CosmicButton from '@/components/ui/cosmic-button';
+import CosmicButton from '@/components/features/cosmic/cosmic-button';
 
 import StripeElements from '@/components/shop/payment/StripeElements';
 import PaymentSelector from '@/components/shop/payment/PaymentSelector';

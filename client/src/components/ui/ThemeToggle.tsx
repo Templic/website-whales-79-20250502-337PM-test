@@ -1,3 +1,9 @@
+/**
+ * ThemeToggle.tsx
+ * 
+ * Component Type: common
+ * Migrated as part of the repository reorganization.
+ */
 import { Moon, Sun, SunMoon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CosmicCard } from "@/components/cosmic/ui/cosmic-card";
-import { CosmicReveal } from "@/components/cosmic/CosmicReveal";
+import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal";
 import { CosmicIcon } from "@/components/cosmic/ui/cosmic-icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

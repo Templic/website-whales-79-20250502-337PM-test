@@ -1,3 +1,8 @@
+/**
+ * AuthPage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
