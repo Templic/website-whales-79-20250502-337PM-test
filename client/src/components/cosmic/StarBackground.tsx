@@ -1,234 +1,148 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import './cosmic-animations.css';
 
 interface StarBackgroundProps {
   starCount?: number;
-  density?: 'low' | 'medium' | 'high';
-  colors?: string[];
-  twinkle?: boolean;
-  shooting?: boolean;
-  nebula?: boolean;
+  shootingStarCount?: number;
+  colorScheme?: 'default' | 'purple' | 'cyan' | 'multi';
   opacity?: number;
-  className?: string;
-  style?: React.CSSProperties;
 }
 
-export const StarBackground: React.FC<StarBackgroundProps> = ({
-  starCount = 100,
-  density = 'medium',
-  colors = ['#00ebd6', '#7c3aed', '#e15554', '#fb923c', '#ffffff'],
-  twinkle = true,
-  shooting = true,
-  nebula = false,
-  opacity = 1,
-  className = '',
-  style = {}
+interface Star {
+  id: number;
+  size: number;
+  x: string;
+  y: string;
+  delay: string;
+  duration: string;
+  color: string;
+}
+
+interface ShootingStar {
+  id: number;
+  x: string;
+  y: string;
+  delay: string;
+  duration: string;
+  distanceX: string;
+  distanceY: string;
+  rotation: string;
+  trailWidth: string;
+}
+
+const StarBackground: React.FC<StarBackgroundProps> = ({
+  starCount = 150,
+  shootingStarCount = 5,
+  colorScheme = 'default',
+  opacity = 0.7,
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  // Calculate actual star count based on density
-  const getActualStarCount = () => {
-    switch (density) {
-      case 'low': return Math.floor(starCount * 0.5);
-      case 'high': return Math.floor(starCount * 2);
-      default: return starCount;
-    }
-  };
+  const [stars, setStars] = useState<Star[]>([]);
+  const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // Set canvas size to match its display size
-    const updateCanvasSize = () => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-    };
-    
-    updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
-    
     // Generate stars
-    const actualStarCount = getActualStarCount();
-    const stars = Array.from({ length: actualStarCount }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: Math.random() * 1.5 + 0.5,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      twinkleSpeed: Math.random() * 0.05 + 0.01,
-      twinkleOffset: Math.random() * Math.PI * 2,
-      opacity: Math.random() * 0.5 + 0.5
-    }));
+    const generatedStars: Star[] = [];
     
+    // Color palette based on Feels So Good album
+    const starColors = {
+      default: ['#ffffff', '#f4f4f4', '#e6e6e6', '#b3b3b3'],
+      purple: ['#ffffff', '#d5c5fb', '#b59df8', '#7c3aed'],
+      cyan: ['#ffffff', '#b3f9f4', '#73f2ea', '#00ebd6'],
+      multi: ['#ffffff', '#00ebd6', '#7c3aed', '#fb923c', '#e15554'],
+    };
+    
+    const colors = starColors[colorScheme];
+
+    for (let i = 0; i < starCount; i++) {
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      const randomSize = (Math.random() * 2 + 1).toFixed(1);
+      const randomX = `${Math.random() * 100}%`;
+      const randomY = `${Math.random() * 100}%`;
+      const randomDelay = `${Math.random() * 5}s`;
+      const randomDuration = `${Math.random() * 2 + 3}s`;
+
+      generatedStars.push({
+        id: i,
+        size: parseFloat(randomSize),
+        x: randomX,
+        y: randomY,
+        delay: randomDelay,
+        duration: randomDuration,
+        color: randomColor,
+      });
+    }
+    setStars(generatedStars);
+
     // Generate shooting stars
-    const shootingStars: any[] = [];
-    if (shooting) {
-      const shootingStarCount = Math.floor(actualStarCount * 0.02);
-      for (let i = 0; i < shootingStarCount; i++) {
-        generateShootingStar();
-      }
-    }
-    
-    function generateShootingStar() {
-      const angle = Math.random() * Math.PI * 2;
-      // Safely use canvas dimensions
-      const canvasWidth = canvas?.width || window.innerWidth;
-      const canvasHeight = canvas?.height || window.innerHeight;
-      const distance = Math.sqrt(canvasWidth * canvasWidth + canvasHeight * canvasHeight);
-      const length = Math.random() * 50 + 50;
-      const speed = Math.random() * 2 + 1;
-      
-      shootingStars.push({
-        x: Math.random() * canvasWidth,
-        y: Math.random() * canvasHeight,
-        length: length,
-        angle: angle,
-        speed: speed,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        active: false,
-        activationTime: Math.random() * 10000 + 5000,
-        lastActivation: Date.now() + Math.random() * 5000
+    const generatedShootingStars: ShootingStar[] = [];
+    for (let i = 0; i < shootingStarCount; i++) {
+      const randomX = `${Math.random() * 70}%`;
+      const randomY = `${Math.random() * 70}%`;
+      const randomDelay = `${Math.random() * 15 + 5}s`;
+      const randomDuration = `${Math.random() * 3 + 2}s`;
+      const randomDistanceX = `${Math.random() * 400 - 200}px`;
+      const randomDistanceY = `${Math.random() * 400 - 100}px`;
+      const randomRotation = `${Math.random() * 90 - 45}deg`;
+      const randomTrailWidth = `${Math.random() * 40 + 30}px`;
+
+      generatedShootingStars.push({
+        id: i,
+        x: randomX,
+        y: randomY,
+        delay: randomDelay,
+        duration: randomDuration,
+        distanceX: randomDistanceX,
+        distanceY: randomDistanceY,
+        rotation: randomRotation,
+        trailWidth: randomTrailWidth,
       });
     }
-    
-    // Animation loop
-    let animationFrameId: number;
-    const animate = () => {
-      if (!canvas) return;
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      
-      // Draw nebula effect if enabled
-      if (nebula) {
-        drawNebula(ctx, canvasWidth, canvasHeight);
-      }
-      
-      // Draw stars
-      const currentTime = Date.now() / 1000;
-      stars.forEach(star => {
-        const twinkleFactor = twinkle ? 
-          Math.sin(currentTime * star.twinkleSpeed + star.twinkleOffset) * 0.3 + 0.7 : 
-          1;
-        
-        ctx.beginPath();
-        ctx.arc(star.x, star.y, star.radius * twinkleFactor, 0, Math.PI * 2);
-        ctx.fillStyle = star.color;
-        ctx.globalAlpha = star.opacity * twinkleFactor * opacity;
-        ctx.fill();
-      });
-      
-      // Draw shooting stars
-      if (shooting) {
-        const now = Date.now();
-        shootingStars.forEach((star: any) => {
-          if (!star.active && now - star.lastActivation > star.activationTime) {
-            star.active = true;
-            star.progress = 0;
-            star.x = Math.random() * canvasWidth;
-            star.y = Math.random() * canvasHeight;
-            star.lastActivation = now;
-          }
-          
-          if (star.active) {
-            star.progress += star.speed / 100;
-            if (star.progress >= 1) {
-              star.active = false;
-              return;
-            }
-            
-            const fadeInOut = Math.sin(star.progress * Math.PI);
-            const startX = star.x;
-            const startY = star.y;
-            const endX = startX + Math.cos(star.angle) * star.length;
-            const endY = startY + Math.sin(star.angle) * star.length;
-            
-            const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + fadeInOut + ')');
-            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(
-              startX + Math.cos(star.angle) * star.length * star.progress,
-              startY + Math.sin(star.angle) * star.length * star.progress
-            );
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 2;
-            ctx.stroke();
-          }
-        });
-      }
-      
-      animationFrameId = requestAnimationFrame(animate);
-    };
-    
-    animate();
-    
-    return () => {
-      window.removeEventListener('resize', updateCanvasSize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [starCount, density, colors, twinkle, shooting, nebula, opacity]);
-  
-  function drawNebula(ctx: CaniosRenderingContext2D, width: number, height: number) {
-    const gradient = ctx.createRadialGradient(
-      width / 2, 
-      height / 2, 
-      10, 
-      width / 2, 
-      height / 2, 
-      width / 1.5
-    );
-    
-    gradient.addColorStop(0, 'rgba(124, 58, 237, 0.03)');
-    gradient.addColorStop(0.4, 'rgba(0, 235, 214, 0.02)');
-    gradient.addColorStop(0.6, 'rgba(251, 146, 60, 0.01)');
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-  }
-  
+    setShootingStars(generatedShootingStars);
+  }, [starCount, shootingStarCount, colorScheme]);
+
   return (
-    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} style={style}>
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-full" 
-      />
+    <div
+      className="fixed inset-0 z-0 pointer-events-none overflow-hidden"
+      style={{ opacity }}
+    >
+      {/* Stars */}
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className="absolute twinkle"
+          style={{
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            left: star.x,
+            top: star.y,
+            backgroundColor: star.color,
+            borderRadius: '50%',
+            boxShadow: `0 0 ${star.size * 2}px ${star.color}`,
+            '--twinkle-delay': star.delay,
+            '--twinkle-duration': star.duration,
+          } as React.CSSProperties}
+        />
+      ))}
+
+      {/* Shooting Stars */}
+      {shootingStars.map((shootingStar) => (
+        <div
+          key={shootingStar.id}
+          className="shooting-star"
+          style={{
+            left: shootingStar.x,
+            top: shootingStar.y,
+            '--shooting-delay': shootingStar.delay,
+            '--shooting-duration': shootingStar.duration,
+            '--shooting-distance-x': shootingStar.distanceX,
+            '--shooting-distance-y': shootingStar.distanceY,
+            '--shooting-rotation': shootingStar.rotation,
+            '--trail-width': shootingStar.trailWidth,
+          } as React.CSSProperties}
+        />
+      ))}
     </div>
   );
 };
 
-// Additional background components
-
-export const NebulaBackground: React.FC<{className?: string, opacity?: number, variant?: 'cosmic' | 'triadic' | 'complementary'}> = ({
-  className = '',
-  opacity = 0.1,
-  variant = 'cosmic'
-}) => {
-  const getNebulaClasses = () => {
-    switch (variant) {
-      case 'triadic':
-        return 'bg-gradient-radial from-cyan-600/5 via-purple-600/5 to-orange-500/5 nebula-triadic';
-      case 'complementary':
-        return 'bg-gradient-radial from-purple-600/5 via-blue-700/5 to-cyan-400/5 nebula-complementary';
-      default:
-        return 'bg-gradient-radial from-purple-600/5 via-indigo-700/5 to-blue-500/5 nebula-cosmic';
-    }
-  };
-  
-  return (
-    <div 
-      className={`absolute inset-0 ${getNebulaClasses()} ${className}`}
-      style={{ opacity }}
-    ></div>
-  );
-};
-
-interface CaniosRenderingContext2D extends CanvasRenderingContext2D {}
+export default StarBackground;
