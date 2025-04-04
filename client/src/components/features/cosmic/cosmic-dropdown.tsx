@@ -6,7 +6,7 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../lib/utils';
+import { cn } from '../../../lib/utils';
 import { ChevronDown } from 'lucide-react';
 import CosmicButton from './cosmic-button';
 

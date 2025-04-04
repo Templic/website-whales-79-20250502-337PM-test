@@ -1,6 +1,6 @@
-import { AccessibilityControls } from "../../components/imported/AccessibilityControls"
-import { AlbumShowcase } from "../../components/imported/AlbumShowcase"
-import { CosmicCollectible, CosmicCollectiblesGrid, CosmicWalletConnect } from "../../components/imported/CosmicCollectible"
+import { AccessibilityControls } from "../../components/common/AccessibilityControls"
+import { AlbumShowcase } from "../../components/common/AlbumShowcase"
+import { CosmicCollectible, CosmicCollectiblesGrid, CosmicWalletConnect } from "../../components/features/cosmic/CosmicCollectible"
 import { Link } from "wouter"
 
 // Mock collectible data for demonstration
