@@ -83,16 +83,22 @@ export default function TourPage() {
         </GeometricSection>
 
         <GeometricSection 
-          variant="cosmic" 
-          shape="wave" 
+          variant="secondary" 
+          shape="shield" 
           title="Tour Locations"
           subtitle="Explore the map to view all past and upcoming cosmic tour stops."
           alignment="center"
+          textContained={true}
+          backgroundStyle="glass"
+          className="mb-16"
         >
-          <div className="relative w-full h-[450px] rounded-lg overflow-hidden">
+          <div className="w-full overflow-hidden relative">
+            <button className="absolute top-3 left-3 bg-white/90 text-[#303436] px-3 py-1 rounded z-20 text-sm hover:bg-white transition-colors">
+              View larger map
+            </button>
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1883097.0233626748!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
-              className="absolute inset-0 w-full h-full border-0"
+              className="w-full border-0 min-h-[450px]"
               allowFullScreen
               loading="lazy"
               title="Tour Map"

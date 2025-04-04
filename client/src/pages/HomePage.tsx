@@ -74,31 +74,33 @@ export default function HomePage() {
             </div>
           </GeometricSection>
           
-          {/* Additional Section */}
+          {/* Explore The Journey Section - with more symmetric rectangular shape like the reference image */}
           <GeometricSection
-            variant="primary"
-            shape="wave" 
+            variant="cosmic"
+            shape="rectangular" 
             title="Explore The Journey"
             alignment="center"
-            className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
+            className="mb-16 mx-auto max-w-[90%]"
+            textContained={true}
+            backgroundStyle="dark"
           >
             <div className="max-w-[80%] mx-auto">
-              <p className="text-xl leading-relaxed mb-6">
+              <p className="text-xl leading-relaxed mb-6 text-[#00ebd6]">
                 Join the cosmic voyage and become part of the ever-growing community of cosmic explorers and music lovers.
               </p>
-              <div className="flex justify-center gap-4 flex-wrap">
+              <div className="flex justify-center gap-6 flex-wrap">
                 <Link href="/music-release">
-                  <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20">
+                  <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20 min-w-[160px]">
                     New Releases
                   </Button>
                 </Link>
                 <Link href="/tour">
-                  <Button variant="outline" className="text-[#7c3aed] border-[#7c3aed] hover:bg-[#7c3aed]/20">
+                  <Button variant="outline" className="text-[#7c3aed] border-[#7c3aed] hover:bg-[#7c3aed]/20 min-w-[160px]">
                     Tour Dates
                   </Button>
                 </Link>
                 <Link href="/cosmic-experience">
-                  <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20">
+                  <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20 min-w-[160px]">
                     Cosmic Experience
                   </Button>
                 </Link>

@@ -11,11 +11,26 @@ interface GeometricSectionProps {
   variant?: 'primary' | 'secondary' | 'accent' | 'cosmic' | 'minimal';
   className?: string;
   style?: React.CSSProperties;
-  shape?: 'trapezoid' | 'hexagon' | 'octagon' | 'pentagon' | 'diamond' | 'wave';
+  shape?: 
+    'trapezoid' | 
+    'hexagon' | 
+    'octagon' | 
+    'pentagon' | 
+    'diamond' | 
+    'wave' |
+    'symmetric-hexagon' |
+    'rectangular' |
+    'shield' | 
+    'pentagram' | 
+    'rounded-diamond' | 
+    'parallelogram' |
+    'pointed-pentagon';
   headingColor?: string;
   backgroundStyle?: 'solid' | 'gradient' | 'glass' | 'dark' | 'light';
   decorative?: boolean;
   alignment?: 'left' | 'center' | 'right';
+  contentWidth?: 'auto' | 'narrow' | 'standard' | 'wide' | number;
+  textContained?: boolean;
 }
 
 const GeometricSection: React.FC<GeometricSectionProps> = ({
@@ -30,6 +45,8 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   backgroundStyle = 'glass',
   decorative = true,
   alignment = 'center',
+  contentWidth = 'standard',
+  textContained = true,
 }) => {
   // Color mappings based on variant
   const variantColors = {
@@ -97,6 +114,14 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
     diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
     wave: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 50% 75%, 25% 100%, 0% 75%)',
+    // New more symmetric shapes
+    'symmetric-hexagon': 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+    'rectangular': 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+    'shield': 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
+    'pentagram': 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+    'rounded-diamond': 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
+    'parallelogram': 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+    'pointed-pentagon': 'polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%)',
   };
 
   // Alignment classes
@@ -169,7 +194,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           </div>
         )}
 
-        {(shape === 'diamond' || shape === 'wave') && (
+        {(shape === 'diamond' || shape === 'wave' || shape === 'rounded-diamond') && (
           <CosmicShapeGroup
             shapes={[
               {
@@ -196,30 +221,141 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             ]}
           />
         )}
+        
+        {(shape === 'symmetric-hexagon') && (
+          <SacredGeometry
+            type="hexagon"
+            color={variantColors[variant].main}
+            size={250}
+            animate={true}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10"
+          />
+        )}
+        
+        {(shape === 'shield') && (
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full border-2 border-[#00ebd6]/30"></div>
+            <div className="absolute bottom-20 left-20 w-14 h-14 rounded-full border-2 border-[#7c3aed]/30"></div>
+            <div className="absolute bottom-20 right-20 w-14 h-14 rounded-full border-2 border-[#e15554]/30"></div>
+          </div>
+        )}
+        
+        {(shape === 'pentagram' || shape === 'pointed-pentagon') && (
+          <SacredGeometry
+            type="pentagon-star" 
+            color={variantColors[variant].main}
+            size={220}
+            animate={true}
+            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10"
+          />
+        )}
       </div>
     );
+  };
+
+  // Calculate content width based on shape type and the contentWidth prop
+  const getContentWidthStyle = () => {
+    if (typeof contentWidth === 'number') {
+      return `${contentWidth}px`;
+    }
+    
+    // Default widths based on shape type if textContained is true
+    if (textContained) {
+      switch(shape) {
+        case 'diamond':
+        case 'rounded-diamond':
+          return '70%'; // Diamond shapes need narrower content
+        case 'hexagon':
+        case 'symmetric-hexagon':
+        case 'octagon':
+          return '75%'; // Hexagons need moderately narrower content
+        case 'shield':
+        case 'pentagon':
+        case 'pointed-pentagon':
+        case 'pentagram':
+          return '80%'; // These shapes need somewhat narrower content
+        case 'wave':
+          return '85%'; // Wave shape needs slightly narrower content
+        case 'trapezoid':
+        case 'parallelogram':
+          return '85%'; // Trapezoid shapes need slightly narrower content
+        case 'rectangular':
+          return '95%'; // Rectangular shapes can use almost full width
+        default:
+          return '80%'; // Default safe value for any shape
+      }
+    }
+    
+    // If textContained is false or contentWidth is explicitly set
+    switch(contentWidth) {
+      case 'narrow':
+        return '60%';
+      case 'standard':
+        return '80%';
+      case 'wide':
+        return '95%';
+      case 'auto':
+      default:
+        return '100%';
+    }
+  };
+
+  // Calculate padding based on shape to ensure text doesn't overflow
+  const getPaddingStyle = () => {
+    if (!textContained) return {};
+    
+    switch(shape) {
+      case 'diamond':
+      case 'rounded-diamond':
+        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '8%', paddingBottom: '8%' };
+      case 'hexagon':
+      case 'symmetric-hexagon':
+        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '5%', paddingBottom: '5%' };
+      case 'shield':
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '15%' };
+      case 'pentagon':
+      case 'pointed-pentagon':
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '12%', paddingBottom: '8%' };
+      case 'pentagram':
+        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '15%', paddingBottom: '15%' };
+      case 'trapezoid':
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '5%' };
+      case 'wave':
+        return { paddingLeft: '8%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '12%' };
+      case 'octagon':
+        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '8%', paddingBottom: '8%' };
+      case 'parallelogram':
+        return { paddingLeft: '15%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '5%' };
+      default:
+        return { padding: '8%' };
+    }
   };
 
   return (
     <section 
       className={cn(
-        'relative p-8 mb-8 shadow-lg', 
+        'relative mb-8 shadow-lg overflow-hidden', 
         backgroundClasses[backgroundStyle],
         alignmentClasses[alignment],
         className
       )}
       style={{ 
         clipPath: clipPaths[shape],
-        ...style
+        ...style,
+        ...getPaddingStyle()
       }}
     >
       {renderDecorativeShapes()}
       
-      <div className="relative z-10">
+      <div className="relative z-10" style={{ 
+        maxWidth: getContentWidthStyle(),
+        margin: alignment === 'center' ? '0 auto' : 
+                alignment === 'right' ? '0 0 0 auto' : '0',
+      }}>
         {title && (
           <div className="section-header mb-8">
             <h2 
-              className="text-4xl font-bold mb-4"
+              className="text-3xl md:text-4xl font-bold mb-4"
               style={{ color: mainColor }}
             >
               {title}
