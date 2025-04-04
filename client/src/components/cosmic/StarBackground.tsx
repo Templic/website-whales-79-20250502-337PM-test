@@ -1,162 +1,234 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './cosmic-animations.css';
 
-// Define the Star interface
-interface Star {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  opacity: number;
-  animationDuration: number;
-  color: string;
-}
-
-// Define the component props
 interface StarBackgroundProps {
-  className?: string;
   starCount?: number;
+  density?: 'low' | 'medium' | 'high';
+  colors?: string[];
+  twinkle?: boolean;
+  shooting?: boolean;
+  nebula?: boolean;
+  opacity?: number;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-export function StarBackground({ className = "", starCount = 50 }: StarBackgroundProps) {
-  const [stars, setStars] = useState<Star[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
+export const StarBackground: React.FC<StarBackgroundProps> = ({
+  starCount = 100,
+  density = 'medium',
+  colors = ['#00ebd6', '#7c3aed', '#e15554', '#fb923c', '#ffffff'],
+  twinkle = true,
+  shooting = true,
+  nebula = false,
+  opacity = 1,
+  className = '',
+  style = {}
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // The "Feels So Good" album colors
-  const starColors = [
-    'rgba(0, 235, 214, 0.9)',    // Cyan
-    'rgba(124, 58, 237, 0.9)',   // Purple
-    'rgba(225, 85, 84, 0.9)',    // Red
-    'rgba(251, 146, 60, 0.9)',   // Orange
-    'rgba(255, 255, 255, 0.9)',  // White
-  ];
-  
-  // Function to generate random stars
-  const generateStars = (count: number) => {
-    if (!containerRef.current) return [];
+  // Calculate actual star count based on density
+  const getActualStarCount = () => {
+    switch (density) {
+      case 'low': return Math.floor(starCount * 0.5);
+      case 'high': return Math.floor(starCount * 2);
+      default: return starCount;
+    }
+  };
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
     
-    const { width, height } = containerRef.current.getBoundingClientRect();
-    const newStars: Star[] = [];
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
-    for (let i = 0; i < count; i++) {
-      newStars.push({
-        id: i,
-        x: Math.random() * width,
-        y: Math.random() * height,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.7 + 0.3,
-        animationDuration: Math.random() * 4 + 2,
-        color: starColors[Math.floor(Math.random() * starColors.length)]
+    // Set canvas size to match its display size
+    const updateCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    };
+    
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    
+    // Generate stars
+    const actualStarCount = getActualStarCount();
+    const stars = Array.from({ length: actualStarCount }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 1.5 + 0.5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      twinkleSpeed: Math.random() * 0.05 + 0.01,
+      twinkleOffset: Math.random() * Math.PI * 2,
+      opacity: Math.random() * 0.5 + 0.5
+    }));
+    
+    // Generate shooting stars
+    const shootingStars: any[] = [];
+    if (shooting) {
+      const shootingStarCount = Math.floor(actualStarCount * 0.02);
+      for (let i = 0; i < shootingStarCount; i++) {
+        generateShootingStar();
+      }
+    }
+    
+    function generateShootingStar() {
+      const angle = Math.random() * Math.PI * 2;
+      // Safely use canvas dimensions
+      const canvasWidth = canvas?.width || window.innerWidth;
+      const canvasHeight = canvas?.height || window.innerHeight;
+      const distance = Math.sqrt(canvasWidth * canvasWidth + canvasHeight * canvasHeight);
+      const length = Math.random() * 50 + 50;
+      const speed = Math.random() * 2 + 1;
+      
+      shootingStars.push({
+        x: Math.random() * canvasWidth,
+        y: Math.random() * canvasHeight,
+        length: length,
+        angle: angle,
+        speed: speed,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        active: false,
+        activationTime: Math.random() * 10000 + 5000,
+        lastActivation: Date.now() + Math.random() * 5000
       });
     }
     
-    return newStars;
-  };
-  
-  // Initialize stars on component mount and handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setStars(generateStars(starCount));
-    };
-    
-    // Initial star generation
-    handleResize();
-    
-    // Add resize listener
-    window.addEventListener('resize', handleResize);
-    
-    // Add occasional shooting stars
-    const shootingStarInterval = setInterval(() => {
-      if (containerRef.current) {
-        const shootingStar = document.createElement('div');
-        shootingStar.className = 'shooting-star';
-        
-        // Random position at top of container
-        const { width } = containerRef.current.getBoundingClientRect();
-        shootingStar.style.top = '0';
-        shootingStar.style.left = `${Math.random() * width}px`;
-        
-        // Random animation duration
-        const duration = Math.random() * 2 + 1;
-        shootingStar.style.animationDuration = `${duration}s`;
-        
-        // Add to container and remove after animation
-        containerRef.current.appendChild(shootingStar);
-        setTimeout(() => {
-          if (shootingStar.parentNode) {
-            shootingStar.parentNode.removeChild(shootingStar);
-          }
-        }, duration * 1000);
+    // Animation loop
+    let animationFrameId: number;
+    const animate = () => {
+      if (!canvas) return;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      // Draw nebula effect if enabled
+      if (nebula) {
+        drawNebula(ctx, canvasWidth, canvasHeight);
       }
-    }, 8000);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      clearInterval(shootingStarInterval);
+      
+      // Draw stars
+      const currentTime = Date.now() / 1000;
+      stars.forEach(star => {
+        const twinkleFactor = twinkle ? 
+          Math.sin(currentTime * star.twinkleSpeed + star.twinkleOffset) * 0.3 + 0.7 : 
+          1;
+        
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.radius * twinkleFactor, 0, Math.PI * 2);
+        ctx.fillStyle = star.color;
+        ctx.globalAlpha = star.opacity * twinkleFactor * opacity;
+        ctx.fill();
+      });
+      
+      // Draw shooting stars
+      if (shooting) {
+        const now = Date.now();
+        shootingStars.forEach((star: any) => {
+          if (!star.active && now - star.lastActivation > star.activationTime) {
+            star.active = true;
+            star.progress = 0;
+            star.x = Math.random() * canvasWidth;
+            star.y = Math.random() * canvasHeight;
+            star.lastActivation = now;
+          }
+          
+          if (star.active) {
+            star.progress += star.speed / 100;
+            if (star.progress >= 1) {
+              star.active = false;
+              return;
+            }
+            
+            const fadeInOut = Math.sin(star.progress * Math.PI);
+            const startX = star.x;
+            const startY = star.y;
+            const endX = startX + Math.cos(star.angle) * star.length;
+            const endY = startY + Math.sin(star.angle) * star.length;
+            
+            const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, ' + fadeInOut + ')');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(
+              startX + Math.cos(star.angle) * star.length * star.progress,
+              startY + Math.sin(star.angle) * star.length * star.progress
+            );
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        });
+      }
+      
+      animationFrameId = requestAnimationFrame(animate);
     };
-  }, [starCount]);
+    
+    animate();
+    
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [starCount, density, colors, twinkle, shooting, nebula, opacity]);
+  
+  function drawNebula(ctx: CaniosRenderingContext2D, width: number, height: number) {
+    const gradient = ctx.createRadialGradient(
+      width / 2, 
+      height / 2, 
+      10, 
+      width / 2, 
+      height / 2, 
+      width / 1.5
+    );
+    
+    gradient.addColorStop(0, 'rgba(124, 58, 237, 0.03)');
+    gradient.addColorStop(0.4, 'rgba(0, 235, 214, 0.02)');
+    gradient.addColorStop(0.6, 'rgba(251, 146, 60, 0.01)');
+    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+  
+  return (
+    <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} style={style}>
+      <canvas 
+        ref={canvasRef} 
+        className="w-full h-full" 
+      />
+    </div>
+  );
+};
+
+// Additional background components
+
+export const NebulaBackground: React.FC<{className?: string, opacity?: number, variant?: 'cosmic' | 'triadic' | 'complementary'}> = ({
+  className = '',
+  opacity = 0.1,
+  variant = 'cosmic'
+}) => {
+  const getNebulaClasses = () => {
+    switch (variant) {
+      case 'triadic':
+        return 'bg-gradient-radial from-cyan-600/5 via-purple-600/5 to-orange-500/5 nebula-triadic';
+      case 'complementary':
+        return 'bg-gradient-radial from-purple-600/5 via-blue-700/5 to-cyan-400/5 nebula-complementary';
+      default:
+        return 'bg-gradient-radial from-purple-600/5 via-indigo-700/5 to-blue-500/5 nebula-cosmic';
+    }
+  };
   
   return (
     <div 
-      ref={containerRef} 
-      className={`star-field ${className}`}
-      aria-hidden="true"
-    >
-      {stars.map((star) => (
-        <div
-          key={star.id}
-          className="star animate-twinkle"
-          style={{
-            left: `${star.x}px`,
-            top: `${star.y}px`,
-            width: `${star.size}px`,
-            height: `${star.size}px`,
-            opacity: star.opacity,
-            backgroundColor: star.color,
-            '--twinkle-duration': `${star.animationDuration}s`,
-            '--twinkle-delay': `${Math.random() * 2}s`
-          } as React.CSSProperties}
-        />
-      ))}
-      
-      {/* Add a few cosmic orbs */}
-      <div 
-        className="cosmic-orb"
-        style={{
-          top: '15%',
-          left: '10%',
-          width: '80px',
-          height: '80px',
-          opacity: 0.25,
-        }}
-      />
-      
-      <div 
-        className="cosmic-orb"
-        style={{
-          top: '70%',
-          right: '5%',
-          width: '120px',
-          height: '120px',
-          opacity: 0.15,
-          animationDelay: '1s'
-        }}
-      />
-      
-      {/* Space dust particles */}
-      {Array.from({ length: 10 }).map((_, index) => (
-        <div
-          key={`dust-${index}`}
-          className="space-dust"
-          style={{
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            opacity: Math.random() * 0.3 + 0.1
-          }}
-        />
-      ))}
-    </div>
+      className={`absolute inset-0 ${getNebulaClasses()} ${className}`}
+      style={{ opacity }}
+    ></div>
   );
-}
+};
+
+interface CaniosRenderingContext2D extends CanvasRenderingContext2D {}

@@ -9,6 +9,7 @@ import {
 import { Home, User, Music, Calendar, Heart, Mail, BookOpen, Users, MessageSquare, Info, Archive, Settings, Menu, Sparkles, Zap, Disc, ShoppingBag, ShoppingCart, ShieldAlert, FileText, Map as MapIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { GeometricContainer } from "@/components/cosmic/GeometricContainer";
+import { StarBackground, NebulaBackground } from "@/components/cosmic/StarBackground";
 
 // Define types for navigation items
 interface NavItem {
@@ -98,7 +99,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a14]">
+    <div className="min-h-screen flex flex-col bg-[#0a0a14] relative">
+      {/* Cosmic Background */}
+      <StarBackground 
+        starCount={150} 
+        density="medium" 
+        colors={['#00ebd6', '#7c3aed', '#e15554', '#fb923c', '#ffffff']}
+        twinkle={true}
+        shooting={true}
+        opacity={0.6}
+      />
+      <NebulaBackground variant="cosmic" opacity={0.08} />
+      
       {/* Main Navigation Header */}
       <header 
         className={`sticky top-0 z-50 w-full bg-black transition-all duration-300 ${
