@@ -3,6 +3,7 @@
  * 
  * Component Type: feature
  * Migrated as part of the repository reorganization.
+ * Enhanced with additional features from lovable version.
  */
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
@@ -17,9 +18,16 @@ import {
   Volume2,
   VolumeX,
   Timer,
+  Clock,
   Leaf as Lungs, // Use Leaf icon instead of Lungs (which doesn't exist)
   Info,
   Music,
+  ChevronUp,
+  ChevronDown,
+  Maximize,
+  Minimize,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -69,11 +77,29 @@ export function BreathSyncPlayer({
   const [breathProgress, setBreathProgress] = useState(0)
   const [currentPatternIndex, setCurrentPatternIndex] = useState(0)
   const [breathCount, setBreathCount] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [customPattern, setCustomPattern] = useState<BreathPattern>({
+    id: 5,
+    name: "Custom",
+    description: "Your custom breathing pattern",
+    inhale: 4,
+    hold1: 4,
+    exhale: 4,
+    hold2: 0,
+    color: "#00e6e6",
+  })
+  
+  // Session state
+  const [sessionDuration, setSessionDuration] = useState(5) // minutes
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(5 * 60) // seconds
+  const [isSessionActive, setIsSessionActive] = useState(false)
 
   // Refs
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const breathIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const sessionIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
 
   // Current track - with safety check
   const currentTrack = tracks.length > 0 
@@ -131,8 +157,17 @@ export function BreathSyncPlayer({
     },
   ]
 
+  // Save custom pattern to the patterns array
+  useEffect(() => {
+    if (breathPatterns.length >= 5) {
+      breathPatterns[4] = { ...customPattern }
+    } else {
+      breathPatterns.push({ ...customPattern })
+    }
+  }, [customPattern])
+
   // Current breath pattern
-  const currentPattern = breathPatterns[currentPatternIndex]
+  const currentPattern = currentPatternIndex === 4 ? { ...customPattern } : breathPatterns[currentPatternIndex]
 
   // Total breath cycle duration in seconds
   const breathCycleDuration =
@@ -357,6 +392,64 @@ export function BreathSyncPlayer({
   const selectBreathPattern = (index: number) => {
     setCurrentPatternIndex(index)
   }
+  
+  // Session timer functionality
+  const toggleSession = () => {
+    if (isSessionActive) {
+      // Stop the session
+      if (sessionIntervalRef.current) {
+        clearInterval(sessionIntervalRef.current)
+        sessionIntervalRef.current = null
+      }
+      setIsSessionActive(false)
+      setSessionTimeRemaining(sessionDuration * 60)
+    } else {
+      // Start the session
+      setIsSessionActive(true)
+      setSessionTimeRemaining(sessionDuration * 60)
+      
+      sessionIntervalRef.current = setInterval(() => {
+        setSessionTimeRemaining((prev) => {
+          if (prev <= 1) {
+            // End of session
+            setIsBreathSyncActive(false)
+            setIsSessionActive(false)
+            if (sessionIntervalRef.current) {
+              clearInterval(sessionIntervalRef.current)
+              sessionIntervalRef.current = null
+            }
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+  }
+  
+  // Fullscreen functionality
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      if (containerRef.current?.requestFullscreen) {
+        containerRef.current.requestFullscreen()
+          .then(() => setIsFullscreen(true))
+          .catch(err => console.error("Could not enter fullscreen mode:", err))
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+          .then(() => setIsFullscreen(false))
+          .catch(err => console.error("Could not exit fullscreen mode:", err))
+      }
+    }
+  }
+  
+  // Custom pattern editor
+  const updateCustomPattern = (field: keyof BreathPattern, value: number) => {
+    setCustomPattern(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
   // Get breath phase instruction
   const getBreathInstruction = () => {
@@ -384,7 +477,13 @@ export function BreathSyncPlayer({
   }
 
   return (
-    <div className="rounded-xl bg-black/30 backdrop-blur-sm border border-cyan-500/20 overflow-hidden">
+    <div 
+      ref={containerRef}
+      className={cn(
+        "rounded-xl bg-black/30 backdrop-blur-sm border border-cyan-500/20 overflow-hidden",
+        isFullscreen && "fixed inset-0 z-50 rounded-none border-0"
+      )}
+    >
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div
@@ -403,6 +502,17 @@ export function BreathSyncPlayer({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleFullscreen}
+            className="mr-2 text-white/70 hover:text-white"
+            aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-5 w-5" />
+            ) : (
+              <Maximize className="h-5 w-5" />
+            )}
+          </button>
           <Button
             variant={isBreathSyncActive ? "default" : "outline"}
             size="sm"
@@ -420,6 +530,32 @@ export function BreathSyncPlayer({
 
       <div className="p-6">
         <div className="space-y-6">
+          {/* Session Timer Display */}
+          {isSessionActive && (
+            <div className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-500/30 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-cyan-500" />
+                  <span className="text-white font-medium">Session Timer</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-white font-bold">{formatTime(sessionTimeRemaining)}</div>
+                  <div 
+                    className="h-1 w-32 bg-black/20 rounded-full mt-1 overflow-hidden"
+                    aria-hidden="true"
+                  >
+                    <div 
+                      className="h-full bg-cyan-500 transition-all duration-1000"
+                      style={{
+                        width: `${(1 - sessionTimeRemaining / (sessionDuration * 60)) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        
           {/* Breath Visualization */}
           <div
             className="relative aspect-square rounded-lg overflow-hidden bg-black/40 flex items-center justify-center mb-6"
@@ -447,26 +583,212 @@ export function BreathSyncPlayer({
           </div>
 
           {/* Breath Pattern Selection */}
-          <div className="space-y-4">
-            <h3 className="text-white text-sm font-medium">Breath Pattern</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {breathPatterns.map((pattern, index) => (
+          <Tabs defaultValue="patterns" className="space-y-4">
+            <TabsList className="bg-black/20 border border-white/10">
+              <TabsTrigger 
+                value="patterns" 
+                className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-white"
+              >
+                Patterns
+              </TabsTrigger>
+              <TabsTrigger 
+                value="custom" 
+                className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-white"
+              >
+                Custom
+              </TabsTrigger>
+              <TabsTrigger 
+                value="session" 
+                className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-white"
+              >
+                Session
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="patterns" className="space-y-4 mt-4">
+              <h3 className="text-white text-sm font-medium">Breath Pattern</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {breathPatterns.slice(0, 4).map((pattern, index) => (
+                  <button
+                    key={pattern.id}
+                    onClick={() => selectBreathPattern(index)}
+                    className={cn(
+                      "text-left p-3 rounded-lg text-sm transition",
+                      currentPatternIndex === index
+                        ? "bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 border border-cyan-500/30"
+                        : "bg-white/5 hover:bg-white/10 border border-white/10"
+                    )}
+                  >
+                    <div className="font-medium text-white">{pattern.name}</div>
+                    <div className="text-white/60 text-xs mt-1 line-clamp-2">{pattern.description}</div>
+                  </button>
+                ))}
                 <button
-                  key={pattern.id}
-                  onClick={() => selectBreathPattern(index)}
+                  onClick={() => selectBreathPattern(4)}
                   className={cn(
                     "text-left p-3 rounded-lg text-sm transition",
-                    currentPatternIndex === index
+                    currentPatternIndex === 4
                       ? "bg-gradient-to-r from-cyan-500/20 to-cyan-600/20 border border-cyan-500/30"
                       : "bg-white/5 hover:bg-white/10 border border-white/10"
                   )}
                 >
-                  <div className="font-medium text-white">{pattern.name}</div>
-                  <div className="text-white/60 text-xs mt-1 line-clamp-2">{pattern.description}</div>
+                  <div className="font-medium text-white">Custom</div>
+                  <div className="text-white/60 text-xs mt-1 line-clamp-2">Your customized breathing pattern</div>
                 </button>
-              ))}
-            </div>
-          </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="custom" className="space-y-6 mt-4">
+              <div>
+                <h3 className="font-medium" style={{ color: customPattern.color }}>Custom Pattern Settings</h3>
+                <p className="text-white/60 text-xs mt-1 mb-4">
+                  Customize your own breathing pattern with the controls below
+                </p>
+                
+                <div className="space-y-4">
+                  {/* Inhale duration */}
+                  <div>
+                    <label className="block text-white text-xs mb-1">Inhale Duration (seconds)</label>
+                    <div className="flex items-center">
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("inhale", Math.max(1, customPattern.inhale - 1))}
+                        disabled={customPattern.inhale <= 1}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-white">{customPattern.inhale}</span>
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("inhale", Math.min(10, customPattern.inhale + 1))}
+                        disabled={customPattern.inhale >= 10}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Hold after inhale */}
+                  <div>
+                    <label className="block text-white text-xs mb-1">Hold After Inhale (seconds)</label>
+                    <div className="flex items-center">
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("hold1", Math.max(0, customPattern.hold1 - 1))}
+                        disabled={customPattern.hold1 <= 0}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-white">{customPattern.hold1}</span>
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("hold1", Math.min(10, customPattern.hold1 + 1))}
+                        disabled={customPattern.hold1 >= 10}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Exhale duration */}
+                  <div>
+                    <label className="block text-white text-xs mb-1">Exhale Duration (seconds)</label>
+                    <div className="flex items-center">
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("exhale", Math.max(1, customPattern.exhale - 1))}
+                        disabled={customPattern.exhale <= 1}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-white">{customPattern.exhale}</span>
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("exhale", Math.min(10, customPattern.exhale + 1))}
+                        disabled={customPattern.exhale >= 10}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Hold after exhale */}
+                  <div>
+                    <label className="block text-white text-xs mb-1">Hold After Exhale (seconds)</label>
+                    <div className="flex items-center">
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("hold2", Math.max(0, customPattern.hold2 - 1))}
+                        disabled={customPattern.hold2 <= 0}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-white">{customPattern.hold2}</span>
+                      <button 
+                        className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                        onClick={() => updateCustomPattern("hold2", Math.min(10, customPattern.hold2 + 1))}
+                        disabled={customPattern.hold2 >= 10}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="session" className="space-y-4 mt-4">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-white font-medium">Session Timer</h3>
+                  <p className="text-white/60 text-xs mt-1">
+                    Set a timer for your breathing session
+                  </p>
+                </div>
+                
+                <div className="flex items-center">
+                  <Switch 
+                    checked={isSessionActive}
+                    onCheckedChange={toggleSession}
+                    className="data-[state=checked]:bg-cyan-500"
+                  />
+                  <span className="ml-2 text-white text-sm">
+                    {isSessionActive ? "Session Active" : "Enable Session Timer"}
+                  </span>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-white text-xs">Session Duration (minutes)</label>
+                  <div className="flex items-center">
+                    <button 
+                      className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                      onClick={() => setSessionDuration(Math.max(1, sessionDuration - 1))}
+                      disabled={sessionDuration <= 1 || isSessionActive}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                    <span className="w-6 text-center text-white">{sessionDuration}</span>
+                    <button 
+                      className="w-7 h-7 rounded bg-black/30 border border-white/10 flex items-center justify-center text-white" 
+                      onClick={() => setSessionDuration(Math.min(60, sessionDuration + 1))}
+                      disabled={sessionDuration >= 60 || isSessionActive}
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <Button
+                  variant={isSessionActive ? "destructive" : "default"}
+                  size="sm"
+                  onClick={toggleSession}
+                  className={isSessionActive ? "bg-red-500 hover:bg-red-600" : "bg-cyan-500 hover:bg-cyan-600"}
+                >
+                  {isSessionActive ? "Stop Session" : "Start Session"}
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Audio Player Controls */}
           {tracks.length > 0 ? (
