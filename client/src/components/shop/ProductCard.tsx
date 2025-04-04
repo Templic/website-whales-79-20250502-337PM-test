@@ -81,7 +81,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       </div>
 
       <CardContent className="p-4">
-        <div className="flex justify-between mb-2">
+        <div className="flex flex-col sm:flex-row justify-between mb-2">
           <div className="space-y-1">
             <Link href={`/shop/product/${id}`}>
               <h3 className="font-medium cosmic-hover-text cursor-pointer">{name}</h3>
@@ -105,8 +105,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div className="flex flex-col">
+      <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div>
           {discountedPrice ? (
             <>
               <span className="text-muted-foreground line-through text-sm">
@@ -121,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <Button
           size="sm"
           className={cn(
-            "cosmic-btn",
+            "cosmic-btn w-full sm:w-auto",
             !inStock && "opacity-50 cursor-not-allowed"
           )}
           disabled={!inStock}

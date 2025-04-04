@@ -68,11 +68,11 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     searchTimeoutRef.current = setTimeout(() => {
       onSearch(value);
     }, 300);
@@ -97,39 +97,39 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
   const startSpeechRecognition = () => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
+
       try {
         const recognitionInstance = new SpeechRecognition();
-        
+
         recognitionInstance.continuous = false;
         recognitionInstance.interimResults = true;
         recognitionInstance.lang = 'en-US';
-        
+
         recognitionInstance.onresult = (event) => {
           const transcript = Array.from(event.results)
             .map(result => result[0])
             .map(result => result.transcript)
             .join('');
-          
+
           setSearchQuery(transcript);
-          
+
           if (event.results[0].isFinal) {
             setIsRecording(false);
             onVoiceSearch?.(transcript);
           }
         };
-        
+
         recognitionInstance.onerror = () => {
           setIsRecording(false);
         };
-        
+
         recognitionInstance.onend = () => {
           setIsRecording(false);
         };
-        
+
         recognitionInstance.start();
         setIsRecording(true);
-        
+
         // Set as any to bypass TypeScript type checking as these are incompatible types
         setRecognition(recognitionInstance as any);
       } catch (error) {
@@ -154,7 +154,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      
+
       if (recognition) {
         recognition.stop();
       }
@@ -170,11 +170,11 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
               <Home className="h-5 w-5" />
             </Button>
           </Link>
-          
+
           <Link href="/shop">
             <h1 className="text-xl md:text-2xl font-bold cosmic-gradient-text">Cosmic Shop</h1>
           </Link>
-          
+
           <nav className="hidden md:flex space-x-1">
             <Button variant="ghost" asChild className="text-sm cosmic-hover-text">
               <Link href="/shop/clothing">Clothing</Link>
@@ -187,7 +187,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
             </Button>
           </nav>
         </div>
-        
+
         <div className="w-full md:w-auto flex items-center gap-2">
           <form 
             onSubmit={handleSearchSubmit}
@@ -209,7 +209,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
               <Search className="h-4 w-4" />
             </Button>
           </form>
-          
+
           {(onVoiceSearch && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
             <Button
               type="button"
@@ -221,7 +221,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
               {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </Button>
           )}
-          
+
           <Link href="/shop/cart">
             <div className="relative">
               <CosmicButton

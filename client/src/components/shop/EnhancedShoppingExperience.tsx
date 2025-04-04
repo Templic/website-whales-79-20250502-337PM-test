@@ -113,9 +113,9 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
       </div>
 
       {/* Feature cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6">
         {shoppingFeatures.map((feature) => (
-          <Card key={feature.id} className="p-6 cosmic-glass-card">
+          <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card">
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 bg-primary/10 p-3 rounded-full">
                 {feature.icon}
@@ -134,7 +134,7 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
           <Button variant="ghost" size="sm">View All</Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 px-4 md:px-0">
           {featuredProducts.map((product) => (
             <Card key={product.id} className="overflow-hidden cosmic-glass-card p-4 h-full flex flex-col">
               <div className="relative mb-4">
