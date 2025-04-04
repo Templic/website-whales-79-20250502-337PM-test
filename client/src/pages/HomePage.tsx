@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { UsersRound, BarChart3 } from "lucide-react";
 import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
+import GeometricSection from "@/components/cosmic/GeometricSection";
 
 export default function HomePage() {
   useEffect(() => {
@@ -42,26 +43,68 @@ export default function HomePage() {
         </section>
 
         {/* Main Content */}
-        <main className="p-16 max-w-[1200px] mx-auto">
+        <main className="max-w-[1200px] mx-auto px-4 py-8">
           {/* About Section */}
-          <section className="section mb-16 bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-            <h2 className="text-[#00ebd6] text-4xl mb-4 inline-block border-b-2 border-[#fe0064]">
-              Ideal Activity
-            </h2>
-            <p className="text-xl max-w-[900px] mx-auto leading-relaxed">
-              Dale Loves Whales blends cosmic rhythms with tropical soul. Dive deep into his musical journey that bridges the stars with the ocean's depths.
-            </p>
-          </section>
+          <GeometricSection
+            variant="secondary"
+            shape="diamond"
+            title="Ideal Activity"
+            alignment="center"
+            className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
+          >
+            <div className="max-w-[80%] mx-auto">
+              <p className="text-xl leading-relaxed">
+                Dale Loves Whales blends cosmic rhythms with tropical soul. Dive deep into his musical journey that bridges the stars with the ocean's depths.
+              </p>
+            </div>
+          </GeometricSection>
 
           {/* Services Section */}
-          <section className="section mb-16 bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-            <h2 className="text-[#00ebd6] text-4xl mb-4 inline-block border-b-2 border-[#fe0064]">
-              Cosmic Sound Vibes
-            </h2>
-            <p className="text-xl max-w-[900px] mx-auto leading-relaxed">
-              From live performances to collaborative projects, Dale brings a unique sound experience infused with retro-futuristic beats, fluid tropical notes, and immersive visuals.
-            </p>
-          </section>
+          <GeometricSection
+            variant="cosmic"
+            shape="hexagon" 
+            title="Cosmic Sound Vibes"
+            alignment="center"
+            className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
+          >
+            <div className="max-w-[80%] mx-auto">
+              <p className="text-xl leading-relaxed">
+                From live performances to collaborative projects, Dale brings a unique sound experience infused with retro-futuristic beats, fluid tropical notes, and immersive visuals.
+              </p>
+            </div>
+          </GeometricSection>
+          
+          {/* Additional Section */}
+          <GeometricSection
+            variant="primary"
+            shape="wave" 
+            title="Explore The Journey"
+            alignment="center"
+            className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
+          >
+            <div className="max-w-[80%] mx-auto">
+              <p className="text-xl leading-relaxed mb-6">
+                Join the cosmic voyage and become part of the ever-growing community of cosmic explorers and music lovers.
+              </p>
+              <div className="flex justify-center gap-4 flex-wrap">
+                <Link href="/music-release">
+                  <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20">
+                    New Releases
+                  </Button>
+                </Link>
+                <Link href="/tour">
+                  <Button variant="outline" className="text-[#7c3aed] border-[#7c3aed] hover:bg-[#7c3aed]/20">
+                    Tour Dates
+                  </Button>
+                </Link>
+                <Link href="/cosmic-experience">
+                  <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20">
+                    Cosmic Experience
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </GeometricSection>
         </main>
       </div>
     </>
