@@ -19,9 +19,26 @@ import type React from "react"
 
 import { useState, useCallback } from "react"
 import { Link } from "wouter"
+import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Facebook, Twitter, Instagram, Youtube, Mail, Music, Headphones, Heart, ExternalLink } from "lucide-react"
-import { FlowerOfLifePattern } from "@/components/features/cosmic/sacred-geometry"
+
+// Simple stand-in for the original FlowerOfLifePattern component
+const FlowerOfLifePattern: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => {
+  return (
+    <div className={cn("relative w-full h-full", className)} {...props}>
+      <div className="absolute inset-0 grid grid-cols-6 gap-4 opacity-10">
+        {Array.from({ length: 36 }).map((_, i) => (
+          <div key={i} className="relative">
+            <div className="absolute inset-0 border border-white/20 rounded-full"></div>
+            <div className="absolute inset-1 border border-white/10 rounded-full"></div>
+            <div className="absolute inset-2 border border-white/5 rounded-full"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 interface FooterLink {
   name: string
@@ -149,7 +166,7 @@ export function CosmicFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Logo and About */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2 group" aria-label="ASTRA - Return to home page">
+            <Link to="/" className="flex items-center space-x-2 group" aria-label="ASTRA - Return to home page">
               <div className="relative h-10 w-10">
                 {/* Animated logo */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -395,7 +412,7 @@ function CosmicFooterOriginal() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Logo and About */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center space-x-2 group" aria-label="ASTRA - Return to home page">
+            <Link to="/" className="flex items-center space-x-2 group" aria-label="ASTRA - Return to home page">
               <div className="relative h-10 w-10">
                 {/* Animated logo */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>

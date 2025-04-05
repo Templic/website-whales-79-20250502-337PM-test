@@ -74,7 +74,7 @@ function Router() {
 
   return (
     <Layout>
-      <CosmicNavigation /> {/* Updated navigation component */}
+
       <Switch>
         {/* Main Pages */}
         <Route path="/" component={HomePage} />
