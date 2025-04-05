@@ -1,60 +1,82 @@
 /**
  * MainHeader.tsx
  * 
- * This is the primary header component for the website.
- * It's a simplified version of the footer with an improved, 
- * streamlined navigation interface.
+ * This is the primary header component for the website, featuring sacred geometry,
+ * staggered navigation, and cosmic design elements.
  * 
- * Created: 2025-04-05
+ * Created: 2025-04-05 - Updated with enhancements
  */
 
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, Search, ChevronDown, User } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  Search, 
+  User, 
+  Facebook, 
+  Twitter, 
+  Instagram, 
+  Youtube,
+  Music,
+  Headphones,
+  MoonStar,
+  Calendar,
+  ShoppingBag,
+  Home
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { motion } from "framer-motion";
+// import SacredGeometry from "../../components/ui/sacred-geometry";
 
 // Define the navigation items structure
 interface NavItem {
   name: string;
   path: string;
-  icon?: React.ReactNode;
+  icon: React.ReactNode;
+  glowColor?: string;
 }
 
-// Main navigation items based on the footer structure
-const mainNavItems: NavItem[] = [
-  { name: "Home", path: "/" },
-  { name: "About", path: "/about" },
-  { name: "Music", path: "/music-release" },
-  { name: "Tour", path: "/tour" },
-  { name: "Cosmic", path: "/cosmic-experience" },
-  { name: "Blog", path: "/blog" },
-  { name: "Shop", path: "/shop" },
+// First row nav items - main navigation
+const primaryNavItems: NavItem[] = [
+  { name: "Home", path: "/", icon: <Home className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "About", path: "/about", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Music", path: "/music-release", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4 mr-1" />, glowColor: "purple" }
 ];
 
-// Dropdown menus for each main section
-const musicDropdown: NavItem[] = [
-  { name: "New Releases", path: "/music-release" },
-  { name: "Archived Music", path: "/archived-music" },
-  { name: "Cosmic Connectivity", path: "/cosmic-connectivity" },
+// Second row nav items - secondary navigation
+const secondaryNavItems: NavItem[] = [
+  { name: "Cosmic", path: "/cosmic-experience", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "cyan" }
 ];
 
-const cosmicDropdown: NavItem[] = [
-  { name: "Cosmic Experience", path: "/cosmic-experience" },
-  { name: "Cosmic Immersive", path: "/cosmic-immersive" },
-  { name: "Sacred Geometry", path: "/resources/sacred-geometry" },
+// Community links that should be accessible
+const communityLinks: NavItem[] = [
+  { name: "Newsletter", path: "/newsletter", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Community", path: "/community", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Collaboration", path: "/collaboration", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Contact", path: "/contact", icon: <Music className="h-4 w-4 mr-1" /> }
 ];
 
-const communityDropdown: NavItem[] = [
-  { name: "Newsletter", path: "/newsletter" },
-  { name: "Community", path: "/community" },
-  { name: "Collaboration", path: "/collaboration" },
-  { name: "Contact", path: "/contact" },
+// Music links for mobile
+const musicLinks: NavItem[] = [
+  { name: "New Releases", path: "/music-release", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Archived Music", path: "/archived-music", icon: <Music className="h-4 w-4 mr-1" /> },
+  { name: "Cosmic Connectivity", path: "/cosmic-connectivity", icon: <Music className="h-4 w-4 mr-1" /> }
+];
+
+// Social media links
+const socialLinks = [
+  { name: "Facebook", icon: <Facebook className="h-5 w-5" aria-hidden="true" />, path: "https://facebook.com/DaleTheWhale", external: true },
+  { name: "Twitter", icon: <Twitter className="h-5 w-5" aria-hidden="true" />, path: "https://twitter.com/DaleTheWhale", external: true },
+  { name: "Instagram", icon: <Instagram className="h-5 w-5" aria-hidden="true" />, path: "https://instagram.com/DaleTheWhale", external: true },
+  { name: "YouTube", icon: <Youtube className="h-5 w-5" aria-hidden="true" />, path: "https://youtube.com/DaleTheWhale", external: true }
 ];
 
 export function MainHeader() {
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,11 +112,6 @@ export function MainHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [autoHideNav]);
 
-  // Handle dropdown toggle
-  const toggleDropdown = useCallback((dropdown: string) => {
-    setActiveDropdown(prev => prev === dropdown ? null : dropdown);
-  }, []);
-
   // Handle navigation click
   const handleNavigationClick = useCallback((path: string) => {
     // First scroll to top with smooth behavior
@@ -103,7 +120,6 @@ export function MainHeader() {
     // Add a small delay to allow the scroll animation to complete
     setTimeout(() => {
       setIsMobileMenuOpen(false);
-      setActiveDropdown(null);
       navigate(path);
     }, 300); // 300ms delay to allow for smooth scroll
   }, [navigate]);
@@ -117,341 +133,460 @@ export function MainHeader() {
     }
   }, [searchQuery, navigate]);
 
+  // Define hover animation variants for nav items
+  const navItemVariants = {
+    initial: { y: 0, opacity: 1 },
+    hover: { y: -3, opacity: 1, transition: { duration: 0.2 } }
+  };
+
   return (
     <header 
       className={`
-        bg-gradient-to-r from-[#050f28] to-[#0a1f3c] 
-        sticky top-0 z-50 border-b border-[#00ebd6]/30 
-        transition-all duration-300 
-        ${isScrolled ? 'py-2 shadow-lg' : 'py-4'}
+        sticky top-0 z-50 transition-all duration-300
+        ${isScrolled ? 'py-1' : 'py-3'}
         ${autoHideNav ? 'transition-transform duration-300' : ''}
       `}
     >
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link 
-              href="/" 
-              className="flex items-center space-x-2 group"
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              aria-label="Dale Loves Whales - Return to home page"
-            >
-              <div className="relative h-10 w-10">
-                {/* Animated logo with cyan-purple gradient */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
-                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
-                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DW</span>
-              </div>
-              <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
-                Dale Loves Whales
-              </span>
-            </Link>
-            
-            {/* Mobile menu button */}
-            <button
-              type="button"
-              className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-expanded={isMobileMenuOpen}
-              aria-label="Toggle navigation menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" aria-hidden="true" />
+      {/* Background Elements - Only visible on sides */}
+      <div className="absolute inset-0 overflow-hidden z-0">
+        <div className="absolute -top-24 -right-24 opacity-30 transform rotate-45">
+          {/* Cosmic element placeholder */}
+          <div className="w-[120px] h-[120px] bg-gradient-to-br from-cyan-500/20 to-purple-600/20 rounded-full"></div>
+        </div>
+        <div className="absolute -bottom-16 -left-16 opacity-20">
+          {/* Cosmic element placeholder */}
+          <div className="w-[100px] h-[100px] bg-gradient-to-br from-purple-500/20 to-cyan-600/20 rounded-full"></div>
+        </div>
+      </div>
+      
+      {/* Header Content */}
+      <div className="max-w-6xl mx-auto px-4 relative z-10">
+        {/* Glowing Header Background with Space on Sides */}
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#050f28]/90 to-[#0a1f3c]/90 backdrop-blur-sm border border-[#00ebd6]/20 shadow-lg shadow-cyan-500/10"></div>
+        
+        {/* Cosmic Glow Effects */}
+        <div className="absolute inset-x-0 -top-10 h-10 bg-gradient-to-b from-cyan-500/20 to-transparent"></div>
+        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/20 via-purple-500/10 to-cyan-500/20 blur-xl opacity-50 group-hover:opacity-100 animate-pulse" style={{ animationDuration: '4s' }}></div>
+        
+        {/* Main Content Container */}
+        <div className="relative z-20 py-2">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center">
+              <Link 
+                href="/" 
+                className="flex items-center space-x-2 group"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Dale Loves Whales - Return to home page"
+              >
+                <div className="relative h-10 w-10">
+                  {/* Animated logo with cyan-purple gradient */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
+                  <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
+                  
+                  {/* Geometric pattern inside the logo */}
+                  <div className="absolute inset-0 opacity-50 group-hover:opacity-80 transition-opacity">
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="w-6 h-6 rotate-45 bg-gradient-to-r from-cyan-500/30 to-purple-600/30 rounded-sm"></div>
+                    </div>
+                  </div>
+                  
+                  <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DLW</span>
+                </div>
+                <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300 drop-shadow-[0_1px_1px_rgba(0,235,214,0.5)]">
+                  Dale Loves Whales
+                </span>
+              </Link>
+              
+              {/* Mobile menu button */}
+              <button
+                type="button"
+                className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-expanded={isMobileMenuOpen}
+                aria-label="Toggle navigation menu"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <Menu className="h-6 w-6" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+
+            {/* Social Icons - Desktop */}
+            <div className="hidden md:flex space-x-3 ml-auto mr-4">
+              {socialLinks.map((link) => (
+                <motion.a
+                  key={link.name}
+                  href={link.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${link.name} (opens in new tab)`}
+                  className="text-[#e8e6e3]/60 hover:text-cyan-400 transition-colors"
+                  whileHover={{ scale: 1.2, y: -2 }}
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {link.icon}
+                  <div className="absolute inset-0 bg-cyan-500/30 rounded-full blur-xl opacity-0 hover:opacity-70 transition-opacity"></div>
+                </motion.a>
+              ))}
+            </div>
+
+            {/* Search & User */}
+            <div className="hidden md:flex items-center space-x-4">
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-[140px] lg:w-[200px] px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              </form>
+
+              {user ? (
+                <motion.div 
+                  className="relative group"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  <Link 
+                    href="/profile" 
+                    className="flex items-center justify-center h-9 w-9 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full hover:opacity-90 transition-opacity"
+                    aria-label="User profile"
+                  >
+                    <User className="h-5 w-5 text-white" />
+                  </Link>
+                  <div className="absolute -inset-1 rounded-full bg-cyan-500/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                </motion.div>
               ) : (
-                <Menu className="h-6 w-6" aria-hidden="true" />
+                <Link 
+                  href="/login" 
+                  className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm font-medium hover:from-cyan-600 hover:to-purple-700 transition-colors"
+                >
+                  Log In
+                </Link>
               )}
-            </button>
+            </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            {mainNavItems.map((item) => {
-              const hasDropdown = 
-                (item.name === "Music" && musicDropdown.length > 0) ||
-                (item.name === "Cosmic" && cosmicDropdown.length > 0) ||
-                (item.name === "Blog" && communityDropdown.length > 0);
-              
-              return (
-                <div key={item.name} className="relative group">
-                  {hasDropdown ? (
-                    <button
-                      className="flex items-center px-3 py-2 text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide"
-                      onClick={() => toggleDropdown(item.name)}
-                      aria-expanded={activeDropdown === item.name}
-                      aria-haspopup="true"
-                    >
-                      {item.name}
-                      <ChevronDown
-                        className={`ml-1 h-4 w-4 transition-transform ${
-                          activeDropdown === item.name ? "rotate-180" : ""
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  ) : (
+          {/* Staggered Two-Row Navigation - Desktop */}
+          <div className="hidden md:block mt-2">
+            <div className="flex flex-col space-y-1">
+              {/* First Row */}
+              <div className="flex justify-center space-x-6 lg:space-x-10">
+                {primaryNavItems.map((item, index) => (
+                  <motion.div 
+                    key={item.path}
+                    className="relative"
+                    initial="initial"
+                    whileHover="hover"
+                    custom={index}
+                  >
                     <Link
                       href={item.path}
                       onClick={() => handleNavigationClick(item.path)}
-                      className="px-3 py-2 text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide"
+                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center"
                     >
+                      {item.icon}
                       {item.name}
                     </Link>
-                  )}
+                    <motion.div 
+                      className={`absolute inset-0 rounded-md opacity-0 bg-gradient-to-r ${
+                        item.glowColor === 'cyan' 
+                          ? 'from-cyan-500/20 to-cyan-500/5' 
+                          : 'from-purple-500/20 to-purple-500/5'
+                      } -z-10`}
+                      variants={navItemVariants}
+                      transition={{ delay: index * 0.05 }}
+                      animate={{ opacity: [0, 0.2, 0], transition: { duration: 2, repeat: Infinity } }}
+                    />
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400/0 via-cyan-400 to-cyan-400/0 transform origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+              
+              {/* Second Row - Slightly Offset */}
+              <div className="flex justify-center space-x-6 lg:space-x-10 ml-8">
+                {secondaryNavItems.map((item, index) => (
+                  <motion.div 
+                    key={item.path}
+                    className="relative"
+                    initial="initial"
+                    whileHover="hover"
+                    custom={index}
+                  >
+                    <Link
+                      href={item.path}
+                      onClick={() => handleNavigationClick(item.path)}
+                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center"
+                    >
+                      {item.icon}
+                      {item.name}
+                    </Link>
+                    <motion.div 
+                      className={`absolute inset-0 rounded-md opacity-0 bg-gradient-to-r ${
+                        item.glowColor === 'cyan' 
+                          ? 'from-cyan-500/20 to-cyan-500/5' 
+                          : 'from-purple-500/20 to-purple-500/5'
+                      } -z-10`}
+                      variants={navItemVariants}
+                      transition={{ delay: index * 0.05 }}
+                      animate={{ opacity: [0, 0.2, 0], transition: { duration: 2, repeat: Infinity, delay: index * 0.3 } }}
+                    />
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-400/0 via-purple-400 to-purple-400/0 transform origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.div>
+                ))}
 
-                  {/* Dropdown menus */}
-                  {hasDropdown && activeDropdown === item.name && (
-                    <div className="absolute left-0 mt-2 w-48 origin-top-left bg-[#0a1f3c]/95 backdrop-blur-sm border border-[#00ebd6]/20 rounded-md shadow-lg z-50">
-                      <div className="py-2" role="menu" aria-orientation="vertical">
-                        {item.name === "Music" && musicDropdown.map((subItem) => (
-                          <Link
-                            key={subItem.path}
-                            href={subItem.path}
-                            onClick={() => handleNavigationClick(subItem.path)}
-                            className="block px-4 py-2 text-sm text-[#e8e6e3] hover:bg-[#00ebd6]/10 hover:text-[#00ebd6]"
-                            role="menuitem"
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                        {item.name === "Cosmic" && cosmicDropdown.map((subItem) => (
-                          <Link
-                            key={subItem.path}
-                            href={subItem.path}
-                            onClick={() => handleNavigationClick(subItem.path)}
-                            className="block px-4 py-2 text-sm text-[#e8e6e3] hover:bg-[#00ebd6]/10 hover:text-[#00ebd6]"
-                            role="menuitem"
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                        {item.name === "Blog" && communityDropdown.map((subItem) => (
-                          <Link
-                            key={subItem.path}
-                            href={subItem.path}
-                            onClick={() => handleNavigationClick(subItem.path)}
-                            className="block px-4 py-2 text-sm text-[#e8e6e3] hover:bg-[#00ebd6]/10 hover:text-[#00ebd6]"
-                            role="menuitem"
-                          >
-                            {subItem.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                {/* Admin link if user is admin */}
+                {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                  <motion.div
+                    initial="initial"
+                    whileHover="hover"
+                  >
+                    <Link 
+                      href="/admin" 
+                      onClick={() => handleNavigationClick("/admin")}
+                      className="px-3 py-1 text-[#fe0064] font-medium text-sm tracking-wide flex items-center"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 mr-1" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Admin
+                    </Link>
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500/0 via-pink-500 to-pink-500/0 transform origin-left"
+                      initial={{ scaleX: 0 }}
+                      whileHover={{ scaleX: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </div>
 
-            {/* Admin link if user is admin */}
-            {(user?.role === 'admin' || user?.role === 'super_admin') && (
-              <Link 
-                href="/admin" 
-                onClick={() => handleNavigationClick("/admin")}
-                className="px-3 py-2 text-[#fe0064] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide"
-              >
-                Admin
-              </Link>
-            )}
-          </nav>
-
-          {/* Search & User */}
-          <div className="hidden md:flex items-center space-x-4">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[140px] lg:w-[200px] px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            </form>
-
-            {user ? (
+          {/* Community Links - Desktop - Small Pills on Bottom */}
+          <div className="hidden md:flex justify-center mt-2 space-x-2">
+            {communityLinks.map((item) => (
               <motion.div 
-                className="relative group"
+                key={item.path}
                 whileHover={{ scale: 1.05 }}
               >
-                <Link 
-                  href="/profile" 
-                  className="flex items-center justify-center h-9 w-9 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full hover:opacity-90 transition-opacity"
-                  aria-label="User profile"
+                <Link
+                  href={item.path}
+                  onClick={() => handleNavigationClick(item.path)}
+                  className="px-2 py-0.5 text-[#e8e6e3]/80 hover:text-white text-xs bg-black/20 rounded-full border border-cyan-500/10 hover:border-cyan-500/30 transition-colors"
                 >
-                  <User className="h-5 w-5 text-white" />
+                  {item.name}
                 </Link>
               </motion.div>
-            ) : (
-              <Link 
-                href="/login" 
-                className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-sm font-medium hover:from-cyan-600 hover:to-purple-700 transition-colors"
-              >
-                Log In
-              </Link>
-            )}
+            ))}
           </div>
-        </div>
 
-        {/* Mobile Menu */}
-        <div
-          className={`
-            fixed inset-0 top-[70px] bg-[#0a1f3c]/95 backdrop-blur-md z-40 transform transition-transform ease-in-out duration-300
-            ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
-          `}
-        >
-          <div className="h-full overflow-y-auto pt-4 pb-20">
-            <nav className="px-4 space-y-6">
-              {/* Mobile Primary Links */}
-              <div className="border-b border-[#00ebd6]/20 pb-6">
-                <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
-                  Navigation
-                </h3>
-                <ul className="space-y-4">
-                  {mainNavItems.map(item => (
-                    <li key={item.path}>
+          {/* Mobile Menu */}
+          <div
+            className={`
+              fixed inset-0 top-[70px] bg-[#0a1f3c]/95 backdrop-blur-md z-40 transform transition-transform ease-in-out duration-300
+              ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}
+            `}
+          >
+            <div className="h-full overflow-y-auto pt-4 pb-20">
+              <nav className="px-4 space-y-6">
+                {/* Mobile Primary Links */}
+                <div className="border-b border-[#00ebd6]/20 pb-6">
+                  <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
+                    Navigation
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    {[...primaryNavItems, ...secondaryNavItems].map((item) => (
                       <Link
+                        key={item.path}
                         href={item.path}
                         onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-base font-medium"
+                        className="flex items-center space-x-1 bg-black/30 rounded-md p-2 border border-[#00ebd6]/10 hover:border-[#00ebd6]/30 text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
                       >
-                        {item.name}
+                        <span className="text-cyan-400">{item.icon}</span>
+                        <span>{item.name}</span>
                       </Link>
-                    </li>
-                  ))}
+                    ))}
 
-                  {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                    <li>
+                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
                       <Link 
                         href="/admin" 
                         onClick={() => handleNavigationClick("/admin")}
-                        className="block text-[#fe0064] hover:text-[#00ebd6] text-base font-medium"
+                        className="flex items-center space-x-1 bg-black/30 rounded-md p-2 border border-pink-500/20 hover:border-pink-500/40 text-[#fe0064] transition-colors col-span-2"
                       >
-                        Admin Portal
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.258 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.0113 9.77251C4.28059 9.5799 4.48572 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.33568 4.58054 7.63502 4.73519 7.95941 4.794C8.28381 4.85282 8.61838 4.81312 8.92 4.68H9C9.29577 4.55324 9.54802 4.34276 9.72569 4.07447C9.90337 3.80618 9.99872 3.49179 10 3.17V3C10 2.46957 10.2107 1.96086 10.5858 1.58579C10.9609 1.21071 11.4696 1 12 1C12.5304 1 13.0391 1.21071 13.4142 1.58579C13.7893 1.96086 14 2.46957 14 3V3.09C14.0013 3.41179 14.0966 3.72618 14.2743 3.99447C14.452 4.26276 14.7042 4.47324 15 4.6C15.3016 4.73312 15.6362 4.77282 15.9606 4.714C16.285 4.65519 16.5843 4.50054 16.82 4.27L16.88 4.21C17.0657 4.02405 17.2863 3.87653 17.5291 3.77588C17.7719 3.67523 18.0322 3.62343 18.295 3.62343C18.5578 3.62343 18.8181 3.67523 19.0609 3.77588C19.3037 3.87653 19.5243 4.02405 19.71 4.21C19.896 4.39575 20.0435 4.61632 20.1441 4.85912C20.2448 5.10192 20.2966 5.36217 20.2966 5.625C20.2966 5.88783 20.2448 6.14808 20.1441 6.39088C20.0435 6.63368 19.896 6.85425 19.71 7.04L19.65 7.1C19.4195 7.33568 19.2648 7.63502 19.206 7.95941C19.1472 8.28381 19.1869 8.61838 19.32 8.92V9C19.4468 9.29577 19.6572 9.54802 19.9255 9.72569C20.1938 9.90337 20.5082 9.99872 20.83 10H21C21.5304 10 22.0391 10.2107 22.4142 10.5858C22.7893 10.9609 23 11.4696 23 12C23 12.5304 22.7893 13.0391 22.4142 13.4142C22.0391 13.7893 21.5304 14 21 14H20.91C20.5882 14.0013 20.2738 14.0966 20.0055 14.2743C19.7372 14.452 19.5268 14.7042 19.4 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>Admin Portal</span>
                       </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              {/* Mobile Music Links */}
-              <div className="border-b border-[#00ebd6]/20 pb-6">
-                <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
-                  Music
-                </h3>
-                <ul className="space-y-3">
-                  {musicDropdown.map(item => (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path}
-                        onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm"
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Mobile Cosmic Links */}
-              <div className="border-b border-[#00ebd6]/20 pb-6">
-                <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
-                  Cosmic Experiences
-                </h3>
-                <ul className="space-y-3">
-                  {cosmicDropdown.map(item => (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path}
-                        onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm"
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Mobile Community Links */}
-              <div className="border-b border-[#00ebd6]/20 pb-6">
-                <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
-                  Community
-                </h3>
-                <ul className="space-y-3">
-                  {communityDropdown.map(item => (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path}
-                        onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm"
-                      >
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Mobile Search */}
-              <div className="pt-2">
-                <form onSubmit={handleSearchSubmit} className="mt-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
-                    />
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    )}
                   </div>
-                  <button
-                    type="submit"
-                    className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300"
-                  >
-                    Search
-                  </button>
-                </form>
+                </div>
 
-                {/* Mobile Auth Buttons */}
-                <div className="mt-8 space-y-4">
-                  {user ? (
-                    <Link
-                      href="/profile"
-                      onClick={() => handleNavigationClick("/profile")}
-                      className="block w-full text-center py-2 px-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300"
-                    >
-                      My Profile
-                    </Link>
-                  ) : (
-                    <>
+                {/* Mobile Community Links */}
+                <div className="border-b border-[#00ebd6]/20 pb-6">
+                  <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
+                    Community
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {communityLinks.map(item => (
                       <Link
-                        href="/login"
-                        onClick={() => handleNavigationClick("/login")}
+                        key={item.path}
+                        href={item.path}
+                        onClick={() => handleNavigationClick(item.path)}
+                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm py-1 px-2"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile Music Links */}
+                <div className="border-b border-[#00ebd6]/20 pb-6">
+                  <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
+                    Music
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {musicLinks.map(item => (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        onClick={() => handleNavigationClick(item.path)}
+                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm py-1 px-2"
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile Social Links */}
+                <div className="border-b border-[#00ebd6]/20 pb-6">
+                  <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
+                    Follow Us
+                  </h3>
+                  <div className="flex justify-around">
+                    {socialLinks.map(link => (
+                      <a
+                        key={link.name}
+                        href={link.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center text-center p-2 text-[#e8e6e3]/80 hover:text-[#00ebd6]"
+                      >
+                        <span className="mb-1">{link.icon}</span>
+                        <span className="text-xs">{link.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Mobile Search */}
+                <div className="pt-2">
+                  <form onSubmit={handleSearchSubmit} className="mt-4">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                      />
+                      <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300"
+                    >
+                      Search
+                    </button>
+                  </form>
+
+                  {/* Mobile Auth Buttons */}
+                  <div className="mt-8 space-y-4">
+                    {user ? (
+                      <Link
+                        href="/profile"
+                        onClick={() => handleNavigationClick("/profile")}
                         className="block w-full text-center py-2 px-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300"
                       >
-                        Log In
+                        My Profile
                       </Link>
-                      <Link
-                        href="/signup"
-                        onClick={() => handleNavigationClick("/signup")}
-                        className="block w-full text-center py-2 px-4 border border-[#00ebd6]/50 text-[#00ebd6] rounded-md hover:bg-[#00ebd6]/10 transition-all duration-300"
-                      >
-                        Sign Up
-                      </Link>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <Link
+                          href="/login"
+                          onClick={() => handleNavigationClick("/login")}
+                          className="block w-full text-center py-2 px-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300"
+                        >
+                          Log In
+                        </Link>
+                        <Link
+                          href="/signup"
+                          onClick={() => handleNavigationClick("/signup")}
+                          className="block w-full text-center py-2 px-4 border border-[#00ebd6]/50 text-[#00ebd6] rounded-md hover:bg-[#00ebd6]/10 transition-all duration-300"
+                        >
+                          Sign Up
+                        </Link>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </nav>
+              </nav>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Glow effect on the header border */}
-      <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-cyan-500/0 via-cyan-500/50 to-cyan-500/0"></div>
+      
+      {/* Cosmic energy waves animation on scroll */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden">
+        <svg className="w-full h-[8px]" viewBox="0 0 1200 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path 
+            d="M0 4C150 4 150 7 300 7C450 7 450 1 600 1C750 1 750 4 900 4C1050 4 1050 7 1200 7"
+            stroke="url(#paint0_linear)" 
+            strokeOpacity="0.5" 
+            strokeWidth="1.5"
+          >
+            <animate attributeName="d" 
+              values="
+                M0 4C150 4 150 7 300 7C450 7 450 1 600 1C750 1 750 4 900 4C1050 4 1050 7 1200 7;
+                M0 4C150 4 150 1 300 1C450 1 450 7 600 7C750 7 750 4 900 4C1050 4 1050 1 1200 1;
+                M0 4C150 4 150 7 300 7C450 7 450 1 600 1C750 1 750 4 900 4C1050 4 1050 7 1200 7"
+              dur="15s" 
+              repeatCount="indefinite" 
+            />
+          </path>
+          <defs>
+            <linearGradient id="paint0_linear" x1="0" y1="4" x2="1200" y2="4" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#00EBD4" stopOpacity="0" />
+              <stop offset="0.2" stopColor="#00EBD4" />
+              <stop offset="0.5" stopColor="#BF5AF2" />
+              <stop offset="0.8" stopColor="#00EBD4" />
+              <stop offset="1" stopColor="#00EBD4" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
     </header>
   );
 }

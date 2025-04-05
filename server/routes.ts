@@ -7,7 +7,7 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { storage } from "./storage";
-import { db, contactFormEntries } from "./db";
+import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import {
@@ -16,6 +16,7 @@ import {
   insertCommentSchema,
   insertCategorySchema,
   insertNewsletterSchema,
+  contactMessages,
   comments
 } from "@shared/schema";
 import { hashPassword } from "./auth";
@@ -198,7 +199,52 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log("Created new subscriber:", subscriber);
 
       // Send welcome email if SMTP is configured
+      if (transporter) {
+        try {
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@example.com',
+            to: data.email,
+            subject: "Welcome to Dale Loves Whales Newsletter!",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+                <h2 style="color: #4A90E2; text-align: center;">Welcome to the Cosmic Journey, ${data.name}! 🐋</h2>
+                <p style="font-size: 16px; line-height: 1.5;">Thank you for joining Dale the Whale's musical universe! Get ready for an extraordinary journey through sound and spirit.</p>
+                <h3 style="color: #4A90E2; margin-top: 20px;">What to Expect:</h3>
+                <ul style="list-style-type: none; padding: 0;">
+                  <li style="margin: 10px 0; padding-left: 20px;">🎵 First access to new releases and exclusive tracks</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎪 Early announcements about upcoming shows and events</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🌟 Behind-the-scenes content and personal stories</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎁 Special subscriber-only offers and experiences</li>
+                </ul>
+                <p style="font-size: 16px; line-height: 1.5; margin-top: 20px;">Stay tuned for your first newsletter, coming soon with some cosmic vibes!</p>
+                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
+                  <p>"Let the music guide your soul through the celestial waves"</p>
+                  <p style="margin-top: 20px;">- Dale 🐋</p>
+                </div>
+              </div>
+            `
+          });
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+        }
+      }
 
+      res.json({ 
+        message: "Successfully subscribed!", 
+        subscriber 
+      });
+      
+    } catch (error) {
+      if (error.code === '23505') { // PostgreSQL unique violation
+        res.status(400).json({ message: "This email is already subscribed" });
+      } else if (error.errors) { // Zod validation error
+        res.status(400).json({ message: error.errors[0].message });
+      } else {
+        console.error("Subscription error:", error);
+        res.status(500).json({ message: "Failed to process subscription" });
+      }
+    }
+  });
 
   // Check if email exists in subscribers
   app.get("/api/subscribers/check/:email", async (req, res) => {
@@ -543,53 +589,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-
-      if (transporter) {
-        try {
-          await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'noreply@example.com',
-            to: data.email,
-            subject: "Welcome to Dale Loves Whales Newsletter!",
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-                <h2 style="color: #4A90E2; text-align: center;">Welcome to the Cosmic Journey, ${data.name}! 🐋</h2>
-                <p style="font-size: 16px; line-height: 1.5;">Thank you for joining Dale the Whale's musical universe! Get ready for an extraordinary journey through sound and spirit.</p>
-                <h3 style="color: #4A90E2; margin-top: 20px;">What to Expect:</h3>
-                <ul style="list-style-type: none; padding: 0;">
-                  <li style="margin: 10px 0; padding-left: 20px;">🎵 First access to new releases and exclusive tracks</li>
-                  <li style="margin: 10px 0; padding-left: 20px;">🎪 Early announcements about upcoming shows and events</li>
-                  <li style="margin: 10px 0; padding-left: 20px;">🌟 Behind-the-scenes content and personal stories</li>
-                  <li style="margin: 10px 0; padding-left: 20px;">🎁 Special subscriber-only offers and experiences</li>
-                </ul>
-                <p style="font-size: 16px; line-height: 1.5; margin-top: 20px;">Stay tuned for your first newsletter, coming soon with some cosmic vibes!</p>
-                <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
-                  <p>"Let the music guide your soul through the celestial waves"</p>
-                  <p style="margin-top: 20px;">- Dale 🐋</p>
-                </div>
-              </div>
-            `
-          });
-        } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
-        }
-      }
-
-      res.json({ 
-        message: "Successfully subscribed!", 
-        subscriber 
-      });
-    } catch (error) {
-      if (error.code === '23505') { // PostgreSQL unique violation
-        res.status(400).json({ message: "This email is already subscribed" });
-      } else if (error.errors) { // Zod validation error
-        res.status(400).json({ message: error.errors[0].message });
-      } else {
-        console.error("Subscription error:", error);
-        res.status(500).json({ message: "Failed to process subscription" });
-      }
-    }
-  });
-
   // Blog post routes
   app.get("/api/posts", async (req, res) => {
     try {
@@ -749,7 +748,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   app.post("/api/contact", async (req, res) => {
   try {
-    const { insertContactSchema, contactMessages } = await import("@shared/schema");
+    const { insertContactSchema } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
     const message = await db.insert(contactMessages).values(data).returning();
     res.json({ message: "Message sent successfully!", data: message[0] });
@@ -1086,12 +1085,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.post('/api/contact/submit', async (req, res) => {
     try {
       const { name, email, message } = req.body;
-      await db.insert(contactFormEntries).values({
-        id: nanoid(),
+      await db.insert(contactMessages).values({
         name,
         email, 
-        message,
-        createdAt: new Date()
+        message
       });
       res.json({ success: true });
     } catch (error) {

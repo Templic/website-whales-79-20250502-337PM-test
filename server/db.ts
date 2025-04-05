@@ -38,10 +38,11 @@ export const pgPool = pool;
 import { sql } from 'drizzle-orm';
 import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 
-export const contactFormEntries = pgTable('contact_form_entries', {
+// This is a legacy table, using contactMessages from schema.ts instead
+/*export const contactFormEntries = pgTable('contact_form_entries', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull(),
   message: text('message').notNull(),
   createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
-});
+});*/
