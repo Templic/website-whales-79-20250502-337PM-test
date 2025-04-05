@@ -6,7 +6,7 @@ import { CosmicText } from "../../components/features/cosmic/CosmicText"
 import { CosmicCard } from "../../components/features/cosmic/CosmicCard"
 import { CosmicSection } from "../../components/features/cosmic/CosmicSection"
 import { CosmicPortal } from "../../components/features/cosmic/CosmicPortal"
-import { AccessibilityControls } from "../../components/common/AccessibilityControls"
+import { AccessibilityControls } from "../../components/common/accessibility-controls"
 import { Star, Moon, Sun, Sparkles, Music, Waves } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 

@@ -1,0 +1,136 @@
+{
+  "/home/runner/workspace/client/src/components/common/cosmic-footer.tsx": [
+    {
+      "statement": "import { FlowerOfLifePattern } from \"@/components/ui/cosmic/sacred-geometry\"",
+      "path": "@/components/ui/cosmic/sacred-geometry"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/audio/dynamic-playlists.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicButton } from \"@/components/cosmic-button\"",
+      "path": "@/components/cosmic-button"
+    },
+    {
+      "statement": "import { CosmicHeading } from \"@/components/cosmic-heading\"",
+      "path": "@/components/cosmic-heading"
+    },
+    {
+      "statement": "import { CosmicIcon } from \"@/components/cosmic-icons\"",
+      "path": "@/components/cosmic-icons"
+    },
+    {
+      "statement": "import { CosmicReveal } from \"@/components/cosmic-interactive-effects\"",
+      "path": "@/components/cosmic-interactive-effects"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/audio/harmonic-journeys-grid.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicText } from \"@/components/cosmic-text\"",
+      "path": "@/components/cosmic-text"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/audio/musical-journey-timeline.tsx": [
+    {
+      "statement": "import { CosmicHeading } from \"@/components/cosmic-heading\"",
+      "path": "@/components/cosmic-heading"
+    },
+    {
+      "statement": "import { CosmicReveal } from \"@/components/cosmic-interactive-effects\"",
+      "path": "@/components/cosmic-interactive-effects"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/community/community-feedback-loop.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicButton } from \"@/components/cosmic-button\"",
+      "path": "@/components/cosmic-button"
+    },
+    {
+      "statement": "import { CosmicHeading } from \"@/components/cosmic-heading\"",
+      "path": "@/components/cosmic-heading"
+    },
+    {
+      "statement": "import { CosmicIcon } from \"@/components/cosmic-icons\"",
+      "path": "@/components/cosmic-icons"
+    },
+    {
+      "statement": "import { CosmicReveal } from \"@/components/cosmic-interactive-effects\"",
+      "path": "@/components/cosmic-interactive-effects"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/community/upcoming-ceremonies-grid.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicText } from \"@/components/cosmic-text\"",
+      "path": "@/components/cosmic-text"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/cosmic/CosmicCollectible.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicButton } from \"@/components/cosmic-button\"",
+      "path": "@/components/cosmic-button"
+    },
+    {
+      "statement": "import { CosmicIcon } from \"@/components/cosmic-icons\"",
+      "path": "@/components/cosmic-icons"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/cosmic/sacred-geometry-demo.tsx": [
+    {
+      "statement": "import {\n  HexagonContainer,\n  OctagonContainer,\n  PentagonContainer,\n  TriangleInterlockContainer,\n  AdaptiveTextContainer,\n} from \"@/components/ui/cosmic/sacred-geometry\"",
+      "path": "@/components/ui/cosmic/sacred-geometry"
+    }
+  ],
+  "/home/runner/workspace/client/src/components/features/shop/merchandise-storytelling.tsx": [
+    {
+      "statement": "import { CosmicCard } from \"@/components/cosmic-card\"",
+      "path": "@/components/cosmic-card"
+    },
+    {
+      "statement": "import { CosmicButton } from \"@/components/cosmic-button\"",
+      "path": "@/components/cosmic-button"
+    },
+    {
+      "statement": "import { CosmicHeading } from \"@/components/cosmic-heading\"",
+      "path": "@/components/cosmic-heading"
+    },
+    {
+      "statement": "import { CosmicIcon } from \"@/components/cosmic-icons\"",
+      "path": "@/components/cosmic-icons"
+    },
+    {
+      "statement": "import { CosmicReveal, CosmicParallax } from \"@/components/cosmic-interactive-effects\"",
+      "path": "@/components/cosmic-interactive-effects"
+    }
+  ],
+  "/home/runner/workspace/client/src/pages/MusicArchivePage.tsx": [
+    {
+      "statement": "import AudioPlayer from \"@/components/AudioPlayer\"",
+      "path": "@/components/AudioPlayer"
+    }
+  ],
+  "/home/runner/workspace/client/src/pages/old-pages/MusicArchivePage_old.tsx": [
+    {
+      "statement": "import AudioPlayer from \"@/components/AudioPlayer\"",
+      "path": "@/components/AudioPlayer"
+    }
+  ]
+}

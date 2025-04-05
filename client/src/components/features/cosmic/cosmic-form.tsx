@@ -132,4 +132,103 @@ const CosmicFormComponents = {
   CosmicFormHelperText
 };
 
+
+
+/**
+ * Original CosmicForm component merged from: client/src/components/ui/cosmic-form.tsx
+ * Merge date: 2025-04-05
+ */
+const CosmicFormOriginal = <TFormValues extends FieldValues>({
+  form, 
+  onSubmit, 
+  children, 
+  className, 
+  ...props
+}: CosmicFormProps<TFormValues>) => {
+  return (
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className={cn("space-y-4", className)}
+      {...props}
+    >
+      {children}
+    </form>
+  );
+};
+
+export const CosmicFormGroup: React.FC<CosmicFormGroupProps> = ({
+  children,
+  className,
+  isError,
+  isSuccess,
+  ...props
+}) => {
+  return (
+    <div
+      className={cn(
+        "space-y-2",
+        isError && "cosmic-form-group-error",
+        isSuccess && "cosmic-form-group-success",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const CosmicFormLabel: React.FC<CosmicFormLabelProps> = ({
+  children,
+  className,
+  required,
+  ...props
+}) => {
+  return (
+    <label
+      className={cn(
+        "block text-sm font-medium leading-6 text-foreground",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {required && <span className="ml-1 text-destructive">*</span>}
+    </label>
+  );
+};
+
+export const CosmicFormHelperText: React.FC<CosmicFormHelperTextProps> = ({
+  children,
+  className,
+  isError,
+  isSuccess,
+  ...props
+}) => {
+  return (
+    <p
+      className={cn(
+        "mt-2 text-sm",
+        isError && "text-destructive",
+        isSuccess && "text-green-600",
+        !isError && !isSuccess && "text-muted-foreground",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </p>
+  );
+};
+
+// Also export a default object for backward compatibility
+const CosmicFormComponents = {
+  CosmicFormOriginal,
+  CosmicFormGroup,
+  CosmicFormLabel,
+  CosmicFormHelperText
+};
+
+CosmicFormComponents;
+
 export default CosmicFormComponents;

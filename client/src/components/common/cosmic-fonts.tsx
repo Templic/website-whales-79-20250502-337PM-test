@@ -68,3 +68,17 @@ export function CosmicFonts({ children }: { children: React.ReactNode }) {
   )
 }
 
+
+
+/**
+ * Original CosmicFonts component merged from: client/src/components/common/system/cosmic-fonts.tsx
+ * Merge date: 2025-04-05
+ */
+function CosmicFontsOriginal({ children }: { children: React.ReactNode }) {
+  return (
+    <div className={`${orbitron.variable} ${spaceGrotesk.variable} ${inter.variable} ${nebulaFont.variable}`}>
+      {children}
+    </div>
+  )
+}
+

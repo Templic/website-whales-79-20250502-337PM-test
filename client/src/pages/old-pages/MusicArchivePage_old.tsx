@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
-import AudioPlayer from "@/components/AudioPlayer";
+import AudioPlayer from "@/components/features/audio/AudioPlayer";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";

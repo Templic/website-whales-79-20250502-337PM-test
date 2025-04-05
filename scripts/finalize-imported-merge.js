@@ -3,6 +3,13 @@
  * 
  * This script orchestrates the process of merging imported components
  * and updating import paths, then removes the imported directory.
+ * 
+ * NOTE: An enhanced version of this process is available in the
+ * component-merge-tools directory. Consider using those tools instead
+ * for more advanced component organization, analysis, and consolidation.
+ * 
+ * @see scripts/component-merge-tools/run-component-merge.js
+ * @see scripts/component-merge-tools/README.md
  */
 
 import { execSync } from 'child_process';

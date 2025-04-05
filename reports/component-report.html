@@ -1,0 +1,2699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Component Analysis Report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2, h3 {
+      color: #1a1a1a;
+    }
+    .summary-box {
+      background-color: #f5f5f5;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .chart-container {
+      height: 300px;
+      margin: 20px 0;
+    }
+    .recommendation {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    .strong {
+      border-left: 5px solid #4caf50;
+    }
+    .consider {
+      border-left: 5px solid #2196f3;
+    }
+    .similarity {
+      float: right;
+      font-weight: bold;
+    }
+    .target {
+      font-weight: bold;
+      color: #2196f3;
+    }
+    .component-list {
+      list-style-type: none;
+      padding-left: 20px;
+    }
+    .component-path {
+      font-family: monospace;
+      font-size: 0.9em;
+      color: #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Component Analysis Report</h1>
+  
+  <div class="summary-box">
+    <h2>Summary</h2>
+    <p>Total components analyzed: <strong>328</strong></p>
+    <p>Consolidation recommendations: <strong>99</strong></p>
+    
+    <h3>Components by Category</h3>
+    <table>
+      <tr>
+        <th>Category</th>
+        <th>Count</th>
+      </tr>
+      
+          <tr>
+            <td>features</td>
+            <td>107</td>
+          </tr>
+        
+          <tr>
+            <td>ui</td>
+            <td>85</td>
+          </tr>
+        
+          <tr>
+            <td>common</td>
+            <td>59</td>
+          </tr>
+        
+          <tr>
+            <td>shop</td>
+            <td>27</td>
+          </tr>
+        
+          <tr>
+            <td>cosmic</td>
+            <td>16</td>
+          </tr>
+        
+          <tr>
+            <td>root</td>
+            <td>7</td>
+          </tr>
+        
+          <tr>
+            <td>layout</td>
+            <td>7</td>
+          </tr>
+        
+          <tr>
+            <td>audio</td>
+            <td>6</td>
+          </tr>
+        
+          <tr>
+            <td>admin</td>
+            <td>5</td>
+          </tr>
+        
+          <tr>
+            <td>immersive</td>
+            <td>4</td>
+          </tr>
+        
+          <tr>
+            <td>community</td>
+            <td>2</td>
+          </tr>
+        
+          <tr>
+            <td>music</td>
+            <td>2</td>
+          </tr>
+        
+          <tr>
+            <td>demo</td>
+            <td>1</td>
+          </tr>
+        
+    </table>
+  </div>
+  
+  <h2>Consolidation Recommendations</h2>
+  
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>1. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ContentReview.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/admin/ContentReview.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ContentReview.tsx
+            <br>
+            <span class="component-path">client/src/components/admin/ContentReview.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>2. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">DatabaseMonitor.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/admin/DatabaseMonitor.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            DatabaseMonitor.tsx
+            <br>
+            <span class="component-path">client/src/components/admin/DatabaseMonitor.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>3. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">NewsletterManagement.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/admin/NewsletterManagement.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            NewsletterManagement.tsx
+            <br>
+            <span class="component-path">client/src/components/admin/NewsletterManagement.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>4. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ToDoList.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/admin/ToDoList.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ToDoList.tsx
+            <br>
+            <span class="component-path">client/src/components/admin/ToDoList.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>5. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">UserManagement.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/admin/UserManagement.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            UserManagement.tsx
+            <br>
+            <span class="component-path">client/src/components/admin/UserManagement.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>6. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">accessibility-controls.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/accessibility-controls.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            accessibility-controls.tsx
+            <br>
+            <span class="component-path">client/src/components/common/accessibility/accessibility-controls.tsx</span>
+          </li>
+        
+          <li>
+            AccessibilityControls.tsx
+            <br>
+            <span class="component-path">client/src/components/common/accessibility/AccessibilityControls.tsx</span>
+          </li>
+        
+          <li>
+            AccessibilityControls.tsx
+            <br>
+            <span class="component-path">client/src/components/common/AccessibilityControls.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>7. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">AlbumShowcase.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/AlbumShowcase.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            album-showcase.tsx
+            <br>
+            <span class="component-path">client/src/components/common/album-showcase.tsx</span>
+          </li>
+        
+          <li>
+            AlbumShowcase.tsx
+            <br>
+            <span class="component-path">client/src/components/common/AlbumShowcase.tsx</span>
+          </li>
+        
+          <li>
+            AlbumShowcase.tsx
+            <br>
+            <span class="component-path">client/src/components/music/AlbumShowcase.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>8. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">FanRemixContest.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/FanRemixContest.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            fan-remix-contest.tsx
+            <br>
+            <span class="component-path">client/src/components/common/fan-remix-contest.tsx</span>
+          </li>
+        
+          <li>
+            FanRemixContest.tsx
+            <br>
+            <span class="component-path">client/src/components/common/FanRemixContest.tsx</span>
+          </li>
+        
+          <li>
+            fan-remix-contest.tsx
+            <br>
+            <span class="component-path">client/src/components/features/community/fan-remix-contest.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>9. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">LiveSession.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/LiveSession.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            live-session.tsx
+            <br>
+            <span class="component-path">client/src/components/common/live-session.tsx</span>
+          </li>
+        
+          <li>
+            LiveSession.tsx
+            <br>
+            <span class="component-path">client/src/components/common/LiveSession.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>10. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">lyrics-section.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/lyrics-section.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            lyrics-section.tsx
+            <br>
+            <span class="component-path">client/src/components/common/lyrics-section.tsx</span>
+          </li>
+        
+          <li>
+            LyricsSection.tsx
+            <br>
+            <span class="component-path">client/src/components/common/LyricsSection.tsx</span>
+          </li>
+        
+          <li>
+            LyricsSection.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/LyricsSection.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>11. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ReleaseEngagement.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/ReleaseEngagement.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            release-engagement.tsx
+            <br>
+            <span class="component-path">client/src/components/common/release-engagement.tsx</span>
+          </li>
+        
+          <li>
+            ReleaseEngagement.tsx
+            <br>
+            <span class="component-path">client/src/components/common/ReleaseEngagement.tsx</span>
+          </li>
+        
+          <li>
+            release-engagement.tsx
+            <br>
+            <span class="component-path">client/src/components/features/community/release-engagement.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>12. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">streaming-links.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/streaming-links.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            streaming-links.tsx
+            <br>
+            <span class="component-path">client/src/components/common/streaming-links.tsx</span>
+          </li>
+        
+          <li>
+            StreamingLinks.tsx
+            <br>
+            <span class="component-path">client/src/components/common/StreamingLinks.tsx</span>
+          </li>
+        
+          <li>
+            StreamingLinks.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/StreamingLinks.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>13. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">community-feedback-loop.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/community/community-feedback-loop.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            community-feedback-loop.tsx
+            <br>
+            <span class="component-path">client/src/components/common/community-feedback-loop.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>14. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">community-feedback.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/community/community-feedback.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            community-feedback.tsx
+            <br>
+            <span class="component-path">client/src/components/common/community-feedback.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>15. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-background.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-background.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-background.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-background.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>16. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-fonts.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/cosmic-fonts.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-fonts.tsx
+            <br>
+            <span class="component-path">client/src/components/common/system/cosmic-fonts.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>17. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-footer.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/cosmic-footer.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-footer.tsx
+            <br>
+            <span class="component-path">client/src/components/layout/cosmic-footer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>18. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicHeading.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicHeading.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-heading.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-heading.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>19. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicIcons.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicIcons.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-icons.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-icons.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-icons.tsx
+            <br>
+            <span class="component-path">client/src/components/common/system/cosmic-icons.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-icons.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/ui/cosmic-icons.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>20. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-navigation.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/cosmic-navigation.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-navigation.tsx
+            <br>
+            <span class="component-path">client/src/components/layout/cosmic-navigation.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>21. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-particles.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-particles.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-particles.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-particles.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>22. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">donation-module.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/community/donation-module.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            donation-module.tsx
+            <br>
+            <span class="component-path">client/src/components/common/donation-module.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>23. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">dynamic-playlists.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/dynamic-playlists.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            dynamic-playlists.tsx
+            <br>
+            <span class="component-path">client/src/components/common/dynamic-playlists.tsx</span>
+          </li>
+        
+          <li>
+            DynamicPlaylists.tsx
+            <br>
+            <span class="component-path">client/src/components/music/DynamicPlaylists.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>24. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">genius-lyrics-integration.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/genius-lyrics-integration.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            genius-lyrics-integration.tsx
+            <br>
+            <span class="component-path">client/src/components/common/genius-lyrics-integration.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>25. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">harmonic-journeys-grid.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/harmonic-journeys-grid.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            harmonic-journeys-grid.tsx
+            <br>
+            <span class="component-path">client/src/components/common/harmonic-journeys-grid.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>26. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">interactive-discography-map.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/interactive-discography-map.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            interactive-discography-map.tsx
+            <br>
+            <span class="component-path">client/src/components/common/interactive-discography-map.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>27. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">merchandise-storytelling.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/merchandise-storytelling.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            merchandise-storytelling.tsx
+            <br>
+            <span class="component-path">client/src/components/common/merchandise-storytelling.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>28. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">music-player.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/music-player.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            music-player.tsx
+            <br>
+            <span class="component-path">client/src/components/common/music-player.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>29. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">musical-journey-timeline.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/musical-journey-timeline.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            musical-journey-timeline.tsx
+            <br>
+            <span class="component-path">client/src/components/common/musical-journey-timeline.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>30. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">newsletter.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/community/newsletter.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            newsletter.tsx
+            <br>
+            <span class="component-path">client/src/components/common/newsletter.tsx</span>
+          </li>
+        
+          <li>
+            Newsletter.tsx
+            <br>
+            <span class="component-path">client/src/components/features/community/Newsletter.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>31. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">performance-optimizations.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/performance-optimizations.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            performance-optimizations.tsx
+            <br>
+            <span class="component-path">client/src/components/common/system/performance-optimizations.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>32. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">seasonal-offers.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/seasonal-offers.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            seasonal-offers.tsx
+            <br>
+            <span class="component-path">client/src/components/common/seasonal-offers.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>33. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">site-header.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/site-header.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            site-header.tsx
+            <br>
+            <span class="component-path">client/src/components/layout/site-header.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>34. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">theme-provider.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/common/system/theme-provider.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            theme-provider.tsx
+            <br>
+            <span class="component-path">client/src/components/common/theme-provider.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>35. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">track-segmentation-viewer.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/track-segmentation-viewer.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            track-segmentation-viewer.tsx
+            <br>
+            <span class="component-path">client/src/components/common/track-segmentation-viewer.tsx</span>
+          </li>
+        
+          <li>
+            TrackSegmentationViewer.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/TrackSegmentationViewer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>36. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">upcoming-ceremonies-grid.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/community/upcoming-ceremonies-grid.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            upcoming-ceremonies-grid.tsx
+            <br>
+            <span class="component-path">client/src/components/common/upcoming-ceremonies-grid.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>37. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">virtual-try-on.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/virtual-try-on.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            virtual-try-on.tsx
+            <br>
+            <span class="component-path">client/src/components/common/virtual-try-on.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>38. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicReveal.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicReveal.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            CosmicReveal.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/CosmicReveal.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>39. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-button.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-button.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-button.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-button.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>40. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-form.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-form.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-form.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-form.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>41. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-markdown.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-markdown.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-markdown.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-markdown.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>42. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-masonry.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-masonry.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-masonry.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-masonry.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>43. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-media-player.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-media-player.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-media-player.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-media-player.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>44. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-sidebar.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-sidebar.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-sidebar.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-sidebar.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>45. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-slider.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-slider.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-slider.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-slider.tsx</span>
+          </li>
+        
+          <li>
+            slider.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/slider.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>46. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-spinner.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-spinner.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-spinner.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-spinner.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>47. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-stepper.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-stepper.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-stepper.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-stepper.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>48. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-toast.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-toast.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-toast.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-toast.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>49. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CheckoutForm.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/CheckoutForm.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            CheckoutForm.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/CheckoutForm.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>50. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicCollectibles.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/CosmicCollectibles.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            CosmicCollectibles.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/CosmicCollectibles.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>51. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">EnhancedShoppingExperience.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/EnhancedShoppingExperience.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            EnhancedShoppingExperience.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/EnhancedShoppingExperience.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>52. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">EnhancedShoppingVenn.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/EnhancedShoppingVenn.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            EnhancedShoppingVenn.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/EnhancedShoppingVenn.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>53. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductCard.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductCard.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductCard.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductCard.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>54. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductComparison.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductComparison.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductComparison.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductComparison.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>55. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductFilter.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductFilter.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductFilter.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductFilter.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>56. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductFilters.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductFilters.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductFilters.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductFilters.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>57. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductGrid.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductGrid.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductGrid.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductGrid.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>58. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ProductQuickView.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ProductQuickView.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ProductQuickView.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ProductQuickView.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>59. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ShopHeader.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ShopHeader.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ShopHeader.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ShopHeader.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>60. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">ShoppingCart.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/ShoppingCart.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            ShoppingCart.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/ShoppingCart.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">100.0% similarity</span>
+      <h3>61. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">VoiceCommands.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/shop/VoiceCommands.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            VoiceCommands.tsx
+            <br>
+            <span class="component-path">client/src/components/shop/VoiceCommands.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">98.0% similarity</span>
+      <h3>62. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicButton.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicButton.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-button.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-button.tsx</span>
+          </li>
+        
+          <li>
+            CosmicButton.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/CosmicButton.tsx</span>
+          </li>
+        
+          <li>
+            CosmicButton.tsx
+            <br>
+            <span class="component-path">client/src/components/features/design-system/button/CosmicButton.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">98.0% similarity</span>
+      <h3>63. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-interactive-effects.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-interactive-effects.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-interactive-effects.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-interactive-effects.tsx</span>
+          </li>
+        
+          <li>
+            CosmicInteractiveEffects.tsx
+            <br>
+            <span class="component-path">client/src/components/features/cosmic/CosmicInteractiveEffects.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">98.0% similarity</span>
+      <h3>64. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicSection.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicSection.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-section.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-section.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-section.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-section.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">98.0% similarity</span>
+      <h3>65. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicText.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicText.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-text.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-text.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-text.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-text.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">98.0% similarity</span>
+      <h3>66. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">particle-background.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/particle-background.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            particle-background.tsx
+            <br>
+            <span class="component-path">client/src/components/common/particle-background.tsx</span>
+          </li>
+        
+          <li>
+            ParticleBackground.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/ParticleBackground.tsx</span>
+          </li>
+        
+          <li>
+            ParticleBackground.tsx
+            <br>
+            <span class="component-path">client/src/components/features/cosmic/ParticleBackground.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">96.0% similarity</span>
+      <h3>67. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-carousel.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-carousel.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-carousel.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-carousel.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">96.0% similarity</span>
+      <h3>68. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-dropdown.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-dropdown.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-dropdown.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-dropdown.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>69. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-accordion.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-accordion.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-accordion.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-accordion.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>70. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-avatar.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-avatar.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-avatar.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-avatar.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>71. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-modal.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-modal.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-modal.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-modal.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>72. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-progress-bar.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-progress-bar.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-progress-bar.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-progress-bar.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>73. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-select.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-select.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-select.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-select.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">95.0% similarity</span>
+      <h3>74. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-table.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-table.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-table.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-table.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>75. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-alert.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-alert.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-alert.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-alert.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>76. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-drawer.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-drawer.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-drawer.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-drawer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>77. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-link.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-link.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-link.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-link.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>78. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-radio.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-radio.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-radio.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-radio.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>79. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-toggle.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-toggle.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-toggle.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-toggle.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>80. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-tooltip.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-tooltip.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-tooltip.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-tooltip.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">93.3% similarity</span>
+      <h3>81. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">binaural-beat-generator.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/binaural-beat-generator.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            BinauralBeatGenerator.tsx
+            <br>
+            <span class="component-path">client/src/components/audio/BinauralBeatGenerator.tsx</span>
+          </li>
+        
+          <li>
+            binaural-beat-generator.tsx
+            <br>
+            <span class="component-path">client/src/components/common/binaural-beat-generator.tsx</span>
+          </li>
+        
+          <li>
+            BinauralBeatGenerator.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/BinauralBeatGenerator.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">92.0% similarity</span>
+      <h3>82. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-badge.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-badge.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            badge.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/badge.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-badge.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-badge.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation strong">
+      <span class="similarity">90.5% similarity</span>
+      <h3>83. Strong Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicPortal.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicPortal.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-portal.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-portal.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-portal.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-portal.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">90.0% similarity</span>
+      <h3>84. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-container.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-container.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-container.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-container.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">90.0% similarity</span>
+      <h3>85. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-heading.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-heading.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-heading.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-heading.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">87.8% similarity</span>
+      <h3>86. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">mood-based-player.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/mood-based-player.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            mood-based-player.tsx
+            <br>
+            <span class="component-path">client/src/components/common/mood-based-player.tsx</span>
+          </li>
+        
+          <li>
+            MoodBasedPlayer.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/MoodBasedPlayer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">84.8% similarity</span>
+      <h3>87. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">SpatialAudioExperience.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/SpatialAudioExperience.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            SpatialAudioExperience.tsx
+            <br>
+            <span class="component-path">client/src/components/audio/SpatialAudioExperience.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">81.5% similarity</span>
+      <h3>88. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-checkbox.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-checkbox.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            checkbox.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/checkbox.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-checkbox.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-checkbox.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">81.4% similarity</span>
+      <h3>89. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">voice-controlled-player.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/voice-controlled-player.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            VoiceControlledPlayer.tsx
+            <br>
+            <span class="component-path">client/src/components/audio/VoiceControlledPlayer.tsx</span>
+          </li>
+        
+          <li>
+            voice-controlled-player.tsx
+            <br>
+            <span class="component-path">client/src/components/common/voice-controlled-player.tsx</span>
+          </li>
+        
+          <li>
+            VoiceControlledPlayer.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/VoiceControlledPlayer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">80.0% similarity</span>
+      <h3>90. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">Navigation.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/layout/Navigation.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            Navigation.tsx
+            <br>
+            <span class="component-path">client/src/components/Navigation.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">80.0% similarity</span>
+      <h3>91. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicBackground.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicBackground.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            CosmicBackground.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/CosmicBackground.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">80.0% similarity</span>
+      <h3>92. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-input.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-input.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-input.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-input.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">80.0% similarity</span>
+      <h3>93. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-tabs.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-tabs.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-tabs.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-tabs.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">77.8% similarity</span>
+      <h3>94. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">cosmic-card.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/cosmic-card.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-card.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-card.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-card.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/ui/cosmic-card.tsx</span>
+          </li>
+        
+          <li>
+            CosmicCard.tsx
+            <br>
+            <span class="component-path">client/src/components/features/cosmic/CosmicCard.tsx</span>
+          </li>
+        
+          <li>
+            card.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/card.tsx</span>
+          </li>
+        
+          <li>
+            cosmic-card.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/cosmic-card.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">77.5% similarity</span>
+      <h3>95. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">sacred-geometry.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/cosmic/ui/sacred-geometry.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            sacred-geometry.tsx
+            <br>
+            <span class="component-path">client/src/components/ui/sacred-geometry.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">76.5% similarity</span>
+      <h3>96. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">breath-sync-player.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/breath-sync-player.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            BreathSyncPlayer.tsx
+            <br>
+            <span class="component-path">client/src/components/audio/BreathSyncPlayer.tsx</span>
+          </li>
+        
+          <li>
+            breath-sync-player.tsx
+            <br>
+            <span class="component-path">client/src/components/common/breath-sync-player.tsx</span>
+          </li>
+        
+          <li>
+            BreathSyncPlayer.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/BreathSyncPlayer.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">76.5% similarity</span>
+      <h3>97. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">CosmicCollectible.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/CosmicCollectible.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            cosmic-collectible.tsx
+            <br>
+            <span class="component-path">client/src/components/common/cosmic-collectible.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">74.2% similarity</span>
+      <h3>98. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">frequency-visualizer-3d.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/audio/frequency-visualizer-3d.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            FrequencyVisualizer3D.tsx
+            <br>
+            <span class="component-path">client/src/components/audio/FrequencyVisualizer3D.tsx</span>
+          </li>
+        
+          <li>
+            frequency-visualizer-3d.tsx
+            <br>
+            <span class="component-path">client/src/components/common/frequency-visualizer-3d.tsx</span>
+          </li>
+        
+          <li>
+            FrequencyVisualizer3D.tsx
+            <br>
+            <span class="component-path">client/src/components/features/audio/FrequencyVisualizer3D.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+    <div class="recommendation consider">
+      <span class="similarity">70.9% similarity</span>
+      <h3>99. Consider Recommendation</h3>
+      
+      <p>
+        <strong>Target Component:</strong>
+        <span class="target">sacred-geometry-demo.tsx</span>
+        <br>
+        <span class="component-path">client/src/components/features/cosmic/sacred-geometry-demo.tsx</span>
+      </p>
+      
+      <p><strong>Components to merge:</strong></p>
+      <ul class="component-list">
+        
+          <li>
+            sacred-geometry-demo.tsx
+            <br>
+            <span class="component-path">client/src/components/common/sacred-geometry-demo.tsx</span>
+          </li>
+        
+          <li>
+            SacredGeometryDemo.tsx
+            <br>
+            <span class="component-path">client/src/components/cosmic/SacredGeometryDemo.tsx</span>
+          </li>
+        
+      </ul>
+    </div>
+  
+</body>
+</html>

@@ -3,6 +3,13 @@
  * 
  * This script merges components from the imported directory
  * into their appropriate feature-specific directories.
+ * 
+ * NOTE: An enhanced version of this script is available in the
+ * component-merge-tools directory. Consider using that instead
+ * for more advanced component organization and analysis.
+ * 
+ * @see scripts/component-merge-tools/enhanced-merge-components.js
+ * @see scripts/component-merge-tools/README.md
  */
 
 import fs from 'fs';

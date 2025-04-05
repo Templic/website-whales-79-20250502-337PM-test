@@ -1,40 +1,7 @@
 /**
- * theme-provider.tsx
- * 
- * Component Type: common
- * Migrated from imported components.
+ * @deprecated This component has been consolidated with theme-provider.tsx.
+ * Please use the component from ./system/theme-provider instead.
  */
-/**
- * theme-provider.tsx
- * 
- * IMPORTED COMPONENT
- * Originally from: tmp_import/components
- * 
- * This component was imported as part of the repository reorganization.
- * Modifications may be needed to ensure compatibility with the current codebase.
- */
-"use client"
-
-import * as React from "react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
-import type { ThemeProviderProps } from "next-themes"
-
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  const [mounted, setMounted] = React.useState(false)
-
-  // Only render children once mounted on client to prevent hydration mismatch
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <NextThemesProvider {...props}>
-        <div style={{ visibility: "hidden" }}>{children}</div>
-      </NextThemesProvider>
-    )
-  }
-
-  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
-}
-
+import { ThemeProvider } from './system/theme-provider';
+export { ThemeProvider };
+export default ThemeProvider;

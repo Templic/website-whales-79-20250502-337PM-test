@@ -39,3 +39,28 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
 
+
+
+/**
+ * Original ThemeProvider component merged from: client/src/components/common/theme-provider.tsx
+ * Merge date: 2025-04-05
+ */
+function ThemeProviderOriginal({ children, ...props }: ThemeProviderProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  // Only render children once mounted on client to prevent hydration mismatch
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <NextThemesProvider {...props}>
+        <div style={{ visibility: "hidden" }}>{children}</div>
+      </NextThemesProvider>
+    )
+  }
+
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
+}
+

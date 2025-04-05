@@ -3,6 +3,13 @@
  * 
  * This script updates import paths for components that were 
  * merged from the imported directory to feature directories.
+ * 
+ * NOTE: An enhanced version of this script is available in the
+ * component-merge-tools directory. Consider using that instead
+ * for more advanced import path handling and diagnostics.
+ * 
+ * @see scripts/component-merge-tools/enhanced-update-imports.js
+ * @see scripts/component-merge-tools/README.md
  */
 
 import fs from 'fs';

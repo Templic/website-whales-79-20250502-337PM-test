@@ -1,0 +1,1801 @@
+[
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/admin/ContentReview.tsx",
+      "name": "ContentReview.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/admin/ContentReview.tsx",
+        "name": "ContentReview.tsx",
+        "category": "admin"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/admin/DatabaseMonitor.tsx",
+      "name": "DatabaseMonitor.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/admin/DatabaseMonitor.tsx",
+        "name": "DatabaseMonitor.tsx",
+        "category": "admin"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/admin/NewsletterManagement.tsx",
+      "name": "NewsletterManagement.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/admin/NewsletterManagement.tsx",
+        "name": "NewsletterManagement.tsx",
+        "category": "admin"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/admin/ToDoList.tsx",
+      "name": "ToDoList.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/admin/ToDoList.tsx",
+        "name": "ToDoList.tsx",
+        "category": "admin"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/admin/UserManagement.tsx",
+      "name": "UserManagement.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/admin/UserManagement.tsx",
+        "name": "UserManagement.tsx",
+        "category": "admin"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/accessibility-controls.tsx",
+      "name": "accessibility-controls.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/accessibility/accessibility-controls.tsx",
+        "name": "accessibility-controls.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/accessibility/AccessibilityControls.tsx",
+        "name": "AccessibilityControls.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/AccessibilityControls.tsx",
+        "name": "AccessibilityControls.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/AlbumShowcase.tsx",
+      "name": "AlbumShowcase.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/album-showcase.tsx",
+        "name": "album-showcase.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/AlbumShowcase.tsx",
+        "name": "AlbumShowcase.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/music/AlbumShowcase.tsx",
+        "name": "AlbumShowcase.tsx",
+        "category": "music"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/FanRemixContest.tsx",
+      "name": "FanRemixContest.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/fan-remix-contest.tsx",
+        "name": "fan-remix-contest.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/FanRemixContest.tsx",
+        "name": "FanRemixContest.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/community/fan-remix-contest.tsx",
+        "name": "fan-remix-contest.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/LiveSession.tsx",
+      "name": "LiveSession.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/live-session.tsx",
+        "name": "live-session.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/LiveSession.tsx",
+        "name": "LiveSession.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/lyrics-section.tsx",
+      "name": "lyrics-section.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/lyrics-section.tsx",
+        "name": "lyrics-section.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/LyricsSection.tsx",
+        "name": "LyricsSection.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/LyricsSection.tsx",
+        "name": "LyricsSection.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/ReleaseEngagement.tsx",
+      "name": "ReleaseEngagement.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/release-engagement.tsx",
+        "name": "release-engagement.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/ReleaseEngagement.tsx",
+        "name": "ReleaseEngagement.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/community/release-engagement.tsx",
+        "name": "release-engagement.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/streaming-links.tsx",
+      "name": "streaming-links.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/streaming-links.tsx",
+        "name": "streaming-links.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/StreamingLinks.tsx",
+        "name": "StreamingLinks.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/StreamingLinks.tsx",
+        "name": "StreamingLinks.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/community/community-feedback-loop.tsx",
+      "name": "community-feedback-loop.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/community-feedback-loop.tsx",
+        "name": "community-feedback-loop.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/community/community-feedback.tsx",
+      "name": "community-feedback.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/community-feedback.tsx",
+        "name": "community-feedback.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-background.tsx",
+      "name": "cosmic-background.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-background.tsx",
+        "name": "cosmic-background.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/cosmic-fonts.tsx",
+      "name": "cosmic-fonts.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/system/cosmic-fonts.tsx",
+        "name": "cosmic-fonts.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/cosmic-footer.tsx",
+      "name": "cosmic-footer.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/layout/cosmic-footer.tsx",
+        "name": "cosmic-footer.tsx",
+        "category": "layout"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicHeading.tsx",
+      "name": "CosmicHeading.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-heading.tsx",
+        "name": "cosmic-heading.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicIcons.tsx",
+      "name": "CosmicIcons.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-icons.tsx",
+        "name": "cosmic-icons.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/system/cosmic-icons.tsx",
+        "name": "cosmic-icons.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/ui/cosmic-icons.tsx",
+        "name": "cosmic-icons.tsx",
+        "category": "cosmic"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/cosmic-navigation.tsx",
+      "name": "cosmic-navigation.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/layout/cosmic-navigation.tsx",
+        "name": "cosmic-navigation.tsx",
+        "category": "layout"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-particles.tsx",
+      "name": "cosmic-particles.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-particles.tsx",
+        "name": "cosmic-particles.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/community/donation-module.tsx",
+      "name": "donation-module.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/donation-module.tsx",
+        "name": "donation-module.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/dynamic-playlists.tsx",
+      "name": "dynamic-playlists.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/dynamic-playlists.tsx",
+        "name": "dynamic-playlists.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/music/DynamicPlaylists.tsx",
+        "name": "DynamicPlaylists.tsx",
+        "category": "music"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/genius-lyrics-integration.tsx",
+      "name": "genius-lyrics-integration.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/genius-lyrics-integration.tsx",
+        "name": "genius-lyrics-integration.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/harmonic-journeys-grid.tsx",
+      "name": "harmonic-journeys-grid.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/harmonic-journeys-grid.tsx",
+        "name": "harmonic-journeys-grid.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/interactive-discography-map.tsx",
+      "name": "interactive-discography-map.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/interactive-discography-map.tsx",
+        "name": "interactive-discography-map.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/merchandise-storytelling.tsx",
+      "name": "merchandise-storytelling.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/merchandise-storytelling.tsx",
+        "name": "merchandise-storytelling.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/music-player.tsx",
+      "name": "music-player.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/music-player.tsx",
+        "name": "music-player.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/musical-journey-timeline.tsx",
+      "name": "musical-journey-timeline.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/musical-journey-timeline.tsx",
+        "name": "musical-journey-timeline.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/community/newsletter.tsx",
+      "name": "newsletter.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/newsletter.tsx",
+        "name": "newsletter.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/community/Newsletter.tsx",
+        "name": "Newsletter.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/performance-optimizations.tsx",
+      "name": "performance-optimizations.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/system/performance-optimizations.tsx",
+        "name": "performance-optimizations.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/seasonal-offers.tsx",
+      "name": "seasonal-offers.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/seasonal-offers.tsx",
+        "name": "seasonal-offers.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/site-header.tsx",
+      "name": "site-header.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/layout/site-header.tsx",
+        "name": "site-header.tsx",
+        "category": "layout"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/common/system/theme-provider.tsx",
+      "name": "theme-provider.tsx",
+      "category": "common"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/theme-provider.tsx",
+        "name": "theme-provider.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/track-segmentation-viewer.tsx",
+      "name": "track-segmentation-viewer.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/track-segmentation-viewer.tsx",
+        "name": "track-segmentation-viewer.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/TrackSegmentationViewer.tsx",
+        "name": "TrackSegmentationViewer.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/community/upcoming-ceremonies-grid.tsx",
+      "name": "upcoming-ceremonies-grid.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/upcoming-ceremonies-grid.tsx",
+        "name": "upcoming-ceremonies-grid.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/virtual-try-on.tsx",
+      "name": "virtual-try-on.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/virtual-try-on.tsx",
+        "name": "virtual-try-on.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicReveal.tsx",
+      "name": "CosmicReveal.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/CosmicReveal.tsx",
+        "name": "CosmicReveal.tsx",
+        "category": "cosmic"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-button.tsx",
+      "name": "cosmic-button.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-button.tsx",
+        "name": "cosmic-button.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-form.tsx",
+      "name": "cosmic-form.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-form.tsx",
+        "name": "cosmic-form.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-markdown.tsx",
+      "name": "cosmic-markdown.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-markdown.tsx",
+        "name": "cosmic-markdown.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-masonry.tsx",
+      "name": "cosmic-masonry.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-masonry.tsx",
+        "name": "cosmic-masonry.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-media-player.tsx",
+      "name": "cosmic-media-player.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-media-player.tsx",
+        "name": "cosmic-media-player.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-sidebar.tsx",
+      "name": "cosmic-sidebar.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-sidebar.tsx",
+        "name": "cosmic-sidebar.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-slider.tsx",
+      "name": "cosmic-slider.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-slider.tsx",
+        "name": "cosmic-slider.tsx",
+        "category": "ui"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/slider.tsx",
+        "name": "slider.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-spinner.tsx",
+      "name": "cosmic-spinner.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-spinner.tsx",
+        "name": "cosmic-spinner.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-stepper.tsx",
+      "name": "cosmic-stepper.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-stepper.tsx",
+        "name": "cosmic-stepper.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-toast.tsx",
+      "name": "cosmic-toast.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-toast.tsx",
+        "name": "cosmic-toast.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/CheckoutForm.tsx",
+      "name": "CheckoutForm.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/CheckoutForm.tsx",
+        "name": "CheckoutForm.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/CosmicCollectibles.tsx",
+      "name": "CosmicCollectibles.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/CosmicCollectibles.tsx",
+        "name": "CosmicCollectibles.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/EnhancedShoppingExperience.tsx",
+      "name": "EnhancedShoppingExperience.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/EnhancedShoppingExperience.tsx",
+        "name": "EnhancedShoppingExperience.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/EnhancedShoppingVenn.tsx",
+      "name": "EnhancedShoppingVenn.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/EnhancedShoppingVenn.tsx",
+        "name": "EnhancedShoppingVenn.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductCard.tsx",
+      "name": "ProductCard.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductCard.tsx",
+        "name": "ProductCard.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductComparison.tsx",
+      "name": "ProductComparison.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductComparison.tsx",
+        "name": "ProductComparison.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductFilter.tsx",
+      "name": "ProductFilter.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductFilter.tsx",
+        "name": "ProductFilter.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductFilters.tsx",
+      "name": "ProductFilters.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductFilters.tsx",
+        "name": "ProductFilters.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductGrid.tsx",
+      "name": "ProductGrid.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductGrid.tsx",
+        "name": "ProductGrid.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ProductQuickView.tsx",
+      "name": "ProductQuickView.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ProductQuickView.tsx",
+        "name": "ProductQuickView.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ShopHeader.tsx",
+      "name": "ShopHeader.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ShopHeader.tsx",
+        "name": "ShopHeader.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/ShoppingCart.tsx",
+      "name": "ShoppingCart.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/ShoppingCart.tsx",
+        "name": "ShoppingCart.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/shop/VoiceCommands.tsx",
+      "name": "VoiceCommands.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/shop/VoiceCommands.tsx",
+        "name": "VoiceCommands.tsx",
+        "category": "shop"
+      }
+    ],
+    "similarity": 1,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicButton.tsx",
+      "name": "CosmicButton.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-button.tsx",
+        "name": "cosmic-button.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/CosmicButton.tsx",
+        "name": "CosmicButton.tsx",
+        "category": "cosmic"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/design-system/button/CosmicButton.tsx",
+        "name": "CosmicButton.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.9800000000000001,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-interactive-effects.tsx",
+      "name": "cosmic-interactive-effects.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-interactive-effects.tsx",
+        "name": "cosmic-interactive-effects.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicInteractiveEffects.tsx",
+        "name": "CosmicInteractiveEffects.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.9800000000000001,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicSection.tsx",
+      "name": "CosmicSection.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-section.tsx",
+        "name": "cosmic-section.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-section.tsx",
+        "name": "cosmic-section.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9800000000000001,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicText.tsx",
+      "name": "CosmicText.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-text.tsx",
+        "name": "cosmic-text.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-text.tsx",
+        "name": "cosmic-text.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9800000000000001,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/particle-background.tsx",
+      "name": "particle-background.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/particle-background.tsx",
+        "name": "particle-background.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/ParticleBackground.tsx",
+        "name": "ParticleBackground.tsx",
+        "category": "cosmic"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/cosmic/ParticleBackground.tsx",
+        "name": "ParticleBackground.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.9800000000000001,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-carousel.tsx",
+      "name": "cosmic-carousel.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-carousel.tsx",
+        "name": "cosmic-carousel.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.96,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-dropdown.tsx",
+      "name": "cosmic-dropdown.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-dropdown.tsx",
+        "name": "cosmic-dropdown.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.96,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-accordion.tsx",
+      "name": "cosmic-accordion.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-accordion.tsx",
+        "name": "cosmic-accordion.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-avatar.tsx",
+      "name": "cosmic-avatar.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-avatar.tsx",
+        "name": "cosmic-avatar.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-modal.tsx",
+      "name": "cosmic-modal.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-modal.tsx",
+        "name": "cosmic-modal.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-progress-bar.tsx",
+      "name": "cosmic-progress-bar.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-progress-bar.tsx",
+        "name": "cosmic-progress-bar.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-select.tsx",
+      "name": "cosmic-select.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-select.tsx",
+        "name": "cosmic-select.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-table.tsx",
+      "name": "cosmic-table.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-table.tsx",
+        "name": "cosmic-table.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.95,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-alert.tsx",
+      "name": "cosmic-alert.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-alert.tsx",
+        "name": "cosmic-alert.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-drawer.tsx",
+      "name": "cosmic-drawer.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-drawer.tsx",
+        "name": "cosmic-drawer.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-link.tsx",
+      "name": "cosmic-link.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-link.tsx",
+        "name": "cosmic-link.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-radio.tsx",
+      "name": "cosmic-radio.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-radio.tsx",
+        "name": "cosmic-radio.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-toggle.tsx",
+      "name": "cosmic-toggle.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-toggle.tsx",
+        "name": "cosmic-toggle.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-tooltip.tsx",
+      "name": "cosmic-tooltip.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-tooltip.tsx",
+        "name": "cosmic-tooltip.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9333333333333333,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/binaural-beat-generator.tsx",
+      "name": "binaural-beat-generator.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/audio/BinauralBeatGenerator.tsx",
+        "name": "BinauralBeatGenerator.tsx",
+        "category": "audio"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/binaural-beat-generator.tsx",
+        "name": "binaural-beat-generator.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/BinauralBeatGenerator.tsx",
+        "name": "BinauralBeatGenerator.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.9332388794344162,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-badge.tsx",
+      "name": "cosmic-badge.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/badge.tsx",
+        "name": "badge.tsx",
+        "category": "ui"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-badge.tsx",
+        "name": "cosmic-badge.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9199999999999999,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicPortal.tsx",
+      "name": "CosmicPortal.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-portal.tsx",
+        "name": "cosmic-portal.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-portal.tsx",
+        "name": "cosmic-portal.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.9046753246753249,
+    "mergeRecommendation": "Strong"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-container.tsx",
+      "name": "cosmic-container.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-container.tsx",
+        "name": "cosmic-container.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.8999999999999999,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-heading.tsx",
+      "name": "cosmic-heading.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-heading.tsx",
+        "name": "cosmic-heading.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.8999999999999999,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/mood-based-player.tsx",
+      "name": "mood-based-player.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/mood-based-player.tsx",
+        "name": "mood-based-player.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/MoodBasedPlayer.tsx",
+        "name": "MoodBasedPlayer.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.8781638697984069,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/SpatialAudioExperience.tsx",
+      "name": "SpatialAudioExperience.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/audio/SpatialAudioExperience.tsx",
+        "name": "SpatialAudioExperience.tsx",
+        "category": "audio"
+      }
+    ],
+    "similarity": 0.847987327226764,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-checkbox.tsx",
+      "name": "cosmic-checkbox.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/checkbox.tsx",
+        "name": "checkbox.tsx",
+        "category": "ui"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-checkbox.tsx",
+        "name": "cosmic-checkbox.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.8154545454545454,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/voice-controlled-player.tsx",
+      "name": "voice-controlled-player.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/audio/VoiceControlledPlayer.tsx",
+        "name": "VoiceControlledPlayer.tsx",
+        "category": "audio"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/voice-controlled-player.tsx",
+        "name": "voice-controlled-player.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/VoiceControlledPlayer.tsx",
+        "name": "VoiceControlledPlayer.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.8140259740259741,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/layout/Navigation.tsx",
+      "name": "Navigation.tsx",
+      "category": "layout"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/Navigation.tsx",
+        "name": "Navigation.tsx",
+        "category": "root"
+      }
+    ],
+    "similarity": 0.8,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicBackground.tsx",
+      "name": "CosmicBackground.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/CosmicBackground.tsx",
+        "name": "CosmicBackground.tsx",
+        "category": "cosmic"
+      }
+    ],
+    "similarity": 0.8,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-input.tsx",
+      "name": "cosmic-input.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-input.tsx",
+        "name": "cosmic-input.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.8,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-tabs.tsx",
+      "name": "cosmic-tabs.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-tabs.tsx",
+        "name": "cosmic-tabs.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.8,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/cosmic-card.tsx",
+      "name": "cosmic-card.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-card.tsx",
+        "name": "cosmic-card.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/ui/cosmic-card.tsx",
+        "name": "cosmic-card.tsx",
+        "category": "cosmic"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicCard.tsx",
+        "name": "CosmicCard.tsx",
+        "category": "features"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/card.tsx",
+        "name": "card.tsx",
+        "category": "ui"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/cosmic-card.tsx",
+        "name": "cosmic-card.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.7781818181818181,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/cosmic/ui/sacred-geometry.tsx",
+      "name": "sacred-geometry.tsx",
+      "category": "cosmic"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/ui/sacred-geometry.tsx",
+        "name": "sacred-geometry.tsx",
+        "category": "ui"
+      }
+    ],
+    "similarity": 0.7754545454545454,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/breath-sync-player.tsx",
+      "name": "breath-sync-player.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/audio/BreathSyncPlayer.tsx",
+        "name": "BreathSyncPlayer.tsx",
+        "category": "audio"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/breath-sync-player.tsx",
+        "name": "breath-sync-player.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/BreathSyncPlayer.tsx",
+        "name": "BreathSyncPlayer.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.7649542670802514,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/CosmicCollectible.tsx",
+      "name": "CosmicCollectible.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/cosmic-collectible.tsx",
+        "name": "cosmic-collectible.tsx",
+        "category": "common"
+      }
+    ],
+    "similarity": 0.7648484848484849,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/audio/frequency-visualizer-3d.tsx",
+      "name": "frequency-visualizer-3d.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/audio/FrequencyVisualizer3D.tsx",
+        "name": "FrequencyVisualizer3D.tsx",
+        "category": "audio"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/common/frequency-visualizer-3d.tsx",
+        "name": "frequency-visualizer-3d.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/features/audio/FrequencyVisualizer3D.tsx",
+        "name": "FrequencyVisualizer3D.tsx",
+        "category": "features"
+      }
+    ],
+    "similarity": 0.7419680278921406,
+    "mergeRecommendation": "Consider"
+  },
+  {
+    "targetComponent": {
+      "path": "/home/runner/workspace/client/src/components/features/cosmic/sacred-geometry-demo.tsx",
+      "name": "sacred-geometry-demo.tsx",
+      "category": "features"
+    },
+    "componentsToMerge": [
+      {
+        "path": "/home/runner/workspace/client/src/components/common/sacred-geometry-demo.tsx",
+        "name": "sacred-geometry-demo.tsx",
+        "category": "common"
+      },
+      {
+        "path": "/home/runner/workspace/client/src/components/cosmic/SacredGeometryDemo.tsx",
+        "name": "SacredGeometryDemo.tsx",
+        "category": "cosmic"
+      }
+    ],
+    "similarity": 0.7085858585858585,
+    "mergeRecommendation": "Consider"
+  }
+]

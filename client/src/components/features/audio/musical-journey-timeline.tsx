@@ -19,8 +19,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { CosmicHeading } from "@/components/cosmic-heading"
-import { CosmicReveal } from "@/components/cosmic-interactive-effects"
+import { CosmicHeading } from "@/components/features/cosmic/CosmicHeading"
+import { CosmicReveal } from "@/components/features/cosmic/CosmicInteractiveEffects"
 import { cn } from "@/lib/utils"
 
 interface TimelineEvent {
@@ -188,6 +188,233 @@ const timelineEvents: TimelineEvent[] = [
 ]
 
 export function MusicalJourneyTimeline() {
+  const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null)
+  const [activeCategory, setActiveCategory] = useState<string>("all")
+
+  const filteredEvents =
+    activeCategory === "all" ? timelineEvents : timelineEvents.filter((event) => event.category === activeCategory)
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "album":
+        return "bg-purple-500"
+      case "collaboration":
+        return "bg-blue-500"
+      case "event":
+        return "bg-green-500"
+      case "breakthrough":
+        return "bg-amber-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "album":
+        return "🎵"
+      case "collaboration":
+        return "👥"
+      case "event":
+        return "🌟"
+      case "breakthrough":
+        return "💡"
+      default:
+        return "✨"
+    }
+  }
+
+  return (
+    <div className="w-full max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <CosmicHeading level={2} withAccent>
+          Musical Journey Timeline
+        </CosmicHeading>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-sm transition-colors",
+              activeCategory === "all"
+                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white",
+            )}
+          >
+            All
+          </button>
+          {["album", "collaboration", "event", "breakthrough"].map((category) => (
+            <button
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm transition-colors",
+                activeCategory === category
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                  : "bg-white/5 text-white/70 border border-white/10 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              {getCategoryIcon(category)} {category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="relative">
+        {/* Vertical line */}
+        <div className="absolute left-0 md:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-500 via-indigo-500 to-purple-500/30 transform md:-translate-x-1/2"></div>
+
+        <div className="space-y-0">
+          {filteredEvents.map((event, index) => (
+            <CosmicReveal key={event.id} direction={index % 2 === 0 ? "left" : "right"} delay={index * 0.1}>
+              <div
+                className={cn(
+                  "relative flex items-start gap-4 pb-10",
+                  index % 2 === 0 ? "md:flex-row-reverse text-right" : "md:flex-row text-left",
+                  "flex-col md:flex-row",
+                )}
+              >
+                {/* Timeline dot */}
+                <div className="absolute left-0 md:left-1/2 w-5 h-5 rounded-full border-2 border-white bg-black transform -translate-x-1/2 z-10"></div>
+
+                {/* Year marker */}
+                <div
+                  className={cn(
+                    "absolute left-6 md:left-1/2 bg-purple-900/50 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium text-white border border-purple-500/30 transform md:translate-y-[-50%]",
+                    index % 2 === 0 ? "md:-translate-x-[calc(100%+1rem)]" : "md:translate-x-4",
+                  )}
+                >
+                  {event.year}
+                </div>
+
+                {/* Content */}
+                <div
+                  className={cn("w-full md:w-[calc(50%-2rem)] pt-8 md:pt-0", index % 2 === 0 ? "md:pr-8" : "md:pl-8")}
+                >
+                  <div
+                    className="rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 hover:border-purple-500/30 transition-colors cursor-pointer"
+                    onClick={() => setSelectedEvent(event)}
+                  >
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={event.image || "/placeholder.svg"}
+                        alt={event.title}
+                        fill
+                        className="object-cover transition-transform hover:scale-105 duration-500"
+                      />
+                      <div className="absolute top-3 right-3">
+                        <span
+                          className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium text-white",
+                            getCategoryColor(event.category),
+                          )}
+                        >
+                          {event.category}
+                        </span>
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-60"></div>
+                      <div className="absolute bottom-0 left-0 p-4">
+                        <h3 className="text-lg font-bold text-white">{event.title}</h3>
+                        <p className="text-sm text-white/80">{event.location}</p>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-white/70">{event.description}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CosmicReveal>
+          ))}
+        </div>
+      </div>
+
+      {/* Event Details Modal */}
+      <AnimatePresence>
+        {selectedEvent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl bg-black/90 border border-purple-500/20"
+            >
+              {/* Header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-black/80 backdrop-blur-md border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium text-white",
+                      getCategoryColor(selectedEvent.category),
+                    )}
+                  >
+                    {selectedEvent.category}
+                  </span>
+                  <h2 className="text-xl font-bold text-white">{selectedEvent.title}</h2>
+                </div>
+                <button
+                  onClick={() => setSelectedEvent(null)}
+                  className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
+                  <Image
+                    src={selectedEvent.image || "/placeholder.svg"}
+                    alt={selectedEvent.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-white">{selectedEvent.title}</h3>
+                        <p className="text-sm text-white/80">
+                          {selectedEvent.location} • {selectedEvent.year}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-white/80 text-lg mb-6">{selectedEvent.description}</p>
+
+                {selectedEvent.details && (
+                  <div className="space-y-6 mt-8">
+                    {selectedEvent.details.map((detail, index) => (
+                      <div key={index} className="space-y-2">
+                        <h4 className="text-lg font-medium text-purple-300">{detail.heading}</h4>
+                        <p className="text-white/70">{detail.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+
+
+/**
+ * Original MusicalJourneyTimeline component merged from: client/src/components/common/musical-journey-timeline.tsx
+ * Merge date: 2025-04-05
+ */
+function MusicalJourneyTimelineOriginal() {
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null)
   const [activeCategory, setActiveCategory] = useState<string>("all")
 

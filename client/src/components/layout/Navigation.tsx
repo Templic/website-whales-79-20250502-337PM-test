@@ -12,3 +12,12 @@ import { Link } from "wouter";
 export function Navigation() {
   return null;
 }
+
+
+/**
+ * Original Navigation component merged from: client/src/components/Navigation.tsx
+ * Merge date: 2025-04-05
+ */
+function NavigationOriginal() {
+  return null;
+}

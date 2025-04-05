@@ -24,7 +24,7 @@ import CosmicSelect from '../../../components/ui/cosmic-select';
 import CosmicCheckbox from '../../../components/ui/cosmic-checkbox';
 import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../../../components/ui/cosmic-radio';
 import CosmicToggle from '../../../components/ui/cosmic-toggle';
-import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../../../components/ui/cosmic-toast';
+import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../../../components/features/cosmic/cosmic-toast';
 import { CosmicSlider } from '../../../components/ui/cosmic-slider';
 import { CosmicSidebar } from '../../../components/ui/cosmic-sidebar';
 import { CosmicMediaPlayer } from '../../../components/ui/cosmic-media-player';
@@ -36,7 +36,7 @@ import {
   CosmicFormGroup, 
   CosmicFormLabel, 
   CosmicFormHelperText 
-} from '../../../components/ui/cosmic-form';
+} from '../../../components/features/cosmic/cosmic-form';
 import { 
   CosmicTable, 
   CosmicTableContainer, 

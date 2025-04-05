@@ -1,5 +1,5 @@
-import { AccessibilityControls } from "../../components/common/AccessibilityControls"
-import { AlbumShowcase } from "../../components/common/AlbumShowcase"
+import { AccessibilityControls } from "../../components/common/accessibility-controls"
+import { AlbumShowcase } from "../../components/features/audio/AlbumShowcase"
 import { CosmicCollectible, CosmicCollectiblesGrid, CosmicWalletConnect } from "../../components/features/cosmic/CosmicCollectible"
 import { Link } from "wouter"
 

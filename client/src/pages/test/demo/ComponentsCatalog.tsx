@@ -8,7 +8,7 @@ import { CosmicSection } from "../../../components/features/cosmic/CosmicSection
 import { CosmicText } from "../../../components/features/cosmic/CosmicText";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AccessibilityControls } from "../../../components/common/AccessibilityControls";
+import { AccessibilityControls } from "../../../components/common/accessibility-controls";
 import {
   Settings, Code, Music, Palette, Filter, Sliders, Box, 
   Headphones, Compass, Layers, Aperture

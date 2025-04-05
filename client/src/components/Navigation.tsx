@@ -1,8 +1,7 @@
-
-import { Link } from "wouter";
-
-// NOTE: This component is no longer used because we now use the navigation in layout.tsx.
-// We keep this file for reference purposes only.
-export function Navigation() {
-  return null;
-}
+/**
+ * @deprecated This component has been consolidated with Navigation.tsx.
+ * Please use the component from ./layout/Navigation instead.
+ */
+import { Navigation } from './layout/Navigation';
+export { Navigation };
+export default Navigation;

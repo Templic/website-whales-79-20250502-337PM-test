@@ -293,3 +293,82 @@ export const showInfoToast = (message: string, title?: string, duration = 5000) 
 
 export const showCosmicToast = (message: string, title?: string, duration = 5000) => 
   addToast({ message, title, variant: 'cosmic', animation: 'glow', duration });
+
+/**
+ * Original addToast component merged from: client/src/components/ui/cosmic-toast.tsx
+ * Merge date: 2025-04-05
+ */
+const addToastOriginal = (toast: Omit<Toast, 'id'>) => {
+  const id = generateId();
+  const newToast = { ...toast, id };
+  toasts = [...toasts, newToast];
+  listeners.forEach(listener => listener(toasts));
+  return id;
+};
+
+// Remove a toast by ID
+export const removeToast = (id: string) => {
+  toasts = toasts.filter(toast => toast.id !== id);
+  listeners.forEach(listener => listener(toasts));
+};
+
+// Clear all toasts
+export const clearToasts = () => {
+  toasts = [];
+  listeners.forEach(listener => listener(toasts));
+};
+
+// Toast Manager Context
+export const ToastManager: FC<ToastManagerProps> = ({ 
+  autoClose = true,
+  position = 'top-right'
+}) => {
+  const [currentToasts, setCurrentToasts] = useState<Toast[]>(toasts);
+
+  useEffect(() => {
+    // Subscribe to toast updates
+    const onToastsChange = (updatedToasts: Toast[]) => {
+      setCurrentToasts([...updatedToasts]);
+    };
+    
+    listeners.push(onToastsChange);
+    
+    return () => {
+      listeners = listeners.filter(listener => listener !== onToastsChange);
+    };
+  }, []);
+
+  return (
+    <>
+      {currentToasts.map(toast => (
+        <CosmicToast
+          key={toast.id}
+          open={true}
+          position={position}
+          title={toast.title}
+          message={toast.message}
+          variant={toast.variant}
+          animation={toast.animation}
+          duration={toast.duration || (autoClose ? 5000 : 0)}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </>
+  );
+};
+
+// Utility functions for specific toast types
+export const showSuccessToast = (message: string, title?: string, duration = 5000) => 
+  addToastOriginal({ message, title, variant: 'success', duration });
+
+export const showErrorToast = (message: string, title?: string, duration = 5000) => 
+  addToastOriginal({ message, title, variant: 'error', duration });
+
+export const showWarningToast = (message: string, title?: string, duration = 5000) => 
+  addToastOriginal({ message, title, variant: 'warning', duration });
+
+export const showInfoToast = (message: string, title?: string, duration = 5000) => 
+  addToastOriginal({ message, title, variant: 'info', duration });
+
+export const showCosmicToast = (message: string, title?: string, duration = 5000) => 
+  addToastOriginal({ message, title, variant: 'cosmic', animation: 'glow', duration });
