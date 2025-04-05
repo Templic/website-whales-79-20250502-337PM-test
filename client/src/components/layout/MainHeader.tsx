@@ -5,6 +5,7 @@
  * staggered navigation, and cosmic design elements.
  * 
  * Created: 2025-04-05 - Updated with enhancements
+ * Latest Update: Added sacred geometry elements and improved staggered navigation
  */
 
 import { useState, useCallback, useEffect } from "react";
@@ -28,7 +29,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { motion } from "framer-motion";
-// import SacredGeometry from "../../components/ui/sacred-geometry";
+import SacredGeometry from "../../components/ui/sacred-geometry";
 
 // Define the navigation items structure
 interface NavItem {
@@ -147,15 +148,43 @@ export function MainHeader() {
         ${autoHideNav ? 'transition-transform duration-300' : ''}
       `}
     >
-      {/* Background Elements - Only visible on sides */}
+      {/* Background Elements with Sacred Geometry - Only visible on sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        <div className="absolute -top-24 -right-24 opacity-30 transform rotate-45">
-          {/* Cosmic element placeholder */}
-          <div className="w-[120px] h-[120px] bg-gradient-to-br from-cyan-500/20 to-purple-600/20 rounded-full"></div>
+        <div className="absolute -top-14 -right-14 opacity-40 transform rotate-45">
+          <SacredGeometry 
+            variant="merkaba" 
+            size={80} 
+            animated={true} 
+            intensity="medium" 
+            className="text-cyan-400" 
+          />
         </div>
-        <div className="absolute -bottom-16 -left-16 opacity-20">
-          {/* Cosmic element placeholder */}
-          <div className="w-[100px] h-[100px] bg-gradient-to-br from-purple-500/20 to-cyan-600/20 rounded-full"></div>
+        <div className="absolute -bottom-10 -left-10 opacity-30">
+          <SacredGeometry 
+            variant="hexagon" 
+            size={70} 
+            animated={true} 
+            intensity="medium" 
+            className="text-purple-400" 
+          />
+        </div>
+        <div className="absolute top-1/2 -translate-y-1/2 -right-8 opacity-20">
+          <SacredGeometry 
+            variant="tetrahedron" 
+            size={50} 
+            animated={true} 
+            intensity="subtle" 
+            className="text-cyan-300" 
+          />
+        </div>
+        <div className="absolute top-1/2 -translate-y-1/2 -left-8 opacity-20">
+          <SacredGeometry 
+            variant="octahedron" 
+            size={50} 
+            animated={true} 
+            intensity="subtle" 
+            className="text-purple-300" 
+          />
         </div>
       </div>
       
@@ -273,15 +302,26 @@ export function MainHeader() {
             </div>
           </div>
 
-          {/* Staggered Two-Row Navigation - Desktop */}
-          <div className="hidden md:block mt-2">
+          {/* Interlacing Staggered Two-Row Navigation - Desktop */}
+          <div className="hidden md:block mt-2 relative">
+            {/* Sacred Geometry Background Elements */}
+            <div className="absolute inset-x-0 top-0 flex justify-center opacity-10 pointer-events-none">
+              <SacredGeometry 
+                variant="flower-of-life" 
+                size={120} 
+                animated={false} 
+                intensity="subtle" 
+                className="text-cyan-300" 
+              />
+            </div>
+            
             <div className="flex flex-col space-y-1">
-              {/* First Row */}
-              <div className="flex justify-center space-x-6 lg:space-x-10">
+              {/* First Row - Staggered from left */}
+              <div className="flex justify-center">
                 {primaryNavItems.map((item, index) => (
                   <motion.div 
                     key={item.path}
-                    className="relative"
+                    className="relative mx-2 md:mx-3 lg:mx-5"
                     initial="initial"
                     whileHover="hover"
                     custom={index}
@@ -289,8 +329,16 @@ export function MainHeader() {
                     <Link
                       href={item.path}
                       onClick={() => handleNavigationClick(item.path)}
-                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center"
+                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center relative"
                     >
+                      <div className="absolute -left-1 -top-1 opacity-50">
+                        <SacredGeometry 
+                          variant={index % 2 === 0 ? "hexagon" : "triangle"} 
+                          size={16} 
+                          intensity="subtle" 
+                          className={index % 2 === 0 ? "text-cyan-300" : "text-purple-300"} 
+                        />
+                      </div>
                       {item.icon}
                       {item.name}
                     </Link>
@@ -314,12 +362,12 @@ export function MainHeader() {
                 ))}
               </div>
               
-              {/* Second Row - Slightly Offset */}
-              <div className="flex justify-center space-x-6 lg:space-x-10 ml-8">
+              {/* Second Row - Staggered from right with different shapes */}
+              <div className="flex justify-center ml-8">
                 {secondaryNavItems.map((item, index) => (
                   <motion.div 
                     key={item.path}
-                    className="relative"
+                    className="relative mx-2 md:mx-3 lg:mx-5"
                     initial="initial"
                     whileHover="hover"
                     custom={index}
@@ -327,8 +375,16 @@ export function MainHeader() {
                     <Link
                       href={item.path}
                       onClick={() => handleNavigationClick(item.path)}
-                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center"
+                      className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center relative"
                     >
+                      <div className="absolute -left-1 -top-1 opacity-50">
+                        <SacredGeometry 
+                          variant={index % 2 === 0 ? "tetrahedron" : "pentagon"} 
+                          size={16} 
+                          intensity="subtle" 
+                          className={index % 2 === 0 ? "text-purple-300" : "text-cyan-300"} 
+                        />
+                      </div>
                       {item.icon}
                       {item.name}
                     </Link>
