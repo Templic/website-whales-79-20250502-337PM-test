@@ -49,7 +49,6 @@ const primaryNavItems: NavItem[] = [
 
 // Second row nav items - secondary navigation
 const secondaryNavItems: NavItem[] = [
-  { name: "Cosmic", path: "/cosmic-experience", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
   { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
   { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "cyan" }
 ];
@@ -307,7 +306,7 @@ export function MainHeader() {
             {/* Sacred Geometry Background Elements */}
             <div className="absolute inset-x-0 top-0 flex justify-center opacity-10 pointer-events-none">
               <SacredGeometry 
-                variant="flower-of-life" 
+                variant="merkaba" 
                 size={120} 
                 animated={false} 
                 intensity="subtle" 
