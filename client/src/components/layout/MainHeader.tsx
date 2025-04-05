@@ -9,35 +9,46 @@
 
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useCallback } from "react";
-import { Menu, X, Search, Music, MoonStar, Heart, Calendar, Mail, Book, Home, Info, ShoppingBag, Users } from "lucide-react";
+import { Menu, X, Search, Music, MoonStar, Moon, Heart, Calendar, Mail, Book, Home, Info, ShoppingBag, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import SacredGeometry from "@/components/ui/sacred-geometry";
 
 // Navigation items based on sitemap, excluding legacy and demo pages
+// Icon components with sizes for different views
+const createIcon = (Icon: React.ElementType, size = "small") => {
+  if (size === "large") {
+    return <Icon className="h-6 w-6" />;
+  } else if (size === "medium") {
+    return <Icon className="h-5 w-5" />;
+  } else {
+    return <Icon className="h-4 w-4" />;
+  }
+};
+
 // Group 1: Primary navigation
 const primaryNavItems = [
-  { path: "/", label: "Home", icon: <Home className="h-4 w-4" />, color: "cyan" },
-  { path: "/about", label: "About", icon: <Info className="h-4 w-4" />, color: "purple" },
-  { path: "/music-release", label: "New Music", icon: <Music className="h-4 w-4" />, color: "cyan" },
-  { path: "/tour", label: "Tour", icon: <Calendar className="h-4 w-4" />, color: "purple" },
-  { path: "/engage", label: "Engage", icon: <Heart className="h-4 w-4" />, color: "cyan" }
+  { path: "/", label: "Home", icon: <Home className="h-4 w-4" />, mobileIcon: createIcon(Home, "large"), color: "cyan" },
+  { path: "/about", label: "About", icon: <Info className="h-4 w-4" />, mobileIcon: createIcon(Info, "large"), color: "purple" },
+  { path: "/music-release", label: "New Music", icon: <Music className="h-4 w-4" />, mobileIcon: createIcon(Music, "large"), color: "cyan" },
+  { path: "/tour", label: "Tour", icon: <Calendar className="h-4 w-4" />, mobileIcon: createIcon(Calendar, "large"), color: "purple" },
+  { path: "/engage", label: "Engage", icon: <Heart className="h-4 w-4" />, mobileIcon: createIcon(Heart, "large"), color: "cyan" }
 ];
 
 // Group 2: Secondary navigation
 const secondaryNavItems = [
-  { path: "/archived-music", label: "Archived Music", icon: <Music className="h-4 w-4" />, color: "purple" },
-  { path: "/cosmic-connectivity", label: "Cosmic", icon: <MoonStar className="h-4 w-4" />, color: "cyan" },
-  { path: "/newsletter", label: "Newsletter", icon: <Mail className="h-4 w-4" />, color: "purple" },
-  { path: "/blog", label: "Blog", icon: <Book className="h-4 w-4" />, color: "cyan" },
-  { path: "/shop", label: "Shop", icon: <ShoppingBag className="h-4 w-4" />, color: "purple" }
+  { path: "/archived-music", label: "Archived Music", icon: <Music className="h-4 w-4" />, mobileIcon: createIcon(Music, "medium"), color: "purple" },
+  { path: "/cosmic-connectivity", label: "Cosmic", icon: <MoonStar className="h-4 w-4" />, mobileIcon: createIcon(MoonStar, "medium"), color: "cyan" },
+  { path: "/newsletter", label: "Newsletter", icon: <Mail className="h-4 w-4" />, mobileIcon: createIcon(Mail, "medium"), color: "purple" },
+  { path: "/blog", label: "Blog", icon: <Book className="h-4 w-4" />, mobileIcon: createIcon(Book, "medium"), color: "cyan" },
+  { path: "/shop", label: "Shop", icon: <ShoppingBag className="h-4 w-4" />, mobileIcon: createIcon(ShoppingBag, "medium"), color: "purple" }
 ];
 
 // Additional items shown in mobile menu
 const additionalNavItems = [
-  { path: "/community", label: "Community", icon: <Users className="h-4 w-4" />, color: "cyan" },
-  { path: "/collaboration", label: "Collaborate", icon: <Users className="h-4 w-4" />, color: "purple" },
-  { path: "/contact", label: "Contact", icon: <Mail className="h-4 w-4" />, color: "cyan" }
+  { path: "/community", label: "Community", icon: <Users className="h-4 w-4" />, mobileIcon: createIcon(Users, "medium"), color: "cyan" },
+  { path: "/collaboration", label: "Collaborate", icon: <Users className="h-4 w-4" />, mobileIcon: createIcon(Users, "medium"), color: "purple" },
+  { path: "/contact", label: "Contact", icon: <Mail className="h-4 w-4" />, mobileIcon: createIcon(Mail, "medium"), color: "cyan" }
 ];
 
 // All navigation items combined (for mobile menu)
@@ -99,12 +110,12 @@ export function MainHeader() {
   const getColorStyles = (color: string, isActive: boolean) => {
     if (color === 'cyan') {
       return isActive 
-        ? "text-cyan-300 border-cyan-500/30 bg-cyan-950/30 shadow-[0_0_10px_rgba(0,235,214,0.2)]" 
-        : "text-white/80 border-white/10 hover:border-cyan-500/20 hover:bg-cyan-950/20 hover:text-cyan-300 hover:shadow-[0_0_8px_rgba(0,235,214,0.15)]";
+        ? "text-cyan-300 border-cyan-500/60 bg-gradient-to-br from-cyan-950/80 to-cyan-900/40 shadow-[0_0_15px_rgba(0,235,214,0.3)]" 
+        : "text-white/90 border-white/10 hover:border-cyan-500/40 hover:bg-gradient-to-br hover:from-cyan-950/60 hover:to-cyan-900/20 hover:text-cyan-300 hover:shadow-[0_0_12px_rgba(0,235,214,0.25)]";
     } else {
       return isActive 
-        ? "text-purple-300 border-purple-500/30 bg-purple-950/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]" 
-        : "text-white/80 border-white/10 hover:border-purple-500/20 hover:bg-purple-950/20 hover:text-purple-300 hover:shadow-[0_0_8px_rgba(168,85,247,0.15)]";
+        ? "text-purple-300 border-purple-500/60 bg-gradient-to-br from-purple-950/80 to-purple-900/40 shadow-[0_0_15px_rgba(168,85,247,0.3)]" 
+        : "text-white/90 border-white/10 hover:border-purple-500/40 hover:bg-gradient-to-br hover:from-purple-950/60 hover:to-purple-900/20 hover:text-purple-300 hover:shadow-[0_0_12px_rgba(168,85,247,0.25)]";
     }
   };
 
@@ -118,8 +129,9 @@ export function MainHeader() {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       style={{
-        backgroundColor: `rgba(5, 15, 40, ${headerOpacity})`,
+        backgroundColor: `rgba(0, 5, 20, ${headerOpacity + 0.25})`,
         backdropFilter: "blur(12px)",
+        boxShadow: "0 4px 20px rgba(0, 235, 214, 0.15), inset 0 0 0 1px rgba(0, 235, 214, 0.1)"
       }}
     >
       <div className="relative overflow-hidden">
@@ -342,27 +354,31 @@ export function MainHeader() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="md:hidden fixed inset-0 top-[57px] bg-black/95 backdrop-blur-xl z-[70] overflow-hidden"
+            className="md:hidden fixed inset-0 top-[57px] bg-[#020B16] z-[70] overflow-hidden"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
+            style={{
+              backgroundImage: "radial-gradient(circle at 50% 50%, rgba(0, 235, 214, 0.05) 0%, rgba(0, 10, 30, 0.95) 70%)",
+              boxShadow: "inset 0 0 100px rgba(0, 235, 214, 0.1)"
+            }}
           >
             {/* Sacred Geometry Background Elements */}
-            <div className="absolute top-10 left-10 opacity-5">
-              <SacredGeometry variant="merkaba" size={120} animated={true} intensity="subtle" />
+            <div className="absolute top-10 left-10 opacity-20">
+              <SacredGeometry variant="merkaba" size={120} animated={true} intensity="medium" />
             </div>
-            <div className="absolute bottom-20 right-10 opacity-5">
-              <SacredGeometry variant="dodecahedron" size={120} animated={true} intensity="subtle" />
+            <div className="absolute bottom-20 right-10 opacity-20">
+              <SacredGeometry variant="dodecahedron" size={120} animated={true} intensity="medium" />
             </div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-3">
-              <SacredGeometry variant="icosahedron" size={200} animated={true} intensity="subtle" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15">
+              <SacredGeometry variant="icosahedron" size={200} animated={true} intensity="medium" />
             </div>
-            <div className="absolute top-[20%] right-[15%] opacity-4">
-              <SacredGeometry variant="octahedron" size={80} animated={true} intensity="subtle" />
+            <div className="absolute top-[20%] right-[15%] opacity-20">
+              <SacredGeometry variant="octahedron" size={80} animated={true} intensity="medium" />
             </div>
-            <div className="absolute bottom-[15%] left-[20%] opacity-4">
-              <SacredGeometry variant="tetrahedron" size={60} animated={true} intensity="subtle" />
+            <div className="absolute bottom-[15%] left-[20%] opacity-20">
+              <SacredGeometry variant="tetrahedron" size={60} animated={true} intensity="medium" />
             </div>
             
             {/* Floating particles */}
@@ -407,16 +423,71 @@ export function MainHeader() {
                 </div>
               </div>
               
+              {/* Menu Title */}
+              <div className="mb-6 mx-auto text-center">
+                <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
+                  Cosmic Experience
+                </h2>
+              </div>
+            
               {/* Primary Navigation Group */}
-              <div className="mb-4">
-                <div className="text-xs uppercase font-medium text-cyan-400/70 mb-2 tracking-wider px-1">Main Navigation</div>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="mb-8">
+                <div className="grid grid-cols-2 gap-4">
                   {primaryNavItems.map((item, index) => (
                     <motion.div
                       key={item.path}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.03, duration: 0.2 }}
+                      className="relative"
+                    >
+                      {/* Glow effect around buttons */}
+                      <div className={cn(
+                        "absolute inset-0 rounded-lg opacity-30 blur-md",
+                        item.color === 'cyan' ? "bg-cyan-500/20" : "bg-purple-500/20"
+                      )}></div>
+                      
+                      <Link
+                        href={item.path}
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={cn(
+                          "flex flex-col items-center justify-center py-6 px-3 rounded-lg transition-all duration-300 border border-white/10 text-center relative bg-black/20 backdrop-filter backdrop-blur-sm",
+                          location === item.path
+                            ? (item.color === 'cyan'
+                              ? "border-cyan-500/50 text-cyan-300 shadow-[0_0_20px_rgba(0,235,214,0.3)]"
+                              : "border-purple-500/50 text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.3)]")
+                            : "text-white hover:border-white/30"
+                        )}
+                      >
+                        {location === item.path && (
+                          <div className={cn(
+                            "absolute inset-0 opacity-20 blur-sm rounded-lg pointer-events-none",
+                            item.color === 'cyan'
+                              ? "bg-gradient-to-br from-cyan-500/30 to-blue-600/10"
+                              : "bg-gradient-to-br from-purple-500/30 to-indigo-600/10"
+                          )}></div>
+                        )}
+                        <div className="text-2xl mb-3">{item.mobileIcon}</div>
+                        <span className="text-base font-medium">{item.label}</span>
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Secondary Navigation Group */}
+              <div className="mb-8">
+                <div className="grid grid-cols-2 gap-3">
+                  {secondaryNavItems.slice(0, 4).map((item, index) => (
+                    <motion.div
+                      key={item.path}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 + index * 0.03, duration: 0.2 }}
+                      className="relative"
                     >
                       <Link
                         href={item.path}
@@ -425,33 +496,31 @@ export function MainHeader() {
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         className={cn(
-                          "flex flex-col items-center justify-center space-y-2 p-3 rounded-lg transition-all duration-300 border text-center relative",
-                          getColorStyles(item.color, location === item.path)
+                          "flex items-center justify-center py-3 px-2 rounded-lg transition-all duration-300 border border-white/10 text-center relative bg-black/30 backdrop-blur-sm",
+                          location === item.path
+                            ? (item.color === 'cyan'
+                              ? "border-cyan-500/40 text-cyan-300 shadow-[0_0_15px_rgba(0,235,214,0.2)]"
+                              : "border-purple-500/40 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.2)]")
+                            : "text-white/90 hover:border-white/20"
                         )}
                       >
-                        {location === item.path && (
-                          <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-cyan-500 to-purple-600 blur-sm rounded-lg pointer-events-none"></div>
-                        )}
-                        <div className="p-1.5 rounded-full bg-black/20 backdrop-blur-sm">
-                          {item.icon}
-                        </div>
-                        <span className="text-xs font-medium">{item.label}</span>
+                        <div className="text-lg mr-2">{item.mobileIcon}</div>
+                        <span className="text-sm font-medium">{item.label}</span>
                       </Link>
                     </motion.div>
                   ))}
                 </div>
               </div>
               
-              {/* Secondary Navigation Group */}
-              <div className="mb-4">
-                <div className="text-xs uppercase font-medium text-purple-400/70 mb-2 tracking-wider px-1">More Experiences</div>
+              {/* Additional Links */}
+              <div className="mb-5">
                 <div className="grid grid-cols-3 gap-2">
-                  {[...secondaryNavItems, ...additionalNavItems].map((item, index) => (
+                  {[...secondaryNavItems.slice(4), ...additionalNavItems].map((item, index) => (
                     <motion.div
                       key={item.path}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + index * 0.03, duration: 0.2 }}
+                      transition={{ delay: 0.25 + index * 0.03, duration: 0.2 }}
                     >
                       <Link
                         href={item.path}
@@ -461,14 +530,15 @@ export function MainHeader() {
                         }}
                         className={cn(
                           "flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 border text-center relative",
-                          getColorStyles(item.color, location === item.path)
+                          location === item.path
+                            ? (item.color === 'cyan'
+                              ? "border-cyan-500/40 text-cyan-300 bg-black/40 shadow-[0_0_10px_rgba(0,235,214,0.15)]"
+                              : "border-purple-500/40 text-purple-300 bg-black/40 shadow-[0_0_10px_rgba(168,85,247,0.15)]")
+                            : "text-white/80 border-white/10 bg-black/20 hover:border-white/20"
                         )}
                       >
-                        {location === item.path && (
-                          <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-cyan-500 to-purple-600 blur-sm rounded-lg pointer-events-none"></div>
-                        )}
-                        {item.icon}
-                        <span className="text-xs font-medium mt-1 line-clamp-1">{item.label}</span>
+                        <div className="text-base mb-1">{item.mobileIcon}</div>
+                        <span className="text-xs font-medium line-clamp-1">{item.label}</span>
                       </Link>
                     </motion.div>
                   ))}
