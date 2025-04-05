@@ -306,11 +306,6 @@ const addToastOriginal = (toast: Omit<Toast, 'id'>) => {
   return id;
 };
 
-// Remove a toast by ID
-export const removeToast = (id: string) => {
-  toasts = toasts.filter(toast => toast.id !== id);
-  listeners.forEach(listener => listener(toasts));
-};
 
 // Clear all toasts
 export const clearToasts = () => {

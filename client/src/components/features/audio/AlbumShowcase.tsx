@@ -1,7 +1,3 @@
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-
 /**
  * AlbumShowcase.tsx
  * 
@@ -11,8 +7,8 @@ import { cn } from "@/lib/utils"
  */
 import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "../ui/button"
-import { cn } from "../../lib/utils"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface Album {
   id: number
@@ -141,7 +137,9 @@ export function AlbumShowcase({ albums = defaultAlbums, className }: AlbumShowca
  * Original AlbumShowcase component merged from: client/src/components/common/album-showcase.tsx
  * Merge date: 2025-04-05
  */
-function AlbumShowcaseOriginal() {
+function AlbumShowcaseOriginalKebabCase() {
+  // Local copy of albums for this specific component
+  const albums = defaultAlbums;
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const nextSlide = () => {
@@ -198,11 +196,9 @@ function AlbumShowcaseOriginal() {
               >
                 <div className="overflow-hidden rounded-xl bg-black/20 p-4 backdrop-blur-sm">
                   <div className="relative aspect-square overflow-hidden rounded-lg">
-                    <Image
+                    <img
                       src={album.image || "/placeholder.svg"}
                       alt={album.title}
-                      width={500}
-                      height={500}
                       className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                     />
                   </div>
@@ -227,7 +223,7 @@ function AlbumShowcaseOriginal() {
  * Original AlbumShowcase component merged from: client/src/components/common/AlbumShowcase.tsx
  * Merge date: 2025-04-05
  */
-function AlbumShowcaseOriginal({ albums = defaultAlbums, className }: AlbumShowcaseProps) {
+function AlbumShowcaseOriginalPascalCase({ albums = defaultAlbums, className }: AlbumShowcaseProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const nextSlide = () => {
@@ -309,7 +305,9 @@ function AlbumShowcaseOriginal({ albums = defaultAlbums, className }: AlbumShowc
  * Original AlbumShowcase component merged from: client/src/components/music/AlbumShowcase.tsx
  * Merge date: 2025-04-05
  */
-function AlbumShowcaseOriginal({ customAlbums, className }: AlbumShowcaseProps) {
+function AlbumShowcaseOriginalMusic({ customAlbums, className }: { customAlbums?: Album[], className?: string }) {
+  // Local copy of albums for this specific component
+  const albums = defaultAlbums;
   const [currentIndex, setCurrentIndex] = useState(0);
   const displayAlbums = customAlbums || albums;
 

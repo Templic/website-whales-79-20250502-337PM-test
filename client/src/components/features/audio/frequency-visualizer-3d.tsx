@@ -1545,7 +1545,7 @@ function FrequencyVisualizer3DOriginal({
  * Original FrequencyVisualizer3D component merged from: client/src/components/common/frequency-visualizer-3d.tsx
  * Merge date: 2025-04-05
  */
-function FrequencyVisualizer3DOriginal({
+function FrequencyVisualizer3DMuladharaOriginal({
   audioSrc = "/placeholder.mp3",
   title = "Root Chakra Alignment",
   frequency = 396,
@@ -2255,7 +2255,7 @@ function FrequencyVisualizer3DOriginal({
  * Original FrequencyVisualizer3D component merged from: client/src/components/features/audio/FrequencyVisualizer3D.tsx
  * Merge date: 2025-04-05
  */
-function FrequencyVisualizer3DOriginal({
+function FrequencyVisualizer3DFeaturesOriginal({
   audioUrl,
   height = '400px',
   width = '100%',

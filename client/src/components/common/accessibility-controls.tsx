@@ -32,6 +32,8 @@ import {
   ChevronUp,
   ChevronDown,
   Settings,
+  Moon,
+  Waves,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -392,7 +394,7 @@ export function AccessibilityControls() {
  * Original AccessibilityControls component merged from: client/src/components/common/accessibility/accessibility-controls.tsx
  * Merge date: 2025-04-05
  */
-function AccessibilityControlsOriginal() {
+function AccessibilityControlsNestedOriginal() {
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [textSize, setTextSize] = useState(100)
@@ -749,7 +751,7 @@ function AccessibilityControlsOriginal() {
  * Original AccessibilityControls component merged from: client/src/components/common/accessibility/AccessibilityControls.tsx
  * Merge date: 2025-04-05
  */
-function AccessibilityControlsOriginal() {
+function AccessibilityControlsPascalCaseOriginal() {
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [textSize, setTextSize] = useState(100)
@@ -1148,7 +1150,7 @@ function AccessibilityControlsOriginal() {
  * Original AccessibilityControls component merged from: client/src/components/common/AccessibilityControls.tsx
  * Merge date: 2025-04-05
  */
-function AccessibilityControlsOriginal() {
+function AccessibilityControlsCommonOriginal() {
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [textSize, setTextSize] = useState(100)

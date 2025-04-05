@@ -6,11 +6,12 @@
  */
 import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { Sparkles, Disc } from "lucide-react"
+import { Sparkles, Disc, Star, Music, ShoppingCart, Gift, ArrowRight } from "lucide-react"
 import { cn } from "../../../lib/utils"
 import { CosmicCard } from "./CosmicCard"
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton"
 import { Button } from "../../../components/ui/button"
+
 
 interface CollectibleAttribute {
   name: string
@@ -353,7 +354,7 @@ function CosmicCollectibleOriginal({
           <CosmicCard glowColor={rarityConfig[rarity].glow} className="h-full p-0 overflow-hidden">
             {/* Image */}
             <div className="relative w-full aspect-square">
-              <Image src={image || "/placeholder.svg"} alt={name} fill className="object-cover" />
+              <img src={image || "/placeholder.svg"} alt={name} className="h-full w-full object-cover" />
 
               {/* Rarity badge */}
               <div
@@ -372,7 +373,7 @@ function CosmicCollectibleOriginal({
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
                   <div className="bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/20">
                     <span className="text-white font-medium flex items-center gap-1">
-                      <CosmicIcon name="sparkles" size={16} />
+                      <Sparkles className="h-4 w-4" />
                       Collected
                     </span>
                   </div>
@@ -392,7 +393,7 @@ function CosmicCollectibleOriginal({
                     animate={{ rotateY: [0, 180] }}
                     transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY, repeatType: "loop" }}
                   >
-                    <CosmicIcon name="disc" size={20} className="text-white" />
+                    <Disc className="h-5 w-5 text-white" />
                   </motion.div>
                 </div>
               )}
@@ -439,13 +440,12 @@ function CosmicCollectibleOriginal({
               <CosmicButton
                 variant="primary"
                 className="w-full"
-                onClick={(e) => {
-                  e.stopPropagation()
+                onClick={() => {
                   handleClaim()
                 }}
                 disabled={claimState === "loading"}
                 glowColor={rarityConfig[rarity].glow}
-                icon={<CosmicIcon name="sparkles" size={16} />}
+                icon={<Sparkles className="h-4 w-4" />}
               >
                 {claimState === "loading"
                   ? "Claiming..."
@@ -511,13 +511,13 @@ function CosmicWalletConnectOriginal({
               variant="outline"
               size="sm"
               onClick={onDisconnect}
-              icon={<CosmicIcon name="orbit" size={16} />}
+              icon={<Disc className="h-4 w-4" />}
             >
               Disconnect
             </CosmicButton>
           </div>
         ) : (
-          <CosmicButton variant="primary" onClick={onConnect} icon={<CosmicIcon name="orbit" size={16} />}>
+          <CosmicButton variant="primary" onClick={onConnect} icon={<Disc className="h-4 w-4" />}>
             Connect Wallet
           </CosmicButton>
         )}

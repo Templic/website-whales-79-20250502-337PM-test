@@ -1147,7 +1147,7 @@ export function BreathSyncPlayer({
  * Original BreathSyncPlayer component merged from: client/src/components/audio/BreathSyncPlayer.tsx
  * Merge date: 2025-04-05
  */
-function BreathSyncPlayerOriginal({
+function BreathSyncPlayerAudioOriginal({
   tracks = [],
   defaultVolume = 80,
 }: BreathSyncPlayerProps) {
@@ -1651,7 +1651,7 @@ function BreathSyncPlayerOriginal({
  * Original BreathSyncPlayer component merged from: client/src/components/common/breath-sync-player.tsx
  * Merge date: 2025-04-05
  */
-function BreathSyncPlayerOriginal({
+function BreathSyncPlayerOriginalKebabCase({
   tracks = [
     {
       id: 1,
@@ -2730,7 +2730,7 @@ function BreathSyncPlayerOriginal({
  * Original BreathSyncPlayer component merged from: client/src/components/features/audio/BreathSyncPlayer.tsx
  * Merge date: 2025-04-05
  */
-function BreathSyncPlayerOriginal({
+function BreathSyncPlayerOriginalPascalCase({
   tracks = [
     {
       id: 1,

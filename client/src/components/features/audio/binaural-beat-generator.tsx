@@ -945,7 +945,7 @@ export function BinauralBeatGenerator({
  * Original BinauralBeatGenerator component merged from: client/src/components/audio/BinauralBeatGenerator.tsx
  * Merge date: 2025-04-05
  */
-function BinauralBeatGeneratorOriginal({
+function BinauralBeatGeneratorAudioOriginal({
   defaultLeftFreq = 200,
   defaultRightFreq = 210,
   defaultVolume = 50,
@@ -1711,7 +1711,7 @@ function BinauralBeatGeneratorOriginal({
  * Original BinauralBeatGenerator component merged from: client/src/components/common/binaural-beat-generator.tsx
  * Merge date: 2025-04-05
  */
-function BinauralBeatGeneratorOriginal({
+function BinauralBeatGeneratorOriginalKebabCase({
   defaultLeftFreq = 200,
   defaultRightFreq = 210,
   defaultVolume = 50,
@@ -2607,7 +2607,7 @@ function BinauralBeatGeneratorOriginal({
  * Original BinauralBeatGenerator component merged from: client/src/components/features/audio/BinauralBeatGenerator.tsx
  * Merge date: 2025-04-05
  */
-function BinauralBeatGeneratorOriginal({
+function BinauralBeatGeneratorFeaturesOriginal({
   defaultLeftFreq = 200,
   defaultRightFreq = 210,
   defaultVolume = 50,

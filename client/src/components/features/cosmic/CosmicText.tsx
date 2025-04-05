@@ -173,7 +173,7 @@ function CosmicTextOriginal({
  * Original CosmicText component merged from: client/src/components/ui/cosmic-text.tsx
  * Merge date: 2025-04-05
  */
-function CosmicTextOriginal({
+function CosmicTextUIOriginal({
   children,
   className,
   size = "md",
