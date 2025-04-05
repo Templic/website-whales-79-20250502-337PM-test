@@ -2,8 +2,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import StarBackground from './cosmic/StarBackground';
 import { EnhancedAccessibilityControls } from './common/EnhancedAccessibilityControls';
-import { MainNavigation } from './layout/MainNavigation';
-import { CosmicFooter } from './common/cosmic-footer';
+import { MainHeader } from './layout/MainHeader';
+import { MainFooter } from './layout/MainFooter';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
@@ -14,8 +14,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {/* Enhanced Accessibility Controls */}
       <EnhancedAccessibilityControls />
 
-      {/* New Main Navigation */}
-      <MainNavigation />
+      {/* Main Header */}
+      <MainHeader />
 
       {/* Main Content */}
       <main className="flex-grow pb-16">
@@ -24,8 +24,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </div>
       </main>
 
-      {/* Footer */}
-      <CosmicFooter />
+      {/* Main Footer */}
+      <MainFooter />
     </div>
   );
 };

@@ -1,3 +1,8 @@
+/**
+ * @deprecated This component is deprecated. Please use MainFooter.tsx instead.
+ * This file will be removed in a future update.
+ */
+
 import { Link } from "wouter";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";

@@ -1,4 +1,9 @@
 
+/**
+ * @deprecated This component is deprecated. Please use MainHeader.tsx in the layout folder instead.
+ * This file will be removed in a future update.
+ */
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"

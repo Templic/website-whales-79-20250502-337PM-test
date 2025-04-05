@@ -3,6 +3,9 @@
  * 
  * Component Type: common
  * Migrated from imported components.
+ * 
+ * @deprecated This component is deprecated. Please use MainHeader.tsx in the layout folder instead.
+ * This file will be removed in a future update.
  */
 /**
  * site-header.tsx

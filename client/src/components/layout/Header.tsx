@@ -1,3 +1,8 @@
+/**
+ * @deprecated This component is deprecated. Please use MainHeader.tsx instead.
+ * This file will be removed in a future update.
+ */
+
 import { Link, useLocation } from "wouter";
 import { useState, useCallback, useEffect } from "react";
 import { Menu, X, Search } from "lucide-react";

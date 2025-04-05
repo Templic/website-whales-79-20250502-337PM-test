@@ -3,6 +3,9 @@
  * 
  * Component Type: common
  * Migrated from imported components.
+ * 
+ * @deprecated This component is deprecated. Please use MainFooter.tsx in the layout folder instead.
+ * This file will be removed in a future update.
  */
 /**
  * cosmic-footer.tsx
