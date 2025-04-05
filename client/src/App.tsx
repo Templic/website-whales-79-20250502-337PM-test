@@ -49,6 +49,7 @@ import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 import CosmicConnectivityPage from "@/pages/experience/CosmicConnectivityPage";
 import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
 import ImmersivePage from "@/pages/experience/ImmersivePage";
+import CosmicImmersivePage from "@/pages/experience/CosmicImmersivePage"; // Added import
 import ArchivePage from "@/pages/ArchivePage";
 import CosmicMerchandisePage from "@/pages/shop/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
@@ -91,7 +92,7 @@ function Router() {
         {/* Experience Routes */}
         <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
-        <Route path="/immersive" component={ImmersivePage} />
+        <Route path="/cosmic-immersive" component={CosmicImmersivePage} /> {/* Updated route */}
         {/* Archived Page - /archive */}
         {/* <Route path="/archive" component={ArchivePage} /> */}
 
