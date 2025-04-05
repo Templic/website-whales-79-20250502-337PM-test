@@ -1,67 +1,65 @@
+
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
-import { useAccessibility } from "@/contexts/AccessibilityContext";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const navigationItems = [
   { path: "/", label: "Home" },
   { path: "/about", label: "About" },
   { path: "/music-release", label: "New Music" },
-  { path: "/archived-music", label: "Archive" },
-  { path: "/cosmic-experience", label: "Experience" },
+  { path: "/archived-music", label: "Archived Music" },
+  { path: "/cosmic-connectivity", label: "Cosmic Connectivity" },
+  { path: "/cosmic-experience", label: "Cosmic Experience" },
   { path: "/tour", label: "Tour" },
+  { path: "/shop", label: "Shop" },
   { path: "/engage", label: "Engage" },
-  { path: "/shop", label: "Shop" }
+  { path: "/newsletter", label: "Newsletter" },
+  { path: "/blog", label: "Blog" },
+  { path: "/collaboration", label: "Collaborate" },
+  { path: "/contact", label: "Contact" }
 ];
 
 export function MainHeader() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { autoHideNav } = useAccessibility();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   return (
-    <header className={`fixed top-0 w-full z-50 bg-[#0a325c] border-b border-[#00ebd6] shadow-lg transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-[#00ebd6] hover:text-[#e8e6e3] transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-
-          <Link 
-            to="/"
-            className="text-[#00ebd6] text-xl sm:text-2xl font-bold no-underline font-montserrat"
-          >
-            Dale Loves Whales
-          </Link>
+    <header className="w-full bg-background/80 backdrop-blur-sm border-b">
+      <div className="container px-4 mx-auto">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="text-xl font-bold">
+              Cosmic Community
+            </Link>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                className="pl-10 w-[300px]"
+              />
+            </div>
+          </div>
         </div>
-
-        <nav className={`absolute md:relative top-full left-0 w-full md:w-auto bg-[#0a325c] md:bg-transparent transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-y-0' : '-translate-y-full md:translate-y-0'} md:block`}>
-          <ul className="flex flex-col md:flex-row gap-2 p-4 md:p-0 md:gap-6 list-none">
-            {navigationItems.map(({ path, label }) => (
-              <li key={path}>
-                <Link
-                  to={path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide block py-2 md:py-0"
-                >
-                  {label}
-                </Link>
-              </li>
+        <nav className="flex justify-between py-4">
+          <div className="flex flex-col gap-2">
+            {navigationItems.slice(0, Math.ceil(navigationItems.length / 2)).map((item) => (
+              <Link 
+                key={item.path} 
+                href={item.path}
+                className="text-sm hover:text-primary transition-colors"
+              >
+                {item.label}
+              </Link>
             ))}
-          </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            {navigationItems.slice(Math.ceil(navigationItems.length / 2)).map((item) => (
+              <Link 
+                key={item.path} 
+                href={item.path}
+                className="text-sm hover:text-primary transition-colors"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       </div>
     </header>
