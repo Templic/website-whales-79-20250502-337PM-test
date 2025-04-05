@@ -59,21 +59,38 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { autoHideNav } = useAccessibility();
 
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+    
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 10);
+      
+      // Handle auto-hide behavior
+      if (autoHideNav) {
+        const header = document.querySelector('header');
+        if (header) {
+          if (scrollY > lastScrollY && scrollY > 150) {
+            // Scrolling down - hide header
+            header.classList.add('scrolled-down');
+          } else {
+            // Scrolling up - show header
+            header.classList.remove('scrolled-down');
+          }
+        }
+      }
+      lastScrollY = scrollY;
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [autoHideNav]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
-
-  const { autoHideNav } = useAccessibility();
 
   return (
     <div className={cn(

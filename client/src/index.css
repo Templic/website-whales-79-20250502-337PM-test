@@ -103,4 +103,36 @@
   .font-space {
     font-family: 'Space Grotesk', sans-serif;
   }
+  
+  /* Accessibility styles */
+  
+  /* Auto-hide navigation */
+  .nav-auto-hide header {
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .nav-auto-hide header.scrolled-down {
+    transform: translateY(-100%);
+  }
+  
+  /* High contrast mode */
+  .high-contrast {
+    --text-color: white;
+    --background-color: black;
+    --accent-color: yellow;
+  }
+  
+  /* Dark mode */
+  .dark-mode {
+    --text-color: #e0e0e0;
+    --background-color: #121212;
+    --accent-color: #7c3aed;
+  }
+  
+  /* Reduced motion */
+  .reduced-motion * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
