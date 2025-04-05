@@ -2,16 +2,16 @@
  * CosmicConnectivityPage.tsx
  * 
  * Migrated as part of the repository reorganization.
+ * Updated 2025-04-05: Merged breathwork features from cosmic-experience-immersive
  */
 import { useState, useEffect } from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
-import { BreathSynchronizationCeremony } from "@/components/immersive/BreathSynchronizationCeremony";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
-import { BreathSyncPlayer } from "@/components/features/audio/BreathSyncPlayer";
 import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatGenerator";
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
+import { Aeroaura } from "@/components/features/cosmic/Aeroaura";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -23,6 +23,8 @@ import {
   Globe,
   Zap,
   Star,
+  Wind,
+  Brain,
 } from "lucide-react";
 
 export default function CosmicConnectivityPage() {
@@ -89,6 +91,54 @@ export default function CosmicConnectivityPage() {
           </div>
         </div>
 
+        {/* Two Column Layout for Cosmic Experience */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-12">
+          {/* Left Column - Aeroaura Component */}
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-purple-500/10">
+              <h2 className="text-2xl font-semibold mb-4 text-white flex items-center">
+                <Wind className="mr-2 h-6 w-6 text-purple-400" />
+                Aeroaura
+              </h2>
+              <p className="text-gray-300 mb-6">
+                Glory in excel Deity — an integrated breathwork experience that combines
+                synchronized breathing patterns with cosmic music. Harmonize your breath
+                with the universe to reveal deeper states of consciousness.
+              </p>
+              <Aeroaura tracks={tracks} />
+            </div>
+          </div>
+
+          {/* Right Column - Sacred Geometry & Sound Journey */}
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-black/80 via-indigo-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-indigo-500/10">
+              <h2 className="text-2xl font-semibold mb-4 text-white flex items-center">
+                <Infinity className="mr-2 h-6 w-6 text-indigo-400" />
+                Sacred Geometry
+              </h2>
+              <p className="text-gray-300 mb-6">
+                Visualize the fundamental patterns of creation through sacred geometry.
+                These visual representations of cosmic order can enhance your meditative
+                practice and breathing exercises.
+              </p>
+              <SacredGeometryDemo />
+            </div>
+
+            <div className="bg-gradient-to-br from-black/80 via-cyan-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-cyan-500/10">
+              <h2 className="text-2xl font-semibold mb-4 text-white flex items-center">
+                <Brain className="mr-2 h-6 w-6 text-cyan-400" />
+                Frequency Attunement
+              </h2>
+              <p className="text-gray-300 mb-6">
+                Attune your consciousness to specific healing frequencies with our
+                binaural beat generator. Create custom frequency combinations to induce
+                states of deep meditation, focus, or relaxation.
+              </p>
+              <BinauralBeatGenerator />
+            </div>
+          </div>
+        </div>
+
         {/* Main Cosmic Tabs */}
         <Tabs defaultValue="frequency" className="max-w-6xl mx-auto">
           <TabsList className="grid w-full grid-cols-3 mb-8 bg-black/30 backdrop-blur-sm border border-white/5 rounded-xl">
@@ -121,50 +171,21 @@ export default function CosmicConnectivityPage() {
                 </p>
               </div>
             </div>
-
-            {/* Binaural Beat Generator */}
-            <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-cyan-500/10">
-              <h2 className="text-2xl font-semibold mb-4">
-                Binaural Beat Generator
-              </h2>
-              <p className="text-gray-300 mb-6">
-                Generate custom binaural beats to induce specific states of
-                consciousness. Binaural beats occur when two slightly different
-                frequencies are played separately in each ear, creating a third
-                "beat" frequency that can influence brain waves.
-              </p>
-              <BinauralBeatGenerator />
-            </div>
           </TabsContent>
 
           {/* Breath Synchronization Tab */}
           <TabsContent value="breath" className="space-y-8">
             <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-red-500/10">
               <h2 className="text-2xl font-semibold mb-6 text-white">
-                Breath Synchronization Ceremony
-              </h2>
-              <BreathSynchronizationCeremony />
-              <div className="mt-4 text-center">
-                <p className="text-gray-300 max-w-2xl mx-auto">
-                  Harmonize your life force with cosmic rhythms. Choose from
-                  ancient breathing patterns or create your own sacred rhythm to
-                  deepen your connection with universal consciousness.
-                </p>
-              </div>
-            </div>
-
-            {/* Synchronized Breath & Music Player */}
-            <div className="bg-gradient-to-br from-black/80 via-purple-900/20 to-black/80 backdrop-blur-md rounded-xl p-6 shadow-xl border border-red-500/10">
-              <h2 className="text-2xl font-semibold mb-4">
-                Synchronized Breath & Music Player
+                Aeroaura - Integrated Breathwork Experience
               </h2>
               <p className="text-gray-300 mb-6">
-                This player synchronizes breathing patterns with music playback,
-                creating a deeply immersive experience. Select different
-                breathing patterns and follow the visual cues to synchronize
-                your breath.
+                Our integrated breathwork experience combines the breath synchronization ceremony
+                and the breath-synchronized player into a single powerful tool. Choose different
+                breathing patterns, synchronize with music, and follow the visual cues to
+                harmonize your breath with the cosmic frequencies.
               </p>
-              <BreathSyncPlayer tracks={tracks} />
+              <Aeroaura tracks={tracks} />
             </div>
           </TabsContent>
 

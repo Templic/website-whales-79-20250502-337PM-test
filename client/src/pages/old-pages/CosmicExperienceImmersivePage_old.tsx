@@ -1,4 +1,11 @@
 
+/**
+ * @deprecated This page has been consolidated into CosmicConnectivityPage.tsx.
+ * The breathwork features have been merged into the Aeroaura component.
+ * This file is kept for reference purposes only.
+ * Last updated: 2025-04-05
+ */
+
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
 import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
@@ -12,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Music, Infinity, Waves, Brain } from "lucide-react";
 
-export default function CosmicExperienceImmersivePage() {
+export default function CosmicExperienceImmersivePage_Old() {
   const { toast } = useToast();
 
   return (

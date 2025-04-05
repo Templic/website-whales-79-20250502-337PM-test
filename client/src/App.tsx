@@ -50,7 +50,7 @@ import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 import CosmicConnectivityPage from "@/pages/experience/CosmicConnectivityPage";
 import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
 import ImmersivePage from "./pages/ImmersivePage";
-import CosmicImmersivePage from "./pages/CosmicExperienceImmersivePage"; // Added import
+import CosmicImmersivePage from "./pages/old-pages/CosmicExperienceImmersivePage_old"; // Legacy page
 import ArchivePage from "@/pages/ArchivePage";
 import CosmicMerchandisePage from "@/pages/shop/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
@@ -93,6 +93,7 @@ function Router() {
         <Route path="/music-archive" component={ArchivedMusicPage} />
         {/* Experience Routes */}
         <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
+        <Route path="/experience/cosmic-connectivity" component={CosmicConnectivityPage} />
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route path="/cosmic-immersive" component={CosmicImmersivePage} />
         <Route path="/cosmic-immersive-experience" component={CosmicImmersivePage} />

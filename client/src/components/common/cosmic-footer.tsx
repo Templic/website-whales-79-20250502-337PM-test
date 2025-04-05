@@ -59,7 +59,7 @@ export function CosmicFooter() {
     { name: "Cosmic Gateway", path: "/" },
     { name: "Sonic Archives", path: "/archive" },
     { name: "Frequency Experiences", path: "/experience" },
-    { name: "Immersive Journeys", path: "/immersive" },
+    { name: "Cosmic Connectivity", path: "/experience/cosmic-connectivity" },
     { name: "Music Harmonics", path: "/music" },
   ]
 
@@ -305,7 +305,7 @@ function CosmicFooterOriginal() {
     { name: "Cosmic Gateway", path: "/" },
     { name: "Sonic Archives", path: "/archive" },
     { name: "Frequency Experiences", path: "/experience" },
-    { name: "Immersive Journeys", path: "/immersive" },
+    { name: "Cosmic Connectivity", path: "/experience/cosmic-connectivity" },
     { name: "Music Harmonics", path: "/music" },
   ]
 
