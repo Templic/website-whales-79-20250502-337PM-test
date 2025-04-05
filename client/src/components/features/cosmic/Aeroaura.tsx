@@ -112,7 +112,7 @@ export function Aeroaura({
   defaultVolume = 80,
 }: AeroauraProps) {
   // Player state
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(tracks.length > 0 ? 0 : -1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(defaultVolume);
   const [isMuted, setIsMuted] = useState(false);
@@ -548,7 +548,7 @@ export function Aeroaura({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
+            style={{ backgroundColor: currentTrack && getChakraColor(currentTrack.chakra) }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -603,250 +603,254 @@ export function Aeroaura({
         {activeView === "player" && (
           <div className="space-y-6">
             {/* Audio element */}
-            <audio
-              ref={audioRef}
-              src={currentTrack.audioSrc}
-              onLoadedMetadata={onLoadedMetadata}
-              onEnded={nextTrack}
-              preload="metadata"
-            />
+            {currentTrack && (
+              <audio
+                ref={audioRef}
+                src={currentTrack.audioSrc}
+                onLoadedMetadata={onLoadedMetadata}
+                onEnded={nextTrack}
+                preload="metadata"
+              />
+            )}
 
             {/* Album art and track info */}
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-1/3">
-                <div
-                  className="relative rounded-lg overflow-hidden aspect-square bg-gradient-to-br from-purple-900/50 to-purple-900/10 backdrop-blur-sm border border-white/5"
-                  style={{
-                    boxShadow: `0 8px 32px -8px ${getChakraColor(
-                      currentTrack.chakra
-                    )}50`,
-                  }}
-                >
-                  {/* Album cover */}
-                  <img
-                    src={currentTrack.coverArt}
-                    alt={`Cover art for ${currentTrack.title}`}
-                    className="w-full h-full object-cover"
-                  />
+            {currentTrack && (
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-1/3">
+                  <div
+                    className="relative rounded-lg overflow-hidden aspect-square bg-gradient-to-br from-purple-900/50 to-purple-900/10 backdrop-blur-sm border border-white/5"
+                    style={{
+                      boxShadow: `0 8px 32px -8px ${getChakraColor(
+                        currentTrack.chakra
+                      )}50`,
+                    }}
+                  >
+                    {/* Album cover */}
+                    <img
+                      src={currentTrack.coverArt}
+                      alt={`Cover art for ${currentTrack.title}`}
+                      className="w-full h-full object-cover"
+                    />
 
-                  {/* Breath visualization overlay */}
-                  {isBreathSyncActive && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div
-                        className="rounded-full bg-white/5 backdrop-blur-sm border border-white/20 transition-all duration-300"
-                        style={{
-                          width: `${getCircleSize()}%`,
-                          height: `${getCircleSize()}%`,
-                          backgroundColor: `${currentPattern.color}20`,
-                          borderColor: `${currentPattern.color}40`,
-                        }}
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <p className="text-white text-lg font-medium">
-                            {getBreathInstruction()}
-                          </p>
+                    {/* Breath visualization overlay */}
+                    {isBreathSyncActive && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div
+                          className="rounded-full bg-white/5 backdrop-blur-sm border border-white/20 transition-all duration-300"
+                          style={{
+                            width: `${getCircleSize()}%`,
+                            height: `${getCircleSize()}%`,
+                            backgroundColor: `${currentPattern.color}20`,
+                            borderColor: `${currentPattern.color}40`,
+                          }}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <p className="text-white text-lg font-medium">
+                              {getBreathInstruction()}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Play/pause overlay */}
-                  {!isBreathSyncActive && (
-                    <div
-                      className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                      onClick={togglePlay}
-                    >
-                      <div className="rounded-full bg-black/50 backdrop-blur-sm p-4">
-                        {isPlaying ? (
-                          <Pause className="h-6 w-6 text-white" />
-                        ) : (
-                          <Play className="h-6 w-6 text-white" />
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="w-full md:w-2/3 space-y-4">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {currentTrack.title}
-                  </h3>
-                  <p className="text-white/60 text-sm">{currentTrack.artist}</p>
-
-                  {currentTrack.chakra && (
-                    <div className="flex items-center gap-2 mt-2">
+                    {/* Play/pause overlay */}
+                    {!isBreathSyncActive && (
                       <div
-                        className="h-3 w-3 rounded-full"
-                        style={{
-                          backgroundColor: getChakraColor(currentTrack.chakra),
-                        }}
-                      ></div>
+                        className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                        onClick={togglePlay}
+                      >
+                        <div className="rounded-full bg-black/50 backdrop-blur-sm p-4">
+                          {isPlaying ? (
+                            <Pause className="h-6 w-6 text-white" />
+                          ) : (
+                            <Play className="h-6 w-6 text-white" />
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-full md:w-2/3 space-y-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">
+                      {currentTrack.title}
+                    </h3>
+                    <p className="text-white/60 text-sm">{currentTrack.artist}</p>
+
+                    {currentTrack.chakra && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{
+                            backgroundColor: getChakraColor(currentTrack.chakra),
+                          }}
+                        ></div>
+                        <p className="text-white/60 text-xs">
+                          {currentTrack.chakra} Chakra • {currentTrack.frequency} Hz
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Breathing pattern selection */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h4 className="text-white text-sm">Breathing Pattern</h4>
                       <p className="text-white/60 text-xs">
-                        {currentTrack.chakra} Chakra • {currentTrack.frequency} Hz
+                        {currentPattern.name}
                       </p>
                     </div>
-                  )}
-                </div>
-
-                {/* Breathing pattern selection */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-white text-sm">Breathing Pattern</h4>
-                    <p className="text-white/60 text-xs">
-                      {currentPattern.name}
+                    <div className="grid grid-cols-5 gap-2">
+                      {breathPatterns.map((pattern, index) => (
+                        <button
+                          key={pattern.id}
+                          onClick={() => selectBreathPattern(index)}
+                          className={cn(
+                            "py-1 px-2 rounded text-xs",
+                            currentPatternIndex === index
+                              ? "bg-white/10 text-white"
+                              : "bg-transparent text-white/60 hover:bg-white/5"
+                          )}
+                          title={pattern.description}
+                        >
+                          {pattern.name}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-white/40 text-xs italic">
+                      {currentPattern.description}
                     </p>
                   </div>
-                  <div className="grid grid-cols-5 gap-2">
-                    {breathPatterns.map((pattern, index) => (
-                      <button
-                        key={pattern.id}
-                        onClick={() => selectBreathPattern(index)}
-                        className={cn(
-                          "py-1 px-2 rounded text-xs",
-                          currentPatternIndex === index
-                            ? "bg-white/10 text-white"
-                            : "bg-transparent text-white/60 hover:bg-white/5"
-                        )}
-                        title={pattern.description}
-                      >
-                        {pattern.name}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-white/40 text-xs italic">
-                    {currentPattern.description}
-                  </p>
-                </div>
 
-                {/* Session timer */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-white text-sm">Session Timer</h4>
-                      <div className="flex items-center gap-1 text-white/60 text-xs">
-                        <Timer className="h-3 w-3" />
-                        {isSessionActive
-                          ? `${Math.floor(sessionTimeRemaining / 60)}:${(
-                              sessionTimeRemaining % 60
-                            )
-                              .toString()
-                              .padStart(2, "0")}`
-                          : `${sessionDuration}:00`}
+                  {/* Session timer */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-white text-sm">Session Timer</h4>
+                        <div className="flex items-center gap-1 text-white/60 text-xs">
+                          <Timer className="h-3 w-3" />
+                          {isSessionActive
+                            ? `${Math.floor(sessionTimeRemaining / 60)}:${(
+                                sessionTimeRemaining % 60
+                              )
+                                .toString()
+                                .padStart(2, "0")}`
+                            : `${sessionDuration}:00`}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-white/60 text-xs">
+                          {isSessionActive ? "Active" : "Inactive"}
+                        </p>
+                        <Switch
+                          checked={isSessionActive}
+                          onCheckedChange={toggleSession}
+                          disabled={!isBreathSyncActive}
+                        />
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-white/60 text-xs">
-                        {isSessionActive ? "Active" : "Inactive"}
-                      </p>
-                      <Switch
-                        checked={isSessionActive}
-                        onCheckedChange={toggleSession}
-                        disabled={!isBreathSyncActive}
+                      <Slider
+                        value={[sessionDuration]}
+                        min={1}
+                        max={30}
+                        step={1}
+                        onValueChange={(value) => setSessionDuration(value[0])}
+                        disabled={isSessionActive}
+                        className="w-full"
                       />
+                      <span className="text-white/60 text-xs w-10">
+                        {sessionDuration} min
+                      </span>
                     </div>
+                    {isSessionActive && (
+                      <p className="text-white/60 text-xs">
+                        Breath cycles completed: {breathCount}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Slider
-                      value={[sessionDuration]}
-                      min={1}
-                      max={30}
-                      step={1}
-                      onValueChange={(value) => setSessionDuration(value[0])}
-                      disabled={isSessionActive}
-                      className="w-full"
-                    />
-                    <span className="text-white/60 text-xs w-10">
-                      {sessionDuration} min
-                    </span>
-                  </div>
-                  {isSessionActive && (
-                    <p className="text-white/60 text-xs">
-                      Breath cycles completed: {breathCount}
-                    </p>
-                  )}
-                </div>
 
-                {/* Audio progress */}
-                <div className="space-y-2">
-                  <Slider
-                    value={[progress]}
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    onValueChange={onProgressChange}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-white/60 text-xs">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-                </div>
-
-                {/* Audio controls */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={toggleMute}
-                      className="text-white"
-                    >
-                      {isMuted ? (
-                        <VolumeX className="h-4 w-4" />
-                      ) : (
-                        <Volume2 className="h-4 w-4" />
-                      )}
-                    </Button>
+                  {/* Audio progress */}
+                  <div className="space-y-2">
                     <Slider
-                      value={[volume]}
+                      value={[progress]}
                       min={0}
                       max={100}
-                      step={1}
-                      onValueChange={onVolumeChange}
-                      className="w-24"
+                      step={0.1}
+                      onValueChange={onProgressChange}
+                      className="w-full"
                     />
+                    <div className="flex justify-between text-white/60 text-xs">
+                      <span>{formatTime(currentTime)}</span>
+                      <span>{formatTime(duration)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={prevTrack}
-                      className="text-white"
-                    >
-                      <SkipBack className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="default"
-                      size="icon"
-                      onClick={togglePlay}
-                      className="rounded-full bg-white/10 text-white hover:bg-white/20"
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-4 w-4" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={nextTrack}
-                      className="text-white"
-                    >
-                      <SkipForward className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="w-24 flex justify-end">
-                    <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
-                      <Info className="h-4 w-4 mr-2" />
-                      Info
-                    </Button>
+
+                  {/* Audio controls */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleMute}
+                        className="text-white"
+                      >
+                        {isMuted ? (
+                          <VolumeX className="h-4 w-4" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Slider
+                        value={[volume]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={onVolumeChange}
+                        className="w-24"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={prevTrack}
+                        className="text-white"
+                      >
+                        <SkipBack className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="icon"
+                        onClick={togglePlay}
+                        className="rounded-full bg-white/10 text-white hover:bg-white/20"
+                      >
+                        {isPlaying ? (
+                          <Pause className="h-4 w-4" />
+                        ) : (
+                          <Play className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={nextTrack}
+                        className="text-white"
+                      >
+                        <SkipForward className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="w-24 flex justify-end">
+                      <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
+                        <Info className="h-4 w-4 mr-2" />
+                        Info
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Custom pattern settings (when Custom is selected) */}
             {currentPatternIndex === 4 && (
@@ -914,13 +918,15 @@ export function Aeroaura({
         {activeView === "ceremony" && (
           <div className="space-y-6">
             {/* Audio player element (hidden but functional) */}
-            <audio
-              ref={audioRef}
-              src={currentTrack.audioSrc}
-              onLoadedMetadata={onLoadedMetadata}
-              onEnded={nextTrack}
-              preload="metadata"
-            />
+            {currentTrack && (
+              <audio
+                ref={audioRef}
+                src={currentTrack.audioSrc}
+                onLoadedMetadata={onLoadedMetadata}
+                onEnded={nextTrack}
+                preload="metadata"
+              />
+            )}
 
             {/* Breath visualization */}
             <div className="aspect-video relative rounded-lg overflow-hidden bg-gradient-to-br from-purple-900/50 to-purple-900/10 backdrop-blur-sm border border-white/5 flex items-center justify-center">
