@@ -12,6 +12,7 @@ import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
 import StarBackground from "@/components/cosmic/StarBackground";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { CosmicNavigation } from './components/common/cosmic-navigation'; // Updated import
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -73,6 +74,7 @@ function Router() {
 
   return (
     <Layout>
+      <CosmicNavigation /> {/* Updated navigation component */}
       <Switch>
         {/* Main Pages */}
         <Route path="/" component={HomePage} />
