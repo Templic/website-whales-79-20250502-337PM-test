@@ -63,6 +63,8 @@ import ComponentsCatalog from "@/pages/test/demo/ComponentsCatalog";
 import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
+import { MainHeader } from './components/layout/MainHeader'; // Added import
+
 
 function AppRouter() {
   const [location] = useLocation();
@@ -74,6 +76,7 @@ function AppRouter() {
   return (
     <Router>
       <Layout>
+        <MainHeader /> {/* Replaced Header with MainHeader */}
         <Switch>
           {/* Main Pages */}
           <Route path="/" component={HomePage} />
