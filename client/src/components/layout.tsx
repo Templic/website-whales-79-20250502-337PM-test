@@ -45,13 +45,12 @@ const topNavItems: MainNavItem[] = [
 ];
 
 const bottomNavItems: MainNavItem[] = [
-  { title: 'Cosmic Experience', href: '/cosmic-experience', icon: <Goal className="h-5 w-5" />, color: '#00ebd6' },
-  { title: 'Immersive', href: '/immersive', icon: <Zap className="h-5 w-5" />, color: '#7c3aed' },
-  { title: 'Music Archive', href: '/music-archive', icon: <Disc className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Cosmic Experience', href: '/cosmic-immersive', icon: <Goal className="h-5 w-5" />, color: '#00ebd6' },
   { title: 'Community', href: '/community', icon: <Users className="h-5 w-5" />, color: '#7c3aed' },
-  { title: 'Collaborate', href: '/collaboration', icon: <MessageSquare className="h-5 w-5" />, color: '#00ebd6' },
-  { title: 'Shop', href: '/shop', icon: <ShoppingBag className="h-5 w-5" />, color: '#7c3aed' },
-  { title: 'Contact', href: '/contact', icon: <Mail className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Music Archive', href: '/music-archive', icon: <Disc className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Collaborate', href: '/collaboration', icon: <MessageSquare className="h-5 w-5" />, color: '#7c3aed' },
+  { title: 'Shop', href: '/shop', icon: <ShoppingBag className="h-5 w-5" />, color: '#00ebd6' },
+  { title: 'Contact', href: '/contact', icon: <Mail className="h-5 w-5" />, color: '#7c3aed' },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
