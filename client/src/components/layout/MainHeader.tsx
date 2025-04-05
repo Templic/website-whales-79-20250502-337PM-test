@@ -23,38 +23,39 @@ export function MainHeader() {
   return (
     <header className="w-full bg-background/80 backdrop-blur-sm border-b">
       <div className="container px-4 mx-auto">
+        {/* Top bar with logo and search */}
         <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="text-xl font-bold">
-              Cosmic Community
-            </Link>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                className="pl-10 w-[300px]"
-              />
-            </div>
+          <Link href="/" className="text-xl font-bold">
+            Dale Loves Whales
+          </Link>
+          <div className="relative w-[300px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              className="pl-10 w-full"
+            />
           </div>
         </div>
-        <nav className="flex justify-between py-4">
-          <div className="flex flex-col gap-2">
+        
+        {/* Two column navigation */}
+        <nav className="grid grid-cols-2 gap-8 py-6">
+          <div className="space-y-2">
             {navigationItems.slice(0, Math.ceil(navigationItems.length / 2)).map((item) => (
               <Link 
                 key={item.path} 
                 href={item.path}
-                className="text-sm hover:text-primary transition-colors"
+                className="block text-sm font-medium hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
             ))}
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="space-y-2">
             {navigationItems.slice(Math.ceil(navigationItems.length / 2)).map((item) => (
               <Link 
                 key={item.path} 
                 href={item.path}
-                className="text-sm hover:text-primary transition-colors"
+                className="block text-sm font-medium hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
@@ -63,5 +64,7 @@ export function MainHeader() {
         </nav>
       </div>
     </header>
+  );
+}
   );
 }
