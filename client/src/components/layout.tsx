@@ -6,6 +6,8 @@ import GeometricContainer from './cosmic/GeometricContainer';
 import StarBackground from './cosmic/StarBackground';
 import CosmicShape from './cosmic/CosmicShapesFixed';
 import SacredGeometry from './cosmic/SacredGeometry';
+import { EnhancedAccessibilityControls } from './common/EnhancedAccessibilityControls';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { 
   Home, 
   Info, 
@@ -71,10 +73,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const { autoHideNav } = useAccessibility();
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0a14]">
+    <div className={cn(
+      "flex flex-col min-h-screen bg-[#0a0a14]",
+      autoHideNav && "nav-auto-hide"
+    )}>
       {/* Star Background for cosmic theme */}
       <StarBackground colorScheme="multi" opacity={0.7} />
+      
+      {/* Enhanced Accessibility Controls */}
+      <EnhancedAccessibilityControls />
 
       {/* Header with both nav sections */}
       <header className={cn(
@@ -85,7 +95,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="cosmic-nav-container">
           {/* Cosmic shapes for decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <SacredGeometry type="hexagon" className="absolute top-0 right-0" color="#7c3aed" strokeWidth={1} size={80} />
+            <SacredGeometry type="hexagon" className="absolute top-0 right-0" color="#7c3aed" size={80} />
             <CosmicShape type="circle" className="absolute bottom-0 left-0" color="#00ebd6" strokeWidth={1} size={60} />
           </div>
           
@@ -182,8 +192,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         >
           {/* Cosmic background patterns */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <SacredGeometry type="hexagon" className="absolute top-5 right-5" color="#7c3aed" strokeWidth={1} size={60} />
-            <SacredGeometry type="merkaba" className="absolute bottom-5 left-5" color="#00ebd6" strokeWidth={1} size={60} />
+            <SacredGeometry type="hexagon" className="absolute top-5 right-5" color="#7c3aed" size={60} />
+            <SacredGeometry type="flower-of-life" className="absolute bottom-5 left-5" color="#00ebd6" size={60} />
             <div className="cosmic-stars-subtle absolute inset-0 opacity-20"></div>
           </div>
           

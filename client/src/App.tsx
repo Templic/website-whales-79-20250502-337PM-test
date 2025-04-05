@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
 import StarBackground from "@/components/cosmic/StarBackground";
+import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -48,7 +49,7 @@ import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 // Imported Pages
 import CosmicConnectivityPage from "@/pages/experience/CosmicConnectivityPage";
 import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
-import ImmersivePage from "@/pages/experience/ImmersivePage";
+import ImmersivePage from "@/pages/ImmersivePage";
 import CosmicImmersivePage from "./pages/CosmicExperienceImmersivePage"; // Added import
 import ArchivePage from "@/pages/ArchivePage";
 import CosmicMerchandisePage from "@/pages/shop/CosmicMerchandisePage";
@@ -173,11 +174,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <StarBackground starCount={150} />
-          <Router />
-          <Toaster />
-        </ErrorBoundary>
+        <AccessibilityProvider>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <StarBackground starCount={150} />
+            <Router />
+            <Toaster />
+          </ErrorBoundary>
+        </AccessibilityProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
