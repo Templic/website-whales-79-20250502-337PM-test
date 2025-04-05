@@ -950,7 +950,7 @@ export function Aeroaura({
                       ? `0 0 40px 0 ${currentPattern.color}30`
                       : "none",
                     borderColor: isBreathSyncActive
-                      ? `${currentPattern.color}40`
+                      ?                      ? `${currentPattern.color}40`
                       : "rgba(255,255,255,0.1)",
                   }}
                 >

@@ -33,7 +33,7 @@ export default function SitemapPage() {
             <li><Link href="/music-release">New Music</Link></li>
             <li><Link href="/archived-music">Archived Music</Link></li>
             <li><Link href="/cosmic-connectivity">Cosmic Connectivity</Link></li>
-            <li><Link href="/cosmic-experience-immersive">Cosmic Experience & Immersive</Link></li>
+            <li><Link href="/cosmic-experience-immersive">Cosmic Experience & Immersive (Legacy)</Link></li>
           </ul>
 
           <h3 className="text-xl font-semibold mt-6 mb-2 text-gray-400">Archive Legacy Pages</h3>
@@ -41,6 +41,7 @@ export default function SitemapPage() {
             <li><Link href="/legacy/archived-music">Archived Music (Legacy)</Link></li>
             <li><Link href="/legacy/cosmic-experience">Cosmic Experience (Legacy)</Link></li>
             <li><Link href="/legacy/immersive">Immersive Experience (Legacy)</Link></li>
+            <li><Link href="/cosmic-experience-immersive">Cosmic Experience & Immersive (Legacy)</Link></li>
           </ul>
         </section>
 
