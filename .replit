@@ -76,7 +76,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "NODE_ENV=development DEBUG=express:*,socket.io:* npm run dev"
+args = "NODE_ENV=development PORT=5000 DEBUG=express:* npm run dev"
 
 [[workflows.workflow]]
 name = "Audio Processing"

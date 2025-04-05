@@ -64,8 +64,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json({ message });
 });
 
-// Use port 5000 to match Replit workflow configuration
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
+// Use port 5000, defaulting to 5000 if PORT env var is invalid
+const port = parseInt(process.env.PORT || "5000", 10) || 5000;
 
 // Add session cleanup interval
 let cleanupInterval: NodeJS.Timeout;

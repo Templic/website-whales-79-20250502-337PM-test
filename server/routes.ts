@@ -33,7 +33,7 @@ const transporter = createTransport({
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-  
+
   // Get subscribers list
   app.get("/api/subscribers", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -61,33 +61,33 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const users = await storage.getAllUsers();
       const pendingComments = await storage.getUnapprovedComments();
       const pendingPosts = await storage.getUnapprovedPosts();
-      
+
       // Calculate user role distribution
       const userRolesDistribution = {
         user: users.filter(user => user.role === 'user').length,
         admin: users.filter(user => user.role === 'admin').length,
         super_admin: users.filter(user => user.role === 'super_admin').length
       };
-      
+
       // Get total pending reviews (comments + posts)
       const pendingReviews = pendingComments.length + pendingPosts.length;
-      
+
       // Calculate approval rate (if any reviews have been done)
       const approvedComments = await db.select({ count: sql`count(*)` })
         .from(comments)
         .where(eq(comments.approved, true));
-      
+
       const rejectedComments = await db.select({ count: sql`count(*)` })
         .from(comments)
         .where(eq(comments.approved, false));
-        
+
       const totalReviewed = parseInt(approvedComments[0]?.count.toString() || '0') + 
                             parseInt(rejectedComments[0]?.count.toString() || '0');
-      
+
       const approvalRate = totalReviewed > 0 
         ? Math.round((parseInt(approvedComments[0]?.count.toString() || '0') / totalReviewed) * 100)
         : 0;
-      
+
       // Determine system health based on pending reviews and other factors
       let systemHealth = "Optimal";
       if (pendingReviews > 50) {
@@ -95,7 +95,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       } else if (pendingReviews > 20) {
         systemHealth = "Warning";
       }
-      
+
       // Return consolidated stats
       res.json({
         totalUsers: users.length,
@@ -110,7 +110,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching admin stats" });
     }
   });
-  
+
   // User management routes
   app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -123,17 +123,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching users" });
     }
   });
-  
+
   // User update endpoint
   app.patch("/api/users/:userId", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const userId = parseInt(req.params.userId);
       const { action } = req.body;
-      
+
       // Handle different actions based on the request
       switch (action) {
         case 'promote':
@@ -142,39 +142,39 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
           const promotedUser = await storage.updateUserRole(userId, 'admin');
           return res.json(promotedUser);
-          
+
         case 'demote':
           if (req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can demote users" });
           }
           const demotedUser = await storage.updateUserRole(userId, 'user');
           return res.json(demotedUser);
-          
+
         case 'delete':
           // Check if user is trying to delete themselves
           if (userId === req.user.id) {
             return res.status(400).json({ message: "You cannot delete your own account" });
           }
-          
+
           // Get user to delete and perform role checks
           const userToDelete = await storage.getUser(userId);
           if (!userToDelete) {
             return res.status(404).json({ message: "User not found" });
           }
-          
+
           // Prevent deletion of super_admin by non-super_admin
           if (userToDelete.role === 'super_admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can delete super admin accounts" });
           }
-          
+
           // Prevent admin from deleting other admins
           if (userToDelete.role === 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can delete admin accounts" });
           }
-          
+
           await storage.deleteUser(userId);
           return res.json({ success: true, message: "User deleted successfully" });
-          
+
         default:
           return res.status(400).json({ message: "Invalid action" });
       }
@@ -191,7 +191,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const data = insertSubscriberSchema.parse(req.body);
       const subscriber = await storage.createSubscriber(data);
       console.log("Created new subscriber:", subscriber);
-      
+
       // Send welcome email if SMTP is configured
 
 
@@ -204,18 +204,18 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error checking subscriber" });
     }
   });
-  
+
   // Content management endpoints for Admin
-  
+
   // Get unapproved posts
   app.get("/api/admin/posts/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const posts = await storage.getUnapprovedPosts();
-      
+
       // Enhance posts with author usernames
       const enhancedPosts = await Promise.all(posts.map(async (post) => {
         let authorName = 'Unknown';
@@ -225,27 +225,27 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         } catch (error) {
           console.error(`Error fetching author for post ${post.id}:`, error);
         }
-        
+
         return {
           ...post,
           authorName
         };
       }));
-      
+
       res.json(enhancedPosts);
     } catch (error) {
       console.error("Error fetching unapproved posts:", error);
       res.status(500).json({ message: "Error fetching unapproved posts" });
     }
   });
-  
+
   // Newsletter management endpoints
   // Get all newsletters
   app.get("/api/newsletters", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const newsletters = await storage.getAllNewsletters();
       res.json(newsletters);
@@ -254,7 +254,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
-  
+
   // Test endpoint - public API for newsletters (for testing purposes only)
   app.get("/api/test/newsletters", async (req, res) => {
     try {
@@ -265,38 +265,38 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
-  
+
   // Get a single newsletter by ID
   app.get("/api/newsletters/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const id = parseInt(req.params.id);
       const newsletter = await storage.getNewsletterById(id);
-      
+
       if (!newsletter) {
         return res.status(404).json({ message: "Newsletter not found" });
       }
-      
+
       res.json(newsletter);
     } catch (error) {
       console.error(`Error fetching newsletter:`, error);
       res.status(500).json({ message: "Error fetching newsletter" });
     }
   });
-  
+
   // Create a new newsletter
   app.post("/api/newsletters", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const data = insertNewsletterSchema.parse(req.body);
       const newsletter = await storage.createNewsletter(data);
-      
+
       res.status(201).json(newsletter);
     } catch (error) {
       console.error("Error creating newsletter:", error);
@@ -307,27 +307,27 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
     }
   });
-  
+
   // Update an existing newsletter
   app.patch("/api/newsletters/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const id = parseInt(req.params.id);
       const data = req.body;
-      
+
       // Prevent updating sent newsletters
       const existingNewsletter = await storage.getNewsletterById(id);
       if (!existingNewsletter) {
         return res.status(404).json({ message: "Newsletter not found" });
       }
-      
+
       if (existingNewsletter.status === 'sent') {
         return res.status(400).json({ message: "Cannot update a newsletter that has already been sent" });
       }
-      
+
       const updatedNewsletter = await storage.updateNewsletter(id, data);
       res.json(updatedNewsletter);
     } catch (error) {
@@ -339,34 +339,34 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
     }
   });
-  
+
   // Send a newsletter
   app.post("/api/newsletters/:id/send", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const id = parseInt(req.params.id);
-      
+
       // Check if newsletter exists and is not already sent
       const newsletter = await storage.getNewsletterById(id);
       if (!newsletter) {
         return res.status(404).json({ message: "Newsletter not found" });
       }
-      
+
       if (newsletter.status === 'sent') {
         return res.status(400).json({ message: "Newsletter has already been sent" });
       }
-      
+
       // Get all active subscribers
       const subscribers = await storage.getAllSubscribers();
       const activeSubscribers = subscribers.filter(sub => sub.active);
-      
+
       if (activeSubscribers.length === 0) {
         return res.status(400).json({ message: "No active subscribers to send to" });
       }
-      
+
       // Send newsletter to all active subscribers (in a real app, this would use a queue)
       if (transporter) {
         try {
@@ -382,7 +382,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           return res.status(500).json({ message: "Failed to send newsletter email" });
         }
       }
-      
+
       // Update newsletter status to sent
       const sentNewsletter = await storage.sendNewsletter(id);
       res.json({ message: "Newsletter sent successfully", newsletter: sentNewsletter });
@@ -397,61 +397,61 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const comments = await storage.getUnapprovedComments();
-      
+
       // Enhance comments with author names and post titles
       const enhancedComments = await Promise.all(comments.map(async (comment) => {
         let authorName = 'Unknown';
         let postTitle = 'Unknown Post';
-        
+
         try {
           const author = await storage.getUser(comment.authorId);
           authorName = author?.username || 'Unknown';
         } catch (error) {
           console.error(`Error fetching author for comment ${comment.id}:`, error);
         }
-        
+
         try {
           const post = await storage.getPostById(comment.postId);
           postTitle = post?.title || 'Unknown Post';
         } catch (error) {
           console.error(`Error fetching post for comment ${comment.id}:`, error);
         }
-        
+
         return {
           ...comment,
           authorName,
           postTitle
         };
       }));
-      
+
       res.json(enhancedComments);
     } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
-  
+
   // Get recent tracks for review
   app.get("/api/admin/tracks/recent", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const tracks = await storage.getTracks();
-      
+
       // Sort tracks by creation date (newest first) and take the most recent 10
       const recentTracks = [...tracks]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10);
-      
+
       // Add uploader information if available
       const enhancedTracks = await Promise.all(recentTracks.map(async (track) => {
         let uploadedByName = 'Unknown';
-        
+
         if (track.uploadedById) {
           try {
             const uploader = await storage.getUser(track.uploadedById);
@@ -460,26 +460,26 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             console.error(`Error fetching uploader for track ${track.id}:`, error);
           }
         }
-        
+
         return {
           ...track,
           uploadedByName
         };
       }));
-      
+
       res.json(enhancedTracks);
     } catch (error) {
       console.error("Error fetching recent tracks:", error);
       res.status(500).json({ message: "Error fetching recent tracks" });
     }
   });
-  
+
   // Approve a post
   app.post("/api/admin/posts/:postId/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const postId = parseInt(req.params.postId);
       const approvedPost = await storage.approvePost(postId);
@@ -489,13 +489,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error approving post" });
     }
   });
-  
+
   // Approve a comment
   app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const commentId = parseInt(req.params.commentId);
       const approvedComment = await storage.approveComment(commentId);
@@ -505,13 +505,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error approving comment" });
     }
   });
-  
+
   // Reject a comment
   app.post("/api/admin/comments/:commentId/reject", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const commentId = parseInt(req.params.commentId);
       const rejectedComment = await storage.rejectComment(commentId);
@@ -521,13 +521,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error rejecting comment" });
     }
   });
-  
+
   // Delete a track
   app.delete("/api/admin/tracks/:trackId", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const trackId = parseInt(req.params.trackId);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
@@ -682,7 +682,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       // Auto-approve comments from admin users
       const isAdmin = req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
-      
+
       const data = insertCommentSchema.parse({
         ...req.body,
         postId: Number(req.params.postId),
@@ -704,7 +704,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Only show approved comments to non-admin users
       const onlyApproved = !req.isAuthenticated() || req.user?.role === 'user';
       console.log(`Fetching comments for post ${postId}, onlyApproved: ${onlyApproved}, user: ${req.user?.username || 'guest'}`);
-      
+
       const comments = await storage.getCommentsByPostId(postId, onlyApproved);
       console.log(`Returning ${comments.length} comments for post ${postId}`);
       res.json(comments);
@@ -789,7 +789,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         subject: "Password Recovery",
         text: `Click this link to reset your password: ${resetLink}`,
         html: `
-          <p>Click the link below to reset your password:</p>
+          <p>Click the link below to reset yourpassword:</p>
           <p><a href="${resetLink}">Reset Password</a></p>
           <p>This link will expire in 1 hour.</p>
         `,
@@ -926,22 +926,22 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.get("/api/admin/analytics/detailed", async (req, res) => {
     // Check for BYPASS_AUTHENTICATION variable from protected-route.tsx
     const bypassAuth = process.env.NODE_ENV !== 'production';
-    
+
     if (!bypassAuth && (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin'))) {
       console.log('Authentication failed for analytics endpoint');
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       console.log('Fetching admin analytics data...');
-      
+
       // Extract date range parameters from query
       const fromDate = req.query.from as string || undefined;
       const toDate = req.query.to as string || undefined;
-      
+
       // Log the date range for debugging
       console.log(`Date range for analytics: from=${fromDate}, to=${toDate}`);
-      
+
       // Get analytics data from storage interface with error handling
       let analyticsData;
       try {
@@ -956,12 +956,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           systemHealth: 'Error'
         };
       }
-      
+
       // Generate time-series data from database if possible, otherwise use realistic patterns
       // This represents data that would be calculated from actual database records
       let activeUsersOverTime = [0, 0, 0, 0, 0, 0];
       let newRegistrationsOverTime = [0, 0, 0, 0, 0, 0];
-      
+
       if (analyticsData && analyticsData.activeUsers) {
         // Generate realistic data patterns based on current metrics
         const baseActiveUsers = analyticsData.activeUsers;
@@ -974,7 +974,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           baseActiveUsers
         ];
       }
-      
+
       if (analyticsData && analyticsData.newRegistrations) {
         // Generate realistic data patterns based on current metrics
         const baseNewRegistrations = analyticsData.newRegistrations;
@@ -987,19 +987,19 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           baseNewRegistrations
         ];
       }
-      
+
       // User role distribution with error handling
       let userRolesDistribution = {
         user: 0,
         admin: 0,
         super_admin: 0
       };
-      
+
       try {
         // Fetch users to calculate user role distribution
         const users = await storage.getAllUsers();
         console.log(`Retrieved ${users.length} users for role distribution`);
-        
+
         // Count users by role
         users.forEach(user => {
           if (user.role && user.role in userRolesDistribution) {
@@ -1009,14 +1009,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       } catch (userError) {
         console.error('Error retrieving user data:', userError);
       }
-      
+
       // Content distribution with error handling
       let contentDistribution = {
         posts: 0,
         comments: 0,
         tracks: 0
       };
-      
+
       try {
         // Get content counts
         const posts = await storage.getPosts();
@@ -1025,7 +1025,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       } catch (postsError) {
         console.error('Error retrieving posts:', postsError);
       }
-      
+
       try {
         const comments = await storage.getUnapprovedComments();
         contentDistribution.comments = comments.length;
@@ -1033,7 +1033,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       } catch (commentsError) {
         console.error('Error retrieving comments:', commentsError);
       }
-      
+
       try {
         const tracks = await storage.getTracks();
         contentDistribution.tracks = tracks.length;
@@ -1041,7 +1041,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       } catch (tracksError) {
         console.error('Error retrieving tracks:', tracksError);
       }
-      
+
       // Build the complete response
       const response = {
         ...analyticsData,
@@ -1050,7 +1050,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         contentDistribution,
         userRolesDistribution
       };
-      
+
       console.log('Sending analytics response:', JSON.stringify(response));
       res.json(response);
     } catch (error) {
@@ -1093,6 +1093,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       console.error('Failed to save contact form:', error);
       res.status(500).json({ error: 'Failed to save contact form' });
     }
+  });
+
+  app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/index.html'), err => {
+      if (err) {
+        res.status(500).send(err);
+      }
+    });
   });
 
   return httpServer;
