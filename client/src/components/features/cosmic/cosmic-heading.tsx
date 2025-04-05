@@ -32,6 +32,9 @@ export interface CosmicHeadingProps {
     | '5xl'
     | '6xl';
   animate?: boolean;
+  // Added for compatibility with merged components
+  level?: number;
+  withAccent?: boolean;
 }
 
 const CosmicHeading: React.FC<CosmicHeadingProps> = ({

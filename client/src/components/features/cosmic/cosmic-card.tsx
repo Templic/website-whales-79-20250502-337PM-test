@@ -12,28 +12,56 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface CosmicCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'interactive' | 'glow';
+  variant?: 'default' | 'interactive' | 'glow' | 'subtle' | 'outline' | 'bordered' | 'glass';
   glowColor?: string;
+  // Added for compatibility with merged components
+  delay?: number;
+  glowEffect?: boolean;
+  hoverEffect?: boolean;
 }
 
 const CosmicCard = React.forwardRef<HTMLDivElement, CosmicCardProps>(
-  ({ className, variant = 'default', glowColor = 'rgba(99, 102, 241, 0.15)', children, ...props }, ref) => {
+  ({ 
+    className, 
+    variant = 'default', 
+    glowColor = 'rgba(99, 102, 241, 0.15)', 
+    glowEffect = false,
+    hoverEffect = false,
+    delay = 0,
+    children, 
+    ...props 
+  }, ref) => {
     const variantClasses = {
       default: 'bg-card text-card-foreground shadow-sm',
       interactive: 'bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow cursor-pointer',
-      glow: 'bg-card text-card-foreground relative before:absolute before:inset-0 before:-z-10 before:rounded-xl before:blur-xl before:opacity-75'
+      glow: 'bg-card text-card-foreground relative before:absolute before:inset-0 before:-z-10 before:rounded-xl before:blur-xl before:opacity-75',
+      // Added for compatibility with merged components
+      subtle: 'bg-black/20 backdrop-blur-md border border-white/5',
+      outline: 'bg-transparent backdrop-blur-sm border border-white/10',
+      bordered: 'bg-black/20 border border-white/10 backdrop-blur-sm',
+      glass: 'bg-white/5 backdrop-blur-md border border-white/10'
     };
 
     const style = variant === 'glow' ? { 
       '--card-glow-color': glowColor 
     } as React.CSSProperties : {};
 
+    // Create custom styles based on variant
+    const getVariantStyles = () => {
+      if (variant in variantClasses) {
+        return variantClasses[variant as keyof typeof variantClasses];
+      }
+      return variantClasses.default;
+    };
+
     return (
       <div
         ref={ref}
         className={cn(
           'rounded-lg border p-4',
-          variantClasses[variant],
+          getVariantStyles(),
+          glowEffect && "relative after:absolute after:inset-0 after:rounded-xl after:opacity-0 after:transition-opacity after:duration-300 after:pointer-events-none after:bg-gradient-to-r after:from-cyan-500/20 after:via-purple-500/20 after:to-cyan-500/20 after:blur-xl hover:after:opacity-100",
+          hoverEffect && "transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg",
           className
         )}
         style={style}
@@ -117,7 +145,7 @@ function CosmicCardOriginal({
  * Original CosmicCard component merged from: client/src/components/cosmic/ui/cosmic-card.tsx
  * Merge date: 2025-04-05
  */
-function CosmicCardOriginal({
+function CosmicCardSecondOriginal({
   children,
   className,
   glowEffect = false,
@@ -147,7 +175,7 @@ function CosmicCardOriginal({
  * Original CosmicCard component merged from: client/src/components/features/cosmic/CosmicCard.tsx
  * Merge date: 2025-04-05
  */
-function CosmicCardOriginal({
+function CosmicCardThirdOriginal({
   children,
   className,
   glowColor = "rgba(139, 92, 246, 0.5)",

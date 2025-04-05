@@ -1,12 +1,6 @@
-import { 
-  HexagonContainer, 
-  TriangleContainer, 
-  InvertedTriangleContainer,
-  CircleContainer, 
-  OctagonContainer,
-  StarburstContainer,
-  SacredGeometryCss 
-} from "./ui/sacred-geometry"
+// Import utilities and base components
+import { cn } from '@/lib/utils'
+import React from 'react'
 import { Button } from "@/components/ui/button"
 
 /**
@@ -28,13 +22,82 @@ import { Button } from "@/components/ui/button"
 "use client"
 
 import { useState } from "react"
-import {
-  HexagonContainer,
-  OctagonContainer,
-  PentagonContainer,
-  TriangleInterlockContainer,
-  AdaptiveTextContainer,
-} from "@/components/features/cosmic/sacred-geometry"
+// Placeholder components for the demo
+// These will be replaced with actual components when the import issues are resolved
+
+// Placeholder container components
+const HexagonContainer = ({ children, className }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const OctagonContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-blue-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const PentagonContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-pink-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const TriangleInterlockContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-teal-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const AdaptiveTextContainer = ({ children, className, clipPath, glowColor, maxLines }: { 
+  children: React.ReactNode, 
+  className?: string, 
+  clipPath?: string, 
+  glowColor?: string,
+  maxLines?: number 
+}) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+// Other shapes used in the second demo
+const TriangleContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-cyan-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const InvertedTriangleContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-blue-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+const CircleContainer = ({ children, className, glowColor, rotateSpeed }: { 
+  children: React.ReactNode, 
+  className?: string, 
+  glowColor?: string,
+  rotateSpeed?: number
+}) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-teal-500/30 rounded-full p-4", className)}>
+    {children}
+  </div>
+)
+
+const StarburstContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
+  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
+    {children}
+  </div>
+)
+
+// CSS Component
+const SacredGeometryCss = () => <style>{`
+  .sacred-geometry-glow {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+  }
+`}</style>
 
 export function SacredGeometryDemo() {
   const [textContent, setTextContent] = useState({
@@ -204,7 +267,7 @@ function SacredGeometryDemoOriginal() {
  * Original SacredGeometryDemo component merged from: client/src/components/cosmic/SacredGeometryDemo.tsx
  * Merge date: 2025-04-05
  */
-function SacredGeometryDemoOriginal() {
+function SacredGeometryDemoSecondOriginal() {
   const [textContent, setTextContent] = useState({
     short: "Sacred geometry is the blueprint of creation and the genesis of all form.",
     medium:

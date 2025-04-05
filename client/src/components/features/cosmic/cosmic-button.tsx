@@ -22,7 +22,8 @@ type CosmicVariant =
   | 'outline'
   | 'secondary'
   | 'ghost'
-  | 'link';
+  | 'link'
+  | 'primary'; // Added for compatibility with merged components
 
 // Define the cosmic button variants
 const cosmicButtonVariants = cva(
@@ -37,6 +38,7 @@ const cosmicButtonVariants = cva(
         stardust: "border border-purple-300 bg-black/20 backdrop-blur-sm text-white hover:bg-black/30 cosmic-glass-effect",
         nebula: "border border-indigo-300/30 bg-indigo-950/30 backdrop-blur-md text-white hover:bg-indigo-900/40 cosmic-glass-effect",
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        primary: "bg-primary text-primary-foreground hover:bg-primary/90", // Added for compatibility with merged components
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -64,6 +66,8 @@ export interface CosmicButtonProps extends
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   children: React.ReactNode;
+  // Added for compatibility with merged components
+  icon?: React.ReactNode;
 }
 
 // Create our CosmicButton component
