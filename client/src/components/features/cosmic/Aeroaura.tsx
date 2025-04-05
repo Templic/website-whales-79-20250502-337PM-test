@@ -956,8 +956,7 @@ export function Aeroaura({
                       {isBreathSyncActive
                         ? `${currentPattern.name} Pattern`
                         : "Click 'Start Sync' to begin"}
-                    </p>
-                  </div>
+                    </p>                  </div>
                 </div>
               </div>
 
