@@ -72,7 +72,7 @@ function AppRouter() {
   }, [location]);
 
   return (
-    <Router base="">
+    <Router>
       <Layout>
         <Switch>
           {/* Main Pages */}
