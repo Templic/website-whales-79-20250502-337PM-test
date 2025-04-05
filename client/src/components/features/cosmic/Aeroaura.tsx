@@ -151,8 +151,10 @@ export function Aeroaura({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Current track
-  const currentTrack = tracks[currentTrackIndex];
+  // Current track - safely handle empty tracks array
+  const currentTrack = currentTrackIndex >= 0 && currentTrackIndex < tracks.length 
+    ? tracks[currentTrackIndex]
+    : null;
 
   // Breath patterns
   const breathPatterns: BreathPattern[] = [
@@ -548,7 +550,7 @@ export function Aeroaura({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: currentTrack && getChakraColor(currentTrack.chakra) }}
+            style={{ backgroundColor: currentTrack ? getChakraColor(currentTrack.chakra) : "#9333ea" }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -620,9 +622,7 @@ export function Aeroaura({
                   <div
                     className="relative rounded-lg overflow-hidden aspect-square bg-gradient-to-br from-purple-900/50 to-purple-900/10 backdrop-blur-sm border border-white/5"
                     style={{
-                      boxShadow: `0 8px 32px -8px ${getChakraColor(
-                        currentTrack.chakra
-                      )}50`,
+                      boxShadow: `0 8px 32px -8px ${currentTrack && currentTrack.chakra ? getChakraColor(currentTrack.chakra) : "#9333ea"}50`,
                     }}
                   >
                     {/* Album cover */}
@@ -683,7 +683,7 @@ export function Aeroaura({
                         <div
                           className="h-3 w-3 rounded-full"
                           style={{
-                            backgroundColor: getChakraColor(currentTrack.chakra),
+                            backgroundColor: currentTrack && currentTrack.chakra ? getChakraColor(currentTrack.chakra) : "#9333ea",
                           }}
                         ></div>
                         <p className="text-white/60 text-xs">

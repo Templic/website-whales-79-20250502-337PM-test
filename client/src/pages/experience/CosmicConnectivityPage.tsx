@@ -28,11 +28,44 @@ import {
 } from "lucide-react";
 
 export default function CosmicConnectivityPage() {
-  const [tracks, setTracks] = useState<any[]>([]);
+  // Initialize with default tracks to prevent errors
+  const [tracks, setTracks] = useState<any[]>([
+    {
+      id: 1,
+      title: "Root Chakra Alignment",
+      artist: "ASTRA",
+      duration: "6:32",
+      audioSrc: "/placeholder.mp3",
+      coverArt: "/placeholder.svg?height=300&width=300",
+      chakra: "Root",
+      frequency: 396,
+    },
+    {
+      id: 2,
+      title: "Sacral Awakening",
+      artist: "ASTRA",
+      duration: "7:14", 
+      audioSrc: "/placeholder.mp3",
+      coverArt: "/placeholder.svg?height=300&width=300",
+      chakra: "Sacral",
+      frequency: 417,
+    },
+    {
+      id: 3,
+      title: "Solar Plexus Activation",
+      artist: "ASTRA",
+      duration: "5:48",
+      audioSrc: "/placeholder.mp3",
+      coverArt: "/placeholder.svg?height=300&width=300",
+      chakra: "Solar Plexus",
+      frequency: 528,
+    }
+  ]);
   const { toast } = useToast();
 
   useEffect(() => {
-    setTracks([]);
+    // Fetch tracks here if needed in the future
+    // For now, we're already initializing with default tracks
 
     toast({
       title: "Welcome to Cosmic Connectivity",
