@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Exo+2:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Gruppo&family=Michroma&family=Poiret+One&family=Syncopate:wght@400;700&display=swap');
 @import url('./cosmic-styles.css');
 @import url('./components/cosmic/cosmic-animations.css');
 @import './styles/cosmic-theme.css';
@@ -102,6 +103,30 @@
   
   .font-space {
     font-family: 'Space Grotesk', sans-serif;
+  }
+  
+  .font-cinzel {
+    font-family: 'Cinzel', serif;
+  }
+  
+  .font-exo2 {
+    font-family: 'Exo 2', sans-serif;
+  }
+  
+  .font-gruppo {
+    font-family: 'Gruppo', cursive;
+  }
+  
+  .font-michroma {
+    font-family: 'Michroma', sans-serif;
+  }
+  
+  .font-poiret {
+    font-family: 'Poiret One', cursive;
+  }
+  
+  .font-syncopate {
+    font-family: 'Syncopate', sans-serif;
   }
   
   /* Accessibility styles */

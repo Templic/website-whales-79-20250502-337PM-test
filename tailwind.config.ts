@@ -10,6 +10,17 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Exo 2', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        orbitron: ['Orbitron', 'sans-serif'],
+        rajdhani: ['Rajdhani', 'sans-serif'],
+        space: ['Space Grotesk', 'sans-serif'],
+        cinzel: ['Cinzel', 'serif'],
+        gruppo: ['Gruppo', 'cursive'],
+        michroma: ['Michroma', 'sans-serif'],
+        poiret: ['Poiret One', 'cursive'],
+        syncopate: ['Syncopate', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

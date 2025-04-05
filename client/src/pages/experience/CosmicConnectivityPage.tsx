@@ -6,7 +6,7 @@
  */
 import { useState, useEffect, useMemo } from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
-import { SacredGeometryDemo } from "@/components/cosmic/SacredGeometryDemo";
+import { SacredGeometryVisualizer } from "@/components/features/cosmic/sacred-geometry-visualizer";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
 import { MultidimensionalSoundJourney } from "@/components/immersive/MultidimensionalSoundJourney";
 import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatGenerator";
@@ -237,7 +237,7 @@ export default function CosmicConnectivityPage() {
               practice and breathing exercises by aligning your visual cortex with
               the mathematical principles of the universe.
             </p>
-            {isComponentVisible.sacredGeometry && <SacredGeometryDemo />}
+            {isComponentVisible.sacredGeometry && <SacredGeometryVisualizer />}
           </div>
         </div>
 
