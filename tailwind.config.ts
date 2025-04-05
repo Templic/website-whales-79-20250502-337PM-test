@@ -128,6 +128,10 @@ export default {
           "0%, 100%": { opacity: "0.2" },
           "50%": { opacity: "0.8" },
         },
+        "twinkle": {
+          "0%, 100%": { opacity: "0.2" },
+          "50%": { opacity: "1" },
+        },
         "cosmic-pulse": {
           "0%": { transform: "scale(0.95)", opacity: "0.5" },
           "50%": { transform: "scale(1.05)", opacity: "0.9" },
