@@ -151,7 +151,7 @@ export const CosmicToast: FC<CosmicToastProps> = ({
               <ToastIcon variant={variant as string} />
             </div>
           )}
-          
+
           <div className="flex-1">
             {title && (
               <h3 className="font-medium text-white">
@@ -162,7 +162,7 @@ export const CosmicToast: FC<CosmicToastProps> = ({
               {message}
             </p>
           </div>
-          
+
           <button
             onClick={() => {
               setIsVisible(false);
@@ -174,7 +174,7 @@ export const CosmicToast: FC<CosmicToastProps> = ({
             <X className="w-4 h-4" />
           </button>
         </div>
-        
+
         {showProgress && progress > 0 && (
           <div className="mt-2 w-full bg-gray-700 rounded-full h-1">
             <div
@@ -251,9 +251,9 @@ export const ToastManager: FC<ToastManagerProps> = ({
     const onToastsChange = (updatedToasts: Toast[]) => {
       setCurrentToasts([...updatedToasts]);
     };
-    
+
     listeners.push(onToastsChange);
-    
+
     return () => {
       listeners = listeners.filter(listener => listener !== onToastsChange);
     };
@@ -305,65 +305,3 @@ const addToastOriginal = (toast: Omit<Toast, 'id'>) => {
   listeners.forEach(listener => listener(toasts));
   return id;
 };
-
-
-// Clear all toasts
-export const clearToasts = () => {
-  toasts = [];
-  listeners.forEach(listener => listener(toasts));
-};
-
-// Toast Manager Context
-export const ToastManager: FC<ToastManagerProps> = ({ 
-  autoClose = true,
-  position = 'top-right'
-}) => {
-  const [currentToasts, setCurrentToasts] = useState<Toast[]>(toasts);
-
-  useEffect(() => {
-    // Subscribe to toast updates
-    const onToastsChange = (updatedToasts: Toast[]) => {
-      setCurrentToasts([...updatedToasts]);
-    };
-    
-    listeners.push(onToastsChange);
-    
-    return () => {
-      listeners = listeners.filter(listener => listener !== onToastsChange);
-    };
-  }, []);
-
-  return (
-    <>
-      {currentToasts.map(toast => (
-        <CosmicToast
-          key={toast.id}
-          open={true}
-          position={position}
-          title={toast.title}
-          message={toast.message}
-          variant={toast.variant}
-          animation={toast.animation}
-          duration={toast.duration || (autoClose ? 5000 : 0)}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
-    </>
-  );
-};
-
-// Utility functions for specific toast types
-export const showSuccessToast = (message: string, title?: string, duration = 5000) => 
-  addToastOriginal({ message, title, variant: 'success', duration });
-
-export const showErrorToast = (message: string, title?: string, duration = 5000) => 
-  addToastOriginal({ message, title, variant: 'error', duration });
-
-export const showWarningToast = (message: string, title?: string, duration = 5000) => 
-  addToastOriginal({ message, title, variant: 'warning', duration });
-
-export const showInfoToast = (message: string, title?: string, duration = 5000) => 
-  addToastOriginal({ message, title, variant: 'info', duration });
-
-export const showCosmicToast = (message: string, title?: string, duration = 5000) => 
-  addToastOriginal({ message, title, variant: 'cosmic', animation: 'glow', duration });
