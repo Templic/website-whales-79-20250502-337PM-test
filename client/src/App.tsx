@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Router } from "wouter";
 // import { lazy } from 'react';
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -64,7 +64,7 @@ import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 
-function Router() {
+function AppRouter() {
   const [location] = useLocation();
 
   useEffect(() => {
@@ -72,84 +72,85 @@ function Router() {
   }, [location]);
 
   return (
-    <Layout>
+    <Router base="">
+      <Layout>
+        <Switch>
+          {/* Main Pages */}
+          <Route path="/" component={HomePage} />
+          <Route path="/about" component={AboutPage} />
+          <Route path="/contact" component={ContactPage} />
+          <Route path="/tour" component={TourPage} />
+          <Route path="/engage" component={EngagePage} />
+          <Route path="/newsletter" component={NewsletterPage} />
+          <Route path="/collaboration" component={CollaborationPage} />
+          {/* Community Pages */}
+          <Route path="/community" component={CommunityPage} />
+          <Route path="/enhanced-community" component={EnhancedCommunityPage} />
 
-      <Switch>
-        {/* Main Pages */}
-        <Route path="/" component={HomePage} />
-        <Route path="/about" component={AboutPage} />
-        <Route path="/contact" component={ContactPage} />
-        <Route path="/tour" component={TourPage} />
-        <Route path="/engage" component={EngagePage} />
-        <Route path="/newsletter" component={NewsletterPage} />
-        <Route path="/collaboration" component={CollaborationPage} />
-        {/* Community Pages */}
-        <Route path="/community" component={CommunityPage} />
-        <Route path="/enhanced-community" component={EnhancedCommunityPage} />
+          {/* Music & Experience */}
+          <Route path="/music-release" component={NewMusicPage} />
+          <Route path="/archived-music" component={ArchivedMusicPage} />
+          <Route path="/music-archive" component={ArchivedMusicPage} />
+          {/* Experience Routes */}
+          <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
+          <Route path="/experience/cosmic-connectivity" component={CosmicConnectivityPage} />
+          <Route path="/cosmic-experience" component={CosmicExperiencePage} />
+          <Route path="/cosmic-immersive" component={CosmicImmersivePage} />
+          <Route path="/cosmic-immersive-experience" component={CosmicImmersivePage} />
+          <Route path="/cosmic-experience-immersive" component={CosmicImmersivePage} />
+          {/* Archived Page - /archive */}
+          {/* <Route path="/archive" component={ArchivePage} /> */}
 
-        {/* Music & Experience */}
-        <Route path="/music-release" component={NewMusicPage} />
-        <Route path="/archived-music" component={ArchivedMusicPage} />
-        <Route path="/music-archive" component={ArchivedMusicPage} />
-        {/* Experience Routes */}
-        <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
-        <Route path="/experience/cosmic-connectivity" component={CosmicConnectivityPage} />
-        <Route path="/cosmic-experience" component={CosmicExperiencePage} />
-        <Route path="/cosmic-immersive" component={CosmicImmersivePage} />
-        <Route path="/cosmic-immersive-experience" component={CosmicImmersivePage} />
-        <Route path="/cosmic-experience-immersive" component={CosmicImmersivePage} />
-        {/* Archived Page - /archive */}
-        {/* <Route path="/archive" component={ArchivePage} /> */}
+          {/* Blog */}
+          <Route path="/blog" component={BlogPage} />
+          <Route path="/blog/:id" component={BlogPostPage} />
 
-        {/* Blog */}
-        <Route path="/blog" component={BlogPage} />
-        <Route path="/blog/:id" component={BlogPostPage} />
+          {/* Shop Routes */}
+          <Route path="/shop" component={ShopPage} />
+          <Route path="/shop/product/:slug" component={ProductPage} />
+          <Route path="/cart" component={CartPage} />
+          <Route path="/shop/cart" component={CartPage} />
+          <Route path="/checkout" component={CheckoutPage} />
+          <Route path="/shop/checkout" component={CheckoutPage} />
+          <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
+          <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
+          <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
+          {/* Cosmic Shop is now integrated into the main ShopPage */}
 
-        {/* Shop Routes */}
-        <Route path="/shop" component={ShopPage} />
-        <Route path="/shop/product/:slug" component={ProductPage} />
-        <Route path="/cart" component={CartPage} />
-        <Route path="/shop/cart" component={CartPage} />
-        <Route path="/checkout" component={CheckoutPage} />
-        <Route path="/shop/checkout" component={CheckoutPage} />
-        <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
-        <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
-        <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
-        {/* Cosmic Shop is now integrated into the main ShopPage */}
+          {/* User Account */}
+          <Route path="/auth" component={AuthPage} />
+          <Route path="/recover-password" component={PasswordRecoveryPage} />
+          <Route path="/reset-password" component={PasswordRecoveryPage} />
+          <ProtectedRoute path="/portal" component={UserPortal} />
 
-        {/* User Account */}
-        <Route path="/auth" component={AuthPage} />
-        <Route path="/recover-password" component={PasswordRecoveryPage} />
-        <Route path="/reset-password" component={PasswordRecoveryPage} />
-        <ProtectedRoute path="/portal" component={UserPortal} />
+          {/* Admin Routes */}
+          <ProtectedRoute path="/admin" component={AdminPortalPage} />
+          <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
+          <ProtectedRoute path="/admin/users" component={UsersPage} />
+          <ProtectedRoute path="/admin/posts" component={PostsPage} />
+          <ProtectedRoute path="/admin/music" component={MusicPage} />
 
-        {/* Admin Routes */}
-        <ProtectedRoute path="/admin" component={AdminPortalPage} />
-        <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
-        <ProtectedRoute path="/admin/users" component={UsersPage} />
-        <ProtectedRoute path="/admin/posts" component={PostsPage} />
-        <ProtectedRoute path="/admin/music" component={MusicPage} />
+          {/* Legal & Info */}
+          <Route path="/sitemap" component={SitemapPage} />
+          <Route path="/terms" component={TermsOfService} />
+          <Route path="/privacy" component={PrivacyPolicy} />
 
-        {/* Legal & Info */}
-        <Route path="/sitemap" component={SitemapPage} />
-        <Route path="/terms" component={TermsOfService} />
-        <Route path="/privacy" component={PrivacyPolicy} />
-
-        {/* Demo Pages */}
-        <Route path="/components" component={ComponentsCatalog} />
-        <Route path="/test/cosmic" component={TestCosmicComponentsDemo} />
-        <Route path="/cosmic-components" component={CosmicComponentsDemo} />
-        <Route path="/test/audio" component={AudioComponentsDemo} />
-        <Route path="/test/new" component={NewComponentsDemo} />
-        <Route path="/cosmic-test" component={CosmicTest} />
-        {/* Archived Page - /button-demo */}
-        {/* <Route path="/button-demo" component={ButtonDemo} /> */}
+          {/* Demo Pages */}
+          <Route path="/components" component={ComponentsCatalog} />
+          <Route path="/test/cosmic" component={TestCosmicComponentsDemo} />
+          <Route path="/cosmic-components" component={CosmicComponentsDemo} />
+          <Route path="/test/audio" component={AudioComponentsDemo} />
+          <Route path="/test/new" component={NewComponentsDemo} />
+          <Route path="/cosmic-test" component={CosmicTest} />
+          {/* Archived Page - /button-demo */}
+          {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
 
-        {/* 404 Route */}
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+          {/* 404 Route */}
+          <Route component={NotFound} />
+        </Switch>
+      </Layout>
+    </Router>
   );
 }
 
@@ -181,7 +182,7 @@ function App() {
         <AccessibilityProvider>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <StarBackground starCount={150} />
-            <Router />
+            <AppRouter />
             <Toaster />
           </ErrorBoundary>
         </AccessibilityProvider>
