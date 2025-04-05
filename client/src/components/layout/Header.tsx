@@ -6,7 +6,7 @@ import { Menu, X, Search } from "lucide-react";
 const navigationItems = [
   { path: "/", label: "Home" },
   { path: "/music", label: "Music" },
-  { path: "/cosmic-immersive", label: "Experience" },
+  { path: "/cosmic-immersive", label: "Immersion" },
   { path: "/shop", label: "Shop" },
   { path: "/community", label: "Community" },
   { path: "/tour", label: "Tour" },
