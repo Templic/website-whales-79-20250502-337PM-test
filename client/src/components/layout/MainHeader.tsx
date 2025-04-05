@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 const navigationItems = [
   { path: "/", label: "Home" },
   { path: "/about", label: "About" },
-  { path: "/music-release", label: "New Music" },
+  { path: "/new-music", label: "New Music" },
   { path: "/archived-music", label: "Archived Music" },
   { path: "/cosmic-connectivity", label: "Cosmic Connectivity" },
   { path: "/cosmic-experience", label: "Cosmic Experience" },
