@@ -17,7 +17,6 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -715,11 +714,11 @@ export function BreathSyncPlayer({
                     className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0"
                     style={{ backgroundColor: `${getChakraColor(currentTrack.chakra)}20` }}
                   >
-                    <Image
+                    <img
                       src={currentTrack.coverArt || "/placeholder.svg"}
                       alt={currentTrack.title}
-                      width={48}
-                      height={48}
+                      
+                      
                       className="h-full w-full object-cover"
                     />
                   </div>
@@ -2298,11 +2297,11 @@ function BreathSyncPlayerOriginalKebabCase({
                     className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0"
                     style={{ backgroundColor: `${getChakraColor(currentTrack.chakra)}20` }}
                   >
-                    <Image
+                    <img
                       src={currentTrack.coverArt || "/placeholder.svg"}
                       alt={currentTrack.title}
-                      width={48}
-                      height={48}
+                      
+                      
                       className="h-full w-full object-cover"
                     />
                   </div>

@@ -490,11 +490,8 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
   )
 }
 
-/**
- * Original RecommendedPlaylists component merged from: client/src/components/common/dynamic-playlists.tsx
- * Merge date: 2025-04-05
- */
-function RecommendedPlaylistsOriginal({
+// Recommended playlists component
+export function RecommendedPlaylists({
   playlists,
   onSelect,
 }: { playlists: Playlist[]; onSelect?: (playlist: Playlist) => void }) {
@@ -544,7 +541,7 @@ function RecommendedPlaylistsOriginal({
  * Original DynamicPlaylists component merged from: client/src/components/music/DynamicPlaylists.tsx
  * Merge date: 2025-04-05
  */
-function DynamicPlaylistsSecondOriginal({ playlists, onPlay, className }: DynamicPlaylistsProps) {
+function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlaylistsProps) {
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -735,11 +732,8 @@ function DynamicPlaylistsSecondOriginal({ playlists, onPlay, className }: Dynami
   );
 }
 
-/**
- * Second original RecommendedPlaylists component from another source
- * Merge date: 2025-04-05
- */
-function RecommendedPlaylistsSecondOriginal({
+// Recommended playlists component
+export function RecommendedPlaylists({
   playlists,
   onSelect,
 }: {

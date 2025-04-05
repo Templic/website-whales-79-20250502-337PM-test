@@ -252,7 +252,7 @@ function ParticleBackgroundOriginal() {
  * Original ParticleBackground component merged from: client/src/components/cosmic/ParticleBackground.tsx
  * Merge date: 2025-04-05
  */
-function ParticleBackgroundOriginal() {
+function ParticleBackgroundSecondOriginal() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -363,7 +363,7 @@ function ParticleBackgroundOriginal() {
  * Original ParticleBackground component merged from: client/src/components/features/cosmic/ParticleBackground.tsx
  * Merge date: 2025-04-05
  */
-function ParticleBackgroundOriginal({
+function ParticleBackgroundThirdOriginal({
   colorScheme = "mixed", 
   density = "medium", 
   speed = "medium",
