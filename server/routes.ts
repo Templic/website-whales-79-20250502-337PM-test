@@ -1100,13 +1100,17 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
   });
 
-  app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/index.html'), err => {
-      if (err) {
-        res.status(500).send(err);
-      }
+  // Let Vite handle frontend routes in development mode
+  if (process.env.NODE_ENV === 'production') {
+    app.get('/*', (req, res) => {
+      const indexPath = path.resolve(path.dirname(__dirname), 'client/index.html');
+      res.sendFile(indexPath, err => {
+        if (err) {
+          res.status(500).send(err);
+        }
+      });
     });
-  });
+  }
 
   return httpServer;
 }

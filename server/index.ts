@@ -32,6 +32,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add MIME type for JavaScript modules
+app.use((req, res, next) => {
+  if (req.path.endsWith('.js') || req.path.endsWith('.mjs') || req.path.includes('.js?')) {
+    res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+  }
+  if (req.path.endsWith('.css') || req.path.includes('.css?')) {
+    res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(fileUpload({
