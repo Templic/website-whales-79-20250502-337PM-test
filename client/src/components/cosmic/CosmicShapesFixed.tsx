@@ -60,13 +60,97 @@ interface CircleShapeProps extends BaseShapeProps {
 type ShapeProps = PolygonShapeProps | StarburstShapeProps | EllipseShapeProps | CircleShapeProps;
 
 interface CosmicShapeProps {
-  shape: ShapeProps;
+  shape?: ShapeProps;
   className?: string;
   style?: React.CSSProperties;
+  // Allow direct props for when shape is not provided
+  type?: ShapeType;
+  size?: number;
+  color?: string;
+  glowColor?: string;
+  fillOpacity?: number;
+  animate?: boolean;
+  animationDuration?: number;
+  position?: ShapePosition;
+  sides?: number;
+  rotation?: number;
+  points?: number;
+  innerRadius?: number;
+  verticalRadius?: number;
+  strokeWidth?: number;
 }
 
 // Single shape component
-const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) => {
+const CosmicShape: React.FC<CosmicShapeProps> = ({ 
+  shape, 
+  className, 
+  style,
+  // Direct props
+  type,
+  size,
+  color,
+  glowColor,
+  fillOpacity,
+  animate,
+  animationDuration,
+  position,
+  sides,
+  rotation,
+  points,
+  innerRadius,
+  verticalRadius,
+  strokeWidth
+}) => {
+  // If direct props are provided, create a shape object
+  const effectiveShape = shape || (() => {
+    if (!type || !size || !color) {
+      console.error('CosmicShape requires either a shape object or type, size, and color props');
+      return {
+        type: 'circle',
+        size: 50,
+        color: '#ffffff'
+      }
+    }
+
+    const baseShape = {
+      type,
+      size,
+      color,
+      glowColor,
+      fillOpacity,
+      animate,
+      animationDuration,
+      position
+    };
+
+    // Add specific properties based on shape type
+    if (type === 'polygon' && sides !== undefined) {
+      return {
+        ...baseShape,
+        type: 'polygon',
+        sides,
+        rotation
+      } as PolygonShapeProps;
+    }
+    else if (type === 'starburst' && points !== undefined) {
+      return {
+        ...baseShape,
+        type: 'starburst',
+        points,
+        innerRadius
+      } as StarburstShapeProps;
+    }
+    else if (type === 'ellipse') {
+      return {
+        ...baseShape,
+        type: 'ellipse',
+        verticalRadius
+      } as EllipseShapeProps;
+    }
+    else {
+      return baseShape as CircleShapeProps;
+    }
+  })();
   // Generate SVG path for a polygon
   const generatePolygonPath = (sides: number, size: number, rotation = 0) => {
     const radius = size / 2;
@@ -102,12 +186,12 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
 
   // Render the shape based on its type
   const renderShape = () => {
-    const { size, color, glowColor, fillOpacity = 0.1, animate = false, animationDuration = 20 } = shape;
+    const { size, color, glowColor, fillOpacity = 0.1, animate = false, animationDuration = 20 } = effectiveShape;
     const svgSize = size;
     const viewBoxSize = size;
 
     const animationClasses = animate
-      ? shape.type === 'starburst'
+      ? effectiveShape.type === 'starburst'
         ? 'cosmic-sparkle'
         : 'cosmic-pulse'
       : '';
@@ -124,14 +208,14 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
       filter: glowColor ? `drop-shadow(0 0 ${size / 20}px ${glowColor})` : undefined,
     };
 
-    const positionStyle = shape.position
+    const positionStyle = effectiveShape.position
       ? {
           position: 'absolute' as const,
-          ...shape.position,
+          ...effectiveShape.position,
         }
       : {};
 
-    switch (shape.type) {
+    switch (effectiveShape.type) {
       case 'circle':
         return (
           <div
@@ -158,7 +242,8 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
         );
 
       case 'ellipse':
-        const verticalRadius = shape.verticalRadius || size * 0.6;
+        const verticalRadius = effectiveShape.type === 'ellipse' ? 
+          effectiveShape.verticalRadius || size * 0.6 : size * 0.6;
         return (
           <div
             className={cn('cosmic-shape', animationClasses, className)}
@@ -177,7 +262,7 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
                 rx={viewBoxSize / 2 - 2}
                 ry={verticalRadius / 2}
                 stroke={color}
-                strokeWidth="1"
+                strokeWidth={strokeWidth || 1}
                 {...shapeFill}
               />
             </svg>
@@ -185,7 +270,11 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
         );
 
       case 'polygon':
-        const path = generatePolygonPath(shape.sides, viewBoxSize, shape.rotation);
+        const path = generatePolygonPath(
+          effectiveShape.type === 'polygon' ? effectiveShape.sides : 6, 
+          viewBoxSize, 
+          effectiveShape.type === 'polygon' ? effectiveShape.rotation : 0
+        );
         return (
           <div
             className={cn('cosmic-shape', animationClasses, className)}
@@ -198,13 +287,17 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
             }}
           >
             <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
-              <path d={path} stroke={color} strokeWidth="1" strokeLinejoin="round" {...shapeFill} />
+              <path d={path} stroke={color} strokeWidth={strokeWidth || 1} strokeLinejoin="round" {...shapeFill} />
             </svg>
           </div>
         );
 
       case 'starburst':
-        const starPath = generateStarburstPath(shape.points, viewBoxSize / 2, shape.innerRadius);
+        const starPath = generateStarburstPath(
+          effectiveShape.type === 'starburst' ? effectiveShape.points : 5, 
+          viewBoxSize / 2, 
+          effectiveShape.type === 'starburst' ? effectiveShape.innerRadius : undefined
+        );
         return (
           <div
             className={cn('cosmic-shape', animationClasses, className)}
@@ -217,7 +310,7 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) =>
             }}
           >
             <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
-              <path d={starPath} stroke={color} strokeWidth="1" strokeLinejoin="round" {...shapeFill} />
+              <path d={starPath} stroke={color} strokeWidth={strokeWidth || 1} strokeLinejoin="round" {...shapeFill} />
             </svg>
           </div>
         );

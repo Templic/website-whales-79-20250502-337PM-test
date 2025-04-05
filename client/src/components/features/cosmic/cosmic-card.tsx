@@ -82,6 +82,7 @@ const CosmicCard = React.forwardRef<HTMLDivElement, CosmicCardProps>(
 
 CosmicCard.displayName = 'CosmicCard';
 
+export { CosmicCard };
 
 
 /**
