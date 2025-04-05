@@ -76,7 +76,7 @@ async function startServer() {
   try {
     // Initialize database connection
     await initializeDatabase();
-    
+
     // Initialize database optimization and background services
     await initDatabaseOptimization().catch(err => {
       console.warn('Database optimization initialization failed, continuing without it:', err);
@@ -85,7 +85,7 @@ async function startServer() {
     await initBackgroundServices().catch(err => {
       console.warn('Background database services initialization failed, continuing without them:', err);
     });
-    
+
     // Setup authentication first
     setupAuth(app);
 
@@ -154,6 +154,17 @@ async function startServer() {
       console.error('Failed to initialize WebSocket server:', error);
       // Continue server startup even if WebSocket fails
     }
+
+    // Error handling and crash recovery
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception:', error);
+      // Perform cleanup if needed but keep server running
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      // Log but don't exit process
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Setting up Vite in development mode...');
