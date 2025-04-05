@@ -1,6 +1,11 @@
 import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 import { storage } from "./storage";
 import { db, contactFormEntries } from "./db";
 import { eq, sql } from "drizzle-orm";
