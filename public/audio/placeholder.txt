@@ -7,3 +7,10 @@ These placeholder audio files are expected by the BreathSyncPlayer component:
 
 If you have access to these audio files, please place them in this directory.
 Otherwise, the component will still function but without actual audio playback.
+Audio Files Attribution:
+- meditation-alpha.mp3: CC0 License
+- theta-waves.mp3: CC0 License  
+- delta-waves.mp3: CC0 License
+- alpha-focus.mp3: CC0 License
+
+All audio files are generated using open-source synthesis tools for demonstration purposes.

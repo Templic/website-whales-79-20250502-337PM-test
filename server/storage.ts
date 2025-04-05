@@ -632,10 +632,10 @@ export class PostgresStorage implements IStorage {
         // Add sample tracks
         await db.insert(tracks).values([
           {
-            title: "Feels So Good",
-            artist: "Dale The Whale ft. AC3-2085",
-            duration: "3:45",
-            audioUrl: "feels-so-good.mp3",
+            title: "Ethereal Dreams",
+            artist: "Dale The Whale",
+            duration: "4:30",
+            audioUrl: "/audio/meditation-alpha.mp3",
             createdAt: new Date(),
             updatedAt: new Date()
           },
@@ -670,7 +670,7 @@ export class PostgresStorage implements IStorage {
             title: "Oceanic Collection",
             artist: "Dale The Whale",
             releaseDate: new Date("2025-01-15"),
-            coverImage: "/static/images/oceanic-collection.jpg",
+            coverImage: "/images/music/ethereal-meditation.svg",
             description: "A collection of ocean-inspired tracks",
             createdAt: new Date(),
             updatedAt: new Date()
