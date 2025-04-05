@@ -49,7 +49,7 @@ import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 import CosmicConnectivityPage from "@/pages/experience/CosmicConnectivityPage";
 import CosmicExperiencePage from "@/pages/CosmicExperiencePage";
 import ImmersivePage from "@/pages/experience/ImmersivePage";
-import CosmicImmersivePage from "@/pages/experience/CosmicImmersivePage"; // Added import
+import CosmicImmersivePage from "./pages/CosmicExperienceImmersivePage"; // Added import
 import ArchivePage from "@/pages/ArchivePage";
 import CosmicMerchandisePage from "@/pages/shop/CosmicMerchandisePage";
 import TestCosmicComponentsDemo from "@/pages/test/CosmicComponentsDemo";
