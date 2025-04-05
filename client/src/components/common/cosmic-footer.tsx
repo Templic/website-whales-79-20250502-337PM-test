@@ -18,7 +18,7 @@
 import type React from "react"
 
 import { useState, useCallback } from "react"
-import Link from "next/link"
+import { Link } from "wouter"
 import { motion } from "framer-motion"
 import { Facebook, Twitter, Instagram, Youtube, Mail, Music, Headphones, Heart, ExternalLink } from "lucide-react"
 import { FlowerOfLifePattern } from "@/components/features/cosmic/sacred-geometry"

@@ -2,8 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { Link, useLocation } from "wouter"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Menu, X, Home, Music, Heart, Calendar, Mail, Book, MoonStar } from "lucide-react"
@@ -21,7 +20,7 @@ export function CosmicNavigation() {
   const [prevScrollPosition, setPrevScrollPosition] = useState(0)
   const [isNavVisible, setIsNavVisible] = useState(true)
   const [isAutoHideEnabled, setIsAutoHideEnabled] = useState(true)
-  const pathname = usePathname()
+  const [pathname] = useLocation()
   const navRef = useRef<HTMLElement>(null)
 
   const routes: NavItem[] = [
@@ -54,6 +53,12 @@ export function CosmicNavigation() {
       path: "/newsletter",
       icon: <Mail className="h-5 w-5" />,
       description: "Stay updated",
+    },
+    {
+      name: "Cosmic Experience",
+      path: "/cosmic-experience",
+      icon: <MoonStar className="h-5 w-5" />,
+      description: "Immersive cosmic journey",
     },
     {
       name: "Blog",
@@ -109,7 +114,7 @@ export function CosmicNavigation() {
         }}
       >
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2 group z-10">
+          <Link to="/" className="flex items-center space-x-2 group z-10">
             <div className="relative h-9 w-9">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
@@ -126,7 +131,7 @@ export function CosmicNavigation() {
               {routes.map((route) => (
                 <Link
                   key={route.path}
-                  href={route.path}
+                  to={route.path}
                   className={cn(
                     "relative inline-flex items-center px-3 py-2 rounded-full transition-colors",
                     pathname === route.path 
@@ -147,7 +152,7 @@ export function CosmicNavigation() {
               {routes.map((route) => (
                 <Link
                   key={route.path}
-                  href={route.path}
+                  to={route.path}
                   className={cn(
                     "relative inline-flex items-center p-2 rounded-full transition-colors tooltip-trigger",
                     pathname === route.path 
@@ -198,7 +203,7 @@ export function CosmicNavigation() {
                   {routes.map((route) => (
                     <Link
                       key={route.path}
-                      href={route.path}
+                      to={route.path}
                       className={cn(
                         "flex items-center space-x-3 p-4 rounded-lg transition-colors",
                         pathname === route.path
