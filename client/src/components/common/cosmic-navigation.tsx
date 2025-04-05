@@ -61,6 +61,12 @@ export function CosmicNavigation() {
       description: "Immersive cosmic journey",
     },
     {
+      name: "Cosmic Immersive",
+      path: "/cosmic-immersive",
+      icon: <MoonStar className="h-5 w-5" />,
+      description: "Deep cosmic immersion",
+    },
+    {
       name: "Blog",
       path: "/blog",
       icon: <Book className="h-5 w-5" />,
