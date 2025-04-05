@@ -1,223 +1,227 @@
-import React from 'react';
-import './cosmic-animations.css';
+/**
+ * CosmicShapesFixed.tsx
+ * 
+ * Component Type: cosmic
+ * Migrated from: v0 components
+ * Migration Date: 2025-04-05
+ */
 
-interface CosmicShapeProps {
-  type: 'circle' | 'ellipse' | 'triangle' | 'polygon' | 'wave' | 'starburst';
-  size?: number;
-  color?: string;
-  glowColor?: string;
-  strokeWidth?: number;
-  animate?: boolean;
-  animationDuration?: number;
-  className?: string;
-  style?: React.CSSProperties;
-  fillOpacity?: number;
-  sides?: number; // For polygon
-  points?: number; // For starburst
+import React from 'react';
+import { cn } from '@/lib/utils';
+
+type ShapeType = 'circle' | 'polygon' | 'ellipse' | 'starburst';
+
+// Shape position defines where the shape is positioned
+interface ShapePosition {
+  top?: string | number;
+  left?: string | number;
+  right?: string | number;
+  bottom?: string | number;
 }
 
-const CosmicShape: React.FC<CosmicShapeProps> = ({
-  type,
-  size = 100,
-  color = '#7c3aed',
-  glowColor = 'rgba(124, 58, 237, 0.4)',
-  strokeWidth = 1.5,
-  animate = false,
-  animationDuration = 60,
-  className = '',
-  style = {},
-  fillOpacity = 0.05,
-  sides = 6, // Default hexagon
-  points = 8, // Default 8-point starburst
-}) => {
-  const animationClass = animate ? 'slow-rotate' : '';
+// Common shape properties
+interface BaseShapeProps {
+  type: ShapeType;
+  size: number;
+  color: string;
+  glowColor?: string;
+  fillOpacity?: number;
+  animate?: boolean;
+  animationDuration?: number;
+  position?: ShapePosition;
+}
 
+// Properties specific to polygon shapes
+interface PolygonShapeProps extends BaseShapeProps {
+  type: 'polygon';
+  sides: number;
+  rotation?: number;
+}
+
+// Properties specific to starburst shapes
+interface StarburstShapeProps extends BaseShapeProps {
+  type: 'starburst';
+  points: number;
+  innerRadius?: number;
+}
+
+// Properties specific to ellipse shapes
+interface EllipseShapeProps extends BaseShapeProps {
+  type: 'ellipse';
+  verticalRadius?: number;
+}
+
+// Properties specific to circle shapes (just using base)
+interface CircleShapeProps extends BaseShapeProps {
+  type: 'circle';
+}
+
+// Union type for all possible shape properties
+type ShapeProps = PolygonShapeProps | StarburstShapeProps | EllipseShapeProps | CircleShapeProps;
+
+interface CosmicShapeProps {
+  shape: ShapeProps;
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+// Single shape component
+const CosmicShape: React.FC<CosmicShapeProps> = ({ shape, className, style }) => {
+  // Generate SVG path for a polygon
+  const generatePolygonPath = (sides: number, size: number, rotation = 0) => {
+    const radius = size / 2;
+    const angleStep = (Math.PI * 2) / sides;
+    const points: [number, number][] = [];
+
+    for (let i = 0; i < sides; i++) {
+      const angle = i * angleStep + (rotation * Math.PI) / 180;
+      const x = radius + radius * Math.cos(angle);
+      const y = radius + radius * Math.sin(angle);
+      points.push([x, y]);
+    }
+
+    return points.map((point, i) => `${i === 0 ? 'M' : 'L'} ${point[0]} ${point[1]}`).join(' ') + ' Z';
+  };
+
+  // Generate SVG path for a starburst (star)
+  const generateStarburstPath = (points: number, outerRadius: number, innerRadius = outerRadius * 0.4) => {
+    const angleStep = (Math.PI * 2) / (points * 2);
+    const center = outerRadius;
+    const svgPoints: [number, number][] = [];
+
+    for (let i = 0; i < points * 2; i++) {
+      const angle = i * angleStep - Math.PI / 2; // Start from top
+      const radius = i % 2 === 0 ? outerRadius : innerRadius;
+      const x = center + radius * Math.cos(angle);
+      const y = center + radius * Math.sin(angle);
+      svgPoints.push([x, y]);
+    }
+
+    return svgPoints.map((point, i) => `${i === 0 ? 'M' : 'L'} ${point[0]} ${point[1]}`).join(' ') + ' Z';
+  };
+
+  // Render the shape based on its type
   const renderShape = () => {
-    switch (type) {
+    const { size, color, glowColor, fillOpacity = 0.1, animate = false, animationDuration = 20 } = shape;
+    const svgSize = size;
+    const viewBoxSize = size;
+
+    const animationClasses = animate
+      ? shape.type === 'starburst'
+        ? 'cosmic-sparkle'
+        : 'cosmic-pulse'
+      : '';
+
+    const animationStyle = animate
+      ? {
+          animationDuration: `${animationDuration}s`,
+        }
+      : {};
+
+    const shapeFill = {
+      fill: color,
+      fillOpacity,
+      filter: glowColor ? `drop-shadow(0 0 ${size / 20}px ${glowColor})` : undefined,
+    };
+
+    const positionStyle = shape.position
+      ? {
+          position: 'absolute' as const,
+          ...shape.position,
+        }
+      : {};
+
+    switch (shape.type) {
       case 'circle':
         return (
-          <svg
-            width={size}
-            height={size}
-            viewBox="0 0 100 100"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`${animationClass} ${className}`}
+          <div
+            className={cn('cosmic-shape', animationClasses, className)}
             style={{
-              '--rotation-duration': `${animationDuration}s`,
-              filter: `drop-shadow(0 0 5px ${glowColor})`,
+              width: svgSize,
+              height: svgSize,
+              ...positionStyle,
               ...style,
-            } as React.CSSProperties}
-          >
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill={color}
-              fillOpacity={fillOpacity}
-              stroke={color}
-              strokeWidth={strokeWidth}
-            />
-          </svg>
-        );
-      
-      case 'ellipse':
-        return (
-          <svg
-            width={size}
-            height={size * 0.7}
-            viewBox="0 0 100 70"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`${animationClass} ${className}`}
-            style={{
-              '--rotation-duration': `${animationDuration}s`,
-              filter: `drop-shadow(0 0 5px ${glowColor})`,
-              ...style,
-            } as React.CSSProperties}
-          >
-            <ellipse
-              cx="50"
-              cy="35"
-              rx="45"
-              ry="30"
-              fill={color}
-              fillOpacity={fillOpacity}
-              stroke={color}
-              strokeWidth={strokeWidth}
-            />
-          </svg>
-        );
-      
-      case 'triangle':
-        return (
-          <svg
-            width={size}
-            height={size * 0.9}
-            viewBox="0 0 100 90"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`${animationClass} ${className}`}
-            style={{
-              '--rotation-duration': `${animationDuration}s`,
-              filter: `drop-shadow(0 0 5px ${glowColor})`,
-              ...style,
-            } as React.CSSProperties}
-          >
-            <polygon
-              points="50,5 95,85 5,85"
-              fill={color}
-              fillOpacity={fillOpacity}
-              stroke={color}
-              strokeWidth={strokeWidth}
-            />
-          </svg>
-        );
-      
-      case 'polygon':
-        {
-          // Generate points for the polygon based on the number of sides
-          const radius = 45;
-          const center = 50;
-          let polygonPoints = '';
-          
-          for (let i = 0; i < sides; i++) {
-            const angle = (Math.PI * 2 * i) / sides;
-            const x = center + radius * Math.cos(angle);
-            const y = center + radius * Math.sin(angle);
-            polygonPoints += `${x},${y} `;
-          }
-          
-          return (
-            <svg
-              width={size}
-              height={size}
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={`${animationClass} ${className}`}
-              style={{
-                '--rotation-duration': `${animationDuration}s`,
-                filter: `drop-shadow(0 0 5px ${glowColor})`,
-                ...style,
-              } as React.CSSProperties}
-            >
-              <polygon
-                points={polygonPoints}
-                fill={color}
-                fillOpacity={fillOpacity}
-                stroke={color}
-                strokeWidth={strokeWidth}
-              />
-            </svg>
-          );
-        }
-      
-      case 'wave':
-        return (
-          <svg
-            width={size}
-            height={size * 0.5}
-            viewBox="0 0 100 50"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`${className}`}
-            style={{
-              filter: `drop-shadow(0 0 5px ${glowColor})`,
-              ...style,
+              ...animationStyle,
             }}
           >
-            <path
-              d="M0,25 C10,10 20,40 30,25 C40,10 50,40 60,25 C70,10 80,40 90,25 C100,10 110,40 120,25"
-              fill="none"
-              stroke={color}
-              strokeWidth={strokeWidth}
-            />
-          </svg>
-        );
-      
-      case 'starburst':
-        {
-          // Generate points for starburst shape
-          const innerRadius = 20;
-          const outerRadius = 45;
-          const starCenter = 50;
-          let starburstPoints = '';
-          const numStarPoints = points;
-          
-          for (let i = 0; i < numStarPoints * 2; i++) {
-            const angleInRadians = (Math.PI * i) / numStarPoints;
-            const radiusToUse = i % 2 === 0 ? outerRadius : innerRadius;
-            const xCoord = starCenter + radiusToUse * Math.cos(angleInRadians);
-            const yCoord = starCenter + radiusToUse * Math.sin(angleInRadians);
-            starburstPoints += `${xCoord.toFixed(2)},${yCoord.toFixed(2)} `;
-          }
-          
-          return (
-            <svg
-              width={size}
-              height={size}
-              viewBox="0 0 100 100"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={`${animationClass} ${className}`}
-              style={{
-                '--rotation-duration': `${animationDuration}s`,
-                filter: `drop-shadow(0 0 5px ${glowColor})`,
-                ...style,
-              } as React.CSSProperties}
-            >
-              <polygon
-                points={starburstPoints}
-                fill={color}
-                fillOpacity={fillOpacity}
+            <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
+              <circle
+                cx={viewBoxSize / 2}
+                cy={viewBoxSize / 2}
+                r={viewBoxSize / 2 - 2}
                 stroke={color}
-                strokeWidth={strokeWidth}
+                strokeWidth="1"
+                {...shapeFill}
               />
             </svg>
-          );
-        }
-      
+          </div>
+        );
+
+      case 'ellipse':
+        const verticalRadius = shape.verticalRadius || size * 0.6;
+        return (
+          <div
+            className={cn('cosmic-shape', animationClasses, className)}
+            style={{
+              width: svgSize,
+              height: svgSize,
+              ...positionStyle,
+              ...style,
+              ...animationStyle,
+            }}
+          >
+            <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
+              <ellipse
+                cx={viewBoxSize / 2}
+                cy={viewBoxSize / 2}
+                rx={viewBoxSize / 2 - 2}
+                ry={verticalRadius / 2}
+                stroke={color}
+                strokeWidth="1"
+                {...shapeFill}
+              />
+            </svg>
+          </div>
+        );
+
+      case 'polygon':
+        const path = generatePolygonPath(shape.sides, viewBoxSize, shape.rotation);
+        return (
+          <div
+            className={cn('cosmic-shape', animationClasses, className)}
+            style={{
+              width: svgSize,
+              height: svgSize,
+              ...positionStyle,
+              ...style,
+              ...animationStyle,
+            }}
+          >
+            <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
+              <path d={path} stroke={color} strokeWidth="1" strokeLinejoin="round" {...shapeFill} />
+            </svg>
+          </div>
+        );
+
+      case 'starburst':
+        const starPath = generateStarburstPath(shape.points, viewBoxSize / 2, shape.innerRadius);
+        return (
+          <div
+            className={cn('cosmic-shape', animationClasses, className)}
+            style={{
+              width: svgSize,
+              height: svgSize,
+              ...positionStyle,
+              ...style,
+              ...animationStyle,
+            }}
+          >
+            <svg width={svgSize} height={svgSize} viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}>
+              <path d={starPath} stroke={color} strokeWidth="1" strokeLinejoin="round" {...shapeFill} />
+            </svg>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -226,43 +230,19 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({
   return renderShape();
 };
 
-// Composite component for creating groups of cosmic shapes
+// Component for a group of shapes
 interface CosmicShapeGroupProps {
-  shapes: Array<Omit<CosmicShapeProps, 'className' | 'style'> & { 
-    position?: { top?: string; left?: string; right?: string; bottom?: string; transform?: string };
-  }>;
-  containerClassName?: string;
-  containerStyle?: React.CSSProperties;
+  shapes: ShapeProps[];
+  className?: string;
+  style?: React.CSSProperties;
 }
 
-export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({
-  shapes,
-  containerClassName = '',
-  containerStyle = {},
-}) => {
+export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, className, style }) => {
   return (
-    <div 
-      className={`relative ${containerClassName}`}
-      style={containerStyle}
-    >
-      {shapes.map((shape, index) => {
-        const { position, ...shapeProps } = shape;
-        return (
-          <div 
-            key={index}
-            className="absolute"
-            style={{
-              top: position?.top,
-              left: position?.left,
-              right: position?.right,
-              bottom: position?.bottom,
-              transform: position?.transform,
-            }}
-          >
-            <CosmicShape {...shapeProps} />
-          </div>
-        );
-      })}
+    <div className={cn('relative', className)} style={style}>
+      {shapes.map((shape, index) => (
+        <CosmicShape key={`cosmic-shape-${index}`} shape={shape} />
+      ))}
     </div>
   );
 };
