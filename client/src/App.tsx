@@ -63,7 +63,7 @@ import ComponentsCatalog from "@/pages/test/demo/ComponentsCatalog";
 import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
-import { MainHeader } from './components/layout/MainHeader'; // Added import
+// MainHeader is now included in MainLayout, no longer needed here
 
 
 function AppRouter() {
@@ -76,7 +76,6 @@ function AppRouter() {
   return (
     <Router>
       <Layout>
-        <MainHeader /> {/* Replaced Header with MainHeader */}
         <Switch>
           {/* Main Pages */}
           <Route path="/" component={HomePage} />
