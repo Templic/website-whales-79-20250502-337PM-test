@@ -114,7 +114,7 @@ export function CosmicNavigation() {
       <motion.header
         ref={navRef}
         className={cn(
-          "fixed top-0 z-[55] w-full transition-transform duration-300",
+          "fixed top-0 z-[65] w-full transition-transform duration-300",
           !isNavVisible && "transform -translate-y-full"
         )}
         initial={{ y: -100 }}
@@ -204,7 +204,7 @@ export function CosmicNavigation() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className="md:hidden fixed inset-0 top-16 bg-black/90 backdrop-blur-lg z-[55]"
+              className="md:hidden fixed inset-0 top-16 bg-black/90 backdrop-blur-lg z-[70]"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
