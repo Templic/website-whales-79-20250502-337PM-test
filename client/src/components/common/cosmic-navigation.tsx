@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -5,7 +6,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Menu, X, Home, Archive, Sparkles, Compass, Music, Heart, Calendar, Mail, Book } from "lucide-react"
+import { Menu, X, Home, Archive, Music, Heart, Calendar, Mail, Book } from "lucide-react"
 
 interface NavItem {
   name: string
@@ -122,9 +123,7 @@ export function CosmicNavigation() {
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
-          <AnimatePresence mode="wait">
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </AnimatePresence>
+          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
