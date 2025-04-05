@@ -79,6 +79,17 @@ export function CosmicNavigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [prevScrollPosition, isAutoHideEnabled])
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMenuOpen(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const headerOpacity = Math.min(scrollPosition / 200, 0.95)
 
   return (
@@ -111,14 +122,16 @@ export function CosmicNavigation() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex space-x-1">
-            <div className="bg-black/20 backdrop-blur-sm rounded-full border border-white/5 px-4 py-2">
+            <div className="bg-black/20 backdrop-blur-sm rounded-full border border-white/5 px-4 py-2 flex space-x-2">
               {routes.map((route) => (
                 <Link
                   key={route.path}
                   href={route.path}
                   className={cn(
                     "relative inline-flex items-center px-3 py-2 rounded-full transition-colors",
-                    pathname === route.path ? "text-white" : "text-white/70 hover:text-white"
+                    pathname === route.path 
+                      ? "text-white bg-white/10" 
+                      : "text-white/70 hover:text-white hover:bg-white/5"
                   )}
                 >
                   {route.icon}
@@ -130,17 +143,21 @@ export function CosmicNavigation() {
 
           {/* Tablet Navigation */}
           <nav className="hidden md:flex lg:hidden space-x-1">
-            <div className="bg-black/20 backdrop-blur-sm rounded-full border border-white/5 px-3 py-2">
+            <div className="bg-black/20 backdrop-blur-sm rounded-full border border-white/5 px-3 py-2 flex space-x-1">
               {routes.map((route) => (
                 <Link
                   key={route.path}
                   href={route.path}
                   className={cn(
-                    "relative inline-flex items-center px-2 py-2 rounded-full transition-colors",
-                    pathname === route.path ? "text-white" : "text-white/70 hover:text-white"
+                    "relative inline-flex items-center p-2 rounded-full transition-colors tooltip-trigger",
+                    pathname === route.path 
+                      ? "text-white bg-white/10" 
+                      : "text-white/70 hover:text-white hover:bg-white/5"
                   )}
+                  title={route.name}
                 >
                   {route.icon}
+                  <span className="sr-only">{route.name}</span>
                 </Link>
               ))}
             </div>
@@ -152,7 +169,17 @@ export function CosmicNavigation() {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={isMenuOpen ? "close" : "menu"}
+                initial={{ opacity: 0, rotate: -90 }}
+                animate={{ opacity: 1, rotate: 0 }}
+                exit={{ opacity: 0, rotate: 90 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </motion.div>
+            </AnimatePresence>
           </button>
         </div>
 
@@ -198,7 +225,10 @@ export function CosmicNavigation() {
       <div className="fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setIsAutoHideEnabled(!isAutoHideEnabled)}
-          className="p-3 rounded-full bg-black/30 backdrop-blur-md border border-white/10 text-white hover:bg-black/40 transition-colors"
+          className={cn(
+            "p-3 rounded-full backdrop-blur-md border border-white/10 transition-colors",
+            isAutoHideEnabled ? "bg-black/30 text-white" : "bg-white/10 text-white/70"
+          )}
           title={isAutoHideEnabled ? "Disable auto-hide" : "Enable auto-hide"}
         >
           <MoonStar className="h-5 w-5" />
