@@ -1,31 +1,43 @@
-import { Header } from "./Header";
-import { Footer } from "./Footer";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { ScrollProgress } from "@/components/ui/ScrollProgress";
-import { AccessibilityControls } from "../imported/AccessibilityControls";
-import { useIsMobile } from "./use-mobile"; // Added import
+import { MainHeader } from "./MainHeader";
+import { MainFooter } from "./MainFooter";
+import StarBackground from "@/components/cosmic/StarBackground";
+import { useState, useEffect } from "react";
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const isMobile = useIsMobile();
+  // Handle mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
-      <ScrollProgress />
-      <AccessibilityControls />
-      <div className="fixed top-4 right-4 z-[60] transition-all duration-300 hover:scale-105">
-        <ThemeToggle />
-      </div>
-      <Header />
-      <main className={`flex-grow w-full py-6 sm:py-8 lg:py-12 transition-all duration-300 ease-in-out ${isMobile ? 'px-4 sm:px-6' : 'px-8'}`}> {/* Added responsive padding */}
-        <div className={`max-w-7xl mx-auto w-full ${isMobile ? 'space-y-4' : 'space-y-8'}`}> {/* Added responsive spacing */}
+    <div className="min-h-screen flex flex-col bg-[#050f28] text-[#e8e6e3] relative overflow-hidden">
+      {/* Cosmic Background with Stars */}
+      <StarBackground starCount={100} colorScheme="cyan" opacity={0.5} />
+      
+      {/* Use consolidated MainHeader component */}
+      <MainHeader />
+      
+      {/* Main Content */}
+      <main className={`flex-grow w-full py-16 sm:py-20 lg:py-24 transition-all duration-300 ease-in-out ${isMobile ? 'px-4 sm:px-6' : 'px-8'} z-10 relative`}>
+        <div className={`max-w-7xl mx-auto w-full ${isMobile ? 'space-y-4' : 'space-y-8'}`}>
           {children}
         </div>
       </main>
-      <Footer />
+      
+      {/* Use consolidated MainFooter component */}
+      <MainFooter />
     </div>
   );
 }

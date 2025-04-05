@@ -29,9 +29,12 @@ import {
   ShoppingBag,
   Phone,
   HelpCircle,
-  Shield
+  Shield,
+  Info,
+  Users
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import SacredGeometry from "@/components/ui/sacred-geometry";
 
 // Simple FlowerOfLifePattern component for cosmic background effect
 const FlowerOfLifePattern: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, ...props }) => {
@@ -195,14 +198,36 @@ export function MainFooter() {
 
   return (
     <footer
-      className="relative bg-[#0a325c] mt-16 border-t border-[#00ebd6] overflow-hidden"
+      className="relative bg-gradient-to-b from-[#050f28] to-[#0a1f3c] mt-16 border-t border-[#00ebd6]/50 overflow-hidden"
       role="contentinfo"
     >
-      {/* Sacred Geometry Background */}
-      <FlowerOfLifePattern className="absolute inset-0 opacity-5" aria-hidden="true" />
+      {/* Sacred Geometry Background Elements */}
+      <div className="absolute top-0 left-1/4 transform -translate-x-1/2 opacity-15">
+        <SacredGeometry variant="dodecahedron" size={300} animated={true} intensity="subtle" />
+      </div>
+      <div className="absolute bottom-20 right-0 transform translate-x-1/3 opacity-15">
+        <SacredGeometry variant="merkaba" size={240} animated={true} intensity="subtle" />
+      </div>
+      <div className="absolute left-0 bottom-0 opacity-10">
+        <FlowerOfLifePattern className="w-full h-full" aria-hidden="true" />
+      </div>
+
+      {/* Glowing accent traces */}
+      <div 
+        className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cyan-500/0 via-cyan-500/30 to-cyan-500/0" 
+        aria-hidden="true"
+      ></div>
+      <div 
+        className="absolute top-0 right-0 w-1 h-40 bg-gradient-to-b from-purple-500/30 to-purple-500/0" 
+        aria-hidden="true"
+      ></div>
+      <div 
+        className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0" 
+        aria-hidden="true"
+      ></div>
 
       <div className="container mx-auto px-4 py-12 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
           {/* Logo and About */}
           <div className="space-y-4">
             <Link 
@@ -211,61 +236,64 @@ export function MainFooter() {
               aria-label="Dale Loves Whales - Return to home page"
             >
               <div className="relative h-10 w-10">
-                {/* Animated logo */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
-                <span className="absolute inset-0 flex items-center justify-center text-white font-bold">DW</span>
+                {/* Animated logo with cyan-purple gradient matching header */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-xl opacity-20 group-hover:opacity-40 transition-all duration-500"></div>
+                <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">DW</span>
               </div>
-              <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-300">
+              <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
                 Dale Loves Whales
               </span>
             </Link>
-            <p className="text-[#e8e6e3]/70 text-sm">
-              Experience transformative sound healing through cosmic frequencies designed to balance chakras and elevate
-              consciousness.
-            </p>
-            <div className="flex space-x-4 pt-2">
-              {socialLinks.map((link) => (
-                <motion.a
-                  key={link.name}
-                  href={link.path}
-                  whileHover={{ scale: 1.1, y: -2 }}
-                  className="text-[#e8e6e3]/60 hover:text-white transition-colors"
-                  aria-label={`${link.name} (opens in a new tab)`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {link.icon}
-                </motion.a>
-              ))}
+            <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
+              <p className="text-[#e8e6e3]/80 text-sm">
+                Experience transformative sound healing through cosmic frequencies designed to balance chakras and elevate
+                consciousness through the sacred geometry of sound.
+              </p>
+              <div className="flex space-x-4 pt-4">
+                {socialLinks.map((link) => (
+                  <motion.a
+                    key={link.name}
+                    href={link.path}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    className="text-[#e8e6e3]/60 hover:text-cyan-400 transition-colors"
+                    aria-label={`${link.name} (opens in a new tab)`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {link.icon}
+                  </motion.a>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Main Links & Community */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h4 className="text-lg font-semibold mb-4 text-[#00ebd6] flex items-center">
-                <Home className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+            <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
+              <h4 className="text-base font-semibold mb-4 text-cyan-400 flex items-center">
+                <Home className="h-4 w-4 mr-2 text-cyan-400" aria-hidden="true" />
                 Main Pages
               </h4>
               {renderLinkList(mainLinks)}
 
-              <h4 className="text-lg font-semibold mt-6 mb-4 text-[#00ebd6] flex items-center">
-                <Heart className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+              <h4 className="text-base font-semibold mt-6 mb-4 text-purple-400 flex items-center">
+                <Users className="h-4 w-4 mr-2 text-purple-400" aria-hidden="true" />
                 Community
               </h4>
               {renderLinkList(communityLinks)}
             </div>
 
-            <div>
-              <h4 className="text-lg font-semibold mb-4 text-[#00ebd6] flex items-center">
-                <Music className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+            <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
+              <h4 className="text-base font-semibold mb-4 text-cyan-400 flex items-center">
+                <Music className="h-4 w-4 mr-2 text-cyan-400" aria-hidden="true" />
                 Music Experience
               </h4>
               {renderLinkList(musicLinks)}
 
-              <h4 className="text-lg font-semibold mt-6 mb-4 text-[#00ebd6] flex items-center">
-                <ShoppingBag className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+              <h4 className="text-base font-semibold mt-6 mb-4 text-purple-400 flex items-center">
+                <ShoppingBag className="h-4 w-4 mr-2 text-purple-400" aria-hidden="true" />
                 Shop
               </h4>
               {renderLinkList(shopLinks)}
@@ -273,24 +301,24 @@ export function MainFooter() {
           </div>
 
           {/* Resources & Support */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4 text-[#00ebd6] flex items-center">
-              <Headphones className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+          <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
+            <h4 className="text-base font-semibold mb-4 text-cyan-400 flex items-center">
+              <Headphones className="h-4 w-4 mr-2 text-cyan-400" aria-hidden="true" />
               Resources
             </h4>
             {renderLinkList(resourceLinks)}
 
-            <h4 className="text-lg font-semibold mt-6 mb-4 text-[#00ebd6] flex items-center">
-              <HelpCircle className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+            <h4 className="text-base font-semibold mt-6 mb-4 text-purple-400 flex items-center">
+              <HelpCircle className="h-4 w-4 mr-2 text-purple-400" aria-hidden="true" />
               Support
             </h4>
             {renderLinkList(supportLinks)}
 
             {user?.role === 'admin' || user?.role === 'super_admin' ? (
-              <div className="mt-4 pt-4 border-t border-[#00ebd6]/20">
+              <div className="mt-6 pt-4 border-t border-white/10">
                 <Link 
                   href="/admin" 
-                  className="text-[#fe0064] hover:text-[#00ebd6] font-semibold flex items-center"
+                  className="text-[#fe0064] hover:text-cyan-400 font-semibold flex items-center"
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Admin Portal
@@ -300,27 +328,30 @@ export function MainFooter() {
           </div>
 
           {/* Newsletter Signup Section */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4 text-[#00ebd6] flex items-center">
-              <Mail className="h-4 w-4 mr-2 text-[#00ebd6]" aria-hidden="true" />
+          <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
+            <h4 className="text-base font-semibold mb-4 text-cyan-400 flex items-center">
+              <Mail className="h-4 w-4 mr-2 text-cyan-400" aria-hidden="true" />
               Join Our Newsletter
             </h4>
             <p className="text-[#e8e6e3]/70 text-sm mb-4">
               Subscribe to receive the latest music releases, cosmic experiences, and tour updates.
             </p>
             <form onSubmit={handleSubscribe} className="space-y-4">
-              <input
-                type="email"
-                value={email}
-                onChange={handleEmailChange}
-                placeholder="Enter your email"
-                required
-                className="w-full px-3 py-2 bg-[#303436] text-[#e8e6e3] border border-[#00ebd6] rounded-md"
-                disabled={isSubmitting}
-              />
+              <div className="relative">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder="Enter your email"
+                  required
+                  className="w-full px-3 py-2 bg-black/30 text-white placeholder:text-gray-400 border border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-cyan-500/50"
+                  disabled={isSubmitting}
+                />
+                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+              </div>
               <button
                 type="submit"
-                className="w-full px-4 py-2 bg-[#00ebd6] text-[#303436] rounded-md hover:bg-[#00c4b6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-md hover:from-cyan-600 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Subscribing..." : "Subscribe"}
@@ -333,23 +364,33 @@ export function MainFooter() {
                 <p className="text-red-400 text-xs">Please enter a valid email address.</p>
               )}
             </form>
+
+            {/* Small sacred geometry element */}
+            <div className="flex justify-center mt-4 opacity-30">
+              <SacredGeometry variant="pentagon" size={60} animated={true} intensity="subtle" />
+            </div>
           </div>
         </div>
 
         {/* Copyright Notice */}
-        <div className="mt-12 pt-6 border-t border-[#00ebd6]/20 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()} Dale Loves Whales. All rights reserved.</p>
+        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
+            <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()} Dale Loves Whales</p>
+            <div className="flex space-x-2 text-[#e8e6e3]/30">
+              <Link href="/privacy" className="text-xs hover:text-cyan-400 transition-colors">Privacy</Link>
+              <span>•</span>
+              <Link href="/terms" className="text-xs hover:text-cyan-400 transition-colors">Terms</Link>
+              <span>•</span>
+              <Link href="/sitemap" className="text-xs hover:text-cyan-400 transition-colors">Sitemap</Link>
+            </div>
+          </div>
           <div className="mt-4 md:mt-0">
-            <p className="text-[#e8e6e3]/50 text-xs">Crafted with sacred geometry for cosmic consciousness</p>
+            <p className="text-[#e8e6e3]/50 text-xs italic">
+              Crafted with sacred geometry for cosmic consciousness
+            </p>
           </div>
         </div>
       </div>
-
-      {/* Sacred Geometry Accent */}
-      <div
-        className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-[#00ebd6]/30 via-purple-500/30 to-indigo-500/30"
-        aria-hidden="true"
-      ></div>
     </footer>
   );
 }
