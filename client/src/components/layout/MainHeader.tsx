@@ -79,6 +79,11 @@ export function MainHeader() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [prevScrollPosition, isAutoHideEnabled]);
+  
+  // Debug mobile menu toggle
+  useEffect(() => {
+    console.log("Mobile menu state:", isMenuOpen);
+  }, [isMenuOpen]);
 
   // Close mobile menu on larger screens
   useEffect(() => {
@@ -129,18 +134,22 @@ export function MainHeader() {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       style={{
-        backgroundColor: `rgba(0, 5, 20, ${headerOpacity + 0.25})`,
+        backgroundColor: `rgba(0, 5, 20, ${headerOpacity + 0.6})`,
+        backgroundImage: "linear-gradient(to right, rgba(0, 15, 40, 0.9), rgba(10, 20, 50, 0.95))",
         backdropFilter: "blur(12px)",
-        boxShadow: "0 4px 20px rgba(0, 235, 214, 0.15), inset 0 0 0 1px rgba(0, 235, 214, 0.1)"
+        boxShadow: "0 4px 20px rgba(0, 235, 214, 0.25), inset 0 0 0 1px rgba(0, 235, 214, 0.2)"
       }}
     >
       <div className="relative overflow-hidden">
         {/* Sacred Geometry Background Elements */}
-        <div className="absolute left-4 -top-8 opacity-10 rotate-12 transform scale-50 lg:scale-75">
-          <SacredGeometry variant="merkaba" size={80} animated={true} intensity="subtle" />
+        <div className="absolute left-4 -top-8 opacity-25 rotate-12 transform scale-50 lg:scale-75">
+          <SacredGeometry variant="merkaba" size={80} animated={true} intensity="medium" />
         </div>
-        <div className="absolute right-4 -bottom-8 opacity-10 -rotate-12 transform scale-50 lg:scale-75">
-          <SacredGeometry variant="dodecahedron" size={80} animated={true} intensity="subtle" />
+        <div className="absolute right-4 -bottom-8 opacity-25 -rotate-12 transform scale-50 lg:scale-75">
+          <SacredGeometry variant="dodecahedron" size={80} animated={true} intensity="medium" />
+        </div>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15 transform scale-75">
+          <SacredGeometry variant="hexagon" size={100} animated={true} intensity="medium" />
         </div>
 
         {/* Main Header Content */}
@@ -149,7 +158,10 @@ export function MainHeader() {
             {/* Logo and mobile menu button */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={() => {
+                  console.log("Menu button clicked, current state:", isMenuOpen);
+                  setIsMenuOpen(prev => !prev);
+                }}
                 className={cn(
                   "md:hidden relative flex items-center justify-center h-9 w-9 rounded-full backdrop-blur-md border transition-all duration-300",
                   isMenuOpen 
@@ -157,6 +169,7 @@ export function MainHeader() {
                     : "bg-black/30 border-white/10 text-white hover:text-cyan-300 hover:border-cyan-500/20"
                 )}
                 aria-label="Toggle menu"
+                type="button"
               >
                 {/* Pulse animation for the button when menu is open */}
                 {isMenuOpen && (
@@ -214,9 +227,9 @@ export function MainHeader() {
 
             {/* Desktop Primary Navigation */}
             <nav className="hidden md:flex">
-              <div className="relative flex items-center gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 overflow-hidden group">
+              <div className="relative flex items-center gap-1 px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden group shadow-[0_2px_15px_rgba(0,235,214,0.15)]">
                 {/* Animated glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700"></div>
                 
                 {primaryNavItems.map((item) => (
                   <Link
@@ -254,9 +267,9 @@ export function MainHeader() {
             {/* Desktop Search and Secondary Nav */}
             <div className="hidden md:flex items-center gap-3">
               {/* Secondary Navigation */}
-              <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 relative overflow-hidden group">
+              <div className="hidden lg:flex items-center gap-1 px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg border border-white/10 relative overflow-hidden group shadow-[0_2px_15px_rgba(168,85,247,0.15)]">
                 {/* Animated glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700"></div>
                 
                 {secondaryNavItems.map((item) => (
                   <Link
@@ -292,16 +305,16 @@ export function MainHeader() {
 
               {/* Search Bar */}
               <div className="relative group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-600/20 rounded-md blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 group-focus-within:opacity-100"></div>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-purple-600/20 rounded-md blur-sm opacity-30 group-hover:opacity-70 transition-opacity duration-300 group-focus-within:opacity-100"></div>
                 <div className="relative">
                   <input 
                     type="text" 
                     placeholder="Search..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="px-3 py-1.5 text-sm border border-white/10 rounded-md bg-black/30 text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 w-[160px] lg:w-[180px]"
+                    className="px-3 py-1.5 text-sm border border-white/10 rounded-md bg-black/40 text-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 w-[160px] lg:w-[180px] shadow-[0_2px_10px_rgba(0,235,214,0.15)]"
                   />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-cyan-400 transition-colors duration-300">
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-400/70 group-focus-within:text-cyan-400 transition-colors duration-300">
                     <Search size={14} />
                   </div>
                 </div>
@@ -311,9 +324,9 @@ export function MainHeader() {
 
           {/* Secondary Row for Tablet */}
           <div className="hidden md:flex lg:hidden justify-center mt-2">
-            <div className="relative flex items-center gap-1 px-2 py-1 bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 overflow-hidden group">
+            <div className="relative flex items-center gap-1 px-2 py-1 bg-black/30 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden group shadow-[0_2px_15px_rgba(168,85,247,0.15)]">
               {/* Animated glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 opacity-30 group-hover:opacity-50 transition-opacity duration-700"></div>
               
               {secondaryNavItems.map((item) => (
                 <Link
@@ -351,10 +364,10 @@ export function MainHeader() {
       </div>
 
       {/* Mobile Navigation Menu */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isMenuOpen && (
           <motion.div
-            className="md:hidden fixed inset-0 top-[57px] bg-[#020B16] z-[70] overflow-hidden"
+            className="md:hidden fixed inset-0 top-[57px] bg-[#020B16] z-[70] overflow-auto"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -408,16 +421,17 @@ export function MainHeader() {
             
             <div className="container px-4 py-6 relative z-10">
               {/* Mobile search - Top for quick access */}
-              <div className="mb-6 relative bg-black/30 rounded-lg p-3 backdrop-blur-sm border border-white/10">
+              <div className="mb-6 relative bg-black/40 rounded-lg p-3 backdrop-blur-sm border border-white/10 shadow-[0_3px_15px_rgba(0,235,214,0.15)]">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-600/10 opacity-40 rounded-lg"></div>
                 <div className="relative">
                   <input 
                     type="text" 
                     placeholder="Search experiences..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-md bg-black/30 text-white placeholder:text-gray-400 focus:outline-none focus:border-cyan-500/50 border border-white/5"
+                    className="w-full px-3 py-2 text-sm rounded-md bg-black/40 text-white placeholder:text-gray-400 focus:outline-none focus:border-cyan-500/50 border border-white/10 shadow-inner"
                   />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-full p-1">
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-full p-1 shadow-[0_0_10px_rgba(0,235,214,0.3)]">
                     <Search className="text-white" size={16} />
                   </div>
                 </div>
