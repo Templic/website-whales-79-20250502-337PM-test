@@ -75,7 +75,7 @@ export function Header() {
   const searchInputStyles = "px-3 py-2 text-base border border-gray-300 rounded-md bg-white/10 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00ebd6]";
 
   return (
-    <header className={`bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
+    <header className={`bg-[#0a325c] sticky top-0 z-[60] border-b border-[#00ebd6] shadow-lg transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
       <div className="flex items-center justify-between p-4 container mx-auto">
         <div className="flex items-center gap-4">
           <button
@@ -121,7 +121,7 @@ export function Header() {
       </div>
 
       {/* Mobile navigation menu */}
-      <nav className={`md:hidden fixed top-[72px] left-0 right-0 bg-[#0a325c] transition-all duration-300 z-50 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-[-100%] opacity-0'}`}>
+      <nav className={`md:hidden fixed top-[72px] left-0 right-0 bg-[#0a325c] transition-all duration-300 z-[60] ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-[-100%] opacity-0'}`}>
         <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
           {navigationItems.map(({ path, label }) => (
             <li key={path}>

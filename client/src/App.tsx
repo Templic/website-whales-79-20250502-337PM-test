@@ -96,6 +96,7 @@ function Router() {
         <Route path="/cosmic-experience" component={CosmicExperiencePage} />
         <Route path="/cosmic-immersive" component={CosmicImmersivePage} />
         <Route path="/cosmic-immersive-experience" component={CosmicImmersivePage} />
+        <Route path="/cosmic-experience-immersive" component={CosmicImmersivePage} />
         {/* Archived Page - /archive */}
         {/* <Route path="/archive" component={ArchivePage} /> */}
 

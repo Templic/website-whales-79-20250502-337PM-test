@@ -67,6 +67,12 @@ export function CosmicNavigation() {
       description: "Deep cosmic immersion",
     },
     {
+      name: "Cosmic Immersive Experience",
+      path: "/cosmic-experience-immersive",
+      icon: <MoonStar className="h-5 w-5" />,
+      description: "Full immersive cosmic journey",
+    },
+    {
       name: "Blog",
       path: "/blog",
       icon: <Book className="h-5 w-5" />,
@@ -108,7 +114,7 @@ export function CosmicNavigation() {
       <motion.header
         ref={navRef}
         className={cn(
-          "fixed top-0 z-50 w-full transition-transform duration-300",
+          "fixed top-0 z-[55] w-full transition-transform duration-300",
           !isNavVisible && "transform -translate-y-full"
         )}
         initial={{ y: -100 }}
@@ -198,7 +204,7 @@ export function CosmicNavigation() {
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className="md:hidden fixed inset-0 top-16 bg-black/90 backdrop-blur-lg"
+              className="md:hidden fixed inset-0 top-16 bg-black/90 backdrop-blur-lg z-[55]"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -233,7 +239,7 @@ export function CosmicNavigation() {
       </motion.header>
 
       {/* Accessibility Toggle */}
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-[65]">
         <button
           onClick={() => setIsAutoHideEnabled(!isAutoHideEnabled)}
           className={cn(
