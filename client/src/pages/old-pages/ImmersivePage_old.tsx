@@ -1,3 +1,8 @@
+/**
+ * ImmersivePage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ImmersiveHeader } from "@/components/immersive/ImmersiveHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";
@@ -7,7 +12,7 @@ import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 
-export default function ImmersivePage() {
+export default function ImmersivePage_old() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-900 relative">
       <CosmicBackground />

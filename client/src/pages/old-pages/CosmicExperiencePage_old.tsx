@@ -1,3 +1,8 @@
+/**
+ * CosmicExperiencePage.tsx
+ * 
+ * Migrated as part of the repository reorganization.
+ */
 import { useEffect, useState } from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ParticleBackground } from "@/components/cosmic/ParticleBackground";
@@ -11,7 +16,7 @@ import { Music, Infinity, PanelTop, Waves, Moon, Leaf as Lungs, Brain } from "lu
 
 // Note: We don't need to import Header & Footer since they're part of the Layout component
 
-export default function CosmicExperiencePage() {
+export default function CosmicExperiencePage_old() {
   const [backgroundType, setBackgroundType] = useState<"cosmic" | "particles">("cosmic");
   const [tracks, setTracks] = useState<any[]>([]);
   const { toast } = useToast();
