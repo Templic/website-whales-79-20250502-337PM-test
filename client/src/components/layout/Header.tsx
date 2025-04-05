@@ -5,17 +5,12 @@ import { Menu, X, Search } from "lucide-react";
 // Navigation items array to reduce repetition
 const navigationItems = [
   { path: "/", label: "Home" },
-  { path: "/about", label: "About" },
-  { path: "/music-release", label: "New Music" },
-  { path: "/archived-music", label: "Archived Music" },
-  { path: "/cosmic-connectivity", label: "Cosmic Connectivity" },
-  { path: "/cosmic-experience", label: "Cosmic Experience" },
-  { path: "/tour", label: "Tour" },
+  { path: "/music", label: "Music" },
+  { path: "/experience", label: "Experience" },
   { path: "/shop", label: "Shop" },
-  { path: "/engage", label: "Engage" },
-  { path: "/newsletter", label: "Newsletter" },
+  { path: "/community", label: "Community" },
+  { path: "/tour", label: "Tour" },
   { path: "/blog", label: "Blog" },
-  { path: "/collaboration", label: "Collaborate" },
   { path: "/contact", label: "Contact" }
 ];
 
