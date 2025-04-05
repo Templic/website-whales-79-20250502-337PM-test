@@ -55,10 +55,10 @@ const secondaryNavItems: NavItem[] = [
 
 // Community links that should be accessible
 const communityLinks: NavItem[] = [
-  { name: "Newsletter", path: "/newsletter", icon: <Music className="h-4 w-4 mr-1" /> },
-  { name: "Community", path: "/community", icon: <Music className="h-4 w-4 mr-1" /> },
-  { name: "Collaboration", path: "/collaboration", icon: <Music className="h-4 w-4 mr-1" /> },
-  { name: "Contact", path: "/contact", icon: <Music className="h-4 w-4 mr-1" /> }
+  { name: "Newsletter", path: "/newsletter", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Community", path: "/community", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "Collaboration", path: "/collaboration", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Contact", path: "/contact", icon: <Music className="h-4 w-4 mr-1" />, glowColor: "purple" }
 ];
 
 // Music links for mobile
@@ -147,8 +147,19 @@ export function MainHeader() {
         ${autoHideNav ? 'transition-transform duration-300' : ''}
       `}
     >
-      {/* Background Elements with Sacred Geometry - Only visible on sides */}
+      {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
+        {/* Center star geometry */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
+          <SacredGeometry 
+            variant="star" 
+            size={100} 
+            animated={true} 
+            intensity="medium" 
+            className="text-cyan-300" 
+          />
+        </div>
+      
         <div className="absolute -top-14 -right-14 opacity-40 transform rotate-45">
           <SacredGeometry 
             variant="merkaba" 
@@ -243,8 +254,8 @@ export function MainHeader() {
               </button>
             </div>
 
-            {/* Social Icons - Desktop */}
-            <div className="hidden md:flex space-x-3 ml-auto mr-4">
+            {/* Social Icons - Desktop - Centered */}
+            <div className="hidden md:flex items-center justify-center space-x-3 mx-auto">
               {socialLinks.map((link) => (
                 <motion.a
                   key={link.name}
@@ -435,20 +446,48 @@ export function MainHeader() {
             </div>
           </div>
 
-          {/* Community Links - Desktop - Small Pills on Bottom */}
+          {/* Community Links - Desktop - Matching Primary Nav Style */}
           <div className="hidden md:flex justify-center mt-2 space-x-2">
-            {communityLinks.map((item) => (
+            {communityLinks.map((item, index) => (
               <motion.div 
                 key={item.path}
-                whileHover={{ scale: 1.05 }}
+                className="relative mx-2 md:mx-3 lg:mx-5"
+                initial="initial"
+                whileHover="hover"
+                custom={index}
               >
                 <Link
                   href={item.path}
                   onClick={() => handleNavigationClick(item.path)}
-                  className="px-2 py-0.5 text-[#e8e6e3]/80 hover:text-white text-xs bg-black/20 rounded-full border border-cyan-500/10 hover:border-cyan-500/30 transition-colors"
+                  className="px-3 py-1 text-[#e8e6e3] font-medium text-sm tracking-wide flex items-center relative"
                 >
+                  <div className="absolute -left-1 -top-1 opacity-50">
+                    <SacredGeometry 
+                      variant={index % 2 === 0 ? "hexagon" : "triangle"} 
+                      size={16} 
+                      intensity="subtle" 
+                      className={index % 2 === 0 ? "text-cyan-300" : "text-purple-300"} 
+                    />
+                  </div>
+                  {item.icon}
                   {item.name}
                 </Link>
+                <motion.div 
+                  className={`absolute inset-0 rounded-md opacity-0 bg-gradient-to-r ${
+                    item.glowColor === 'cyan' 
+                      ? 'from-cyan-500/20 to-cyan-500/5' 
+                      : 'from-purple-500/20 to-purple-500/5'
+                  } -z-10`}
+                  variants={navItemVariants}
+                  transition={{ delay: index * 0.05 }}
+                  animate={{ opacity: [0, 0.2, 0], transition: { duration: 2, repeat: Infinity } }}
+                />
+                <motion.div
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400/0 via-cyan-400 to-cyan-400/0 transform origin-left"
+                  initial={{ scaleX: 0 }}
+                  whileHover={{ scaleX: 1 }}
+                  transition={{ duration: 0.3 }}
+                />
               </motion.div>
             ))}
           </div>

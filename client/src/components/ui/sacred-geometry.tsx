@@ -8,7 +8,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface SacredGeometryProps {
-  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon';
+  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star';
   className?: string;
   strokeWidth?: number;
   fillOpacity?: number;
@@ -313,6 +313,18 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
       return createSvg(
         <path 
           d="M12 2L4 8L2 17L8 22H16L22 17L20 8L12 2Z" 
+          stroke="currentColor" 
+          strokeWidth={strokeWidth} 
+          fill="currentColor" 
+          fillOpacity={opacityValue} 
+          style={{ pointerEvents: 'none' }}
+        />
+      );
+      
+    case 'star':
+      return createSvg(
+        <path 
+          d="M12 2L14.4 9.1H22L16 13.9L18.4 22L12 17.5L5.6 22L8 13.9L2 9.1H9.6L12 2Z" 
           stroke="currentColor" 
           strokeWidth={strokeWidth} 
           fill="currentColor" 
