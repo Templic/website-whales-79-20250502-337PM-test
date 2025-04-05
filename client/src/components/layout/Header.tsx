@@ -82,14 +82,14 @@ export function Header() {
       </div>
 
       {/* Mobile navigation menu */}
-      <nav className={`md:hidden transition-all duration-300 ${isMenuOpen ? 'max-h-screen' : 'max-h-0 overflow-hidden'}`}>
+      <nav className={`md:hidden fixed top-[72px] left-0 right-0 bg-[#0a325c] transition-all duration-300 z-50 ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-[-100%] opacity-0'}`}>
         <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
           {navigationItems.map(({ path, label }) => (
             <li key={path}>
               <Link href={path} onClick={() => {
                 setIsMenuOpen(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-              }} className={mobileNavItemStyles}>
+              }} className={`${mobileNavItemStyles} block w-full text-center py-4`}>
                 {label}
               </Link>
             </li>
