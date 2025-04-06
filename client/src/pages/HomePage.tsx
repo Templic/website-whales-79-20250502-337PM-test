@@ -29,14 +29,11 @@ export default function HomePage() {
               no-repeat center center / cover`
           }}>
           <div className="hero-content relative z-10 max-w-[800px] p-8">
-            <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] mb-4 text-shadow shadow-[#fe0064] animate-cosmic">
+            <h1 className="text-[clamp(2.5rem,5vw,4rem)] mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-bold">
               Ride the Cosmic Wave
             </h1>
-            <p className="text-[clamp(1rem,2.5vw,1.5rem)] mb-8">
-              Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.
-            </p>
-            <p className="text-[clamp(1rem,2.5vw,1.5rem)] mb-8">
-              Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths.
+            <p className="text-[clamp(1rem,2vw,1.4rem)] mb-8 max-w-[800px] mx-auto leading-relaxed">
+              Immerse yourself in the sonic universe of Dale Loves Whales. Experience the vibe, explore the depths, and join us on a journey through sound and consciousness.
             </p>
             <Link href="/music"
               className="cta-button bg-[#00ebd6] text-[#303436] px-8 py-3 text-xl rounded-[50px] border-none
