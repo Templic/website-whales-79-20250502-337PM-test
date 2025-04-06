@@ -162,6 +162,16 @@ export function MainFooter() {
     [email],
   );
 
+  // Handle internal navigation with scroll to top
+  const handleInternalNavigation = useCallback((path: string) => {
+    // Scroll to top with smooth behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Small delay for smooth scroll before navigation
+    setTimeout(() => {
+      window.location.href = path;
+    }, 300);
+  }, []);
+
   // Utility function to render a list of links with consistent styling
   const renderLinkList = (links: FooterLink[], className?: string) => (
     <ul className={`space-y-2 ${className || ""}`}>
@@ -183,13 +193,17 @@ export function MainFooter() {
               />
             </a>
           ) : (
-            <Link
+            <a
               href={link.path}
               className="text-[#e8e6e3] hover:text-[#00ebd6] transition-colors text-sm flex items-center"
+              onClick={(e) => {
+                e.preventDefault();
+                handleInternalNavigation(link.path);
+              }}
             >
               {link.icon && link.icon}
               {link.name}
-            </Link>
+            </a>
           )}
         </li>
       ))}
@@ -230,10 +244,14 @@ export function MainFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
           {/* Logo and About */}
           <div className="space-y-4">
-            <Link 
+            <a 
               href="/" 
               className="flex items-center space-x-2 group"
               aria-label="Dale Loves Whales - Return to home page"
+              onClick={(e) => {
+                e.preventDefault();
+                handleInternalNavigation("/");
+              }}
             >
               <div className="relative h-10 w-10">
                 {/* Animated logo with cyan-purple gradient matching header */}
@@ -245,7 +263,7 @@ export function MainFooter() {
               <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-purple-400 to-indigo-300">
                 Dale Loves Whales
               </span>
-            </Link>
+            </a>
             <div className="bg-black/20 backdrop-blur-sm rounded-lg border border-white/5 p-4">
               <p className="text-[#e8e6e3]/80 text-sm">
                 Experience transformative sound healing through cosmic frequencies designed to balance chakras and elevate
@@ -316,13 +334,17 @@ export function MainFooter() {
 
             {user?.role === 'admin' || user?.role === 'super_admin' ? (
               <div className="mt-6 pt-4 border-t border-white/10">
-                <Link 
+                <a 
                   href="/admin" 
                   className="text-[#fe0064] hover:text-cyan-400 font-semibold flex items-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleInternalNavigation("/admin");
+                  }}
                 >
                   <Shield className="h-4 w-4 mr-2" />
                   Admin Portal
-                </Link>
+                </a>
               </div>
             ) : null}
           </div>
@@ -377,11 +399,38 @@ export function MainFooter() {
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
             <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()} Dale Loves Whales</p>
             <div className="flex space-x-2 text-[#e8e6e3]/30">
-              <Link href="/privacy" className="text-xs hover:text-cyan-400 transition-colors">Privacy</Link>
+              <a 
+                href="/privacy" 
+                className="text-xs hover:text-cyan-400 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleInternalNavigation("/privacy");
+                }}
+              >
+                Privacy
+              </a>
               <span>•</span>
-              <Link href="/terms" className="text-xs hover:text-cyan-400 transition-colors">Terms</Link>
+              <a 
+                href="/terms" 
+                className="text-xs hover:text-cyan-400 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleInternalNavigation("/terms");
+                }}
+              >
+                Terms
+              </a>
               <span>•</span>
-              <Link href="/sitemap" className="text-xs hover:text-cyan-400 transition-colors">Sitemap</Link>
+              <a 
+                href="/sitemap" 
+                className="text-xs hover:text-cyan-400 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleInternalNavigation("/sitemap");
+                }}
+              >
+                Sitemap
+              </a>
             </div>
           </div>
           <div className="mt-4 md:mt-0">
