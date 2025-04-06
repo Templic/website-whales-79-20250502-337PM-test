@@ -62,17 +62,19 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: "Too many requests from this IP, please try again after 15 minutes"
-});
+// Import enhanced rate limiting middleware
+import { 
+  defaultLimiter, 
+  authLimiter, 
+  adminLimiter, 
+  publicLimiter 
+} from './middleware/rateLimit';
 
-// Apply rate limiting to API routes
-app.use('/api/', apiLimiter);
+// Apply rate limiting to different routes based on their purposes
+app.use('/api/auth', authLimiter);         // Stricter limits for authentication endpoints
+app.use('/api/admin', adminLimiter);       // Admin operations get their own rate limit
+app.use('/api/public', publicLimiter);     // Public API endpoints get more generous limits
+app.use('/api', defaultLimiter);           // Default rate limiting for all other API routes
 
 // Add MIME type for JavaScript modules
 app.use((req, res, next) => {
@@ -144,13 +146,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Add error handling middleware
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  console.error('Error:', err);
-  res.status(status).json({ message });
-});
+// Import global error handling middleware
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 // Use port 5000, defaulting to 5000 if PORT env var is invalid
 const port = parseInt(process.env.PORT || "5000", 10) || 5000;
@@ -179,6 +176,12 @@ async function startServer() {
 
     // Register API routes
     const httpServer = await registerRoutes(app);
+    
+    // Add 404 handler for API routes
+    app.use(notFoundHandler);
+    
+    // Add global error handler (must be after all other middleware and routes)
+    app.use(errorHandler);
 
     // Initialize WebSocket and Socket.IO servers
     try {

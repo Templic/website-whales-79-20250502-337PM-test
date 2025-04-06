@@ -1,380 +1,569 @@
 /**
- * securityController.ts
+ * Security Controller
  * 
- * Controller for security-related API endpoints
+ * Handles security operations including security settings management,
+ * security event logging, vulnerability scanning, and security reports.
  */
-import { Request, Response } from 'express';
+
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { scanProject } from '../securityScan';
-import { z } from 'zod';
+import { Request, Response } from 'express';
+import { asyncHandler } from '../middleware/errorHandler';
+import { scanProject, SecurityScanResult } from '../securityScan';
+import { 
+  detectSecurityPackages, 
+  detectCommonSecurityIssues, 
+  generateSecurityReport,
+  calculateRiskMetrics
+} from './scanUtils';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Define AsyncHandler type
+type AsyncHandler = (req: Request, res: Response) => Promise<void>;
 
-const SECURITY_SETTINGS_FILE = path.join(__dirname, '../../config/security_settings.json');
-const SECURITY_LOG_FILE = path.join(__dirname, '../../logs/security/security.log');
-
-// Create directories if they don't exist
-const securityConfigDir = path.dirname(SECURITY_SETTINGS_FILE);
-const securityLogDir = path.dirname(SECURITY_LOG_FILE);
-
-if (!fs.existsSync(securityConfigDir)) {
-  fs.mkdirSync(securityConfigDir, { recursive: true });
-}
-
-if (!fs.existsSync(securityLogDir)) {
-  fs.mkdirSync(securityLogDir, { recursive: true });
+// Security settings management
+export interface SecuritySettings {
+  enforceStrictTransportSecurity: boolean;
+  enableContentSecurityPolicy: boolean;
+  enableRateLimiting: boolean;
+  enableCSRFProtection: boolean;
+  enableSQLInjectionProtection: boolean;
+  enableXSSProtection: boolean;
+  enableSecurityHeaders: boolean;
+  enableSanitization: boolean;
+  logSecurityEvents: boolean;
+  autoRunSecurityScans: boolean;
+  preventCredentialExposure: boolean;
+  requireStrongPasswords: boolean;
+  lockAccountAfterFailedAttempts: boolean;
+  requireMFA: boolean;
+  sessionTimeout: number; // in minutes
+  passwordExpiryDays: number; // 0 means never expire
 }
 
 // Default security settings
-const defaultSecuritySettings = {
-  CONTENT_SECURITY_POLICY: true,
-  HTTPS_ENFORCEMENT: true,
-  AUDIO_DOWNLOAD_PROTECTION: true,
-  ADVANCED_BOT_PROTECTION: true,
-  TWO_FACTOR_AUTHENTICATION: false,
-  RATE_LIMITING: true,
-  CSRF_PROTECTION: true,
-  XSS_PROTECTION: true,
-  SQL_INJECTION_PROTECTION: true
+export const defaultSecuritySettings: SecuritySettings = {
+  enforceStrictTransportSecurity: true,
+  enableContentSecurityPolicy: true,
+  enableRateLimiting: true,
+  enableCSRFProtection: true,
+  enableSQLInjectionProtection: true,
+  enableXSSProtection: true,
+  enableSecurityHeaders: true,
+  enableSanitization: true,
+  logSecurityEvents: true,
+  autoRunSecurityScans: true,
+  preventCredentialExposure: true,
+  requireStrongPasswords: true,
+  lockAccountAfterFailedAttempts: true,
+  requireMFA: false, // Off by default as it requires implementation
+  sessionTimeout: 60,
+  passwordExpiryDays: 90
 };
 
-// Log security events
-export const logSecurityEvent = (eventData: any) => {
+// Security log event types
+export type SecurityEventType =
+  | 'LOGIN_SUCCESS'
+  | 'LOGIN_FAILURE'
+  | 'LOGOUT'
+  | 'PASSWORD_CHANGE'
+  | 'PASSWORD_RESET_REQUEST'
+  | 'PASSWORD_RESET_COMPLETE'
+  | 'ACCOUNT_LOCKED'
+  | 'ACCOUNT_UNLOCKED'
+  | 'USER_CREATED'
+  | 'USER_DELETED'
+  | 'USER_ROLE_CHANGED'
+  | 'PERMISSION_DENIED'
+  | 'UNAUTHORIZED_ATTEMPT'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'CSRF_FAILURE'
+  | 'XSS_ATTEMPT'
+  | 'SQL_INJECTION_ATTEMPT'
+  | 'SUSPICIOUS_ACTIVITY'
+  | 'SECURITY_SETTING_CHANGED'
+  | 'SECURITY_SCAN_STARTED'
+  | 'SECURITY_SCAN_COMPLETED'
+  | 'SECURITY_VULNERABILITY_DETECTED'
+  | 'SECURITY_SETTING_VALIDATION_FAILED';
+
+// Security event data interface
+export interface SecurityEventData {
+  type: SecurityEventType;
+  timestamp?: string;
+  userId?: string;
+  userRole?: string;
+  ip?: string;
+  userAgent?: string;
+  path?: string;
+  method?: string;
+  details?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  metadata?: Record<string, any>;
+}
+
+// Security log constants
+const LOGS_DIR = path.join(process.cwd(), 'logs');
+const SECURITY_LOGS_DIR = path.join(LOGS_DIR, 'security');
+const SECURITY_LOG_FILE = path.join(SECURITY_LOGS_DIR, 'security.log');
+const SECURITY_SETTINGS_FILE = path.join(SECURITY_LOGS_DIR, 'security-settings.json');
+const SCAN_RESULTS_DIR = path.join(SECURITY_LOGS_DIR, 'scan-results');
+
+// Ensure log directories exist
+if (!fs.existsSync(LOGS_DIR)) {
+  fs.mkdirSync(LOGS_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(SECURITY_LOGS_DIR)) {
+  fs.mkdirSync(SECURITY_LOGS_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(SCAN_RESULTS_DIR)) {
+  fs.mkdirSync(SCAN_RESULTS_DIR, { recursive: true });
+}
+
+// Initialize security settings
+let securitySettings: SecuritySettings;
+
+try {
+  if (fs.existsSync(SECURITY_SETTINGS_FILE)) {
+    const settingsData = fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8');
+    securitySettings = JSON.parse(settingsData);
+  } else {
+    securitySettings = { ...defaultSecuritySettings };
+    fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
+  }
+} catch (error) {
+  console.error('Error initializing security settings:', error);
+  securitySettings = { ...defaultSecuritySettings };
+}
+
+/**
+ * Log a security event
+ * @param event The security event to log
+ */
+export function logSecurityEvent(event: SecurityEventData): void {
   try {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[SECURITY] ${timestamp} - ${JSON.stringify(eventData)}\n`;
+    if (!securitySettings.logSecurityEvents) {
+      return;
+    }
     
+    const timestamp = new Date().toISOString();
+    const eventWithTimestamp = { ...event, timestamp: timestamp };
+    const logEntry = `${timestamp} [${event.severity.toUpperCase()}] [${event.type}] ${JSON.stringify(eventWithTimestamp)}\n`;
+    
+    // Append to log file
     fs.appendFileSync(SECURITY_LOG_FILE, logEntry);
+    
+    // Log to console for critical events
+    if (event.severity === 'critical' || event.severity === 'high') {
+      console.warn(`[SECURITY] ${event.type}: ${event.details}`);
+    }
   } catch (error) {
     console.error('Failed to log security event:', error);
   }
-};
-
-// Rotate security logs (called from a scheduled task)
-export const rotateSecurityLogs = () => {
-  try {
-    if (fs.existsSync(SECURITY_LOG_FILE)) {
-      const timestamp = new Date().toISOString().replace(/:/g, '-');
-      const rotatedLogFile = path.join(securityLogDir, `security-${timestamp}.log`);
-      
-      fs.renameSync(SECURITY_LOG_FILE, rotatedLogFile);
-      console.log(`Security log rotated to ${rotatedLogFile}`);
-    }
-  } catch (error) {
-    console.error('Failed to rotate security logs:', error);
-  }
-};
-
-// Initialize or load security settings
-const initializeSecuritySettings = () => {
-  try {
-    if (!fs.existsSync(SECURITY_SETTINGS_FILE)) {
-      fs.writeFileSync(
-        SECURITY_SETTINGS_FILE,
-        JSON.stringify(defaultSecuritySettings, null, 2),
-        'utf8'
-      );
-      console.log(`Security settings file created at ${SECURITY_SETTINGS_FILE}`);
-    }
-    return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error) {
-    console.error('Failed to initialize security settings:', error);
-    return defaultSecuritySettings;
-  }
-};
-
-// Get current security settings
-const getSecuritySettings = () => {
-  try {
-    return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error) {
-    console.error('Failed to read security settings:', error);
-    return defaultSecuritySettings;
-  }
-};
-
-// Update security settings
-const updateSecuritySettings = (newSettings: any) => {
-  try {
-    const currentSettings = getSecuritySettings();
-    const updatedSettings = { ...currentSettings, ...newSettings };
-    fs.writeFileSync(
-      SECURITY_SETTINGS_FILE,
-      JSON.stringify(updatedSettings, null, 2),
-      'utf8'
-    );
-    return updatedSettings;
-  } catch (error) {
-    console.error('Failed to update security settings:', error);
-    throw error;
-  }
-};
-
-// Parse and get security events from log file
-const getSecurityStats = () => {
-  try {
-    if (!fs.existsSync(SECURITY_LOG_FILE)) {
-      return { 
-        total: 0,
-        byType: {},
-        bySetting: {},
-        recentEvents: []
-      };
-    }
-
-    const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
-    const logLines = logContent.split('\n').filter(line => line.trim() !== '');
-
-    const events = logLines.map(line => {
-      try {
-        // Skip the timestamp prefix (e.g., "[SECURITY] 2023-01-01T00:00:00.000Z - ")
-        const jsonStart = line.indexOf('- ') + 2;
-        const jsonContent = line.substring(jsonStart);
-        return JSON.parse(jsonContent);
-      } catch (e) {
-        console.error('Failed to parse security log line:', e);
-        return null;
-      }
-    }).filter(event => event !== null);
-
-    // Count events by type
-    const byType: { [key: string]: number } = {};
-    const bySetting: { [key: string]: number } = {};
-
-    events.forEach(event => {
-      if (event.type) {
-        byType[event.type] = (byType[event.type] || 0) + 1;
-      }
-      if (event.setting) {
-        bySetting[event.setting] = (bySetting[event.setting] || 0) + 1;
-      }
-    });
-
-    return {
-      total: events.length,
-      byType,
-      bySetting,
-      recentEvents: events.slice(-50).reverse() // Get last 50 events in reverse chronological order
-    };
-  } catch (error) {
-    console.error('Failed to get security stats:', error);
-    return { 
-      total: 0,
-      byType: {},
-      bySetting: {},
-      recentEvents: []
-    };
-  }
-};
-
-// Store the latest scan result
-let latestScanResult: any = null;
+}
 
 /**
  * Get security settings
  */
-export const getSettings = (req: Request, res: Response) => {
-  try {
-    // Check authorization (admin or super_admin only)
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      // Log unauthorized attempt
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SETTINGS_ACCESS',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-    
-    const settings = getSecuritySettings();
-    res.json({ success: true, settings });
-  } catch (error) {
-    console.error('Error retrieving security settings:', error);
-    res.status(500).json({ success: false, message: 'Failed to retrieve security settings' });
-  }
-};
+export const getSecuritySettings: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  logSecurityEvent({
+    type: 'SECURITY_SETTING_CHANGED',
+    userId: req.session?.user?.id,
+    userRole: req.session?.user?.role,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    path: req.path,
+    method: req.method,
+    details: 'Security settings viewed',
+    severity: 'low'
+  });
+  
+  res.json({ success: true, settings: securitySettings });
+});
 
 /**
  * Update a security setting
  */
-export const updateSetting = (req: Request, res: Response) => {
-  try {
-    // Check authorization (admin or super_admin only)
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      // Log unauthorized attempt
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SETTINGS_UPDATE',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-    
-    // Validate input
-    const schema = z.object({
-      setting: z.string(),
-      value: z.boolean()
+export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { setting, value } = req.body;
+  
+  // Validate the setting exists
+  if (!(setting in securitySettings)) {
+    logSecurityEvent({
+      type: 'SECURITY_SETTING_VALIDATION_FAILED',
+      userId: req.session?.user?.id,
+      userRole: req.session?.user?.role,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      method: req.method,
+      details: `Invalid security setting: ${setting}`,
+      severity: 'medium'
     });
     
-    const validationResult = schema.safeParse(req.body);
-    
-    if (!validationResult.success) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid input', 
-        errors: validationResult.error.errors 
-      });
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Invalid security setting' 
+    });
+  }
+  
+  // Update the setting
+  const oldValue = (securitySettings as any)[setting];
+  (securitySettings as any)[setting] = value;
+  
+  // Save updated settings
+  fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
+  
+  logSecurityEvent({
+    type: 'SECURITY_SETTING_CHANGED',
+    userId: req.session?.user?.id,
+    userRole: req.session?.user?.role,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    path: req.path,
+    method: req.method,
+    details: `Security setting "${setting}" changed from ${oldValue} to ${value}`,
+    severity: 'medium',
+    metadata: { setting, oldValue, newValue: value }
+  });
+  
+  res.json({ 
+    success: true, 
+    message: 'Security setting updated successfully', 
+    setting, 
+    value 
+  });
+});
+
+/**
+ * Reset security settings to defaults
+ */
+export const resetSecuritySettings: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  securitySettings = { ...defaultSecuritySettings };
+  fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
+  
+  logSecurityEvent({
+    type: 'SECURITY_SETTING_CHANGED',
+    userId: req.session?.user?.id,
+    userRole: req.session?.user?.role,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    path: req.path,
+    method: req.method,
+    details: 'Security settings reset to defaults',
+    severity: 'medium'
+  });
+  
+  res.json({ 
+    success: true, 
+    message: 'Security settings reset to defaults', 
+    settings: securitySettings 
+  });
+});
+
+/**
+ * Get security logs
+ */
+export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  const { limit = 100, severity, type, startDate, endDate } = req.query;
+  
+  try {
+    if (!fs.existsSync(SECURITY_LOG_FILE)) {
+      return res.json({ success: true, logs: [] });
     }
     
-    const { setting, value } = validationResult.data;
+    // Read the log file
+    const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
+    const logLines = logContent.split('\n').filter(line => line.trim() !== '');
     
-    // Update setting
-    const newSettings = { [setting]: value };
-    const updatedSettings = updateSecuritySettings(newSettings);
+    // Parse and filter logs
+    let logs = logLines.map(line => {
+      try {
+        const timestampEndIndex = line.indexOf(' [');
+        const timestamp = line.substring(0, timestampEndIndex);
+        const jsonStartIndex = line.indexOf('{');
+        const jsonData = line.substring(jsonStartIndex);
+        return JSON.parse(jsonData);
+      } catch (error) {
+        return null;
+      }
+    }).filter(log => log !== null);
     
-    // Log the change
+    // Apply filters if provided
+    if (severity) {
+      logs = logs.filter(log => log.severity === severity);
+    }
+    
+    if (type) {
+      logs = logs.filter(log => log.type === type);
+    }
+    
+    if (startDate) {
+      const startDateTime = new Date(startDate as string).getTime();
+      logs = logs.filter(log => new Date(log.timestamp).getTime() >= startDateTime);
+    }
+    
+    if (endDate) {
+      const endDateTime = new Date(endDate as string).getTime();
+      logs = logs.filter(log => new Date(log.timestamp).getTime() <= endDateTime);
+    }
+    
+    // Limit the number of logs returned
+    logs = logs.slice(-parseInt(limit as string));
+    
     logSecurityEvent({
       type: 'SECURITY_SETTING_CHANGED',
-      setting,
-      value,
-      userId: req.user.id,
-      userRole: req.user.role
+      userId: req.session?.user?.id,
+      userRole: req.session?.user?.role,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      method: req.method,
+      details: 'Security logs viewed',
+      severity: 'low'
     });
     
-    res.json({ 
-      success: true,
-      message: 'Security setting updated successfully',
-      settings: updatedSettings
-    });
+    res.json({ success: true, logs });
   } catch (error) {
-    console.error('Error updating security setting:', error);
-    res.status(500).json({ success: false, message: 'Failed to update security setting' });
-  }
-};
-
-/**
- * Get security statistics
- */
-export const getStats = (req: Request, res: Response) => {
-  try {
-    // Check authorization (admin or super_admin only)
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      // Log unauthorized attempt
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_STATS_ACCESS',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-    
-    const stats = getSecurityStats();
-    res.json({ success: true, stats });
-  } catch (error) {
-    console.error('Error retrieving security stats:', error);
-    res.status(500).json({ success: false, message: 'Failed to retrieve security statistics' });
-  }
-};
-
-/**
- * Get latest scan results
- */
-export const getLatestScan = (req: Request, res: Response) => {
-  try {
-    // Check authorization (admin or super_admin only)
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      // Log unauthorized attempt
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SCAN_RESULTS_ACCESS',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-    
-    if (!latestScanResult) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'No scan results available. Run a scan first.' 
-      });
-    }
-    
-    res.json({ 
-      success: true,
-      result: latestScanResult
-    });
-  } catch (error) {
-    console.error('Error retrieving latest security scan results:', error);
+    console.error('Error getting security logs:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to retrieve latest security scan results' 
+      message: 'Error retrieving security logs' 
     });
   }
-};
+});
 
 /**
- * Run a new security scan
+ * Run a security scan
  */
-export const runScan = async (req: Request, res: Response) => {
+export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  logSecurityEvent({
+    type: 'SECURITY_SCAN_STARTED',
+    userId: req.session?.user?.id,
+    userRole: req.session?.user?.role,
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    path: req.path,
+    method: req.method,
+    details: 'Manual security scan initiated',
+    severity: 'low'
+  });
+  
   try {
-    // Check authorization (admin or super_admin only)
-    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      // Log unauthorized attempt
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SCAN_RUN',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
+    // Run the security scan
+    const scanResults = await scanProject();
     
-    const scanResult = await scanProject();
-    latestScanResult = scanResult;
+    // Enhance with additional security package information
+    const packageInfo = await detectSecurityPackages();
     
-    // Log the scan event
+    // Find additional code issues
+    const commonIssues = await detectCommonSecurityIssues();
+    
+    // Merge vulnerabilities
+    const allVulnerabilities = [
+      ...scanResults.vulnerabilities,
+      ...commonIssues
+    ];
+    
+    // Calculate risk metrics
+    const riskMetrics = calculateRiskMetrics(allVulnerabilities);
+    
+    // Create enhanced scan results
+    const enhancedResults = {
+      ...scanResults,
+      vulnerabilities: allVulnerabilities,
+      securityPackages: packageInfo,
+      riskMetrics,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Save scan results
+    const scanTimestamp = new Date().toISOString().replace(/:/g, '-');
+    const scanResultFile = path.join(SCAN_RESULTS_DIR, `scan-${scanTimestamp}.json`);
+    fs.writeFileSync(scanResultFile, JSON.stringify(enhancedResults, null, 2));
+    
+    // Generate markdown report
+    const reportFile = path.join(SCAN_RESULTS_DIR, `report-${scanTimestamp}.md`);
+    await generateSecurityReport(allVulnerabilities, reportFile);
+    
     logSecurityEvent({
-      type: 'SECURITY_SCAN',
-      userId: req.user.id,
-      userRole: req.user.role,
-      ...scanResult
+      type: 'SECURITY_SCAN_COMPLETED',
+      userId: req.session?.user?.id,
+      userRole: req.session?.user?.role,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      method: req.method,
+      details: `Security scan completed with ${allVulnerabilities.length} issues found`,
+      severity: 'low',
+      metadata: {
+        criticalIssues: scanResults.criticalIssues,
+        highIssues: scanResults.highIssues,
+        mediumIssues: scanResults.mediumIssues,
+        lowIssues: scanResults.lowIssues,
+        scanResultFile,
+        reportFile
+      }
     });
     
-    res.json({ 
+    res.json({
       success: true,
-      message: 'Security scan completed successfully',
-      result: scanResult
+      message: 'Security scan completed',
+      results: enhancedResults,
+      reportFile
     });
   } catch (error) {
     console.error('Error running security scan:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to run security scan' 
+      message: 'Error running security scan',
+      error: (error as Error).message
     });
   }
-};
+});
 
-// Initialize security settings on module load
-initializeSecuritySettings();
+/**
+ * Get latest security scan results
+ */
+export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    if (!fs.existsSync(SCAN_RESULTS_DIR)) {
+      return res.json({ 
+        success: true, 
+        message: 'No scan results found', 
+        results: null 
+      });
+    }
+    
+    // Get list of scan result files
+    const files = fs.readdirSync(SCAN_RESULTS_DIR)
+      .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
+      .sort();
+    
+    if (files.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'No scan results found', 
+        results: null 
+      });
+    }
+    
+    // Get the most recent scan
+    const latestScanFile = path.join(SCAN_RESULTS_DIR, files[files.length - 1]);
+    const scanData = fs.readFileSync(latestScanFile, 'utf8');
+    const scanResults = JSON.parse(scanData);
+    
+    logSecurityEvent({
+      type: 'SECURITY_SETTING_CHANGED',
+      userId: req.session?.user?.id,
+      userRole: req.session?.user?.role,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      path: req.path,
+      method: req.method,
+      details: 'Security scan results viewed',
+      severity: 'low'
+    });
+    
+    res.json({ 
+      success: true, 
+      results: scanResults 
+    });
+  } catch (error) {
+    console.error('Error getting scan results:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error retrieving scan results' 
+    });
+  }
+});
+
+/**
+ * Get security stats summary
+ */
+export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
+  try {
+    // Get count of security logs by severity
+    let criticalCount = 0;
+    let highCount = 0;
+    let mediumCount = 0;
+    let lowCount = 0;
+    let totalEvents = 0;
+    
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
+      const logLines = logContent.split('\n').filter(line => line.trim() !== '');
+      
+      totalEvents = logLines.length;
+      
+      // Count events by severity
+      for (const line of logLines) {
+        if (line.includes('[CRITICAL]')) criticalCount++;
+        else if (line.includes('[HIGH]')) highCount++;
+        else if (line.includes('[MEDIUM]')) mediumCount++;
+        else if (line.includes('[LOW]')) lowCount++;
+      }
+    }
+    
+    // Get latest scan results if available
+    let latestScan = null;
+    let securityScore = 100; // Default to perfect score if no scan available
+    
+    if (fs.existsSync(SCAN_RESULTS_DIR)) {
+      const files = fs.readdirSync(SCAN_RESULTS_DIR)
+        .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
+        .sort();
+      
+      if (files.length > 0) {
+        const latestScanFile = path.join(SCAN_RESULTS_DIR, files[files.length - 1]);
+        const scanData = fs.readFileSync(latestScanFile, 'utf8');
+        latestScan = JSON.parse(scanData);
+        
+        // Get security score from scan if available
+        if (latestScan.riskMetrics && typeof latestScan.riskMetrics.securityScore === 'number') {
+          securityScore = latestScan.riskMetrics.securityScore;
+        } else {
+          // Calculate score based on vulnerabilities
+          const totalIssues = latestScan.totalIssues || 0;
+          const criticalIssues = latestScan.criticalIssues || 0;
+          const highIssues = latestScan.highIssues || 0;
+          
+          // Formula: Start with 100, subtract weighted issues
+          securityScore = Math.max(0, 100 - (criticalIssues * 10) - (highIssues * 5) - (totalIssues - criticalIssues - highIssues));
+        }
+      }
+    }
+    
+    res.json({
+      success: true,
+      stats: {
+        securityScore,
+        logStats: {
+          totalEvents,
+          criticalCount,
+          highCount,
+          mediumCount,
+          lowCount
+        },
+        latestScanTimestamp: latestScan ? latestScan.timestamp : null,
+        vulnerabilities: latestScan ? {
+          total: latestScan.totalIssues,
+          critical: latestScan.criticalIssues,
+          high: latestScan.highIssues,
+          medium: latestScan.mediumIssues,
+          low: latestScan.lowIssues
+        } : null,
+        settingsEnabled: Object.entries(securitySettings)
+          .filter(([key, value]) => typeof value === 'boolean' && value === true)
+          .map(([key]) => key)
+      }
+    });
+  } catch (error) {
+    console.error('Error getting security stats:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error retrieving security statistics' 
+    });
+  }
+});

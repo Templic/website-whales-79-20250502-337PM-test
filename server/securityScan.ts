@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const execPromise = promisify(exec);
 
-interface SecurityVulnerability {
+export interface SecurityVulnerability {
   id: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
@@ -21,7 +21,7 @@ interface SecurityVulnerability {
   recommendation?: string;
 }
 
-interface SecurityScanResult {
+export interface SecurityScanResult {
   timestamp: string;
   totalIssues: number;
   criticalIssues: number;
@@ -324,38 +324,198 @@ async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Pr
  * Check for input validation
  */
 async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+  // Expand the list of files to check for input validation
   const serverFiles = [
-    path.join(process.cwd(), 'server', 'routes.ts')
+    path.join(process.cwd(), 'server', 'routes.ts'),
+    path.join(process.cwd(), 'server', 'securityRoutes.ts'),
+    path.join(process.cwd(), 'server', 'auth.ts'),
+    path.join(process.cwd(), 'server', 'validation.ts'),
+    ...findAllControllers()
   ];
   
   let foundInputValidation = false;
+  let validationPatterns = 0;
+  const validationLibraries = new Set<string>();
+  const filesWithValidation = new Set<string>();
+  let totalApiEndpoints = 0;
+  let endpointsWithValidation = 0;
   
+  // Enhanced validation pattern detection
   for (const file of serverFiles) {
     if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
+      totalApiEndpoints += countAPIEndpoints(content);
       
-      // Check for input validation
-      if (
-        content.includes('validator') || 
-        content.includes('joi') || 
-        content.includes('zod') || 
-        content.includes('express-validator') || 
-        content.includes('validateRequest')
-      ) {
-        foundInputValidation = true;
-        break;
+      // Check for various validation libraries and patterns
+      const validationChecks = [
+        { pattern: 'validator', name: 'validator' },
+        { pattern: 'joi', name: 'joi' },
+        { pattern: 'zod', name: 'zod' },
+        { pattern: 'express-validator', name: 'express-validator' },
+        { pattern: 'validateRequest', name: 'custom validation' },
+        { pattern: 'check(', name: 'express-validator check' },
+        { pattern: 'body(', name: 'express-validator body' },
+        { pattern: 'param(', name: 'express-validator param' },
+        { pattern: 'query(', name: 'express-validator query' },
+        { pattern: 'validationResult', name: 'express-validator result' },
+        { pattern: 'sanitize', name: 'sanitization' },
+        { pattern: 'escape', name: 'content escaping' },
+        { pattern: 'isValid', name: 'validation check' },
+        { pattern: 'schema.validate', name: 'schema validation' },
+        { pattern: 'typeof', name: 'type checking' }
+      ];
+      
+      for (const check of validationChecks) {
+        if (content.includes(check.pattern)) {
+          validationLibraries.add(check.name);
+          filesWithValidation.add(file);
+          validationPatterns++;
+          
+          // Count endpoints with validation by looking for validation near route handlers
+          const lines = content.split('\n');
+          for (let i = 0; i < lines.length; i++) {
+            if (isRouteDefinition(lines[i])) {
+              // Check if any validation patterns exist in nearby lines
+              const surroundingLines = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 5)).join('\n');
+              if (validationChecks.some(c => surroundingLines.includes(c.pattern))) {
+                endpointsWithValidation++;
+              }
+            }
+          }
+        }
       }
     }
   }
   
+  // Determine if validation coverage is sufficient
+  foundInputValidation = validationPatterns >= 3;
+  const validationCoverage = totalApiEndpoints > 0 ? (endpointsWithValidation / totalApiEndpoints) * 100 : 0;
+  
+  // Add vulnerabilities based on analysis
   if (!foundInputValidation) {
     vulnerabilities.push({
       id: uuidv4(),
       severity: 'high',
       description: 'No comprehensive input validation found',
-      recommendation: 'Implement input validation for all API endpoints'
+      recommendation: 'Implement input validation for all API endpoints using express-validator, zod, or similar libraries'
+    });
+  } else if (validationCoverage < 70) {
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'medium',
+      description: `Inconsistent input validation (only ${validationCoverage.toFixed(0)}% of endpoints protected)`,
+      recommendation: 'Extend input validation to all API endpoints that accept user input'
+    });
+  } else if (validationLibraries.size < 2) {
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'low',
+      description: 'Limited validation approach detected',
+      recommendation: 'Consider using multiple validation strategies for critical endpoints'
     });
   }
+  
+  // Check for SQL injection protection specifically
+  const sqlInjectionVulnerable = await checkForSQLInjectionVulnerabilities();
+  if (sqlInjectionVulnerable.length > 0) {
+    vulnerabilities.push({
+      id: uuidv4(),
+      severity: 'critical',
+      description: 'Potential SQL injection vulnerabilities detected',
+      location: sqlInjectionVulnerable.join(', '),
+      recommendation: 'Use parameterized queries or an ORM consistently for all database operations'
+    });
+  }
+}
+
+/**
+ * Find all controller files in the server directory
+ */
+function findAllControllers(): string[] {
+  const controllers: string[] = [];
+  const serverDir = path.join(process.cwd(), 'server');
+  
+  if (fs.existsSync(serverDir)) {
+    const processDir = (dir: string) => {
+      const items = fs.readdirSync(dir);
+      for (const item of items) {
+        const itemPath = path.join(dir, item);
+        const stat = fs.statSync(itemPath);
+        
+        if (stat.isDirectory()) {
+          processDir(itemPath);
+        } else if (
+          stat.isFile() && 
+          (item.includes('Controller') || item.includes('Routes') || item.includes('router')) &&
+          (item.endsWith('.ts') || item.endsWith('.js'))
+        ) {
+          controllers.push(itemPath);
+        }
+      }
+    };
+    
+    processDir(serverDir);
+  }
+  
+  return controllers;
+}
+
+/**
+ * Count API endpoints in a file
+ */
+function countAPIEndpoints(content: string): number {
+  const lines = content.split('\n');
+  let count = 0;
+  
+  for (const line of lines) {
+    if (isRouteDefinition(line)) {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
+/**
+ * Check if a line contains a route definition
+ */
+function isRouteDefinition(line: string): boolean {
+  const routePatterns = [
+    /\.(get|post|put|delete|patch|options)\s*\(/i,
+    /router\.(get|post|put|delete|patch|options)\s*\(/i,
+    /app\.(get|post|put|delete|patch|options)\s*\(/i,
+    /route\.(get|post|put|delete|patch|options)\s*\(/i
+  ];
+  
+  return routePatterns.some(pattern => pattern.test(line));
+}
+
+/**
+ * Check for potential SQL injection vulnerabilities
+ */
+async function checkForSQLInjectionVulnerabilities(): Promise<string[]> {
+  const vulnerableFiles: string[] = [];
+  
+  try {
+    const { stdout } = await execPromise(
+      'grep -r -i -E "(executeQuery|query\\().*\\$\\{|sql.*\\+|query.*concat" --include="*.ts" --include="*.js" --exclude-dir="node_modules" --exclude-dir=".git" ./server 2>/dev/null || true'
+    );
+    
+    if (stdout.trim()) {
+      const results = stdout.split('\n').filter(line => line.trim() !== '');
+      
+      for (const result of results) {
+        const [file] = result.split(':');
+        if (file && !vulnerableFiles.includes(file)) {
+          vulnerableFiles.push(file);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for SQL injection vulnerabilities:', error);
+  }
+  
+  return vulnerableFiles;
 }
 
 /**

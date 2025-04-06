@@ -1,8 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 
 interface ApiRequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  data?: any;
   headers?: Record<string, string>;
   skipCsrfToken?: boolean;
 }
@@ -35,14 +33,25 @@ export async function fetchCsrfToken(): Promise<string> {
 }
 
 // Default fetch function for React Query
-export const getQueryFn = <T>(url: string) => 
-  async (): Promise<T> => {
+export const getQueryFn = <T>({ 
+  on401 = "throw" 
+}: { 
+  on401?: "throw" | "returnNull" 
+} = {}) => 
+  async ({ queryKey }: { queryKey: unknown[] }): Promise<T> => {
+    const url = queryKey[0] as string;
+    
     const response = await fetch(url, {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json'
       }
     });
+
+    // Special handling for unauthorized requests based on configuration
+    if (response.status === 401 && on401 === "returnNull") {
+      return null as unknown as T;
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({
@@ -56,10 +65,12 @@ export const getQueryFn = <T>(url: string) =>
 
 // Default fetch function for API requests
 export async function apiRequest(
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   endpoint: string,
-  options: ApiRequestOptions = {}
+  data?: any,
+  options: Omit<ApiRequestOptions, 'method' | 'data'> = {}
 ) {
-  const { method = 'GET', data, headers = {}, skipCsrfToken = false } = options;
+  const { headers = {}, skipCsrfToken = false } = options;
 
   // Only add CSRF token for mutation requests (non-GET)
   if (method !== 'GET' && !skipCsrfToken && endpoint.startsWith('/api')) {
@@ -82,7 +93,7 @@ export async function apiRequest(
     credentials: 'include',
   };
 
-  if (data) {
+  if (data !== undefined) {
     config.body = JSON.stringify(data);
   }
 
@@ -111,7 +122,7 @@ export async function apiRequest(
     }
   } catch (error) {
     console.error("API request failed:", error); // Log the error for debugging
-    throw new Error("Failed to fetch data from API."); // Throw a more user-friendly error
+    throw new Error(error instanceof Error ? error.message : "Failed to fetch data from API."); 
   }
 }
 

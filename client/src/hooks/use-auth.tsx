@@ -23,23 +23,49 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  
+  // Define a custom query function to fix the TypeScript error with readonly arrays
+  const userQueryFn = async () => {
+    try {
+      const response = await fetch('/api/user', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.status === 401) {
+        return null;
+      }
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          message: response.statusText,
+        }));
+        throw new Error(error.message || 'An error occurred');
+      }
+      
+      return await response.json() as SelectUser;
+    } catch (error) {
+      if ((error as Error).message === 'Failed to fetch') {
+        console.error('Network error when fetching current user');
+      }
+      return null;
+    }
+  };
+  
   const {
     data: user,
     error,
     isLoading,
-  } = useQuery<SelectUser | undefined, Error>({
+  } = useQuery<SelectUser | null, Error>({
     queryKey: ["/api/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
+    queryFn: userQueryFn,
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Failed to login');
-      }
-      return await res.json();
+      return await apiRequest('POST', "/api/login", credentials);
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -55,8 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      return await apiRequest('POST', "/api/register", credentials);
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -72,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      await apiRequest('POST', "/api/logout");
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
