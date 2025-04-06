@@ -4,6 +4,34 @@ interface ApiRequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   data?: any;
   headers?: Record<string, string>;
+  skipCsrfToken?: boolean;
+}
+
+// Store the CSRF token
+let csrfToken: string | null = null;
+
+// Function to fetch CSRF token
+export async function fetchCsrfToken(): Promise<string> {
+  if (csrfToken) {
+    return csrfToken;
+  }
+  
+  try {
+    const response = await fetch('/api/csrf-token', {
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch CSRF token');
+    }
+    
+    const data = await response.json();
+    csrfToken = data.csrfToken;
+    return csrfToken || '';
+  } catch (error) {
+    console.error('Error fetching CSRF token:', error);
+    throw error;
+  }
 }
 
 // Default fetch function for React Query
@@ -31,7 +59,19 @@ export async function apiRequest(
   endpoint: string,
   options: ApiRequestOptions = {}
 ) {
-  const { method = 'GET', data, headers = {} } = options;
+  const { method = 'GET', data, headers = {}, skipCsrfToken = false } = options;
+
+  // Only add CSRF token for mutation requests (non-GET)
+  if (method !== 'GET' && !skipCsrfToken && endpoint.startsWith('/api')) {
+    try {
+      // Get CSRF token
+      const token = await fetchCsrfToken();
+      headers['X-CSRF-Token'] = token;
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+      // Continue with the request even if CSRF token fetching fails
+    }
+  }
 
   const config: RequestInit = {
     method,

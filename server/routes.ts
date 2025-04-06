@@ -11,6 +11,23 @@ import { storage } from "./storage";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import { nanoid } from 'nanoid';
+import { validate } from './middlewares/validationMiddleware';
+import { body } from 'express-validator'; // Add body to imports
+import { 
+  contactValidation, 
+  newsletterValidation, 
+  productValidation,
+  postValidation,
+  commentValidation,
+  userValidation,
+  tourDateValidation,
+  musicValidation,
+  orderValidation,
+  paginationValidation,
+  categoryValidation,
+  passwordRecoveryValidation,
+  passwordResetValidation
+} from './validation';
 import {
   insertSubscriberSchema,
   insertPostSchema,
@@ -195,10 +212,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Existing subscriber route
-  app.post("/api/subscribe", async (req, res) => {
+  // Existing subscriber route with added validation
+  app.post("/api/subscribe", newsletterValidation, validate, async (req, res) => {
     try {
       console.log("Received subscription request:", req.body);
+      // Input validation performed by express-validator middleware
       const data = insertSubscriberSchema.parse(req.body);
       const subscriber = await storage.createSubscriber(data);
       console.log("Created new subscriber:", subscriber);
@@ -670,13 +688,23 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Create a new newsletter
-  app.post("/api/newsletters", async (req, res) => {
-    if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      return res.status(403).json({ message: "Unauthorized" });
-    }
-
+  // Create a new newsletter with validation
+  app.post("/api/newsletters", [
+    // Authentication check
+    (req, res, next) => {
+      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      next();
+    },
+    // Basic validation using express-validator
+    body('title').trim().notEmpty().withMessage('Title is required').isLength({ min: 3, max: 100 }).withMessage('Title must be between 3 and 100 characters').escape(),
+    body('content').trim().notEmpty().withMessage('Content is required').isLength({ min: 50 }).withMessage('Content must be at least 50 characters'),
+    body('subject').trim().notEmpty().withMessage('Subject is required').isLength({ min: 3, max: 100 }).withMessage('Subject must be between 3 and 100 characters').escape(),
+    validate
+  ], async (req, res) => {
     try {
+      // After passing validation middleware, parse schema
       const data = insertNewsletterSchema.parse(req.body);
       const newsletter = await storage.createNewsletter(data);
 
@@ -983,13 +1011,19 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/posts", async (req, res) => {
+  app.post("/api/posts", postValidation.create, validate, async (req, res) => {
     try {
+      // Input is already validated by express-validator middleware
       const data = insertPostSchema.parse(req.body);
       const post = await storage.createPost(data);
       res.json(post);
     } catch (error) {
-      res.status(400).json({ message: "Invalid post data" });
+      console.error("Error creating post:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid post data", details: error.message });
+      } else {
+        res.status(400).json({ message: "Invalid post data" });
+      }
     }
   });
 
@@ -1003,34 +1037,49 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", categoryValidation, validate, async (req, res) => {
     try {
+      // Input is already validated by express-validator middleware
       const data = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(data);
       res.json(category);
     } catch (error) {
-      res.status(400).json({ message: "Invalid category data" });
+      console.error("Error creating category:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid category data", details: error.message });
+      } else {
+        res.status(400).json({ message: "Invalid category data" });
+      }
     }
   });
 
   // Comment routes
-  app.post("/api/posts/:postId/comments", async (req, res) => {
+  app.post("/api/posts/:postId/comments", commentValidation, validate, async (req, res) => {
     try {
       // Auto-approve comments from admin users
       const isAdmin = req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
 
+      // Input is already validated by express-validator middleware
       const data = insertCommentSchema.parse({
         ...req.body,
         postId: Number(req.params.postId),
         approved: isAdmin // Auto-approve if admin
       });
+      
       console.log("Creating comment with data:", data);
       const comment = await storage.createComment(data);
       console.log("Created comment:", comment);
       res.json(comment);
     } catch (error) {
       console.error("Error creating comment:", error);
-      res.status(400).json({ message: "Invalid comment data" });
+      if (error instanceof Error) {
+        res.status(400).json({ 
+          message: "Invalid comment data", 
+          details: error.message 
+        });
+      } else {
+        res.status(400).json({ message: "Invalid comment data" });
+      }
     }
   });
 
@@ -1078,17 +1127,31 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.post("/api/contact", async (req, res) => {
+  app.post("/api/contact", contactValidation, validate, async (req, res) => {
   try {
+    // Input is already validated by our middleware
     const { insertContactSchema } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
+    
+    // Create database entry
     const message = await db.insert(contactMessages).values(data).returning();
-    res.json({ message: "Message sent successfully!", data: message[0] });
+    
+    // Send success response
+    res.json({ 
+      message: "Message sent successfully!", 
+      data: message[0] 
+    });
   } catch (error) {
     console.error("Contact form error:", error);
-    res.status(400).json({ 
-      message: error.errors?.[0]?.message || "Failed to send message" 
-    });
+    if (error instanceof Error) {
+      res.status(400).json({ 
+        message: error.message || "Failed to send message" 
+      });
+    } else {
+      res.status(400).json({ 
+        message: "Failed to send message" 
+      });
+    }
   }
 });
 
@@ -1106,13 +1169,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   });
 
   // Password recovery routes
-  app.post("/api/recover-password", async (req, res) => {
+  app.post("/api/recover-password", passwordRecoveryValidation, validate, async (req, res) => {
     try {
+      // Email is already validated by our middleware
       const { email } = req.body;
       const user = await storage.getUserByEmail(email);
 
       if (!user) {
-        // Don't reveal if email exists or not
+        // Don't reveal if email exists or not for security
         return res.json({ message: "If an account exists with this email, you will receive a recovery link." });
       }
 
@@ -1125,7 +1189,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         subject: "Password Recovery",
         text: `Click this link to reset your password: ${resetLink}`,
         html: `
-          <p>Click the link below to reset yourpassword:</p>
+          <p>Click the link below to reset your password:</p>
           <p><a href="${resetLink}">Reset Password</a></p>
           <p>This link will expire in 1 hour.</p>
         `,
@@ -1138,8 +1202,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
   });
 
-  app.post("/api/reset-password", async (req, res) => {
+  app.post("/api/reset-password", passwordResetValidation, validate, async (req, res) => {
     try {
+      // Input is already validated by our middleware
       const { token, newPassword } = req.body;
       const user = await storage.validatePasswordResetToken(token);
 
@@ -1153,7 +1218,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.json({ message: "Password updated successfully" });
     } catch (error) {
       console.error("Password reset error:", error);
-      res.status(500).json({ message: "Failed to reset password" });
+      if (error instanceof Error) {
+        res.status(500).json({ 
+          message: "Failed to reset password",
+          details: error.message 
+        });
+      } else {
+        res.status(500).json({ message: "Failed to reset password" });
+      }
     }
   });
 
@@ -1418,14 +1490,18 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
   // Contact form submission
-  app.post('/api/contact/submit', async (req, res) => {
+  // Import contactValidation & validate from our new modules (added at the top of the file)
+  app.post('/api/contact/submit', contactValidation, validate, async (req, res) => {
     try {
       const { name, email, message } = req.body;
+      
+      // Input has been validated by our middleware
       await db.insert(contactMessages).values({
         name,
         email, 
         message
       });
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Failed to save contact form:', error);

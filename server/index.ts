@@ -16,6 +16,7 @@ import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import csurf from "csurf";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -94,6 +95,41 @@ app.use(fileUpload({
   preserveExtension: true,
   debug: false // Disable debug messages
 }));
+
+// Setup CSRF protection
+const csrfProtection = csurf({ 
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  }
+});
+
+// Provide CSRF token for client-side forms (must be defined before applying CSRF protection)
+app.get('/api/csrf-token', csrfProtection, (req: Request, res: Response) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Apply CSRF protection to all API routes except the token endpoint
+app.use('/api', (req, res, next) => {
+  // Skip CSRF protection for the token endpoint
+  if (req.path === '/csrf-token') {
+    return next();
+  }
+  csrfProtection(req, res, next);
+});
+
+// CSRF error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    // Handle CSRF token errors
+    return res.status(403).json({
+      error: 'CSRF attack detected. Form submission rejected.'
+    });
+  }
+  // Pass other errors to the next error handler
+  next(err);
+});
 
 
 // Add logging middleware
