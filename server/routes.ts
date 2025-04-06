@@ -26,7 +26,9 @@ import dbMonitorRoutes from './routes/db-monitor';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
 import { handleSecurityLog, rotateSecurityLogs } from './security';
+import { scanProject, initializeSecurityScans } from './securityScan';
 import { updateSecuritySetting, getSecuritySettings, type SecuritySettings } from './settings';
+import { securityRouter, testSecurityRouter } from './securityRoutes';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -374,22 +376,187 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
   
-  // Test endpoint - view security logs (for testing purposes only)
-  app.get("/api/test/security/logs", (req, res) => {
+  // Test endpoint - view security settings (for testing purposes only)
+  app.get("/api/test/security/settings", (req, res) => {
     try {
-      const fs = require('fs');
-      const path = require('path');
+      const settings = getSecuritySettings();
+      res.json({
+        message: 'Security settings retrieved successfully',
+        settings
+      });
+    } catch (error) {
+      console.error('Error retrieving security settings:', error);
+      res.status(500).json({ 
+        message: 'Failed to retrieve security settings', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+  
+  // Test endpoint - simulate unauthorized access (for testing purposes only)
+  app.get("/api/test/security/simulate-unauthorized", (req, res) => {
+    try {
+      // Log the unauthorized access attempt
+      handleSecurityLog({
+        type: 'UNAUTHORIZED_ATTEMPT',
+        setting: 'API_ACCESS',
+        timestamp: new Date().toISOString(),
+        ip: req.ip || '0.0.0.0',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        path: '/api/test/security/simulate-unauthorized',
+        method: 'GET'
+      });
       
-      // Ensure the logs directory exists
+      res.status(401).json({
+        message: 'Unauthorized access attempt logged successfully',
+        details: 'This endpoint simulates an unauthorized access attempt to test security logging'
+      });
+    } catch (error) {
+      console.error('Error simulating unauthorized access:', error);
+      res.status(500).json({ 
+        message: 'Failed to simulate unauthorized access', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+  
+  // Test endpoint - get security statistics (for testing purposes only)
+  app.get("/api/test/security/stats", (req, res) => {
+    try {
+      // Create the logs directory structure if it doesn't exist
       const logsDir = path.join(process.cwd(), 'logs', 'security');
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+        return res.json({ 
+          message: 'No security statistics available yet',
+          stats: {
+            total: 0,
+            byType: {},
+            bySetting: {},
+            recentEvents: []
+          }
+        });
+      }
+      
       const logFilePath = path.join(logsDir, 'security.log');
       
+      // Check if the file exists, and create it if it doesn't
       if (!fs.existsSync(logFilePath)) {
-        return res.status(404).json({ message: 'Security log file not found' });
+        fs.writeFileSync(logFilePath, '', 'utf8');
+        return res.json({ 
+          message: 'No security statistics available yet',
+          stats: {
+            total: 0,
+            byType: {},
+            bySetting: {},
+            recentEvents: []
+          }
+        });
       }
       
       // Read the log file
       const logData = fs.readFileSync(logFilePath, 'utf8');
+      
+      // If log file is empty, return empty stats
+      if (!logData.trim()) {
+        return res.json({ 
+          message: 'No security statistics available yet',
+          stats: {
+            total: 0,
+            byType: {},
+            bySetting: {},
+            recentEvents: []
+          }
+        });
+      }
+      
+      // Parse the log entries
+      const logEntries = logData
+        .split('\n')
+        .filter(line => line.trim() !== '')
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (err) {
+            return { rawLog: line, parseError: true };
+          }
+        });
+      
+      // Calculate statistics
+      const stats = {
+        total: logEntries.length,
+        byType: {},
+        bySetting: {},
+        recentEvents: logEntries.slice(-5).reverse() // Get the 5 most recent events
+      };
+      
+      // Count events by type and setting
+      logEntries.forEach(entry => {
+        // Count by type
+        const type = entry.type || 'UNKNOWN';
+        if (!stats.byType[type]) {
+          stats.byType[type] = 1;
+        } else {
+          stats.byType[type]++;
+        }
+        
+        // Count by setting
+        if (entry.setting) {
+          const setting = entry.setting;
+          if (!stats.bySetting[setting]) {
+            stats.bySetting[setting] = 1;
+          } else {
+            stats.bySetting[setting]++;
+          }
+        }
+      });
+      
+      res.json({ 
+        message: 'Security statistics retrieved successfully',
+        stats
+      });
+    } catch (error) {
+      console.error('Error retrieving security statistics:', error);
+      res.status(500).json({ 
+        message: 'Failed to retrieve security statistics', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  // Test endpoint - view security logs (for testing purposes only)
+  app.get("/api/test/security/logs", (req, res) => {
+    try {
+      // Create the logs directory structure if it doesn't exist
+      const logsDir = path.join(process.cwd(), 'logs', 'security');
+      if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+      }
+      
+      const logFilePath = path.join(logsDir, 'security.log');
+      
+      // Check if the file exists, and create it if it doesn't
+      if (!fs.existsSync(logFilePath)) {
+        // Create an empty log file
+        fs.writeFileSync(logFilePath, '', 'utf8');
+        return res.json({ 
+          message: 'Security log file created',
+          logs: [],
+          count: 0
+        });
+      }
+      
+      // Read the log file
+      const logData = fs.readFileSync(logFilePath, 'utf8');
+      
+      // If log file is empty, return empty array
+      if (!logData.trim()) {
+        return res.json({ 
+          message: 'Security log file is empty',
+          logs: [],
+          count: 0
+        });
+      }
       
       // Parse the log entries and format them
       const logEntries = logData
@@ -410,7 +577,75 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error) {
       console.error('Error retrieving security logs:', error);
-      res.status(500).json({ message: 'Failed to retrieve security logs' });
+      res.status(500).json({ 
+        message: 'Failed to retrieve security logs', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+  
+  // Security scan endpoint
+  app.get("/api/security/scan", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      handleSecurityLog({
+        type: 'UNAUTHORIZED_ATTEMPT',
+        setting: 'SECURITY_SCAN',
+        timestamp: new Date().toISOString(),
+        ip: req.ip || '0.0.0.0',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        path: '/api/security/scan',
+        method: 'GET'
+      });
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const scanResults = await scanProject();
+      
+      res.json({
+        message: 'Security scan completed successfully',
+        timestamp: scanResults.timestamp,
+        summary: {
+          totalIssues: scanResults.totalIssues,
+          criticalIssues: scanResults.criticalIssues,
+          highIssues: scanResults.highIssues,
+          mediumIssues: scanResults.mediumIssues,
+          lowIssues: scanResults.lowIssues
+        },
+        vulnerabilities: scanResults.vulnerabilities
+      });
+    } catch (error) {
+      console.error('Error running security scan:', error);
+      res.status(500).json({
+        message: 'Failed to run security scan',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Test security scan endpoint (for testing purposes)
+  app.get("/api/test/security/scan", async (req, res) => {
+    try {
+      const scanResults = await scanProject();
+      
+      res.json({
+        message: 'Security scan completed successfully',
+        timestamp: scanResults.timestamp,
+        summary: {
+          totalIssues: scanResults.totalIssues,
+          criticalIssues: scanResults.criticalIssues,
+          highIssues: scanResults.highIssues,
+          mediumIssues: scanResults.mediumIssues,
+          lowIssues: scanResults.lowIssues
+        },
+        vulnerabilities: scanResults.vulnerabilities
+      });
+    } catch (error) {
+      console.error('Error running security scan:', error);
+      res.status(500).json({
+        message: 'Failed to run security scan',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -1175,6 +1410,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Shop routes
   app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
+  
+  // Security routes
+  app.use('/api/security', securityRouter);
+  app.use('/api/test', testSecurityRouter);
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);

@@ -37,8 +37,19 @@ export function logSecurityEvent(event: any): void {
 }
 
 // Handler for the security log API endpoint
-export function handleSecurityLog(req: Request, res: Response): void {
+export function handleSecurityLog(req: Request, res: Response): void;
+export function handleSecurityLog(event: any): void;
+export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): void {
   try {
+    // If this is a direct event object (not a request)
+    if (!res) {
+      // Log the security event directly
+      logSecurityEvent(reqOrEvent);
+      return;
+    }
+    
+    const req = reqOrEvent as Request;
+    
     // Validate user is authenticated (if applicable)
     if (req.isAuthenticated && !req.isAuthenticated()) {
       // Still log the attempt, but mark it as unauthorized
@@ -70,7 +81,9 @@ export function handleSecurityLog(req: Request, res: Response): void {
     res.status(200).json({ message: 'Security event logged successfully' });
   } catch (error) {
     console.error('Error handling security log:', error);
-    res.status(500).json({ message: 'Failed to log security event' });
+    if (res) {
+      res.status(500).json({ message: 'Failed to log security event' });
+    }
   }
 }
 

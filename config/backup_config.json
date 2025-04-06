@@ -1,0 +1,37 @@
+{
+  "backupSettings": {
+    "enabled": true,
+    "automaticBackups": true,
+    "backupFrequency": "daily",
+    "maxBackups": 10,
+    "compressionLevel": "high",
+    "encryptDatabase": true,
+    "excludePatterns": [
+      ".git",
+      "node_modules",
+      "tmp",
+      "*.log",
+      "*.tmp",
+      "uploads/temp",
+      "__pycache__",
+      "*.pyc",
+      ".env"
+    ],
+    "backupDirectory": "backups",
+    "retentionPolicy": {
+      "daily": 7,
+      "weekly": 4,
+      "monthly": 3
+    }
+  },
+  "notifications": {
+    "onSuccess": true,
+    "onFailure": true,
+    "includeDetails": true
+  },
+  "security": {
+    "encryptionAlgorithm": "aes-256-cbc",
+    "useKeyFile": true,
+    "calculateChecksum": true
+  }
+}

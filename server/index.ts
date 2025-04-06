@@ -11,6 +11,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { initDatabaseOptimization } from "./db-optimize";
 import { initBackgroundServices, shutdownBackgroundServices } from "./db-background";
+import { initializeSecurityScans } from "./securityScan";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
@@ -242,6 +243,17 @@ async function startServer() {
       httpServer.listen(port, '0.0.0.0', () => {
         console.log(`Server successfully listening on port ${port}`);
         log(`Server listening on port ${port}`);
+        
+        // Initialize security scans now that the server is running
+        // Schedule regular scans every 24 hours
+        try {
+          initializeSecurityScans(24);
+          console.log('Security scanning service initialized');
+        } catch (error) {
+          console.error('Failed to initialize security scans:', error);
+          // Continue server operation even if security scans fail to initialize
+        }
+        
         resolve(true);
       }).on('error', (err: Error) => {
         console.error('Server startup error:', err);
