@@ -128,10 +128,6 @@ export default {
           "0%, 100%": { opacity: "0.2" },
           "50%": { opacity: "0.8" },
         },
-        "twinkle": {
-          "0%, 100%": { opacity: "0.2" },
-          "50%": { opacity: "1" },
-        },
         "cosmic-pulse": {
           "0%": { transform: "scale(0.95)", opacity: "0.5" },
           "50%": { transform: "scale(1.05)", opacity: "0.9" },
@@ -163,7 +159,6 @@ export default {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "pulse-fast": "pulse-fast 1s ease-in-out infinite",
         "stars-twinkle": "stars-twinkle 3s ease-in-out infinite",
-        "twinkle": "twinkle 3s ease-in-out infinite",
         "cosmic-pulse": "cosmic-pulse 4s ease-in-out infinite",
         "float": "float 6s ease-in-out infinite",
         "glow": "glow 3s ease-in-out infinite",
