@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { logSecurityEvent } from './security';
+import { logSecurityEvent } from './security/security';
 
 // Define security settings and their default values
 export interface SecuritySettings {

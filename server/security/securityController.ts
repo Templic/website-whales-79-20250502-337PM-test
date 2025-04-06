@@ -1,16 +1,20 @@
-import { Router, Request, Response } from 'express';
-import { z } from 'zod';
+/**
+ * securityController.ts
+ * 
+ * Controller for security-related API endpoints
+ */
+import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { logSecurityEvent, handleSecurityLog, rotateSecurityLogs } from './security';
-import { scanProject } from './security/securityScan';
+import { scanProject } from '../securityScan';
+import { z } from 'zod';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SECURITY_SETTINGS_FILE = path.join(__dirname, '../config/security_settings.json');
-const SECURITY_LOG_FILE = path.join(__dirname, '../logs/security/security.log');
+const SECURITY_SETTINGS_FILE = path.join(__dirname, '../../config/security_settings.json');
+const SECURITY_LOG_FILE = path.join(__dirname, '../../logs/security/security.log');
 
 // Create directories if they don't exist
 const securityConfigDir = path.dirname(SECURITY_SETTINGS_FILE);
@@ -30,7 +34,38 @@ const defaultSecuritySettings = {
   HTTPS_ENFORCEMENT: true,
   AUDIO_DOWNLOAD_PROTECTION: true,
   ADVANCED_BOT_PROTECTION: true,
-  TWO_FACTOR_AUTHENTICATION: false
+  TWO_FACTOR_AUTHENTICATION: false,
+  RATE_LIMITING: true,
+  CSRF_PROTECTION: true,
+  XSS_PROTECTION: true,
+  SQL_INJECTION_PROTECTION: true
+};
+
+// Log security events
+export const logSecurityEvent = (eventData: any) => {
+  try {
+    const timestamp = new Date().toISOString();
+    const logEntry = `[SECURITY] ${timestamp} - ${JSON.stringify(eventData)}\n`;
+    
+    fs.appendFileSync(SECURITY_LOG_FILE, logEntry);
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+  }
+};
+
+// Rotate security logs (called from a scheduled task)
+export const rotateSecurityLogs = () => {
+  try {
+    if (fs.existsSync(SECURITY_LOG_FILE)) {
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
+      const rotatedLogFile = path.join(securityLogDir, `security-${timestamp}.log`);
+      
+      fs.renameSync(SECURITY_LOG_FILE, rotatedLogFile);
+      console.log(`Security log rotated to ${rotatedLogFile}`);
+    }
+  } catch (error) {
+    console.error('Failed to rotate security logs:', error);
+  }
 };
 
 // Initialize or load security settings
@@ -135,17 +170,17 @@ const getSecurityStats = () => {
   }
 };
 
-// Setup security routes
-const securityRouter = Router();
+// Store the latest scan result
 let latestScanResult: any = null;
 
-// Get security settings
-securityRouter.get('/settings', async (req: Request, res: Response) => {
+/**
+ * Get security settings
+ */
+export const getSettings = (req: Request, res: Response) => {
   try {
-    const userRole = req.session?.user?.role;
-    
-    // Only admin and super_admin roles can access security settings
-    if (!userRole || (userRole !== 'admin' && userRole !== 'super_admin')) {
+    // Check authorization (admin or super_admin only)
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      // Log unauthorized attempt
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_SETTINGS_ACCESS',
@@ -159,21 +194,21 @@ securityRouter.get('/settings', async (req: Request, res: Response) => {
     }
     
     const settings = getSecuritySettings();
-    res.json({ message: 'Security settings retrieved successfully', settings });
+    res.json({ success: true, settings });
   } catch (error) {
     console.error('Error retrieving security settings:', error);
-    res.status(500).json({ message: 'Failed to retrieve security settings' });
+    res.status(500).json({ success: false, message: 'Failed to retrieve security settings' });
   }
-});
+};
 
-// Update security settings
-securityRouter.post('/settings/update', async (req: Request, res: Response) => {
+/**
+ * Update a security setting
+ */
+export const updateSetting = (req: Request, res: Response) => {
   try {
-    const userRole = req.session?.user?.role;
-    const userId = req.session?.user?.id || 0;
-    
-    // Only admin and super_admin roles can update security settings
-    if (!userRole || (userRole !== 'admin' && userRole !== 'super_admin')) {
+    // Check authorization (admin or super_admin only)
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      // Log unauthorized attempt
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_SETTINGS_UPDATE',
@@ -196,6 +231,7 @@ securityRouter.post('/settings/update', async (req: Request, res: Response) => {
     
     if (!validationResult.success) {
       return res.status(400).json({ 
+        success: false, 
         message: 'Invalid input', 
         errors: validationResult.error.errors 
       });
@@ -212,27 +248,29 @@ securityRouter.post('/settings/update', async (req: Request, res: Response) => {
       type: 'SECURITY_SETTING_CHANGED',
       setting,
       value,
-      userId,
-      userRole
+      userId: req.user.id,
+      userRole: req.user.role
     });
     
     res.json({ 
+      success: true,
       message: 'Security setting updated successfully',
       settings: updatedSettings
     });
   } catch (error) {
     console.error('Error updating security setting:', error);
-    res.status(500).json({ message: 'Failed to update security setting' });
+    res.status(500).json({ success: false, message: 'Failed to update security setting' });
   }
-});
+};
 
-// Get security stats
-securityRouter.get('/stats', async (req: Request, res: Response) => {
+/**
+ * Get security statistics
+ */
+export const getStats = (req: Request, res: Response) => {
   try {
-    const userRole = req.session?.user?.role;
-    
-    // Only admin and super_admin roles can access security stats
-    if (!userRole || (userRole !== 'admin' && userRole !== 'super_admin')) {
+    // Check authorization (admin or super_admin only)
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      // Log unauthorized attempt
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_STATS_ACCESS',
@@ -246,20 +284,61 @@ securityRouter.get('/stats', async (req: Request, res: Response) => {
     }
     
     const stats = getSecurityStats();
-    res.json({ message: 'Security statistics retrieved successfully', stats });
+    res.json({ success: true, stats });
   } catch (error) {
     console.error('Error retrieving security stats:', error);
-    res.status(500).json({ message: 'Failed to retrieve security statistics' });
+    res.status(500).json({ success: false, message: 'Failed to retrieve security statistics' });
   }
-});
+};
 
-// Run security scan
-securityRouter.post('/scan/run', async (req: Request, res: Response) => {
+/**
+ * Get latest scan results
+ */
+export const getLatestScan = (req: Request, res: Response) => {
   try {
-    const userRole = req.session?.user?.role;
+    // Check authorization (admin or super_admin only)
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      // Log unauthorized attempt
+      logSecurityEvent({
+        type: 'UNAUTHORIZED_ATTEMPT',
+        setting: 'SECURITY_SCAN_RESULTS_ACCESS',
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        path: req.path,
+        method: req.method
+      });
+      
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
     
-    // Only admin and super_admin roles can run security scans
-    if (!userRole || (userRole !== 'admin' && userRole !== 'super_admin')) {
+    if (!latestScanResult) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'No scan results available. Run a scan first.' 
+      });
+    }
+    
+    res.json({ 
+      success: true,
+      result: latestScanResult
+    });
+  } catch (error) {
+    console.error('Error retrieving latest security scan results:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to retrieve latest security scan results' 
+    });
+  }
+};
+
+/**
+ * Run a new security scan
+ */
+export const runScan = async (req: Request, res: Response) => {
+  try {
+    // Check authorization (admin or super_admin only)
+    if (!req.isAuthenticated || !req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
+      // Log unauthorized attempt
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_SCAN_RUN',
@@ -278,119 +357,24 @@ securityRouter.post('/scan/run', async (req: Request, res: Response) => {
     // Log the scan event
     logSecurityEvent({
       type: 'SECURITY_SCAN',
+      userId: req.user.id,
+      userRole: req.user.role,
       ...scanResult
     });
     
     res.json({ 
+      success: true,
       message: 'Security scan completed successfully',
       result: scanResult
     });
   } catch (error) {
     console.error('Error running security scan:', error);
-    res.status(500).json({ message: 'Failed to run security scan' });
-  }
-});
-
-// Get latest scan results
-securityRouter.get('/scan/latest', async (req: Request, res: Response) => {
-  try {
-    const userRole = req.session?.user?.role;
-    
-    // Only admin and super_admin roles can access scan results
-    if (!userRole || (userRole !== 'admin' && userRole !== 'super_admin')) {
-      logSecurityEvent({
-        type: 'UNAUTHORIZED_ATTEMPT',
-        setting: 'SECURITY_SCAN_RESULTS_ACCESS',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method
-      });
-      
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
-    
-    if (!latestScanResult) {
-      // Run a new scan if none available
-      latestScanResult = await scanProject();
-      
-      // Log the scan event
-      logSecurityEvent({
-        type: 'SECURITY_SCAN',
-        ...latestScanResult
-      });
-    }
-    
-    res.json({ 
-      message: 'Latest security scan results retrieved successfully',
-      result: latestScanResult
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to run security scan' 
     });
-  } catch (error) {
-    console.error('Error retrieving latest security scan results:', error);
-    res.status(500).json({ message: 'Failed to retrieve latest security scan results' });
   }
-});
-
-// Test endpoints for development (these should be removed in production)
-const testSecurityRouter = Router();
-
-// Test endpoint to get security settings without authentication
-testSecurityRouter.get('/security/settings', (req, res) => {
-  const settings = getSecuritySettings();
-  res.json({ message: 'Security settings retrieved successfully', settings });
-});
-
-// Test endpoint to get security stats without authentication
-testSecurityRouter.get('/security/stats', (req, res) => {
-  const stats = getSecurityStats();
-  res.json({ message: 'Security statistics retrieved successfully', stats });
-});
-
-// Test endpoint to run a security scan without authentication
-testSecurityRouter.get('/security/scan', async (req, res) => {
-  try {
-    const scanResult = await scanProject();
-    latestScanResult = scanResult;
-    
-    // Log the scan event
-    logSecurityEvent({
-      type: 'SECURITY_SCAN',
-      ...scanResult
-    });
-    
-    res.json({ 
-      message: 'Security scan completed successfully',
-      timestamp: scanResult.timestamp,
-      summary: {
-        totalIssues: scanResult.totalIssues,
-        criticalIssues: scanResult.criticalIssues,
-        highIssues: scanResult.highIssues,
-        mediumIssues: scanResult.mediumIssues,
-        lowIssues: scanResult.lowIssues
-      },
-      vulnerabilities: scanResult.vulnerabilities
-    });
-  } catch (error) {
-    console.error('Error running security scan:', error);
-    res.status(500).json({ message: 'Failed to run security scan' });
-  }
-});
-
-// Test endpoint to simulate an unauthorized access event for testing
-testSecurityRouter.get('/security/simulate-unauthorized', (req, res) => {
-  logSecurityEvent({
-    type: 'UNAUTHORIZED_ATTEMPT',
-    setting: 'API_ACCESS',
-    ip: req.ip,
-    userAgent: req.headers['user-agent'],
-    path: req.path,
-    method: req.method
-  });
-  
-  res.json({ message: 'Unauthorized access event logged successfully' });
-});
+};
 
 // Initialize security settings on module load
 initializeSecuritySettings();
-
-export { securityRouter, testSecurityRouter };

@@ -395,7 +395,7 @@ export default function AdminPortalPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Link href="/admin/settings/security">
+                <Link href="/admin/security">
                   <Button className="w-full" variant="outline">
                     <ShieldCheck className="mr-2 h-4 w-4" />
                     Security

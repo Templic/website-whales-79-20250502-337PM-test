@@ -3,8 +3,6 @@
  * 
  * Security vulnerability scanner for the application
  */
-
-import { logSecurityEvent } from './security/security';
 import fs from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
@@ -356,48 +354,4 @@ async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): P
       recommendation: 'Implement input validation for all API endpoints'
     });
   }
-}
-
-/**
- * Initialize the security scanning service
- * @param intervalHours The interval in hours at which to run scans (default: 24)
- */
-export function initializeSecurityScans(intervalHours: number = 24): NodeJS.Timeout {
-  console.log(`Initializing security scans with ${intervalHours} hour interval`);
-  
-  // Run an initial scan
-  scanProject().then(result => {
-    console.log(`Initial security scan completed: ${result.totalIssues} issues found`);
-    
-    // Log the event
-    logSecurityEvent({
-      type: 'SECURITY_SCAN',
-      details: `Automated security scan completed with ${result.totalIssues} issues found`,
-      severity: result.criticalIssues > 0 ? 'critical' : 
-                result.highIssues > 0 ? 'high' : 
-                result.mediumIssues > 0 ? 'medium' : 'low'
-    });
-  }).catch(error => {
-    console.error('Initial security scan failed:', error);
-  });
-  
-  // Set up periodic scans
-  const intervalMilliseconds = intervalHours * 60 * 60 * 1000;
-  return setInterval(() => {
-    console.log('Running scheduled security scan...');
-    scanProject().then(result => {
-      console.log(`Scheduled security scan completed: ${result.totalIssues} issues found`);
-      
-      // Log the event
-      logSecurityEvent({
-        type: 'SECURITY_SCAN',
-        details: `Automated security scan completed with ${result.totalIssues} issues found`,
-        severity: result.criticalIssues > 0 ? 'critical' : 
-                  result.highIssues > 0 ? 'high' : 
-                  result.mediumIssues > 0 ? 'medium' : 'low'
-      });
-    }).catch(error => {
-      console.error('Scheduled security scan failed:', error);
-    });
-  }, intervalMilliseconds);
 }

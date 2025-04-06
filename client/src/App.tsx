@@ -28,6 +28,7 @@ import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/admin/AdminPortalPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import SecuritySettingsPage from "@/pages/admin/SecuritySettingsPage";
 import PasswordRecoveryPage from "@/pages/PasswordRecoveryPage";
 import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
@@ -128,6 +129,7 @@ function AppRouter() {
           {/* Admin Routes */}
           <ProtectedRoute path="/admin" component={AdminPortalPage} />
           <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
+          <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} />
           <ProtectedRoute path="/admin/users" component={UsersPage} />
           <ProtectedRoute path="/admin/posts" component={PostsPage} />
           <ProtectedRoute path="/admin/music" component={MusicPage} />

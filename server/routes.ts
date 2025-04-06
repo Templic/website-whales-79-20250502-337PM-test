@@ -42,9 +42,9 @@ import { createTransport } from "nodemailer";
 import dbMonitorRoutes from './routes/db-monitor';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
-import { handleSecurityLog, rotateSecurityLogs } from './security';
-import { scanProject, initializeSecurityScans } from './securityScan';
-import { updateSecuritySetting, getSecuritySettings, type SecuritySettings } from './settings';
+import { handleSecurityLog, rotateSecurityLogs, logSecurityEvent } from './security/security';
+import { scanProject } from './securityScan';
+import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 
 // Email transporter for nodemailer
@@ -415,7 +415,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.get("/api/test/security/simulate-unauthorized", (req, res) => {
     try {
       // Log the unauthorized access attempt
-      handleSecurityLog({
+      logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'API_ACCESS',
         timestamp: new Date().toISOString(),
@@ -605,7 +605,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Security scan endpoint
   app.get("/api/security/scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
-      handleSecurityLog({
+      logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'SECURITY_SCAN',
         timestamp: new Date().toISOString(),
@@ -1511,7 +1511,18 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
 
   // Security log endpoint
   app.post('/api/security/log', (req, res) => {
-    handleSecurityLog(req, res);
+    try {
+      // Log the security event from the request body
+      logSecurityEvent(req.body);
+      res.json({ success: true, message: 'Security event logged successfully' });
+    } catch (error) {
+      console.error('Error logging security event:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to log security event',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
   
   // Get security settings (admin only)
