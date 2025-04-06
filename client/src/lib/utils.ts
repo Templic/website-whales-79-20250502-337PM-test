@@ -71,3 +71,15 @@ export const customAnimations = {
   float: 'float 6s ease-in-out infinite',
   rotate: 'rotate 20s linear infinite',
 };
+
+/**
+ * Formats a number as currency
+ */
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}

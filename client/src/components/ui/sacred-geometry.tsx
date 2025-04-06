@@ -261,3 +261,6 @@ export const SacredGeometryContainer: React.FC<GeometryProps & { type?: 'flower'
     </div>
   );
 };
+
+// Default export for the sacred geometry components
+export default SacredGeometryContainer;

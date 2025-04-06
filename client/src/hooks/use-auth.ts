@@ -18,6 +18,7 @@ export interface User {
 export interface AuthReturn {
   user: User | null;
   loading: boolean;
+  isLoading: boolean; // Added for compatibility with protected-route.tsx
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
@@ -32,6 +33,7 @@ export function useAuth(): AuthReturn {
   return {
     user: null,
     loading: false,
+    isLoading: false, // Added to match interface
     error: null,
     login: async () => {},
     register: async () => {},
