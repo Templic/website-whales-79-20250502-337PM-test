@@ -11,11 +11,39 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { initDatabaseOptimization } from "./db-optimize";
 import { initBackgroundServices, shutdownBackgroundServices } from "./db-background";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Apply helmet middleware for security headers
+app.use(helmet());
+
+// Set Content-Security-Policy header
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: blob:; " +
+    "connect-src 'self' wss: ws:; " +
+    "font-src 'self' data:; " +
+    "object-src 'none'; " +
+    "media-src 'self'; " +
+    "frame-src 'self' https://auth.util.repl.co;"
+  );
+  next();
+});
+
 // Force HTTPS
 app.use((req, res, next) => {
   if (process.env.NODE_ENV === 'production' && !req.secure) {
@@ -24,13 +52,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// Security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
+// Set up CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://cosmic-community.replit.app'] 
+    : ['http://localhost:5000', 'http://localhost:3000'],
+  credentials: true
+}));
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many requests from this IP, please try again after 15 minutes"
 });
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
 
 // Add MIME type for JavaScript modules
 app.use((req, res, next) => {

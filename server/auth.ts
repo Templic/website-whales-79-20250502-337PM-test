@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { logSecurityEvent } from "./security";
 
 // Extend session type to include our custom properties
 declare module 'express-session' {
@@ -43,21 +44,31 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Generate a random session secret if one is not provided in environment
+  const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+  
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'dale-the-whale-secret-key-for-development',
+    secret: sessionSecret,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: false, // Don't create session until something stored
     store: storage.sessionStore,
     cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production", // Require HTTPS in production
+      sameSite: "strict", // Enhanced protection against CSRF
       maxAge: 24 * 60 * 60 * 1000, // 24 hours default
       path: "/",
-      httpOnly: true,
+      httpOnly: true, // Prevent client-side JS from reading cookie
+      domain: process.env.NODE_ENV === 'production' ? '.replit.app' : undefined, // Scope cookies to domain in production
     },
-    name: 'sid', // Custom session ID name
-    proxy: true // Trust the reverse proxy
+    name: 'cosmic_session', // Custom session ID name, not revealing our stack
+    proxy: true, // Trust the reverse proxy
+    rolling: true, // Force cookie to be set on every response
   };
+  
+  // Log the use of a dynamic session secret
+  if (!process.env.SESSION_SECRET) {
+    console.log('Generated dynamic session secret for this instance');
+  }
 
   app.set("trust proxy", 1);
   app.use(session(sessionSettings));
@@ -199,6 +210,76 @@ export function setupAuth(app: Express) {
     }
     // Return the current authenticated user
     res.json(req.user);
+  });
+  
+  // Password change endpoint with security logging
+  app.post("/api/user/change-password", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "You must be logged in to change your password" });
+    }
+    
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Both current and new password are required" });
+      }
+      
+      // Validate new password strength
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "New password must be at least 8 characters long" });
+      }
+      
+      if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ 
+          message: "New password must contain at least one uppercase letter, one lowercase letter, and one number" 
+        });
+      }
+      
+      // Get current user
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      if (!(await comparePasswords(currentPassword, user.password))) {
+        // Log failed password change attempt for security monitoring
+        if (typeof logSecurityEvent === 'function') {
+          logSecurityEvent({
+            type: 'PASSWORD_CHANGE_FAILED',
+            userId: req.user.id,
+            username: req.user.username,
+            reason: 'Current password verification failed',
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+          });
+        }
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update password in database
+      await storage.updateUserPassword(req.user.id, hashedPassword);
+      
+      // Log successful password change for security monitoring
+      if (typeof logSecurityEvent === 'function') {
+        logSecurityEvent({
+          type: 'PASSWORD_CHANGE_SUCCESS',
+          userId: req.user.id,
+          username: req.user.username,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        });
+      }
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
   });
 
   // Session analytics endpoint

@@ -124,11 +124,43 @@ export function PerformanceOptimizations() {
     }, 200)
   }
 
-  // Toggle security setting
+  // Toggle security setting with enhanced logging
   const toggleSecurity = (index: number) => {
     const newSettings = [...securitySettings]
-    newSettings[index].enabled = !newSettings[index].enabled
+    const currentSetting = newSettings[index]
+    
+    // Enhanced logging for security setting changes
+    console.log(
+      `User is toggling ${currentSetting.name} from ${currentSetting.enabled} to ${!currentSetting.enabled}`
+    )
+    
+    // Log warning if disabling a recommended security feature
+    if (currentSetting.recommended && currentSetting.enabled) {
+      console.warn(
+        `Security warning: User is disabling the recommended security feature: ${currentSetting.name}`
+      )
+    }
+    
+    // Update the security setting
+    newSettings[index].enabled = !currentSetting.enabled
     setSecuritySettings(newSettings)
+    
+    // Send update to security monitoring service
+    try {
+      fetch('/api/security/log', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          setting: currentSetting.name,
+          enabled: !currentSetting.enabled,
+          timestamp: new Date().toISOString()
+        })
+      }).catch(err => console.error('Failed to log security setting change:', err))
+    } catch (error) {
+      console.error('Error logging security setting change:', error)
+    }
   }
 
   const getStatusColor = (status: PerformanceMetric["status"]) => {

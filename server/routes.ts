@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer, type Server } from "http";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -24,6 +25,8 @@ import { createTransport } from "nodemailer";
 import dbMonitorRoutes from './routes/db-monitor';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
+import { handleSecurityLog, rotateSecurityLogs } from './security';
+import { updateSecuritySetting, getSecuritySettings, type SecuritySettings } from './settings';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -314,6 +317,100 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     } catch (error) {
       console.error("Error fetching newsletters:", error);
       res.status(500).json({ message: "Error fetching newsletters" });
+    }
+  });
+  
+  // Test endpoint - initialize security settings (for testing purposes only)
+  app.get("/api/test/security/init", (req, res) => {
+    try {
+      const settings = getSecuritySettings();
+      res.json({ 
+        message: "Security settings initialized successfully",
+        settings
+      });
+    } catch (error) {
+      console.error("Error initializing security settings:", error);
+      res.status(500).json({ message: "Error initializing security settings" });
+    }
+  });
+  
+  // Test endpoint - update security settings (for testing purposes only)
+  app.post("/api/test/security/settings", (req, res) => {
+    try {
+      const { setting, enabled } = req.body;
+      
+      // Validate inputs
+      if (!setting || typeof enabled !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
+      }
+      
+      // Check if setting is valid
+      const validSettings = Object.keys(getSecuritySettings());
+      if (!validSettings.includes(setting)) {
+        return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
+      }
+      
+      // Update the setting
+      const success = updateSecuritySetting(
+        setting as keyof SecuritySettings, 
+        enabled,
+        999, // Fake user ID for testing
+        'super_admin' // Fake role for testing
+      );
+      
+      if (!success) {
+        return res.status(500).json({ message: 'Failed to update security setting' });
+      }
+      
+      res.json({ 
+        message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
+        setting,
+        enabled,
+        settings: getSecuritySettings()
+      });
+    } catch (error) {
+      console.error('Error updating security setting:', error);
+      res.status(500).json({ message: 'Failed to update security setting' });
+    }
+  });
+  
+  // Test endpoint - view security logs (for testing purposes only)
+  app.get("/api/test/security/logs", (req, res) => {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      
+      // Ensure the logs directory exists
+      const logsDir = path.join(process.cwd(), 'logs', 'security');
+      const logFilePath = path.join(logsDir, 'security.log');
+      
+      if (!fs.existsSync(logFilePath)) {
+        return res.status(404).json({ message: 'Security log file not found' });
+      }
+      
+      // Read the log file
+      const logData = fs.readFileSync(logFilePath, 'utf8');
+      
+      // Parse the log entries and format them
+      const logEntries = logData
+        .split('\n')
+        .filter(line => line.trim() !== '')
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (err) {
+            return { rawLog: line, parseError: true };
+          }
+        });
+      
+      res.json({ 
+        message: 'Security logs retrieved successfully',
+        logs: logEntries,
+        count: logEntries.length
+      });
+    } catch (error) {
+      console.error('Error retrieving security logs:', error);
+      res.status(500).json({ message: 'Failed to retrieve security logs' });
     }
   });
 
@@ -1096,6 +1193,113 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ error: 'Failed to save contact form' });
     }
   });
+
+  // Security log endpoint
+  app.post('/api/security/log', (req, res) => {
+    handleSecurityLog(req, res);
+  });
+  
+  // Get security settings (admin only)
+  app.get('/api/security/settings', (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const settings = getSecuritySettings();
+      res.json(settings);
+    } catch (error) {
+      console.error('Error fetching security settings:', error);
+      res.status(500).json({ message: 'Failed to fetch security settings' });
+    }
+  });
+  
+  // Update a security setting (admin only)
+  app.post('/api/security/settings', (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const { setting, enabled } = req.body;
+      
+      // Validate inputs
+      if (!setting || typeof enabled !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
+      }
+      
+      // Check if setting is valid
+      const validSettings = Object.keys(getSecuritySettings());
+      if (!validSettings.includes(setting)) {
+        return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
+      }
+      
+      // Update the setting
+      const success = updateSecuritySetting(
+        setting as keyof SecuritySettings, 
+        enabled,
+        req.user?.id,
+        req.user?.role
+      );
+      
+      if (!success) {
+        return res.status(500).json({ message: 'Failed to update security setting' });
+      }
+      
+      res.json({ 
+        message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
+        setting,
+        enabled
+      });
+    } catch (error) {
+      console.error('Error updating security setting:', error);
+      res.status(500).json({ message: 'Failed to update security setting' });
+    }
+  });
+  
+  // Get security logs (admin only)
+  app.get('/api/security/logs', (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const securityLogsDir = path.join(process.cwd(), 'logs', 'security');
+      const securityLogFile = path.join(securityLogsDir, 'security.log');
+      
+      if (!fs.existsSync(securityLogFile)) {
+        return res.json({ logs: [] });
+      }
+      
+      // Read the log file (in a production app, you might want to paginate this)
+      const logContent = fs.readFileSync(securityLogFile, 'utf8');
+      const logs = logContent
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return { raw: line, error: 'Failed to parse log entry' };
+          }
+        });
+      
+      res.json({ logs });
+    } catch (error) {
+      console.error('Error fetching security logs:', error);
+      res.status(500).json({ message: 'Failed to fetch security logs' });
+    }
+  });
+
+  // Schedule periodic security log rotation (every 24 hours)
+  setInterval(() => {
+    try {
+      rotateSecurityLogs();
+      console.log('Security logs rotated successfully');
+    } catch (error) {
+      console.error('Error rotating security logs:', error);
+    }
+  }, 24 * 60 * 60 * 1000);
 
   // Let Vite handle frontend routes in development mode
   if (process.env.NODE_ENV === 'production') {
