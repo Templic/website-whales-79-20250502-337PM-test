@@ -1,186 +1,149 @@
 /**
  * MainHeader.tsx
  * 
- * This is the primary header component for the website, featuring sacred geometry,
- * staggered navigation, and cosmic design elements.
+ * This is the primary header component for the website.
  * 
- * Created: 2025-04-05 - Updated with enhancements
- * Latest Update: Added sacred geometry elements and improved staggered navigation
+ * Restored to previous working version with cosmic styling.
  */
-import React, { useState } from 'react';
-import { Link } from 'wouter';
-import { Menu, X, Sun, Moon, Home, Info, Music, MapPin, ShoppingBag, BookOpen, Users, Mail, Headphones, Star, Archive, Send } from 'lucide-react';
-import { useAuth, User, AuthReturn } from '@/hooks/use-auth';
+import React, { useState, useCallback } from 'react';
+import { Link, useLocation } from 'wouter';
+import { Menu, X, Search } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
-// Interface definitions
-interface NavItem {
-  name: string;
-  path: string;
-  icon: React.ReactNode;
-  glowColor?: string;
-}
+// Navigation items array to reduce repetition
+const navigationItems = [
+  { path: "/", label: "Home" },
+  { path: "/about", label: "About" },
+  { path: "/music-release", label: "New Music" },
+  { path: "/archived-music", label: "Archived Music" },
+  { path: "/cosmic-connectivity", label: "Cosmic Connectivity" },
+  { path: "/cosmic-experience", label: "Cosmic Experience" },
+  { path: "/tour", label: "Tour" },
+  { path: "/shop", label: "Shop" },
+  { path: "/engage", label: "Engage" },
+  { path: "/newsletter", label: "Newsletter" },
+  { path: "/blog", label: "Blog" },
+  { path: "/collaboration", label: "Collaborate" },
+  { path: "/contact", label: "Contact" }
+];
 
 export function MainHeader() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [, navigate] = useLocation();
   const { user } = useAuth();
 
-  // Primary navigation items
-  const primaryNavItems: NavItem[] = [
-    { name: 'Home', path: '/', icon: <Home className="h-4 w-4" />, glowColor: 'from-purple-500 to-indigo-600' },
-    { name: 'About', path: '/about', icon: <Info className="h-4 w-4" />, glowColor: 'from-blue-500 to-teal-500' },
-    { name: 'Music', path: '/music-release', icon: <Music className="h-4 w-4" />, glowColor: 'from-pink-500 to-red-500' },
-    { name: 'Tour', path: '/tour', icon: <MapPin className="h-4 w-4" />, glowColor: 'from-yellow-400 to-orange-500' },
-    { name: 'Shop', path: '/shop', icon: <ShoppingBag className="h-4 w-4" />, glowColor: 'from-green-400 to-emerald-600' },
-    { name: 'Blog', path: '/blog', icon: <BookOpen className="h-4 w-4" />, glowColor: 'from-violet-500 to-purple-600' },
-  ];
+  const handleNavigationClick = useCallback((path: string) => {
+    // First scroll to top with smooth behavior
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  // Secondary navigation items
-  const secondaryNavItems: NavItem[] = [
-    { name: 'Community', path: '/community', icon: <Users className="h-4 w-4" /> },
-    { name: 'Newsletter', path: '/newsletter', icon: <Mail className="h-4 w-4" /> },
-    { name: 'Collaboration', path: '/collaboration', icon: <Headphones className="h-4 w-4" /> },
-    { name: 'Engage', path: '/engage', icon: <Star className="h-4 w-4" /> },
-    { name: 'Archive', path: '/archived-music', icon: <Archive className="h-4 w-4" /> },
-    { name: 'Contact', path: '/contact', icon: <Send className="h-4 w-4" /> },
-  ];
+    // Add a small delay to allow the scroll animation to complete
+    setTimeout(() => {
+      setIsMenuOpen(false);
+      navigate(path);
+    }, 300); // 300ms delay to allow for smooth scroll
+  }, [navigate]);
 
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+  // Common styles
+  const navItemStyles = "text-[#e8e6e3] hover:text-[#00ebd6] font-medium uppercase text-sm tracking-wide p-2";
+  const mobileNavItemStyles = `${navItemStyles} p-3 block w-full text-left`;
+  const searchInputStyles = "px-3 py-2 text-base border border-gray-300 rounded-md bg-white/10 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00ebd6]";
 
   return (
-    <header className="relative z-50 bg-gradient-to-b from-black/90 to-transparent">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/">
-              <div className="flex items-center">
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full blur opacity-60 group-hover:opacity-80 transition duration-1000"></div>
-                  <div className="relative px-5 py-3 bg-black rounded-full flex items-center leading-none">
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">
-                      Cosmic
-                    </span>
-                  </div>
-                </div>
+    <header className="bg-[#0a325c] sticky top-0 z-50 border-b border-[#00ebd6] shadow-lg">
+      <div className="flex items-center justify-between p-4 container mx-auto">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden text-[#00ebd6] hover:text-[#e8e6e3] transition-colors"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          <button 
+            onClick={() => handleNavigationClick("/")}
+            className="text-[#00ebd6] text-xl sm:text-2xl font-bold no-underline font-montserrat"
+          >
+            Cosmic Experience
+          </button>
+        </div>
+
+        <nav className="hidden md:block flex-grow mx-8">
+          <ul className="flex flex-wrap gap-4 lg:gap-6 list-none p-0 justify-center">
+            {navigationItems.map(({ path, label }) => (
+              <li key={path}>
+                <Link href={path} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={navItemStyles}>
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="search-container hidden sm:flex items-center gap-2">
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`${searchInputStyles} w-[200px] lg:w-[300px]`}
+            />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          </div>
+          
+          {/* Admin Portal Link - only for admin users */}
+          {user?.role === 'admin' || user?.role === 'super_admin' ? (
+            <Link href="/admin">
+              <div className="text-[#fe0064] hover:text-[#00ebd6] font-semibold ml-4">
+                Admin Portal
               </div>
             </Link>
-          </div>
-
-          {/* Desktop Navigation - Primary */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {primaryNavItems.map((item) => (
-              <Link key={item.name} href={item.path}>
-                <div className="group relative px-3 py-2 transition-all duration-300 ease-in-out">
-                  <div className={`absolute inset-0 bg-gradient-to-r ${item.glowColor || 'from-blue-500 to-purple-500'} rounded-md opacity-0 group-hover:opacity-20 transition-opacity duration-300`}></div>
-                  <div className="relative flex items-center space-x-1">
-                    {item.icon}
-                    <span className="text-gray-300 group-hover:text-white">{item.name}</span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </nav>
-
-          {/* Secondary Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-4">
-            {secondaryNavItems.slice(0, 2).map((item) => (
-              <Link key={item.name} href={item.path}>
-                <div className="text-sm text-gray-400 hover:text-white transition-colors duration-300 flex items-center space-x-1">
-                  {item.icon}
-                  <span>{item.name}</span>
-                </div>
-              </Link>
-            ))}
-            
-            {/* Admin Portal Link - only for admin users */}
-            {user?.role === 'admin' || user?.role === 'super_admin' ? (
-              <Link href="/admin">
-                <div className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors duration-300">
-                  Admin Portal
-                </div>
-              </Link>
-            ) : null}
-
-            {/* Mobile Menu Button */}
-            <button
-              type="button"
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/50 focus:outline-none"
-              onClick={toggleMobileMenu}
-            >
-              <span className="sr-only">Open main menu</span>
-              {mobileMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
-            </button>
-          </nav>
-
-          {/* Mobile Menu Button (outside secondary nav for mobile view) */}
-          <button
-            type="button"
-            className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800/50 focus:outline-none"
-            onClick={toggleMobileMenu}
-          >
-            <span className="sr-only">Open main menu</span>
-            {mobileMenuOpen ? (
-              <X className="block h-6 w-6" aria-hidden="true" />
-            ) : (
-              <Menu className="block h-6 w-6" aria-hidden="true" />
-            )}
-          </button>
+          ) : null}
         </div>
       </div>
 
-      {/* Mobile menu, show/hide based on menu state */}
-      {mobileMenuOpen && (
-        <div className="md:hidden bg-black/95 backdrop-blur-md">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {/* Primary Navigation Items */}
-            {primaryNavItems.map((item) => (
-              <Link key={item.name} href={item.path}>
-                <div 
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 flex items-center space-x-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </div>
+      {/* Mobile navigation menu */}
+      <nav className={`md:hidden transition-all duration-300 ${isMenuOpen ? 'max-h-screen' : 'max-h-0 overflow-hidden'}`}>
+        <ul className="flex flex-col gap-2 p-4 border-t border-[#00ebd6]/20">
+          {navigationItems.map(({ path, label }) => (
+            <li key={path}>
+              <Link href={path} onClick={() => {
+                setIsMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} className={mobileNavItemStyles}>
+                {label}
               </Link>
-            ))}
-
-            {/* Divider */}
-            <div className="border-t border-gray-800 my-2"></div>
-
-            {/* Secondary Navigation Items */}
-            {secondaryNavItems.map((item) => (
-              <Link key={item.name} href={item.path}>
-                <div 
-                  className="block px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 flex items-center space-x-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.icon}
-                  <span>{item.name}</span>
-                </div>
-              </Link>
-            ))}
-
-            {/* Admin Portal Link - only for admin users */}
-            {user?.role === 'admin' || user?.role === 'super_admin' ? (
-              <Link href="/admin">
-                <div 
-                  className="block px-3 py-2 rounded-md text-sm font-medium text-indigo-400 hover:text-indigo-300 hover:bg-gray-800/50"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
+            </li>
+          ))}
+          
+          {/* Admin Portal Link in mobile menu - only for admin users */}
+          {user?.role === 'admin' || user?.role === 'super_admin' ? (
+            <li>
+              <Link href="/admin" onClick={() => setIsMenuOpen(false)}>
+                <div className="text-[#fe0064] hover:text-[#00ebd6] font-semibold p-3 block w-full text-left">
                   Admin Portal
                 </div>
               </Link>
-            ) : null}
+            </li>
+          ) : null}
+        </ul>
+
+        {/* Mobile search */}
+        <div className="p-4 border-t border-[#00ebd6]/20">
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Search..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`${searchInputStyles} w-full`}
+            />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           </div>
         </div>
-      )}
+      </nav>
     </header>
   );
 }
