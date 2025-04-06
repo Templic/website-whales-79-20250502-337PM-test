@@ -17,10 +17,30 @@ export async function fetchCsrfToken(): Promise<string> {
   try {
     // Use development/test mode check to bypass CSRF in development
     if (import.meta.env.DEV || import.meta.env.MODE === 'development') {
-      console.log('Development mode detected, using empty CSRF token');
-      return '';
+      console.log('Development mode detected, using development CSRF token');
+      // In development, we still attempt to fetch the token but don't block on failure
+      try {
+        const response = await fetch('/api/csrf-token', {
+          credentials: 'include',
+          cache: 'no-store',
+          // Add a short timeout for development to not block too long
+          signal: AbortSignal.timeout(2000)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          csrfToken = data.csrfToken;
+          console.log('Successfully fetched CSRF token in development mode');
+          return csrfToken || 'dev-csrf-token';
+        }
+      } catch (devError) {
+        console.warn('Could not fetch CSRF token in development mode:', devError);
+      }
+      // Return a fallback token in development
+      return 'dev-csrf-token';
     }
     
+    // Production mode - we need a real token
     const response = await fetch('/api/csrf-token', {
       credentials: 'include',
       // Adding cache: 'no-store' to prevent caching issues
@@ -29,7 +49,7 @@ export async function fetchCsrfToken(): Promise<string> {
     
     if (!response.ok) {
       console.warn('Failed to fetch CSRF token, status:', response.status);
-      // Return empty string instead of throwing to allow the request to proceed without CSRF
+      // In production, still try to continue but log the warning
       return '';
     }
     
@@ -39,6 +59,7 @@ export async function fetchCsrfToken(): Promise<string> {
   } catch (error) {
     console.error('Error fetching CSRF token:', error);
     // Return empty string instead of throwing to allow the request to proceed without CSRF
+    // This will likely fail in production but allows dev testing to continue
     return '';
   }
 }

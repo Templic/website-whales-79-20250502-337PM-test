@@ -99,13 +99,35 @@ app.use(fileUpload({
 }));
 
 // Setup CSRF protection with more permissive settings
+// In development mode, we're even more permissive to simplify testing
 const csrfProtection = csurf({ 
   cookie: {
-    httpOnly: true,
+    httpOnly: process.env.NODE_ENV === 'production',
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
   },
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] // Don't require CSRF for these methods
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'], // Don't require CSRF for these methods
+  value: (req) => {
+    // For development, accept CSRF token from various locations
+    if (process.env.NODE_ENV !== 'production') {
+      const token = 
+        req.body?._csrf || 
+        req.query?._csrf || 
+        req.headers['csrf-token'] || 
+        req.headers['x-csrf-token'] ||
+        req.headers['x-xsrf-token'];
+      if (token) return token;
+    }
+    // In production, use the standard behavior
+    // Fall back to default extraction if available, otherwise allow token to be undefined
+    // which will likely fail CSRF validation (secure in production)
+    return (req.cookies && req.cookies['_csrf']) || 
+           (req.body && req.body._csrf) || 
+           (req.query && req.query._csrf) ||
+           req.headers['csrf-token'] ||
+           req.headers['x-csrf-token'] ||
+           req.headers['x-xsrf-token'];
+  }
 });
 
 // Provide CSRF token for client-side forms (must be defined before applying CSRF protection)
@@ -115,10 +137,24 @@ app.get('/api/csrf-token', csrfProtection, (req: Request, res: Response) => {
 
 // Apply CSRF protection to all API routes except the token endpoint and user endpoint
 app.use('/api', (req, res, next) => {
+  // Be more permissive with CSRF protection in development mode
+  if (process.env.NODE_ENV !== 'production') {
+    // Skip CSRF protection for GET requests in development
+    if (req.method === 'GET') {
+      return next();
+    }
+    
+    // Skip CSRF for development convenience endpoints
+    if (req.path.startsWith('/test/') || req.path === '/health') {
+      return next();
+    }
+  }
+  
   // Skip CSRF protection for the token endpoint and authentication endpoints
   if (req.path === '/csrf-token' || req.path === '/user' || req.path === '/login' || req.path === '/register') {
     return next();
   }
+  
   csrfProtection(req, res, next);
 });
 

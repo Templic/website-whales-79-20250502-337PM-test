@@ -15,8 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { ChartBar, LogOut, Users, FileText, AlertCircle, ShieldCheck, Gauge, RefreshCw, Settings } from "lucide-react";
+import { ChartBar, LogOut, Users, FileText, AlertCircle, ShieldCheck, Gauge, RefreshCw, Settings, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import SecurityHealthCheck from "@/components/system/SecurityHealthCheck";
+import HealthCheck from "@/components/system/HealthCheck";
 
 interface AdminStats {
   totalUsers: number;
@@ -266,6 +268,9 @@ export default function AdminPortalPage() {
           <TabsTrigger value="content">Content Review</TabsTrigger>
           <TabsTrigger value="database">Database</TabsTrigger>
           <TabsTrigger value="subscribers">Newsletter</TabsTrigger>
+          <TabsTrigger value="security">
+            <Shield className="h-4 w-4 mr-1" /> Security
+          </TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
@@ -375,7 +380,7 @@ export default function AdminPortalPage() {
                     <div>Name</div>
                     <div>Email</div>
                   </div>
-                  {subscribers?.map((subscriber) => (
+                  {subscribers?.map((subscriber: { id: string | number, name: string, email: string }) => (
                     <div key={subscriber.id} className="grid grid-cols-2">
                       <div>{subscriber.name}</div>
                       <div>{subscriber.email}</div>
@@ -387,6 +392,57 @@ export default function AdminPortalPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="security">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <ShieldCheck className="h-5 w-5 mr-2" />
+                  Security Status
+                </CardTitle>
+                <CardDescription>
+                  Overview of application security measures and their statuses
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SecurityHealthCheck />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Gauge className="h-5 w-5 mr-2" />
+                  System Health
+                </CardTitle>
+                <CardDescription>
+                  Current health status of the system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HealthCheck />
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Management</CardTitle>
+                <CardDescription>Access detailed security configurations and settings</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/security">
+                  <Button className="w-full" variant="default">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Advanced Security Dashboard
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
         <TabsContent value="settings">
           <Card>
             <CardHeader>
