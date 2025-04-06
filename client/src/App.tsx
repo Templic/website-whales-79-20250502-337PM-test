@@ -12,6 +12,7 @@ import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
 import StarBackground from "@/components/cosmic/StarBackground";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import CookieConsent from "@/components/common/CookieConsent";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -34,6 +35,7 @@ import UserPortal from "@/pages/user-portal";
 import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import DataRequestPage from "@/pages/DataRequest";
 import CosmicTest from "@/pages/test/CosmicTest";
 import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
@@ -141,6 +143,7 @@ function AppRouter() {
           <Route path="/sitemap" component={SitemapPage} />
           <Route path="/terms" component={TermsOfService} />
           <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/data-request" component={DataRequestPage} />
 
           {/* Demo Pages */}
           <Route path="/components" component={ComponentsCatalog} />
@@ -190,6 +193,7 @@ function App() {
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <StarBackground starCount={150} />
             <AppRouter />
+            <CookieConsent />
             <Toaster />
           </ErrorBoundary>
         </AccessibilityProvider>
