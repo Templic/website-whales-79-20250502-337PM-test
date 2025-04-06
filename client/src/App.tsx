@@ -64,6 +64,8 @@ import ComponentsCatalog from "@/pages/test/demo/ComponentsCatalog";
 import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
+import { LoginPage } from '@/pages/Login'; //Import added here
+
 // MainHeader is now included in MainLayout, no longer needed here
 
 
@@ -125,6 +127,7 @@ function AppRouter() {
           <Route path="/recover-password" component={PasswordRecoveryPage} />
           <Route path="/reset-password" component={PasswordRecoveryPage} />
           <ProtectedRoute path="/portal" component={UserPortal} />
+          <Route path="/login" component={LoginPage}/>
 
           {/* Admin Routes */}
           <ProtectedRoute path="/admin" component={AdminPortalPage} />
