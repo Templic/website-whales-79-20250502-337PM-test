@@ -145,6 +145,8 @@ The `scripts/` directory contains utilities for managing the codebase:
 3. **Routing Changes:** When deprecating routes, comment them out rather than removing them
 4. **Documentation:** Keep all README files up to date with the latest changes
 5. **Testing:** Test both active and recently modified components
+6. **Security:** Follow security best practices outlined in the security documentation
+7. **Dependency Management:** Regularly update dependencies using the provided scripts
 
 ## Agentic Development
 
@@ -190,3 +192,37 @@ Recently added comprehensive documentation on Replit's Agentic vibe-coding metho
 4. **Practical Use Cases:** Specific scenarios for leveraging the Agent in daily development
 
 These documents provide a framework for effectively using the Replit Agent to enhance development productivity, code quality, and creative exploration in the project.
+
+## Security Features
+
+The application implements comprehensive security measures to protect users and data:
+
+### Security Documentation
+
+- [Security Best Practices Guide](reports/security_best_practices_guide.md) - Security standards and practices
+- [Vulnerability Remediation Plan](reports/vulnerability_remediation_plan.md) - Details on vulnerability fixes
+- [Security Implementation Report](reports/security_implementation_report.md) - Overview of security features
+- [Backup and Restore Guide](docs/backup_restore_guide.md) - Backup procedures and disaster recovery
+
+### Security Implementation
+
+1. **Secure Authentication** - Implementation of strong authentication practices
+2. **Data Encryption** - Encryption for sensitive data at rest and in transit
+3. **Vulnerability Scanning** - Automated detection of security vulnerabilities
+4. **Dependency Management** - Regular updates to dependencies to fix security issues
+5. **Backup & Restore** - Comprehensive backup procedures with encryption
+6. **Security Monitoring** - Real-time monitoring for security threats
+
+### Security Maintenance
+
+To maintain the application's security posture:
+
+1. **Regular Updates** - Use `node scripts/update-dependencies.js` to update dependencies
+2. **Security Documentation** - Use `node scripts/update-security-docs.js` to update security documentation
+3. **Security Scans** - Regular security scans are performed automatically
+4. **Documentation Reviews** - Regularly review security documentation for accuracy
+
+### Dependency Management
+
+For dependency management, follow the procedures outlined in [Dependency Management Guide](docs/DEPENDENCY_MANAGEMENT.md).
+

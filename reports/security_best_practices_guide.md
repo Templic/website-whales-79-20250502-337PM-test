@@ -1,137 +1,194 @@
 # Security Best Practices Guide
 
-## Overview
-This guide provides best practices for maintaining and enhancing the security of the application. It covers coding standards, operational guidelines, and security considerations for developers and administrators.
+## Introduction
 
-## Secure Coding Practices
+This guide provides security best practices for developers, administrators, and users of the Cosmic Community Connect application. Following these practices helps maintain the security posture of the application and protects user data.
 
-### Authentication & Authorization
-- **Password Storage**: Always use bcrypt with appropriate cost factor (currently set to 12) for password hashing.
-- **Session Management**: Use secure, HTTP-only, SameSite cookies with appropriate expiration.
-- **Authorization Checks**: Implement authorization checks at both the route and business logic levels.
-- **Principle of Least Privilege**: Grant only the permissions necessary for each user role.
+## For Developers
 
-### Input Validation & Output Encoding
-- **Server-Side Validation**: Never rely solely on client-side validation; validate all input on the server.
-- **Input Sanitization**: Sanitize user inputs appropriate to their context (HTML, SQL, etc.).
-- **Output Encoding**: Always encode data before outputting to prevent XSS attacks.
-- **Content-Type Headers**: Set appropriate Content-Type and X-Content-Type-Options headers.
+### Secure Coding Practices
 
-### Database Security
-- **Parameterized Queries**: Always use parameterized queries or ORMs to prevent SQL injection.
-- **Database Privileges**: Use separate database users with minimal required privileges.
-- **Connection Security**: Ensure database connections are encrypted and credentials are securely stored.
-- **Query Limiting**: Implement limits on query results to prevent DoS attacks.
+#### Authentication & Authorization
+- Use the provided authentication middleware for all protected routes
+- Never bypass authorization checks
+- Always verify user permissions before performing sensitive operations
+- Do not hardcode credentials or API keys in the source code
 
-### File Operations
-- **File Uploads**: Validate file types, scan for malware, and store in a location outside the web root.
-- **File Paths**: Use path normalization and restrict access to the filesystem.
-- **File Permissions**: Set appropriate permissions on server files and directories.
-- **Temporary Files**: Securely manage and clean up temporary files.
+#### Input Validation
+- Validate all user inputs server-side using provided validation utilities
+- Use parameterized queries for all database operations
+- Validate file uploads for type, size, and content
+- Do not trust client-side validation alone
 
-### API Security
-- **API Authentication**: Use secure API keys or OAuth tokens with proper expiration.
-- **Rate Limiting**: Implement rate limiting on all API endpoints.
-- **Input Validation**: Thoroughly validate and sanitize all API inputs.
-- **Error Handling**: Return appropriate error codes without exposing implementation details.
+#### Output Handling
+- Use the appropriate context-specific encoding for outputs
+- Let React handle HTML rendering to prevent XSS
+- For dynamic rendering, use DOMPurify with appropriate configuration
+- Set proper Content-Type headers for all responses
 
-### Configuration Management
-- **Environment Variables**: Store sensitive configuration in environment variables, not in code.
-- **Configuration Validation**: Validate configuration values on application startup.
-- **Production Settings**: Ensure development settings are not used in production.
-- **Secrets Management**: Use a secure method for managing secrets and credentials.
+#### Error Handling
+- Use the centralized error handling middleware
+- Never expose sensitive information in error messages
+- Log errors appropriately but sanitize sensitive data
+- Provide generic error messages to users
 
-## Operational Security
+#### Dependency Management
+- Only use approved dependencies from the project's package.json
+- Do not add new dependencies without security review
+- Run `node scripts/update-dependencies.js` regularly
+- Report any vulnerabilities in dependencies to the security team
 
-### Monitoring & Logging
-- **Security Logging**: Log all security-relevant events (authentication, authorization, etc.).
-- **Log Protection**: Secure logs against unauthorized access and tampering.
-- **Alerting**: Configure alerts for suspicious activities and security events.
-- **Regular Review**: Regularly review logs for security incidents.
+### Secure Development Workflow
 
-### Backup & Recovery
-- **Regular Backups**: Configure automated backups using the provided scripts.
-- **Backup Testing**: Periodically test the restoration process to ensure backups are valid.
-- **Secure Storage**: Store backups securely, preferably encrypted and off-site.
-- **Backup Rotation**: Implement the backup rotation policy to maintain adequate history.
+#### Code Reviews
+- All security-related code must undergo peer review
+- Use the security checklist for reviewing security-critical components
+- Look for common vulnerabilities like OWASP Top 10
+- Verify that security controls are not bypassed
 
-### Update Management
-- **Dependency Updates**: Regularly update dependencies to address security vulnerabilities.
-- **Security Patches**: Prioritize security-related patches and updates.
-- **Change Management**: Follow a formal change management process for updates.
-- **Compatibility Testing**: Test updates thoroughly before deploying to production.
+#### Security Testing
+- Run security linters before committing code
+- Add security test cases for new features
+- Verify that authentication and authorization work correctly
+- Test for edge cases that might bypass security controls
 
-### Incident Response
-- **Incident Plan**: Develop and maintain a security incident response plan.
-- **Contact Information**: Maintain updated contact information for security personnel.
-- **Forensic Readiness**: Prepare systems for potential forensic investigation.
-- **Post-Incident Review**: Conduct thorough reviews after security incidents.
+#### Version Control
+- Do not commit secrets, credentials, or sensitive configuration
+- Use environment variables for configuration
+- Review git history to ensure no secrets were accidentally committed
+- Use signed commits for important security changes
 
-## Security Controls
+#### Documentation
+- Document security-related code with clear comments
+- Update security documentation when changing security controls
+- Document security assumptions and constraints
+- Keep security architecture diagrams up-to-date
 
-### Network Security
-- **Firewall Rules**: Implement and maintain appropriate firewall rules.
-- **Network Segmentation**: Segment the network to limit the impact of breaches.
-- **TLS Configuration**: Use secure TLS configurations for all encrypted connections.
-- **Public Exposure**: Minimize the attack surface by limiting publicly exposed services.
+## For Administrators
 
-### Access Control
-- **Account Management**: Regularly review user accounts and privileges.
-- **Multi-Factor Authentication**: Enable MFA for administrative access.
-- **Password Policies**: Enforce strong password requirements.
-- **Session Timeout**: Implement appropriate session timeouts for idle users.
+### System Security
 
-### Content Security
-- **Content Security Policy**: Maintain a strict CSP to prevent XSS and other attacks.
-- **Subresource Integrity**: Use SRI for external resources when possible.
-- **Cross-Origin Policies**: Implement appropriate CORS policies to restrict access.
-- **Embedded Content**: Securely handle embedded content from external sources.
+#### Server Configuration
+- Follow the hardening guidelines in the deployment documentation
+- Keep the system updated with security patches
+- Use the provided security scripts for monitoring
+- Implement network-level security controls
 
-### Security Testing
-- **Regular Scanning**: Schedule regular automated security scans.
-- **Penetration Testing**: Conduct periodic penetration testing by qualified personnel.
-- **Code Reviews**: Include security considerations in code reviews.
-- **Vulnerability Tracking**: Track and address identified vulnerabilities promptly.
+#### Database Security
+- Use strong, unique passwords for database access
+- Implement network restrictions for database access
+- Regularly backup the database using the provided scripts
+- Monitor database access for unusual patterns
 
-## Implementation Guidelines
+#### User Management
+- Practice principle of least privilege for admin accounts
+- Use strong, unique passwords for admin accounts
+- Rotate admin credentials regularly
+- Immediately revoke access for departing personnel
 
-### Security Dashboard Usage
-- **Access Control**: Limit access to the Security Dashboard to authorized personnel only.
-- **Settings Management**: Review the impact of security settings before enabling/disabling.
-- **Scan Scheduling**: Run security scans during off-peak hours to minimize performance impact.
-- **Alert Configuration**: Configure security alerts to appropriate channels.
+#### Monitoring & Logging
+- Review security logs regularly
+- Set up alerts for suspicious activities
+- Monitor for unusual authentication patterns
+- Investigate security incidents promptly
 
-### Backup System Usage
-- **Manual Backups**: Use the following command to create a manual backup:
-  ```
-  ./scripts/backup.sh
-  ```
-- **Customized Backups**: For customized backups, use command-line options:
-  ```
-  ./scripts/backup.sh -o custom_directory -n  # No encryption
-  ./scripts/backup.sh -d  # Database only
-  ./scripts/backup.sh -a  # Application only
-  ```
-- **Restoration**: To restore from a backup, use:
-  ```
-  ./scripts/restore.sh -b backups/backup-filename.tar.gz
-  ```
-- **Selective Restoration**: For selective restoration:
-  ```
-  ./scripts/restore.sh -b backups/backup-filename.tar.gz -d  # Database only
-  ./scripts/restore.sh -b backups/backup-filename.tar.gz -a  # Application only
-  ```
+### Security Operations
 
-### Security Logging
-- **Log Locations**: Security logs are stored in the `logs` directory.
-- **Log Rotation**: Logs are automatically rotated to prevent excessive disk usage.
-- **Log Analysis**: Use the Security Dashboard for basic log analysis.
-- **External Tools**: Configure external logging tools for advanced analysis.
+#### Incident Response
+- Follow the incident response plan when security events occur
+- Document all security incidents and their resolution
+- Perform post-incident analysis to prevent recurrence
+- Update security controls based on incident learnings
 
-## Conclusion
-Following these security best practices will help maintain the security posture of the application and protect against common threats. Regular review and updates to security practices are essential as new threats emerge and technology evolves.
+#### Backup & Recovery
+- Verify backups regularly using the provided scripts
+- Test the recovery process periodically
+- Store backups securely with encryption
+- Document the backup and recovery procedures
+
+#### Security Updates
+- Apply security patches promptly
+- Test security updates in staging before production
+- Maintain a security update log
+- Subscribe to security advisories for used components
+
+#### Security Assessments
+- Conduct regular security assessments
+- Address findings based on risk prioritization
+- Update security documentation after assessments
+- Track security improvement metrics
+
+## For Users
+
+### Account Security
+
+#### Password Security
+- Use strong, unique passwords
+- Enable multi-factor authentication when available
+- Do not share account credentials
+- Change passwords immediately if compromise is suspected
+
+#### Session Security
+- Log out from shared devices
+- Do not leave sessions unattended
+- Verify the connection is secure (HTTPS) before logging in
+- Beware of phishing attempts
+
+#### Data Protection
+- Only upload content you have the right to share
+- Be cautious about sharing sensitive information
+- Review privacy settings regularly
+- Understand what data is publicly visible
+
+#### Security Awareness
+- Be aware of common security threats
+- Report suspicious activities to administrators
+- Keep devices and browsers updated
+- Verify emails claiming to be from the application
+
+## Security Features Reference
+
+### Available Security Controls
+
+#### Authentication Controls
+- Password strength enforcement
+- Account lockout after failed attempts
+- Secure password reset
+- Session timeout and management
+
+#### Data Protection Controls
+- Data encryption at rest
+- Secure data transmission
+- File upload scanning
+- Data access controls
+
+#### Communication Security
+- HTTPS enforcement
+- Email authenticity verification
+- Secure messaging
+- Anti-spam measures
+
+#### User Security Options
+- Profile visibility settings
+- Content sharing controls
+- Activity logging options
+- Third-party application permissions
+
+## Security Contact Information
+
+For reporting security issues or concerns:
+
+- **Security Email**: security@example.com
+- **Responsible Disclosure**: https://example.com/security
+- **Emergency Contact**: +1-XXX-XXX-XXXX (For critical security incidents)
+
+## Security Resources
+
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
+- [Web Security Academy](https://portswigger.net/web-security)
+- [HaveIBeenPwned](https://haveibeenpwned.com/) (Check if your data has been compromised)
 
 ---
 
-*Guide created: April 6, 2025*  
-*Last updated: April 6, 2025*
+*Last updated: 2025-04-06*

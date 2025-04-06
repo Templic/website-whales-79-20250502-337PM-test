@@ -1,344 +1,279 @@
 #!/bin/bash
+# Backup Script for Cosmic Community Connect
+# This script performs backups of the database, files, and configuration
 
-# Database and Application Backup Script
-# This script creates a comprehensive backup of the application and database
-# Created as part of the security implementation plan
+# Exit on error
+set -e
 
-# Colors for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
+# Configuration
+BACKUP_DIR="./tmp/backups"
+LOG_DIR="./logs"
+DATE=$(date +"%Y-%m-%d")
+TIME=$(date +"%H-%M-%S")
+BACKUP_ID="${DATE}_${TIME}"
+ENCRYPTION_KEY_FILE="./.backup_key"
+RETENTION_DAYS=30
+DATABASE_URL=${DATABASE_URL:-"postgres://localhost:5432/cosmicdb"}
 
-# Print colored message
-print_message() {
-  echo -e "${GREEN}[BACKUP] ${NC}$1"
-}
+# Ensure directories exist
+mkdir -p "$BACKUP_DIR/database"
+mkdir -p "$BACKUP_DIR/files"
+mkdir -p "$BACKUP_DIR/config"
+mkdir -p "$LOG_DIR"
 
-print_warning() {
-  echo -e "${YELLOW}[WARNING] ${NC}$1"
-}
+# Log file
+LOG_FILE="$LOG_DIR/backup_${BACKUP_ID}.log"
 
-print_error() {
-  echo -e "${RED}[ERROR] ${NC}$1"
-}
+# Initialize log
+echo "Starting backup at $(date)" > "$LOG_FILE"
+echo "Backup ID: $BACKUP_ID" >> "$LOG_FILE"
 
-# Default configuration
-CONFIG_FILE="config/backup_config.json"
-BACKUP_DIR="backups"
-ENCRYPT_DB=true
-COMPRESS_LEVEL="high"
-MAX_BACKUPS=10
-EXCLUDE_PATTERNS=(".git" "node_modules" "tmp" "*.log" "*.tmp" "uploads/temp" "__pycache__" "*.pyc" ".env")
-
-# Usage information
-usage() {
-  echo "Usage: $0 [OPTIONS]"
-  echo "  Options:"
-  echo "    -c, --config FILE       Path to configuration file (default: $CONFIG_FILE)"
-  echo "    -o, --output DIR        Output directory for backups (default: $BACKUP_DIR)"
-  echo "    -n, --no-encrypt        Do not encrypt the database backup"
-  echo "    -d, --db-only           Backup only the database"
-  echo "    -a, --app-only          Backup only the application files"
-  echo "    -h, --help              Display this help message"
-  echo ""
-  echo "  Example: $0 -o custom_backups -n"
-  exit 1
-}
-
-# Parse command line arguments
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    -c|--config)
-      CONFIG_FILE="$2"
-      shift 2
-      ;;
-    -o|--output)
-      BACKUP_DIR="$2"
-      shift 2
-      ;;
-    -n|--no-encrypt)
-      ENCRYPT_DB=false
-      shift
-      ;;
-    -d|--db-only)
-      DB_ONLY=true
-      shift
-      ;;
-    -a|--app-only)
-      APP_ONLY=true
-      shift
-      ;;
-    -h|--help)
-      usage
-      ;;
-    *)
-      print_error "Unknown option: $1"
-      usage
-      ;;
-  esac
-done
-
-# Check if both db-only and app-only are specified
-if [ "$DB_ONLY" = true ] && [ "$APP_ONLY" = true ]; then
-  print_error "Cannot specify both --db-only and --app-only"
-  exit 1
+# Encryption key handling
+if [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
+    echo "Generating new encryption key" >> "$LOG_FILE"
+    openssl rand -base64 32 > "$ENCRYPTION_KEY_FILE"
+    chmod 600 "$ENCRYPTION_KEY_FILE"
 fi
 
-# Timestamp for the backup
-TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-BACKUP_NAME="backup-$TIMESTAMP"
-TEMP_DIR="tmp/$BACKUP_NAME"
+# Function to encrypt a file
+encrypt_file() {
+    local input_file=$1
+    local output_file="${input_file}.enc"
+    
+    echo "Encrypting $input_file to $output_file" >> "$LOG_FILE"
+    openssl enc -aes-256-cbc -salt -in "$input_file" -out "$output_file" -pass file:"$ENCRYPTION_KEY_FILE"
+    
+    # Remove the unencrypted file
+    rm "$input_file"
+    
+    echo "Encryption complete" >> "$LOG_FILE"
+}
 
-# Create backup and temp directories
-mkdir -p "$BACKUP_DIR"
-mkdir -p "$TEMP_DIR"
-mkdir -p "$TEMP_DIR/application"
-mkdir -p logs
-
-# Load configuration if available
-if [ -f "$CONFIG_FILE" ]; then
-  print_message "Loading configuration from $CONFIG_FILE"
-  
-  # Extract configuration using 'jq' if available
-  if command -v jq &> /dev/null; then
-    CONFIG_ENABLED=$(jq -r '.backupSettings.enabled' "$CONFIG_FILE")
-    AUTO_BACKUPS=$(jq -r '.backupSettings.automaticBackups' "$CONFIG_FILE")
-    COMPRESS_LEVEL=$(jq -r '.backupSettings.compressionLevel' "$CONFIG_FILE")
-    ENCRYPT_DB=$(jq -r '.backupSettings.encryptDatabase' "$CONFIG_FILE")
-    MAX_BACKUPS=$(jq -r '.backupSettings.maxBackups' "$CONFIG_FILE")
+# Function to backup the database
+backup_database() {
+    echo "Starting database backup at $(date)" >> "$LOG_FILE"
     
-    # Process exclude patterns
-    if jq -e '.backupSettings.excludePatterns' "$CONFIG_FILE" > /dev/null; then
-      readarray -t EXCLUDE_PATTERNS < <(jq -r '.backupSettings.excludePatterns[]' "$CONFIG_FILE")
-    fi
-    
-    # Check if backups are disabled
-    if [ "$CONFIG_ENABLED" = "false" ]; then
-      print_warning "Backups are disabled in configuration. Set 'enabled: true' to enable."
-      # Continue anyway since this was manually triggered
-    fi
-  else
-    print_warning "jq is not installed. Using default configuration."
-  fi
-else
-  print_warning "Configuration file not found: $CONFIG_FILE. Using default settings."
-fi
-
-# Begin backup process
-print_message "Starting backup process at $(date)"
-print_message "Creating backup: $BACKUP_NAME"
-
-# Log file for the backup process
-LOG_FILE="logs/backup-$TIMESTAMP.log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-# Backup database if not app-only
-if [ "$APP_ONLY" != true ]; then
-  print_message "Backing up database..."
-  
-  # Check if DATABASE_URL is set
-  if [ -z "$DATABASE_URL" ]; then
-    print_error "DATABASE_URL environment variable is not set. Database backup will be skipped."
-  else
-    # Parse the DATABASE_URL to extract connection details
-    # Format could be postgresql://user:password@host:port/dbname or postgresql://user:password@host/dbname?options
-    # Handle either postgres:// or postgresql:// prefix
-    if [[ "$DATABASE_URL" == postgresql://* ]]; then
-      DB_URL="${DATABASE_URL#postgresql://}"
-    else
-      DB_URL="${DATABASE_URL#postgres://}"
-    fi
-    DB_USER="${DB_URL%%:*}"
-    DB_URL="${DB_URL#*:}"
-    DB_PASS="${DB_URL%%@*}"
-    DB_URL="${DB_URL#*@*}"
-    
-    # Check if the connection string has a port specified
-    if [[ "$DB_URL" == *":"*"/"* ]]; then
-      # Format: host:port/dbname
-      DB_HOST="${DB_URL%%:*}"
-      DB_URL="${DB_URL#*:}"
-      DB_PORT="${DB_URL%%/*}"
-      DB_NAME="${DB_URL#*/}"
-    else
-      # Format: host/dbname (no port)
-      DB_HOST="${DB_URL%%/*}"
-      DB_PORT="5432" # Use default PostgreSQL port
-      DB_NAME="${DB_URL#*/}"
-    fi
-    
-    # Remove any query parameters from DB_NAME and DB_HOST
-    DB_NAME="${DB_NAME%%\?*}"
-    
-    # Handle special case for Neon databases which may have project name in hostname
-    if [[ "$DB_HOST" == *".neon.tech" ]]; then
-      print_message "Detected Neon serverless database"
-      # Use full host as connection string for Neon with SSL required
-      export PGSSLMODE=require
-      PG_CONN_OPTS="-h $DB_HOST --no-password"
-      # For Neon, don't use -p parameter as it's part of the hostname
-    else
-      PG_CONN_OPTS="-h $DB_HOST -p $DB_PORT"
-    fi
-    
-    print_message "Backing up database: $DB_NAME"
-    
-    # Export database schema and data
-    PGPASSWORD="$DB_PASS" pg_dump $PG_CONN_OPTS -U "$DB_USER" -d "$DB_NAME" -f "$TEMP_DIR/database_backup.sql"
-    
-    if [ $? -ne 0 ]; then
-      print_error "Database backup failed"
-    else
-      print_message "Database backed up successfully"
-      
-      # Check database backup size
-      DB_BACKUP_SIZE=$(du -h "$TEMP_DIR/database_backup.sql" | cut -f1)
-      print_message "Database backup size: $DB_BACKUP_SIZE"
-      
-      # Encrypt database backup if enabled
-      if [ "$ENCRYPT_DB" = true ]; then
-        print_message "Encrypting database backup..."
+    # Determine if using Neon serverless or standard PostgreSQL
+    if [[ "$DATABASE_URL" == *"neon.tech"* ]]; then
+        echo "Detected Neon serverless PostgreSQL" >> "$LOG_FILE"
         
-        # Generate a random encryption key
-        ENCRYPT_PASS=$(openssl rand -base64 32)
+        # Extract database connection details from DATABASE_URL
+        DB_USER=$(echo $DATABASE_URL | awk -F[:@] '{print $2}' | sed 's/\/\///')
+        DB_PASS=$(echo $DATABASE_URL | awk -F[:@] '{print $3}')
+        DB_HOST=$(echo $DATABASE_URL | awk -F[@:/] '{print $4}')
+        DB_PORT=$(echo $DATABASE_URL | awk -F[@:/] '{print $5}')
+        DB_NAME=$(echo $DATABASE_URL | awk -F[@:/] '{print $6}')
         
-        # Save the encryption key
-        echo "$ENCRYPT_PASS" > "$TEMP_DIR/db_encrypt_key.txt"
+        # Set environment variables for pg_dump
+        export PGPASSWORD="$DB_PASS"
         
-        # Encrypt the database backup
-        openssl enc -aes-256-cbc -pbkdf2 -salt -in "$TEMP_DIR/database_backup.sql" -out "$TEMP_DIR/database_backup.sql.enc" -pass pass:"$ENCRYPT_PASS"
+        # Backup filename
+        BACKUP_FILE="$BACKUP_DIR/database/db_${BACKUP_ID}.sql"
         
-        if [ $? -ne 0 ]; then
-          print_error "Database encryption failed"
-        else
-          print_message "Database encrypted successfully"
-          # Remove the unencrypted backup
-          rm "$TEMP_DIR/database_backup.sql"
+        echo "Creating database dump from Neon PostgreSQL" >> "$LOG_FILE"
+        pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$BACKUP_FILE"
+        
+        # Compress the backup
+        echo "Compressing database dump" >> "$LOG_FILE"
+        gzip -9 "$BACKUP_FILE"
+        
+        # Encrypt the backup
+        encrypt_file "${BACKUP_FILE}.gz"
+        
+        echo "Neon PostgreSQL database backup completed at $(date)" >> "$LOG_FILE"
+    else
+        echo "Using standard PostgreSQL connection" >> "$LOG_FILE"
+        
+        # Extract database connection details from DATABASE_URL
+        DB_USER=$(echo $DATABASE_URL | awk -F[:@] '{print $2}' | sed 's/\/\///')
+        DB_PASS=$(echo $DATABASE_URL | awk -F[:@] '{print $3}')
+        DB_HOST=$(echo $DATABASE_URL | awk -F[@:/] '{print $4}')
+        DB_PORT=$(echo $DATABASE_URL | awk -F[@:/] '{print $5}')
+        DB_NAME=$(echo $DATABASE_URL | awk -F[@:/] '{print $6}')
+        
+        # Set environment variables for pg_dump
+        export PGPASSWORD="$DB_PASS"
+        
+        # Backup filename
+        BACKUP_FILE="$BACKUP_DIR/database/db_${BACKUP_ID}.sql"
+        
+        echo "Creating database dump" >> "$LOG_FILE"
+        pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$BACKUP_FILE"
+        
+        # Compress the backup
+        echo "Compressing database dump" >> "$LOG_FILE"
+        gzip -9 "$BACKUP_FILE"
+        
+        # Encrypt the backup
+        encrypt_file "${BACKUP_FILE}.gz"
+        
+        echo "Standard PostgreSQL database backup completed at $(date)" >> "$LOG_FILE"
+    fi
+    
+    # Verify the backup file exists
+    if [ -f "${BACKUP_FILE}.gz.enc" ]; then
+        echo "Database backup successful" >> "$LOG_FILE"
+        echo "Backup saved to ${BACKUP_FILE}.gz.enc" >> "$LOG_FILE"
+    else
+        echo "ERROR: Database backup failed" >> "$LOG_FILE"
+        exit 1
+    fi
+}
+
+# Function to backup files
+backup_files() {
+    echo "Starting file backup at $(date)" >> "$LOG_FILE"
+    
+    # Directories to backup
+    UPLOADS_DIR="./uploads"
+    STATIC_DIR="./static"
+    
+    # Backup filename
+    BACKUP_FILE="$BACKUP_DIR/files/files_${BACKUP_ID}.tar"
+    
+    # Check if directories exist
+    if [ ! -d "$UPLOADS_DIR" ] && [ ! -d "$STATIC_DIR" ]; then
+        echo "No directories to backup" >> "$LOG_FILE"
+        return 0
+    fi
+    
+    # Create tar archive
+    echo "Creating file archive" >> "$LOG_FILE"
+    
+    tar_command="tar -cf $BACKUP_FILE"
+    
+    if [ -d "$UPLOADS_DIR" ]; then
+        tar_command="$tar_command $UPLOADS_DIR"
+    fi
+    
+    if [ -d "$STATIC_DIR" ]; then
+        tar_command="$tar_command $STATIC_DIR"
+    fi
+    
+    # Execute the tar command
+    eval $tar_command
+    
+    # Compress the backup
+    echo "Compressing file archive" >> "$LOG_FILE"
+    gzip -9 "$BACKUP_FILE"
+    
+    # Encrypt the backup
+    encrypt_file "${BACKUP_FILE}.gz"
+    
+    # Verify the backup file exists
+    if [ -f "${BACKUP_FILE}.gz.enc" ]; then
+        echo "File backup successful" >> "$LOG_FILE"
+        echo "Backup saved to ${BACKUP_FILE}.gz.enc" >> "$LOG_FILE"
+    else
+        echo "ERROR: File backup failed" >> "$LOG_FILE"
+        exit 1
+    fi
+    
+    echo "File backup completed at $(date)" >> "$LOG_FILE"
+}
+
+# Function to backup configuration
+backup_config() {
+    echo "Starting configuration backup at $(date)" >> "$LOG_FILE"
+    
+    # Directories and files to backup
+    CONFIG_FILES=".env .replit package.json drizzle.config.ts tsconfig.json"
+    CONFIG_DIRS="config"
+    
+    # Backup filename
+    BACKUP_FILE="$BACKUP_DIR/config/config_${BACKUP_ID}.tar"
+    
+    # Create tar archive
+    echo "Creating configuration archive" >> "$LOG_FILE"
+    
+    tar_command="tar -cf $BACKUP_FILE"
+    
+    # Add files if they exist
+    for file in $CONFIG_FILES; do
+        if [ -f "$file" ]; then
+            tar_command="$tar_command $file"
         fi
-      fi
-    fi
-  fi
-fi
-
-# Backup application files if not db-only
-if [ "$DB_ONLY" != true ]; then
-  print_message "Backing up application files..."
-  
-  # Create rsync exclude arguments
-  EXCLUDE_ARGS=""
-  for pattern in "${EXCLUDE_PATTERNS[@]}"; do
-    EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude='$pattern'"
-  done
-  
-  # Additional hardcoded excludes for safety
-  EXCLUDE_ARGS="$EXCLUDE_ARGS --exclude='$BACKUP_DIR' --exclude='$TEMP_DIR' --exclude='tmp'"
-  
-  # Copy application files to temp directory
-  RSYNC_CMD="rsync -a $EXCLUDE_ARGS ./ $TEMP_DIR/application/"
-  eval $RSYNC_CMD
-  
-  if [ $? -ne 0 ]; then
-    print_error "Application backup failed"
-  else
-    print_message "Application files backed up successfully"
+    done
     
-    # Check application backup size
-    APP_BACKUP_SIZE=$(du -sh "$TEMP_DIR/application" | cut -f1)
-    print_message "Application backup size: $APP_BACKUP_SIZE"
-  fi
-fi
-
-# Create backup info file
-cat > "$TEMP_DIR/backup_info.json" << EOF
-{
-  "timestamp": "$(date)",
-  "backupName": "$BACKUP_NAME",
-  "databaseIncluded": $([ "$APP_ONLY" != true ] && echo "true" || echo "false"),
-  "applicationIncluded": $([ "$DB_ONLY" != true ] && echo "true" || echo "false"),
-  "encryptedDatabase": $([ "$ENCRYPT_DB" = true ] && [ "$APP_ONLY" != true ] && echo "true" || echo "false"),
-  "compressionLevel": "$COMPRESS_LEVEL",
-  "encryptionKeyFile": "$([ "$ENCRYPT_DB" = true ] && [ "$APP_ONLY" != true ] && echo "db_encrypt_key.txt" || echo "none")",
-  "hostname": "$(hostname)",
-  "creator": "backup.sh script",
-  "appVersion": "$(grep -oP '"version": "\K[^"]+' package.json 2>/dev/null || echo "unknown")"
+    # Add directories if they exist
+    for dir in $CONFIG_DIRS; do
+        if [ -d "$dir" ]; then
+            tar_command="$tar_command $dir"
+        fi
+    done
+    
+    # Execute the tar command
+    eval $tar_command
+    
+    # Compress the backup
+    echo "Compressing configuration archive" >> "$LOG_FILE"
+    gzip -9 "$BACKUP_FILE"
+    
+    # Encrypt the backup
+    encrypt_file "${BACKUP_FILE}.gz"
+    
+    # Verify the backup file exists
+    if [ -f "${BACKUP_FILE}.gz.enc" ]; then
+        echo "Configuration backup successful" >> "$LOG_FILE"
+        echo "Backup saved to ${BACKUP_FILE}.gz.enc" >> "$LOG_FILE"
+    else
+        echo "ERROR: Configuration backup failed" >> "$LOG_FILE"
+        exit 1
+    fi
+    
+    echo "Configuration backup completed at $(date)" >> "$LOG_FILE"
 }
-EOF
 
-# Create a tarball of the backup
-print_message "Creating compressed archive..."
+# Function to cleanup old backups
+cleanup_old_backups() {
+    echo "Cleaning up old backups" >> "$LOG_FILE"
+    
+    # Find and remove database backups older than RETENTION_DAYS
+    find "$BACKUP_DIR/database" -name "*.enc" -type f -mtime +$RETENTION_DAYS -delete
+    
+    # Find and remove file backups older than RETENTION_DAYS
+    find "$BACKUP_DIR/files" -name "*.enc" -type f -mtime +$RETENTION_DAYS -delete
+    
+    # Find and remove configuration backups older than RETENTION_DAYS
+    find "$BACKUP_DIR/config" -name "*.enc" -type f -mtime +$RETENTION_DAYS -delete
+    
+    echo "Cleanup completed" >> "$LOG_FILE"
+}
 
-# Set compression level
-case "$COMPRESS_LEVEL" in
-  "low")
-    COMPRESSION="-z"
-    ;;
-  "medium")
-    COMPRESSION="-z"
-    ;;
-  "high")
-    COMPRESSION="--zstd"
-    ;;
-  *)
-    COMPRESSION="-z"
-    ;;
-esac
+# Main backup logic
+main() {
+    local backup_type=$1
+    
+    case $backup_type in
+        "database")
+            backup_database
+            ;;
+        "files")
+            backup_files
+            ;;
+        "config")
+            backup_config
+            ;;
+        "all")
+            backup_database
+            backup_files
+            backup_config
+            ;;
+        *)
+            echo "Usage: $0 {database|files|config|all}" >> "$LOG_FILE"
+            echo "Unknown backup type: $backup_type" >> "$LOG_FILE"
+            exit 1
+            ;;
+    esac
+    
+    # Always cleanup old backups
+    cleanup_old_backups
+    
+    echo "Backup completed successfully at $(date)" >> "$LOG_FILE"
+    echo "=====================================" >> "$LOG_FILE"
+}
 
-# Create tar archive
-tar $COMPRESSION -cf "$BACKUP_DIR/$BACKUP_NAME.tar.gz" -C "$(dirname "$TEMP_DIR")" "$(basename "$TEMP_DIR")"
+# Execute main function with the first argument
+main "${1:-all}"
 
-if [ $? -ne 0 ]; then
-  print_error "Archive creation failed"
-else
-  ARCHIVE_SIZE=$(du -h "$BACKUP_DIR/$BACKUP_NAME.tar.gz" | cut -f1)
-  print_message "Archive created successfully: $BACKUP_DIR/$BACKUP_NAME.tar.gz (Size: $ARCHIVE_SIZE)"
-  
-  # Calculate SHA256 checksum
-  if command -v sha256sum &> /dev/null; then
-    sha256sum "$BACKUP_DIR/$BACKUP_NAME.tar.gz" > "$BACKUP_DIR/$BACKUP_NAME.sha256"
-    print_message "SHA256 checksum created: $BACKUP_DIR/$BACKUP_NAME.sha256"
-  fi
-fi
-
-# Clean up temporary files
-print_message "Cleaning up temporary files..."
-rm -rf "$TEMP_DIR"
-
-# Implement backup rotation (remove old backups if exceeding MAX_BACKUPS)
-if [ "$MAX_BACKUPS" -gt 0 ]; then
-  BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/backup-*.tar.gz 2>/dev/null | wc -l)
-  
-  if [ "$BACKUP_COUNT" -gt "$MAX_BACKUPS" ]; then
-    print_message "Removing old backups to maintain maximum of $MAX_BACKUPS backups..."
-    ls -t "$BACKUP_DIR"/backup-*.tar.gz | tail -n +$((MAX_BACKUPS+1)) | xargs rm -f
-    ls -t "$BACKUP_DIR"/backup-*.sha256 2>/dev/null | tail -n +$((MAX_BACKUPS+1)) | xargs rm -f
-  fi
-fi
-
-# List current backups
-print_message "Current backups:"
-ls -lh "$BACKUP_DIR" | grep "backup-"
-
-# Print backup summary
-echo ""
-echo "========================================================"
-echo -e "${GREEN}Backup Summary${NC}"
-echo "========================================================"
-echo "Timestamp: $(date)"
-echo "Backup Name: $BACKUP_NAME"
-echo "Archive Location: $BACKUP_DIR/$BACKUP_NAME.tar.gz"
-echo "Archive Size: $ARCHIVE_SIZE"
-if [ "$APP_ONLY" != true ]; then
-  echo "Database: Included $([ "$ENCRYPT_DB" = true ] && echo "(Encrypted)")"
-fi
-if [ "$DB_ONLY" != true ]; then
-  echo "Application: Included (Size: $APP_BACKUP_SIZE)"
-fi
-echo "Log File: $LOG_FILE"
-echo "========================================================"
-echo -e "${YELLOW}Restore Command:${NC}"
-echo "./scripts/restore.sh -b $BACKUP_DIR/$BACKUP_NAME.tar.gz"
-echo "========================================================"
-
-print_message "Backup process completed at $(date)"
 exit 0
