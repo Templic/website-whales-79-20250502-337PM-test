@@ -1,8 +1,49 @@
 @import '@/components/cosmic/cosmic-animations.css';
 
+/* Font styles for the Almendra and Cormorant Garamond font stack */
+:root {
+  --font-almendra: var(--font-almendra, serif);
+  --font-cormorant: var(--font-cormorant-garamond, serif);
+  --font-nebula: var(--font-nebula, sans-serif);
+}
+
 /* Global styles */
 html, body {
   scroll-behavior: smooth;
+  font-family: var(--font-cormorant);
+  font-weight: 400;
+}
+
+h1, h2, h3, .fancy-text {
+  font-family: var(--font-almendra);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.title-large {
+  font-family: var(--font-almendra);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.body-text {
+  font-family: var(--font-cormorant);
+  font-weight: 400;
+}
+
+.body-text-light {
+  font-family: var(--font-cormorant);
+  font-weight: 300;
+}
+
+.body-text-medium {
+  font-family: var(--font-cormorant);
+  font-weight: 500;
+}
+
+.accent-text {
+  font-family: var(--font-nebula);
+  font-weight: 400;
 }
 
 /* Add custom scrollbar */

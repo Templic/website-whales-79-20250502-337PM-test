@@ -11,15 +11,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Exo 2', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        orbitron: ['Orbitron', 'sans-serif'],
-        rajdhani: ['Rajdhani', 'sans-serif'],
-        space: ['Space Grotesk', 'sans-serif'],
+        sans: ['Cormorant Garamond', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'ui-serif', 'Georgia', 'serif'],
+        fancy: ['Almendra', 'serif'],
+        almendra: ['var(--font-almendra)', 'serif'],
+        cormorant: ['var(--font-cormorant-garamond)', 'serif'],
+        nebula: ['var(--font-nebula)', 'sans-serif'],
+        // Keep some of the old fonts for legacy usage
         cinzel: ['Cinzel', 'serif'],
         gruppo: ['Gruppo', 'cursive'],
         michroma: ['Michroma', 'sans-serif'],
         poiret: ['Poiret One', 'cursive'],
-        syncopate: ['Syncopate', 'sans-serif'],
       },
       borderRadius: {
         lg: "var(--radius)",
