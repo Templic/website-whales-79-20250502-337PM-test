@@ -53,10 +53,8 @@ const rolePermissions: Record<UserRole, SecurityPermission[]> = {
 // Auth middleware for checking permissions
 const checkPermission = (requiredPermission: SecurityPermission) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const userRole = req.session?.user?.role as UserRole;
-    
-    // Check if user is authenticated
-    if (!userRole) {
+    // Check if user is authenticated using Passport.js's req.user
+    if (!req.isAuthenticated() || !req.user) {
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         details: `Unauthenticated user attempted to access ${req.path}`,
@@ -70,6 +68,8 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
     
+    const userRole = req.user.role as UserRole;
+    
     // Check if user has required permission
     const hasPermission = rolePermissions[userRole]?.includes(requiredPermission);
     
@@ -77,7 +77,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
       logSecurityEvent({
         type: 'PERMISSION_DENIED',
         details: `User with role ${userRole} attempted to access resource requiring ${requiredPermission}`,
-        userId: req.session?.user?.id,
+        userId: req.user.id,
         userRole,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -240,8 +240,8 @@ securityRouter.get(
       // Log successful access
       logSecurityEvent({
         type: 'SECURITY_SETTINGS_ACCESS',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: 'Security settings accessed',
         severity: 'low'
       });
@@ -260,8 +260,8 @@ securityRouter.post(
   checkPermission(SecurityPermission.MODIFY_SETTINGS),
   async (req: Request, res: Response) => {
     try {
-      const userId = req.session?.user?.id;
-      const userRole = req.session?.user?.role;
+      const userId = req.user?.id;
+      const userRole = req.user?.role;
       
       // Enhanced input validation with more strict requirements
       const schema = z.object({
@@ -327,8 +327,8 @@ securityRouter.post(
       // Log the error
       logSecurityEvent({
         type: 'SECURITY_SETTING_UPDATE_ERROR',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: `Error updating security setting: ${error instanceof Error ? error.message : 'Unknown error'}`,
         severity: 'high'
       });
@@ -349,8 +349,8 @@ securityRouter.get(
       // Log access
       logSecurityEvent({
         type: 'SECURITY_STATS_ACCESS',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: 'Security statistics accessed',
         severity: 'low'
       });
@@ -390,8 +390,8 @@ securityRouter.post(
       // Log the scan event
       logSecurityEvent({
         type: 'SECURITY_SCAN',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: `Security scan completed with ${scanResult.totalIssues} issues found`,
         severity: scanResult.criticalIssues > 0 ? 'critical' : 
                 scanResult.highIssues > 0 ? 'high' : 
@@ -408,8 +408,8 @@ securityRouter.post(
       // Log error
       logSecurityEvent({
         type: 'SECURITY_SCAN_ERROR',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: `Error running security scan: ${error instanceof Error ? error.message : 'Unknown error'}`,
         severity: 'high'
       });
@@ -428,22 +428,22 @@ securityRouter.get(
       // Log access
       logSecurityEvent({
         type: 'SECURITY_SCAN_RESULTS_ACCESS',
-        userId: req.session?.user?.id,
-        userRole: req.session?.user?.role,
+        userId: req.user?.id || undefined,
+        userRole: req.user?.role || undefined,
         details: 'Security scan results accessed',
         severity: 'low'
       });
       
       if (!latestScanResult) {
         // Run a new scan if none available but only if user has permission
-        if (rolePermissions[req.session?.user?.role as UserRole]?.includes(SecurityPermission.RUN_SCAN)) {
+        if (req.user && rolePermissions[req.user.role as UserRole]?.includes(SecurityPermission.RUN_SCAN)) {
           latestScanResult = await scanProject();
           
           // Log the scan event
           logSecurityEvent({
             type: 'SECURITY_SCAN',
-            userId: req.session?.user?.id,
-            userRole: req.session?.user?.role,
+            userId: req.user.id,
+            userRole: req.user.role,
             details: `Automatic security scan completed with ${latestScanResult.totalIssues} issues found`,
             severity: latestScanResult.criticalIssues > 0 ? 'critical' : 
                     latestScanResult.highIssues > 0 ? 'high' : 

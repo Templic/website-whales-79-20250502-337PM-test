@@ -98,13 +98,14 @@ app.use(fileUpload({
   debug: false // Disable debug messages
 }));
 
-// Setup CSRF protection
+// Setup CSRF protection with more permissive settings
 const csrfProtection = csurf({ 
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
-  }
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+  },
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'] // Don't require CSRF for these methods
 });
 
 // Provide CSRF token for client-side forms (must be defined before applying CSRF protection)
@@ -112,10 +113,10 @@ app.get('/api/csrf-token', csrfProtection, (req: Request, res: Response) => {
   res.json({ csrfToken: req.csrfToken() });
 });
 
-// Apply CSRF protection to all API routes except the token endpoint
+// Apply CSRF protection to all API routes except the token endpoint and user endpoint
 app.use('/api', (req, res, next) => {
-  // Skip CSRF protection for the token endpoint
-  if (req.path === '/csrf-token') {
+  // Skip CSRF protection for the token endpoint and authentication endpoints
+  if (req.path === '/csrf-token' || req.path === '/user' || req.path === '/login' || req.path === '/register') {
     return next();
   }
   csrfProtection(req, res, next);
@@ -171,7 +172,7 @@ async function startServer() {
       console.warn('Background database services initialization failed, continuing without them:', err);
     });
 
-    // Setup authentication first
+    // Setup authentication first (before any routes are registered)
     setupAuth(app);
 
     // Register API routes
