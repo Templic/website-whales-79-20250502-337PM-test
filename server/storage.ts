@@ -555,6 +555,141 @@ export class PostgresStorage implements IStorage {
         ]);
       }
 
+      // Initialize blog categories
+      const existingCategories = await db.select().from(categories);
+      if (existingCategories.length === 0) {
+        console.log("Initializing blog categories...");
+        await db.insert(categories).values([
+          {
+            name: "Music",
+            slug: "music",
+            description: "Posts about music releases, production, and inspiration"
+          },
+          {
+            name: "Cosmic Exploration",
+            slug: "cosmic-exploration",
+            description: "Exploring the universe and its cosmic wonders"
+          },
+          {
+            name: "Ocean Conservation",
+            slug: "ocean-conservation",
+            description: "Topics related to marine life and ocean conservation efforts"
+          },
+          {
+            name: "Events",
+            slug: "events",
+            description: "Upcoming events, concerts, and appearances"
+          }
+        ]);
+      }
+
+      // Initialize blog posts
+      const existingPosts = await db.select().from(posts);
+      if (existingPosts.length === 0) {
+        console.log("Initializing blog posts...");
+        
+        // The categories should be available now
+        const blogCategories = await db.select().from(categories);
+        const categoryMap = blogCategories.reduce((map, category) => {
+          map[category.slug] = category.id;
+          return map;
+        }, {} as Record<string, number>);
+
+        // Insert blog posts
+        await db.insert(posts).values([
+          {
+            title: "The Cosmic Symphony: Where Music Meets the Universe",
+            content: `<p>In the vast expanse of the cosmos, there exists a harmony that transcends our understanding. As a musician who draws inspiration from both the depths of the ocean and the mysteries of space, I've always been fascinated by the cosmic symphony that surrounds us.</p>
+            
+            <p>Recent discoveries in astrophysics have revealed that celestial bodies emit frequencies that can be translated into sound. These "cosmic melodies" have inspired my latest album, where I attempt to weave together the sounds of distant stars with the songs of the ocean's gentle giants.</p>
+            
+            <p>When we listen closely to the universe, we find that rhythm is not just a human invention—it's a fundamental property of existence itself. From the pulsing of neutron stars to the oscillations of gas in distant nebulae, the cosmos is constantly creating its own music.</p>
+            
+            <p>My journey to capture these sounds has taken me to remote observatories and deep-sea expeditions. The resulting compositions blend astronomical data sonification with whale songs recorded in the Pacific, creating a bridge between cosmic and oceanic realms.</p>
+            
+            <p>Join me on this journey as we explore the universal language of vibration and harmony. My upcoming live performance at the Cosmic Ocean Concert will feature these new works, accompanied by stunning visualizations of the astronomical phenomena that inspired them.</p>`,
+            excerpt: "Exploring the intersection of cosmic sounds and oceanic rhythms in my latest musical project.",
+            featuredImage: "https://images.unsplash.com/photo-1515462277126-2dd0c162007a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+            published: true,
+            approved: true,
+            authorId: 1, // admin user
+            createdAt: new Date("2025-03-10"),
+            updatedAt: new Date("2025-03-10")
+          },
+          {
+            title: "Ocean Conservation Efforts: Making Waves for Change",
+            content: `<p>The oceans are the lifeblood of our planet, covering more than 70% of Earth's surface and providing a home to countless species. Yet, our marine ecosystems face unprecedented threats from pollution, overfishing, and climate change.</p>
+            
+            <p>As someone who has found inspiration in the ocean's depths, I feel a profound responsibility to protect these precious waters. That's why I'm excited to announce our partnership with the Global Ocean Trust, a nonprofit organization dedicated to marine conservation.</p>
+            
+            <p>Through this collaboration, a portion of all proceeds from my upcoming "Blue Planet" tour will go directly toward conservation efforts, including coral reef restoration and marine wildlife protection programs.</p>
+            
+            <p>We're also launching a series of educational workshops at each tour location, where attendees can learn about local marine ecosystems and how to contribute to their preservation. These interactive sessions will feature marine biologists and conservation experts who will share their knowledge and passion for ocean protection.</p>
+            
+            <p>Music has the power to move hearts and minds. By combining my artistic platform with concrete action, I hope to inspire a wave of change that extends far beyond the concert hall.</p>
+            
+            <p>Join us in this vital mission. Together, we can ensure that the ocean's symphony continues to play for generations to come.</p>`,
+            excerpt: "Announcing new partnerships and initiatives to protect our ocean ecosystems.",
+            featuredImage: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+            published: true,
+            approved: true,
+            authorId: 2, // superadmin user
+            createdAt: new Date("2025-02-15"),
+            updatedAt: new Date("2025-02-15")
+          },
+          {
+            title: "Behind the Music: The Making of 'Cosmic Depths'",
+            content: `<p>Creating an album is always a journey of discovery, but "Cosmic Depths" took me further than I ever imagined—from the ocean floor to the outer reaches of the universe.</p>
+            
+            <p>The production process began almost a year ago, when I embarked on a deep-sea expedition with a team of marine biologists. Equipped with specialized hydrophones, we captured the haunting songs of humpback whales and the mysterious clicks and whistles of other marine creatures.</p>
+            
+            <p>These recordings formed the foundation of the album, but I wanted to take the concept further. Working with astrophysicists from the National Observatory, we translated data from radio telescopes into audible frequencies, creating "portraits" of distant galaxies, pulsars, and even the cosmic microwave background radiation—echoes of the Big Bang itself.</p>
+            
+            <p>In the studio, I combined these elements with traditional instruments and electronic production, creating a sound palette that moves seamlessly between oceanic and cosmic environments. Each track on the album represents a different stage in this journey from the deepest seas to the farthest stars.</p>
+            
+            <p>The mixing process presented unique challenges, as we worked to preserve the authentic character of our unusual sound sources while creating music that resonates on a human level. The result is something I'm incredibly proud of—a collection that invites listeners to experience the wonder of realms beyond our everyday perception.</p>
+            
+            <p>"Cosmic Depths" will be released next month, accompanied by an immersive visual experience that will be available both online and at select planetariums worldwide.</p>`,
+            excerpt: "A behind-the-scenes look at the unique production process for my latest album.",
+            featuredImage: "https://images.unsplash.com/photo-1520690214124-2405c5217036?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+            published: true,
+            approved: true,
+            authorId: 1, // admin user
+            createdAt: new Date("2025-01-20"),
+            updatedAt: new Date("2025-01-20")
+          }
+        ]);
+
+        // Get the inserted posts to link them with categories
+        const insertedPosts = await db.select().from(posts);
+        
+        // Link posts to categories (post_categories junction table)
+        if (insertedPosts.length > 0) {
+          // First post categories: Music, Cosmic Exploration
+          await db.execute(sql`
+            INSERT INTO post_categories (post_id, category_id)
+            VALUES 
+              (${insertedPosts[0].id}, ${categoryMap['music']}),
+              (${insertedPosts[0].id}, ${categoryMap['cosmic-exploration']})
+          `);
+          
+          // Second post categories: Ocean Conservation, Events
+          await db.execute(sql`
+            INSERT INTO post_categories (post_id, category_id)
+            VALUES 
+              (${insertedPosts[1].id}, ${categoryMap['ocean-conservation']}),
+              (${insertedPosts[1].id}, ${categoryMap['events']})
+          `);
+          
+          // Third post categories: Music
+          await db.execute(sql`
+            INSERT INTO post_categories (post_id, category_id)
+            VALUES 
+              (${insertedPosts[2].id}, ${categoryMap['music']})
+          `);
+        }
+      }
+
       // Initialize collaboration proposals
       await db.execute(sql`
         CREATE TABLE IF NOT EXISTS collaboration_proposals (
