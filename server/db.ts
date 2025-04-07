@@ -1,48 +1,94 @@
-import pkg from 'pg';
-const { Pool } = pkg;
-import { drizzle } from 'drizzle-orm/node-postgres';
-import * as schema from "@shared/schema";
+/**
+ * Database connection manager
+ */
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+import { Pool } from 'pg';
+import { executeWithCircuitBreaker } from './resilience';
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
-
-// Add error handler for the pool
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-  // Don't exit on error in development
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(-1);
-  }
+// Create PostgreSQL connection pool
+export const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Match max connections to environment resources - low for dev, higher for prod
+  max: parseInt(process.env.PGMAXCONNECTIONS || '10'),
+  // Idle timeout
+  idleTimeoutMillis: 30000,
+  // Connection timeout
+  connectionTimeoutMillis: 5000
 });
 
-export const initializeDatabase = async () => {
+// Handle pool errors
+pgPool.on('error', (err) => {
+  console.error('Unexpected PostgreSQL pool error:', err);
+});
+
+/**
+ * Check if the database connection is working
+ */
+export async function checkDatabaseConnection(): Promise<boolean> {
   try {
-    const client = await pool.connect();
-    console.log('Successfully connected to PostgreSQL database');
-    client.release();
-    return true;
-  } catch (err) {
-    console.error('Failed to connect to PostgreSQL:', err);
-    throw err;
+    // Use circuit breaker for database connection check
+    const result = await executeWithCircuitBreaker('database', async () => {
+      const client = await pgPool.connect();
+      try {
+        await client.query('SELECT 1');
+        return true;
+      } finally {
+        client.release();
+      }
+    });
+    return result;
+  } catch (error) {
+    console.error('Database connection check failed:', error);
+    return false;
   }
+}
+
+/**
+ * Initialize the database connection
+ */
+export async function initDatabaseConnection(): Promise<boolean> {
+  console.log('Initializing database connection...');
+  
+  try {
+    const isConnected = await checkDatabaseConnection();
+    if (isConnected) {
+      console.log('Database connection initialized successfully');
+      return true;
+    } else {
+      console.error('Database connection failed during initialization');
+      return false;
+    }
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    return false;
+  }
+}
+
+/**
+ * Close the database connection
+ */
+export async function closeDatabaseConnection(): Promise<void> {
+  console.log('Closing database connection...');
+  await pgPool.end();
+  console.log('Database connection closed');
+}
+
+/**
+ * Get database connection stats
+ */
+export function getDatabaseStats(): any {
+  return {
+    totalConnections: pgPool.totalCount,
+    idleConnections: pgPool.idleCount,
+    waitingClients: pgPool.waitingCount,
+    maxConnections: parseInt(process.env.PGMAXCONNECTIONS || '10')
+  };
+}
+
+export default {
+  pgPool,
+  initDatabaseConnection,
+  closeDatabaseConnection,
+  checkDatabaseConnection,
+  getDatabaseStats
 };
-
-// Export pool to be able to end it when the server closes
-export const pgPool = pool;
-import { sql } from 'drizzle-orm';
-import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
-
-// This is a legacy table, using contactMessages from schema.ts instead
-/*export const contactFormEntries = pgTable('contact_form_entries', {
-  id: text('id').primaryKey(),
-  name: text('name').notNull(),
-  email: text('email').notNull(),
-  message: text('message').notNull(),
-  createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
-});*/

@@ -1,206 +1,179 @@
 /**
- * Rate limiting middleware
- * 
- * Configures different rate limits for various API endpoints
- * based on their sensitivity and expected usage patterns.
+ * Rate limiting middleware for API protection
  */
 
-import rateLimit, { Options, RateLimitRequestHandler } from 'express-rate-limit';
-import { logSecurityEvent } from '../security/security';
 import { Request, Response, NextFunction } from 'express';
+import { logSecurityEvent } from '../security/security';
 
-// Define the options type for rate limit handlers
-interface RateLimitOptions {
-  windowMs: number;
-  max: number;
-  message: string;
-  statusCode: number;
-}
-
-// Type for our custom handler
-type CustomRateLimitHandler = (
-  req: Request, 
-  res: Response, 
-  next: NextFunction, 
-  options: RateLimitOptions
-) => void;
-
-// Configuration type with our custom handler
-interface CustomRateLimitConfig extends Omit<Options, 'handler'> {
-  windowMs: number;
-  max: number;
-  message: string;
-  handler: CustomRateLimitHandler;
-}
-
-// Different rate limit configurations
-const rateLimitConfigs: Record<string, CustomRateLimitConfig> = {
-  // Default API rate limit (100 requests per 15 minutes)
-  default: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    message: 'Too many requests from this IP, please try again after 15 minutes',
-    handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => {
-      logSecurityEvent({
-        type: 'RATE_LIMIT_EXCEEDED',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method,
-        details: `Default rate limit exceeded: ${options.max} requests in ${options.windowMs}ms`,
-        severity: 'medium'
-      });
-      res.status(options.statusCode).json({
-        message: options.message,
-        retryAfter: Math.ceil(options.windowMs / 1000 / 60) // minutes
-      });
-    }
-  },
-  
-  // Authentication rate limit (30 requests per 15 minutes)
-  auth: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 30,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many authentication attempts, please try again after 15 minutes',
-    handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => {
-      logSecurityEvent({
-        type: 'AUTH_RATE_LIMIT_EXCEEDED',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method,
-        details: `Authentication rate limit exceeded: ${options.max} requests in ${options.windowMs}ms`,
-        severity: 'high'
-      });
-      res.status(options.statusCode).json({
-        message: options.message,
-        retryAfter: Math.ceil(options.windowMs / 1000 / 60) // minutes
-      });
-    }
-  },
-  
-  // Security operations rate limit (10 requests per 15 minutes)
-  security: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many security operations, please try again after 15 minutes',
-    handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => {
-      logSecurityEvent({
-        type: 'SECURITY_RATE_LIMIT_EXCEEDED',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method,
-        details: `Security operation rate limit exceeded: ${options.max} requests in ${options.windowMs}ms`,
-        severity: 'high'
-      });
-      res.status(options.statusCode).json({
-        message: options.message,
-        retryAfter: Math.ceil(options.windowMs / 1000 / 60) // minutes
-      });
-    }
-  },
-  
-  // Admin operations rate limit (50 requests per 15 minutes)
-  admin: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many admin operations, please try again after 15 minutes',
-    handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => {
-      logSecurityEvent({
-        type: 'ADMIN_RATE_LIMIT_EXCEEDED',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method,
-        details: `Admin operation rate limit exceeded: ${options.max} requests in ${options.windowMs}ms`,
-        severity: 'high'
-      });
-      res.status(options.statusCode).json({
-        message: options.message,
-        retryAfter: Math.ceil(options.windowMs / 1000 / 60) // minutes
-      });
-    }
-  },
-  
-  // Public API rate limit (200 requests per 15 minutes)
-  public: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many requests, please try again after 15 minutes',
-    handler: (req: Request, res: Response, next: NextFunction, options: RateLimitOptions) => {
-      logSecurityEvent({
-        type: 'PUBLIC_RATE_LIMIT_EXCEEDED',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        path: req.path,
-        method: req.method,
-        details: `Public API rate limit exceeded: ${options.max} requests in ${options.windowMs}ms`,
-        severity: 'low'
-      });
-      res.status(options.statusCode).json({
-        message: options.message,
-        retryAfter: Math.ceil(options.windowMs / 1000 / 60) // minutes
-      });
-    }
-  }
-};
-
-// Helper function to create a rate limiter from our config
-const createLimiter = (config: CustomRateLimitConfig): RateLimitRequestHandler => {
-  // Extract handler from our custom config
-  const { handler, ...restConfig } = config;
-  
-  // Create compatible handler for express-rate-limit
-  const compatibleHandler = (req: Request, res: Response, next: NextFunction, options: Options) => {
-    // Convert standard options to our custom format
-    const customOptions: RateLimitOptions = {
-      windowMs: options.windowMs || 15 * 60 * 1000,
-      max: typeof options.max === 'number' ? options.max : 100,
-      message: options.message?.toString() || 'Too many requests',
-      statusCode: options.statusCode || 429
-    };
-    
-    // Call our custom handler
-    handler(req, res, next, customOptions);
+// Simple in-memory store for rate limiting
+interface RateLimitStore {
+  [key: string]: {
+    count: number;
+    resetTime: number;
   };
+}
+
+const ipLimits: RateLimitStore = {};
+const userLimits: RateLimitStore = {};
+
+// Clean up expired rate limit entries periodically
+const CLEANUP_INTERVAL = 15 * 60 * 1000; // 15 minutes
+setInterval(() => {
+  const now = Date.now();
   
-  // Return rate limiter with compatible handler
-  return rateLimit({
-    ...restConfig,
-    handler: compatibleHandler
+  // Clean up IP limits
+  Object.keys(ipLimits).forEach(key => {
+    if (now >= ipLimits[key].resetTime) {
+      delete ipLimits[key];
+    }
   });
-};
+  
+  // Clean up user limits
+  Object.keys(userLimits).forEach(key => {
+    if (now >= userLimits[key].resetTime) {
+      delete userLimits[key];
+    }
+  });
+}, CLEANUP_INTERVAL);
 
-// Create rate limiters
-export const defaultLimiter = createLimiter(rateLimitConfigs.default);
-export const authLimiter = createLimiter(rateLimitConfigs.auth);
-export const securityLimiter = createLimiter(rateLimitConfigs.security);
-export const adminLimiter = createLimiter(rateLimitConfigs.admin);
-export const publicLimiter = createLimiter(rateLimitConfigs.public);
+/**
+ * Rate limit middleware
+ * @param options Rate limiting options
+ */
+export function rateLimit(options: {
+  maxRequests?: number;
+  windowMs?: number;
+  keyGenerator?: (req: Request) => string;
+  message?: string;
+  statusCode?: number;
+  skipSuccessfulRequests?: boolean;
+} = {}) {
+  const {
+    maxRequests = 100,
+    windowMs = 15 * 60 * 1000, // 15 minutes by default
+    keyGenerator = (req: Request) => req.ip || 'unknown',
+    message = 'Too many requests, please try again later',
+    statusCode = 429,
+    skipSuccessfulRequests = false
+  } = options;
+  
+  return function rateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
+    // Generate a unique key for this client
+    const key = keyGenerator(req);
+    
+    // Get the current time
+    const now = Date.now();
+    
+    // Get current rate limit info
+    const store = key.startsWith('user:') ? userLimits : ipLimits;
+    
+    // Initialize or reset if window has passed
+    if (!store[key] || now > store[key].resetTime) {
+      store[key] = {
+        count: 0,
+        resetTime: now + windowMs
+      };
+    }
+    
+    // Check if rate limit is exceeded
+    if (store[key].count >= maxRequests) {
+      // Log security event for excessive requests
+      logSecurityEvent({
+        type: 'WARNING',
+        details: `Rate limit exceeded for ${key}`,
+        severity: 'medium',
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        userId: key.startsWith('user:') ? key.substring(5) : undefined
+      });
+      
+      // Set rate limit headers
+      res.setHeader('Retry-After', Math.ceil((store[key].resetTime - now) / 1000));
+      res.setHeader('X-RateLimit-Limit', maxRequests);
+      res.setHeader('X-RateLimit-Remaining', 0);
+      res.setHeader('X-RateLimit-Reset', Math.ceil(store[key].resetTime / 1000));
+      
+      // Return rate limit error
+      return res.status(statusCode).json({
+        error: {
+          status: statusCode,
+          code: 'rate_limit_exceeded',
+          message
+        }
+      });
+    }
+    
+    // Increment counter
+    store[key].count++;
+    
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', maxRequests);
+    res.setHeader('X-RateLimit-Remaining', Math.max(0, maxRequests - store[key].count));
+    res.setHeader('X-RateLimit-Reset', Math.ceil(store[key].resetTime / 1000));
+    
+    // Only count successful requests if option is enabled
+    if (skipSuccessfulRequests) {
+      // Decrement on successful response
+      const originalEnd = res.end;
+      res.end = function(chunk?: any, encoding?: string, callback?: () => void): Response {
+        if (res.statusCode < 400) {
+          store[key].count = Math.max(0, store[key].count - 1);
+        }
+        return originalEnd.call(this, chunk, encoding, callback);
+      };
+    }
+    
+    next();
+  };
+}
 
-// Helper function to get limiter by name
-export const getLimiter = (name: 'default' | 'auth' | 'security' | 'admin' | 'public') => {
-  switch (name) {
-    case 'auth':
-      return authLimiter;
-    case 'security':
-      return securityLimiter;
-    case 'admin':
-      return adminLimiter;
-    case 'public':
-      return publicLimiter;
-    default:
-      return defaultLimiter;
-  }
+/**
+ * User-based rate limiter - applies limits to authenticated users
+ */
+export function userRateLimit(options: {
+  maxRequests?: number;
+  windowMs?: number;
+  message?: string;
+  statusCode?: number;
+} = {}) {
+  return rateLimit({
+    ...options,
+    keyGenerator: (req: Request) => {
+      const user = (req as any).user;
+      return user && user.id ? `user:${user.id}` : req.ip || 'unknown';
+    }
+  });
+}
+
+/**
+ * Stricter rate limit for authentication endpoints to prevent brute force
+ */
+export function authRateLimit() {
+  return rateLimit({
+    maxRequests: 5,
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    message: 'Too many authentication attempts, please try again later',
+    keyGenerator: (req: Request) => `auth:${req.ip || 'unknown'}`
+  });
+}
+
+/**
+ * API rate limit for general API endpoints
+ */
+export function apiRateLimit() {
+  return rateLimit({
+    maxRequests: 120,
+    windowMs: 60 * 1000, // 1 minute
+    message: 'Too many API requests, please slow down',
+    skipSuccessfulRequests: true
+  });
+}
+
+export default {
+  rateLimit,
+  userRateLimit,
+  authRateLimit,
+  apiRateLimit
 };

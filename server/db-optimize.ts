@@ -1,227 +1,194 @@
-import { pgPool, db } from './db';
-import pgMonitor from 'pg-monitor';
-import PgBoss from 'pg-boss';
-import path from 'path';
-import fs from 'fs';
-import { log } from './vite';
+/**
+ * Database optimization utilities
+ */
 
-// Configure pg-monitor for basic logging
-pgMonitor.attach({});
-pgMonitor.setTheme('matrix'); // or 'dark', 'bright', etc.
+import { pgPool } from './db';
 
-// Set pg-monitor log destination to file in production
-if (process.env.NODE_ENV === 'production') {
-  const logDir = path.join(process.cwd(), 'logs');
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
-  }
+/**
+ * Initialize database optimization system
+ */
+export async function initDatabaseOptimization(): Promise<boolean> {
+  console.log('Initializing database optimization...');
   
-  const logFile = path.join(logDir, 'db-queries.log');
-  const logStream = fs.createWriteStream(logFile, { flags: 'a' });
-  
-  pgMonitor.setLog((msg, info) => {
-    // Log query performance metrics to file
-    const logEntry = `[${new Date().toISOString()}] ${info.event}: ${msg}\n`;
-    logStream.write(logEntry);
-  });
-}
-
-// Initialize task queue for background optimization
-let boss: PgBoss;
-
-export async function initDatabaseOptimization() {
+  // Run initial vacuum analyze to ensure good performance
   try {
-    // Initialize PgBoss for background job processing
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL environment variable is not set');
+    const client = await pgPool.connect();
+    try {
+      console.log('Running initial VACUUM ANALYZE...');
+      await client.query('VACUUM ANALYZE');
+      console.log('Initial VACUUM ANALYZE completed successfully');
+    } finally {
+      client.release();
     }
-    boss = new PgBoss({
-      connectionString: process.env.DATABASE_URL
-    });
-    await boss.start();
     
-    // Register maintenance tasks
-    await setupMaintenanceTasks();
-    
-    log('Database optimization initialized', 'db-optimize');
+    console.log('Database optimization initialized successfully');
     return true;
   } catch (error) {
     console.error('Failed to initialize database optimization:', error);
-    return false;
-  }
-}
-
-async function setupMaintenanceTasks() {
-  try {
-    // Create queues first
-    await boss.createQueue('vacuum-analyze');
-    await boss.createQueue('reindex-database');
-    await boss.createQueue('analyze-slow-queries');
-    
-    // Send initial messages to ensure queues exist
-    await boss.send('vacuum-analyze', {});
-    await boss.send('reindex-database', {});
-    await boss.send('analyze-slow-queries', {});
-    
-    // Schedule regular VACUUM
-    await boss.schedule('vacuum-analyze', '0 3 * * *'); // Every day at 3am
-    await boss.work('vacuum-analyze', async () => {
-      try {
-        await pgPool.query('VACUUM ANALYZE');
-        log('VACUUM ANALYZE completed successfully', 'db-maintenance');
-        return { success: true };
-      } catch (error) {
-        console.error('VACUUM ANALYZE failed:', error);
-        return { success: false, error };
-      }
-    });
-    
-    // Schedule regular index optimization
-    await boss.schedule('reindex-database', '0 4 * * 0'); // Every Sunday at 4am
-    await boss.work('reindex-database', async () => {
-      try {
-        // First get the current database name
-        const dbNameResult = await pgPool.query('SELECT current_database()');
-        const dbName = dbNameResult.rows[0].current_database;
-        
-        // Reindex tables one by one to avoid locks
-        const tablesResult = await pgPool.query(`
-          SELECT tablename 
-          FROM pg_tables 
-          WHERE schemaname = 'public'
-        `);
-        
-        for (const row of tablesResult.rows) {
-          await pgPool.query(`REINDEX TABLE "${row.tablename}"`);
-          log(`Reindexed table ${row.tablename}`, 'db-maintenance');
-        }
-        
-        log('Database reindexing completed', 'db-maintenance');
-        return { success: true, tablesReindexed: tablesResult.rows.length };
-      } catch (error) {
-        console.error('Database reindexing failed:', error);
-        return { success: false, error };
-      }
-    });
-    
-    // Register query analysis task
-    await boss.work('analyze-slow-queries', async () => {
-      try {
-        // Check if pg_stat_statements extension exists
-        const checkExtension = await pgPool.query(`
-          SELECT exists(
-            SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements'
-          );
-        `);
-        
-        if (checkExtension.rows[0].exists) {
-          // If extension exists, analyze slow queries
-          const result = await pgPool.query(`
-            SELECT query, calls, total_time, mean_time, rows
-            FROM pg_stat_statements
-            ORDER BY mean_time DESC
-            LIMIT 10;
-          `);
-          
-          log('Slow query analysis completed', 'db-performance');
-          return { success: true, slowQueries: result.rows };
-        } else {
-          // Otherwise, return basic query stats
-          const result = await pgPool.query(`
-            SELECT relname as table_name, 
-                  seq_scan, 
-                  seq_tup_read,
-                  idx_scan, 
-                  idx_tup_fetch
-            FROM pg_stat_user_tables
-            ORDER BY seq_scan DESC
-            LIMIT 10;
-          `);
-          
-          // Log basic query stats
-          log('Basic query stats analysis completed', 'db-performance');
-          return { success: true, basicQueryStats: result.rows };
-        }
-      } catch (error) {
-        console.error('Slow query analysis failed:', error);
-        return { success: false, error };
-      }
-    });
-  } catch (error) {
-    console.error('Error setting up maintenance tasks:', error);
-  }
-}
-
-// Utility function to execute query with detailed performance metrics
-export async function executeOptimizedQuery(query: string, params?: any[]) {
-  const start = Date.now();
-  try {
-    const result = await pgPool.query(query, params);
-    const duration = Date.now() - start;
-    
-    // Log performance details only if query takes more than 100ms
-    if (duration > 100) {
-      log(`Slow query (${duration}ms): ${query.substring(0, 100)}...`, 'db-performance');
-    }
-    
-    return result;
-  } catch (error) {
-    const duration = Date.now() - start;
-    console.error(`Query error after ${duration}ms:`, error);
     throw error;
   }
 }
 
-// Connection pooling optimization
-export async function getConnectionPoolStats() {
+/**
+ * Optimize a specific database table
+ */
+export async function optimizeTable(tableName: string): Promise<void> {
+  console.log(`Optimizing table: ${tableName}...`);
+  
   try {
-    // Try to get pool stats from pg_stat_activity instead of internal properties
-    const result = await pgPool.query(`
-      SELECT count(*) as total,
-             count(*) FILTER (WHERE state = 'active') as active,
-             count(*) FILTER (WHERE state = 'idle') as idle,
-             count(*) FILTER (WHERE state = 'idle in transaction') as idle_in_transaction,
-             count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
-      FROM pg_stat_activity 
-      WHERE datname = current_database()
-        AND pid <> pg_backend_pid();
-    `);
-    
-    const stats = result.rows[0] || {};
-    
-    return {
-      total: parseInt(stats.total) || 0,
-      active: parseInt(stats.active) || 0,
-      idle: parseInt(stats.idle) || 0,
-      waiting: parseInt(stats.waiting) || 0,
-    };
-  } catch (error) {
-    console.error('Failed to get connection pool stats:', error);
-    // Return default values instead of error to prevent frontend from crashing
-    return {
-      total: 0,
-      active: 0,
-      idle: 0,
-      waiting: 0
-    };
-  }
-}
-
-// API to trigger manual optimization tasks
-export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'analyze') {
-  try {
-    switch (task) {
-      case 'vacuum':
-        return boss.send('vacuum-analyze', {});
-      case 'reindex':
-        return boss.send('reindex-database', {});
-      case 'analyze':
-        return boss.send('analyze-slow-queries', {});
-      default:
-        throw new Error(`Unknown maintenance task: ${task}`);
+    const client = await pgPool.connect();
+    try {
+      // Run VACUUM ANALYZE on the specified table
+      await client.query(`VACUUM ANALYZE ${tableName}`);
+      console.log(`Optimization of table ${tableName} completed`);
+    } finally {
+      client.release();
     }
   } catch (error) {
-    console.error(`Failed to trigger ${task} task:`, error);
+    console.error(`Failed to optimize table ${tableName}:`, error);
     throw error;
   }
 }
+
+/**
+ * Analyze database for optimization opportunities
+ */
+export async function analyzeDatabase(): Promise<any> {
+  console.log('Analyzing database for optimization opportunities...');
+  
+  try {
+    const client = await pgPool.connect();
+    try {
+      // Find unused indexes
+      const unusedIndexesQuery = `
+        SELECT
+          schemaname || '.' || relname as table_name,
+          indexrelname as index_name,
+          idx_scan as index_scans,
+          pg_size_pretty(pg_relation_size(indexrelid)) as index_size,
+          pg_relation_size(indexrelid) as index_size_bytes
+        FROM
+          pg_stat_user_indexes
+        JOIN
+          pg_index USING (indexrelid)
+        WHERE
+          idx_scan = 0
+          AND indisunique IS FALSE
+        ORDER BY
+          pg_relation_size(indexrelid) DESC
+      `;
+      
+      const unusedIndexesResult = await client.query(unusedIndexesQuery);
+      
+      // Find missing indexes (tables with high seq scans)
+      const missingIndexesQuery = `
+        SELECT
+          schemaname || '.' || relname as table_name,
+          seq_scan as sequential_scans,
+          seq_tup_read as sequential_tuples_read,
+          idx_scan as index_scans,
+          n_live_tup as estimated_tuples,
+          pg_size_pretty(pg_relation_size(relid)) as table_size
+        FROM
+          pg_stat_user_tables
+        WHERE
+          seq_scan > 0
+        ORDER BY
+          seq_tup_read DESC
+        LIMIT 10
+      `;
+      
+      const missingIndexesResult = await client.query(missingIndexesQuery);
+      
+      // Find tables that need vacuuming
+      const needsVacuumQuery = `
+        SELECT
+          schemaname || '.' || relname as table_name,
+          n_dead_tup as dead_tuples,
+          n_live_tup as live_tuples,
+          n_dead_tup::float / GREATEST(n_live_tup, 1) * 100 as dead_ratio,
+          last_vacuum,
+          last_autovacuum
+        FROM
+          pg_stat_user_tables
+        WHERE
+          n_dead_tup > 0
+        ORDER BY
+          n_dead_tup::float / GREATEST(n_live_tup, 1) DESC
+        LIMIT 10
+      `;
+      
+      const needsVacuumResult = await client.query(needsVacuumQuery);
+      
+      // Return the analysis results
+      return {
+        timestamp: new Date().toISOString(),
+        analysis: {
+          unusedIndexes: unusedIndexesResult.rows,
+          potentialMissingIndexes: missingIndexesResult.rows,
+          tablesNeedingVacuum: needsVacuumResult.rows
+        }
+      };
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Failed to analyze database:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get table statistics
+ */
+export async function getTableStats(tableName?: string): Promise<any> {
+  console.log('Getting table statistics...');
+  
+  try {
+    const client = await pgPool.connect();
+    try {
+      let query = `
+        SELECT
+          schemaname || '.' || relname as table_name,
+          pg_size_pretty(pg_relation_size(relid)) as table_size,
+          pg_size_pretty(pg_total_relation_size(relid)) as total_size,
+          n_live_tup as live_tuples,
+          n_dead_tup as dead_tuples,
+          seq_scan as sequential_scans,
+          idx_scan as index_scans,
+          last_vacuum,
+          last_autovacuum,
+          last_analyze,
+          last_autoanalyze
+        FROM
+          pg_stat_user_tables
+      `;
+      
+      // If a specific table is requested, filter for it
+      if (tableName) {
+        query += ` WHERE relname = $1`;
+        
+        const result = await client.query(query, [tableName]);
+        return result.rows;
+      } else {
+        // Order by size for all tables
+        query += ` ORDER BY pg_relation_size(relid) DESC`;
+        
+        const result = await client.query(query);
+        return result.rows;
+      }
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Failed to get table statistics:', error);
+    throw error;
+  }
+}
+
+export default {
+  initDatabaseOptimization,
+  optimizeTable,
+  analyzeDatabase,
+  getTableStats
+};
