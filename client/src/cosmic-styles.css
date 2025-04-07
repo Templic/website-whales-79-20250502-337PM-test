@@ -10,20 +10,44 @@
   --cosmic-darker: #030110;
 }
 
-/* Cosmic glow effects */
+/* Enhanced Cosmic glow effects with higher intensity */
 .cosmic-glow-cyan {
-  box-shadow: 0 0 10px 2px rgba(0, 235, 214, 0.3),
-              0 0 20px 5px rgba(0, 235, 214, 0.1);
+  box-shadow: 0 0 10px 2px rgba(0, 235, 214, 0.5),
+              0 0 20px 5px rgba(0, 235, 214, 0.3),
+              0 0 30px 8px rgba(0, 235, 214, 0.1);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.cosmic-glow-cyan:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 235, 214, 0.6),
+              0 0 30px 8px rgba(0, 235, 214, 0.4),
+              0 0 45px 12px rgba(0, 235, 214, 0.2);
 }
 
 .cosmic-glow-purple {
-  box-shadow: 0 0 10px 2px rgba(124, 58, 237, 0.3),
-              0 0 20px 5px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 10px 2px rgba(124, 58, 237, 0.5),
+              0 0 20px 5px rgba(124, 58, 237, 0.3),
+              0 0 30px 8px rgba(124, 58, 237, 0.1);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.cosmic-glow-purple:hover {
+  box-shadow: 0 0 15px 4px rgba(124, 58, 237, 0.6),
+              0 0 30px 8px rgba(124, 58, 237, 0.4),
+              0 0 45px 12px rgba(124, 58, 237, 0.2);
 }
 
 .cosmic-glow-orange {
-  box-shadow: 0 0 10px 2px rgba(251, 146, 60, 0.3),
-              0 0 20px 5px rgba(251, 146, 60, 0.1);
+  box-shadow: 0 0 10px 2px rgba(251, 146, 60, 0.5),
+              0 0 20px 5px rgba(251, 146, 60, 0.3),
+              0 0 30px 8px rgba(251, 146, 60, 0.1);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.cosmic-glow-orange:hover {
+  box-shadow: 0 0 15px 4px rgba(251, 146, 60, 0.6),
+              0 0 30px 8px rgba(251, 146, 60, 0.4),
+              0 0 45px 12px rgba(251, 146, 60, 0.2);
 }
 
 /* Glassmorphism Card */
@@ -65,15 +89,65 @@
               radial-gradient(circle at 70% 90%, rgba(0, 235, 214, 0.1), transparent 25%);
 }
 
-/* Cosmic animation */
+/* Enhanced Cosmic animations */
 @keyframes cosmic-pulse {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
+  0% { opacity: 0.8; filter: brightness(0.9); }
+  50% { opacity: 1; filter: brightness(1.1); }
+  100% { opacity: 0.8; filter: brightness(0.9); }
+}
+
+@keyframes cosmic-glow-pulse {
+  0% { 
+    filter: drop-shadow(0 0 3px currentColor);
+    opacity: 0.7;
+  }
+  50% { 
+    filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 12px currentColor);
+    opacity: 1;
+  }
+  100% { 
+    filter: drop-shadow(0 0 3px currentColor);
+    opacity: 0.7;
+  }
+}
+
+@keyframes cosmic-rotate-pulse {
+  0% { transform: rotate(0deg) scale(0.95); opacity: 0.8; }
+  50% { transform: rotate(180deg) scale(1.05); opacity: 1; }
+  100% { transform: rotate(360deg) scale(0.95); opacity: 0.8; }
+}
+
+@keyframes cosmic-shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .animate-cosmic {
   animation: cosmic-pulse 3s infinite ease-in-out;
+}
+
+.animate-cosmic-glow {
+  animation: cosmic-glow-pulse 4s infinite ease-in-out;
+}
+
+.animate-cosmic-rotate {
+  animation: cosmic-rotate-pulse 12s infinite linear;
+}
+
+.animate-cosmic-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(0, 235, 214, 0.1), 
+    rgba(124, 58, 237, 0.1), 
+    rgba(0, 235, 214, 0.1)
+  );
+  background-size: 200% 100%;
+  animation: cosmic-shimmer 8s infinite ease-in-out;
+}
+
+/* Combined animations */
+.animate-cosmic-intense {
+  animation: cosmic-pulse 3s infinite ease-in-out, cosmic-glow-pulse 4s infinite ease-in-out;
 }
 
 /* Cosmic separator */

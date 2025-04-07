@@ -212,6 +212,9 @@ async function startServer() {
     // Setup authentication first (before any routes are registered)
     setupAuth(app);
 
+    // Mount auth routes
+    app.use('/api/auth', authRoutes);
+
     // Register API routes
     const httpServer = await registerRoutes(app);
 
