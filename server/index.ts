@@ -197,17 +197,24 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Initialize database connection
-    await initializeDatabase();
+    // Initialize core services in parallel
+    const [dbInit, dbOpt, bgServices] = await Promise.allSettled([
+      initializeDatabase(),
+      initDatabaseOptimization(),
+      initBackgroundServices(),
+      initializeSecurityScans(24)
+    ]);
 
-    // Initialize database optimization and background services
-    await initDatabaseOptimization().catch(err => {
-      console.warn('Database optimization initialization failed, continuing without it:', err);
-    });
-
-    await initBackgroundServices().catch(err => {
-      console.warn('Background database services initialization failed, continuing without them:', err);
-    });
+    // Handle initialization results
+    if (dbInit.status === 'rejected') {
+      throw dbInit.reason;
+    }
+    if (dbOpt.status === 'rejected') {
+      console.warn('Database optimization initialization failed, continuing:', dbOpt.reason);
+    }
+    if (bgServices.status === 'rejected') {
+      console.warn('Background services initialization failed, continuing:', bgServices.reason);
+    }
 
     // Setup authentication first (before any routes are registered)
     setupAuth(app);
@@ -321,15 +328,7 @@ async function startServer() {
         console.log(`Server successfully listening on port ${port}`);
         log(`Server listening on port ${port}`);
 
-        // Initialize security scans now that the server is running
-        // Schedule regular scans every 24 hours
-        try {
-          initializeSecurityScans(24);
-          console.log('Security scanning service initialized');
-        } catch (error) {
-          console.error('Failed to initialize security scans:', error);
-          // Continue server operation even if security scans fail to initialize
-        }
+        console.log('Server initialization complete');
 
         resolve(true);
       }).on('error', (err: Error) => {
