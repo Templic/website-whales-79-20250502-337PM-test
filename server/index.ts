@@ -108,7 +108,7 @@ function configureExpress(): void {
   app.use(['/api/auth', '/api/user', '/api/data'], security.securityMiddleware);
 
   // Register health routes
-  app.use(healthRoutes);
+  app.use('/api', healthRoutes);
 
   // Register auth routes
   app.use('/api/auth', authRoutes);
