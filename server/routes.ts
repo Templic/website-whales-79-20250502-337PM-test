@@ -15,22 +15,9 @@ export async function registerRoutes(app: express.Application): Promise<http.Ser
   // Create HTTP server
   const httpServer = http.createServer(app);
   
-  // Simple root route
-  app.get('/', (req, res) => {
-    res.json({
-      message: 'API server is running',
-      timestamp: new Date().toISOString()
-    });
-  });
+  // Root route is now defined in server/index.ts
   
-  // Health check endpoints
-  app.get('/health', (req: Request, res: Response) => {
-    res.status(200).json({
-      status: 'ok',
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString()
-    });
-  });
+  // Health check endpoints are now mounted in configureExpress in server/index.ts
   
   // Mount database monitoring routes
   app.use('/api/db', dbMonitorRoutes);

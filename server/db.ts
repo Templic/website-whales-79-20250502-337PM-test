@@ -44,11 +44,17 @@ export async function checkDatabaseConnection(): Promise<boolean> {
   }
 }
 
+// Flag to track if pool has been closed
+let isPoolClosed = false;
+
 /**
  * Initialize the database connection
  */
 export async function initDatabaseConnection(): Promise<boolean> {
   console.log('Initializing database connection...');
+  
+  // Reset the pool closed flag when initializing
+  isPoolClosed = false;
   
   try {
     const isConnected = await checkDatabaseConnection();
@@ -69,9 +75,22 @@ export async function initDatabaseConnection(): Promise<boolean> {
  * Close the database connection
  */
 export async function closeDatabaseConnection(): Promise<void> {
+  // Prevent multiple calls to pool.end()
+  if (isPoolClosed) {
+    console.log('Database connection already closed');
+    return;
+  }
+  
   console.log('Closing database connection...');
-  await pgPool.end();
-  console.log('Database connection closed');
+  try {
+    isPoolClosed = true;
+    await pgPool.end();
+    console.log('Database connection closed');
+  } catch (error) {
+    console.error('Error closing database connection:', error);
+    // Still mark as closed even if there was an error
+    isPoolClosed = true;
+  }
 }
 
 /**

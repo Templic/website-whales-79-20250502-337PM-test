@@ -17,6 +17,7 @@ import { initializeCompliance } from './security/compliance';
 import security from './security/security';
 import healthRoutes from './routes/healthRoutes';
 import authRoutes from './routes/authRoutes';
+import dbMonitorRoutes from './routes/db-monitor';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { apiRateLimit } from './middleware/rateLimit';
 import monitoringMiddleware from './middleware/monitoring';
@@ -65,7 +66,7 @@ export async function startServer(): Promise<http.Server> {
     server = await registerRoutes(app);
     
     // Start HTTP server
-    const port = process.env.PORT || 3000;
+    const port = process.env.PORT || 5000;
     const host = process.env.HOST || '0.0.0.0';
     
     server.listen(port, host as any, () => {
@@ -86,10 +87,10 @@ export async function startServer(): Promise<http.Server> {
  * Configure Express middleware
  */
 function configureExpress(): void {
-  // Security middleware
+  // Basic security middleware
   app.use(helmet());
   app.use(cors());
-  app.use(security.securityMiddleware);
+  // Security headers can be applied to all routes
   app.use(security.securityHeaders);
   
   // Body parsing middleware
@@ -100,8 +101,11 @@ function configureExpress(): void {
   app.use(monitoringMiddleware.requestTimingMiddleware);
   app.use(monitoringMiddleware.serverInfoMiddleware);
   
-  // Rate limiting for API routes
+  // Rate limiting and security for API routes
   app.use('/api', apiRateLimit());
+  // Apply security middleware only to specific API routes to avoid blocking 404 handler
+  // Exclude database monitoring and health endpoints from security checks
+  app.use(['/api/auth', '/api/user', '/api/data'], security.securityMiddleware);
   
   // Register health routes
   app.use(healthRoutes);
@@ -109,7 +113,28 @@ function configureExpress(): void {
   // Register auth routes
   app.use('/api/auth', authRoutes);
   
+  // Register database monitoring routes
+  app.use('/api/db', dbMonitorRoutes);
+  
+  // Add test endpoint directly to ensure it's registered
+  app.get('/api/test', (req, res) => {
+    res.status(200).json({
+      message: 'API test successful',
+      timestamp: new Date().toISOString(),
+      userInfo: (req as any).user || null
+    });
+  });
+  
+  // Add root route
+  app.get('/', (req, res) => {
+    res.json({
+      message: 'API server is running',
+      timestamp: new Date().toISOString()
+    });
+  });
+  
   // Error handling middleware - should be registered last
+  // These need to be registered after all routes
   app.use(notFoundHandler);
   app.use(errorHandler);
 }

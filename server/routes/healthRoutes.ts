@@ -3,7 +3,7 @@
  */
 
 import express, { Request, Response } from 'express';
-import { asyncHandler } from '../middleware/errorHandler';
+import { asyncHandler, validateQueryParams } from '../middleware/errorHandler';
 import monitoring from '../monitoring';
 import { pgPool } from '../db';
 
@@ -19,6 +19,34 @@ router.get('/health', (req: Request, res: Response) => {
     message: 'Server is running'
   });
 });
+
+/**
+ * Detailed health check route - provides additional system information
+ */
+router.get('/health/detailed', asyncHandler(async (req: Request, res: Response) => {
+  const memoryUsage = process.memoryUsage();
+  const uptime = process.uptime();
+  
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    message: 'Server is running',
+    system: {
+      uptime: {
+        seconds: uptime,
+        formatted: `${Math.floor(uptime / 86400)}d ${Math.floor((uptime % 86400) / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`
+      },
+      memory: {
+        rss: `${Math.round(memoryUsage.rss / 1024 / 1024)} MB`,
+        heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)} MB`,
+        heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)} MB`,
+        external: `${Math.round(memoryUsage.external / 1024 / 1024)} MB`
+      },
+      platform: process.platform,
+      nodeVersion: process.version
+    }
+  });
+}));
 
 /**
  * Get detailed system metrics for monitoring

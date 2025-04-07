@@ -4,7 +4,7 @@
 
 import express, { Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
-import { pgPool } from '../db';
+import { pgPool, checkDatabaseConnection } from '../db';
 
 const router = express.Router();
 
@@ -21,9 +21,44 @@ const adminOnly = (req: Request, res: Response, next: Function) => {
 };
 
 /**
+ * Simple database connection check - public endpoint
+ */
+router.get('/check', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const isConnected = await checkDatabaseConnection();
+    if (isConnected) {
+      res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        message: 'Database connection successful',
+        pool: {
+          totalConnections: pgPool.totalCount,
+          idleConnections: pgPool.idleCount,
+          waitingClients: pgPool.waitingCount
+        }
+      });
+    } else {
+      res.status(503).json({
+        status: 'error',
+        timestamp: new Date().toISOString(),
+        message: 'Database connection failed'
+      });
+    }
+  } catch (error) {
+    console.error('Database check error:', error);
+    res.status(500).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      message: 'Database check error',
+      error: process.env.NODE_ENV === 'production' ? undefined : (error as Error).message
+    });
+  }
+}));
+
+/**
  * Get database health and statistics
  */
-router.get('/db-health', asyncHandler(async (req: Request, res: Response) => {
+router.get('/status', asyncHandler(async (req: Request, res: Response) => {
   try {
     const client = await pgPool.connect();
     try {
@@ -94,7 +129,7 @@ router.get('/db-health', asyncHandler(async (req: Request, res: Response) => {
 /**
  * Run database maintenance operations - admin only endpoint
  */
-router.post('/db-maintenance', asyncHandler(async (req: Request, res: Response) => {
+router.post('/maintenance', asyncHandler(async (req: Request, res: Response) => {
   // Check if user has admin role
   const user = (req as any).user;
   if (!user || user.role !== 'admin') {

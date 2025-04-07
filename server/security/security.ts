@@ -124,6 +124,17 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
   const userAgent = req.headers['user-agent'] || 'unknown';
   const userId = (req as any).user?.id;
   
+  // Skip security checks for health endpoints, database monitoring, and other safe endpoints
+  const safePathPrefixes = ['/health', '/api/db', '/api/health', '/api/status'];
+  if (req.path === '/' || safePathPrefixes.some(prefix => req.path.startsWith(prefix))) {
+    return next();
+  }
+  
+  // Allow all OPTIONS requests (for CORS preflight) to pass through
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  
   // Check for suspicious query parameters
   const suspiciousParams = ['__proto__', 'constructor', 'prototype'];
   
