@@ -134,6 +134,7 @@ function configureExpress(): void {
   // Basic security middleware
   app.use(helmet());
   app.use(cors());
+  
   // Security headers can be applied to all routes
   app.use(security.securityHeaders);
 
@@ -147,8 +148,8 @@ function configureExpress(): void {
 
   // Rate limiting and security for API routes
   app.use('/api', apiRateLimit());
+  
   // Apply security middleware only to specific API routes to avoid blocking 404 handler
-  // Exclude database monitoring and health endpoints from security checks
   app.use(['/api/auth', '/api/user', '/api/data'], security.securityMiddleware);
 
   // Register health routes
@@ -169,97 +170,31 @@ function configureExpress(): void {
     });
   });
 
-  // Add Flask server proxy for all non-API frontend routes
-  // This should be placed before the catch-all route
-  const flaskProxy = createProxyMiddleware({
-    target: 'http://localhost:5001',
-    changeOrigin: true,
-    // Additional proxy options for Replit environment
-    ws: true, // Support WebSocket
-    pathRewrite: { '^/': '/' }, // No path rewriting
-    // Add longer timeout for Replit environment
-    timeout: 20000,
-    proxyTimeout: 20000,
-    // TypeScript error workarounds - simply use @ ts-ignore for now
-    // @ts-ignore
-    onProxyReq: (proxyReq: any, req: any) => {
-      console.log(`Proxying request: ${req.method} ${req.url} to Flask server`);
-    },
-    // Improved error handling for Replit environment
-    // @ts-ignore
-    onError: (err: Error, req: any, res: any) => {
-      console.error('Flask proxy error:', err);
-      // Send a friendlier error response when proxy fails
-      res.status(503).send(`
-        <html>
-          <head>
-            <title>Service Temporarily Unavailable</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-              h1 { color: #d32f2f; }
-              .error-details { color: #666; margin-top: 20px; text-align: left; padding: 10px; background: #f5f5f5; border-radius: 4px; }
-            </style>
-          </head>
-          <body>
-            <h1>Service Temporarily Unavailable</h1>
-            <p>The frontend service is currently unavailable. Our team has been notified and is working on a fix.</p>
-            <p>Please try refreshing the page or try again in a few moments.</p>
-            <div class="error-details">
-              <p><strong>Error details:</strong> ${err.message}</p>
-            </div>
-          </body>
-        </html>
-      `);
-    }
-  });
-
-  // Frontend routes to proxy to Flask server
-  const frontendRoutes = [
-    '/',
-    '/about',
-    '/new-music',
-    '/archived-music',
-    '/tour',
-    '/engage',
-    '/newsletter',
-    '/blog',
-    '/collaboration',
-    '/contact',
-    '/static'
-  ];
-
-  // Register API routes first so they don't get proxied to Flask
   // Add fallback API root route
   app.get('/api', (req, res) => {
     // Include more detailed server info for diagnostics
     res.json({
       message: 'API server is running',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || 'unknown',
+      version: process.env.npm_package_version || '1.0.0',
       uptime: process.uptime().toFixed(0) + ' seconds',
       environment: process.env.NODE_ENV || 'development',
       node_version: process.version
     });
   });
 
-  // Register the Flask proxy for frontend routes AFTER API routes
-  frontendRoutes.forEach(route => {
-    app.use(route, flaskProxy);
-  });
-
-  // Serve static files directly from Express server for better performance
+  // Serve static files directly from Express
   app.use('/static', express.static('static'));
-  // Also serve CSS file from the root (styles.css) directly
-  app.use(express.static('.'));
-
-  // Add catch-all route for unmatched paths
-  app.use('*', (req, res) => {
-    res.status(404).json({
-      status: 'error',
-      code: 'not_found',
-      message: 'The requested route was not found'
-    });
-  });
+  app.use(express.static('.', { index: false }));
+  
+  // Create a simple proxy for Flask with minimal options
+  const flaskProxyOptions = {
+    target: 'http://localhost:5001',
+    changeOrigin: true
+  };
+  
+  // Use a simpler proxy setup - less complexity is more reliable in Replit
+  app.use('/', createProxyMiddleware(flaskProxyOptions));
 
   // Error handling middleware - registered last
   app.use(errorHandler);
