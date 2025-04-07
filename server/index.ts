@@ -17,6 +17,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import csurf from "csurf";
+import authRoutes from './routes/authRoutes'; // Added import for auth routes
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -143,18 +144,18 @@ app.use('/api', (req, res, next) => {
     if (req.method === 'GET') {
       return next();
     }
-    
+
     // Skip CSRF for development convenience endpoints
     if (req.path.startsWith('/test/') || req.path === '/health') {
       return next();
     }
   }
-  
+
   // Skip CSRF protection for the token endpoint and authentication endpoints
   if (req.path === '/csrf-token' || req.path === '/user' || req.path === '/login' || req.path === '/register') {
     return next();
   }
-  
+
   csrfProtection(req, res, next);
 });
 
@@ -213,10 +214,10 @@ async function startServer() {
 
     // Register API routes
     const httpServer = await registerRoutes(app);
-    
+
     // Add 404 handler for API routes
     app.use(notFoundHandler);
-    
+
     // Add global error handler (must be after all other middleware and routes)
     app.use(errorHandler);
 
@@ -319,7 +320,7 @@ async function startServer() {
       httpServer.listen(port, '0.0.0.0', () => {
         console.log(`Server successfully listening on port ${port}`);
         log(`Server listening on port ${port}`);
-        
+
         // Initialize security scans now that the server is running
         // Schedule regular scans every 24 hours
         try {
@@ -329,7 +330,7 @@ async function startServer() {
           console.error('Failed to initialize security scans:', error);
           // Continue server operation even if security scans fail to initialize
         }
-        
+
         resolve(true);
       }).on('error', (err: Error) => {
         console.error('Server startup error:', err);
