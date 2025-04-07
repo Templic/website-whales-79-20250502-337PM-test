@@ -3,7 +3,6 @@ import { MainFooter } from "./MainFooter";
 import StarBackground from "@/components/cosmic/StarBackground";
 import { useState, useEffect } from "react";
 import { CosmicFonts } from "@/components/common/cosmic-fonts";
-import { EnhancedAccessibilityControls } from "@/components/common/EnhancedAccessibilityControls";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -41,9 +40,6 @@ export function MainLayout({ children }: MainLayoutProps) {
         
         {/* Use consolidated MainFooter component */}
         <MainFooter />
-        
-        {/* Enhanced Accessibility Controls with Cosmic UI */}
-        <EnhancedAccessibilityControls />
       </div>
     </CosmicFonts>
   );

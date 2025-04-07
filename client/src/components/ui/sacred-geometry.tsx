@@ -38,29 +38,17 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
 
   // Adjust opacity based on intensity
   const opacityValue = intensity === 'subtle' ? 0.05 : 
-                       intensity === 'vivid' ? 0.3 : 
+                       intensity === 'vivid' ? 0.2 : 
                        fillOpacity;
 
-  // Enhanced shared style for all geometry components with more pronounced glow effects
+  // Shared style for all geometry components
   const svgStyle = {
     "--stroke-width": `${strokeWidth}px`,
     "--fill-opacity": opacityValue,
-    filter: intensity === 'vivid' 
-            ? 'drop-shadow(0 0 4px currentColor) drop-shadow(0 0 8px currentColor)' : 
-            intensity === 'medium' 
-            ? 'drop-shadow(0 0 3px currentColor)' : 
-            'drop-shadow(0 0 1px currentColor)',
-    transition: 'all 0.5s ease-in-out',
   } as React.CSSProperties;
 
-  // Enhanced animation classes with more cosmic effects
-  const animationClass = animated 
-    ? intensity === 'vivid' 
-      ? 'animate-spin-very-slow animate-pulse-glow animate-cosmic-pulse' 
-      : intensity === 'medium'
-        ? 'animate-spin-very-slow animate-glow' 
-        : 'animate-spin-very-slow' 
-    : '';
+  // Animation class based on the animated prop
+  const animationClass = animated ? 'animate-spin-very-slow' : '';
 
   // Helper function to create SVG with consistent props
   const createSvg = (children: React.ReactNode) => (

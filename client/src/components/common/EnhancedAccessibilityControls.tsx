@@ -1,227 +1,358 @@
-/**
- * EnhancedAccessibilityControls.tsx
- * 
- * Component for accessibility controls with cosmic theming
- * Provides options for text size, contrast, motion reduction, and voice controls
- */
-
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import {
+  Eye,
+  EyeOff,
+  Type,
+  Contrast,
+  Mic,
+  Keyboard,
+  X,
+  Maximize,
+  Minimize,
+  ChevronUp,
+  ChevronDown,
+  Settings,
+  Moon,
+  Waves,
+  ArrowDownUp,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
-import SacredGeometry from "@/components/cosmic/SacredGeometry";
 
 export function EnhancedAccessibilityControls() {
-  const { 
-    textSize, 
+  const {
+    textSize,
     setTextSize,
     contrast,
-    setContrast, 
-    reducedMotion, 
+    setContrast,
+    reducedMotion,
     setReducedMotion,
     voiceEnabled,
-    setVoiceEnabled
+    setVoiceEnabled,
+    autoHideNav,
+    setAutoHideNav,
+    isAccessibilityOpen,
+    openAccessibilityPanel,
+    closeAccessibilityPanel,
   } = useAccessibility();
-  
-  const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  
-  // Helper functions to modify textSize
-  const increaseTextSize = () => {
-    if (textSize < 150) {
-      setTextSize(textSize + 25);
-    }
-  };
-  
-  const decreaseTextSize = () => {
-    if (textSize > 75) {
-      setTextSize(textSize - 25);
-    }
-  };
-  
-  // Helper functions for toggles
-  const toggleHighContrast = () => {
-    setContrast(contrast === 'high' ? 'default' : 'high');
-  };
-  
-  const toggleReducedMotion = () => {
-    setReducedMotion(!reducedMotion);
-  };
-  
-  const toggleVoiceEnabled = () => {
-    setVoiceEnabled(!voiceEnabled);
-  };
-  
-  // Control visibility with delay for animations
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    if (isOpen) {
-      setIsVisible(true);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  // Mock voice recognition
+  const toggleVoiceRecognition = () => {
+    if (isListening) {
+      setIsListening(false);
     } else {
-      timeout = setTimeout(() => {
-        setIsVisible(false);
-      }, 300); // Match transition duration
+      setIsListening(true);
+      // In a real implementation, this would start the speech recognition API
+      setTimeout(() => {
+        setIsListening(false);
+      }, 5000);
     }
-    
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [isOpen]);
+  };
 
   return (
-    <div className="fixed bottom-6 md:bottom-8 right-6 md:right-8 z-50">
-      {/* Accessibility Panel */}
-      {isVisible && (
-        <div 
-          className={`cosmic-accessibility-panel bg-gradient-to-br from-[rgba(0,235,214,0.15)] to-[rgba(91,120,255,0.05)] backdrop-blur-md border border-[#00ebd6]/20 rounded-xl p-4 md:p-6 mb-4 w-[280px] transition-all duration-300 ${isOpen ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'}`}
-          aria-hidden={!isOpen}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-[#00ebd6] font-bold text-lg flex items-center gap-2">
-              <SacredGeometry type="flower-of-life" className="w-5 h-5" />
-              <span>Accessibility</span>
-            </h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white/70 hover:text-white transition-colors p-1"
-              aria-label="Close accessibility panel"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
+    <>
+      {/* Accessibility button */}
+      <button
+        onClick={openAccessibilityPanel}
+        className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+        aria-label="Accessibility Options"
+      >
+        <Settings className="h-6 w-6" />
+      </button>
 
-          <div className="space-y-4">
-            {/* Text Size Controls */}
-            <div className="accessibility-control">
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-white flex items-center gap-2">
-                  <SacredGeometry type="pentagon-star" className="w-4 h-4 text-[#5b78ff]" />
-                  <span>Text Size</span>
-                </label>
-                <span className="text-[#00ebd6] text-sm">
-                  {textSize === 75 ? 'Small' : textSize === 100 ? 'Medium' : 'Large'}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={decreaseTextSize}
-                  disabled={textSize <= 75}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border ${textSize <= 75 ? 'border-white/20 text-white/30' : 'border-[#00ebd6]/40 text-white hover:border-[#00ebd6] hover:bg-[#00ebd6]/10 transition-colors'}`}
-                  aria-label="Decrease text size"
+      {/* Accessibility panel */}
+      {isAccessibilityOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div
+            className={cn(
+              "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all",
+              isExpanded ? "h-[80vh] overflow-y-auto" : "max-h-[80vh] overflow-y-auto"
+            )}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">Accessibility Options</h2>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
-                  <span className="text-lg">-</span>
-                </button>
-                <div className="flex-grow h-2 bg-[#050f28] rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[#00ebd6] to-[#5b78ff] transition-all duration-300"
-                    style={{ width: textSize === 75 ? '33%' : textSize === 100 ? '66%' : '100%' }}
-                  ></div>
+                  {isExpanded ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                  <span className="sr-only">{isExpanded ? "Minimize" : "Maximize"}</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeAccessibilityPanel}
+                  className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Text Size */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Type className="h-5 w-5 text-purple-400" />
+                    <h3 className="font-medium text-white">Text Size</h3>
+                  </div>
+                  <span className="text-sm text-white/70">{textSize}%</span>
                 </div>
-                <button
-                  onClick={increaseTextSize}
-                  disabled={textSize >= 150}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center border ${textSize >= 150 ? 'border-white/20 text-white/30' : 'border-[#00ebd6]/40 text-white hover:border-[#00ebd6] hover:bg-[#00ebd6]/10 transition-colors'}`}
-                  aria-label="Increase text size"
-                >
-                  <span className="text-lg">+</span>
-                </button>
+                <Slider
+                  value={[textSize]}
+                  min={75}
+                  max={200}
+                  step={5}
+                  onValueChange={(value) => setTextSize(value[0])}
+                  className="cursor-pointer"
+                />
+                <div className="flex justify-between text-xs text-white/60">
+                  <span>A</span>
+                  <span className="text-base">A</span>
+                  <span className="text-xl">A</span>
+                </div>
               </div>
+
+              {/* Contrast */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Contrast className="h-5 w-5 text-purple-400" />
+                  <h3 className="font-medium text-white">Contrast & Color</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setContrast("default")}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors",
+                      contrast === "default"
+                        ? "border-purple-400 bg-purple-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600"></div>
+                    <span className="text-xs font-medium text-white">Default</span>
+                  </button>
+                  <button
+                    onClick={() => setContrast("high")}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors",
+                      contrast === "high"
+                        ? "border-purple-400 bg-purple-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-white"></div>
+                    <span className="text-xs font-medium text-white">High Contrast</span>
+                  </button>
+                  <button
+                    onClick={() => setContrast("dark")}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-lg border p-3 transition-colors",
+                      contrast === "dark"
+                        ? "border-purple-400 bg-purple-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-8 w-8 rounded-full bg-gray-900"></div>
+                    <span className="text-xs font-medium text-white">Dark Mode</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Motion & Animation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-purple-400"
+                  >
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                  </svg>
+                  <div>
+                    <h3 className="font-medium text-white">Reduce Motion</h3>
+                    <p className="text-xs text-white/60">Minimize animations</p>
+                  </div>
+                </div>
+                <Switch checked={reducedMotion} onCheckedChange={setReducedMotion} />
+              </div>
+
+              {/* Auto-hide Navigation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ArrowDownUp className="h-5 w-5 text-purple-400" />
+                  <div>
+                    <h3 className="font-medium text-white">Auto-hide Navigation</h3>
+                    <p className="text-xs text-white/60">Hide navigation when scrolling</p>
+                  </div>
+                </div>
+                <Switch checked={autoHideNav} onCheckedChange={setAutoHideNav} />
+              </div>
+
+              {/* Voice Navigation */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mic className="h-5 w-5 text-purple-400" />
+                  <div>
+                    <h3 className="font-medium text-white">Voice Navigation</h3>
+                    <p className="text-xs text-white/60">Control with voice commands</p>
+                  </div>
+                </div>
+                <Switch checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
+              </div>
+
+              {voiceEnabled && (
+                <div className="rounded-lg bg-black/40 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-white">Voice Commands</h4>
+                    <Button
+                      variant={isListening ? "default" : "outline"}
+                      size="sm"
+                      onClick={toggleVoiceRecognition}
+                      className={cn(
+                        isListening
+                          ? "bg-purple-500 text-white hover:bg-purple-600"
+                          : "border-white/20 text-white hover:bg-white/10"
+                      )}
+                    >
+                      <Mic className="mr-2 h-4 w-4" />
+                      {isListening ? "Listening..." : "Start Listening"}
+                    </Button>
+                  </div>
+                  <div className="space-y-2 text-sm text-white/80">
+                    <p>Try saying:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>"Play music" - Start playing the current track</li>
+                      <li>"Next track" - Skip to the next track</li>
+                      <li>"Show merchandise" - Navigate to the merchandise page</li>
+                      <li>"Increase volume" - Turn up the volume</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Keyboard Navigation */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Keyboard className="h-5 w-5 text-purple-400" />
+                  <h3 className="font-medium text-white">Keyboard Navigation</h3>
+                </div>
+                <div className="rounded-lg bg-black/40 p-4">
+                  <div className="space-y-2 text-sm text-white/80">
+                    <p>Keyboard shortcuts:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center justify-between">
+                        <span>Play/Pause</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">Space</kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Next Track</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">→</kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Previous Track</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">←</kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Volume Up</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">↑</kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Volume Down</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">↓</kbd>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Mute</span>
+                        <kbd className="rounded bg-black/60 px-2 py-1 text-xs">M</kbd>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {isExpanded && (
+                <>
+                  {/* Screen Reader */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Eye className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <h3 className="font-medium text-white">Screen Reader Support</h3>
+                        <p className="text-xs text-white/60">Optimized for screen readers</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-green-400">Active</span>
+                  </div>
+
+                  {/* Focus Mode */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <EyeOff className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <h3 className="font-medium text-white">Focus Mode</h3>
+                        <p className="text-xs text-white/60">Reduce distractions</p>
+                      </div>
+                    </div>
+                    <Switch />
+                  </div>
+
+                  {/* Additional Settings */}
+                  <div className="rounded-lg bg-gradient-to-r from-purple-900/30 to-indigo-900/30 p-4">
+                    <h4 className="font-medium text-white mb-2">Need More Help?</h4>
+                    <p className="text-sm text-white/80 mb-3">
+                      Contact us for personalized accessibility assistance or to report any issues.
+                    </p>
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700">
+                      Contact Support
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* High Contrast Toggle */}
-            <div className="accessibility-control">
-              <div className="flex justify-between items-center">
-                <label className="text-white flex items-center gap-2" htmlFor="high-contrast-toggle">
-                  <SacredGeometry type="vesica-piscis" className="w-4 h-4 text-[#5b78ff]" />
-                  <span>High Contrast</span>
-                </label>
-                <button
-                  id="high-contrast-toggle"
-                  onClick={toggleHighContrast}
-                  className={`w-12 h-6 rounded-full p-1 transition-colors ${contrast === 'high' ? 'bg-[#00ebd6]' : 'bg-[#050f28] border border-white/20'}`}
-                  aria-pressed={contrast === 'high'}
-                  aria-label="Toggle high contrast mode"
-                >
-                  <span 
-                    className={`block w-4 h-4 rounded-full transition-transform ${contrast === 'high' ? 'bg-[#050f28] transform translate-x-6' : 'bg-white transform translate-x-0'}`}
-                  ></span>
-                </button>
-              </div>
-            </div>
+            {!isExpanded && (
+              <Button
+                variant="ghost"
+                className="mt-4 w-full border-t border-white/10 pt-4 text-white/70 hover:bg-transparent hover:text-white"
+                onClick={() => setIsExpanded(true)}
+              >
+                <ChevronDown className="mr-2 h-4 w-4" />
+                Show More Options
+              </Button>
+            )}
 
-            {/* Reduced Motion Toggle */}
-            <div className="accessibility-control">
-              <div className="flex justify-between items-center">
-                <label className="text-white flex items-center gap-2" htmlFor="reduced-motion-toggle">
-                  <SacredGeometry type="hexagon" className="w-4 h-4 text-[#5b78ff]" />
-                  <span>Reduced Motion</span>
-                </label>
-                <button
-                  id="reduced-motion-toggle"
-                  onClick={toggleReducedMotion}
-                  className={`w-12 h-6 rounded-full p-1 transition-colors ${reducedMotion ? 'bg-[#00ebd6]' : 'bg-[#050f28] border border-white/20'}`}
-                  aria-pressed={reducedMotion}
-                  aria-label="Toggle reduced motion"
-                >
-                  <span 
-                    className={`block w-4 h-4 rounded-full transition-transform ${reducedMotion ? 'bg-[#050f28] transform translate-x-6' : 'bg-white transform translate-x-0'}`}
-                  ></span>
-                </button>
-              </div>
-            </div>
-
-            {/* Voice Controls Toggle */}
-            <div className="accessibility-control">
-              <div className="flex justify-between items-center">
-                <label className="text-white flex items-center gap-2" htmlFor="voice-enabled-toggle">
-                  <SacredGeometry type="golden-spiral" className="w-4 h-4 text-[#5b78ff]" />
-                  <span>Voice Controls</span>
-                </label>
-                <button
-                  id="voice-enabled-toggle"
-                  onClick={toggleVoiceEnabled}
-                  className={`w-12 h-6 rounded-full p-1 transition-colors ${voiceEnabled ? 'bg-[#00ebd6]' : 'bg-[#050f28] border border-white/20'}`}
-                  aria-pressed={voiceEnabled}
-                  aria-label="Toggle voice controls"
-                >
-                  <span 
-                    className={`block w-4 h-4 rounded-full transition-transform ${voiceEnabled ? 'bg-[#050f28] transform translate-x-6' : 'bg-white transform translate-x-0'}`}
-                  ></span>
-                </button>
-              </div>
-            </div>
+            {isExpanded && (
+              <Button
+                variant="ghost"
+                className="mt-4 w-full border-t border-white/10 pt-4 text-white/70 hover:bg-transparent hover:text-white"
+                onClick={() => setIsExpanded(false)}
+              >
+                <ChevronUp className="mr-2 h-4 w-4" />
+                Show Less
+              </Button>
+            )}
           </div>
         </div>
       )}
-      
-      {/* Accessibility Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative group bg-gradient-to-br from-[#00ebd6] to-[#5b78ff] hover:from-[#00ebd6] hover:to-[#7c3aed] p-3 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center"
-        aria-expanded={isOpen}
-        aria-label="Accessibility controls"
-      >
-        <span className="sr-only">Accessibility Options</span>
-        
-        {/* Visual pulse effect */}
-        <span className="absolute inset-0 rounded-full bg-[#00ebd6] opacity-20 group-hover:scale-110 transition-transform duration-500"></span>
-        
-        {/* Accessibility icon */}
-        <div className="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#050f28]">
-            <circle cx="12" cy="12" r="10"></circle>
-            <circle cx="12" cy="10" r="3"></circle>
-            <path d="M12 13a5 5 0 0 0-5 5"></path>
-            <path d="M12 13a5 5 0 0 1 5 5"></path>
-          </svg>
-          
-          {/* Decorative geometry */}
-          <div className="absolute -right-1 -top-1 opacity-70">
-            <SacredGeometry type="pentagon-star" className="w-3 h-3 text-[#050f28]" />
-          </div>
-        </div>
-      </button>
-    </div>
+    </>
   );
 }

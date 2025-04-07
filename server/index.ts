@@ -1,290 +1,347 @@
-/**
- * Server main entry point with resilience, monitoring, and security features
- */
+import express, { type Request, Response, NextFunction } from "express";
+import fileUpload from "express-fileupload";
+import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { log } from "./vite";
+import { setupVite } from "./vite";
+import { registerRoutes } from "./routes";
+import { pgPool, initializeDatabase } from "./db";
+import { setupAuth } from "./auth";
+import { storage } from "./storage";
+import { initDatabaseOptimization } from "./db-optimize";
+import { initBackgroundServices, shutdownBackgroundServices } from "./db-background";
+import { initializeSecurityScans } from "./securityScan";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
+import csurf from "csurf";
+import authRoutes from './routes/authRoutes'; // Added import for auth routes
 
-import express from 'express';
-import http from 'http';
-import cors from 'cors';
-import helmet from 'helmet';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import db from './db';
-import resilience from './resilience';
-import monitoring from './monitoring';
-import { registerRoutes } from './routes';
-import { initializeSecurityScans, stopSecurityScans } from './securityScan';
-import { initDatabaseOptimization } from './db-optimize';
-import { initBackgroundServices, shutdownBackgroundServices } from './db-background';
-import { initializeCompliance } from './security/compliance';
-import security from './security/security';
-import healthRoutes from './routes/healthRoutes';
-import authRoutes from './routes/authRoutes';
-import dbMonitorRoutes from './routes/db-monitor';
-import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { apiRateLimit } from './middleware/rateLimit';
-import monitoringMiddleware from './middleware/monitoring';
-import { spawn } from 'child_process';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-// Create Express app
 const app = express();
-let server: http.Server;
 
-/**
- * Initialize and start the server
- */
-let flaskProcess: any = null;
+// Cookie parser middleware
+app.use(cookieParser());
 
-/**
- * Start the Flask frontend server process
- */
-function startFlaskServer() {
-  console.log('Starting Flask frontend server...');
-  
-  // Start Flask server as a child process
-  flaskProcess = spawn('python3', ['app.py']);
-  
-  flaskProcess.stdout.on('data', (data: Buffer) => {
-    console.log(`Flask server stdout: ${data.toString()}`);
-  });
-  
-  flaskProcess.stderr.on('data', (data: Buffer) => {
-    console.error(`Flask server stderr: ${data.toString()}`);
-  });
-  
-  flaskProcess.on('close', (code: number) => {
-    console.log(`Flask server process exited with code ${code}`);
-    flaskProcess = null;
-  });
-  
-  // Wait for Flask server to start (simple delay)
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, 2000);
-  });
-}
+// Apply helmet middleware for security headers
+app.use(helmet());
 
-export async function startServer(): Promise<http.Server> {
-  console.log('Starting server with enhanced resilience and monitoring...');
+// Set Content-Security-Policy header
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: blob:; " +
+    "connect-src 'self' wss: ws:; " +
+    "font-src 'self' data:; " +
+    "object-src 'none'; " +
+    "media-src 'self'; " +
+    "frame-src 'self' https://auth.util.repl.co;"
+  );
+  next();
+});
 
-  try {
-    // Initialize resilience components
-    resilience.initializeResilienceComponents();
+// Force HTTPS
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && !req.secure) {
+    return res.redirect('https://' + req.headers.host + req.url);
+  }
+  next();
+});
 
-    // Initialize database
-    const dbInitialized = await db.initDatabaseConnection();
-    if (!dbInitialized) {
-      throw new Error('Failed to initialize database connection');
+// Set up CORS
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://cosmic-community.replit.app'] 
+    : ['http://localhost:5000', 'http://localhost:3000'],
+  credentials: true
+}));
+
+// Import enhanced rate limiting middleware
+import { 
+  defaultLimiter, 
+  authLimiter, 
+  adminLimiter, 
+  publicLimiter 
+} from './middleware/rateLimit';
+
+// Apply rate limiting to different routes based on their purposes
+app.use('/api/auth', authLimiter);         // Stricter limits for authentication endpoints
+app.use('/api/admin', adminLimiter);       // Admin operations get their own rate limit
+app.use('/api/public', publicLimiter);     // Public API endpoints get more generous limits
+app.use('/api', defaultLimiter);           // Default rate limiting for all other API routes
+
+// Add MIME type for JavaScript modules
+app.use((req, res, next) => {
+  if (req.path.endsWith('.js') || req.path.endsWith('.mjs') || req.path.includes('.js?')) {
+    res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
+  }
+  if (req.path.endsWith('.css') || req.path.includes('.css?')) {
+    res.setHeader('Content-Type', 'text/css; charset=UTF-8');
+  }
+  next();
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(fileUpload({
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB max file size
+  createParentPath: true,
+  abortOnLimit: true,
+  safeFileNames: true,
+  preserveExtension: true,
+  debug: false // Disable debug messages
+}));
+
+// Setup CSRF protection with more permissive settings
+// In development mode, we're even more permissive to simplify testing
+const csrfProtection = csurf({ 
+  cookie: {
+    httpOnly: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+  },
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'], // Don't require CSRF for these methods
+  value: (req) => {
+    // For development, accept CSRF token from various locations
+    if (process.env.NODE_ENV !== 'production') {
+      const token = 
+        req.body?._csrf || 
+        req.query?._csrf || 
+        req.headers['csrf-token'] || 
+        req.headers['x-csrf-token'] ||
+        req.headers['x-xsrf-token'];
+      if (token) return token;
+    }
+    // In production, use the standard behavior
+    // Fall back to default extraction if available, otherwise allow token to be undefined
+    // which will likely fail CSRF validation (secure in production)
+    return (req.cookies && req.cookies['_csrf']) || 
+           (req.body && req.body._csrf) || 
+           (req.query && req.query._csrf) ||
+           req.headers['csrf-token'] ||
+           req.headers['x-csrf-token'] ||
+           req.headers['x-xsrf-token'];
+  }
+});
+
+// Provide CSRF token for client-side forms (must be defined before applying CSRF protection)
+app.get('/api/csrf-token', csrfProtection, (req: Request, res: Response) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Apply CSRF protection to all API routes except the token endpoint and user endpoint
+app.use('/api', (req, res, next) => {
+  // Be more permissive with CSRF protection in development mode
+  if (process.env.NODE_ENV !== 'production') {
+    // Skip CSRF protection for GET requests in development
+    if (req.method === 'GET') {
+      return next();
     }
 
-    // Initialize database optimization
-    await initDatabaseOptimization();
+    // Skip CSRF for development convenience endpoints
+    if (req.path.startsWith('/test/') || req.path === '/health') {
+      return next();
+    }
+  }
 
-    // Initialize background services
-    await initBackgroundServices();
+  // Skip CSRF protection for the token endpoint and authentication endpoints
+  if (req.path === '/csrf-token' || req.path === '/user' || req.path === '/login' || req.path === '/register') {
+    return next();
+  }
 
-    // Initialize monitoring
-    monitoring.initialize({
-      systemMetricsIntervalMs: 60000 // Collect metrics every minute
+  csrfProtection(req, res, next);
+});
+
+// CSRF error handler
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    // Handle CSRF token errors
+    return res.status(403).json({
+      error: 'CSRF attack detected. Form submission rejected.'
+    });
+  }
+  // Pass other errors to the next error handler
+  next(err);
+});
+
+
+// Add logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (req.path.startsWith("/api")) {
+      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
+    }
+  });
+  next();
+});
+
+// Import global error handling middleware
+import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+
+// Use port 5000, defaulting to 5000 if PORT env var is invalid
+const port = parseInt(process.env.PORT || "5000", 10) || 5000;
+
+// Add session cleanup interval
+let cleanupInterval: NodeJS.Timeout;
+
+async function startServer() {
+  console.log('Starting server initialization...');
+
+  try {
+    // Initialize database connection
+    await initializeDatabase();
+
+    // Initialize database optimization and background services
+    await initDatabaseOptimization().catch(err => {
+      console.warn('Database optimization initialization failed, continuing without it:', err);
     });
 
-    // Initialize security scanning
-    initializeSecurityScans();
+    await initBackgroundServices().catch(err => {
+      console.warn('Background database services initialization failed, continuing without them:', err);
+    });
 
-    // Initialize compliance framework
-    initializeCompliance();
-    
-    // Start Flask frontend server
-    await startFlaskServer();
+    // Setup authentication first (before any routes are registered)
+    setupAuth(app);
 
-    // Configure Express middleware
-    configureExpress();
+    // Register API routes
+    const httpServer = await registerRoutes(app);
 
-    // Register routes
-    server = await registerRoutes(app);
+    // Add 404 handler for API routes
+    app.use(notFoundHandler);
 
-    // Start HTTP server
-    const port = process.env.PORT || 5000;
-    const host = process.env.HOST || '0.0.0.0';
+    // Add global error handler (must be after all other middleware and routes)
+    app.use(errorHandler);
 
-    server.listen(port, host as any, () => {
-      console.log(`Server listening on ${host}:${port}`);
-      
-      // Add more helpful information for Replit environment
-      if (process.env.REPL_ID && process.env.REPL_OWNER) {
-        console.log(`\n✅ Application is running in Replit environment`);
-        console.log(`Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
-      } else {
-        console.log(`\n✅ Local development URL: http://localhost:${port}`);
+    // Initialize WebSocket and Socket.IO servers
+    try {
+      const { wss, io } = await import('./websocket').then(({ setupWebSockets }) => setupWebSockets(httpServer));
+      console.log('WebSocket and Socket.IO servers initialized successfully');
+
+      // Add WebSocket server cleanup to shutdown process
+      const shutdown = async () => {
+        console.log('Shutting down server...');
+        try {
+          // Clear session cleanup interval
+          if (cleanupInterval) {
+            clearInterval(cleanupInterval as any);
+          }
+
+          // Close WebSocket connections
+          wss.clients.forEach(client => {
+            try {
+              client.close();
+            } catch (err) {
+              console.error('Error closing WebSocket client:', err);
+            }
+          });
+          wss.close();
+
+          // Close Socket.IO connections
+          io.close(() => {
+            console.log('Socket.IO server closed');
+          });
+
+          await new Promise<void>((resolve) => {
+            httpServer.close(() => {
+              console.log('HTTP server closed');
+              resolve();
+            });
+          });
+
+          // Shutdown background services
+          try {
+            await shutdownBackgroundServices();
+            console.log('Background database services stopped');
+          } catch (err) {
+            console.error('Error shutting down background services:', err);
+          }
+
+          console.log('Closing database pool...');
+          await pgPool.end();
+          console.log('Database pool closed');
+
+          process.exit(0);
+        } catch (error) {
+          console.error('Error during shutdown:', error);
+          process.exit(1);
+        }
+      };
+
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+
+    } catch (error) {
+      console.error('Failed to initialize WebSocket server:', error);
+      // Continue server startup even if WebSocket fails
+    }
+
+    // Error handling and crash recovery
+    process.on('uncaughtException', (error) => {
+      console.error('Uncaught Exception:', error);
+      // Perform cleanup if needed but keep server running
+    });
+
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      // Log but don't exit process
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Setting up Vite in development mode...');
+      await setupVite(app, httpServer);
+    } else {
+      app.use(express.static(path.resolve(__dirname, "../templates")));
+      app.use("*", (_req, res) => {
+        res.sendFile(path.resolve(__dirname, "../templates/home_page.html"));
+      });
+    }
+
+
+    // Start periodic session cleanup (every 6 hours)
+    cleanupInterval = setInterval(async () => {
+      try {
+        await storage.cleanupExpiredSessions();
+        console.log('Session cleanup completed successfully');
+      } catch (error) {
+        console.error('Session cleanup failed:', error);
       }
-      console.log(`API endpoint: http://localhost:${port}/api`);
+    }, 6 * 60 * 60 * 1000);
+
+    await new Promise((resolve, reject) => {
+      httpServer.listen(port, '0.0.0.0', () => {
+        console.log(`Server successfully listening on port ${port}`);
+        log(`Server listening on port ${port}`);
+
+        // Initialize security scans now that the server is running
+        // Schedule regular scans every 24 hours
+        try {
+          initializeSecurityScans(24);
+          console.log('Security scanning service initialized');
+        } catch (error) {
+          console.error('Failed to initialize security scans:', error);
+          // Continue server operation even if security scans fail to initialize
+        }
+
+        resolve(true);
+      }).on('error', (err: Error) => {
+        console.error('Server startup error:', err);
+        reject(err);
+      });
     });
 
-    // Handle graceful shutdown
-    setupGracefulShutdown();
-
-    return server;
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
-/**
- * Configure Express middleware
- */
-function configureExpress(): void {
-  // Basic security middleware
-  app.use(helmet());
-  app.use(cors());
-  
-  // Security headers can be applied to all routes
-  app.use(security.securityHeaders);
-
-  // Body parsing middleware
-  app.use(express.json({ limit: '1mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-
-  // Monitoring middleware for request timing
-  app.use(monitoringMiddleware.requestTimingMiddleware);
-  app.use(monitoringMiddleware.serverInfoMiddleware);
-
-  // Rate limiting and security for API routes
-  app.use('/api', apiRateLimit());
-  
-  // Apply security middleware only to specific API routes to avoid blocking 404 handler
-  app.use(['/api/auth', '/api/user', '/api/data'], security.securityMiddleware);
-
-  // Register health routes
-  app.use('/api', healthRoutes);
-
-  // Register auth routes
-  app.use('/api/auth', authRoutes);
-
-  // Register database monitoring routes
-  app.use('/api/db', dbMonitorRoutes);
-
-  // Add test endpoint directly to ensure it's registered
-  app.get('/api/test', (req, res) => {
-    res.status(200).json({
-      message: 'API test successful',
-      timestamp: new Date().toISOString(),
-      userInfo: (req as any).user || null
-    });
-  });
-
-  // Add fallback API root route
-  app.get('/api', (req, res) => {
-    // Include more detailed server info for diagnostics
-    res.json({
-      message: 'API server is running',
-      timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      uptime: process.uptime().toFixed(0) + ' seconds',
-      environment: process.env.NODE_ENV || 'development',
-      node_version: process.version
-    });
-  });
-
-  // Serve static files directly from Express
-  app.use('/static', express.static('static'));
-  app.use(express.static('.', { index: false }));
-  
-  // Create a simple proxy for Flask with minimal options
-  const flaskProxyOptions = {
-    target: 'http://localhost:5001',
-    changeOrigin: true
-  };
-  
-  // Use a simpler proxy setup - less complexity is more reliable in Replit
-  app.use('/', createProxyMiddleware(flaskProxyOptions));
-
-  // Error handling middleware - registered last
-  app.use(errorHandler);
-}
-
-/**
- * Set up graceful shutdown handling
- */
-function setupGracefulShutdown(): void {
-  // Handle process termination signals
-  const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
-
-  for (const signal of signals) {
-    process.on(signal, async () => {
-      console.log(`Received ${signal}, shutting down gracefully...`);
-      await shutdown();
-    });
-  }
-
-  // Handle uncaught exceptions
-  process.on('uncaughtException', async (error) => {
-    console.error('Uncaught exception:', error);
-    await shutdown();
-  });
-
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', async (reason, promise) => {
-    console.error('Unhandled promise rejection at:', promise, 'reason:', reason);
-    // Don't shut down for unhandled rejections, just log them
-  });
-}
-
-/**
- * Gracefully shut down the server and release resources
- */
-export async function shutdown(): Promise<void> {
-  console.log('Shutting down server...');
-
-  // Close HTTP server first to stop accepting new connections
-  if (server) {
-    await new Promise<void>((resolve) => {
-      server.close(() => {
-        console.log('HTTP server closed');
-        resolve();
-      });
-    });
-  }
-
-  // Terminate Flask server process if running
-  if (flaskProcess) {
-    console.log('Terminating Flask server process...');
-    try {
-      flaskProcess.kill();
-      console.log('Flask server process terminated');
-    } catch (error) {
-      console.error('Error terminating Flask server process:', error);
-    }
-    flaskProcess = null;
-  }
-
-  // Shutdown monitoring
-  monitoring.shutdown();
-
-  // Shutdown security scans
-  stopSecurityScans();
-
-  // Shutdown background services
-  await shutdownBackgroundServices();
-
-  // Shutdown resilience components
-  resilience.shutdownResilienceComponents();
-
-  // Close database connection last
-  await db.closeDatabaseConnection();
-
-  console.log('Server shutdown complete');
-
-  // Force exit if shutdown takes too long
-  setTimeout(() => {
-    console.log('Forced exit after shutdown timeout');
-    process.exit(0);
-  }, 5000);
-}
-
-// Start the server if this file is run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  startServer().catch((error) => {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  });
-}
-
-export default app;
+startServer();

@@ -10,7 +10,7 @@ import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SacredGeometryProps {
-  type: 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral' | 'fibonacci-spiral' | 'merkaba' | 'octagon';
+  type: 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral';
   size?: number;
   color?: string;
   animate?: boolean;
@@ -80,15 +80,6 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           break;
         case 'golden-spiral':
           drawGoldenSpiral(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'fibonacci-spiral':
-          drawFibonacciSpiral(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'merkaba':
-          drawMerkaba(ctx, centerX, centerY, radius, rotation);
-          break;
-        case 'octagon':
-          drawOctagon(ctx, centerX, centerY, radius, rotation);
           break;
         default:
           drawFlowerOfLife(ctx, centerX, centerY, radius, rotation);
@@ -468,10 +459,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
       
       // Draw quarter circles for each rectangle
       for (let i = 0; i < maxIterations; i++) {
-        let centerX = cx;
-        let centerY = cy;
-        let startAngle = 0;
-        let endAngle = Math.PI / 2;
+        let centerX, centerY, startAngle, endAngle;
         
         if (i % 4 === 0) {
           centerX = cx + currentSize / 2;
@@ -504,237 +492,6 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
       ctx.restore();
     }
 
-    // Fibonacci Spiral (similar to Golden Spiral but using Fibonacci numbers)
-    function drawFibonacciSpiral(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-
-      // Fibonacci sequence
-      const fibonacci = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55];
-      const maxSize = Math.min(fibonacci[fibonacci.length - 1], radius * 1.5);
-      const scale = (radius * 0.9) / maxSize;
-      
-      // Start at a relative center
-      let currentX = cx;
-      let currentY = cy;
-      let direction = 0; // 0: right, 1: down, 2: left, 3: up
-      
-      // Draw the spiral
-      ctx.beginPath();
-      ctx.moveTo(currentX, currentY);
-      
-      for (let i = 0; i < fibonacci.length - 1; i++) {
-        const size = fibonacci[i] * scale;
-        
-        // Draw rectangle
-        ctx.rect(currentX, currentY, size, size);
-        
-        // Calculate positions for the arc
-        let arcX, arcY;
-        switch (direction) {
-          case 0: // going right
-            arcX = currentX + size;
-            arcY = currentY + size;
-            currentX += size;
-            break;
-          case 1: // going down
-            arcX = currentX;
-            arcY = currentY + size;
-            currentY += size;
-            break;
-          case 2: // going left
-            arcX = currentX;
-            arcY = currentY;
-            currentX -= fibonacci[i+1] * scale;
-            break;
-          case 3: // going up
-            arcX = currentX + size;
-            arcY = currentY;
-            currentY -= fibonacci[i+1] * scale;
-            break;
-        }
-        
-        // Draw the arc
-        const startAngle = Math.PI * 0.5 * (direction);
-        const endAngle = Math.PI * 0.5 * ((direction + 1) % 4);
-        if (arcX !== undefined && arcY !== undefined) {
-          ctx.arc(arcX, arcY, size, startAngle, endAngle, false);
-        }
-        
-        // Update direction for next segment
-        direction = (direction + 1) % 4;
-      }
-      
-      ctx.stroke();
-      
-      ctx.restore();
-    }
-
-    // Merkaba (Star Tetrahedron)
-    function drawMerkaba(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-      
-      // Draw upward-pointing tetrahedron
-      const upperRadius = radius * 0.8;
-      ctx.beginPath();
-      
-      // Top point
-      const topX = cx;
-      const topY = cy - upperRadius;
-      
-      // Bottom triangle points (120° apart)
-      const bottomPoints = [];
-      for (let i = 0; i < 3; i++) {
-        const angle = Math.PI * 2 / 3 * i + Math.PI / 6;
-        bottomPoints.push({
-          x: cx + upperRadius * Math.cos(angle),
-          y: cy + upperRadius * Math.sin(angle)
-        });
-      }
-      
-      // Draw edges
-      ctx.moveTo(topX, topY);
-      ctx.lineTo(bottomPoints[0].x, bottomPoints[0].y);
-      ctx.lineTo(bottomPoints[1].x, bottomPoints[1].y);
-      ctx.lineTo(topX, topY);
-      ctx.moveTo(topX, topY);
-      ctx.lineTo(bottomPoints[2].x, bottomPoints[2].y);
-      ctx.moveTo(bottomPoints[0].x, bottomPoints[0].y);
-      ctx.lineTo(bottomPoints[2].x, bottomPoints[2].y);
-      ctx.moveTo(bottomPoints[1].x, bottomPoints[1].y);
-      ctx.lineTo(bottomPoints[2].x, bottomPoints[2].y);
-      
-      ctx.stroke();
-      
-      // Draw downward-pointing tetrahedron
-      const lowerRadius = radius * 0.8;
-      ctx.beginPath();
-      
-      // Bottom point
-      const bottomX = cx;
-      const bottomY = cy + lowerRadius;
-      
-      // Top triangle points (120° apart)
-      const topPoints = [];
-      for (let i = 0; i < 3; i++) {
-        const angle = Math.PI * 2 / 3 * i - Math.PI / 6;
-        topPoints.push({
-          x: cx + lowerRadius * Math.cos(angle),
-          y: cy + lowerRadius * Math.sin(angle)
-        });
-      }
-      
-      // Draw edges
-      ctx.moveTo(bottomX, bottomY);
-      ctx.lineTo(topPoints[0].x, topPoints[0].y);
-      ctx.lineTo(topPoints[1].x, topPoints[1].y);
-      ctx.lineTo(bottomX, bottomY);
-      ctx.moveTo(bottomX, bottomY);
-      ctx.lineTo(topPoints[2].x, topPoints[2].y);
-      ctx.moveTo(topPoints[0].x, topPoints[0].y);
-      ctx.lineTo(topPoints[2].x, topPoints[2].y);
-      ctx.moveTo(topPoints[1].x, topPoints[1].y);
-      ctx.lineTo(topPoints[2].x, topPoints[2].y);
-      
-      ctx.stroke();
-      
-      // Draw central hexagram
-      ctx.beginPath();
-      ctx.moveTo(bottomPoints[0].x, bottomPoints[0].y);
-      ctx.lineTo(topPoints[0].x, topPoints[0].y);
-      ctx.lineTo(bottomPoints[1].x, bottomPoints[1].y);
-      ctx.lineTo(topPoints[1].x, topPoints[1].y);
-      ctx.lineTo(bottomPoints[2].x, bottomPoints[2].y);
-      ctx.lineTo(topPoints[2].x, topPoints[2].y);
-      ctx.closePath();
-      ctx.stroke();
-      
-      ctx.restore();
-    }
-    
-    // Octagon
-    function drawOctagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, radius: number, rotation: number) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotation);
-      ctx.translate(-cx, -cy);
-      
-      // Draw main octagon
-      ctx.beginPath();
-      const points = 8;
-      for (let i = 0; i < points; i++) {
-        const angle = (Math.PI * 2 * i) / points + Math.PI / 8; // Offset to flat top
-        const x = cx + radius * Math.cos(angle);
-        const y = cy + radius * Math.sin(angle);
-        
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
-      
-      // Draw inner octagon
-      const innerRadius = radius * 0.7;
-      ctx.beginPath();
-      for (let i = 0; i < points; i++) {
-        const angle = (Math.PI * 2 * i) / points + Math.PI / 8;
-        const x = cx + innerRadius * Math.cos(angle);
-        const y = cy + innerRadius * Math.sin(angle);
-        
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
-      
-      // Connect vertices
-      for (let i = 0; i < points; i++) {
-        const angle1 = (Math.PI * 2 * i) / points + Math.PI / 8;
-        const x1 = cx + radius * Math.cos(angle1);
-        const y1 = cy + radius * Math.sin(angle1);
-        
-        // Connect to opposite point
-        const oppositeIdx = (i + 4) % points;
-        const angle2 = (Math.PI * 2 * oppositeIdx) / points + Math.PI / 8;
-        const x2 = cx + radius * Math.cos(angle2);
-        const y2 = cy + radius * Math.sin(angle2);
-        
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-      
-      // Draw star inside
-      ctx.beginPath();
-      for (let i = 0; i < points; i++) {
-        const angle = (Math.PI * 2 * i) / points + Math.PI / 8;
-        const innerX = cx + innerRadius * 0.7 * Math.cos(angle);
-        const innerY = cy + innerRadius * 0.7 * Math.sin(angle);
-        
-        if (i === 0) {
-          ctx.moveTo(innerX, innerY);
-        } else {
-          ctx.lineTo(innerX, innerY);
-        }
-      }
-      ctx.closePath();
-      ctx.stroke();
-      
-      ctx.restore();
-    }
-
     // Draw label text
     function drawLabel(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
       ctx.fillStyle = color;
@@ -744,17 +501,17 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
     }
 
     // Animation loop
-    const animationFunction = () => {
+    const animate = () => {
       if (animate) {
         rotationRef.current += 0.001; // Adjust rotation speed
         drawPattern(rotationRef.current);
-        animationRef.current = requestAnimationFrame(animationFunction);
+        animationRef.current = requestAnimationFrame(animate);
       } else {
         drawPattern(0);
       }
     };
 
-    animationFunction();
+    animate();
 
     return () => {
       if (animationRef.current) {

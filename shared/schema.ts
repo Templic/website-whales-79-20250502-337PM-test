@@ -30,7 +30,6 @@ export const subscribers = pgTable("subscribers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  additionalInfo: text("additional_info"),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow()
 });
@@ -100,13 +99,11 @@ export const insertUserSchema = createInsertSchema(users)
 export const insertSubscriberSchema = createInsertSchema(subscribers)
   .pick({
     email: true,
-    name: true,
-    additionalInfo: true
+    name: true
   })
   .extend({
     email: z.string().email("Invalid email address"),
-    name: z.string().min(2, "Name must be at least 2 characters"),
-    additionalInfo: z.string().optional()
+    name: z.string().min(2, "Name must be at least 2 characters")
   });
 
 export const insertNewsletterSchema = createInsertSchema(newsletters)

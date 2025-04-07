@@ -1,413 +1,255 @@
-/**
- * Background database services and maintenance tasks
- */
-
 import { pgPool } from './db';
-import { executeWithCircuitBreaker } from './resilience';
-import { logSecurityEvent } from './security/security';
+import { log } from './vite';
+import PgBoss from 'pg-boss';
+import path from 'path';
+import fs from 'fs';
 
-// Track background services
-const backgroundServices: {
-  [serviceName: string]: {
-    name: string;
-    interval: NodeJS.Timeout | null;
-    lastRun: number;
-    status: 'running' | 'stopped' | 'error';
-    errorCount: number;
-  }
-} = {};
+// Initialize background job processor
+let boss: PgBoss | null = null;
 
-/**
- * Initialize background database services
- */
-export async function initBackgroundServices(): Promise<boolean> {
-  console.log('Initializing background database services...');
-  
-  // Setup scheduled database maintenance
-  setupDatabaseMaintenance();
-  
-  // Setup data cleanup
-  setupDataCleanup();
-  
-  // Setup periodic stat refresh
-  setupStatRefresh();
-  
-  console.log('Background database services initialized successfully');
-  return true;
+// Setup database logging
+const logDir = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
 }
 
-/**
- * Shutdown background services
- */
-export async function shutdownBackgroundServices(): Promise<void> {
-  console.log('Shutting down background database services...');
+const logFile = path.join(logDir, 'db-background.log');
+const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+
+// Helper to log both to console and file
+function logBackground(message: string, level: 'info' | 'error' = 'info') {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
   
-  // Stop all scheduled intervals
-  Object.values(backgroundServices).forEach(service => {
-    if (service.interval) {
-      clearInterval(service.interval);
-      service.interval = null;
-      service.status = 'stopped';
+  logStream.write(logEntry);
+  if (level === 'error') {
+    console.error(`[bg-db] ${message}`);
+  } else {
+    log(message, 'bg-db');
+  }
+}
+
+export async function initBackgroundServices() {
+  try {
+    // Initialize PgBoss with the connection string
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    boss = new PgBoss({
+      connectionString: process.env.DATABASE_URL
+    });
+    
+    // Handle startup events
+    boss.on('error', error => {
+      logBackground(`PgBoss error: ${error.message}`, 'error');
+    });
+    
+    boss.on('maintenance', notice => {
+      logBackground(`PgBoss maintenance: ${notice.message}`);
+    });
+    
+    // Start the job processor
+    await boss.start();
+    logBackground('Background database services initialized');
+    
+    // Register workers for various tasks
+    await registerWorkers();
+    
+    // Schedule regular jobs
+    await scheduleRecurringJobs();
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to initialize database background services:', error);
+    return false;
+  }
+}
+
+async function registerWorkers() {
+  if (!boss) return;
+  
+  // Cleanup old sessions
+  await boss.work('cleanup-sessions', async () => {
+    try {
+      const result = await pgPool.query(`
+        DELETE FROM "session"
+        WHERE expire < NOW()
+      `);
+      
+      logBackground(`Cleaned up ${result.rowCount} expired sessions`);
+      return { success: true, cleanedCount: result.rowCount };
+    } catch (error) {
+      logBackground(`Session cleanup failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
-  console.log('Background services shutdown complete');
-}
-
-/**
- * Setup database maintenance schedule
- */
-function setupDatabaseMaintenance(): void {
-  // Register service
-  backgroundServices.maintenance = {
-    name: 'Database Maintenance',
-    interval: null,
-    lastRun: 0,
-    status: 'stopped',
-    errorCount: 0
-  };
-  
-  // Run vacuum analyze daily
-  const dailyMaintenanceInterval = 24 * 60 * 60 * 1000; // 24 hours
-  
-  // Set up interval for database maintenance
-  const interval = setInterval(async () => {
+  // Database statistics collection
+  await boss.work('collect-db-stats', async () => {
     try {
-      backgroundServices.maintenance.status = 'running';
+      // Get database size
+      const sizeResult = await pgPool.query(`
+        SELECT 
+          pg_database_size(current_database()) as db_size_bytes,
+          current_database() as db_name
+      `);
       
-      // Run with circuit breaker to prevent database overload
-      await executeWithCircuitBreaker('maintenance', async () => {
-        const client = await pgPool.connect();
-        try {
-          console.log('Running scheduled VACUUM ANALYZE...');
-          await client.query('VACUUM ANALYZE');
-          console.log('Scheduled VACUUM ANALYZE completed successfully');
-          
-          // Reset error count on success
-          backgroundServices.maintenance.errorCount = 0;
-        } finally {
-          client.release();
-        }
-      });
+      // Get table counts
+      const tableCounts = await pgPool.query(`
+        SELECT 
+          schemaname,
+          relname as table_name,
+          n_live_tup as row_count
+        FROM pg_stat_user_tables
+      `);
       
-      backgroundServices.maintenance.lastRun = Date.now();
-      backgroundServices.maintenance.status = 'stopped';
+      // Insert the statistics into our metrics table
+      // First ensure the table exists
+      await pgPool.query(`
+        CREATE TABLE IF NOT EXISTS db_metrics (
+          id SERIAL PRIMARY KEY,
+          collected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          db_size_bytes BIGINT,
+          metrics JSONB
+        )
+      `);
+      
+      // Store current metrics
+      await pgPool.query(`
+        INSERT INTO db_metrics (db_size_bytes, metrics)
+        VALUES ($1, $2)
+      `, [
+        sizeResult.rows[0].db_size_bytes,
+        JSON.stringify({
+          tables: tableCounts.rows,
+          timestamp: new Date().toISOString()
+        })
+      ]);
+      
+      // Cleanup old metrics (keep only last 30 days)
+      await pgPool.query(`
+        DELETE FROM db_metrics
+        WHERE collected_at < NOW() - INTERVAL '30 days'
+      `);
+      
+      logBackground('Database metrics collected successfully');
+      return { success: true };
     } catch (error) {
-      console.error('Database maintenance error:', error);
-      
-      // Increment error count
-      backgroundServices.maintenance.errorCount++;
-      backgroundServices.maintenance.status = 'error';
-      
-      // Log security event
-      logSecurityEvent({
-        type: 'ERROR',
-        details: 'Scheduled database maintenance failed',
-        severity: 'medium',
-        metadata: {
-          errorCount: backgroundServices.maintenance.errorCount,
-          error: (error as Error).message
-        }
-      });
-      
-      // Stop service if too many consecutive errors
-      if (backgroundServices.maintenance.errorCount >= 5) {
-        console.error('Too many database maintenance errors, stopping service');
-        clearInterval(interval);
-        backgroundServices.maintenance.interval = null;
-        backgroundServices.maintenance.status = 'stopped';
-        
-        logSecurityEvent({
-          type: 'ALERT',
-          details: 'Database maintenance service stopped due to too many errors',
-          severity: 'high'
-        });
-      }
+      logBackground(`Database metrics collection failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
-  }, dailyMaintenanceInterval);
+  });
   
-  // Store the interval reference
-  backgroundServices.maintenance.interval = interval;
-  
-  // Immediate first run (don't await)
-  executeWithCircuitBreaker('maintenance', async () => {
+  // Auto-vacuum analyzer for large tables
+  await boss.work('auto-vacuum-analyze', async (job) => {
     try {
-      const client = await pgPool.connect();
-      try {
-        console.log('Running initial VACUUM ANALYZE...');
-        await client.query('VACUUM ANALYZE');
-        console.log('Initial VACUUM ANALYZE completed successfully');
-        backgroundServices.maintenance.lastRun = Date.now();
-      } finally {
-        client.release();
+      const tables = job.data?.tables || [];
+      const results = [];
+      
+      for (const table of tables) {
+        logBackground(`Running VACUUM ANALYZE on table ${table}`);
+        await pgPool.query(`VACUUM ANALYZE "${table}"`);
+        results.push({ table, status: 'success' });
       }
+      
+      logBackground(`Auto-vacuum completed for ${tables.length} tables`);
+      return { success: true, results };
     } catch (error) {
-      console.error('Initial database maintenance error:', error);
-      backgroundServices.maintenance.errorCount++;
-      backgroundServices.maintenance.status = 'error';
+      logBackground(`Auto-vacuum failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
 }
 
-/**
- * Setup data cleanup schedule
- */
-function setupDataCleanup(): void {
-  // Register service
-  backgroundServices.cleanup = {
-    name: 'Data Cleanup',
-    interval: null,
-    lastRun: 0,
-    status: 'stopped',
-    errorCount: 0
-  };
+async function scheduleRecurringJobs() {
+  if (!boss) return;
   
-  // Run cleanup weekly
-  const weeklyCleanupInterval = 7 * 24 * 60 * 60 * 1000; // 7 days
+  try {
+    // Create queues first
+    await boss.createQueue('cleanup-sessions');
+    await boss.createQueue('collect-db-stats');
+    await boss.createQueue('identify-large-tables');
+    await boss.createQueue('auto-vacuum-analyze');
+    
+    // Send initial messages to ensure queues exist
+    await boss.send('cleanup-sessions', {});
+    await boss.send('collect-db-stats', {});
+    await boss.send('identify-large-tables', {});
+    
+    // Schedule session cleanup (daily)
+    await boss.schedule('cleanup-sessions', '0 2 * * *'); // Every day at 2am
+    
+    // Schedule database metrics collection (hourly)
+    await boss.schedule('collect-db-stats', '5 * * * *'); // 5 minutes past every hour
+    
+    // Schedule auto-vacuum for large tables (weekly)
+    await boss.schedule('identify-large-tables', '0 1 * * 0'); // Every Sunday at 1am
+  } catch (error) {
+    console.error('Error scheduling recurring jobs:', error);
+  }
   
-  // Set up interval for data cleanup
-  const interval = setInterval(async () => {
+  // Register worker to identify large tables that need vacuuming
+  await boss?.work('identify-large-tables', async () => {
     try {
-      backgroundServices.cleanup.status = 'running';
+      // Find tables with high dead tuple counts
+      const result = await pgPool.query(`
+        SELECT 
+          relname as table_name,
+          n_live_tup as live_tuples,
+          n_dead_tup as dead_tuples,
+          (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100)::numeric(10,2) as dead_tuple_pct
+        FROM pg_stat_user_tables
+        WHERE (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100) > 10
+        ORDER BY dead_tuple_pct DESC
+      `);
       
-      // Run with circuit breaker to prevent database overload
-      await executeWithCircuitBreaker('cleanup', async () => {
-        const client = await pgPool.connect();
-        try {
-          // Clean up expired tokens/sessions/temporary data
-          console.log('Running scheduled data cleanup...');
-          
-          // Delete old audit logs (older than 90 days)
-          const auditLogsResult = await client.query(`
-            DELETE FROM audit_logs
-            WHERE created_at < NOW() - INTERVAL '90 days'
-          `).catch(err => {
-            console.log('No audit_logs table found, skipping cleanup');
-            return { rowCount: 0 };
-          });
-          
-          // Clean other expired data...
-          
-          console.log(`Scheduled data cleanup completed successfully. Removed ${auditLogsResult.rowCount} old audit logs.`);
-          
-          // Reset error count on success
-          backgroundServices.cleanup.errorCount = 0;
-        } finally {
-          client.release();
-        }
-      });
-      
-      backgroundServices.cleanup.lastRun = Date.now();
-      backgroundServices.cleanup.status = 'stopped';
-    } catch (error) {
-      console.error('Data cleanup error:', error);
-      
-      // Increment error count
-      backgroundServices.cleanup.errorCount++;
-      backgroundServices.cleanup.status = 'error';
-      
-      // Log security event
-      logSecurityEvent({
-        type: 'ERROR',
-        details: 'Scheduled data cleanup failed',
-        severity: 'medium',
-        metadata: {
-          errorCount: backgroundServices.cleanup.errorCount,
-          error: (error as Error).message
-        }
-      });
-      
-      // Stop service if too many consecutive errors
-      if (backgroundServices.cleanup.errorCount >= 5) {
-        console.error('Too many data cleanup errors, stopping service');
-        clearInterval(interval);
-        backgroundServices.cleanup.interval = null;
-        backgroundServices.cleanup.status = 'stopped';
+      if (result.rows.length > 0) {
+        // Schedule vacuum for identified tables
+        const tables = result.rows.map(row => row.table_name);
         
-        logSecurityEvent({
-          type: 'ALERT',
-          details: 'Data cleanup service stopped due to too many errors',
-          severity: 'high'
-        });
+        logBackground(`Scheduling VACUUM ANALYZE for ${tables.length} tables with high dead tuple counts`);
+        await boss?.send('auto-vacuum-analyze', { tables });
+      } else {
+        logBackground('No tables require vacuuming at this time');
       }
-    }
-  }, weeklyCleanupInterval);
-  
-  // Store the interval reference
-  backgroundServices.cleanup.interval = interval;
-}
-
-/**
- * Setup database statistics refresh schedule
- */
-function setupStatRefresh(): void {
-  // Register service
-  backgroundServices.statRefresh = {
-    name: 'Stat Refresh',
-    interval: null,
-    lastRun: 0,
-    status: 'stopped',
-    errorCount: 0
-  };
-  
-  // Run statistics refresh every 12 hours
-  const statRefreshInterval = 12 * 60 * 60 * 1000; // 12 hours
-  
-  // Set up interval for statistics refresh
-  const interval = setInterval(async () => {
-    try {
-      backgroundServices.statRefresh.status = 'running';
       
-      // Run with circuit breaker to prevent database overload
-      await executeWithCircuitBreaker('statRefresh', async () => {
-        const client = await pgPool.connect();
-        try {
-          console.log('Running scheduled statistics refresh...');
-          await client.query('ANALYZE');
-          console.log('Statistics refresh completed successfully');
-          
-          // Reset error count on success
-          backgroundServices.statRefresh.errorCount = 0;
-        } finally {
-          client.release();
-        }
-      });
-      
-      backgroundServices.statRefresh.lastRun = Date.now();
-      backgroundServices.statRefresh.status = 'stopped';
+      return { success: true, tablesIdentified: result.rows.length };
     } catch (error) {
-      console.error('Statistics refresh error:', error);
-      
-      // Increment error count
-      backgroundServices.statRefresh.errorCount++;
-      backgroundServices.statRefresh.status = 'error';
-      
-      // Log security event
-      logSecurityEvent({
-        type: 'ERROR',
-        details: 'Scheduled statistics refresh failed',
-        severity: 'low',
-        metadata: {
-          errorCount: backgroundServices.statRefresh.errorCount,
-          error: (error as Error).message
-        }
-      });
-      
-      // Stop service if too many consecutive errors
-      if (backgroundServices.statRefresh.errorCount >= 5) {
-        console.error('Too many statistics refresh errors, stopping service');
-        clearInterval(interval);
-        backgroundServices.statRefresh.interval = null;
-        backgroundServices.statRefresh.status = 'stopped';
-        
-        logSecurityEvent({
-          type: 'WARNING',
-          details: 'Statistics refresh service stopped due to too many errors',
-          severity: 'medium'
-        });
-      }
+      logBackground(`Large table identification failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
-  }, statRefreshInterval);
+  });
   
-  // Store the interval reference
-  backgroundServices.statRefresh.interval = interval;
+  logBackground('Recurring database maintenance jobs scheduled');
 }
 
-/**
- * Get status of all background services
- */
-export function getBackgroundServicesStatus(): any {
-  return Object.entries(backgroundServices).map(([id, service]) => ({
-    id,
-    name: service.name,
-    status: service.status,
-    lastRun: service.lastRun > 0 ? new Date(service.lastRun).toISOString() : null,
-    errorCount: service.errorCount
-  }));
+// Utility to manually trigger a specific job
+export async function triggerBackgroundJob(jobName: string, data?: any) {
+  if (!boss) {
+    throw new Error('Background services not initialized');
+  }
+  
+  return await boss.send(jobName, data || {});
 }
 
-/**
- * Manually run a specific background service
- */
-export async function runBackgroundService(serviceId: string): Promise<any> {
-  const service = backgroundServices[serviceId];
-  
-  if (!service) {
-    throw new Error(`Background service '${serviceId}' not found`);
+// Get the status of a specific job
+export async function getJobStatus(jobId: string) {
+  if (!boss) {
+    throw new Error('Background services not initialized');
   }
   
-  if (service.status === 'running') {
-    throw new Error(`Background service '${serviceId}' is already running`);
-  }
-  
-  // Implement custom logic based on service ID
-  switch (serviceId) {
-    case 'maintenance':
-      return executeWithCircuitBreaker('maintenance', async () => {
-        const client = await pgPool.connect();
-        try {
-          service.status = 'running';
-          console.log('Running manual VACUUM ANALYZE...');
-          await client.query('VACUUM ANALYZE');
-          console.log('Manual VACUUM ANALYZE completed successfully');
-          service.lastRun = Date.now();
-          service.status = 'stopped';
-          return { success: true, message: 'Maintenance completed successfully' };
-        } finally {
-          client.release();
-        }
-      });
-      
-    case 'cleanup':
-      return executeWithCircuitBreaker('cleanup', async () => {
-        const client = await pgPool.connect();
-        try {
-          service.status = 'running';
-          console.log('Running manual data cleanup...');
-          
-          // Example: Delete old audit logs (older than 90 days)
-          const auditLogsResult = await client.query(`
-            DELETE FROM audit_logs
-            WHERE created_at < NOW() - INTERVAL '90 days'
-          `).catch(() => ({ rowCount: 0 }));
-          
-          console.log(`Manual data cleanup completed. Removed ${auditLogsResult.rowCount} old audit logs.`);
-          service.lastRun = Date.now();
-          service.status = 'stopped';
-          return {
-            success: true,
-            message: 'Cleanup completed successfully',
-            details: { removedAuditLogs: auditLogsResult.rowCount }
-          };
-        } finally {
-          client.release();
-        }
-      });
-      
-    case 'statRefresh':
-      return executeWithCircuitBreaker('statRefresh', async () => {
-        const client = await pgPool.connect();
-        try {
-          service.status = 'running';
-          console.log('Running manual statistics refresh...');
-          await client.query('ANALYZE');
-          console.log('Manual statistics refresh completed successfully');
-          service.lastRun = Date.now();
-          service.status = 'stopped';
-          return { success: true, message: 'Statistics refresh completed successfully' };
-        } finally {
-          client.release();
-        }
-      });
-      
-    default:
-      throw new Error(`Service '${serviceId}' does not support manual execution`);
-  }
+  // PgBoss 7.x expects different parameters than what TS types indicate
+  // @ts-ignore - Type definitions don't match actual implementation
+  return await boss.getJobById(jobId);
 }
 
-export default {
-  initBackgroundServices,
-  shutdownBackgroundServices,
-  getBackgroundServicesStatus,
-  runBackgroundService
-};
+// Graceful shutdown
+export async function shutdownBackgroundServices() {
+  if (boss) {
+    await boss.stop();
+    logBackground('Background database services stopped');
+  }
+  
+  // Close the log stream
+  logStream.end();
+}
