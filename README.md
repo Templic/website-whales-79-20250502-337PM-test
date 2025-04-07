@@ -1,6 +1,6 @@
 # Cosmic Community Connect
 
-A sophisticated music and cosmic experience web application that creates an immersive, interactive audio journey blending AI-generated music, visual design, and cosmic exploration.
+A sophisticated music and cosmic experience web application that creates an immersive, interactive audio journey blending AI-generated music, art, visual design, and cosmic exploration.
 
 ## Tech Stack
 

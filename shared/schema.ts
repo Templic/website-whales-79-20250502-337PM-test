@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql, relations } from "drizzle-orm";
 
-// Users table with role-based authentication
+// Users table with role-based authentication and two-factor authentication
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -11,6 +11,16 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   role: text("role", { enum: ["user", "admin", "super_admin"] }).notNull().default("user"),
   isBanned: boolean("is_banned").notNull().default(false),
+  // Two-factor authentication fields
+  twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
+  twoFactorSecret: text("two_factor_secret"),
+  backupCodes: text("backup_codes").array(), // Array of backup codes
+  lastLogin: timestamp("last_login"),
+  lastLoginIp: text("last_login_ip"),
+  loginAttempts: integer("login_attempts").notNull().default(0),
+  lockedUntil: timestamp("locked_until"), // Account lockout timestamp
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
+  passwordUpdatedAt: timestamp("password_updated_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at")
 });

@@ -1,7 +1,7 @@
 /**
  * AuthPage.tsx
  * 
- * Migrated as part of the repository reorganization.
+ * Authentication page for login, registration, and two-factor authentication.
  */
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,7 +12,7 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Redirect, Link } from "wouter";
-import { Loader2, Eye, EyeOff, Info, Check, X } from "lucide-react";
+import { Loader2, Eye, EyeOff, Info, Check, X, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TwoFactorAuth } from "@/components/auth/TwoFactorAuth";
 
 const passwordStrengthText = {
   0: "Very Weak",
@@ -72,7 +73,17 @@ type LoginForm = {
 };
 
 export default function AuthPage() {
-  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const { 
+    user, 
+    isLoading, 
+    requires2FA,
+    loginMutation, 
+    registerMutation,
+    verify2FAMutation,
+    verifyBackupCodeMutation,
+    clearRequires2FA
+  } = useAuth();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
@@ -95,6 +106,7 @@ export default function AuthPage() {
     }
   });
 
+  // If user is already authenticated, redirect to home
   if (user) {
     return <Redirect to="/" />;
   }
@@ -104,6 +116,17 @@ export default function AuthPage() {
     setPasswordStrength(calculatePasswordStrength(password));
   };
 
+  const handle2FASuccess = (userData: any) => {
+    // The user is now fully authenticated
+    console.log("2FA verification successful", userData);
+  };
+
+  const handle2FACancel = () => {
+    // User canceled the 2FA verification
+    clearRequires2FA();
+  };
+
+  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -112,6 +135,19 @@ export default function AuthPage() {
     );
   }
 
+  // Show 2FA verification if needed
+  if (requires2FA) {
+    return (
+      <div className="container mx-auto py-16 px-4">
+        <TwoFactorAuth 
+          onSuccess={handle2FASuccess} 
+          onCancel={handle2FACancel} 
+        />
+      </div>
+    );
+  }
+
+  // Show login/register forms
   return (
     <div className="container mx-auto py-8">
       <div className="grid md:grid-cols-2 gap-8">
@@ -174,8 +210,19 @@ export default function AuthPage() {
                 className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
                 disabled={loginMutation.isPending}
               >
-                {loginMutation.isPending ? "Logging in..." : "Login"}
+                {loginMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
+              
+              <div className="flex items-center justify-center text-sm text-gray-500 mt-4">
+                <ShieldCheck className="h-4 w-4 mr-2 text-[#00ebd6]" />
+                <span>This site supports two-factor authentication for enhanced security</span>
+              </div>
             </form>
           </Form>
         </div>
@@ -330,8 +377,18 @@ export default function AuthPage() {
                 className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
                 disabled={registerMutation.isPending}
               >
-                {registerMutation.isPending ? "Creating account..." : "Register"}
+                {registerMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
+                  </>
+                ) : (
+                  "Register"
+                )}
               </Button>
+              
+              <p className="text-sm text-center text-gray-500 mt-4">
+                After registering, you'll have the option to enable two-factor authentication in your account settings for added security.
+              </p>
             </form>
           </Form>
         </div>
