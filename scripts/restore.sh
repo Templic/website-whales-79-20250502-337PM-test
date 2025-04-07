@@ -31,13 +31,14 @@ if [ ! -f "$ENCRYPTION_KEY_FILE" ]; then
     exit 1
 fi
 
-# Function to decrypt a file
+# Function to decrypt a file using improved key derivation
 decrypt_file() {
     local input_file=$1
     local output_file="${input_file%.enc}"
     
     echo "Decrypting $input_file to $output_file" >> "$LOG_FILE"
-    openssl enc -d -aes-256-cbc -in "$input_file" -out "$output_file" -pass file:"$ENCRYPTION_KEY_FILE"
+    # Use -pbkdf2 for better key derivation (addresses the deprecation warning)
+    openssl enc -d -aes-256-cbc -pbkdf2 -in "$input_file" -out "$output_file" -pass file:"$ENCRYPTION_KEY_FILE"
     
     echo "Decryption complete" >> "$LOG_FILE"
     
@@ -90,6 +91,17 @@ restore_database() {
     
     echo "Starting database restoration at $(date)" >> "$LOG_FILE"
     
+    # Debug output - verify environment and connection details
+    echo "DATABASE_URL format check: ${DATABASE_URL:0:25}..." >> "$LOG_FILE"
+    echo "Checking PostgreSQL client installation" >> "$LOG_FILE"
+    which psql >> "$LOG_FILE" 2>&1 || { echo "ERROR: PostgreSQL client not found" >> "$LOG_FILE"; exit 1; }
+    
+    # For databases that don't have valid connection info, exit early
+    if [[ -z "$DATABASE_URL" || "$DATABASE_URL" == "undefined" ]]; then
+        echo "ERROR: No valid DATABASE_URL found, cannot restore database" >> "$LOG_FILE"
+        exit 1
+    fi
+    
     # Determine which backup to use
     if [ "$backup_specifier" == "latest" ]; then
         backup_file=$(find_latest_backup "database")
@@ -105,68 +117,127 @@ restore_database() {
     gunzip -f "$decrypted_file"
     local uncompressed_file="${decrypted_file%.gz}"
     
-    # Determine if using Neon serverless or standard PostgreSQL
+    # Check if this is a placeholder backup
+    if grep -q "This is a dummy backup file for record-keeping only" "$uncompressed_file"; then
+        echo "WARNING: This is a placeholder backup file, not a real database dump" >> "$LOG_FILE"
+        echo "Skipping database restoration as this is just a placeholder" >> "$LOG_FILE"
+        rm -f "$uncompressed_file"
+        return 0
+    fi
+    
+    # Check if this is a schema-only backup
+    if grep -q "Schema-only backup created" "$uncompressed_file"; then
+        echo "NOTE: This is a schema-only backup (no data)" >> "$LOG_FILE"
+        echo "Proceeding with schema-only restoration" >> "$LOG_FILE"
+    fi
+    
+    # Create temporary file for database operation output
+    TEST_OUTPUT=$(mktemp)
+    
+    # First create a backup of current database
+    echo "Creating a backup of current database before restoration" >> "$LOG_FILE"
+    CURRENT_BACKUP_FILE="$BACKUP_DIR/database/pre_restore_${RESTORE_ID}.sql"
+    
+    # Test database connection first
+    echo "Testing database connection..." >> "$LOG_FILE"
+    
+    # If DATABASE_URL contains neon.tech, it's a Neon serverless PostgreSQL
     if [[ "$DATABASE_URL" == *"neon.tech"* ]]; then
         echo "Detected Neon serverless PostgreSQL" >> "$LOG_FILE"
         
-        # Extract database connection details from DATABASE_URL
-        DB_USER=$(echo $DATABASE_URL | awk -F[:@] '{print $2}' | sed 's/\/\///')
-        DB_PASS=$(echo $DATABASE_URL | awk -F[:@] '{print $3}')
-        DB_HOST=$(echo $DATABASE_URL | awk -F[@:/] '{print $4}')
-        DB_PORT=$(echo $DATABASE_URL | awk -F[@:/] '{print $5}')
-        DB_NAME=$(echo $DATABASE_URL | awk -F[@:/] '{print $6}')
+        # Parse URL using pattern matching for Neon
+        DB_USER=$(echo "$DATABASE_URL" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+        DB_PASS=$(echo "$DATABASE_URL" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+        DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+        DB_PORT="5432" # Default PostgreSQL port
+        DB_NAME=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
         
-        # Set environment variables for psql
+        echo "Connection details: Host=$DB_HOST, User=$DB_USER, DB=$DB_NAME" >> "$LOG_FILE"
+        
+        # Set environment variable for psql/pg_dump
         export PGPASSWORD="$DB_PASS"
         
-        echo "Restoring database to Neon PostgreSQL" >> "$LOG_FILE"
-        
-        # First create a backup of current database
-        echo "Creating a backup of current database before restoration" >> "$LOG_FILE"
-        CURRENT_BACKUP_FILE="$BACKUP_DIR/database/pre_restore_${RESTORE_ID}.sql"
-        pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$CURRENT_BACKUP_FILE" || {
-            echo "WARNING: Failed to create backup of current database, but proceeding with restore" >> "$LOG_FILE"
-        }
-        
-        # Restore database
-        echo "Running database restoration" >> "$LOG_FILE"
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$uncompressed_file"
-        
-        echo "Neon PostgreSQL database restoration completed at $(date)" >> "$LOG_FILE"
+        # Test connection with a simple query
+        if timeout 10 psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" > "$TEST_OUTPUT" 2>&1; then
+            echo "Database connection successful" >> "$LOG_FILE"
+            
+            # Try to create a pre-restore backup with timeout
+            echo "Creating pre-restore backup with 30-second timeout" >> "$LOG_FILE"
+            if timeout 30 pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" --schema-only -f "$CURRENT_BACKUP_FILE"; then
+                echo "Pre-restore schema backup created successfully" >> "$LOG_FILE"
+            else
+                echo "WARNING: Failed to create backup of current database schema, but proceeding with restore" >> "$LOG_FILE"
+            fi
+            
+            # Drop public schema and recreate it to avoid conflicts
+            echo "Preparing database by dropping and recreating schema" >> "$LOG_FILE"
+            if timeout 30 psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" > "$TEST_OUTPUT" 2>&1; then
+                echo "Database schema reset successful" >> "$LOG_FILE"
+                
+                # Proceed with restore using parsed details with shorter timeout
+                echo "Restoring to Neon PostgreSQL: $DB_HOST/$DB_NAME" >> "$LOG_FILE"
+                if timeout 60 psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$uncompressed_file"; then
+                    echo "Database restored successfully using parsed connection details" >> "$LOG_FILE"
+                else
+                    echo "ERROR: Database restore timed out or failed" >> "$LOG_FILE"
+                    rm -f "$uncompressed_file"
+                    rm -f "$TEST_OUTPUT"
+                    exit 1
+                fi
+            else
+                echo "ERROR: Failed to reset database schema" >> "$LOG_FILE"
+                cat "$TEST_OUTPUT" >> "$LOG_FILE"
+                echo "Attempting restore without schema reset" >> "$LOG_FILE"
+                
+                # Try restore without schema reset as fallback
+                if timeout 120 psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$uncompressed_file"; then
+                    echo "Database restored successfully without schema reset" >> "$LOG_FILE"
+                else
+                    echo "ERROR: All restore attempts failed" >> "$LOG_FILE"
+                    rm -f "$uncompressed_file"
+                    rm -f "$TEST_OUTPUT"
+                    exit 1
+                fi
+            fi
+        else
+            echo "ERROR: Database connection test failed" >> "$LOG_FILE"
+            cat "$TEST_OUTPUT" >> "$LOG_FILE"
+            echo "Cannot proceed with database restoration" >> "$LOG_FILE"
+            rm -f "$uncompressed_file"
+            rm -f "$TEST_OUTPUT"
+            exit 1
+        fi
     else
+        # Standard PostgreSQL
         echo "Using standard PostgreSQL connection" >> "$LOG_FILE"
         
-        # Extract database connection details from DATABASE_URL
-        DB_USER=$(echo $DATABASE_URL | awk -F[:@] '{print $2}' | sed 's/\/\///')
-        DB_PASS=$(echo $DATABASE_URL | awk -F[:@] '{print $3}')
-        DB_HOST=$(echo $DATABASE_URL | awk -F[@:/] '{print $4}')
-        DB_PORT=$(echo $DATABASE_URL | awk -F[@:/] '{print $5}')
-        DB_NAME=$(echo $DATABASE_URL | awk -F[@:/] '{print $6}')
+        # Create pre-restore backup
+        echo "Creating pre-restore backup using direct URL" >> "$LOG_FILE"
+        if pg_dump "$DATABASE_URL" --schema-only -f "$CURRENT_BACKUP_FILE"; then
+            echo "Pre-restore schema backup created successfully" >> "$LOG_FILE"
+        else
+            echo "WARNING: Failed to create backup of current database schema, but proceeding with restore" >> "$LOG_FILE"
+        fi
         
-        # Set environment variables for psql
-        export PGPASSWORD="$DB_PASS"
-        
-        echo "Restoring database to standard PostgreSQL" >> "$LOG_FILE"
-        
-        # First create a backup of current database
-        echo "Creating a backup of current database before restoration" >> "$LOG_FILE"
-        CURRENT_BACKUP_FILE="$BACKUP_DIR/database/pre_restore_${RESTORE_ID}.sql"
-        pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$CURRENT_BACKUP_FILE" || {
-            echo "WARNING: Failed to create backup of current database, but proceeding with restore" >> "$LOG_FILE"
-        }
-        
-        # Restore database
-        echo "Running database restoration" >> "$LOG_FILE"
-        psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f "$uncompressed_file"
-        
-        echo "Standard PostgreSQL database restoration completed at $(date)" >> "$LOG_FILE"
+        # Try direct reset and restore
+        echo "Resetting schema and restoring database" >> "$LOG_FILE"
+        if psql "$DATABASE_URL" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" && \
+           psql "$DATABASE_URL" -f "$uncompressed_file"; then
+            echo "Database restored successfully using direct URL" >> "$LOG_FILE"
+        else
+            echo "ERROR: Failed to restore database" >> "$LOG_FILE"
+            rm -f "$uncompressed_file"
+            rm -f "$TEST_OUTPUT"
+            exit 1
+        fi
     fi
     
     # Clean up
     echo "Cleaning up temporary files" >> "$LOG_FILE"
     rm -f "$uncompressed_file"
+    rm -f "$TEST_OUTPUT"
     
-    echo "Database restoration completed successfully" >> "$LOG_FILE"
+    echo "Database restoration completed successfully at $(date)" >> "$LOG_FILE"
 }
 
 # Function to restore files

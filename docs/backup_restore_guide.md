@@ -1,299 +1,170 @@
-# Backup and Restore Guide
+# Backup and Restore Guide for Cosmic Community Connect
+
+This document explains how to use the backup and restore scripts to manage data for the Cosmic Community Connect platform.
 
 ## Overview
 
-This document outlines the backup and restore procedures for the Cosmic Community Connect application. It provides detailed instructions for performing backups, verifying their integrity, and restoring data in case of data loss or system failure.
+The backup system provides a comprehensive solution for backing up and restoring three types of data:
 
-## Backup Strategy
+1. **Database** - PostgreSQL database backup (schema or full data)
+2. **Files** - User uploads and static content
+3. **Configuration** - Environment variables and system configuration files
 
-The application implements a comprehensive backup strategy with multiple layers:
+All backups are compressed with gzip and encrypted with AES-256-CBC encryption for security.
 
-### Types of Backups
+## Requirements
 
-1. **Database Backups**
-   - Complete PostgreSQL database dumps
-   - Incremental transaction log backups
-   - Schema-only backups for development environments
+- PostgreSQL client tools (`pg_dump` and `psql`)
+- OpenSSL for encryption/decryption
+- A valid `.backup_key` file for encryption/decryption (auto-generated on first run)
+- Appropriate permissions to read/write to the backup directories
+- Valid DATABASE_URL environment variable (for database operations)
 
-2. **File Backups**
-   - User-uploaded content (images, audio, documents)
-   - Configuration files
-   - Log files (for audit and compliance purposes)
+## Backup Process
 
-3. **Application Code Backups**
-   - Git repository backup
-   - Deployment configuration backup
-   - Environment variables backup (encrypted)
+### Directory Structure
 
-### Backup Schedule
+Backups are organized in the following directory structure:
 
-| Backup Type | Frequency | Retention Period | Storage Location |
-|-------------|-----------|------------------|------------------|
-| Full Database | Daily | 30 days | Primary + Secondary |
-| Transaction Logs | Hourly | 7 days | Primary + Secondary |
-| User Uploads | Daily | 90 days | Primary + Secondary |
-| Configuration | On change | 90 days | Primary + Secondary |
-| Application Code | On release | Indefinite | Git + Secondary |
+```
+./tmp/backups/
+├── database/   # Database SQL dumps
+├── files/      # File archives from static and uploads directories
+└── config/     # Configuration file archives
+```
 
-### Backup Storage
+### Running Backups
 
-- **Primary Storage**: Cloud storage with encryption
-- **Secondary Storage**: Offsite backup for disaster recovery
-- **Development Backups**: Local encrypted storage for development environments
-
-## Backup Procedures
-
-### Database Backup
-
-#### Automated Daily Backup
-
-The system performs automated daily backups of the PostgreSQL database:
-
-1. Database dump is created using pg_dump
-2. Dump file is compressed and encrypted
-3. Backup file is uploaded to secure cloud storage
-4. Backup verification is performed
-5. Older backups are pruned according to retention policy
-
-To manually initiate a database backup:
+The backup script can be run in various modes:
 
 ```bash
-# Run the database backup script
+# Full backup of all components
+./scripts/backup.sh all
+
+# Database backup only
 ./scripts/backup.sh database
-```
 
-#### Special Considerations for Neon Serverless PostgreSQL
-
-For Neon serverless PostgreSQL databases:
-
-1. Utilize Neon's built-in point-in-time recovery feature
-2. Perform logical backups using the pg_dump utility with the provided connection string
-3. Schedule backups during off-peak hours to minimize impact
-4. Test restoration regularly to ensure compatibility
-
-### File Backup
-
-User-uploaded files are backed up daily:
-
-1. Files are packaged with directory structure preserved
-2. Archive is compressed and encrypted
-3. Archive is uploaded to secure cloud storage
-4. Verification is performed to ensure integrity
-
-To manually initiate a file backup:
-
-```bash
-# Run the file backup script
+# Files backup only
 ./scripts/backup.sh files
-```
 
-### Configuration Backup
-
-Configuration files are backed up whenever changes are made:
-
-1. Configuration files are collected and versioned
-2. Sensitive information is encrypted
-3. Configuration archive is stored securely
-4. Previous versions are maintained for rollback capability
-
-To manually backup configuration:
-
-```bash
-# Run the configuration backup script
+# Configuration backup only
 ./scripts/backup.sh config
 ```
 
-## Verification Procedures
+### Backup Schedule
 
-### Backup Verification
+The recommended backup schedule is:
 
-All backups are automatically verified after creation:
+- **Daily**: Database backups
+- **Weekly**: File backups
+- **Monthly**: Configuration backups
 
-1. Database backups are verified by restoring to a test instance
-2. File backups are verified by checksum validation
-3. Configuration backups are verified by syntax checking
+### Database Backup Special Cases
 
-To manually verify a backup:
+For Neon serverless PostgreSQL connections, database backups use a specialized approach:
 
-```bash
-# Verify the latest backup
-./scripts/verify-backup.sh latest
+1. Connection testing is performed before backup attempts
+2. Schema-only backups are taken to avoid timeout issues
+3. If a full backup is needed, consider scheduling during low-traffic periods
 
-# Verify a specific backup by date
-./scripts/verify-backup.sh 2025-04-06
-```
+## Restoration Process
 
-### Scheduled Verification
+### Running Restores
 
-In addition to post-backup verification:
-
-1. Weekly verification of random previous backups
-2. Monthly restoration test to verify complete recovery process
-3. Quarterly disaster recovery simulation
-
-## Restore Procedures
-
-### Database Restoration
-
-To restore the database from a backup:
-
-1. Identify the appropriate backup file to restore from
-2. Stop the application services
-3. Create a backup of the current database (if accessible)
-4. Restore the database from the selected backup
-5. Verify database integrity
-6. Restart application services
+The restore script can be run in various modes:
 
 ```bash
-# Restore database from the latest backup
+# Restore latest database backup
 ./scripts/restore.sh database latest
 
-# Restore database from a specific backup
-./scripts/restore.sh database 2025-04-06
-```
-
-### File Restoration
-
-To restore user files from a backup:
-
-1. Identify the appropriate backup archive
-2. Create a backup of current files (if available)
-3. Extract and decrypt the backup archive
-4. Replace the current files with restored files
-5. Verify file integrity and permissions
-6. Restart application services if needed
-
-```bash
-# Restore files from the latest backup
+# Restore latest file backup
 ./scripts/restore.sh files latest
 
-# Restore files from a specific backup
-./scripts/restore.sh files 2025-04-06
-```
-
-### Configuration Restoration
-
-To restore configuration files:
-
-1. Identify the appropriate configuration backup
-2. Create a backup of current configuration
-3. Extract and decrypt the configuration archive
-4. Replace current configuration with restored files
-5. Verify configuration syntax
-6. Restart application services
-
-```bash
-# Restore configuration from the latest backup
+# Restore latest configuration backup
 ./scripts/restore.sh config latest
 
-# Restore configuration from a specific backup
-./scripts/restore.sh config 2025-04-06
+# Restore from a specific date (format: YYYY-MM-DD)
+./scripts/restore.sh database 2025-04-01
 ```
 
-### Full System Restoration
+### Database Restoration Notes
 
-For complete system restoration:
+- Database restoration will attempt to drop and recreate the public schema
+- A pre-restore backup is automatically created before any restoration
+- If the schema reset fails, the script will attempt to restore without resetting
+- For schema-only backups, only the database structure will be restored (no data)
 
-1. Provision new infrastructure if needed
-2. Restore application code from repository
-3. Restore configuration files
-4. Restore database
-5. Restore user files
-6. Verify system integrity
-7. Perform application testing
-8. Switch traffic to restored system
+### Configuration Restoration Notes
 
-```bash
-# Perform a complete system restoration
-./scripts/disaster-recovery.sh
-```
+Configuration files are extracted to a temporary directory and must be manually reviewed and copied to their final destinations to prevent accidental overrides.
 
-## Backup Security
+## Retention Policy
 
-### Encryption
+Backups are automatically managed with a retention policy:
 
-All backups are encrypted:
+- By default, backups older than 30 days are automatically removed
+- This value can be adjusted by changing the `RETENTION_DAYS` variable in the backup script
 
-1. Database dumps are encrypted with AES-256
-2. File backups are encrypted with AES-256
-3. Configuration backups with sensitive data are encrypted
-4. Encryption keys are managed securely and backed up separately
+## Security
 
-### Access Controls
+- All backups are encrypted using AES-256-CBC encryption with PBKDF2 key derivation
+- The PBKDF2 method provides enhanced security against brute force attacks
+- The encryption key is stored in the `.backup_key` file in the project root
+- For production deployments, store the backup key in a secure location
+- Consider using cloud key management services for better security in production
+- Backup file encryption is mandatory and cannot be disabled
 
-Access to backups is strictly controlled:
+## Troubleshooting
 
-1. Backup access requires multi-factor authentication
-2. All backup access is logged and audited
-3. Backup operations follow principle of least privilege
-4. Separate credentials are used for backup operations
+### Common Issues
 
-## Testing and Monitoring
+1. **Permission Denied**: Make sure the scripts have execute permissions:
+   ```bash
+   chmod +x ./scripts/backup.sh ./scripts/restore.sh
+   ```
 
-### Backup Monitoring
+2. **Database Connection Errors**:
+   - Verify the DATABASE_URL environment variable is correctly set
+   - Check network connectivity to the database server
+   - Test the connection manually with `psql "$DATABASE_URL" -c "SELECT 1;"`
 
-The backup system is continuously monitored:
+3. **Timeout Errors**:
+   - For large databases, consider using schema-only backups
+   - For frequent timeouts, adjust the timeout values in the script
+   - Split database operations into smaller chunks
 
-1. Alerts for backup failures
-2. Monitoring of backup storage capacity
-3. Verification of backup completion
-4. Regular audit of backup access
+4. **Encryption Key Missing**:
+   - If `.backup_key` is missing, a new one will be generated on the first backup
+   - Ensure this key is preserved for restoring previous backups
 
-### Restoration Testing
+### Checking Log Files
 
-Regular testing of restoration procedures:
+All backup and restore operations are logged in the `./logs` directory. Check these logs for detailed information about each operation.
 
-1. Monthly restoration test to a test environment
-2. Quarterly full disaster recovery simulation
-3. Documentation of test results and improvements
+## Best Practices
 
-## Disaster Recovery
+1. **Regular Testing**: Regularly test the restore process to ensure backups are valid
+2. **Secure Key Storage**: Store the encryption key securely, separate from the backups
+3. **Off-site Backups**: Copy encrypted backups to an off-site location regularly
+4. **Monitoring**: Monitor backup logs for any errors or warnings
+5. **Documentation**: Keep this documentation updated with any changes to the backup process
 
-### Recovery Time Objective (RTO)
+## Script Enhancements
 
-Target recovery times for different scenarios:
+The backup and restore scripts include several enhancements for reliability:
 
-1. Single file restoration: < 1 hour
-2. Database restoration: < 4 hours
-3. Complete system restoration: < 24 hours
+1. **Connection Testing**: Database connections are tested before operations
+2. **Timeout Management**: Operations have timeouts to prevent hanging
+3. **Placeholder Backups**: If a backup operation fails, a placeholder file is created
+4. **Pre-restore Backups**: Current state is backed up before restoration
+5. **Schema-Only Option**: Database schema can be backed up without data
 
-### Recovery Point Objective (RPO)
+## Recent Changes
 
-Maximum acceptable data loss:
-
-1. Database data: < 1 hour
-2. User-uploaded files: < 24 hours
-3. Configuration changes: < 1 hour
-
-### Disaster Recovery Plan
-
-Comprehensive disaster recovery plan:
-
-1. Emergency contact information
-2. Step-by-step recovery procedures
-3. Role assignments for recovery team
-4. Communication plan for stakeholders
-
-## Compliance and Retention
-
-### Data Retention
-
-Backup retention policies:
-
-1. Daily backups retained for 30 days
-2. Weekly backups retained for 90 days
-3. Monthly backups retained for 1 year
-4. Annual backups retained for 7 years
-
-### Compliance Requirements
-
-Backup and restore procedures comply with:
-
-1. Data protection regulations
-2. Industry-specific requirements
-3. Contractual obligations
-4. Internal security policies
-
----
-
-*Last updated: 2025-04-06*
+- Upgraded encryption implementation to use PBKDF2 key derivation (addressing OpenSSL deprecation warnings)
+- Added improved error handling for database operations
+- Enhanced timeouts and connection verification
+- Added support for schema-only backups for large databases
+- Implemented fallback mechanisms for various failure scenarios
+- Updated logging for better visibility into the backup process
+- Added detailed security documentation
