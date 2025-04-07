@@ -19,8 +19,6 @@ export function setupWebSockets(httpServer: Server) {
   const wss = new WebSocketServer({ 
     server: httpServer,
     path: '/ws',
-host: '0.0.0.0',
-port: 5000,
     perMessageDeflate: false,
     maxPayload: 64 * 1024 // 64kb
   });
