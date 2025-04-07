@@ -182,7 +182,7 @@ export async function shutdown(): Promise<void> {
 }
 
 // Start the server if this file is run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   startServer().catch((error) => {
     console.error('Failed to start server:', error);
     process.exit(1);
