@@ -90,7 +90,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <div className="flex flex-col sm:flex-row justify-between mb-2">
           <div className="space-y-1">
             <Link href={`/shop/product/${id}`}>
-              <h3 className="font-medium cosmic-hover-text cursor-pointer">{name}</h3>
+              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg md:text-xl">{name}</h3>
             </Link>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               {categories.slice(0, 1).map((category) => (

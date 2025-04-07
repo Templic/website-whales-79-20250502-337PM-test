@@ -83,13 +83,13 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             <span className="font-medium">Price Range</span>
           </AccordionTrigger>
           <AccordionContent className="pb-4 space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2"> {/* Changed to 1 column on mobile */}
               <div className="space-y-1">
                 <Label htmlFor="min-price" className="text-xs cosmic-label">Min Price</Label>
                 <Input
                   id="min-price"
                   type="number"
-                  className="h-8 cosmic-glass-field"
+                  className="h-8 cosmic-glass-field w-full" {/* Added w-full for mobile */}
                   value={priceRange[0]}
                   onChange={handleMinPriceChange}
                   min={0}
@@ -100,7 +100,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                 <Input
                   id="max-price"
                   type="number"
-                  className="h-8 cosmic-glass-field"
+                  className="h-8 cosmic-glass-field w-full" {/* Added w-full for mobile */}
                   value={priceRange[1]}
                   onChange={handleMaxPriceChange}
                   min={priceRange[0]}

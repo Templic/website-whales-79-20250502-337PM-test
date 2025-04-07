@@ -54,7 +54,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full cosmic-cart">
+    <div className="flex flex-col w-full max-w-md mx-auto cosmic-cart"> {/* Applied the provided change here */}
       {cartItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
           <ShoppingBag className="h-16 w-16 mb-4 text-muted-foreground" />
