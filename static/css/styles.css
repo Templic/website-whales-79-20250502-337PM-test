@@ -162,3 +162,22 @@ ul {
 .styled-link:hover {
     background-color: #555;
 }
+
+section.section {
+      margin-bottom: 4rem;
+      color: var(--font-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .octagon-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      padding: 3rem;
+      background: rgba(10, 50, 92, 0.6);
+      backdrop-filter: blur(5px);
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
