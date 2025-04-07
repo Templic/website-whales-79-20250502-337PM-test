@@ -31,51 +31,51 @@ let server: http.Server;
  */
 export async function startServer(): Promise<http.Server> {
   console.log('Starting server with enhanced resilience and monitoring...');
-  
+
   try {
     // Initialize resilience components
     resilience.initializeResilienceComponents();
-    
+
     // Initialize database
     const dbInitialized = await db.initDatabaseConnection();
     if (!dbInitialized) {
       throw new Error('Failed to initialize database connection');
     }
-    
+
     // Initialize database optimization
     await initDatabaseOptimization();
-    
+
     // Initialize background services
     await initBackgroundServices();
-    
+
     // Initialize monitoring
     monitoring.initialize({
       systemMetricsIntervalMs: 60000 // Collect metrics every minute
     });
-    
+
     // Initialize security scanning
     initializeSecurityScans();
-    
+
     // Initialize compliance framework
     initializeCompliance();
-    
+
     // Configure Express middleware
     configureExpress();
-    
+
     // Register routes
     server = await registerRoutes(app);
-    
+
     // Start HTTP server
     const port = process.env.PORT || 5000;
     const host = process.env.HOST || '0.0.0.0';
-    
+
     server.listen(port, host as any, () => {
       console.log(`Server listening on ${host}:${port}`);
     });
-    
+
     // Handle graceful shutdown
     setupGracefulShutdown();
-    
+
     return server;
   } catch (error) {
     console.error('Failed to start server:', error);
@@ -92,30 +92,30 @@ function configureExpress(): void {
   app.use(cors());
   // Security headers can be applied to all routes
   app.use(security.securityHeaders);
-  
+
   // Body parsing middleware
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-  
+
   // Monitoring middleware for request timing
   app.use(monitoringMiddleware.requestTimingMiddleware);
   app.use(monitoringMiddleware.serverInfoMiddleware);
-  
+
   // Rate limiting and security for API routes
   app.use('/api', apiRateLimit());
   // Apply security middleware only to specific API routes to avoid blocking 404 handler
   // Exclude database monitoring and health endpoints from security checks
   app.use(['/api/auth', '/api/user', '/api/data'], security.securityMiddleware);
-  
+
   // Register health routes
   app.use(healthRoutes);
-  
+
   // Register auth routes
   app.use('/api/auth', authRoutes);
-  
+
   // Register database monitoring routes
   app.use('/api/db', dbMonitorRoutes);
-  
+
   // Add test endpoint directly to ensure it's registered
   app.get('/api/test', (req, res) => {
     res.status(200).json({
@@ -124,7 +124,7 @@ function configureExpress(): void {
       userInfo: (req as any).user || null
     });
   });
-  
+
   // Add root route
   app.get('/', (req, res) => {
     res.json({
@@ -132,10 +132,17 @@ function configureExpress(): void {
       timestamp: new Date().toISOString()
     });
   });
-  
-  // Error handling middleware - should be registered last
-  // These need to be registered after all routes
-  app.use(notFoundHandler);
+
+  // Add catch-all route for unmatched paths
+  app.use('*', (req, res) => {
+    res.status(404).json({
+      status: 'error',
+      code: 'not_found',
+      message: 'The requested route was not found'
+    });
+  });
+
+  // Error handling middleware - registered last
   app.use(errorHandler);
 }
 
@@ -145,20 +152,20 @@ function configureExpress(): void {
 function setupGracefulShutdown(): void {
   // Handle process termination signals
   const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
-  
+
   for (const signal of signals) {
     process.on(signal, async () => {
       console.log(`Received ${signal}, shutting down gracefully...`);
       await shutdown();
     });
   }
-  
+
   // Handle uncaught exceptions
   process.on('uncaughtException', async (error) => {
     console.error('Uncaught exception:', error);
     await shutdown();
   });
-  
+
   // Handle unhandled promise rejections
   process.on('unhandledRejection', async (reason, promise) => {
     console.error('Unhandled promise rejection at:', promise, 'reason:', reason);
@@ -171,7 +178,7 @@ function setupGracefulShutdown(): void {
  */
 export async function shutdown(): Promise<void> {
   console.log('Shutting down server...');
-  
+
   // Close HTTP server first to stop accepting new connections
   if (server) {
     await new Promise<void>((resolve) => {
@@ -181,24 +188,24 @@ export async function shutdown(): Promise<void> {
       });
     });
   }
-  
+
   // Shutdown monitoring
   monitoring.shutdown();
-  
+
   // Shutdown security scans
   stopSecurityScans();
-  
+
   // Shutdown background services
   await shutdownBackgroundServices();
-  
+
   // Shutdown resilience components
   resilience.shutdownResilienceComponents();
-  
+
   // Close database connection last
   await db.closeDatabaseConnection();
-  
+
   console.log('Server shutdown complete');
-  
+
   // Force exit if shutdown takes too long
   setTimeout(() => {
     console.log('Forced exit after shutdown timeout');
