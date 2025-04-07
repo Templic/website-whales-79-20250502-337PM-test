@@ -18,7 +18,7 @@ export default function TourPage() {
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Tour Dates</h1>
-        
+
         <GeometricSection 
           variant="secondary" 
           shape="trapezoid" 
@@ -27,7 +27,7 @@ export default function TourPage() {
           alignment="center"
         >
           <div className="tour-items space-y-6">
-            <div className="tour-item bg-[rgba(48,52,54,0.5)] p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
+            <div className="tour-item cosmic-glow-box p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
               <div className="tour-details">
                 <h3 className="text-xl font-bold text-[#00ebd6]">Honolulu, HI</h3>
                 <p>Date: August 15, 2025</p>
@@ -43,7 +43,7 @@ export default function TourPage() {
               </div>
             </div>
 
-            <div className="tour-item bg-[rgba(48,52,54,0.5)] p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
+            <div className="tour-item cosmic-glow-box p-6 rounded-lg flex flex-wrap justify-between items-center transform hover:-translate-y-1 transition-transform duration-300">
               <div className="tour-details">
                 <h3 className="text-xl font-bold text-[#00ebd6]">Big Island, HI</h3>
                 <p>Date: September 10, 2025</p>

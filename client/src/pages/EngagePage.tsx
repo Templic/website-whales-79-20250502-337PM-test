@@ -22,10 +22,10 @@ export default function EngagePage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Engage</h1>
+        <h1 className="text-5xl font-bold text-[#00ebd6] mb-6 cosmic-float font-nebula tracking-wider">Engage</h1>
         <div className="space-y-8">
           {/* Main Banner Section */}
-          <section className="banner bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+          <section className="banner cosmic-glow-box p-8 rounded-xl cosmic-pulse">
             <div className="w-full h-64 bg-gradient-to-r from-[#0a305c] to-[#00ebd6] rounded-lg mb-6 flex items-center justify-center">
               <h2 className="text-4xl font-bold text-white">Join Our Community</h2>
             </div>

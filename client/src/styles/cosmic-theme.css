@@ -1,3 +1,22 @@
+
+@font-face {
+  font-family: 'Nebula';
+  src: url('/fonts/Nebula-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Nebula';
+  src: url('/fonts/Nebula-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+}
+
+.font-nebula {
+  font-family: 'Nebula', system-ui, -apple-system, sans-serif;
+}
+
 /* Cosmic Theme CSS for Dale Loves Whales Website */
 
 /* Cosmic Navigation Styles */
