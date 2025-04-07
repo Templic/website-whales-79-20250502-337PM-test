@@ -110,66 +110,89 @@ export default function CollaborationPage() {
           </div>
         </section>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Find Our Content</h2>
-          <div className="grid grid-cols-1 gap-6">
-            <a
-              href="https://www.youtube.com/@DiamondOrca777/featured"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
-            >
-              <div className="flex items-center space-x-4 w-full">
-                <img 
-                  src="https://yt3.ggpht.com/ytc/APkrFKaqca-xQS5mwY_U6LWpBds93aWgUZqOA4x-5g=s88-c-k-c0x00ffffff-no-rj" 
-                  alt="YouTube Profile" 
-                  className="w-12 h-12 rounded-full"
-                />
-                <span className="flex flex-col flex-grow">
-                  <span className="font-semibold">Dale's YouTube:</span>
-                  <span>@DiamondOrca777</span>
-                </span>
-                <img src="/icons8-youtube-48.png" alt="YouTube" className="w-8 h-8" />
-              </div>
-            </a>
-            <a
-              href="https://www.instagram.com/dalethewhalemusic"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
-            >
-              <div className="flex items-center space-x-4 w-full">
-                <img 
-                  src="/images/dale-profile.jpg"
-                  alt="Instagram Profile" 
-                  className="w-12 h-12 rounded-full"
-                />
-                <span className="flex flex-col flex-grow">
-                  <span className="font-semibold">Dale's Instagram:</span>
-                  <span>@dalethewhalemusic</span>
-                </span>
-                <img src="/icons8-instagram-48.png" alt="Instagram" className="w-8 h-8" />
-              </div>
-            </a>
-            <a
-              href="https://creators.spotify.com/pod/show/dale-ham"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center p-4 bg-[rgba(48,52,54,0.5)] rounded-lg hover:bg-[rgba(48,52,54,0.7)] transition-colors"
-            >
-              <div className="flex items-center space-x-4 w-full">
-                <img 
-                  src="/images/podcast-cover.jpg" 
-                  alt="Podcast Cover" 
-                  className="w-12 h-12 rounded-lg"
-                />
-                <span className="flex flex-col flex-grow">
-                  <span className="font-semibold">THE IRIDESCENT DOVE Podcast:</span>
-                  <span>Ham</span>
-                </span>
-                <img src="/icons8-spotify-48.png" alt="Spotify" className="w-8 h-8" />
-              </div>
-            </a>
+        <section className="mb-12 mt-8" id="social-media-section">
+          <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center cosmic-glow">Connect With Our Content</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-gradient-to-br from-[rgba(48,52,54,0.7)] to-[rgba(48,52,54,0.5)] p-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] group">
+              <a
+                href="https://www.youtube.com/@DiamondOrca777/featured"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block h-full"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-red-600 transform transition-transform group-hover:scale-110">
+                    <img 
+                      src="https://yt3.ggpht.com/ytc/APkrFKaqca-xQS5mwY_U6LWpBds93aWgUZqOA4x-5g=s88-c-k-c0x00ffffff-no-rj" 
+                      alt="YouTube Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-red-500">YouTube Channel</h3>
+                    <p className="text-[#00ebd6] mb-2">@DiamondOrca777</p>
+                    <p className="text-sm opacity-80 mb-4">Music videos, live performances & cosmic journeys</p>
+                    <div className="p-2 bg-red-600 rounded-lg text-white font-medium text-center group-hover:bg-red-700 transition-colors">
+                      Visit Channel
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[rgba(48,52,54,0.7)] to-[rgba(48,52,54,0.5)] p-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] group">
+              <a
+                href="https://www.instagram.com/dalethewhalemusic"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block h-full"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-600 transform transition-transform group-hover:scale-110">
+                    <img 
+                      src="/images/dale-profile.jpg"
+                      alt="Instagram Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-purple-500">Instagram</h3>
+                    <p className="text-[#00ebd6] mb-2">@dalethewhalemusic</p>
+                    <p className="text-sm opacity-80 mb-4">Behind-the-scenes, daily inspiration & tour updates</p>
+                    <div className="p-2 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg text-white font-medium text-center group-hover:from-purple-700 group-hover:to-pink-600 transition-colors">
+                      Follow Us
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[rgba(48,52,54,0.7)] to-[rgba(48,52,54,0.5)] p-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] group">
+              <a
+                href="https://creators.spotify.com/pod/show/dale-ham"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block h-full"
+              >
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-green-500 transform transition-transform group-hover:scale-110">
+                    <img 
+                      src="/images/podcast-cover.jpg" 
+                      alt="Podcast Cover" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-semibold text-green-500">Podcast</h3>
+                    <p className="text-[#00ebd6] mb-2">THE IRIDESCENT DOVE</p>
+                    <p className="text-sm opacity-80 mb-4">Deep conversations, musical insights & cosmic wisdom</p>
+                    <div className="p-2 bg-green-600 rounded-lg text-white font-medium text-center group-hover:bg-green-700 transition-colors">
+                      Listen Now
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
           </div>
         </section>
 
