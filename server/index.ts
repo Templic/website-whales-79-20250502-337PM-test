@@ -6,6 +6,7 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import db from './db';
 import resilience from './resilience';
 import monitoring from './monitoring';
@@ -21,6 +22,7 @@ import dbMonitorRoutes from './routes/db-monitor';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { apiRateLimit } from './middleware/rateLimit';
 import monitoringMiddleware from './middleware/monitoring';
+import { spawn } from 'child_process';
 
 // Create Express app
 const app = express();
@@ -29,6 +31,36 @@ let server: http.Server;
 /**
  * Initialize and start the server
  */
+let flaskProcess: any = null;
+
+/**
+ * Start the Flask frontend server process
+ */
+function startFlaskServer() {
+  console.log('Starting Flask frontend server...');
+  
+  // Start Flask server as a child process
+  flaskProcess = spawn('python3', ['app.py']);
+  
+  flaskProcess.stdout.on('data', (data: Buffer) => {
+    console.log(`Flask server stdout: ${data.toString()}`);
+  });
+  
+  flaskProcess.stderr.on('data', (data: Buffer) => {
+    console.error(`Flask server stderr: ${data.toString()}`);
+  });
+  
+  flaskProcess.on('close', (code: number) => {
+    console.log(`Flask server process exited with code ${code}`);
+    flaskProcess = null;
+  });
+  
+  // Wait for Flask server to start (simple delay)
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, 2000);
+  });
+}
+
 export async function startServer(): Promise<http.Server> {
   console.log('Starting server with enhanced resilience and monitoring...');
 
@@ -58,6 +90,9 @@ export async function startServer(): Promise<http.Server> {
 
     // Initialize compliance framework
     initializeCompliance();
+    
+    // Start Flask frontend server
+    await startFlaskServer();
 
     // Configure Express middleware
     configureExpress();
@@ -125,13 +160,70 @@ function configureExpress(): void {
     });
   });
 
-  // Add root route
-  app.get('/', (req, res) => {
+  // Add Flask server proxy for all non-API frontend routes
+  // This should be placed before the catch-all route
+  const flaskProxy = createProxyMiddleware({
+    target: 'http://localhost:5001',
+    changeOrigin: true,
+    // TypeScript error workarounds - simply use @ ts-ignore for now
+    // @ts-ignore
+    onProxyReq: (proxyReq: any, req: any) => {
+      console.log(`Proxying request: ${req.method} ${req.url} to Flask server`);
+    },
+    // @ts-ignore
+    onError: (err: Error, req: any, res: any) => {
+      console.error('Flask proxy error:', err);
+      // Send a friendlier error response when proxy fails
+      res.status(503).send(`
+        <html>
+          <head><title>Service Temporarily Unavailable</title></head>
+          <body>
+            <h1>Service Temporarily Unavailable</h1>
+            <p>The frontend service is currently unavailable. Please try again later.</p>
+          </body>
+        </html>
+      `);
+    }
+  });
+
+  // Frontend routes to proxy to Flask server
+  const frontendRoutes = [
+    '/',
+    '/about',
+    '/new-music',
+    '/archived-music',
+    '/tour',
+    '/engage',
+    '/newsletter',
+    '/blog',
+    '/collaboration',
+    '/contact',
+    '/static'
+  ];
+
+  // Register API routes first so they don't get proxied to Flask
+  // Add fallback API root route
+  app.get('/api', (req, res) => {
+    // Include more detailed server info for diagnostics
     res.json({
       message: 'API server is running',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      version: process.env.npm_package_version || 'unknown',
+      uptime: process.uptime().toFixed(0) + ' seconds',
+      environment: process.env.NODE_ENV || 'development',
+      node_version: process.version
     });
   });
+
+  // Register the Flask proxy for frontend routes AFTER API routes
+  frontendRoutes.forEach(route => {
+    app.use(route, flaskProxy);
+  });
+
+  // Serve static files directly from Express server for better performance
+  app.use('/static', express.static('static'));
+  // Also serve CSS file from the root (styles.css) directly
+  app.use(express.static('.'));
 
   // Add catch-all route for unmatched paths
   app.use('*', (req, res) => {
@@ -187,6 +279,18 @@ export async function shutdown(): Promise<void> {
         resolve();
       });
     });
+  }
+
+  // Terminate Flask server process if running
+  if (flaskProcess) {
+    console.log('Terminating Flask server process...');
+    try {
+      flaskProcess.kill();
+      console.log('Flask server process terminated');
+    } catch (error) {
+      console.error('Error terminating Flask server process:', error);
+    }
+    flaskProcess = null;
   }
 
   // Shutdown monitoring

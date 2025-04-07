@@ -88,6 +88,12 @@ def internal_server_error(e):
     logger.error(f"Internal server error: {str(e)}")
     return render_template('500.html'), 500
 
+# Route for serving root-level styles.css
+@app.route('/styles.css')
+def root_styles():
+    logger.info("Serving root-level styles.css")
+    return app.send_static_file('css/styles.css'), 200
+
 # Test route for basic connectivity verification
 @app.route('/test')
 def test():
