@@ -60,9 +60,15 @@ export default function CosmicConnectivityPage() {
       frequency: 528,
     }
   ]);
-  
+
   const { toast } = useToast();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleAudioError = (err) => {
+    console.error('Audio playback failed:', err);
+    setError('Failed to play audio. Please try again.');
+  };
 
   // Track component visibility for performance optimization
   const [visibleComponents, setVisibleComponents] = useState({
@@ -88,10 +94,10 @@ export default function CosmicConnectivityPage() {
         "Experience the unified cosmic sound healing and consciousness expansion journey.",
       duration: 5000,
     });
-    
+
     // Mark page as loaded
     setIsPageLoaded(true);
-    
+
     // Cleanup function
     return () => {
       // Any cleanup needed when component unmounts
@@ -171,7 +177,7 @@ export default function CosmicConnectivityPage() {
               synchronized breathing patterns with cosmic music. Harmonize your breath
               with the universe to reveal deeper states of consciousness and activate chakra energy fields.
             </p>
-            {isComponentVisible.aeroaura && <Aeroaura tracks={tracks} />}
+            {isComponentVisible.aeroaura && <Aeroaura tracks={tracks} onAudioError={handleAudioError}/>}
           </div>
 
           {/* Frequency Attunement Section - Merged with Binaural Beat Generator */}
@@ -189,7 +195,7 @@ export default function CosmicConnectivityPage() {
             </p>
             <div className="grid lg:grid-cols-2 gap-8">
               <div>
-                {isComponentVisible.frequencyAttunement && <FrequencyAttunementChamber />}
+                {isComponentVisible.frequencyAttunement && <FrequencyAttunementChamber onAudioError={handleAudioError}/>}
               </div>
               <div>
                 <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-5 h-full">
@@ -201,7 +207,7 @@ export default function CosmicConnectivityPage() {
                     Create custom binaural beats to induce specific brainwave states. 
                     Amplify the effects of the attunement chamber with targeted neural entrainment.
                   </p>
-                  {isComponentVisible.frequencyAttunement && <BinauralBeatGenerator />}
+                  {isComponentVisible.frequencyAttunement && <BinauralBeatGenerator onAudioError={handleAudioError}/>}
                 </div>
               </div>
             </div>
@@ -220,7 +226,7 @@ export default function CosmicConnectivityPage() {
               creating a portal to deeper states of awareness and cosmic connection. Combine different
               sound layers to craft your unique interdimensional sound experience.
             </p>
-            {isComponentVisible.multidimensionalJourney && <MultidimensionalSoundJourney />}
+            {isComponentVisible.multidimensionalJourney && <MultidimensionalSoundJourney onAudioError={handleAudioError}/>}
           </div>
 
           {/* Sacred Geometry Visualization */}
