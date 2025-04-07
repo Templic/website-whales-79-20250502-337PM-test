@@ -78,6 +78,8 @@ export default function CosmicConnectivityPage() {
     multidimensionalJourney: true
   });
 
+const isMobile = useMediaQuery('(max-width: 768px)');
+
   // Optimize rendering by memoizing component visibility
   const isComponentVisible = useMemo(() => ({
     aeroaura: visibleComponents.aeroaura,
