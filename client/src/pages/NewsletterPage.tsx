@@ -34,7 +34,7 @@ export default function NewsletterPage() {
     document.title = "Newsletter - Dale Loves Whales";
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
-    }, 9000);
+    }, 345);
 
     return () => clearInterval(interval);
   }, []);
