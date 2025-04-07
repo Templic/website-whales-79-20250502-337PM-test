@@ -48,7 +48,7 @@ export default function MusicReleasePage() {
           <div className="w-full md:w-1/2 bg-gray-900 rounded-lg shadow-xl relative overflow-hidden">
             <div className="pt-[56.25%] relative">
               <iframe
-                src="https://www.youtube.com/embed/jzpvkq3Krjg"
+                src="https://www.youtube.com/embed/jzpvkq3Krjg?rel=0&showinfo=0&controls=1"
                 title="Feels So Good - Music Video"
                 className="absolute inset-0 w-full h-full rounded-lg"
                 frameBorder="0"

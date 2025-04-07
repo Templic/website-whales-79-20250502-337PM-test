@@ -28,7 +28,13 @@ export default function HomePage() {
               url(https://onlyinhawaii.org/wp-content/uploads/2011/03/Rainbow-Falls.jpg)
               no-repeat center center / cover`
           }}>
-          <div className="hero-content relative z-10 max-w-[800px] p-8">
+          <GeometricSection
+            variant="cosmic"
+            shape="hexagon"
+            alignment="center"
+            backgroundStyle="glass"
+            className="hero-content relative z-10 max-w-[800px]"
+          >
             <h1 className="text-[clamp(2rem,4vw,3.5rem)] mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-almendra leading-tight px-4 whitespace-normal">
               🌊 Ride the Cosmic Wave 🌌
             </h1>
@@ -41,7 +47,7 @@ export default function HomePage() {
                 shadow-[0_0_15px_#00ebd6] hover:shadow-[0_0_20px_#fe0064] inline-block">
               Explore Music
             </Link>
-          </div>
+          </GeometricSection>
         </section>
 
         {/* Main Content */}

@@ -100,7 +100,7 @@ export default function TourPage() {
         >
           <div className="w-full h-full flex-grow overflow-hidden relative bg-black/30 backdrop-blur-sm rounded-xl p-2">
             <a 
-              href="https://www.google.com/maps/@21.2893734,-157.8710592,9z?entry=ttu" 
+              href="https://www.google.com/maps/d/viewer?mid=1O20t-0KO1FJ8E8KW3CWgBVm6JtA&hl=en_US&ll=21.289373449999997%2C-157.8710592&z=9" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="absolute top-3 left-3 bg-white/90 text-[#303436] px-3 py-1 rounded z-20 text-sm hover:bg-white transition-colors"
@@ -108,14 +108,13 @@ export default function TourPage() {
               View larger map
             </a>
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1883097.0233626748!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d967248.1160445086!2d-158.72112568359374!3d21.32281999999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7c006579e2469e15%3A0xa5d85a82e90e7cc1!2sHawaiian%20Islands!5e0!3m2!1sen!2sus!4v1744055826053!5m2!1sen!2sus"
               className="w-full h-full border-0 min-h-[450px] rounded-lg"
-              style={{ display: 'block' }}
-              frameBorder="0"
+              style={{ border: 0, display: 'block' }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Tour Map"
+              title="Hawaii Tour Locations"
             />
           </div>
         </GeometricSection>
