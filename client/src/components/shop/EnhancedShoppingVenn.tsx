@@ -35,12 +35,17 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
           </p>
         </div>
         
-        {/* Venn Diagram - just two overlapping circles */}
-        <div className="relative h-[24rem] md:h-[32rem]">
-          {/* Left Circle - Shop Together */}
-          <div className="absolute h-[90%] aspect-square rounded-full border border-purple-400/30 
-                        left-[5%] md:left-[15%] top-[5%] flex flex-col items-center justify-center
-                        bg-indigo-900/10 backdrop-blur-sm">
+        {/* Venn Diagram - Desktop horizontal layout, Mobile vertical layout */}
+        <div className="relative h-[60rem] sm:h-[40rem] md:h-[32rem]">
+          {/* First Circle - Shop Together */}
+          <div className="
+            absolute h-[60%] sm:h-[90%] aspect-square rounded-full border border-purple-400/30 
+            bg-indigo-900/10 backdrop-blur-sm flex flex-col items-center justify-center
+            
+            top-[0%] left-1/2 transform -translate-x-1/2 
+            sm:left-[5%] md:left-[15%] sm:top-[5%] sm:transform-none
+            z-20
+          ">
             <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
               <Users className="h-6 w-6 text-purple-300" />
             </div>
@@ -58,10 +63,15 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
             </Button>
           </div>
           
-          {/* Right Circle - Co-Design Studio */}
-          <div className="absolute h-[90%] aspect-square rounded-full border border-purple-400/30 
-                        right-[5%] md:right-[15%] top-[5%] flex flex-col items-center justify-center
-                        bg-indigo-900/10 backdrop-blur-sm">
+          {/* Second Circle - Co-Design Studio */}
+          <div className="
+            absolute h-[60%] sm:h-[90%] aspect-square rounded-full border border-purple-400/30 
+            bg-indigo-900/10 backdrop-blur-sm flex flex-col items-center justify-center
+            
+            top-[45%] left-1/2 transform -translate-x-1/2
+            sm:left-auto sm:right-[5%] md:right-[15%] sm:top-[5%] sm:transform-none
+            z-10
+          ">
             <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
               <Sparkles className="h-6 w-6 text-purple-300" />
             </div>
@@ -78,8 +88,6 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
               <Plus className="h-4 w-4 mr-2" /> Create Design
             </Button>
           </div>
-          
-          {/* No extra circle in the middle - Venn diagram is just two overlapping circles */}
         </div>
       </div>
     </div>
