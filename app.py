@@ -92,7 +92,19 @@ def internal_server_error(e):
 @app.route('/styles.css')
 def root_styles():
     logger.info("Serving root-level styles.css")
-    return app.send_static_file('css/styles.css'), 200
+    try:
+        # Try to serve from static folder first
+        return app.send_static_file('css/styles.css')
+    except Exception as e:
+        logger.warning(f"Failed to serve styles.css from static folder: {str(e)}")
+        # Fallback to the root styles.css
+        try:
+            with open('styles.css', 'r') as f:
+                css_content = f.read()
+                return css_content, 200, {'Content-Type': 'text/css'}
+        except Exception as e:
+            logger.error(f"Failed to serve styles.css from root: {str(e)}")
+            return "/* CSS file not found */", 404, {'Content-Type': 'text/css'}
 
 # Test route for basic connectivity verification
 @app.route('/test')
@@ -109,8 +121,11 @@ def inject_year():
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
     try:
-        # Change port to 5001 to avoid conflict with Node.js server
-        app.run(host='0.0.0.0', port=5001, debug=True, use_reloader=False)
+        # Get port from environment or use default 5001
+        port = int(os.environ.get('FLASK_PORT', 5001))
+        logger.info(f"Flask server starting on port {port}")
+        # Using 0.0.0.0 to ensure accessibility within Replit environment
+        app.run(host='0.0.0.0', port=port, debug=True, use_reloader=False)
         logger.info("Flask application started successfully")
     except Exception as e:
         logger.error(f"Failed to start Flask application: {str(e)}")

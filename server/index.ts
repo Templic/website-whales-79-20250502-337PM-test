@@ -106,6 +106,15 @@ export async function startServer(): Promise<http.Server> {
 
     server.listen(port, host as any, () => {
       console.log(`Server listening on ${host}:${port}`);
+      
+      // Add more helpful information for Replit environment
+      if (process.env.REPL_ID && process.env.REPL_OWNER) {
+        console.log(`\n✅ Application is running in Replit environment`);
+        console.log(`Public URL: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+      } else {
+        console.log(`\n✅ Local development URL: http://localhost:${port}`);
+      }
+      console.log(`API endpoint: http://localhost:${port}/api`);
     });
 
     // Handle graceful shutdown
@@ -165,21 +174,39 @@ function configureExpress(): void {
   const flaskProxy = createProxyMiddleware({
     target: 'http://localhost:5001',
     changeOrigin: true,
+    // Additional proxy options for Replit environment
+    ws: true, // Support WebSocket
+    pathRewrite: { '^/': '/' }, // No path rewriting
+    // Add longer timeout for Replit environment
+    timeout: 20000,
+    proxyTimeout: 20000,
     // TypeScript error workarounds - simply use @ ts-ignore for now
     // @ts-ignore
     onProxyReq: (proxyReq: any, req: any) => {
       console.log(`Proxying request: ${req.method} ${req.url} to Flask server`);
     },
+    // Improved error handling for Replit environment
     // @ts-ignore
     onError: (err: Error, req: any, res: any) => {
       console.error('Flask proxy error:', err);
       // Send a friendlier error response when proxy fails
       res.status(503).send(`
         <html>
-          <head><title>Service Temporarily Unavailable</title></head>
+          <head>
+            <title>Service Temporarily Unavailable</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+              h1 { color: #d32f2f; }
+              .error-details { color: #666; margin-top: 20px; text-align: left; padding: 10px; background: #f5f5f5; border-radius: 4px; }
+            </style>
+          </head>
           <body>
             <h1>Service Temporarily Unavailable</h1>
-            <p>The frontend service is currently unavailable. Please try again later.</p>
+            <p>The frontend service is currently unavailable. Our team has been notified and is working on a fix.</p>
+            <p>Please try refreshing the page or try again in a few moments.</p>
+            <div class="error-details">
+              <p><strong>Error details:</strong> ${err.message}</p>
+            </div>
           </body>
         </html>
       `);
