@@ -13,6 +13,7 @@ import { BinauralBeatGenerator } from "@/components/features/audio/BinauralBeatG
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton";
 import { Aeroaura } from "@/components/features/cosmic/Aeroaura";
 import { useToast } from "@/hooks/use-toast";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { Link } from "wouter";
 import {
   Music,
@@ -63,9 +64,9 @@ export default function CosmicConnectivityPage() {
 
   const { toast } = useToast();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAudioError = (err) => {
+  const handleAudioError = (err: any) => {
     console.error('Audio playback failed:', err);
     setError('Failed to play audio. Please try again.');
   };
@@ -78,7 +79,7 @@ export default function CosmicConnectivityPage() {
     multidimensionalJourney: true
   });
 
-const isMobile = useMediaQuery('(max-width: 768px)');
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Optimize rendering by memoizing component visibility
   const isComponentVisible = useMemo(() => ({
@@ -179,7 +180,7 @@ const isMobile = useMediaQuery('(max-width: 768px)');
               synchronized breathing patterns with cosmic music. Harmonize your breath
               with the universe to reveal deeper states of consciousness and activate chakra energy fields.
             </p>
-            {isComponentVisible.aeroaura && <Aeroaura tracks={tracks} onAudioError={handleAudioError}/>}
+            {isComponentVisible.aeroaura && <Aeroaura tracks={tracks} />}
           </div>
 
           {/* Frequency Attunement Section - Merged with Binaural Beat Generator */}
@@ -197,7 +198,7 @@ const isMobile = useMediaQuery('(max-width: 768px)');
             </p>
             <div className="grid lg:grid-cols-2 gap-8">
               <div>
-                {isComponentVisible.frequencyAttunement && <FrequencyAttunementChamber onAudioError={handleAudioError}/>}
+                {isComponentVisible.frequencyAttunement && <FrequencyAttunementChamber />}
               </div>
               <div>
                 <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-5 h-full">
@@ -209,7 +210,7 @@ const isMobile = useMediaQuery('(max-width: 768px)');
                     Create custom binaural beats to induce specific brainwave states. 
                     Amplify the effects of the attunement chamber with targeted neural entrainment.
                   </p>
-                  {isComponentVisible.frequencyAttunement && <BinauralBeatGenerator onAudioError={handleAudioError}/>}
+                  {isComponentVisible.frequencyAttunement && <BinauralBeatGenerator />}
                 </div>
               </div>
             </div>
@@ -228,7 +229,7 @@ const isMobile = useMediaQuery('(max-width: 768px)');
               creating a portal to deeper states of awareness and cosmic connection. Combine different
               sound layers to craft your unique interdimensional sound experience.
             </p>
-            {isComponentVisible.multidimensionalJourney && <MultidimensionalSoundJourney onAudioError={handleAudioError}/>}
+            {isComponentVisible.multidimensionalJourney && <MultidimensionalSoundJourney />}
           </div>
 
           {/* Sacred Geometry Visualization */}

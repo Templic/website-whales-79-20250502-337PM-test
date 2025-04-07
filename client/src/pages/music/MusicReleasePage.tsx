@@ -45,14 +45,32 @@ export default function MusicReleasePage() {
       <SpotlightEffect />
       <div className="space-y-8">
         <section className="flex flex-col md:flex-row gap-8 items-start relative">
-          <div className="w-full md:w-1/2">
-            <iframe
-              src="https://www.youtube.com/embed/jzpvkq3Krjg"
-              title="Feels So Good - Music Video"
-              className="w-full aspect-video rounded-lg shadow-xl"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+          <div className="w-full md:w-1/2 bg-gray-900 rounded-lg shadow-xl relative overflow-hidden">
+            <div className="pt-[56.25%] relative">
+              <iframe
+                src="https://www.youtube.com/embed/jzpvkq3Krjg"
+                title="Feels So Good - Music Video"
+                className="absolute inset-0 w-full h-full rounded-lg"
+                frameBorder="0"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+            {/* Fallback message in case the iframe doesn't load */}
+            <div className="hidden youtube-fallback absolute inset-0 flex items-center justify-center bg-gray-900 text-white p-4 text-center">
+              <div>
+                <p className="text-lg font-medium mb-2">Video not available</p>
+                <a 
+                  href="https://www.youtube.com/watch?v=jzpvkq3Krjg" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[#00ebd6] hover:underline"
+                >
+                  Watch "Feels So Good" on YouTube
+                </a>
+              </div>
+            </div>
           </div>
           <div className="w-full md:w-1/2 space-y-6">
             <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>

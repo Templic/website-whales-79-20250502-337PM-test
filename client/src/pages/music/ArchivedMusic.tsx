@@ -278,17 +278,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
           </Tabs>
         </div>
         
-        {/* Call to Action */}
-        <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-8 mb-16 text-center">
-          <h2 className="text-2xl font-semibold mb-3">Join Our Archive Community</h2>
-          <p className="text-gray-300 max-w-2xl mx-auto mb-6">
-            Get early access to new releases, exclusive ceremonies, and cosmic events
-            by joining our community of frequency explorers.
-          </p>
-          <Button className="bg-gradient-to-r from-cyan-500 to-cyan-700 hover:from-cyan-400 hover:to-cyan-600">
-            Subscribe for Updates
-          </Button>
-        </div>
+
       </div>
     </div>
   );
