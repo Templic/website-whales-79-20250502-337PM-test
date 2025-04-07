@@ -2,7 +2,8 @@
  * Database connection manager
  */
 
-import { Pool } from 'pg';
+import pg from 'pg';
+const { Pool } = pg;
 import { executeWithCircuitBreaker } from './resilience';
 
 // Create PostgreSQL connection pool
