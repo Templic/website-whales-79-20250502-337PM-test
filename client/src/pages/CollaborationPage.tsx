@@ -48,14 +48,14 @@ export default function CollaborationPage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Collaboration</h1>
-        <section className="text-center mb-12"> {/* Added marginBottom for spacing */}
-          <h2 className="text-3xl font-bold text-[#00ebd6] mb-4">Support Dale's Cosmic Journey</h2>
+        <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float">Collaboration</h1>
+        <section className="text-center mb-12 cosmic-slide-up">
+          <h2 className="text-3xl font-nebula font-bold text-[#00ebd6] mb-4 cosmic-glow">Support Dale's Cosmic Journey</h2>
           <p className="text-xl max-w-2xl mx-auto">Join us in creating otherworldly musical experiences that transcend the boundaries of space and time.</p>
         </section>
 
         <section className="grid md:grid-cols-2 gap-8 mb-12">
-          <div className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+          <div className="cosmic-glow-box p-8 rounded-xl cosmic-slide-up">
             <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Musical Collaborations</h2>
             <p className="mb-6">Let's create something extraordinary together. We're always open to innovative musical partnerships.</p>
             <ul className="space-y-4 list-none mb-8">
@@ -80,7 +80,7 @@ export default function CollaborationPage() {
             </Button>
           </div>
 
-          <div className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+          <div className="cosmic-glow-box p-8 rounded-xl shadow-lg backdrop-blur-sm cosmic-slide-up">
             <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Support Options</h2>
             <div className="space-y-6 mb-8">
               <div>
@@ -183,7 +183,7 @@ export default function CollaborationPage() {
           </div>
         </section>
 
-        <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm text-center">
+        <section className="cosmic-glow-box p-8 rounded-xl shadow-lg backdrop-blur-sm text-center">
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-4">Contact for Business Inquiries</h2>
           <p className="mb-4">For sponsorships, licensing, and other business opportunities:</p>
           <p className="text-[#00ebd6] text-lg">business@daleloveswhales.com</p>

@@ -15,8 +15,8 @@ export default function AboutPage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">About</h1>
-        <section className="biography mb-16 bg-[rgba(10,50,92,0.3)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)]">
+        <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float">About</h1>
+        <section className="biography mb-16 cosmic-glow-box p-8 rounded-xl cosmic-slide-up">
           <div className="section-header mb-8">
             <h2 className="text-4xl text-[#00ebd6] mb-4 inline-block border-b-2 border-[#fe0064]">Biography</h2>
           </div>

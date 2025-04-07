@@ -72,7 +72,7 @@ export default function NewsletterPage() {
             <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
           </section>
 
-          <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
+          <section className="cosmic-glow-box p-8 rounded-xl cosmic-slide-up">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div>
