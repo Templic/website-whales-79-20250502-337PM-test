@@ -334,6 +334,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
+  // Get latest sent newsletter (public)
+  app.get("/api/latest-newsletter", async (req, res) => {
+    try {
+      const newsletter = await storage.getLatestSentNewsletter();
+      if (!newsletter) {
+        return res.status(404).json({ message: "No sent newsletters found" });
+      }
+      res.json(newsletter);
+    } catch (error) {
+      console.error("Error fetching latest newsletter:", error);
+      res.status(500).json({ message: "Error fetching latest newsletter" });
+    }
+  });
+  // Subscribe route is already defined above (line ~221)
+  
   // Test endpoint - public API for newsletters (for testing purposes only)
   app.get("/api/test/newsletters", async (req, res) => {
     try {

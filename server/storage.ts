@@ -37,6 +37,7 @@ export interface IStorage {
   createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
   getAllNewsletters(): Promise<Newsletter[]>;
   getNewsletterById(id: number): Promise<Newsletter | null>;
+  getLatestSentNewsletter(): Promise<Newsletter | null>;
   updateNewsletter(id: number, newsletter: Partial<InsertNewsletter>): Promise<Newsletter>;
   sendNewsletter(id: number): Promise<Newsletter>;
 
@@ -164,6 +165,15 @@ export class PostgresStorage implements IStorage {
 
   async getNewsletterById(id: number): Promise<Newsletter | null> {
     const result = await db.select().from(newsletters).where(eq(newsletters.id, id));
+    return result[0] || null;
+  }
+  
+  async getLatestSentNewsletter(): Promise<Newsletter | null> {
+    const result = await db.select()
+      .from(newsletters)
+      .where(eq(newsletters.status, "sent"))
+      .orderBy(sql`sent_at DESC`)
+      .limit(1);
     return result[0] || null;
   }
 
