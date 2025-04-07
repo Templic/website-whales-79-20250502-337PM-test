@@ -10,7 +10,7 @@ export class ApiError extends Error {
   statusCode: number;
   code?: string;
   details?: any;
-  
+
   constructor(message: string, statusCode: number, code?: string, details?: any) {
     super(message);
     this.statusCode = statusCode;
@@ -29,6 +29,20 @@ export const asyncHandler = (fn: Function) => (
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+export const validateQueryParams = (requiredParams: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const missingParams = requiredParams.filter(param => !req.query[param]);
+
+    if (missingParams.length > 0) {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: `Missing required query parameters: ${missingParams.join(', ')}`
+      });
+    }
+    next();
+  };
+};
+
 /**
  * Global error handler middleware
  */
@@ -43,11 +57,11 @@ export function errorHandler(
   let errorCode = 'server_error';
   let message = 'Internal Server Error';
   let details = undefined;
-  
+
   // Get original URL and method for logging
   const originalUrl = req.originalUrl || req.url;
   const method = req.method;
-  
+
   // Use ApiError values if available
   if (err instanceof ApiError) {
     statusCode = err.statusCode;
@@ -55,17 +69,17 @@ export function errorHandler(
     message = err.message;
     details = err.details;
   }
-  
+
   // For development, include stack trace
   const stack = process.env.NODE_ENV === 'development' ? err.stack : undefined;
-  
+
   // Log errors 
   const logLevel = statusCode >= 500 ? 'error' : 'warn';
   console[logLevel](`[${statusCode}] ${method} ${originalUrl} - ${message}`, 
     stack || '', 
     details || ''
   );
-  
+
   // Log security event for server errors
   if (statusCode >= 500) {
     logSecurityEvent({
@@ -84,7 +98,7 @@ export function errorHandler(
       }
     });
   }
-  
+
   // Return error response
   res.status(statusCode).json({
     error: {
@@ -103,9 +117,9 @@ export function errorHandler(
 export function notFoundHandler(req: Request, res: Response): void {
   const originalUrl = req.originalUrl || req.url;
   const method = req.method;
-  
+
   console.warn(`[404] ${method} ${originalUrl} - Route not found`);
-  
+
   res.status(404).json({
     error: {
       status: 404,
@@ -137,5 +151,6 @@ export default {
   ApiError,
   asyncHandler,
   errorHandler,
-  notFoundHandler
+  notFoundHandler,
+  validateQueryParams
 };

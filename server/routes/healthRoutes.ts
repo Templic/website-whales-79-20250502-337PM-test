@@ -90,7 +90,7 @@ router.get('/health/database', asyncHandler(async (req: Request, res: Response) 
 /**
  * Get API health metrics for monitoring
  */
-router.get('/health/api', asyncHandler(async (req: Request, res: Response) => {
+router.get('/health/api', validateQueryParams(['minutes']), asyncHandler(async (req: Request, res: Response) => {
   // Similar access control as metrics endpoint
   const ip = req.ip || (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim();
   const isInternalRequest = 
