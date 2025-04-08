@@ -42,6 +42,13 @@ import ButtonDemo from "@/pages/test/ButtonDemo";
 import CommunityPage from "@/pages/community/CommunityPage";
 import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
 
+// Resource Pages
+import ResourcesPage from "@/pages/resources/ResourcesPage";
+import FrequencyGuidePage from "@/pages/resources/FrequencyGuidePage";
+import SacredGeometryPage from "@/pages/resources/SacredGeometryPage";
+import SoundHealingPage from "@/pages/resources/SoundHealingPage";
+import MeditationTechniquesPage from "@/pages/resources/MeditationTechniquesPage";
+
 // Shop Pages
 import ShopPage from "@/pages/shop/ShopPage";
 import ProductDetailPage from "@/pages/shop/ProductPage";
@@ -143,6 +150,13 @@ function AppRouter() {
           <ProtectedRoute path="/admin/posts" component={PostsPage} />
           <ProtectedRoute path="/admin/music" component={MusicPage} />
 
+          {/* Resource Pages */}
+          <Route path="/resources" component={ResourcesPage} />
+          <Route path="/resources/frequency-guide" component={FrequencyGuidePage} />
+          <Route path="/resources/sacred-geometry" component={SacredGeometryPage} />
+          <Route path="/resources/sound-healing" component={SoundHealingPage} />
+          <Route path="/resources/meditation" component={MeditationTechniquesPage} />
+          
           {/* Legal & Info */}
           <Route path="/sitemap" component={SitemapPage} />
           <Route path="/terms" component={TermsOfService} />

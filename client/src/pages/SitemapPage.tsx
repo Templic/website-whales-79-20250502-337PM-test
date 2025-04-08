@@ -48,6 +48,7 @@ export default function SitemapPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Resources</h2>
           <ul className="space-y-2">
+            <li><Link href="/resources">Resources Home</Link></li>
             <li><Link href="/resources/frequency-guide">Frequency Guide</Link></li>
             <li><Link href="/resources/sacred-geometry">Sacred Geometry</Link></li>
             <li><Link href="/resources/sound-healing">Sound Healing</Link></li>
