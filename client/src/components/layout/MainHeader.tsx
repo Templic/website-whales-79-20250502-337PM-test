@@ -556,15 +556,16 @@ export function MainHeader() {
                   <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
                     Community
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     {communityLinks.map(item => (
                       <Link
                         key={item.path}
                         href={item.path}
                         onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm py-1 px-2"
+                        className="flex items-center space-x-1 bg-black/30 rounded-md p-2 border border-[#00ebd6]/10 hover:border-[#00ebd6]/30 text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
                       >
-                        {item.name}
+                        <span className="text-cyan-400">{item.icon}</span>
+                        <span>{item.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -575,15 +576,16 @@ export function MainHeader() {
                   <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
                     Music
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-4">
                     {musicLinks.map(item => (
                       <Link
                         key={item.path}
                         href={item.path}
                         onClick={() => handleNavigationClick(item.path)}
-                        className="block text-[#e8e6e3] hover:text-[#00ebd6] text-sm py-1 px-2"
+                        className="flex items-center space-x-1 bg-black/30 rounded-md p-2 border border-[#00ebd6]/10 hover:border-[#00ebd6]/30 text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
                       >
-                        {item.name}
+                        <span className="text-cyan-400">{item.icon}</span>
+                        <span>{item.name}</span>
                       </Link>
                     ))}
                   </div>
@@ -594,17 +596,17 @@ export function MainHeader() {
                   <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
                     Follow Us
                   </h3>
-                  <div className="flex justify-around">
+                  <div className="grid grid-cols-2 gap-4">
                     {socialLinks.map(link => (
                       <a
                         key={link.name}
                         href={link.path}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex flex-col items-center text-center p-2 text-[#e8e6e3]/80 hover:text-[#00ebd6]"
+                        className="flex items-center space-x-1 bg-black/30 rounded-md p-2 border border-[#00ebd6]/10 hover:border-[#00ebd6]/30 text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
                       >
-                        <span className="mb-1">{link.icon}</span>
-                        <span className="text-xs">{link.name}</span>
+                        <span className="text-cyan-400">{link.icon}</span>
+                        <span>{link.name}</span>
                       </a>
                     ))}
                   </div>
