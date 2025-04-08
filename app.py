@@ -28,12 +28,13 @@ csrf = CSRFProtect(app)
 # Configure CSP to allow external resources
 csp = {
     'default-src': ['\'self\'', '\'unsafe-inline\''],
-    'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com'],
+    'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com', 'https://i.ytimg.com', 'https://yt3.ggpht.com'],
     'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com'],
     'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
-    'frame-src': ['\'self\'', 'https://www.youtube.com', 'https://youtube.com', 'https://www.google.com'],
+    'frame-src': ['\'self\'', 'https://www.youtube.com', 'https://youtube.com', 'https://www.youtube-nocookie.com', 'https://www.google.com'],
     'media-src': ['\'self\'', 'https://*'],
-    'script-src': ['\'self\'', '\'unsafe-inline\'']
+    'script-src': ['\'self\'', '\'unsafe-inline\'', 'https://www.youtube.com', 'https://s.ytimg.com'],
+    'connect-src': ['\'self\'', 'https://www.youtube.com']
 }
 
 # Initialize Talisman with our CSP configuration

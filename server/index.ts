@@ -32,10 +32,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.youtube.com"],
-      frameSrc: ["'self'", "https://www.youtube.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.youtube.com", "https://www.youtube-nocookie.com", "https://s.ytimg.com"],
+      frameSrc: ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://i.ytimg.com", "https://yt3.ggpht.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "https://www.youtube.com"],
     },
   },
 }));

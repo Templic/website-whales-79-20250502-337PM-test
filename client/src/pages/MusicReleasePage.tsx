@@ -42,7 +42,7 @@ export default function MusicReleasePage() {
         <section className="flex flex-col md:flex-row gap-8 items-start relative">
           <div className="w-full md:w-1/2">
             <iframe
-              src="https://www.youtube.com/embed/jzpvkq3Krjg"
+              src="https://www.youtube-nocookie.com/embed/jzpvkq3Krjg"
               title="Feels So Good - Music Video"
               className="w-full aspect-video rounded-lg shadow-xl"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
