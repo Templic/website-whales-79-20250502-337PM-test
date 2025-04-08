@@ -56,58 +56,71 @@ export default function AboutPage() {
           className="mb-16 cosmic-slide-up"
           decorative={true}
         >
-          <div className="flex flex-col lg:flex-row gap-10 items-center justify-center p-8">
-            {/* Center image with bigger size on larger screens */}
-            <div className="relative rounded-xl overflow-hidden shadow-2xl max-w-md w-full lg:max-w-xl">
-              <div className="absolute -top-5 -left-5 z-10">
+          {/* Specifically designed to fill the hexagon shape with a layout that conforms to its contours */}
+          <div className="relative pt-2 pb-4">
+            {/* Central large image with cosmic overlay */}
+            <div className="mx-auto mb-6 px-4 relative" style={{ maxWidth: "min(85%, 700px)" }}>
+              <div className="absolute -top-5 -left-2 z-10">
                 <SacredGeometry 
                   type="pentagon-star" 
                   size={60} 
                   color="#fe0064" 
                 />
               </div>
-              <img
-                src="/images/dale-with-flowers-and-staff.jpg"
-                alt="Dale the Whale portrait with cosmic overlay"
-                className="w-full h-auto relative z-0"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-[rgba(254,0,100,0.3)] to-[rgba(0,235,214,0.3)]" />
+              <div className="relative rounded-xl overflow-hidden shadow-2xl w-full">
+                <img
+                  src="/images/dale-with-flowers-and-staff.jpg"
+                  alt="Dale the Whale portrait with cosmic overlay"
+                  className="w-full h-auto relative z-0"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-[rgba(254,0,100,0.3)] to-[rgba(0,235,214,0.3)]" />
 
-              <div className="absolute bottom-4 right-4 z-10 backdrop-blur-sm bg-black/40 rounded-full p-2">
-                <Button 
-                  onClick={toggleAudio} 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-10 w-10 rounded-full bg-[#00ebd6]/20 text-white hover:bg-[#00ebd6]/40"
-                >
-                  {audioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                </Button>
-              </div>
+                <div className="absolute bottom-4 right-4 z-10 backdrop-blur-sm bg-black/40 rounded-full p-2">
+                  <Button 
+                    onClick={toggleAudio} 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-10 w-10 rounded-full bg-[#00ebd6]/20 text-white hover:bg-[#00ebd6]/40"
+                  >
+                    {audioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                  </Button>
+                </div>
 
-              {/* Audio waveform visualization (simulated) */}
-              <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
-                <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
-                <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
+                {/* Audio waveform visualization (simulated) */}
+                <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
+                  <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
+                </div>
               </div>
             </div>
 
-            {/* Biography text with enhanced styling */}
-            <div className="space-y-5 max-w-xl">
-              <div className="flex items-center mb-4">
+            {/* Biography text shaped to flow with hexagon */}
+            <div className="px-8 space-y-4 mx-auto" style={{ maxWidth: "min(90%, 900px)" }}>
+              <div className="flex items-center justify-center mb-3">
                 <Music className="w-7 h-7 text-[#00ebd6] mr-3" />
                 <h3 className="text-2xl font-bold text-[#00ebd6]">Sonic Explorer</h3>
               </div>
-              <p className="text-xl leading-relaxed">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
-              <p className="text-xl leading-relaxed">Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life. This duality is reflected in every note, every beat, and every lyric of his transformative compositions.</p>
-              <p className="text-xl leading-relaxed">With influences ranging from cosmic jazz to tropical ambient, Dale continues to push boundaries and explore new sonic territories, creating immersive soundscapes that resonate with the rhythm of the universe.</p>
+              
+              <div className="text-center max-w-4xl mx-auto">
+                <p className="text-xl leading-relaxed">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4 mt-6">
+                <div>
+                  <p className="text-lg leading-relaxed">Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life.</p>
+                </div>
+                <div>
+                  <p className="text-lg leading-relaxed">This duality is reflected in every note, every beat, and every lyric of his transformative compositions. With influences ranging from cosmic jazz to tropical ambient, Dale creates soundscapes that resonate with the universe.</p>
+                </div>
+              </div>
             </div>
           </div>
         </GeometricSection>
