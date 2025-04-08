@@ -45,7 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <Link href={`/shop/product/${id}`}>
           <div className="overflow-hidden aspect-square relative group cursor-pointer">
             <img
-              src={image}
+              src={image || "/images/products/crystal-pendant.jpg"}
               alt={name}
               className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
             />

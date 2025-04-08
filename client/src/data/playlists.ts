@@ -38,7 +38,7 @@ export const playlists: Playlist[] = [
         title: "Root Chakra Grounding",
         artist: "Cosmic Harmony",
         duration: "10:30",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-root.jpg", 
         audioSrc: "/audio/root-chakra.mp3",
       },
       {
@@ -46,7 +46,7 @@ export const playlists: Playlist[] = [
         title: "Sacral Creativity Flow",
         artist: "Cosmic Harmony",
         duration: "9:45",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-sacral.jpg", 
         audioSrc: "/audio/sacral-chakra.mp3",
       },
       {
@@ -54,7 +54,7 @@ export const playlists: Playlist[] = [
         title: "Solar Plexus Empowerment",
         artist: "Cosmic Harmony",
         duration: "8:21",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-solar-plexus.jpg", 
         audioSrc: "/audio/solar-plexus.mp3",
       },
       {
@@ -62,7 +62,7 @@ export const playlists: Playlist[] = [
         title: "Heart Chakra Opening",
         artist: "Cosmic Harmony",
         duration: "12:15",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-heart.jpg", 
         audioSrc: "/audio/heart-chakra.mp3",
       },
       {
@@ -70,7 +70,7 @@ export const playlists: Playlist[] = [
         title: "Throat Chakra Expression",
         artist: "Cosmic Harmony",
         duration: "7:42",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-throat.jpg", 
         audioSrc: "/audio/throat-chakra.mp3",
       },
       {
@@ -78,7 +78,7 @@ export const playlists: Playlist[] = [
         title: "Third Eye Awakening",
         artist: "Cosmic Harmony",
         duration: "11:11",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-third-eye.jpg", 
         audioSrc: "/audio/third-eye.mp3",
       },
       {
@@ -86,7 +86,7 @@ export const playlists: Playlist[] = [
         title: "Crown Connection",
         artist: "Cosmic Harmony",
         duration: "14:22",
-        coverArt: "/images/products/sacred-geometry.jpg", 
+        coverArt: "/images/products/chakra-crown.jpg", 
         audioSrc: "/audio/crown-chakra.mp3",
       },
     ],
@@ -106,7 +106,7 @@ export const playlists: Playlist[] = [
         title: "DNA Repair",
         artist: "Cosmic Harmony",
         duration: "20:33",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/quantum-healing-1.jpg", 
         audioSrc: "/audio/dna-repair.mp3",
       },
       {
@@ -114,7 +114,7 @@ export const playlists: Playlist[] = [
         title: "Cellular Regeneration",
         artist: "Cosmic Harmony",
         duration: "18:47",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/quantum-healing-2.jpg", 
         audioSrc: "/audio/cellular-regeneration.mp3",
       },
       {
@@ -122,7 +122,7 @@ export const playlists: Playlist[] = [
         title: "Quantum Field Harmonizer",
         artist: "Cosmic Harmony",
         duration: "15:21",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/quantum-healing-3.jpg", 
         audioSrc: "/audio/quantum-field.mp3",
       },
       {
@@ -130,7 +130,7 @@ export const playlists: Playlist[] = [
         title: "Mitochondrial Activation",
         artist: "Cosmic Harmony",
         duration: "12:15",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/quantum-healing-4.jpg", 
         audioSrc: "/audio/mitochondrial.mp3",
       },
     ],
@@ -150,7 +150,7 @@ export const playlists: Playlist[] = [
         title: "Theta Gateway",
         artist: "Cosmic Harmony",
         duration: "45:00",
-        coverArt: "/images/products/meditation-cushion.jpg", 
+        coverArt: "/images/products/sleep-journey-1.jpg", 
         audioSrc: "/audio/theta-gateway.mp3",
       },
       {
@@ -158,7 +158,7 @@ export const playlists: Playlist[] = [
         title: "Delta Dreamscape",
         artist: "Cosmic Harmony",
         duration: "60:00",
-        coverArt: "/images/products/meditation-cushion.jpg", 
+        coverArt: "/images/products/sleep-journey-2.jpg", 
         audioSrc: "/audio/delta-dreamscape.mp3",
       },
       {
@@ -166,7 +166,7 @@ export const playlists: Playlist[] = [
         title: "Nocturnal Neural Reset",
         artist: "Cosmic Harmony",
         duration: "90:00",
-        coverArt: "/images/products/meditation-cushion.jpg", 
+        coverArt: "/images/products/sleep-journey-3.jpg", 
         audioSrc: "/audio/neural-reset.mp3",
       },
     ],
@@ -185,7 +185,7 @@ export const playlists: Playlist[] = [
         title: "Vibrational Tuning",
         artist: "Cosmic Harmony",
         duration: "15:30",
-        coverArt: "/images/products/crystal-bowl.jpg", 
+        coverArt: "/images/products/astral-projection-1.jpg", 
         audioSrc: "/audio/vibrational-tuning.mp3",
       },
       {
@@ -193,7 +193,7 @@ export const playlists: Playlist[] = [
         title: "Silver Cord Activation",
         artist: "Cosmic Harmony",
         duration: "22:15",
-        coverArt: "/images/products/crystal-bowl.jpg", 
+        coverArt: "/images/products/astral-projection-2.jpg", 
         audioSrc: "/audio/silver-cord.mp3",
       },
       {
@@ -201,7 +201,7 @@ export const playlists: Playlist[] = [
         title: "Etheric Separation",
         artist: "Cosmic Harmony",
         duration: "30:00",
-        coverArt: "/images/products/crystal-bowl.jpg", 
+        coverArt: "/images/products/astral-projection-3.jpg", 
         audioSrc: "/audio/etheric-separation.mp3",
       },
       {
@@ -209,7 +209,7 @@ export const playlists: Playlist[] = [
         title: "Astral Guide",
         artist: "Cosmic Harmony",
         duration: "45:00",
-        coverArt: "/images/products/crystal-bowl.jpg", 
+        coverArt: "/images/products/astral-projection-4.jpg", 
         audioSrc: "/audio/astral-guide.mp3",
       },
     ],
@@ -228,7 +228,7 @@ export const playlists: Playlist[] = [
         title: "Fibonacci Sequence",
         artist: "Cosmic Harmony",
         duration: "13:21",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/sacred-geometry-1.jpg", 
         audioSrc: "/audio/fibonacci.mp3",
       },
       {
@@ -236,7 +236,7 @@ export const playlists: Playlist[] = [
         title: "Golden Ratio",
         artist: "Cosmic Harmony",
         duration: "17:08",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/sacred-geometry-2.jpg", 
         audioSrc: "/audio/golden-ratio.mp3",
       },
       {
@@ -244,7 +244,7 @@ export const playlists: Playlist[] = [
         title: "Metatron's Cube",
         artist: "Cosmic Harmony",
         duration: "19:19",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/sacred-geometry-3.jpg", 
         audioSrc: "/audio/metatron.mp3",
       },
       {
@@ -252,7 +252,7 @@ export const playlists: Playlist[] = [
         title: "Flower of Life",
         artist: "Cosmic Harmony",
         duration: "21:00",
-        coverArt: "/images/products/cosmic-frequency-album.png", 
+        coverArt: "/images/products/sacred-geometry-4.jpg", 
         audioSrc: "/audio/flower-of-life.mp3",
       },
     ],
@@ -263,7 +263,7 @@ export const playlists: Playlist[] = [
     description: "Ambient soundscapes for deep meditation",
     category: "meditation",
     image: "/images/products/sacred-geometry.jpg",
-    coverArt: "/images/products/sacred-geometry.jpg",
+    coverArt: "/images/products/meditation-ambient-1.jpg",
     duration: "45:00",
     tracks: []
   },
@@ -273,7 +273,7 @@ export const playlists: Playlist[] = [
     description: "Binaural beats for astral travel and lucid dreaming",
     category: "astral",
     image: "/images/products/crystal-bowl.jpg",
-    coverArt: "/images/products/crystal-bowl.jpg",
+    coverArt: "/images/products/astral-travel-1.jpg",
     duration: "30:00",
     tracks: []
   },
@@ -283,7 +283,7 @@ export const playlists: Playlist[] = [
     description: "Frequency-tuned meditation for chakra balancing",
     category: "healing",
     image: "/images/products/sacred-geometry.jpg",
-    coverArt: "/images/products/sacred-geometry.jpg",
+    coverArt: "/images/products/chakra-balancing-1.jpg",
     duration: "60:00",
     tracks: []
   },
@@ -293,7 +293,7 @@ export const playlists: Playlist[] = [
     description: "Sacred geometry sound healing",
     category: "meditation",
     image: "/images/products/meditation-cushion.jpg",
-    coverArt: "/images/products/meditation-cushion.jpg",
+    coverArt: "/images/products/sacred-geometry-meditation-1.jpg",
     duration: "40:00",
     tracks: []
   },
@@ -303,7 +303,7 @@ export const playlists: Playlist[] = [
     description: "Deep sleep frequency entrainment",
     category: "sleep",
     image: "/images/products/cosmic-frequency-album.png",
-    coverArt: "/images/products/cosmic-frequency-album.png",
+    coverArt: "/images/products/delta-sleep-1.jpg",
     duration: "60:00",
     tracks: []
   },
@@ -313,7 +313,7 @@ export const playlists: Playlist[] = [
     description: "Harmonic frequencies aligned with universal constants",
     category: "healing",
     image: "/images/products/cosmic-frequency-album.png",
-    coverArt: "/images/products/cosmic-frequency-album.png",
+    coverArt: "/images/products/quantum-resonance-1.jpg",
     duration: "55:00",
     tracks: []
   },
