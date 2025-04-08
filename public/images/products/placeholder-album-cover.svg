@@ -1,0 +1,56 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1151" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0A0721" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#9D84E8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#9D84E8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="url(#bg-gradient)"/>
+  
+  <!-- Album Cover Frame -->
+  <rect x="50" y="50" width="200" height="200" fill="#0D0426" stroke="#9D84E8" stroke-width="2"/>
+  
+  <!-- Galaxy/Cosmic Background on Album -->
+  <circle cx="150" cy="150" r="80" fill="url(#glow)" opacity="0.8"/>
+  
+  <!-- Sound Waves -->
+  <g stroke="#D4C1FF" stroke-width="1.5" fill="none">
+    <path d="M 90,150 Q 110,120 130,150 Q 150,180 170,150 Q 190,120 210,150" />
+    <path d="M 90,130 Q 110,100 130,130 Q 150,160 170,130 Q 190,100 210,130" opacity="0.7"/>
+    <path d="M 90,170 Q 110,140 130,170 Q 150,200 170,170 Q 190,140 210,170" opacity="0.7"/>
+  </g>
+  
+  <!-- Cosmic Elements -->
+  <g>
+    <!-- Stars -->
+    <circle cx="70" cy="70" r="1.5" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="220" cy="80" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="190" cy="200" r="1.2" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="100" cy="220" r="1" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="80" cy="180" r="1.3" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="230" cy="170" r="1.5" fill="#FFFFFF" opacity="0.8"/>
+    
+    <!-- Cosmic Symbol -->
+    <circle cx="150" cy="150" r="30" fill="none" stroke="#E9C3FF" stroke-width="2"/>
+    <circle cx="150" cy="150" r="20" fill="none" stroke="#E9C3FF" stroke-width="1.5"/>
+    <circle cx="150" cy="150" r="10" fill="#E9C3FF" opacity="0.3"/>
+  </g>
+  
+  <!-- Album Title -->
+  <text x="150" y="110" font-family="Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="bold">COSMIC FREQUENCIES</text>
+  
+  <!-- Tracklist Indicator -->
+  <g>
+    <rect x="100" y="195" width="100" height="2" fill="#9D84E8" opacity="0.7"/>
+    <text x="150" y="210" font-family="Arial, sans-serif" font-size="10" fill="#9D84E8" text-anchor="middle">12 TRACKS</text>
+  </g>
+  
+  <!-- Text label -->
+  <text x="150" y="275" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Album Cover Collection - 12 Tracks</text>
+</svg>

@@ -1,0 +1,67 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shirt-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#F5F5F5" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- T-Shirt Shape -->
+  <path d="M 75,80 L 120,60 L 180,60 L 225,80 
+           L 215,110 L 225,110 L 225,230 
+           L 75,230 L 75,110 L 85,110 Z" 
+        fill="url(#shirt-gradient)"/>
+  
+  <!-- Collar -->
+  <path d="M 130,60 Q 150,75 170,60" 
+        fill="none" stroke="#CCCCCC" stroke-width="1"/>
+  
+  <!-- Sleeves -->
+  <path d="M 75,110 L 50,140" 
+        fill="none" stroke="#CCCCCC" stroke-width="1"/>
+  <path d="M 225,110 L 250,140" 
+        fill="none" stroke="#CCCCCC" stroke-width="1"/>
+  
+  <!-- Sacred Geometry Design -->
+  <g transform="translate(150, 150)">
+    <!-- Metatron's Cube -->
+    <g fill="none" stroke="#7953D2" stroke-width="1.5">
+      <!-- Inner Cube -->
+      <polygon points="0,-40 34.64,-20 34.64,20 0,40 -34.64,20 -34.64,-20" />
+      
+      <!-- Outer Circle -->
+      <circle cx="0" cy="0" r="50" />
+      
+      <!-- Inner Circles -->
+      <circle cx="0" cy="-40" r="10" />
+      <circle cx="34.64" cy="-20" r="10" />
+      <circle cx="34.64" cy="20" r="10" />
+      <circle cx="0" cy="40" r="10" />
+      <circle cx="-34.64" cy="20" r="10" />
+      <circle cx="-34.64" cy="-20" r="10" />
+      <circle cx="0" cy="0" r="10" />
+      
+      <!-- Connection Lines -->
+      <path d="M 0,-40 L 34.64,-20 L 34.64,20 L 0,40 L -34.64,20 L -34.64,-20 L 0,-40" />
+      <path d="M 0,-40 L 0,40" />
+      <path d="M 34.64,-20 L -34.64,20" />
+      <path d="M 34.64,20 L -34.64,-20" />
+    </g>
+    
+    <!-- Additional Sacred Geometry Elements -->
+    <g fill="none" stroke="#4527A0" stroke-width="1">
+      <circle cx="0" cy="0" r="25" />
+      <polygon points="0,-30 26,-15 26,15 0,30 -26,15 -26,-15" />
+      <polygon points="0,-20 17.32,-10 17.32,10 0,20 -17.32,10 -17.32,-10" />
+    </g>
+    
+    <!-- Center Point -->
+    <circle cx="0" cy="0" r="3" fill="#7953D2" />
+  </g>
+  
+  <!-- Text label -->
+  <text x="150" y="260" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Cotton T-Shirt with Sacred Geometry</text>
+</svg>

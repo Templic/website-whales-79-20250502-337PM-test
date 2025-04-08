@@ -1,0 +1,46 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="crystal-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B088F9" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#7953D2" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#4527A0" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="crystal-shine" cx="50%" cy="40%" r="60%" fx="40%" fy="30%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Chain -->
+  <path d="M 150,35 L 150,75" stroke="#BBBBBB" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M 140,45 Q 150,35 160,45" stroke="#BBBBBB" stroke-width="2" fill="none"/>
+  <path d="M 140,55 Q 150,45 160,55" stroke="#BBBBBB" stroke-width="2" fill="none"/>
+  <path d="M 140,65 Q 150,55 160,65" stroke="#BBBBBB" stroke-width="2" fill="none"/>
+  <path d="M 140,75 Q 150,65 160,75" stroke="#BBBBBB" stroke-width="2" fill="none"/>
+  
+  <!-- Pendant Crystal Outer Shape -->
+  <path d="M 150,75 L 110,160 L 150,240 L 190,160 Z" fill="url(#crystal-gradient)" opacity="0.9"/>
+  
+  <!-- Crystal Facets -->
+  <path d="M 150,75 L 130,160 L 150,240 Z" fill="#9C64CC" opacity="0.5"/>
+  <path d="M 150,75 L 170,160 L 150,240 Z" fill="#684A9C" opacity="0.5"/>
+  <path d="M 150,75 L 110,160 L 150,160 Z" fill="#B088F9" opacity="0.6"/>
+  <path d="M 150,75 L 190,160 L 150,160 Z" fill="#8C52CC" opacity="0.6"/>
+  
+  <!-- Crystal Shine -->
+  <path d="M 140,90 L 160,90 L 165,120 L 135,120 Z" fill="url(#crystal-shine)" opacity="0.5"/>
+  
+  <!-- Inner Details -->
+  <path d="M 130,160 L 150,180 L 170,160 L 150,140 Z" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.7"/>
+  <circle cx="150" cy="160" r="5" fill="#FFFFFF" opacity="0.4"/>
+  
+  <!-- Wire Wrap Detail -->
+  <path d="M 140,85 Q 150,75 160,85" stroke="#CCCCCC" stroke-width="1.5" fill="none"/>
+  <path d="M 145,90 L 155,90" stroke="#CCCCCC" stroke-width="1.5" fill="none"/>
+  
+  <!-- Text label -->
+  <text x="150" y="275" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Handcrafted Crystal Pendant</text>
+</svg>

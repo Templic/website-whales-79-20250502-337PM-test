@@ -1,0 +1,62 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="labradorite-base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#354D50" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#1D2B2D" stop-opacity="1"/>
+    </linearGradient>
+    <radialGradient id="labradorite-flash-1" cx="40%" cy="30%" r="50%" fx="30%" fy="20%">
+      <stop offset="0%" stop-color="#58B0BC" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#3F8C9E" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#354D50" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="labradorite-flash-2" cx="65%" cy="60%" r="40%" fx="65%" fy="60%">
+      <stop offset="0%" stop-color="#9D84E8" stop-opacity="0.7"/>
+      <stop offset="60%" stop-color="#7953D2" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#354D50" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="labradorite-flash-3" cx="30%" cy="70%" r="30%" fx="30%" fy="70%">
+      <stop offset="0%" stop-color="#E9C3FF" stop-opacity="0.6"/>
+      <stop offset="70%" stop-color="#B39DFF" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#354D50" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Stone Shadow -->
+  <ellipse cx="150" cy="220" rx="70" ry="15" fill="#000000" opacity="0.3"/>
+  
+  <!-- Stone Base Shape - Palm Stone -->
+  <ellipse cx="150" cy="160" rx="70" ry="50" fill="url(#labradorite-base)"/>
+  
+  <!-- Smooth Top Surface -->
+  <ellipse cx="150" cy="160" rx="70" ry="50" fill="none" stroke="#446366" stroke-width="1.5"/>
+  
+  <!-- Labradorescence (Flashes) -->
+  <g>
+    <ellipse cx="135" cy="145" rx="45" ry="30" fill="url(#labradorite-flash-1)" transform="rotate(-10,135,145)"/>
+    <ellipse cx="165" cy="170" rx="40" ry="25" fill="url(#labradorite-flash-2)" transform="rotate(15,165,170)"/>
+    <ellipse cx="120" cy="175" rx="35" ry="20" fill="url(#labradorite-flash-3)" transform="rotate(-5,120,175)"/>
+  </g>
+  
+  <!-- Stone Surface Details -->
+  <g stroke="#1D2B2D" stroke-width="0.5" opacity="0.5">
+    <path d="M 130,140 Q 150,150 170,140"/>
+    <path d="M 120,160 Q 150,170 180,160"/>
+    <path d="M 125,180 Q 150,190 175,180"/>
+  </g>
+  
+  <!-- Light Reflections -->
+  <g fill="#FFFFFF" opacity="0.6">
+    <circle cx="135" cy="140" r="3"/>
+    <circle cx="165" cy="165" r="2"/>
+    <circle cx="120" cy="170" r="2"/>
+  </g>
+  
+  <!-- Stone Edges -->
+  <ellipse cx="150" cy="160" rx="70" ry="50" fill="none" stroke="#1D2B2D" stroke-width="2"/>
+  
+  <!-- Text label -->
+  <text x="150" y="245" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Labradorite Palm Stone</text>
+</svg>

@@ -1,0 +1,71 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bowl-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DAA520" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#B8860B" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="bowl-inner" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC125" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#DAA520" stop-opacity="0.7"/>
+    </linearGradient>
+    <radialGradient id="bowl-shine" cx="40%" cy="30%" r="70%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#FFF8E1" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#FFF8E1" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Bowl Shadow -->
+  <ellipse cx="150" cy="235" rx="90" ry="20" fill="#000000" opacity="0.3"/>
+  
+  <!-- Bottom of Bowl -->
+  <ellipse cx="150" cy="220" rx="60" ry="15" fill="#B8860B"/>
+  
+  <!-- Bowl Body -->
+  <path d="M 90,160 C 90,120 115,100 150,100 C 185,100 210,120 210,160 C 210,190 185,220 150,220 C 115,220 90,190 90,160 Z" fill="url(#bowl-gradient)"/>
+  
+  <!-- Bowl Interior -->
+  <ellipse cx="150" cy="160" rx="55" ry="30" fill="url(#bowl-inner)"/>
+  
+  <!-- Bowl Rim -->
+  <path d="M 95,160 C 95,125 115,105 150,105 C 185,105 205,125 205,160" fill="none" stroke="#FFC125" stroke-width="3" opacity="0.9"/>
+  
+  <!-- Tibetan Decorative Patterns -->
+  <g fill="none" stroke="#FFC125" stroke-width="1" opacity="0.9">
+    <path d="M 100,140 L 200,140"/>
+    <path d="M 92,150 L 208,150"/>
+    <path d="M 90,160 L 210,160"/>
+    <path d="M 92,170 L 208,170"/>
+    <path d="M 95,180 L 205,180"/>
+    <path d="M 100,190 L 200,190"/>
+    <path d="M 110,200 L 190,200"/>
+  </g>
+  
+  <!-- Decorative Symbols -->
+  <g fill="none" stroke="#FFF8E1" stroke-width="1" opacity="0.7">
+    <circle cx="150" cy="160" r="5"/>
+    <circle cx="150" cy="160" r="10"/>
+    <circle cx="150" cy="160" r="15"/>
+    <path d="M 135,145 L 165,175 M 135,175 L 165,145"/>
+    <path d="M 120,160 L 180,160 M 150,130 L 150,190"/>
+  </g>
+  
+  <!-- Mallet -->
+  <line x1="220" y1="120" x2="240" y2="100" stroke="#7A5E3A" stroke-width="3"/>
+  <circle cx="245" cy="95" r="8" fill="#B39DFF" stroke="#9D84E8" stroke-width="1"/>
+  
+  <!-- Light Reflection -->
+  <ellipse cx="120" cy="145" rx="30" ry="15" fill="url(#bowl-shine)" opacity="0.5"/>
+  
+  <!-- Sound Waves -->
+  <g stroke="#9D84E8" stroke-width="1" stroke-dasharray="2,2" opacity="0.6">
+    <ellipse cx="150" cy="160" rx="70" ry="40"/>
+    <ellipse cx="150" cy="160" rx="80" ry="50"/>
+    <ellipse cx="150" cy="160" rx="90" ry="60"/>
+  </g>
+  
+  <!-- Text label -->
+  <text x="150" y="265" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Metal Tibetan Singing Bowl</text>
+</svg>

@@ -1,0 +1,75 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="amethyst-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9D84E8" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#5637DD" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="amethyst-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B39DFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#7953D2" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="amethyst-gradient-3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8871D5" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#5E35B1" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="crystal-shine" cx="40%" cy="30%" r="60%" fx="30%" fy="20%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Cluster Shadow -->
+  <ellipse cx="150" cy="230" rx="80" ry="15" fill="#000000" opacity="0.3"/>
+  
+  <!-- Amethyst Base/Matrix -->
+  <path d="M 70,170 L 100,190 L 150,200 L 200,190 L 230,170 L 210,210 L 90,210 Z" fill="#444444"/>
+  
+  <!-- Main Crystal Group -->
+  <g>
+    <!-- Large Center Crystal -->
+    <path d="M 150,100 L 130,150 L 170,150 Z" fill="url(#amethyst-gradient-1)"/>
+    <path d="M 130,150 L 150,200 L 170,150 Z" fill="url(#amethyst-gradient-2)"/>
+    
+    <!-- Left Crystal Group -->
+    <path d="M 120,120 L 100,150 L 140,150 Z" fill="url(#amethyst-gradient-2)"/>
+    <path d="M 100,150 L 120,190 L 140,150 Z" fill="url(#amethyst-gradient-3)"/>
+    
+    <path d="M 90,130 L 70,150 L 100,150 Z" fill="url(#amethyst-gradient-3)"/>
+    <path d="M 70,150 L 85,180 L 100,150 Z" fill="url(#amethyst-gradient-1)"/>
+    
+    <!-- Right Crystal Group -->
+    <path d="M 180,120 L 160,150 L 200,150 Z" fill="url(#amethyst-gradient-2)"/>
+    <path d="M 160,150 L 180,190 L 200,150 Z" fill="url(#amethyst-gradient-3)"/>
+    
+    <path d="M 210,130 L 200,150 L 230,150 Z" fill="url(#amethyst-gradient-3)"/>
+    <path d="M 200,150 L 215,180 L 230,150 Z" fill="url(#amethyst-gradient-1)"/>
+    
+    <!-- Small Crystals -->
+    <path d="M 110,130 L 100,150 L 120,150 Z" fill="url(#amethyst-gradient-1)"/>
+    <path d="M 190,130 L 180,150 L 200,150 Z" fill="url(#amethyst-gradient-1)"/>
+    <path d="M 140,110 L 130,130 L 150,130 Z" fill="url(#amethyst-gradient-2)"/>
+    <path d="M 160,110 L 150,130 L 170,130 Z" fill="url(#amethyst-gradient-2)"/>
+  </g>
+  
+  <!-- Crystal Shine and Highlights -->
+  <g fill="url(#crystal-shine)" opacity="0.4">
+    <path d="M 150,110 L 140,125 L 160,125 Z"/>
+    <path d="M 120,130 L 110,140 L 130,140 Z"/>
+    <path d="M 180,130 L 170,140 L 190,140 Z"/>
+  </g>
+  
+  <!-- Crystal Facet Lines -->
+  <g stroke="#FFFFFF" stroke-width="0.5" opacity="0.3">
+    <path d="M 150,100 L 150,200"/>
+    <path d="M 120,120 L 120,190"/>
+    <path d="M 180,120 L 180,190"/>
+    <path d="M 90,130 L 90,180"/>
+    <path d="M 210,130 L 210,180"/>
+  </g>
+  
+  <!-- Text label -->
+  <text x="150" y="245" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Amethyst Crystal Cluster</text>
+</svg>

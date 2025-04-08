@@ -1,0 +1,64 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cushion-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C5B097" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#A89077" stop-opacity="0.9"/>
+    </linearGradient>
+    <pattern id="cork-pattern" patternUnits="userSpaceOnUse" width="10" height="10">
+      <rect width="10" height="10" fill="#C5B097"/>
+      <circle cx="5" cy="5" r="1" fill="#A08065" opacity="0.5"/>
+      <circle cx="0" cy="0" r="0.8" fill="#A08065" opacity="0.4"/>
+      <circle cx="10" cy="10" r="0.8" fill="#A08065" opacity="0.4"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Cushion Shadow -->
+  <ellipse cx="150" cy="190" rx="110" ry="30" fill="#000000" opacity="0.3"/>
+  
+  <!-- Main Cushion Bottom -->
+  <ellipse cx="150" cy="175" rx="110" ry="30" fill="#B8A086" opacity="0.9"/>
+  
+  <!-- Main Cushion Side -->
+  <path d="M 40,175 C 40,175 40,145 40,145 C 40,145 95,115 150,115 C 205,115 260,145 260,145 C 260,145 260,175 260,175 C 260,175 205,205 150,205 C 95,205 40,175 40,175 Z" fill="url(#cushion-gradient)"/>
+  
+  <!-- Top of the Cushion - Cork -->
+  <ellipse cx="150" cy="145" rx="110" ry="30" fill="url(#pattern-cork-pattern)"/>
+  
+  <!-- Organic Cotton Border -->
+  <ellipse cx="150" cy="145" rx="100" ry="25" fill="none" stroke="#A8A8A8" stroke-width="1.5" opacity="0.8"/>
+  
+  <!-- Cosmic Pattern on Cotton -->
+  <g fill="none" stroke="#9D84E8" stroke-width="1" opacity="0.7">
+    <!-- Mandala pattern -->
+    <circle cx="150" cy="145" r="90" />
+    <circle cx="150" cy="145" r="80" />
+    <circle cx="150" cy="145" r="70" />
+    <circle cx="150" cy="145" r="60" />
+    <circle cx="150" cy="145" r="50" />
+    <circle cx="150" cy="145" r="40" />
+    
+    <!-- Geometric pattern -->
+    <path d="M 60,145 L 240,145" />
+    <path d="M 150,55 L 150,235" />
+    <path d="M 90,95 L 210,195" />
+    <path d="M 90,195 L 210,95" />
+  </g>
+  
+  <!-- Center Button -->
+  <circle cx="150" cy="145" r="15" fill="#A5DCC0" stroke="#78A495" stroke-width="1.5"/>
+  <circle cx="150" cy="145" r="10" fill="none" stroke="#78A495" stroke-width="1"/>
+  <circle cx="150" cy="145" r="5" fill="none" stroke="#78A495" stroke-width="1"/>
+  
+  <!-- Cushion Texture Lines -->
+  <g stroke="#D2C1AA" stroke-width="0.5" opacity="0.5">
+    <path d="M 60,140 Q 150,110 240,140" />
+    <path d="M 70,150 Q 150,120 230,150" />
+    <path d="M 60,160 Q 150,130 240,160" />
+  </g>
+  
+  <!-- Text label -->
+  <text x="150" y="245" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Cork and Organic Cotton Meditation Cushion</text>
+</svg>

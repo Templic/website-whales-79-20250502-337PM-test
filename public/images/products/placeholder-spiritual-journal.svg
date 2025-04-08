@@ -1,0 +1,84 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cover-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7953D2" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#4527A0" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="page-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#F1F1F1" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Journal Shadow -->
+  <rect x="85" y="185" width="150" height="10" rx="2" ry="2" fill="#000000" opacity="0.3"/>
+  
+  <!-- Journal Cover -->
+  <rect x="80" y="80" width="150" height="200" rx="5" ry="5" fill="url(#cover-gradient)"/>
+  
+  <!-- Journal Binding -->
+  <rect x="145" y="80" width="20" height="200" fill="#5E35B1"/>
+  <path d="M 145,80 L 145,280 M 165,80 L 165,280" stroke="#4527A0" stroke-width="1"/>
+  
+  <!-- Journal Elastic Band -->
+  <rect x="80" y="180" width="150" height="10" fill="#9D84E8" opacity="0.7"/>
+  
+  <!-- Open Pages - Right Side -->
+  <g transform="rotate(-5,240,180)">
+    <rect x="165" y="90" width="120" height="180" rx="3" ry="3" fill="url(#page-gradient)"/>
+    
+    <!-- Page Lines -->
+    <g stroke="#CCCCCC" stroke-width="0.5">
+      <path d="M 175,120 L 275,120" />
+      <path d="M 175,135 L 275,135" />
+      <path d="M 175,150 L 275,150" />
+      <path d="M 175,165 L 275,165" />
+      <path d="M 175,180 L 275,180" />
+      <path d="M 175,195 L 275,195" />
+      <path d="M 175,210 L 275,210" />
+      <path d="M 175,225 L 275,225" />
+      <path d="M 175,240 L 275,240" />
+    </g>
+    
+    <!-- Prompts -->
+    <text x="175" y="115" font-family="Arial, sans-serif" font-size="5" fill="#9D84E8">Today's spiritual insights:</text>
+    <text x="175" y="175" font-family="Arial, sans-serif" font-size="5" fill="#9D84E8">Gratitude reflection:</text>
+    <text x="175" y="235" font-family="Arial, sans-serif" font-size="5" fill="#9D84E8">Cosmic connection:</text>
+  </g>
+  
+  <!-- Open Pages - Left Side -->
+  <g transform="rotate(5,70,180)">
+    <rect x="25" y="90" width="120" height="180" rx="3" ry="3" fill="url(#page-gradient)"/>
+    
+    <!-- Mandala Design on Left Page -->
+    <g stroke="#9D84E8" fill="none" opacity="0.5" transform="translate(85,180)">
+      <circle cx="0" cy="0" r="30"/>
+      <circle cx="0" cy="0" r="25"/>
+      <circle cx="0" cy="0" r="20"/>
+      <circle cx="0" cy="0" r="15"/>
+      <circle cx="0" cy="0" r="10"/>
+      <path d="M -35,0 L 35,0 M 0,-35 L 0,35"/>
+      <path d="M -25,-25 L 25,25 M -25,25 L 25,-25"/>
+    </g>
+  </g>
+  
+  <!-- Cover Design Elements -->
+  <g fill="none" stroke="#D4C1FF" stroke-width="1" opacity="0.8">
+    <circle cx="115" cy="130" r="20"/>
+    <circle cx="115" cy="130" r="15"/>
+    <circle cx="115" cy="130" r="10"/>
+    <path d="M 95,130 L 135,130 M 115,110 L 115,150"/>
+    
+    <polygon points="115,190 125,210 115,230 105,210" stroke-width="0.8" />
+    <polygon points="115,190 130,215 115,240 100,215" stroke-width="0.8" />
+  </g>
+  
+  <!-- Cover Title -->
+  <text x="115" y="100" font-family="Arial, sans-serif" font-size="8" fill="#FFFFFF" text-anchor="middle">SPIRITUAL JOURNEY</text>
+  
+  <!-- Text label -->
+  <text x="150" y="290" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Spiritual Journey Journal with Prompts</text>
+</svg>

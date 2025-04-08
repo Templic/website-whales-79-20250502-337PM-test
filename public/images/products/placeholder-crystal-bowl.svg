@@ -1,0 +1,40 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="crystal-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9E7BE2" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#3D2C8D" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="bowl-shine" cx="40%" cy="30%" r="70%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Bowl outer shape -->
+  <ellipse cx="150" cy="175" rx="120" ry="40" fill="url(#crystal-gradient)" opacity="0.6"/>
+  
+  <!-- Bowl inner ellipse -->
+  <ellipse cx="150" cy="150" rx="100" ry="30" fill="url(#crystal-gradient)" opacity="0.8"/>
+  
+  <!-- Bowl rim -->
+  <path d="M 50,150 C 50,130 100,110 150,110 C 200,110 250,130 250,150 C 250,170 200,190 150,190 C 100,190 50,170 50,150 Z" fill="none" stroke="#B69DF8" stroke-width="2" opacity="0.8"/>
+  
+  <!-- Bowl details -->
+  <ellipse cx="150" cy="150" rx="90" ry="25" fill="none" stroke="#D4C1FF" stroke-width="1"/>
+  <ellipse cx="150" cy="150" rx="80" ry="20" fill="none" stroke="#D4C1FF" stroke-width="1"/>
+  <ellipse cx="150" cy="150" rx="70" ry="15" fill="none" stroke="#D4C1FF" stroke-width="1"/>
+  
+  <!-- Light reflection -->
+  <ellipse cx="150" cy="150" rx="60" ry="15" fill="url(#bowl-shine)" opacity="0.4"/>
+  
+  <!-- Crystal-like facets -->
+  <path d="M 100,145 L 130,150 L 110,155 Z" fill="#FFFFFF" opacity="0.3"/>
+  <path d="M 170,145 L 200,148 L 190,155 Z" fill="#FFFFFF" opacity="0.3"/>
+  <path d="M 140,140 L 160,140 L 150,145 Z" fill="#FFFFFF" opacity="0.4"/>
+  
+  <!-- Text label -->
+  <text x="150" y="230" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Hand-crafted Crystal Bowl</text>
+</svg>

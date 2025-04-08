@@ -1,0 +1,58 @@
+<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tube-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4D0C8" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#BFBBB0" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="wood-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9E7E50" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#7A5E3A" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="300" height="300" fill="#0A0721"/>
+  
+  <!-- Hanging Thread -->
+  <path d="M 150,30 L 150,70" stroke="#CCCCCC" stroke-width="1" fill="none"/>
+  
+  <!-- Wooden Top Piece -->
+  <rect x="120" y="70" width="60" height="15" rx="3" ry="3" fill="url(#wood-gradient)"/>
+  <rect x="140" y="85" width="20" height="10" fill="url(#wood-gradient)"/>
+  
+  <!-- Main Tube -->
+  <rect x="125" y="95" width="50" height="120" rx="25" ry="25" fill="url(#tube-gradient)"/>
+  
+  <!-- Tube Detail Lines -->
+  <line x1="125" y1="135" x2="175" y2="135" stroke="#BFBBB0" stroke-width="1"/>
+  <line x1="125" y1="175" x2="175" y2="175" stroke="#BFBBB0" stroke-width="1"/>
+  
+  <!-- Metal Chimes -->
+  <g stroke="#BBBBBB" stroke-width="1.5">
+    <line x1="135" y1="95" x2="135" y2="215" />
+    <line x1="145" y1="95" x2="145" y2="215" />
+    <line x1="155" y1="95" x2="155" y2="215" />
+    <line x1="165" y1="95" x2="165" y2="215" />
+  </g>
+  
+  <!-- Bottom Disk -->
+  <ellipse cx="150" cy="215" rx="25" ry="5" fill="url(#wood-gradient)"/>
+  
+  <!-- Sound Waves -->
+  <g stroke="#9D84E8" stroke-width="1" stroke-dasharray="2,2" opacity="0.5">
+    <path d="M 100,155 Q 150,140 200,155" />
+    <path d="M 90,170 Q 150,150 210,170" />
+    <path d="M 80,185 Q 150,160 220,185" />
+  </g>
+  
+  <!-- Wind Indicator -->
+  <path d="M 180,140 Q 200,155 190,170" stroke="#E0E0E0" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M 188,150 L 195,155 L 188,160" stroke="#E0E0E0" stroke-width="1" fill="none" opacity="0.5"/>
+  
+  <!-- Label -->
+  <rect x="125" y="135" width="50" height="20" rx="2" ry="2" fill="#9D84E8" opacity="0.2"/>
+  <text x="150" y="149" font-family="Arial, sans-serif" font-size="8" fill="#FFFFFF" text-anchor="middle">KOSHI</text>
+  
+  <!-- Text label -->
+  <text x="150" y="255" font-family="Arial, sans-serif" font-size="14" fill="#D4C1FF" text-anchor="middle">Koshi Chimes</text>
+</svg>
