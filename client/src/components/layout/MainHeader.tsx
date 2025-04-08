@@ -149,11 +149,11 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Center star geometry */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-20">
+        {/* Center star geometry - Fixed position and improved centering */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30 flex items-center justify-center">
           <SacredGeometry 
             variant="star" 
-            size={100} 
+            size={110} 
             animated={true} 
             intensity="medium" 
             className="text-cyan-300" 
@@ -255,7 +255,7 @@ export function MainHeader() {
             </div>
 
             {/* Social Icons - Desktop - Centered */}
-            <div className="hidden md:flex items-center justify-center space-x-3 mx-auto">
+            <div className="hidden md:flex items-center justify-center space-x-4 absolute left-1/2 -translate-x-1/2">
               {socialLinks.map((link) => (
                 <motion.a
                   key={link.name}
@@ -263,7 +263,7 @@ export function MainHeader() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${link.name} (opens in new tab)`}
-                  className="text-[#e8e6e3]/60 hover:text-cyan-400 transition-colors"
+                  className="text-[#e8e6e3]/60 hover:text-cyan-400 transition-colors relative"
                   whileHover={{ scale: 1.2, y: -2 }}
                   initial={{ opacity: 0.7 }}
                   animate={{ opacity: 1 }}
@@ -325,8 +325,8 @@ export function MainHeader() {
               />
             </div>
             
-            <div className="flex flex-col space-y-1">
-              {/* First Row - Staggered from left */}
+            <div className="flex flex-col space-y-1 items-center">
+              {/* First Row - Staggered from left - improved centering */}
               <div className="flex justify-center">
                 {primaryNavItems.map((item, index) => (
                   <motion.div 
@@ -372,8 +372,8 @@ export function MainHeader() {
                 ))}
               </div>
               
-              {/* Second Row - Staggered from right with different shapes */}
-              <div className="flex justify-center ml-8">
+              {/* Second Row - Staggered from right with different shapes - improved centering */}
+              <div className="flex justify-center">
                 {secondaryNavItems.map((item, index) => (
                   <motion.div 
                     key={item.path}
