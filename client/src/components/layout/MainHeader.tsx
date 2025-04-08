@@ -149,17 +149,52 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Six-pointed star - only visible in desktop mode */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+        {/* Six-pointed stars - only visible in desktop mode */}
+        {/* Left star - positioned under logo area */}
+        <div className="absolute top-1/2 left-[25%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
           <div className="animate-pulse" style={{ animationDuration: '3s' }}>
             <SacredGeometry 
               variant="six-pointed-star" 
-              size={120} 
+              size={100} 
               animated={true} 
               intensity="medium" 
               className="text-cyan-300" 
             />
           </div>
+        </div>
+
+        {/* Right star - positioned under login area */}
+        <div className="absolute top-1/2 left-[75%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+          <div className="animate-pulse" style={{ animationDuration: '3.5s' }}>
+            <SacredGeometry 
+              variant="six-pointed-star" 
+              size={100} 
+              animated={true} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+
+        {/* Shadow stars - slightly offset for glow effect */}
+        <div className="absolute top-[52%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-5 opacity-50 blur-sm">
+          <SacredGeometry 
+            variant="six-pointed-star" 
+            size={110} 
+            animated={true} 
+            intensity="subtle" 
+            className="text-purple-400" 
+          />
+        </div>
+        
+        <div className="absolute top-[52%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-5 opacity-50 blur-sm">
+          <SacredGeometry 
+            variant="six-pointed-star" 
+            size={110} 
+            animated={true} 
+            intensity="subtle" 
+            className="text-purple-400" 
+          />
         </div>
       
         <div className="absolute -top-14 -right-14 opacity-40 transform rotate-45">
@@ -316,18 +351,6 @@ export function MainHeader() {
 
           {/* Interlacing Staggered Two-Row Navigation - Desktop */}
           <div className="hidden md:block mt-2 relative">
-            {/* Six-pointed star centered among navigation links */}
-            <div className="absolute inset-x-0 top-0 flex justify-center pointer-events-none">
-              <div className="animate-pulse" style={{ animationDuration: '4s' }}>
-                <SacredGeometry 
-                  variant="six-pointed-star" 
-                  size={120} 
-                  animated={true} 
-                  intensity="medium" 
-                  className="text-cyan-300" 
-                />
-              </div>
-            </div>
             
             <div className="flex flex-col space-y-1 items-center">
               {/* First Row - Staggered from left - improved centering */}
