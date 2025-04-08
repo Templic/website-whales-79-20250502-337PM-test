@@ -202,9 +202,9 @@ export function MainHeader() {
           </div>
         </div>
         
-        {/* SECOND SET - Slightly below and toward center */}
+        {/* SECOND SET - Slightly below and toward center - in absolute foreground */}
         {/* Left circle foreground - second set */}
-        <div className="absolute top-[60%] left-[12%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-30">
+        <div className="absolute top-[60%] left-[12%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ zIndex: 100 }}>
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
@@ -217,7 +217,7 @@ export function MainHeader() {
         </div>
 
         {/* Left circle background/shadow - second set */}
-        <div className="absolute top-[62%] left-[11%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20 opacity-50 blur-sm">
+        <div className="absolute top-[62%] left-[11%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{ zIndex: 99 }}>
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
@@ -230,7 +230,7 @@ export function MainHeader() {
         </div>
         
         {/* Right circle foreground - second set */}
-        <div className="absolute top-[60%] right-[12%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-30">
+        <div className="absolute top-[60%] right-[12%] transform translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ zIndex: 100 }}>
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
@@ -243,7 +243,7 @@ export function MainHeader() {
         </div>
         
         {/* Right circle background/shadow - second set */}
-        <div className="absolute top-[62%] right-[11%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20 opacity-50 blur-sm">
+        <div className="absolute top-[62%] right-[11%] transform translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{ zIndex: 99 }}>
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
@@ -577,8 +577,8 @@ export function MainHeader() {
             ))}
           </div>
 
-          {/* Five-pointed star for mobile view - visible in foreground */}
-          <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}>
+          {/* Five-pointed star for mobile view - behind everything except page background */}
+          <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`} style={{ zIndex: 5 }}>
             <div className="animate-spin-very-slow animate-pulse" style={{ animationDuration: '25s' }}>
               <SacredGeometry 
                 variant="star" 
@@ -752,8 +752,8 @@ export function MainHeader() {
         </div>
       </div>
       
-      {/* Five-pointed star positioned in foreground for mobile view */}
-      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 md:hidden" style={{ zIndex: 50 }}>
+      {/* Five-pointed star positioned behind content for mobile view */}
+      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 md:hidden" style={{ zIndex: 5 }}>
         <SacredGeometry 
           variant="star" 
           size={110} 
@@ -764,7 +764,7 @@ export function MainHeader() {
       </div>
 
       {/* Media query based five-pointed star (fallback for very small screens) */}
-      <div className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 md:hidden max-[340px]:hidden" style={{ zIndex: 10 }}>
+      <div className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 md:hidden max-[340px]:hidden" style={{ zIndex: 3 }}>
         <SacredGeometry 
           variant="star" 
           size={110} 
