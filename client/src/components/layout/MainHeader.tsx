@@ -149,17 +149,6 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Five-pointed star - only visible in mobile/hamburger menu mode */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 md:hidden z-10">
-          <SacredGeometry 
-            variant="star" 
-            size={110} 
-            animated={true} 
-            intensity="medium" 
-            className="text-cyan-300" 
-          />
-        </div>
-        
         {/* Six-pointed star - only visible in desktop mode */}
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
           <div className="animate-pulse" style={{ animationDuration: '3s' }}>
@@ -669,6 +658,28 @@ export function MainHeader() {
         </div>
       </div>
       
+      {/* Five-pointed star positioned in foreground for mobile view */}
+      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 md:hidden" style={{ zIndex: 50 }}>
+        <SacredGeometry 
+          variant="star" 
+          size={110} 
+          animated={true} 
+          intensity="medium" 
+          className="text-cyan-300" 
+        />
+      </div>
+
+      {/* Media query based five-pointed star (fallback for very small screens) */}
+      <div className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 md:hidden max-[340px]:hidden" style={{ zIndex: 10 }}>
+        <SacredGeometry 
+          variant="star" 
+          size={110} 
+          animated={true} 
+          intensity="medium" 
+          className="text-cyan-300" 
+        />
+      </div>
+
       {/* Cosmic energy waves animation on scroll */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden">
         <svg className="w-full h-[8px]" viewBox="0 0 1200 8" fill="none" xmlns="http://www.w3.org/2000/svg">
