@@ -115,11 +115,11 @@ export default function AboutPage() {
           shape="pentagon"
           backgroundStyle="glass"
           title="Cosmic Community Engagement"
-          className="mb-16 shadow-glow-cosmic"
+          className="mb-16 shadow-glow-cosmic mt-10 pt-4"
           decorative={true}
         >
           <div className="p-8">
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-6 mt-4">
               <Volume2 className="w-6 h-6 text-[#fe0064]" />
               <p className="text-xl">Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in community projects aimed at spreading creative energy and healing positivity.</p>
             </div>
