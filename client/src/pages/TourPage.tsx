@@ -108,13 +108,13 @@ export default function TourPage() {
               View larger map
             </a>
             <iframe
-              src="https://maps.google.com/maps?q=Hawaii&t=&z=9&ie=UTF8&iwloc=&output=embed"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d1886543.2259421861!2d-157.39721521213165!3d20.85972671559977!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1600000000000!5m2!1sen!2sus"
               className="w-full h-full border-0 min-h-[450px] rounded-lg"
               style={{ border: 0, display: 'block' }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Hawaii Tour Locations"
+              title="Tour Map"
             />
           </div>
         </GeometricSection>

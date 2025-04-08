@@ -381,7 +381,8 @@ export function MainFooter() {
         {/* Copyright Notice */}
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
-            <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()} Dale Loves Whales</p>
+            <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()}Language Copyright claimed                 by Dale Ham 2025</p>
+             <p className="text-[#e8e6e3]/50 text-sm">&copy; {new Date().getFullYear()} Website-App Copyright                     claimed by Lee Swan 2025</p>
             <div className="flex space-x-2 text-[#e8e6e3]/30">
               <Link 
                 href="/privacy" 

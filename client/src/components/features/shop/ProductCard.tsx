@@ -13,6 +13,55 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/**
+ * Returns a relevant placeholder image URL based on product details
+ */
+const getProductPlaceholderImage = (name: string, description: string, categories: string[]): string => {
+  const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
+  
+  // Map for category-specific placeholders
+  const categoryPlaceholders: Record<string, string> = {
+    'healing tools': '/images/products/placeholder-healing-tools.jpg',
+    'sound therapy': '/images/products/placeholder-sound-therapy.jpg',
+    'jewelry': '/images/products/placeholder-jewelry.jpg',
+    'energy tools': '/images/products/placeholder-energy-tools.jpg',
+    'digital': '/images/products/placeholder-digital.jpg',
+    'music': '/images/products/placeholder-music.jpg',
+    'meditation': '/images/products/placeholder-meditation.jpg',
+    'home': '/images/products/placeholder-home-decor.jpg',
+    'art': '/images/products/placeholder-art.jpg',
+    'books': '/images/products/placeholder-books.jpg',
+    'self-development': '/images/products/placeholder-self-development.jpg'
+  };
+  
+  // Check if product content matches any specific categories
+  for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
+    if (combinedText.includes(category.toLowerCase())) {
+      return imagePath;
+    }
+  }
+  
+  // Common product types to check for
+  const productTypes = [
+    { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/crystal-bowl.jpg' },
+    { keywords: ['pendant', 'necklace', 'jewelry'], image: '/images/products/energy-pendant.jpg' },
+    { keywords: ['album', 'frequency', 'music', 'sound'], image: '/images/products/cosmic-frequency-album.png' },
+    { keywords: ['cushion', 'meditation', 'sitting'], image: '/images/products/meditation-cushion.jpg' },
+    { keywords: ['sacred geometry', 'geometry', 'art', 'wall'], image: '/images/products/sacred-geometry.jpg' },
+    { keywords: ['journal', 'diary', 'write', 'book'], image: '/images/products/cosmic-journal.jpg' }
+  ];
+  
+  // Check for matches in product types
+  for (const type of productTypes) {
+    if (type.keywords.some(keyword => combinedText.includes(keyword))) {
+      return type.image;
+    }
+  }
+  
+  // Default placeholder if no specific match
+  return '/images/products/placeholder-cosmic.jpg';
+};
+
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, quantity?: number) => void;
@@ -51,9 +100,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <Link href={`/shop/product/${id}`}>
           <div className="overflow-hidden aspect-square relative group cursor-pointer">
             <img
-              src={image}
+              src={image || getProductPlaceholderImage(name, description, categories)}
               alt={name}
               className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null; // Prevent infinite loops
+                target.src = getProductPlaceholderImage(name, description, categories);
+              }}
             />
             {(featured || isNew || discountPercent) && (
               <div className="absolute top-2 right-2 flex flex-col gap-2">

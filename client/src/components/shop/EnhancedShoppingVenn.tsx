@@ -35,51 +35,56 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
           </p>
         </div>
         
-        {/* Venn Diagram - just two overlapping circles */}
-        <div className="relative h-[24rem] md:h-[32rem]">
-          {/* Left Circle - Shop Together */}
-          <div className="absolute h-[90%] aspect-square rounded-full border border-purple-400/30 
-                        left-[5%] md:left-[15%] top-[5%] flex flex-col items-center justify-center
-                        bg-indigo-900/10 backdrop-blur-sm">
-            <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
-              <Users className="h-6 w-6 text-purple-300" />
+        {/* Venn Diagram with two partially overlapping circles */}
+        <div className="relative h-[36rem] md:h-[32rem]">
+          {/* Container for mobile layout (vertical) or desktop layout (horizontal) */}
+          <div className="relative h-full flex flex-col md:flex-row items-center justify-center">
+            {/* Left/Top Circle - Shop Together */}
+            <div className="relative w-[80%] md:w-[45%] aspect-square rounded-full border border-purple-400/30 
+                         md:left-[5%] z-10 flex flex-col items-center justify-center
+                         bg-indigo-900/10 backdrop-blur-sm mb-16 md:mb-0">
+              <div className="absolute top-[20%] md:top-[25%] flex flex-col items-center">
+                <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
+                  <Users className="h-6 w-6 text-purple-300" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Shop Together</h3>
+                <p className="text-sm text-gray-300 max-w-[200px] text-center mb-6">
+                  Browse and shop with friends in real-time, share product recommendations,
+                  and make collective purchasing decisions
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
+                  onClick={onStartSession}
+                >
+                  <Users className="h-4 w-4 mr-2" /> Start Session
+                </Button>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-3">Shop Together</h3>
-            <p className="text-sm text-gray-300 max-w-[200px] text-center mb-6">
-              Browse and shop with friends in real-time, share product recommendations,
-              and make collective purchasing decisions
-            </p>
-            <Button 
-              variant="outline" 
-              className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
-              onClick={onStartSession}
-            >
-              <Users className="h-4 w-4 mr-2" /> Start Session
-            </Button>
-          </div>
-          
-          {/* Right Circle - Co-Design Studio */}
-          <div className="absolute h-[90%] aspect-square rounded-full border border-purple-400/30 
-                        right-[5%] md:right-[15%] top-[5%] flex flex-col items-center justify-center
-                        bg-indigo-900/10 backdrop-blur-sm">
-            <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
-              <Sparkles className="h-6 w-6 text-purple-300" />
+            
+            {/* Right/Bottom Circle - Co-Design Studio */}
+            <div className="relative w-[80%] md:w-[45%] aspect-square rounded-full border border-purple-400/30 
+                         md:right-[5%] -mt-24 md:mt-0 z-0 flex flex-col items-center justify-center
+                         bg-indigo-900/10 backdrop-blur-sm">
+              <div className="absolute top-[55%] md:top-[25%] flex flex-col items-center">
+                <div className="h-12 w-12 rounded-full bg-indigo-900/40 flex items-center justify-center mb-2">
+                  <Sparkles className="h-6 w-6 text-purple-300" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Co-Design Studio</h3>
+                <p className="text-sm text-gray-300 max-w-[200px] text-center mb-6">
+                  Create and customize your own cosmic products with our interactive design
+                  tools, collaborate with others on design ideas
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
+                  onClick={onCreateDesign}
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Create Design
+                </Button>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-white mb-3">Co-Design Studio</h3>
-            <p className="text-sm text-gray-300 max-w-[200px] text-center mb-6">
-              Create and customize your own cosmic products with our interactive design
-              tools, collaborate with others on design ideas
-            </p>
-            <Button 
-              variant="outline" 
-              className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
-              onClick={onCreateDesign}
-            >
-              <Plus className="h-4 w-4 mr-2" /> Create Design
-            </Button>
           </div>
-          
-          {/* No extra circle in the middle - Venn diagram is just two overlapping circles */}
         </div>
       </div>
     </div>
