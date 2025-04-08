@@ -139,7 +139,7 @@ export default function CollaborationPage() {
                 </div>
               </a>
             </div>
-            
+
             <div className="bg-gradient-to-br from-[rgba(48,52,54,0.7)] to-[rgba(48,52,54,0.5)] p-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] group">
               <a
                 href="https://www.instagram.com/dalethewhalemusic"
@@ -166,7 +166,7 @@ export default function CollaborationPage() {
                 </div>
               </a>
             </div>
-            
+
             <div className="bg-gradient-to-br from-[rgba(48,52,54,0.7)] to-[rgba(48,52,54,0.5)] p-6 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] group">
               <a
                 href="https://creators.spotify.com/pod/show/dale-ham"

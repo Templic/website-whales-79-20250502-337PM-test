@@ -28,35 +28,18 @@ const app = express();
 app.use(cookieParser());
 
 // Apply helmet middleware for security headers
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        "frame-src": ["'self'", "https://maps.google.com"],
-        "script-src": ["'self'", "https://maps.google.com", "https://maps.googleapis.com"],
-        "img-src": ["'self'", "https://maps.google.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "data:"]
-      }
-    }
-  })
-);
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.youtube.com"],
+      frameSrc: ["'self'", "https://www.youtube.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+}));
 
-// Set Content-Security-Policy header
-app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: blob:; " +
-    "connect-src 'self' wss: ws:; " +
-    "font-src 'self' data:; " +
-    "object-src 'none'; " +
-    "media-src 'self'; " +
-    "frame-src 'self' https://auth.util.repl.co;"
-  );
-  next();
-});
 
 // Force HTTPS
 app.use((req, res, next) => {
@@ -68,18 +51,18 @@ app.use((req, res, next) => {
 
 // Set up CORS
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://cosmic-community.replit.app'] 
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://cosmic-community.replit.app']
     : ['http://localhost:5000', 'http://localhost:3000'],
   credentials: true
 }));
 
 // Import enhanced rate limiting middleware
-import { 
-  defaultLimiter, 
-  authLimiter, 
-  adminLimiter, 
-  publicLimiter 
+import {
+  defaultLimiter,
+  authLimiter,
+  adminLimiter,
+  publicLimiter
 } from './middleware/rateLimit';
 
 // Apply rate limiting to different routes based on their purposes
@@ -112,7 +95,7 @@ app.use(fileUpload({
 
 // Setup CSRF protection with more permissive settings
 // In development mode, we're even more permissive to simplify testing
-const csrfProtection = csurf({ 
+const csrfProtection = csurf({
   cookie: {
     httpOnly: process.env.NODE_ENV === 'production',
     secure: process.env.NODE_ENV === 'production',
@@ -122,10 +105,10 @@ const csrfProtection = csurf({
   value: (req) => {
     // For development, accept CSRF token from various locations
     if (process.env.NODE_ENV !== 'production') {
-      const token = 
-        req.body?._csrf || 
-        req.query?._csrf || 
-        req.headers['csrf-token'] || 
+      const token =
+        req.body?._csrf ||
+        req.query?._csrf ||
+        req.headers['csrf-token'] ||
         req.headers['x-csrf-token'] ||
         req.headers['x-xsrf-token'];
       if (token) return token;
@@ -133,8 +116,8 @@ const csrfProtection = csurf({
     // In production, use the standard behavior
     // Fall back to default extraction if available, otherwise allow token to be undefined
     // which will likely fail CSRF validation (secure in production)
-    return (req.cookies && req.cookies['_csrf']) || 
-           (req.body && req.body._csrf) || 
+    return (req.cookies && req.cookies['_csrf']) ||
+           (req.body && req.body._csrf) ||
            (req.query && req.query._csrf) ||
            req.headers['csrf-token'] ||
            req.headers['x-csrf-token'] ||
@@ -211,7 +194,7 @@ async function startServer() {
     // Essential initialization first: database connection only
     // This is necessary before anything else can work
     await initializeDatabase();
-    
+
     // Start non-essential services in parallel but don't wait for them
     // This allows the server to start handling requests while these complete in the background
     Promise.all([
@@ -222,7 +205,7 @@ async function startServer() {
         console.warn('Background services initialization failed, continuing:', err);
       })
     ]);
-    
+
     // Start security scans asynchronously after server is up
     // This doesn't block the initialization process
     setTimeout(() => {

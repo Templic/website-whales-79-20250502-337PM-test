@@ -60,7 +60,7 @@ export default function NewsletterPage() {
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Newsletter</h1>
-        <div className="space-y-8">
+        <div className="space-y-6"> {/* This line has been changed */}
           <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
             <img
               src={images[currentImageIndex]}

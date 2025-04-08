@@ -19,7 +19,7 @@ export default function HomePage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        
+
 
         {/* Hero Section */}
         <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8 border-t-4 border-[#00ebd6]"
@@ -81,7 +81,7 @@ export default function HomePage() {
               </p>
             </div>
           </GeometricSection>
-          
+
           {/* Explore The Journey Section - with more symmetric rectangular shape like the reference image */}
           <GeometricSection
             variant="cosmic"

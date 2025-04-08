@@ -28,7 +28,7 @@ export default function AboutPage() {
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float">About</h1>
-        
+
         {/* Sacred geometry decoration - floating in background */}
         <div className="fixed top-20 right-10 opacity-20 z-0 cosmic-pulse hidden lg:block">
           <SacredGeometry 
@@ -38,7 +38,7 @@ export default function AboutPage() {
             animate={true} 
           />
         </div>
-        
+
         <div className="fixed bottom-20 left-10 opacity-20 z-0 cosmic-pulse hidden lg:block">
           <SacredGeometry 
             type="sri-yantra" 
@@ -66,12 +66,12 @@ export default function AboutPage() {
                 />
               </div>
               <img
-                src="uploads/dale with flowers and staff.jpg"
+                src="/images/dale-with-flowers-and-staff.jpg"
                 alt="Dale the Whale portrait with cosmic overlay"
                 className="w-full h-auto relative z-0"
               />
               <div className="absolute inset-0 bg-gradient-to-br from-[rgba(254,0,100,0.3)] to-[rgba(0,235,214,0.3)]" />
-              
+
               <div className="absolute bottom-4 right-4 z-10 backdrop-blur-sm bg-black/40 rounded-full p-2">
                 <Button 
                   onClick={toggleAudio} 
@@ -82,7 +82,7 @@ export default function AboutPage() {
                   {audioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                 </Button>
               </div>
-              
+
               {/* Audio waveform visualization (simulated) */}
               <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
                 <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
                 <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
               </div>
             </div>
-            
+
             <div className="space-y-4 order-1 md:order-2">
               <div className="flex items-center mb-4">
                 <Music className="w-6 h-6 text-[#00ebd6] mr-2" />
@@ -123,7 +123,7 @@ export default function AboutPage() {
               <Volume2 className="w-6 h-6 text-[#fe0064]" />
               <p className="text-xl">Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in community projects aimed at spreading creative energy and healing positivity.</p>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 opacity-20">
@@ -141,7 +141,7 @@ export default function AboutPage() {
                   </li>
                 </ul>
               </div>
-              
+
               <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 opacity-20">
                   <SacredGeometry type="golden-spiral" size={100} color="#00ebd6" />
@@ -159,7 +159,7 @@ export default function AboutPage() {
                 </ul>
               </div>
             </div>
-            
+
             <div className="text-center relative">
               <div className="absolute left-1/2 -translate-x-1/2 -top-10 opacity-30">
                 <SacredGeometry type="vesica-piscis" size={80} color="#fe0064" />
@@ -168,7 +168,7 @@ export default function AboutPage() {
             </div>
           </div>
         </GeometricSection>
-        
+
         {/* Sound Philosophy section with geometric shapes */}
         <GeometricSection
           shape="wave"
@@ -182,13 +182,13 @@ export default function AboutPage() {
               <h3 className="text-xl font-bold text-[#00ebd6] my-4">Harmonic Unity</h3>
               <p>Sound frequencies that align with the natural harmonics of the universe, creating resonance between listener and cosmos.</p>
             </div>
-            
+
             <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
               <SacredGeometry type="metatron-cube" size={80} color="#fe0064" />
               <h3 className="text-xl font-bold text-[#00ebd6] my-4">Geometric Rhythms</h3>
               <p>Structured patterns of sound that mirror sacred geometry, forming mathematical relationships that speak to our deepest consciousness.</p>
             </div>
-            
+
             <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
               <SacredGeometry type="sri-yantra" size={80} color="#00ebd6" />
               <h3 className="text-xl font-bold text-[#00ebd6] my-4">Oceanic Flow</h3>
@@ -197,7 +197,7 @@ export default function AboutPage() {
           </div>
         </GeometricSection>
       </div>
-      
+
       {/* Add CSS animations for audio visualization */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -221,7 +221,7 @@ export default function AboutPage() {
           0%, 100% { height: 6px; }
           50% { height: 14px; }
         }
-        
+
         .animate-sound-bar-1 {
           animation: sound-bar-1 0.9s ease-in-out infinite;
         }
