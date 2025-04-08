@@ -108,7 +108,7 @@ export default function TourPage() {
               View larger map
             </a>
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d967248.1160445086!2d-158.72112568359374!3d21.32281999999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7c006579e2469e15%3A0xa5d85a82e90e7cc1!2sHawaiian%20Islands!5e0!3m2!1sen!2sus!4v1744055826053!5m2!1sen!2sus"
+              src="https://maps.google.com/maps?q=Hawaii&t=&z=9&ie=UTF8&iwloc=&output=embed"
               className="w-full h-full border-0 min-h-[450px] rounded-lg"
               style={{ border: 0, display: 'block' }}
               allowFullScreen

@@ -28,7 +28,18 @@ const app = express();
 app.use(cookieParser());
 
 // Apply helmet middleware for security headers
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "frame-src": ["'self'", "https://maps.google.com"],
+        "script-src": ["'self'", "https://maps.google.com", "https://maps.googleapis.com"],
+        "img-src": ["'self'", "https://maps.google.com", "https://maps.googleapis.com", "https://maps.gstatic.com", "data:"]
+      }
+    }
+  })
+);
 
 // Set Content-Security-Policy header
 app.use((req, res, next) => {
