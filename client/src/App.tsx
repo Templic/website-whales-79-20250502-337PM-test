@@ -43,9 +43,9 @@ import CommunityPage from "@/pages/community/CommunityPage";
 import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
 
 // Shop Pages
-import ShopPage from "@/pages/ShopPage";
-import ProductDetailPage from "@/pages/ProductDetailPage";
-import CheckoutPage from "@/pages/CheckoutPage";
+import ShopPage from "@/pages/shop/ShopPage";
+import ProductDetailPage from "@/pages/shop/ProductPage";
+import CheckoutPage from "@/pages/shop/CheckoutPage";
 import CartPage from "@/pages/shop/CartPage";
 import OrderConfirmationPage from "@/pages/shop/OrderConfirmationPage";
 import OrderTrackingPage from "@/pages/shop/OrderTrackingPage";
