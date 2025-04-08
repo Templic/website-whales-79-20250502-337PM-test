@@ -8,7 +8,7 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface SacredGeometryProps {
-  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star';
+  variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star' | 'six-pointed-star';
   className?: string;
   strokeWidth?: number;
   fillOpacity?: number;
