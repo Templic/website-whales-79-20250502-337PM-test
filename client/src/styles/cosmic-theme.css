@@ -307,6 +307,16 @@
   }
 }
 
+/* Cosmic shadow glow */
+.shadow-glow-cosmic {
+  box-shadow: 0 0 20px rgba(0, 235, 214, 0.2),
+              0 0 40px rgba(0, 235, 214, 0.1);
+}
+
+.text-shadow-lg {
+  text-shadow: 0 0 10px rgba(0, 235, 214, 0.5);
+}
+
 /* Universal geometric optimization */
 .geometric-container {
   transition: transform 0.3s ease;

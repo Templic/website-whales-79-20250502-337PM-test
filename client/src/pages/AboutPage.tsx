@@ -115,7 +115,7 @@ export default function AboutPage() {
           shape="pentagon"
           backgroundStyle="glass"
           title="Cosmic Community Engagement"
-          className="mb-16"
+          className="mb-16 shadow-glow-cosmic"
           decorative={true}
         >
           <div className="p-8">
@@ -126,10 +126,10 @@ export default function AboutPage() {
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-20">
+                <div className="absolute top-0 right-0 opacity-10">
                   <SacredGeometry type="metatron-cube" size={100} color="#00ebd6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#00ebd6] mb-4">Harmonizing With Others</h3>
+                <h3 className="text-xl font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Harmonizing With Others</h3>
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <span className="text-[#fe0064] mr-2 mt-1">★</span>
@@ -143,10 +143,10 @@ export default function AboutPage() {
               </div>
 
               <div className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl border border-[rgba(0,235,214,0.3)] backdrop-blur-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 opacity-20">
+                <div className="absolute top-0 right-0 opacity-10">
                   <SacredGeometry type="golden-spiral" size={100} color="#00ebd6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#00ebd6] mb-4">Resonating With Purpose</h3>
+                <h3 className="text-xl font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Resonating With Purpose</h3>
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <span className="text-[#fe0064] mr-2 mt-1">★</span>
@@ -160,11 +160,11 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="text-center relative">
-              <div className="absolute left-1/2 -translate-x-1/2 -top-10 opacity-30">
+            <div className="text-center relative mt-16">
+              <div className="absolute left-1/2 -translate-x-1/2 -top-12 opacity-30">
                 <SacredGeometry type="vesica-piscis" size={80} color="#fe0064" />
               </div>
-              <p className="text-xl max-w-3xl mx-auto">Through these initiatives, Dale the Whale continues to foster a creative and inclusive environment that empowers individuals and celebrates the transformative power of music. His community-centered approach reflects his belief that music, like the cosmic forces that inspire it, has the power to unite, heal, and inspire across all boundaries.</p>
+              <p className="text-xl max-w-3xl mx-auto relative z-10">Through these initiatives, Dale the Whale continues to foster a creative and inclusive environment that empowers individuals and celebrates the transformative power of music. His community-centered approach reflects his belief that music, like the cosmic forces that inspire it, has the power to unite, heal, and inspire across all boundaries.</p>
             </div>
           </div>
         </GeometricSection>
