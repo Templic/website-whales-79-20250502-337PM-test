@@ -1,4 +1,46 @@
 
+/* Rotating geometry animation */
+@keyframes rotateGeometry {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.geometric-section[data-background-style="animated"]::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at center, rgba(0, 235, 214, 0.1) 0%, transparent 70%);
+  animation: rotateGeometry 20s linear infinite;
+  pointer-events: none;
+}
+
+/* Responsive text containment */
+@media (max-width: 768px) {
+  .geometric-section {
+    padding: 2rem 1rem;
+  }
+  
+  .geometric-section h2 {
+    font-size: 1.75rem;
+  }
+  
+  .geometric-section p {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .geometric-section {
+    padding: 3rem 2rem;
+  }
+}
+
+
 @font-face {
   font-family: 'Nebula';
   src: url('/fonts/Nebula-Regular.woff2') format('woff2');

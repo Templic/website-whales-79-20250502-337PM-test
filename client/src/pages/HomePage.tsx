@@ -22,7 +22,7 @@ export default function HomePage() {
 
 
         {/* Hero Section */}
-        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8 border-t-4 border-[#00ebd6]"
+        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8"
           style={{
             background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8)),
               url(/images/rainbow-falls-hawaii.jpg)
@@ -54,13 +54,15 @@ export default function HomePage() {
         <main className="max-w-[1200px] mx-auto px-4 py-8">
           {/* About Section */}
           <GeometricSection
-            variant="secondary"
+            variant="cosmic"
             shape="diamond"
             title="Ideal Activity"
             alignment="center"
-            className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
+            backgroundStyle="animated"
+            className="mb-16 px-8 py-12 mx-auto max-w-[90%] overflow-hidden"
           >
-            <div className="max-w-[90%] md:max-w-[80%] mx-auto px-4">
+            <div className="max-w-[90%] md:max-w-[80%] mx-auto px-4 relative z-10">
+              <h2 className="text-[#00ebd6] text-3xl mb-6 font-almendra">Ideal Activity</h2>
               <p className="text-xl leading-relaxed font-cormorant whitespace-normal">
                 🌟 Dale Loves Whales blends cosmic rhythms with tropical soul 🌴 Dive deep into his musical journey that bridges the stars with the ocean's depths 🌊
               </p>
@@ -85,12 +87,12 @@ export default function HomePage() {
           {/* Explore The Journey Section - with more symmetric rectangular shape like the reference image */}
           <GeometricSection
             variant="cosmic"
-            shape="rectangular" 
+            shape="diamond"
             title="Explore The Journey"
             alignment="center"
             className="mb-16 mx-auto max-w-[90%]"
+            backgroundStyle="animated"
             textContained={true}
-            backgroundStyle="dark"
           >
             <div className="max-w-[80%] mx-auto">
               <p className="text-xl leading-relaxed mb-6 text-[#00ebd6] font-cormorant whitespace-normal px-4">
