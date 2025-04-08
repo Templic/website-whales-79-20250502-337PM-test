@@ -154,3 +154,49 @@
 .cosmic-glow-border:hover::after {
   opacity: 1;
 }
+
+/* Slide up animation */
+@keyframes cosmicSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cosmic-slide-up {
+  animation: cosmicSlideUp 0.8s ease-out forwards;
+}
+
+/* Fade in animation */
+@keyframes cosmicFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cosmic-fade-in {
+  animation: cosmicFadeIn 1.2s ease-out forwards;
+}
+
+/* Cosmic glow box */
+.cosmic-glow-box {
+  background: rgba(10, 10, 20, 0.5);
+  border: 1px solid rgba(0, 235, 214, 0.2);
+  box-shadow: 0 0 15px rgba(0, 235, 214, 0.1);
+  transition: all 0.3s ease;
+}
+
+.cosmic-glow-box:hover {
+  box-shadow: 0 0 25px rgba(0, 235, 214, 0.2);
+  border-color: rgba(0, 235, 214, 0.4);
+  transform: translateY(-3px);
+}

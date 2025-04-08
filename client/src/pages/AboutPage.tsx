@@ -168,6 +168,23 @@ export default function AboutPage() {
             </div>
           </div>
         </GeometricSection>
+        
+        {/* Artistic Journey image section */}
+        <div className="mb-16 mt-10 cosmic-fade-in">
+          <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center">Artistic Journey</h2>
+          <div className="relative rounded-xl overflow-hidden shadow-lg max-w-3xl mx-auto">
+            <img
+              src="/images/dale-with-flowers-and-staff.jpg"
+              alt="Dale's artistic journey"
+              className="w-full h-auto"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[rgba(0,0,0,0.7)] to-transparent pointer-events-none"></div>
+            <div className="absolute bottom-6 left-6 right-6">
+              <h3 className="text-2xl font-bold text-white mb-2 drop-shadow-lg">Cosmic Connections</h3>
+              <p className="text-white drop-shadow-md">Exploring the intersection of music, nature, and spiritual awakening through Dale's unique sonic vision.</p>
+            </div>
+          </div>
+        </div>
 
         {/* Sound Philosophy section with geometric shapes */}
         <GeometricSection
