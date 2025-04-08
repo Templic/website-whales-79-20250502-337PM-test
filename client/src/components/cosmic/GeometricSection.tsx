@@ -195,7 +195,47 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           </div>
         )}
 
-        {(shape === 'diamond' || shape === 'wave' || shape === 'rounded-diamond') && (
+        {(shape === 'diamond' || shape === 'rounded-diamond') && (
+          <>
+            {/* Diamond-shaped "mat" that provides a border/outline */}
+            <div className="absolute inset-0 z-0" style={{ 
+              clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+              border: `2px solid ${variantColors[variant].border}`,
+              boxShadow: `0 0 15px ${variantColors[variant].glow}`,
+              background: `linear-gradient(135deg, ${variantColors[variant].border} 0%, transparent 70%)`,
+              opacity: 0.4
+            }}></div>
+            
+            {/* Decorative shapes inside */}
+            <CosmicShapeGroup
+              shapes={[
+                {
+                  type: 'ellipse',
+                  size: 150,
+                  color: variantColors[variant].main,
+                  glowColor: variantColors[variant].glow,
+                  fillOpacity: 0.02,
+                  animate: true,
+                  animationDuration: 80,
+                  position: { top: '30%', left: '10%' }
+                },
+                {
+                  type: 'starburst',
+                  points: 5,
+                  size: 80,
+                  color: variantColors[variant].main,
+                  glowColor: variantColors[variant].glow,
+                  fillOpacity: 0.03,
+                  animate: true,
+                  animationDuration: 60,
+                  position: { bottom: '20%', right: '15%' }
+                },
+              ]}
+            />
+          </>
+        )}
+        
+        {shape === 'wave' && (
           <CosmicShapeGroup
             shapes={[
               {

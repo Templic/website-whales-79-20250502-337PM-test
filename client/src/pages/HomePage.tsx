@@ -58,11 +58,10 @@ export default function HomePage() {
             shape="diamond"
             title="Ideal Activity"
             alignment="center"
-            backgroundStyle="animated"
+            backgroundStyle="gradient"
             className="mb-16 px-8 py-12 mx-auto max-w-[90%] overflow-hidden"
           >
             <div className="max-w-[90%] md:max-w-[80%] mx-auto px-4 relative z-10">
-              <h2 className="text-[#00ebd6] text-3xl mb-6 font-almendra">Ideal Activity</h2>
               <p className="text-xl leading-relaxed font-cormorant whitespace-normal">
                 🌟 Dale Loves Whales blends cosmic rhythms with tropical soul 🌴 Dive deep into his musical journey that bridges the stars with the ocean's depths 🌊
               </p>
@@ -91,7 +90,7 @@ export default function HomePage() {
             title="Explore The Journey"
             alignment="center"
             className="mb-16 mx-auto max-w-[90%]"
-            backgroundStyle="animated"
+            backgroundStyle="gradient"
             textContained={true}
           >
             <div className="max-w-[80%] mx-auto">
