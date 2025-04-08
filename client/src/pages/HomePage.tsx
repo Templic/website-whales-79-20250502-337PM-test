@@ -24,11 +24,15 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8"
           style={{
-            background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8)),
-              url(/images/rainbow-falls-hawaii.jpg)
-              no-repeat center center / cover`
+            background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8))`
           }}>
-          <div className="hero-content relative z-10 max-w-[800px] text-center mx-auto">
+          <GeometricSection
+            variant="cosmic"
+            shape="hexagon"
+            alignment="center"
+            backgroundStyle="glass"
+            className="hero-content relative z-10 max-w-[800px]"
+          >
             <h1 className="text-[clamp(2rem,4vw,3.5rem)] mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-almendra leading-tight px-4 whitespace-normal text-[#e15554]">
               🌊 Ride the Cosmic Wave 🌌
             </h1>
@@ -41,7 +45,7 @@ export default function HomePage() {
                 shadow-[0_0_15px_#00ebd6] hover:shadow-[0_0_20px_#fe0064] inline-block">
               Explore Music
             </Link>
-          </div>
+          </GeometricSection>
         </section>
 
         {/* Main Content */}
@@ -86,24 +90,25 @@ export default function HomePage() {
             className="mb-16 mx-auto max-w-[90%]"
             backgroundStyle="gradient"
             textContained={true}
+            style={{ padding: '8% 15%' }} // Enhanced padding to create more space inside the diamond
           >
-            <div className="max-w-[80%] mx-auto">
-              <p className="text-xl leading-relaxed mb-6 text-[#00ebd6] font-cormorant whitespace-normal px-4">
+            <div className="max-w-[98%] mx-auto">
+              <p className="text-xl leading-relaxed mb-6 text-[#00ebd6] font-cormorant whitespace-normal">
                 💫 Join the cosmic voyage and become part of the ever-growing community of cosmic explorers and music lovers 💖
               </p>
-              <div className="flex justify-center gap-6 flex-wrap">
+              <div className="flex justify-center gap-4 flex-wrap">
                 <Link href="/music-release">
-                  <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20 min-w-[160px]">
+                  <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20 min-w-[140px]">
                     New Releases
                   </Button>
                 </Link>
                 <Link href="/tour">
-                  <Button variant="outline" className="text-[#7c3aed] border-[#7c3aed] hover:bg-[#7c3aed]/20 min-w-[160px]">
+                  <Button variant="outline" className="text-[#7c3aed] border-[#7c3aed] hover:bg-[#7c3aed]/20 min-w-[140px]">
                     Tour Dates
                   </Button>
                 </Link>
                 <Link href="/cosmic-experience">
-                  <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20 min-w-[160px]">
+                  <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20 min-w-[140px]">
                     Cosmic Experience
                   </Button>
                 </Link>
