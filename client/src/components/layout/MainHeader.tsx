@@ -149,52 +149,57 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Six-pointed stars - only visible in desktop mode */}
-        {/* Left star - positioned under logo area */}
-        <div className="absolute top-1/2 left-[25%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
-          <div className="animate-pulse" style={{ animationDuration: '3s' }}>
+        {/* Sacred geometry circles - only visible in desktop mode */}
+        {/* Left circle foreground */}
+        <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
-              variant="six-pointed-star" 
-              size={100} 
-              animated={true} 
+              variant="merkaba" 
+              size={90} 
+              animated={false} 
               intensity="medium" 
               className="text-cyan-300" 
             />
           </div>
         </div>
 
-        {/* Right star - positioned under login area */}
-        <div className="absolute top-1/2 left-[75%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
-          <div className="animate-pulse" style={{ animationDuration: '3.5s' }}>
+        {/* Left circle background/shadow */}
+        <div className="absolute top-[52%] left-[7%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
-              variant="six-pointed-star" 
+              variant="merkaba" 
               size={100} 
-              animated={true} 
-              intensity="medium" 
-              className="text-cyan-300" 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-400" 
             />
           </div>
-        </div>
-
-        {/* Shadow stars - slightly offset for glow effect */}
-        <div className="absolute top-[52%] left-[25%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-5 opacity-50 blur-sm">
-          <SacredGeometry 
-            variant="six-pointed-star" 
-            size={110} 
-            animated={true} 
-            intensity="subtle" 
-            className="text-purple-400" 
-          />
         </div>
         
-        <div className="absolute top-[52%] left-[75%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-5 opacity-50 blur-sm">
-          <SacredGeometry 
-            variant="six-pointed-star" 
-            size={110} 
-            animated={true} 
-            intensity="subtle" 
-            className="text-purple-400" 
-          />
+        {/* Right circle foreground */}
+        <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={90} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+        
+        {/* Right circle background/shadow */}
+        <div className="absolute top-[52%] right-[7%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={100} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-400" 
+            />
+          </div>
         </div>
       
         <div className="absolute -top-14 -right-14 opacity-40 transform rotate-45">
