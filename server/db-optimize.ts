@@ -1,47 +1,86 @@
 import { pgPool, db } from './db';
-import pgMonitor from 'pg-monitor';
-import PgBoss from 'pg-boss';
 import path from 'path';
 import fs from 'fs';
 import { log } from './vite';
 
-// Configure pg-monitor for basic logging
-pgMonitor.attach({});
-pgMonitor.setTheme('matrix'); // or 'dark', 'bright', etc.
+// Import PgBoss type properly
+import type { default as PgBossType } from 'pg-boss';
 
-// Set pg-monitor log destination to file in production
-if (process.env.NODE_ENV === 'production') {
-  const logDir = path.join(process.cwd(), 'logs');
-  if (!fs.existsSync(logDir)) {
-    fs.mkdirSync(logDir, { recursive: true });
+// Create log directory lazily only when needed
+let logStream: fs.WriteStream | null = null;
+
+// Function to lazily setup logging
+function setupLogging() {
+  if (process.env.NODE_ENV === 'production' && !logStream) {
+    const logDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    
+    const logFile = path.join(logDir, 'db-queries.log');
+    logStream = fs.createWriteStream(logFile, { flags: 'a' });
   }
+  return logStream;
+}
+
+// Setup monitors lazily to avoid slowing down startup
+async function setupMonitoring() {
+  // Dynamically import pg-monitor only when needed
+  const { default: pgMonitor } = await import('pg-monitor');
   
-  const logFile = path.join(logDir, 'db-queries.log');
-  const logStream = fs.createWriteStream(logFile, { flags: 'a' });
+  // Configure pg-monitor for basic logging
+  pgMonitor.attach({});
+  pgMonitor.setTheme('matrix'); // or 'dark', 'bright', etc.
   
-  pgMonitor.setLog((msg, info) => {
-    // Log query performance metrics to file
-    const logEntry = `[${new Date().toISOString()}] ${info.event}: ${msg}\n`;
-    logStream.write(logEntry);
-  });
+  // Set pg-monitor log destination to file in production
+  if (process.env.NODE_ENV === 'production') {
+    const stream = setupLogging();
+    if (stream) {
+      pgMonitor.setLog((msg, info) => {
+        // Log query performance metrics to file
+        const logEntry = `[${new Date().toISOString()}] ${info.event}: ${msg}\n`;
+        stream.write(logEntry);
+      });
+    }
+  }
 }
 
 // Initialize task queue for background optimization
-let boss: PgBoss;
+let boss: any; // Using 'any' temporarily to avoid type issues
 
 export async function initDatabaseOptimization() {
   try {
+    // Start the monitoring asynchronously - doesn't block initialization
+    setupMonitoring().catch(err => {
+      console.warn('Failed to set up database monitoring:', err);
+    });
+    
+    // Lazy load PgBoss only when needed
+    const { default: PgBossConstructor } = await import('pg-boss');
+    
     // Initialize PgBoss for background job processing
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL environment variable is not set');
     }
-    boss = new PgBoss({
-      connectionString: process.env.DATABASE_URL
+    
+    // Configure connection pool with optimal settings for startup
+    boss = new PgBossConstructor({
+      connectionString: process.env.DATABASE_URL,
+      max: 3, // Limit connections during startup
+      deleteAfterDays: 7 // Only keep completed jobs for 7 days
     });
+    
     await boss.start();
     
-    // Register maintenance tasks
-    await setupMaintenanceTasks();
+    // Register maintenance tasks in the background with a delay
+    // to avoid blocking the application startup
+    setTimeout(async () => {
+      try {
+        await setupMaintenanceTasks();
+      } catch (err) {
+        console.error('Error during delayed maintenance setup:', err);
+      }
+    }, 3000); // 3 second delay
     
     log('Database optimization initialized', 'db-optimize');
     return true;

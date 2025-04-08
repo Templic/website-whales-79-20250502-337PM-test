@@ -525,21 +525,25 @@ async function checkForSQLInjectionVulnerabilities(): Promise<string[]> {
 export function initializeSecurityScans(intervalHours: number = 24): NodeJS.Timeout {
   console.log(`Initializing security scans with ${intervalHours} hour interval`);
   
-  // Run an initial scan
-  scanProject().then(result => {
-    console.log(`Initial security scan completed: ${result.totalIssues} issues found`);
-    
-    // Log the event
-    logSecurityEvent({
-      type: 'SECURITY_SCAN',
-      details: `Automated security scan completed with ${result.totalIssues} issues found`,
-      severity: result.criticalIssues > 0 ? 'critical' : 
-                result.highIssues > 0 ? 'high' : 
-                result.mediumIssues > 0 ? 'medium' : 'low'
+  // Run an initial scan but on a slight delay to not block startup
+  // and to allow other services to initialize first
+  setTimeout(() => {
+    console.log('Starting initial security scan...');
+    scanProject().then(result => {
+      console.log(`Initial security scan completed: ${result.totalIssues} issues found`);
+      
+      // Log the event
+      logSecurityEvent({
+        type: 'SECURITY_SCAN',
+        details: `Automated security scan completed with ${result.totalIssues} issues found`,
+        severity: result.criticalIssues > 0 ? 'critical' : 
+                  result.highIssues > 0 ? 'high' : 
+                  result.mediumIssues > 0 ? 'medium' : 'low'
+      });
+    }).catch(error => {
+      console.error('Initial security scan failed:', error);
     });
-  }).catch(error => {
-    console.error('Initial security scan failed:', error);
-  });
+  }, 5000); // 5 second delay
   
   // Set up periodic scans
   const intervalMilliseconds = intervalHours * 60 * 60 * 1000;

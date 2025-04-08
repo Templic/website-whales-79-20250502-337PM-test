@@ -197,24 +197,26 @@ async function startServer() {
   console.log('Starting server initialization...');
 
   try {
-    // Initialize core services in parallel
-    const [dbInit, dbOpt, bgServices] = await Promise.allSettled([
-      initializeDatabase(),
-      initDatabaseOptimization(),
-      initBackgroundServices(),
-      initializeSecurityScans(24)
+    // Essential initialization first: database connection only
+    // This is necessary before anything else can work
+    await initializeDatabase();
+    
+    // Start non-essential services in parallel but don't wait for them
+    // This allows the server to start handling requests while these complete in the background
+    Promise.all([
+      initDatabaseOptimization().catch(err => {
+        console.warn('Database optimization initialization failed, continuing:', err);
+      }),
+      initBackgroundServices().catch(err => {
+        console.warn('Background services initialization failed, continuing:', err);
+      })
     ]);
-
-    // Handle initialization results
-    if (dbInit.status === 'rejected') {
-      throw dbInit.reason;
-    }
-    if (dbOpt.status === 'rejected') {
-      console.warn('Database optimization initialization failed, continuing:', dbOpt.reason);
-    }
-    if (bgServices.status === 'rejected') {
-      console.warn('Background services initialization failed, continuing:', bgServices.reason);
-    }
+    
+    // Start security scans asynchronously after server is up
+    // This doesn't block the initialization process
+    setTimeout(() => {
+      initializeSecurityScans(24);
+    }, 1000);
 
     // Setup authentication first (before any routes are registered)
     setupAuth(app);
