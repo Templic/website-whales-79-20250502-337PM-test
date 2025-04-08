@@ -48,8 +48,8 @@ export default function BlogPage() {
                     className="w-full h-48 object-cover rounded-lg mb-4"
                   />
                 )}
-                <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
-                <p className="text-gray-300 mb-4">{post.content}</p>
+                <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title.replace(/<[^>]*>/g, '')}</h2>
+                <p className="text-gray-300 mb-4">{post.content.replace(/<[^>]*>/g, '')}</p>
                 <p className="text-sm text-[#fe0064]">
                   Published: {formatDisplayDate(post.createdAt)}
                 </p>
