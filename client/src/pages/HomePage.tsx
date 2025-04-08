@@ -28,17 +28,11 @@ export default function HomePage() {
               url(/images/rainbow-falls-hawaii.jpg)
               no-repeat center center / cover`
           }}>
-          <GeometricSection
-            variant="cosmic"
-            shape="hexagon"
-            alignment="center"
-            backgroundStyle="glass"
-            className="hero-content relative z-10 max-w-[800px]"
-          >
-            <h1 className="text-[clamp(2rem,4vw,3.5rem)] mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-almendra leading-tight px-4 whitespace-normal">
+          <div className="hero-content relative z-10 max-w-[800px] text-center mx-auto">
+            <h1 className="text-[clamp(2rem,4vw,3.5rem)] mb-6 text-shadow shadow-[#fe0064] animate-cosmic font-almendra leading-tight px-4 whitespace-normal text-[#e15554]">
               🌊 Ride the Cosmic Wave 🌌
             </h1>
-            <p className="text-[clamp(1rem,2vw,1.4rem)] mb-8 max-w-[800px] mx-auto leading-relaxed font-cormorant px-4 whitespace-normal">
+            <p className="text-[clamp(1rem,2vw,1.4rem)] mb-8 max-w-[800px] mx-auto leading-relaxed font-cormorant px-4 whitespace-normal text-[#00ebd6]">
               🐋 Immerse yourself in the sonic universe of Dale Loves Whales 🎵 Experience the vibe, explore the depths, and join us on a journey through sound and consciousness ✨
             </p>
             <Link href="/music"
@@ -47,7 +41,7 @@ export default function HomePage() {
                 shadow-[0_0_15px_#00ebd6] hover:shadow-[0_0_20px_#fe0064] inline-block">
               Explore Music
             </Link>
-          </GeometricSection>
+          </div>
         </section>
 
         {/* Main Content */}
@@ -62,7 +56,7 @@ export default function HomePage() {
             className="mb-16 px-8 py-12 mx-auto max-w-[90%] overflow-hidden"
           >
             <div className="max-w-[90%] md:max-w-[80%] mx-auto px-4 relative z-10">
-              <p className="text-xl leading-relaxed font-cormorant whitespace-normal">
+              <p className="text-xl leading-relaxed font-cormorant whitespace-normal text-[#00ebd6]">
                 🌟 Dale Loves Whales blends cosmic rhythms with tropical soul 🌴 Dive deep into his musical journey that bridges the stars with the ocean's depths 🌊
               </p>
             </div>
@@ -77,7 +71,7 @@ export default function HomePage() {
             className="mb-16 px-8 py-12 mx-auto max-w-[90%]"
           >
             <div className="max-w-[80%] mx-auto">
-              <p className="text-xl leading-relaxed">
+              <p className="text-xl leading-relaxed text-[#00ebd6]">
                 From live performances to collaborative projects, Dale brings a unique sound experience infused with retro-futuristic beats, fluid tropical notes, and immersive visuals.
               </p>
             </div>

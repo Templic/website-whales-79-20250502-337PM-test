@@ -210,16 +210,6 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             <CosmicShapeGroup
               shapes={[
                 {
-                  type: 'ellipse',
-                  size: 150,
-                  color: variantColors[variant].main,
-                  glowColor: variantColors[variant].glow,
-                  fillOpacity: 0.02,
-                  animate: true,
-                  animationDuration: 80,
-                  position: { top: '30%', left: '10%' }
-                },
-                {
                   type: 'starburst',
                   points: 5,
                   size: 80,
@@ -400,7 +390,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
           <div className="section-header mb-8">
             <h2 
               className="text-3xl md:text-4xl font-bold mb-4"
-              style={{ color: mainColor }}
+              style={{ color: variant === 'cosmic' ? '#e15554' : mainColor }}
             >
               {title}
             </h2>
