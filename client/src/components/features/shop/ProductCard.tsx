@@ -14,24 +14,24 @@ import { ShoppingCart, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Returns a relevant placeholder image URL based on product details
+ * Returns a relevant product image URL based on product details
  */
 const getProductPlaceholderImage = (name: string, description: string, categories: string[]): string => {
   const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
   
-  // Map for category-specific placeholders - using new SVG files
+  // Map for category-specific images
   const categoryPlaceholders: Record<string, string> = {
-    'healing tools': '/images/products/placeholder-crystal-bowl.svg',
-    'sound therapy': '/images/products/placeholder-tibetan-bowl.svg',
-    'jewelry': '/images/products/placeholder-crystal-pendant.svg',
-    'energy tools': '/images/products/placeholder-clear-quartz.svg',
-    'digital': '/images/products/placeholder-album-cover.svg',
-    'music': '/images/products/placeholder-album-cover.svg',
-    'meditation': '/images/products/placeholder-meditation-cushion.svg',
-    'home': '/images/products/placeholder-crystal-bowl.svg',
-    'art': '/images/products/placeholder-sacred-geometry.svg',
-    'books': '/images/products/placeholder-spiritual-journal.svg',
-    'self-development': '/images/products/placeholder-spiritual-journal.svg'
+    'healing tools': '/images/products/samples/crystal-bowl.jpg',
+    'sound therapy': '/images/products/samples/tibetan-bowl.jpg',
+    'jewelry': '/images/products/samples/crystal-pendant.jpg',
+    'energy tools': '/images/products/samples/clear-quartz.jpg',
+    'digital': '/images/products/samples/album-cover.jpg',
+    'music': '/images/products/samples/album-cover.jpg',
+    'meditation': '/images/products/samples/meditation-cushion.jpg',
+    'home': '/images/products/samples/crystal-bowl.jpg',
+    'art': '/images/products/samples/sacred-geometry.jpg',
+    'books': '/images/products/samples/spiritual-journal.jpg',
+    'self-development': '/images/products/samples/spiritual-journal.jpg'
   };
   
   // Check if product content matches any specific categories
@@ -43,19 +43,19 @@ const getProductPlaceholderImage = (name: string, description: string, categorie
   
   // Common product types to check for with specific descriptions
   const productTypes = [
-    { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/placeholder-crystal-bowl.svg' },
-    { keywords: ['clear quartz', 'point', 'amplification'], image: '/images/products/placeholder-clear-quartz.svg' },
-    { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic frequencies'], image: '/images/products/placeholder-cosmic-pendant.svg' },
-    { keywords: ['album', 'frequency', 'music', 'sound', 'tracks'], image: '/images/products/placeholder-album-cover.svg' },
-    { keywords: ['cushion', 'meditation', 'cork', 'organic cotton'], image: '/images/products/placeholder-meditation-cushion-organic.svg' },
-    { keywords: ['cushion', 'meditation', 'sitting', 'cosmic pattern'], image: '/images/products/placeholder-meditation-cushion.svg' },
-    { keywords: ['sacred geometry', 'geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/placeholder-sacred-geometry.svg' },
-    { keywords: ['t-shirt', 'sacred geometry', 'cotton'], image: '/images/products/placeholder-sacred-geometry-tshirt.svg' },
-    { keywords: ['journal', 'diary', 'write', 'book', 'spiritual'], image: '/images/products/placeholder-spiritual-journal.svg' },
-    { keywords: ['amethyst', 'cluster'], image: '/images/products/placeholder-amethyst-cluster.svg' },
-    { keywords: ['labradorite', 'palm stone'], image: '/images/products/placeholder-labradorite.svg' },
-    { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/placeholder-tibetan-bowl.svg' },
-    { keywords: ['koshi', 'chimes'], image: '/images/products/placeholder-koshi-chimes.svg' },
+    { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/samples/crystal-bowl.jpg' },
+    { keywords: ['clear quartz', 'point', 'amplification'], image: '/images/products/samples/clear-quartz.jpg' },
+    { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic frequencies'], image: '/images/products/samples/cosmic-pendant.jpg' },
+    { keywords: ['album', 'frequency', 'music', 'sound', 'tracks'], image: '/images/products/samples/album-cover.jpg' },
+    { keywords: ['cushion', 'meditation', 'cork', 'organic cotton'], image: '/images/products/samples/organic-meditation-cushion.jpg' },
+    { keywords: ['cushion', 'meditation', 'sitting', 'cosmic pattern'], image: '/images/products/samples/meditation-cushion.jpg' },
+    { keywords: ['sacred geometry', 'geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/samples/sacred-geometry.jpg' },
+    { keywords: ['t-shirt', 'sacred geometry', 'cotton'], image: '/images/products/samples/sacred-geometry-tshirt.jpg' },
+    { keywords: ['journal', 'diary', 'write', 'book', 'spiritual'], image: '/images/products/samples/spiritual-journal.jpg' },
+    { keywords: ['amethyst', 'cluster'], image: '/images/products/samples/amethyst-cluster.jpg' },
+    { keywords: ['labradorite', 'palm stone'], image: '/images/products/samples/labradorite.jpg' },
+    { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/samples/tibetan-bowl.jpg' },
+    { keywords: ['koshi', 'chimes'], image: '/images/products/samples/koshi-chimes.jpg' },
   ];
   
   // Check for matches in product types
@@ -65,8 +65,8 @@ const getProductPlaceholderImage = (name: string, description: string, categorie
     }
   }
   
-  // Default placeholder if no specific match - use cosmic pendant as fallback
-  return '/images/products/placeholder-cosmic-pendant.svg';
+  // Default image if no specific match
+  return '/images/products/samples/cosmic-pendant.jpg';
 };
 
 interface ProductCardProps {
