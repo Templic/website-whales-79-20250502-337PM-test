@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperience";
 import CosmicCollectibles from "@/components/shop/CosmicCollectibles";
@@ -58,7 +58,7 @@ export interface Product {
 }
 
 // Sample products data
-const sampleProducts: Product[] = [
+export const sampleProducts: Product[] = [
   {
     id: "prod-1",
     name: "Celestial Crystal Sound Bowl",
@@ -165,6 +165,7 @@ interface CartItem {
 
 export default function ShopPage() {
   const [, params] = useRoute('/shop/:category?');
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(sampleProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
@@ -318,7 +319,7 @@ export default function ShopPage() {
   // Handle viewing a product
   const handleProductView = (productId: string) => {
     console.log(`Viewing product: ${productId}`);
-    // In a real app, this would navigate to a product detail page
+    setLocation(`/shop/product/${productId}`);
   };
   
   // Toggle category in filter
@@ -332,19 +333,18 @@ export default function ShopPage() {
   
   // Get fallback image based on product details
   const getProductImage = (product: Product): string => {
-    // Check if image exists and is valid
-    if (product.image && product.image.startsWith('/images/products/samples/')) {
-      return product.image;
-    }
-    
-    const { name, description, categories } = product;
+    // Force using the fallback system for demonstration
+    const { name, description, categories = [] } = product;
     const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
+    
+    // For debugging
+    console.log('Product info:', product.id, product.name, product.image);
     
     // Map for category-specific images
     const categoryPlaceholders: Record<string, string> = {
       'healing tools': '/images/products/samples/crystal-bowl.jpg',
       'sound therapy': '/images/products/samples/tibetan-bowl.jpg',
-      'jewelry': '/images/products/samples/crystal-pendant.jpg',
+      'jewelry': '/images/products/samples/cosmic-pendant.jpg',
       'energy tools': '/images/products/samples/clear-quartz.jpg',
       'digital': '/images/products/samples/album-cover.jpg',
       'music': '/images/products/samples/album-cover.jpg',
@@ -356,9 +356,15 @@ export default function ShopPage() {
     };
     
     // Check if product content matches any specific categories
-    for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
-      if (combinedText.includes(category.toLowerCase())) {
-        return imagePath;
+    if (categories && categories.length > 0) {
+      for (const productCategory of categories) {
+        const lowerCategory = productCategory.toLowerCase();
+        for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
+          if (lowerCategory.includes(category.toLowerCase())) {
+            console.log('Found category match:', category, 'for product', product.name);
+            return imagePath;
+          }
+        }
       }
     }
     
@@ -366,28 +372,40 @@ export default function ShopPage() {
     const productTypes = [
       { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/samples/crystal-bowl.jpg' },
       { keywords: ['clear quartz', 'point', 'amplification'], image: '/images/products/samples/clear-quartz.jpg' },
-      { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic frequencies'], image: '/images/products/samples/cosmic-pendant.jpg' },
+      { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic'], image: '/images/products/samples/cosmic-pendant.jpg' },
       { keywords: ['album', 'frequency', 'music', 'sound', 'tracks'], image: '/images/products/samples/album-cover.jpg' },
-      { keywords: ['cushion', 'meditation', 'cork', 'organic cotton'], image: '/images/products/samples/organic-meditation-cushion.jpg' },
-      { keywords: ['cushion', 'meditation', 'sitting', 'cosmic pattern'], image: '/images/products/samples/meditation-cushion.jpg' },
-      { keywords: ['sacred geometry', 'geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/samples/sacred-geometry.jpg' },
-      { keywords: ['t-shirt', 'sacred geometry', 'cotton'], image: '/images/products/samples/sacred-geometry-tshirt.jpg' },
-      { keywords: ['journal', 'diary', 'write', 'book', 'spiritual'], image: '/images/products/samples/spiritual-journal.jpg' },
+      { keywords: ['cushion', 'meditation', 'cork', 'organic'], image: '/images/products/samples/meditation-cushion.jpg' },
+      { keywords: ['geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/samples/sacred-geometry.jpg' },
+      { keywords: ['t-shirt', 'cotton'], image: '/images/products/samples/sacred-geometry-tshirt.jpg' },
+      { keywords: ['journal', 'diary', 'write', 'book'], image: '/images/products/samples/spiritual-journal.jpg' },
       { keywords: ['amethyst', 'cluster'], image: '/images/products/samples/amethyst-cluster.jpg' },
       { keywords: ['labradorite', 'palm stone'], image: '/images/products/samples/labradorite.jpg' },
       { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/samples/tibetan-bowl.jpg' },
       { keywords: ['koshi', 'chimes'], image: '/images/products/samples/koshi-chimes.jpg' },
     ];
     
-    // Check for matches in product types
+    // Check for keyword matches in name or description
     for (const type of productTypes) {
       if (type.keywords.some(keyword => combinedText.includes(keyword))) {
+        console.log('Found keyword match:', type.keywords[0], 'for product', product.name);
         return type.image;
       }
     }
     
-    // Default image if no specific match
-    return '/images/products/samples/cosmic-pendant.jpg';
+    // Default to different images based on product ID to ensure unique visuals
+    const defaultImages = [
+      '/images/products/samples/cosmic-pendant.jpg',
+      '/images/products/samples/crystal-bowl.jpg',
+      '/images/products/samples/sacred-geometry.jpg',
+      '/images/products/samples/meditation-cushion.jpg',
+      '/images/products/samples/album-cover.jpg',
+    ];
+    
+    // Use product ID to deterministically select an image
+    const idNumber = parseInt(product.id.replace(/\D/g, '')) || 0;
+    const defaultImage = defaultImages[idNumber % defaultImages.length];
+    console.log('Using default image for', product.name, ':', defaultImage);
+    return defaultImage;
   };
 
   return (

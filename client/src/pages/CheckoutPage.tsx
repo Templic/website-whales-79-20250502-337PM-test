@@ -1,704 +1,953 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { apiRequest } from '@/lib/queryClient';
-import { CartItem, ShippingInfo } from '@/types/cart';
-import { formatCurrency } from '@/lib/format';
-import { useToast } from '@/hooks/use-toast';
-import { createPaymentIntent, processOrder } from '@/lib/paymentService';
-import StripeProvider from '@/components/shop/payment/StripeProvider';
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { ChevronLeft, CreditCard, ShoppingCart, Lock, AlertCircle } from "lucide-react";
+import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
+import { Product } from "./ShopPage";
 
-// UI Components
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
-import CosmicButton from '@/components/features/cosmic/cosmic-button';
-
-import StripeElements from '@/components/shop/payment/StripeElements';
-import PaymentSelector from '@/components/shop/payment/PaymentSelector';
-
-const shippingFormSchema = z.object({
-  firstName: z.string().min(2, 'First name is required'),
-  lastName: z.string().min(2, 'Last name is required'),
-  address: z.string().min(5, 'Address is required'),
-  city: z.string().min(2, 'City is required'),
-  state: z.string().min(2, 'State is required'),
-  postalCode: z.string().min(3, 'Postal code is required'),
-  country: z.string().min(2, 'Country is required'),
-  phone: z.string().optional(),
-  email: z.string().email('Valid email is required'),
-  useShippingForBilling: z.boolean().default(true),
-});
-
-type ShippingFormValues = z.infer<typeof shippingFormSchema>;
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
 
 export default function CheckoutPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [isClientLoaded, setIsClientLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('shipping');
-  const [orderPlaced, setOrderPlaced] = useState(false);
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | undefined>();
-  const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [shippingInfo, setShippingInfo] = useState<ShippingFormValues | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>('stripe');
-  
-  // Create form
-  const form = useForm<ShippingFormValues>({
-    resolver: zodResolver(shippingFormSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      address: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: 'US',
-      phone: '',
-      email: '',
-      useShippingForBilling: true,
-    },
-  });
-  
-  useEffect(() => {
-    setIsClientLoaded(true);
-    document.title = 'Checkout - Dale Loves Whales';
-  }, []);
-  
-  // Fetch cart items
-  const { 
-    data: cartData, 
-    isLoading: isCartLoading, 
-    isError: isCartError,
-  } = useQuery<{ cart: any; items: CartItem[] }>({
-    queryKey: ['/api/cart'],
-    enabled: isClientLoaded,
-  });
-  
-  // Get cart items and calculate totals
-  const cartItems = cartData?.items || [];
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
-  const tax = subtotal * 0.07; // 7% tax
-  const total = subtotal + shipping + tax;
-  
-  // Create order mutation
-  const createOrderMutation = useMutation({
-    mutationFn: async (data: any) => {
-      return await apiRequest('/api/orders', {
-        method: 'POST',
-        data,
-      });
-    },
-    onSuccess: (data) => {
-      setOrderPlaced(true);
-      setOrderId(data.id);
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      toast({
-        title: 'Order Placed',
-        description: `Your order #${data.orderNumber} has been placed successfully.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to place order. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Handle shipping form submission
-  const onShippingSubmit = async (data: ShippingFormValues) => {
-    // Skip if already processing
-    if (isCreatingPaymentIntent) return;
-    
-    // Clear previous errors
-    setPaymentError(null);
-    
-    // Create a payment intent when moving to payment
-    try {
-      setIsCreatingPaymentIntent(true);
-      
-      // Create payment intent
-      const paymentIntentResponse = await createPaymentIntent({
-        amount: Math.round(total * 100), // Convert to cents
-        currency: 'usd',
-        metadata: {
-          customer_email: data.email,
-          customer_name: `${data.firstName} ${data.lastName}`
-        }
-      });
-      
-      if (!paymentIntentResponse.clientSecret) {
-        throw new Error('Failed to initialize payment: Missing client secret');
-      }
-      
-      // Store client secret and shipping info
-      setClientSecret(paymentIntentResponse.clientSecret);
-      setShippingInfo(data);
-      
-      // Move to payment tab if shipping form is valid
-      setActiveTab('payment');
-    } catch (error: any) {
-      console.error('Payment intent error:', error);
-      setPaymentError(error.message || 'Failed to initialize payment system');
-      toast({
-        title: 'Payment Error',
-        description: error.message || 'Failed to initialize payment system. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsCreatingPaymentIntent(false);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    // Load cart from localStorage on initial render
+    if (typeof window !== 'undefined') {
+      const savedCart = localStorage.getItem('cosmic-cart');
+      return savedCart ? JSON.parse(savedCart) : [];
     }
-  };
-  
-  // Handle payment submission
-  const onPaymentSubmit = async (paymentMethodId: string): Promise<void> => {
-    const shippingData = form.getValues();
+    return [];
+  });
+  const [step, setStep] = useState<'cart' | 'shipping' | 'payment' | 'confirmation'>('cart');
+  const [loading, setLoading] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
+  const [countries, setCountries] = useState(['United States', 'Canada', 'United Kingdom', 'Australia', 'Germany', 'France', 'Japan']);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    // Shipping info
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'United States',
+    // Payment info
+    cardName: '',
+    cardNumber: '',
+    expMonth: '',
+    expYear: '',
+    cvv: '',
+  });
+
+  // Validation state
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('cosmic-cart', JSON.stringify(cart));
+    } else {
+      localStorage.removeItem('cosmic-cart');
+    }
+  }, [cart]);
+
+  // Handle empty cart
+  useEffect(() => {
+    if (cart.length === 0 && !orderCompleted) {
+      toast({
+        title: "Your cart is empty",
+        description: "Add some products to your cart before checking out.",
+      });
+      setLocation('/shop');
+    }
+  }, [cart, setLocation, toast, orderCompleted]);
+
+  const getProductImage = (product: Product): string => {
+    // Force using the fallback system for demonstration
+    const { name, description, categories = [] } = product;
+    const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
     
-    const orderData = {
-      billingAddress: shippingData.useShippingForBilling
-        ? {
-            firstName: shippingData.firstName,
-            lastName: shippingData.lastName,
-            address1: shippingData.address,
-            city: shippingData.city,
-            state: shippingData.state,
-            postalCode: shippingData.postalCode,
-            country: shippingData.country,
-            email: shippingData.email,
-            phone: shippingData.phone,
-          }
-        : {
-            // If different billing address is used, you would have another form for this
-            firstName: shippingData.firstName,
-            lastName: shippingData.lastName,
-            address1: shippingData.address,
-            city: shippingData.city,
-            state: shippingData.state,
-            postalCode: shippingData.postalCode,
-            country: shippingData.country,
-            email: shippingData.email,
-            phone: shippingData.phone,
-          },
-      shippingAddress: {
-        firstName: shippingData.firstName,
-        lastName: shippingData.lastName,
-        address1: shippingData.address,
-        city: shippingData.city,
-        state: shippingData.state,
-        postalCode: shippingData.postalCode,
-        country: shippingData.country,
-        email: shippingData.email,
-        phone: shippingData.phone,
-      },
-      paymentMethod: 'credit_card',
-      paymentMethodId: paymentMethodId,
-      amount: total,
-      items: cartItems.map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        price: item.price
-      }))
+    // Map for category-specific images
+    const categoryPlaceholders: Record<string, string> = {
+      'healing tools': '/images/products/samples/crystal-bowl.jpg',
+      'sound therapy': '/images/products/samples/tibetan-bowl.jpg',
+      'jewelry': '/images/products/samples/cosmic-pendant.jpg',
+      'energy tools': '/images/products/samples/clear-quartz.jpg',
+      'digital': '/images/products/samples/album-cover.jpg',
+      'music': '/images/products/samples/album-cover.jpg',
+      'meditation': '/images/products/samples/meditation-cushion.jpg',
+      'home': '/images/products/samples/crystal-bowl.jpg',
+      'art': '/images/products/samples/sacred-geometry.jpg',
+      'books': '/images/products/samples/spiritual-journal.jpg',
+      'self-development': '/images/products/samples/spiritual-journal.jpg'
     };
     
-    try {
-      const result = await processOrder(orderData, paymentMethodId);
-      
-      if (result.success) {
-        setOrderId(result.orderId);
-        setOrderPlaced(true);
-        queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-        toast({
-          title: 'Order Placed',
-          description: `Your order has been placed successfully.`,
-        });
-      } else {
-        throw new Error('Failed to process order');
+    // Check if product content matches any specific categories
+    if (categories && categories.length > 0) {
+      for (const productCategory of categories) {
+        const lowerCategory = productCategory.toLowerCase();
+        for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
+          if (lowerCategory.includes(category.toLowerCase())) {
+            return imagePath;
+          }
+        }
       }
-    } catch (error: any) {
-      toast({
-        title: 'Payment Error',
-        description: error.message || 'Failed to process payment',
-        variant: 'destructive',
+    }
+    
+    // Common product types to check for with specific descriptions
+    const productTypes = [
+      { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/samples/crystal-bowl.jpg' },
+      { keywords: ['clear quartz', 'point', 'amplification'], image: '/images/products/samples/clear-quartz.jpg' },
+      { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic'], image: '/images/products/samples/cosmic-pendant.jpg' },
+      { keywords: ['album', 'frequency', 'music', 'sound', 'tracks'], image: '/images/products/samples/album-cover.jpg' },
+      { keywords: ['cushion', 'meditation', 'cork', 'organic'], image: '/images/products/samples/meditation-cushion.jpg' },
+      { keywords: ['geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/samples/sacred-geometry.jpg' },
+      { keywords: ['t-shirt', 'cotton'], image: '/images/products/samples/sacred-geometry-tshirt.jpg' },
+      { keywords: ['journal', 'diary', 'write', 'book'], image: '/images/products/samples/spiritual-journal.jpg' },
+      { keywords: ['amethyst', 'cluster'], image: '/images/products/samples/amethyst-cluster.jpg' },
+      { keywords: ['labradorite', 'palm stone'], image: '/images/products/samples/labradorite.jpg' },
+      { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/samples/tibetan-bowl.jpg' },
+      { keywords: ['koshi', 'chimes'], image: '/images/products/samples/koshi-chimes.jpg' },
+    ];
+    
+    // Check for keyword matches in name or description
+    for (const type of productTypes) {
+      if (type.keywords.some(keyword => combinedText.includes(keyword))) {
+        return type.image;
+      }
+    }
+    
+    // Default to different images based on product ID to ensure unique visuals
+    const defaultImages = [
+      '/images/products/samples/cosmic-pendant.jpg',
+      '/images/products/samples/crystal-bowl.jpg',
+      '/images/products/samples/sacred-geometry.jpg',
+      '/images/products/samples/meditation-cushion.jpg',
+      '/images/products/samples/album-cover.jpg',
+    ];
+    
+    // Use product ID to deterministically select an image
+    const idNumber = parseInt(product.id.replace(/\D/g, '')) || 0;
+    const defaultImage = defaultImages[idNumber % defaultImages.length];
+    return defaultImage;
+  };
+
+  // Calculate cart totals
+  const subtotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  const tax = subtotal * 0.07; // 7% tax
+  const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
+  const total = subtotal + tax + shipping;
+
+  // Update quantity
+  const updateQuantity = (id: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      removeFromCart(id);
+    } else {
+      setCart(cart.map(item => 
+        item.product.id === id 
+          ? { ...item, quantity: newQuantity } 
+          : item
+      ));
+    }
+  };
+
+  // Remove from cart
+  const removeFromCart = (id: string) => {
+    setCart(cart.filter(item => item.product.id !== id));
+  };
+
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user edits field
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
       });
-      throw error; // Re-throw to let Stripe Elements handle the error UI
     }
   };
-  
-  // Navigate to cart
-  const handleBackToCart = () => {
-    setLocation('/shop/cart');
-  };
-  
-  // Navigate to shop
-  const handleContinueShopping = () => {
-    setLocation('/shop');
-  };
-  
-  // Navigate to order details
-  const handleViewOrder = () => {
-    if (orderId) {
-      setLocation(`/shop/orders/${orderId}`);
+
+  // Handle dropdown change
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user edits field
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
-  
-  // If still loading
-  if (!isClientLoaded || isCartLoading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-12 w-12 animate-spin mb-4 text-primary" />
-        <p className="text-lg">Loading checkout...</p>
-      </div>
-    );
-  }
-  
-  // If error loading cart
-  if (isCartError) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-destructive mb-4">Failed to load cart data</p>
-          <Button onClick={handleBackToCart} className="cosmic-hover-glow">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Cart
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
-  // If cart is empty
-  if (cartItems.length === 0 && !orderPlaced) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text">Your Cart is Empty</h1>
-          <p className="text-muted-foreground mb-6">
-            You need to add items to your cart before checkout.
-          </p>
-          <Button 
-            onClick={handleContinueShopping}
-            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow"
-          >
-            Continue Shopping
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
-  // If order has been placed successfully
-  if (orderPlaced) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-8 w-8 text-green-600" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
+
+  // Validate shipping form
+  const validateShippingForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.firstName.trim()) errors.firstName = "First name is required";
+    if (!formData.lastName.trim()) errors.lastName = "Last name is required";
+    if (!formData.email.trim()) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = "Email is invalid";
+    if (!formData.address.trim()) errors.address = "Address is required";
+    if (!formData.city.trim()) errors.city = "City is required";
+    if (!formData.zipCode.trim()) errors.zipCode = "Zip code is required";
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Validate payment form
+  const validatePaymentForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.cardName.trim()) errors.cardName = "Name on card is required";
+    if (!formData.cardNumber.trim()) errors.cardNumber = "Card number is required";
+    else if (!/^\d{16}$/.test(formData.cardNumber.replace(/\s/g, ''))) {
+      errors.cardNumber = "Please enter a valid 16-digit card number";
+    }
+    if (!formData.expMonth.trim()) errors.expMonth = "Expiration month is required";
+    if (!formData.expYear.trim()) errors.expYear = "Expiration year is required";
+    if (!formData.cvv.trim()) errors.cvv = "CVV is required";
+    else if (!/^\d{3,4}$/.test(formData.cvv)) errors.cvv = "CVV must be 3 or 4 digits";
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Proceed to next step
+  const proceedToShipping = () => {
+    setStep('shipping');
+    window.scrollTo(0, 0);
+  };
+
+  const proceedToPayment = () => {
+    if (validateShippingForm()) {
+      setStep('payment');
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const placeOrder = () => {
+    if (validatePaymentForm()) {
+      setLoading(true);
+      
+      // Simulate API call to process order
+      setTimeout(() => {
+        setLoading(false);
+        setOrderCompleted(true);
+        setStep('confirmation');
+        // Clear cart
+        setCart([]);
+        window.scrollTo(0, 0);
+      }, 1500);
+    }
+  };
+
+  const backToCart = () => {
+    setStep('cart');
+    window.scrollTo(0, 0);
+  };
+
+  const backToShipping = () => {
+    setStep('shipping');
+    window.scrollTo(0, 0);
+  };
+
+  return (
+    <div className="min-h-screen relative">
+      <CosmicBackground opacity={0.2} />
+      
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="flex items-center text-sm mb-4">
+            <Button 
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1 hover:bg-transparent p-0 h-auto text-muted-foreground"
+              onClick={() => setLocation('/shop')}
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M5 13l4 4L19 7" 
-              />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold mb-2 cosmic-gradient-text">Order Confirmed!</h1>
-          <p className="text-muted-foreground mb-6">
-            Thank you for your purchase. Your order has been placed successfully.
-            {orderId && <span> Order ID: {orderId}</span>}
-          </p>
-          <div className="space-y-4">
-            {orderId && (
-              <Button onClick={handleViewOrder} className="w-full cosmic-hover-glow">
-                View Order Details
-              </Button>
-            )}
-            <Button onClick={handleContinueShopping} variant="outline" className="w-full">
+              <ChevronLeft className="h-4 w-4" />
               Continue Shopping
             </Button>
           </div>
+          
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-500">
+            {step === 'cart' && 'Your Cart'}
+            {step === 'shipping' && 'Shipping Information'}
+            {step === 'payment' && 'Payment Details'}
+            {step === 'confirmation' && 'Order Confirmed'}
+          </h1>
+          
+          {/* Checkout Progress */}
+          {!orderCompleted && (
+            <div className="mt-6 mb-8">
+              <div className="flex items-center justify-between max-w-3xl mx-auto">
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'cart' ? 'bg-primary text-primary-foreground' : 'bg-primary text-primary-foreground'}`}>
+                    <ShoppingCart className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs mt-1">Cart</span>
+                </div>
+                
+                <div className={`h-1 flex-1 mx-2 ${step === 'cart' ? 'bg-muted' : 'bg-primary'}`}></div>
+                
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'shipping' || step === 'payment' || step === 'confirmation' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    2
+                  </div>
+                  <span className="text-xs mt-1">Shipping</span>
+                </div>
+                
+                <div className={`h-1 flex-1 mx-2 ${step === 'cart' || step === 'shipping' ? 'bg-muted' : 'bg-primary'}`}></div>
+                
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'payment' || step === 'confirmation' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    <CreditCard className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs mt-1">Payment</span>
+                </div>
+                
+                <div className={`h-1 flex-1 mx-2 ${step === 'confirmation' ? 'bg-primary' : 'bg-muted'}`}></div>
+                
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'confirmation' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                    ✓
+                  </div>
+                  <span className="text-xs mt-1">Confirmation</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold cosmic-gradient-text">Checkout</h1>
-        <p className="text-muted-foreground">Complete your purchase</p>
-      </div>
-      
-      <div className="lg:grid lg:grid-cols-3 lg:gap-8">
-        <div className="lg:col-span-2">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="shipping">Shipping</TabsTrigger>
-              <TabsTrigger value="payment" disabled={!form.formState.isValid}>
-                Payment
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="shipping">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shipping Information</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onShippingSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="John" {...field} className="cosmic-glass-field" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Doe" {...field} className="cosmic-glass-field" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+        
+        <div className="max-w-7xl mx-auto">
+          {/* Cart */}
+          {step === 'cart' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Cart Items */}
+              <div className="lg:col-span-2">
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    {cart.length === 0 ? (
+                      <div className="text-center py-12">
+                        <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-medium mb-2">Your cart is empty</h3>
+                        <p className="text-muted-foreground mb-6">Looks like you haven't added any items to your cart yet.</p>
+                        <Button onClick={() => setLocation('/shop')}>Browse Products</Button>
                       </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="email" 
-                                placeholder="your.email@example.com" 
-                                {...field}
-                                className="cosmic-glass-field"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="address"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Address</FormLabel>
-                            <FormControl>
-                              <Input 
-                                placeholder="123 Main St" 
-                                {...field}
-                                className="cosmic-glass-field"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>City</FormLabel>
-                              <FormControl>
-                                <Input placeholder="New York" {...field} className="cosmic-glass-field" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="state"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>State / Province</FormLabel>
-                              <FormControl>
-                                <Input placeholder="NY" {...field} className="cosmic-glass-field" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="postalCode"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Postal Code</FormLabel>
-                              <FormControl>
-                                <Input placeholder="10001" {...field} className="cosmic-glass-field" />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="country"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Country</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="cosmic-glass-field">
-                                    <SelectValue placeholder="Select a country" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="US">United States</SelectItem>
-                                  <SelectItem value="CA">Canada</SelectItem>
-                                  <SelectItem value="GB">United Kingdom</SelectItem>
-                                  <SelectItem value="AU">Australia</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone (optional)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="tel" 
-                                placeholder="(123) 456-7890" 
-                                {...field}
-                                className="cosmic-glass-field"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="useShippingForBilling"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>Use shipping address for billing</FormLabel>
+                    ) : (
+                      <div>
+                        <div className="space-y-4">
+                          {cart.map((item) => (
+                            <div key={item.product.id} className="flex items-start space-x-4 py-4 border-b last:border-0">
+                              <div className="h-20 w-20 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                                <img 
+                                  src={getProductImage(item.product)} 
+                                  alt={item.product.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-base font-medium line-clamp-1">{item.product.name}</h4>
+                                
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {item.product.categories.slice(0, 2).map(category => (
+                                    <span key={category} className="text-xs text-muted-foreground">{category}</span>
+                                  ))}
+                                </div>
+                                
+                                <div className="flex justify-between items-end mt-2">
+                                  <div className="flex items-center space-x-1">
+                                    <button 
+                                      className="text-sm w-6 h-6 rounded border flex items-center justify-center"
+                                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                                    >-</button>
+                                    <span className="text-sm w-8 text-center">{item.quantity}</span>
+                                    <button 
+                                      className="text-sm w-6 h-6 rounded border flex items-center justify-center"
+                                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                    >+</button>
+                                  </div>
+                                  
+                                  <button 
+                                    className="text-sm text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeFromCart(item.product.id)}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="text-right">
+                                <span className="font-medium">
+                                  ${(item.product.price * item.quantity).toFixed(2)}
+                                </span>
+                                {item.quantity > 1 && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    ${item.product.price.toFixed(2)} each
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-between">
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          onClick={handleBackToCart}
-                          className="cosmic-hover-glow"
-                        >
-                          <ArrowLeft className="h-4 w-4 mr-2" />
-                          Back to Cart
-                        </Button>
-                        <Button 
-                          type="submit"
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 cosmic-hover-glow"
-                        >
-                          Continue to Payment
-                        </Button>
+                          ))}
+                        </div>
                       </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="payment">
-              <Card className="cosmic-glass-card cosmic-box-shadow">
-                <CardHeader>
-                  <div className="h-1.5 w-full bg-gradient-to-r from-cosmic-primary/20 via-cosmic-primary to-cosmic-primary/20 rounded-full mb-2 animate-pulse-slow" />
-                  <CardTitle className="cosmic-gradient-text flex items-center">
-                    <Sparkles className="h-5 w-5 mr-2 opacity-80" />
-                    Payment Method
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {paymentError && (
-                    <Alert variant="destructive" className="mb-4 border-destructive/30 bg-destructive/10">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Payment Error</AlertTitle>
-                      <AlertDescription>{paymentError}</AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {/* Payment Method Selector */}
-                  <PaymentSelector 
-                    paymentType={paymentMethod} 
-                    onValueChange={setPaymentMethod} 
-                  />
-                  
-                  {/* Only show the Stripe payment form for the stripe payment method */}
-                  {paymentMethod === 'stripe' && (
-                    <>
-                      {isCreatingPaymentIntent ? (
-                        <div className="flex justify-center items-center py-6 cosmic-glass-panel rounded-lg p-4">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-cosmic-primary rounded-full opacity-10 animate-ping"></div>
-                            <div className="absolute inset-4 bg-cosmic-primary rounded-full opacity-20"></div>
-                            <Loader2 className="h-6 w-6 animate-spin text-cosmic-primary mr-2 relative z-10" />
-                          </div>
-                          <span className="ml-2 cosmic-text">Preparing payment form...</span>
-                        </div>
-                      ) : clientSecret ? (
-                        <StripeProvider clientSecret={clientSecret}>
-                          <StripeElements onSubmit={onPaymentSubmit} />
-                        </StripeProvider>
-                      ) : (
-                        <div className="text-destructive p-3 bg-destructive/10 rounded-md mb-4">
-                          Failed to initialize payment. Please try again.
-                        </div>
-                      )}
-                    </>
-                  )}
-                  
-                  {/* Show disabled forms for other payment methods */}
-                  {paymentMethod !== 'stripe' && (
-                    <div className="cosmic-glass-panel p-4 rounded-lg border border-cosmic-primary/20">
-                      <div className="flex justify-center items-center py-6">
-                        <p className="text-center text-muted-foreground">
-                          This payment method is coming soon. Please use Stripe for now.
-                        </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Order Summary */}
+              <div>
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-medium mb-4">Order Summary</h3>
+                    
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>${subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Tax (7%)</span>
+                        <span>${tax.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                      </div>
+                      <Separator className="my-2" />
+                      <div className="flex justify-between font-medium">
+                        <span>Total</span>
+                        <span>${total.toFixed(2)}</span>
                       </div>
                     </div>
-                  )}
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <p>Your payment information is secure and encrypted.</p>
+                    
+                    {subtotal > 0 && (
+                      <>
+                        {shipping === 0 && (
+                          <div className="bg-teal-500/10 border border-teal-500/30 rounded-md p-3 text-sm text-teal-700 dark:text-teal-300 mb-4">
+                            You've qualified for free shipping!
+                          </div>
+                        )}
+                        
+                        <Button 
+                          className="w-full"
+                          onClick={proceedToShipping}
+                        >
+                          Proceed to Checkout
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+          
+          {/* Shipping Information */}
+          {step === 'shipping' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input 
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className={formErrors.firstName ? 'border-destructive' : ''}
+                        />
+                        {formErrors.firstName && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.firstName}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input 
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className={formErrors.lastName ? 'border-destructive' : ''}
+                        />
+                        {formErrors.lastName && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.lastName}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="email">Email Address</Label>
+                        <Input 
+                          id="email"
+                          name="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className={formErrors.email ? 'border-destructive' : ''}
+                        />
+                        {formErrors.email && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.email}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="phone">Phone Number (Optional)</Label>
+                        <Input 
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      
+                      <div className="sm:col-span-2">
+                        <Label htmlFor="address">Street Address</Label>
+                        <Input 
+                          id="address"
+                          name="address"
+                          value={formData.address}
+                          onChange={handleInputChange}
+                          className={formErrors.address ? 'border-destructive' : ''}
+                        />
+                        {formErrors.address && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.address}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="city">City</Label>
+                        <Input 
+                          id="city"
+                          name="city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          className={formErrors.city ? 'border-destructive' : ''}
+                        />
+                        {formErrors.city && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.city}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="state">State/Province</Label>
+                        <Input 
+                          id="state"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleInputChange}
+                          className={formErrors.state ? 'border-destructive' : ''}
+                        />
+                        {formErrors.state && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.state}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="zipCode">Zip/Postal Code</Label>
+                        <Input 
+                          id="zipCode"
+                          name="zipCode"
+                          value={formData.zipCode}
+                          onChange={handleInputChange}
+                          className={formErrors.zipCode ? 'border-destructive' : ''}
+                        />
+                        {formErrors.zipCode && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.zipCode}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="country">Country</Label>
+                        <Select
+                          value={formData.country}
+                          onValueChange={(value) => handleSelectChange('country', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map(country => (
+                              <SelectItem key={country} value={country}>{country}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={backToCart}
+                      >
+                        Back to Cart
+                      </Button>
+                      
+                      <Button onClick={proceedToPayment}>
+                        Continue to Payment
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Order Summary */}
+              <div>
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-medium mb-4">Order Summary</h3>
+                    
+                    <div className="space-y-4 mb-4">
+                      {cart.map((item) => (
+                        <div key={item.product.id} className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded overflow-hidden bg-muted flex-shrink-0">
+                            <img 
+                              src={getProductImage(item.product)} 
+                              alt={item.product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium line-clamp-1">{item.product.name}</p>
+                            <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                          </div>
+                          
+                          <div className="text-sm font-medium">
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Separator />
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tax (7%)</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-medium">
+                          <span>Total</span>
+                          <span>${total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+          
+          {/* Payment Details */}
+          {step === 'payment' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <div className="flex items-center mb-6">
+                      <Lock className="h-4 w-4 mr-2 text-emerald-500" />
+                      <span className="text-sm text-muted-foreground">Secure payment processing</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <Label htmlFor="cardName">Name on Card</Label>
+                        <Input 
+                          id="cardName"
+                          name="cardName"
+                          value={formData.cardName}
+                          onChange={handleInputChange}
+                          className={formErrors.cardName ? 'border-destructive' : ''}
+                        />
+                        {formErrors.cardName && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.cardName}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="cardNumber">Card Number</Label>
+                        <Input 
+                          id="cardNumber"
+                          name="cardNumber"
+                          value={formData.cardNumber}
+                          onChange={handleInputChange}
+                          placeholder="1234 5678 9012 3456"
+                          className={formErrors.cardNumber ? 'border-destructive' : ''}
+                        />
+                        {formErrors.cardNumber && (
+                          <p className="text-destructive text-xs mt-1">{formErrors.cardNumber}</p>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="expMonth">Exp. Month</Label>
+                          <Select
+                            value={formData.expMonth}
+                            onValueChange={(value) => handleSelectChange('expMonth', value)}
+                          >
+                            <SelectTrigger className={formErrors.expMonth ? 'border-destructive' : ''}>
+                              <SelectValue placeholder="MM" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({length: 12}, (_, i) => (
+                                <SelectItem key={i} value={String(i + 1).padStart(2, '0')}>
+                                  {String(i + 1).padStart(2, '0')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {formErrors.expMonth && (
+                            <p className="text-destructive text-xs mt-1">{formErrors.expMonth}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="expYear">Exp. Year</Label>
+                          <Select
+                            value={formData.expYear}
+                            onValueChange={(value) => handleSelectChange('expYear', value)}
+                          >
+                            <SelectTrigger className={formErrors.expYear ? 'border-destructive' : ''}>
+                              <SelectValue placeholder="YYYY" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({length: 10}, (_, i) => (
+                                <SelectItem key={i} value={String(new Date().getFullYear() + i)}>
+                                  {new Date().getFullYear() + i}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {formErrors.expYear && (
+                            <p className="text-destructive text-xs mt-1">{formErrors.expYear}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="cvv">CVV</Label>
+                          <Input 
+                            id="cvv"
+                            name="cvv"
+                            value={formData.cvv}
+                            onChange={handleInputChange}
+                            className={formErrors.cvv ? 'border-destructive' : ''}
+                          />
+                          {formErrors.cvv && (
+                            <p className="text-destructive text-xs mt-1">{formErrors.cvv}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md p-4 text-sm">
+                      <div className="flex items-start">
+                        <AlertCircle className="h-5 w-5 text-amber-500 mr-3 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-amber-800 dark:text-amber-300">Demo Mode</p>
+                          <p className="text-amber-700 dark:text-amber-400 mt-1">
+                            This is a demonstration checkout. No real transactions will be processed.
+                            You can enter any test data to proceed.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={backToShipping}
+                      >
+                        Back to Shipping
+                      </Button>
+                      
+                      <Button 
+                        onClick={placeOrder}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          'Place Order'
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              {/* Order Summary */}
+              <div>
+                <Card className="bg-muted/20 backdrop-blur-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-medium mb-4">Order Summary</h3>
+                    
+                    <div className="space-y-4 mb-4">
+                      {cart.map((item) => (
+                        <div key={item.product.id} className="flex items-center gap-3">
+                          <div className="h-12 w-12 rounded overflow-hidden bg-muted flex-shrink-0">
+                            <img 
+                              src={getProductImage(item.product)} 
+                              alt={item.product.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium line-clamp-1">{item.product.name}</p>
+                            <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                          </div>
+                          
+                          <div className="text-sm font-medium">
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <Separator />
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tax (7%)</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-medium">
+                          <span>Total</span>
+                          <span>${total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground">
+                      <h4 className="font-medium mb-1">Shipping to:</h4>
+                      <p>{formData.firstName} {formData.lastName}</p>
+                      <p>{formData.address}</p>
+                      <p>{formData.city}, {formData.state} {formData.zipCode}</p>
+                      <p>{formData.country}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+          
+          {/* Order Confirmation */}
+          {step === 'confirmation' && (
+            <div className="max-w-3xl mx-auto">
+              <Card className="bg-muted/20 backdrop-blur-sm overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+                <CardContent className="p-8">
+                  <div className="text-center mb-8">
+                    <div className="flex items-center justify-center w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full mx-auto mb-4">
+                      <svg className="h-8 w-8 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      Thank you for your order. We've received your purchase request and will process it shortly.
+                    </p>
                   </div>
                   
-                  <div className="flex justify-between mt-4">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={() => setActiveTab('shipping')}
-                      className="cosmic-hover-glow"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Back to Shipping
+                  <div className="bg-muted/30 rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-medium">Order Details</h3>
+                      <span className="text-sm text-muted-foreground">
+                        Order #{Math.floor(100000 + Math.random() * 900000)}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-4 mt-4">
+                      <div className="text-sm">
+                        <p className="mb-1"><span className="font-medium">Name:</span> {formData.firstName} {formData.lastName}</p>
+                        <p className="mb-1"><span className="font-medium">Email:</span> {formData.email}</p>
+                        <p className="mb-1">
+                          <span className="font-medium">Shipping Address:</span> {formData.address}, {formData.city}, {formData.state} {formData.zipCode}, {formData.country}
+                        </p>
+                      </div>
+                      
+                      <Separator />
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal</span>
+                          <span>${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Tax</span>
+                          <span>${tax.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Shipping</span>
+                          <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex justify-between font-medium">
+                          <span>Total</span>
+                          <span>${total.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-6">
+                      You will receive an email confirmation shortly at {formData.email}
+                    </p>
+                    
+                    <Button onClick={() => setLocation('/shop')}>
+                      Continue Shopping
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
-        
-        <div className="mt-8 lg:mt-0">
-          <Card className="cosmic-glass-card">
-            <CardHeader>
-              <CardTitle className="cosmic-gradient-text">Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between text-sm py-2">
-                    <div className="flex-1">
-                      <p>{item.name} <span className="text-muted-foreground">× {item.quantity}</span></p>
-                    </div>
-                    <div className="font-medium">
-                      {formatCurrency(item.price * item.quantity)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
-                </div>
-                
-                <div className="flex justify-between text-sm">
-                  <span>Tax (7%)</span>
-                  <span>{formatCurrency(tax)}</span>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="flex justify-between font-medium text-lg">
-                <span>Total</span>
-                <span className="cosmic-gradient-text font-bold">{formatCurrency(total)}</span>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>

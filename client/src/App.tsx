@@ -43,10 +43,10 @@ import CommunityPage from "@/pages/community/CommunityPage";
 import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
 
 // Shop Pages
-import ShopPage from "@/pages/shop/ShopPage";
-import ProductPage from "@/pages/shop/ProductPage";
+import ShopPage from "@/pages/ShopPage";
+import ProductDetailPage from "@/pages/ProductDetailPage";
+import CheckoutPage from "@/pages/CheckoutPage";
 import CartPage from "@/pages/shop/CartPage";
-import CheckoutPage from "@/pages/shop/CheckoutPage";
 import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 
 // Imported Pages
@@ -114,7 +114,7 @@ function AppRouter() {
 
           {/* Shop Routes */}
           <Route path="/shop" component={ShopPage} />
-          <Route path="/shop/product/:slug" component={ProductPage} />
+          <Route path="/shop/product/:productId" component={ProductDetailPage} />
           <Route path="/cart" component={CartPage} />
           <Route path="/shop/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
