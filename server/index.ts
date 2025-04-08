@@ -31,12 +31,17 @@ app.use(cookieParser());
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://www.youtube.com", "https://www.youtube-nocookie.com", "https://s.ytimg.com"],
-      frameSrc: ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
-      imgSrc: ["'self'", "data:", "https:", "https://i.ytimg.com", "https://yt3.ggpht.com"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https://www.youtube.com"],
+      defaultSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "http:", "data:"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https:", "http:"],
+      frameSrc: ["'self'", "https:", "http:"],
+      imgSrc: ["'self'", "data:", "https:", "http:", "blob:"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:", "http:"],
+      fontSrc: ["'self'", "data:", "https:", "http:"],
+      mediaSrc: ["'self'", "data:", "https:", "http:", "blob:"],
+      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"],
+      objectSrc: ["'self'", "data:", "blob:"],
+      baseUri: ["'self'"],
+      formAction: ["'self'", "https:", "http:"],
     },
   },
 }));
