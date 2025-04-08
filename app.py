@@ -24,7 +24,29 @@ app = Flask(__name__,
 # Security configurations
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24))
 csrf = CSRFProtect(app)
-# Talisman is temporarily disabled for testing purposes.  Re-enable as needed.
+
+# Configure CSP to allow external resources
+csp = {
+    'default-src': ['\'self\'', '\'unsafe-inline\''],
+    'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com'],
+    'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com'],
+    'font-src': ['\'self\'', 'https://fonts.gstatic.com'],
+    'frame-src': ['\'self\'', 'https://www.youtube.com', 'https://youtube.com', 'https://www.google.com'],
+    'media-src': ['\'self\'', 'https://*'],
+    'script-src': ['\'self\'', '\'unsafe-inline\'']
+}
+
+# Initialize Talisman with our CSP configuration
+talisman = Talisman(
+    app,
+    content_security_policy=csp,
+    content_security_policy_nonce_in=['script-src'],
+    feature_policy={
+        'geolocation': '\'none\'',
+        'microphone': '\'none\'',
+        'camera': '\'none\''
+    }
+)
 
 @app.route('/')
 def home():

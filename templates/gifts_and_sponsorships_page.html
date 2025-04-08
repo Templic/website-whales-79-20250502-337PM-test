@@ -3,82 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="styles.css">
-    <title>Gifts and Sponsorships</title>
+    <title>Collaboration - Dale Loves Whales</title>
     <style>
-        /* Add some basic styling */
-        body { font-family: Arial, sans-serif; }
-        header, footer { background-color: #f8f9fa; padding: 20px; text-align: center; }
-        nav ul { list-style-type: none; padding: 0; }
-        nav ul li { display: inline; margin: 0 10px; }
-        .container { width: 80%; margin: 0 auto; }
-        .main-banner { background-color: #e9ecef; padding: 50px; text-align: center; }
-        .cta-button { background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; }
+        :root {
+            --background-color: #303436;
+            --midground-color: #0a325c;
+            --foreground-color: #9e140d;
+            --fill-color: #00ebd6;
+            --accent-color: #fe0064;
+            --font-color: #e8e6e3;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--font-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--midground-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        .logo {
+            color: var(--fill-color);
+            font-size: 2rem;
+            font-weight: bold;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav li {
+            margin-left: 1.5rem;
+        }
+
+        nav a {
+            color: var(--font-color);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover,
+        nav a:focus {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        .container { 
+            width: 80%; 
+            margin: 0 auto; 
+            padding: 2rem 0;
+        }
+
+        .main-banner { 
+            background: linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8));
+            padding: 4rem 2rem; 
+            text-align: center;
+            color: var(--font-color);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .main-banner h2 {
+            font-size: 2.5rem;
+            color: var(--fill-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-button { 
+            background-color: var(--fill-color); 
+            color: var(--background-color); 
+            padding: 0.75rem 1.5rem; 
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        section {
+            background: rgba(10, 50, 92, 0.6);
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        section h3 {
+            color: var(--fill-color);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-color);
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+        
+        input[type="text"], input[type="email"] {
+            padding: 0.75rem;
+            font-size: 1rem;
+            border: 1px solid var(--fill-color);
+            border-radius: 4px;
+            background: rgba(48, 52, 54, 0.8);
+            color: var(--font-color);
+            width: 300px;
+        }
+        
+        button {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            background-color: var(--fill-color);
+            color: var(--background-color);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+        }
+
+        footer {
+            background-color: var(--midground-color);
+            color: var(--font-color);
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-top: 2rem;
+        }
+
+        .patronage-tiers {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .tier {
+            flex: 1;
+            min-width: 250px;
+            background: rgba(48, 52, 54, 0.5);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-top: 3px solid;
+        }
+
+        .bronze { border-color: #cd7f32; }
+        .silver { border-color: #c0c0c0; }
+        .gold { border-color: #ffd700; }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .social-icons a {
+            color: var(--fill-color);
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            color: var(--accent-color);
+            transform: translateY(-3px);
+        }
     </style>
 </head>
 <body>
 
   <!-- Header -->
   <header>
-    <a href="home_page_Dale Loves Whales_20250311.html" class="logo">Dale Loves Whales</a>
+    <a href="home_page.html" class="logo">Dale Loves Whales</a>
     <nav>
       <ul>
-        <li><a href="home_page.html" aria-current="page">Home</a></li>
+        <li><a href="home_page.html">Home</a></li>
         <li><a href="about_page.html">About</a></li>
-		<li><a href="music_release_page.html">New Music</a></li>
+        <li><a href="music_release_page.html">New Music</a></li>
         <li><a href="music_page.html">Archived Music</a></li>
-		<li><a href="tour_page.html">Tour</a></li>
-		<li><a href="engage_page.html">Engage</a></li>
-		<li><a href="newsletter_page.html">Newsletter</a></li>
+        <li><a href="tour_page.html">Tour</a></li>
+        <li><a href="engage_page.html">Engage</a></li>
+        <li><a href="newsletter_page.html">Newsletter</a></li>
         <li><a href="blog_page.html">Blog</a></li>
-		<li><a href="gifts_and_sponsorships_page.html">Collaboration</a></li>
+        <li><a href="gifts_and_sponsorships_page.html" aria-current="page">Collaboration</a></li>
         <li><a href="contact_page.html">Contact</a></li>
       </ul>
     </nav>
-	<title>Search Button</title>
-    <style>
-        .search-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        input[type="text"] {
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            width: 300px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #00ebd6;
-            color: #303436;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-left: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
 
-<div class="search-container">
-    <input type="text" placeholder="Search...">
-    <button type="button">Search</button>
-</div>
-
-</body>
+    <div class="search-container">
+        <input type="text" placeholder="Search...">
+        <button type="button">Search</button>
+    </div>
   </header>
 
-<div class="main-banner">
-    <img src="banner.jpg" alt="Inspiring Image">
-    <h2>Support Dale the Whale – Be a Part of Our Journey</h2>
-    <a href="#how-to-help" class="cta-button">Learn How You Can Help</a>
-</div>
+<div class="container">
+    <div class="main-banner">
+        <h2>Support Dale the Whale – Join Our Cosmic Journey</h2>
+        <p>Your support enables us to create transcendent music that connects souls across the universe.</p>
+        <a href="#how-to-help" class="cta-button">Learn How You Can Help</a>
+    </div>
 
 <main class="container">
     <section id="donation-links">
@@ -89,11 +247,40 @@
 
     <section id="patronage-methods">
         <h3>Patronage Methods</h3>
-        <ul>
-            <li>Bronze</li>
-            <li>Silver</li>
-            <li>Gold</li>
-        </ul>
+        <p>Join our cosmic community by becoming a patron at one of these tiers:</p>
+        
+        <div class="patronage-tiers">
+            <div class="tier bronze">
+                <h4>Bronze Tier - $5/month</h4>
+                <ul>
+                    <li>Early access to new releases</li>
+                    <li>Monthly exclusive content</li>
+                    <li>Name in credits of releases</li>
+                </ul>
+            </div>
+            
+            <div class="tier silver">
+                <h4>Silver Tier - $15/month</h4>
+                <ul>
+                    <li>All Bronze benefits</li>
+                    <li>Quarterly digital meetups</li>
+                    <li>15% off merchandise</li>
+                    <li>Access to patron-only live streams</li>
+                </ul>
+            </div>
+            
+            <div class="tier gold">
+                <h4>Gold Tier - $30/month</h4>
+                <ul>
+                    <li>All Silver benefits</li>
+                    <li>Annual personalized video message</li>
+                    <li>30% off merchandise</li>
+                    <li>VIP access at live events</li>
+                    <li>Input on upcoming projects</li>
+                </ul>
+            </div>
+        </div>
+        
         <a href="#become-a-patron" class="cta-button">Become a Patron</a>
     </section>
 
