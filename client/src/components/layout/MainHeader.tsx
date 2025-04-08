@@ -149,8 +149,8 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Sacred geometry circles - only visible in desktop mode */}
-        {/* Left circle foreground */}
+        {/* FIRST SET - Sacred geometry circles on outer edges */}
+        {/* Left circle foreground - first set */}
         <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
@@ -163,7 +163,7 @@ export function MainHeader() {
           </div>
         </div>
 
-        {/* Left circle background/shadow */}
+        {/* Left circle background/shadow - first set */}
         <div className="absolute top-[52%] left-[7%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
@@ -176,7 +176,7 @@ export function MainHeader() {
           </div>
         </div>
         
-        {/* Right circle foreground */}
+        {/* Right circle foreground - first set */}
         <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
@@ -189,12 +189,65 @@ export function MainHeader() {
           </div>
         </div>
         
-        {/* Right circle background/shadow */}
+        {/* Right circle background/shadow - first set */}
         <div className="absolute top-[52%] right-[7%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
           <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={100} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-400" 
+            />
+          </div>
+        </div>
+        
+        {/* SECOND SET - Slightly below and toward center */}
+        {/* Left circle foreground - second set */}
+        <div className="absolute top-[60%] left-[12%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-30">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={75} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+
+        {/* Left circle background/shadow - second set */}
+        <div className="absolute top-[62%] left-[11%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20 opacity-50 blur-sm">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={85} 
+              animated={false} 
+              intensity="subtle" 
+              className="text-purple-400" 
+            />
+          </div>
+        </div>
+        
+        {/* Right circle foreground - second set */}
+        <div className="absolute top-[60%] right-[12%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-30">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={75} 
+              animated={false} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
+        </div>
+        
+        {/* Right circle background/shadow - second set */}
+        <div className="absolute top-[62%] right-[11%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20 opacity-50 blur-sm">
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
+            <SacredGeometry 
+              variant="merkaba" 
+              size={85} 
               animated={false} 
               intensity="subtle" 
               className="text-purple-400" 
@@ -522,6 +575,19 @@ export function MainHeader() {
                 />
               </motion.div>
             ))}
+          </div>
+
+          {/* Five-pointed star for mobile view - visible in foreground */}
+          <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="animate-spin-very-slow animate-pulse" style={{ animationDuration: '25s' }}>
+              <SacredGeometry 
+                variant="star" 
+                size={180} 
+                animated={false} 
+                intensity="medium" 
+                className="text-cyan-300" 
+              />
+            </div>
           </div>
 
           {/* Mobile Menu */}
