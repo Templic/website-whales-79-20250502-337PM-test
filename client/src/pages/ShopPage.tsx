@@ -329,6 +329,66 @@ export default function ShopPage() {
         : [...prev, category]
     );
   };
+  
+  // Get fallback image based on product details
+  const getProductImage = (product: Product): string => {
+    // Check if image exists and is valid
+    if (product.image && product.image.startsWith('/images/products/samples/')) {
+      return product.image;
+    }
+    
+    const { name, description, categories } = product;
+    const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
+    
+    // Map for category-specific images
+    const categoryPlaceholders: Record<string, string> = {
+      'healing tools': '/images/products/samples/crystal-bowl.jpg',
+      'sound therapy': '/images/products/samples/tibetan-bowl.jpg',
+      'jewelry': '/images/products/samples/crystal-pendant.jpg',
+      'energy tools': '/images/products/samples/clear-quartz.jpg',
+      'digital': '/images/products/samples/album-cover.jpg',
+      'music': '/images/products/samples/album-cover.jpg',
+      'meditation': '/images/products/samples/meditation-cushion.jpg',
+      'home': '/images/products/samples/crystal-bowl.jpg',
+      'art': '/images/products/samples/sacred-geometry.jpg',
+      'books': '/images/products/samples/spiritual-journal.jpg',
+      'self-development': '/images/products/samples/spiritual-journal.jpg'
+    };
+    
+    // Check if product content matches any specific categories
+    for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
+      if (combinedText.includes(category.toLowerCase())) {
+        return imagePath;
+      }
+    }
+    
+    // Common product types to check for with specific descriptions
+    const productTypes = [
+      { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/samples/crystal-bowl.jpg' },
+      { keywords: ['clear quartz', 'point', 'amplification'], image: '/images/products/samples/clear-quartz.jpg' },
+      { keywords: ['pendant', 'necklace', 'jewelry', 'cosmic frequencies'], image: '/images/products/samples/cosmic-pendant.jpg' },
+      { keywords: ['album', 'frequency', 'music', 'sound', 'tracks'], image: '/images/products/samples/album-cover.jpg' },
+      { keywords: ['cushion', 'meditation', 'cork', 'organic cotton'], image: '/images/products/samples/organic-meditation-cushion.jpg' },
+      { keywords: ['cushion', 'meditation', 'sitting', 'cosmic pattern'], image: '/images/products/samples/meditation-cushion.jpg' },
+      { keywords: ['sacred geometry', 'geometry', 'art', 'wall', 'hand-painted'], image: '/images/products/samples/sacred-geometry.jpg' },
+      { keywords: ['t-shirt', 'sacred geometry', 'cotton'], image: '/images/products/samples/sacred-geometry-tshirt.jpg' },
+      { keywords: ['journal', 'diary', 'write', 'book', 'spiritual'], image: '/images/products/samples/spiritual-journal.jpg' },
+      { keywords: ['amethyst', 'cluster'], image: '/images/products/samples/amethyst-cluster.jpg' },
+      { keywords: ['labradorite', 'palm stone'], image: '/images/products/samples/labradorite.jpg' },
+      { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/samples/tibetan-bowl.jpg' },
+      { keywords: ['koshi', 'chimes'], image: '/images/products/samples/koshi-chimes.jpg' },
+    ];
+    
+    // Check for matches in product types
+    for (const type of productTypes) {
+      if (type.keywords.some(keyword => combinedText.includes(keyword))) {
+        return type.image;
+      }
+    }
+    
+    // Default image if no specific match
+    return '/images/products/samples/cosmic-pendant.jpg';
+  };
 
   return (
     <div className="min-h-screen relative">
@@ -546,7 +606,7 @@ export default function ShopPage() {
                     <div className={`relative ${viewType === "list" ? "w-1/3" : "h-48 sm:h-60"}`}>
                       <div 
                         className="absolute inset-0 bg-cover bg-center"
-                        style={{ backgroundImage: `url(${product.image})` }}
+                        style={{ backgroundImage: `url(${getProductImage(product)})` }}
                       ></div>
                       {!product.inStock && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/60">
@@ -661,7 +721,7 @@ export default function ShopPage() {
                     <div key={item.product.id} className="flex border-b border-border pb-4">
                       <div 
                         className="w-16 h-16 rounded-md bg-cover bg-center shrink-0"
-                        style={{ backgroundImage: `url(${item.product.image})` }}
+                        style={{ backgroundImage: `url(${getProductImage(item.product)})` }}
                       ></div>
                       <div className="ml-4 flex-1">
                         <div className="flex justify-between">
