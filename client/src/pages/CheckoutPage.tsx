@@ -251,12 +251,20 @@ export default function CheckoutPage() {
       
       // Simulate API call to process order
       setTimeout(() => {
+        // Generate a mock order ID for demonstration purposes
+        const orderId = `ORD${Math.floor(100000 + Math.random() * 900000)}`;
+        
         setLoading(false);
         setOrderCompleted(true);
         setStep('confirmation');
         // Clear cart
         setCart([]);
         window.scrollTo(0, 0);
+        
+        // After a brief delay to show confirmation page, redirect to order details
+        setTimeout(() => {
+          setLocation(`/shop/order/${orderId}`);
+        }, 3000);
       }, 1500);
     }
   };

@@ -47,6 +47,8 @@ import ShopPage from "@/pages/ShopPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import CartPage from "@/pages/shop/CartPage";
+import OrderConfirmationPage from "@/pages/shop/OrderConfirmationPage";
+import OrderTrackingPage from "@/pages/shop/OrderTrackingPage";
 import CollaborativeShoppingPage from "@/pages/shop/CollaborativeShoppingPage";
 
 // Imported Pages
@@ -119,6 +121,8 @@ function AppRouter() {
           <Route path="/shop/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
           <Route path="/shop/checkout" component={CheckoutPage} />
+          <Route path="/shop/order/:orderId" component={OrderConfirmationPage} />
+          <Route path="/shop/track-order" component={OrderTrackingPage} />
           <Route path="/collaborative-shopping" component={CollaborativeShoppingPage} />
           <Route path="/shop/collaborative" component={CollaborativeShoppingPage} />
           <Route path="/shop/collaborative/room/:roomId" component={CollaborativeShoppingPage} />
