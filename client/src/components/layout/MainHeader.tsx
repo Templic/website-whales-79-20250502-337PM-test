@@ -149,8 +149,8 @@ export function MainHeader() {
     >
       {/* Background Elements with Sacred Geometry - Centered and sides */}
       <div className="absolute inset-0 overflow-hidden z-0">
-        {/* Center star geometry - Fixed position and improved centering */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-30 flex items-center justify-center">
+        {/* Five-pointed star - only visible in mobile/hamburger menu mode */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 md:hidden z-10">
           <SacredGeometry 
             variant="star" 
             size={110} 
@@ -158,6 +158,19 @@ export function MainHeader() {
             intensity="medium" 
             className="text-cyan-300" 
           />
+        </div>
+        
+        {/* Six-pointed star - only visible in desktop mode */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10">
+          <div className="animate-pulse" style={{ animationDuration: '3s' }}>
+            <SacredGeometry 
+              variant="six-pointed-star" 
+              size={120} 
+              animated={true} 
+              intensity="medium" 
+              className="text-cyan-300" 
+            />
+          </div>
         </div>
       
         <div className="absolute -top-14 -right-14 opacity-40 transform rotate-45">
@@ -314,15 +327,17 @@ export function MainHeader() {
 
           {/* Interlacing Staggered Two-Row Navigation - Desktop */}
           <div className="hidden md:block mt-2 relative">
-            {/* Sacred Geometry Background Elements */}
-            <div className="absolute inset-x-0 top-0 flex justify-center opacity-10 pointer-events-none">
-              <SacredGeometry 
-                variant="merkaba" 
-                size={120} 
-                animated={false} 
-                intensity="subtle" 
-                className="text-cyan-300" 
-              />
+            {/* Six-pointed star centered among navigation links */}
+            <div className="absolute inset-x-0 top-0 flex justify-center pointer-events-none">
+              <div className="animate-pulse" style={{ animationDuration: '4s' }}>
+                <SacredGeometry 
+                  variant="six-pointed-star" 
+                  size={120} 
+                  animated={true} 
+                  intensity="medium" 
+                  className="text-cyan-300" 
+                />
+              </div>
             </div>
             
             <div className="flex flex-col space-y-1 items-center">

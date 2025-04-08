@@ -332,6 +332,18 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           style={{ pointerEvents: 'none' }}
         />
       );
+      
+    case 'six-pointed-star':
+      return createSvg(
+        <path 
+          d="M12 2L17 12L12 22L7 12L12 2Z M7 7L17 17M17 7L7 17" 
+          stroke="currentColor" 
+          strokeWidth={strokeWidth} 
+          fill="currentColor" 
+          fillOpacity={opacityValue} 
+          style={{ pointerEvents: 'none' }}
+        />
+      );
 
     default:
       return null;
