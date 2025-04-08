@@ -27,7 +27,7 @@ export default function AboutPage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float">About</h1>
+        <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float text-center">About</h1>
 
         {/* Sacred geometry decoration - floating in background */}
         <div className="fixed top-20 right-10 opacity-20 z-0 cosmic-pulse hidden lg:block">
@@ -56,8 +56,9 @@ export default function AboutPage() {
           className="mb-16 cosmic-slide-up"
           decorative={true}
         >
-          <div className="grid md:grid-cols-2 gap-8 items-center p-8">
-            <div className="relative rounded-xl overflow-hidden shadow-lg order-2 md:order-1">
+          <div className="flex flex-col lg:flex-row gap-10 items-center justify-center p-8">
+            {/* Center image with bigger size on larger screens */}
+            <div className="relative rounded-xl overflow-hidden shadow-2xl max-w-md w-full lg:max-w-xl">
               <div className="absolute -top-5 -left-5 z-10">
                 <SacredGeometry 
                   type="pentagon-star" 
@@ -98,9 +99,10 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="space-y-4 order-1 md:order-2">
+            {/* Biography text with enhanced styling */}
+            <div className="space-y-5 max-w-xl">
               <div className="flex items-center mb-4">
-                <Music className="w-6 h-6 text-[#00ebd6] mr-2" />
+                <Music className="w-7 h-7 text-[#00ebd6] mr-3" />
                 <h3 className="text-2xl font-bold text-[#00ebd6]">Sonic Explorer</h3>
               </div>
               <p className="text-xl leading-relaxed">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
