@@ -66,6 +66,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+  
+  // Serve public images
+  app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
   // Get subscribers list
   app.get("/api/subscribers", async (req, res) => {

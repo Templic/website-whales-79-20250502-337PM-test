@@ -346,7 +346,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '15%' };
       case 'pentagon':
       case 'pointed-pentagon':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '12%', paddingBottom: '8%' };
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '18%', paddingBottom: '8%' };
       case 'pentagram':
         return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '15%', paddingBottom: '15%' };
       case 'trapezoid':
