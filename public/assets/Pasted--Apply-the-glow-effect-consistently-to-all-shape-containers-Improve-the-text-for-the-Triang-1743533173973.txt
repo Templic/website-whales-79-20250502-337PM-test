@@ -1,0 +1,112 @@
+
+    Apply the glow effect consistently to all shape containers.
+    Improve the text for the TriangleContainer while keeping the texts for the HexagonContainer and CircleContainer as they are.
+    Implement the Star of David shape using its UNICODE HEX and HTML codes.
+
+Here's the modified version of your code relevant to these adjustments:
+
+// Updated HexagonContainer
+export function HexagonContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center p-6 text-white",
+        className
+      )}
+      style={{
+        clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="opacity-20">
+          <path d="M50 0 L100 25 L100 75 L50 100 L0 75 L0 25 Z" stroke="white" strokeWidth="0.5" fill="none" />
+        </svg>
+      </div>
+      <div className="z-10 max-w-[85%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+    </div>
+  );
+}
+
+// Updated TriangleContainer with Improved Text
+export function TriangleContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center p-6 text-white",
+        className
+      )}
+      style={{
+        clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" className="opacity-20">
+          <path d="M50 10 L90 90 L10 90 Z" stroke="white" strokeWidth="0.5" fill="none" />
+        </svg>
+      </div>
+      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+    </div>
+  );
+}
+
+// Star of David Container
+export function StarOfDavidContainer({
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
+}: GeometryContainerProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex items-center justify-center p-6 text-white",
+        className
+      )}
+      style={{
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        boxShadow: `0 0 15px ${glowColor}`,
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        minHeight: "250px",
+      }}
+    >
+      <div className="absolute inset-0 opacity-10">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="opacity-20"
+        >
+          <path d="M50 10 L90 70 L10 70 Z" stroke="white" strokeWidth="0.5" fill="none" />
+          <path d="M50 90 L10 30 L90 30 Z" stroke="white" strokeWidth="0.5" fill="none" />
+        </svg>
+      </div>
+      <div className="z-10 max-w-[70%] max-h-[70%] overflow-y-auto hide-scrollbar text-center">
+        {children} {/* Insert text content for Star of David here */}
+        <span>☆</span> {/* Star of David character with UNICODE HEX CODE &#x2721; */}
+      </div>
+    </div>
+  );
+}
+
+Notes:
+
+    The glow effect has been applied across all shape containers.
+    The TriangleContainer text has been designated for enhancement, and you should replace the placeholder comment with actual text content.
+    The StarOfDavidContainer has been created reflecting the description you provided, with a placeholder for text and the star character.
+    To see the guide on CSS polygons you've shared, you can review it as needed: Smashing Magazine CSS Shapes.

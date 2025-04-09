@@ -1,0 +1,101 @@
+Here's a basic TypeScript React (TSX) code snippet for a Terms of Service page. This code will provide a structure for the page content aligning with Dale Loves Whales Web App's branding:
+
+```tsx
+import React from 'react';
+
+const TermsOfService: React.FC = () => {
+  return (
+    <div className="terms-of-service-container">
+      <h1>Terms of Service</h1>
+      
+      <section>
+        <h2>Introduction</h2>
+        <p>
+          Welcome to the Dale Loves Whales Web App, your gateway to immersive music and sound healing experiences. These Terms of Service are designed to ensure a harmonious and legally compliant environment for all users. By accessing or using our services, you agree to adhere to these terms.
+        </p>
+      </section>
+      
+      <section>
+        <h2>Acceptance of Terms</h2>
+        <p>
+          By using the Dale Loves Whales Web App, you acknowledge and accept these Terms of Service. Continued use of the platform implies consent to these terms, formalized by your interaction with the site or services.
+        </p>
+      </section>
+      
+      <section>
+        <h2>Overview of Services</h2>
+        <ul>
+          <li><strong>Music Streaming and Sound Healing:</strong> Our platform offers a variety of music streaming and sound healing sessions.</li>
+          <li><strong>Community Features:</strong> Engage in a vibrant community dedicated to wellness and creativity.</li>
+          <li><strong>Global Accessibility:</strong> Our services are available worldwide, reflecting our commitment to global inclusivity and wellness.</li>
+        </ul>
+      </section>
+      
+      <section>
+        <h2>Intellectual Property</h2>
+        <p>
+          All content, including text, graphics, and music, is protected under intellectual property rights. Unauthorized use of our content is prohibited without express permission from Dale Loves Whales or its licensors.
+        </p>
+      </section>
+
+      <section>
+        <h2>User Conduct</h2>
+        <ul>
+          <li>Spamming</li>
+          <li>Hacking</li>
+          <li>Any form of misconduct that disrupts the service’s integrity.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>User-Generated Content</h2>
+        <p>
+          Users may submit content such as reviews and comments, which must comply with our community guidelines. By submitting content, you grant Dale Loves Whales a license to use, modify, and publish it.
+        </p>
+      </section>
+
+      <section>
+        <h2>Privacy</h2>
+        <p>
+          Our Privacy Policy outlines how we collect, use, and protect your data. By using our services, you consent to these practices.
+        </p>
+      </section>
+
+      <section>
+        <h2>Limitation of Liability</h2>
+        <p>
+          Dale Loves Whales is not liable for any indirect or consequential damages arising from the use of our services.
+        </p>
+      </section>
+
+      <section>
+        <h2>Termination</h2>
+        <p>
+          We reserve the right to terminate or restrict access to users who violate these Terms of Service.
+        </p>
+      </section>
+
+      <section>
+        <h2>Contact Information</h2>
+        <p>
+          For further inquiries or support, please reach out via:
+          <br />
+          Email: support@daleloveswhales.com
+          <br />
+          Phone: (XXX) XXX-XXXX
+        </p>
+      </section>
+    </div>
+  );
+}
+
+export default TermsOfService;
+```
+
+### Notes:
+- Ensure that any styles or CSS classes used (like `terms-of-service-container`) are defined in your CSS files to ensure the page displays properly.
+- Update the email and phone number with actual contact details before deployment.
+- You might want to add additional sections for each part of the terms if necessary.
+- Ensure proper routing is set up in your React application to link to this Terms of Service page.
+
+This code provides a structured and semantic way to present the Terms of Service content, offering a good user experience and remaining consistent with web standards.

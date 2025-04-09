@@ -186,4 +186,51 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+  
+  /* Geometric shape clip paths for containers */
+  .clip-path-hexagon {
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+  
+  .clip-path-pentagon {
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  }
+  
+  .clip-path-octagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  }
+  
+  .clip-path-heptagon {
+    clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
+  }
+  
+  .clip-path-triangle {
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  }
+  
+  .clip-path-diamond {
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+  
+  .clip-path-merkaba {
+    clip-path: polygon(
+      50% 0%,
+      61% 35%,
+      98% 35%,
+      68% 57%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 57%,
+      2% 35%,
+      39% 35%
+    );
+  }
+  
+  /* Add a subtle glow effect to all geometric containers */
+  .clip-path-hexagon, .clip-path-pentagon, .clip-path-octagon, 
+  .clip-path-heptagon, .clip-path-triangle, .clip-path-diamond, .clip-path-merkaba {
+    box-shadow: 0 0 15px rgba(0, 235, 214, 0.3), 
+                inset 0 0 15px rgba(0, 235, 214, 0.2);
+  }
 }

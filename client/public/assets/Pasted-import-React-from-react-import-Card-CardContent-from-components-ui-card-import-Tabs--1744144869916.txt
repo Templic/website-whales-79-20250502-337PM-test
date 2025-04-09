@@ -1,0 +1,54 @@
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image";
+
+const resources = [
+  {
+    title: "Frequency Guide",
+    description: `A detailed breakdown of sound frequencies and their unique impacts on the body, mind, and energy field. Frequencies like 528Hz (DNA repair), 396Hz (fear release), and 852Hz (spiritual connection) are part of the ancient Solfeggio scale used for healing and transformation.`,
+    image: "/images/frequency-guide.png"
+  },
+  {
+    title: "Sacred Geometry",
+    description: `Explore universal patterns like the Flower of Life, Metatron’s Cube, and the Golden Ratio. These symbols represent the architecture of creation and are used in meditation and spiritual practices to promote harmony and awareness.`,
+    image: "/images/sacred-geometry.png"
+  },
+  {
+    title: "Sound Healing",
+    description: `Discover how instruments like crystal singing bowls, tuning forks, and gongs are used to release energetic blockages and promote healing. Sound healing aligns brainwaves, soothes the nervous system, and supports emotional balance.`,
+    image: "/images/sound-healing.png"
+  },
+  {
+    title: "Meditation Techniques",
+    description: `Learn mindfulness, loving-kindness, mantra repetition, visualization, and chakra meditation. Each technique supports focus, emotional balance, and spiritual clarity.`,
+    image: "/images/meditation-techniques.png"
+  }
+];
+
+export default function ResourcesPage() {
+  return (
+    <div className="max-w-6xl mx-auto py-10 px-4">
+      <h1 className="text-4xl font-bold text-center mb-10">Resources</h1>
+      <div className="grid md:grid-cols-2 gap-8">
+        {resources.map((res, index) => (
+          <Card key={index} className="rounded-2xl shadow-lg">
+            <Image
+              src={res.image}
+              alt={res.title}
+              width={600}
+              height={400}
+              className="rounded-t-2xl object-cover"
+            />
+            <CardContent className="p-6">
+              <h2 className="text-2xl font-semibold mb-2">{res.title}</h2>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {res.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
