@@ -1,18 +1,25 @@
-import React from 'react';
-import { Link } from 'wouter';
-import { Product } from '@/pages/shop/ShopPage';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ShoppingCart, Star, Heart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+/**
+ * ProductCard Component
+ * Individual product display card with image, details, and actions
+ * Links to individual product pages and handles cart interactions
+ */
+
+import React from "react";
+import { Link } from "wouter";
+import { Product } from "@/pages/shop/ShopPage";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Star, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useCart } from "@/hooks/use-cart";
 
 /**
  * Returns a relevant product image URL based on product details
  */
 const getProductPlaceholderImage = (name: string, description: string, categories: string[]): string => {
   const combinedText = `${name} ${description} ${categories.join(' ')}`.toLowerCase();
-  
+
   // Map for category-specific images
   const categoryPlaceholders: Record<string, string> = {
     'healing tools': '/images/products/samples/crystal-bowl.jpg',
@@ -27,14 +34,14 @@ const getProductPlaceholderImage = (name: string, description: string, categorie
     'books': '/images/products/samples/spiritual-journal.jpg',
     'self-development': '/images/products/samples/spiritual-journal.jpg'
   };
-  
+
   // Check if product content matches any specific categories
   for (const [category, imagePath] of Object.entries(categoryPlaceholders)) {
     if (combinedText.includes(category.toLowerCase())) {
       return imagePath;
     }
   }
-  
+
   // Common product types to check for with specific descriptions
   const productTypes = [
     { keywords: ['crystal', 'bowl', 'singing'], image: '/images/products/samples/crystal-bowl.jpg' },
@@ -51,14 +58,14 @@ const getProductPlaceholderImage = (name: string, description: string, categorie
     { keywords: ['tibetan', 'metal', 'singing bowl'], image: '/images/products/samples/tibetan-bowl.jpg' },
     { keywords: ['koshi', 'chimes'], image: '/images/products/samples/koshi-chimes.jpg' },
   ];
-  
+
   // Check for matches in product types
   for (const type of productTypes) {
     if (type.keywords.some(keyword => combinedText.includes(keyword))) {
       return type.image;
     }
   }
-  
+
   // Default image if no specific match
   return '/images/products/samples/cosmic-pendant.jpg';
 };
@@ -94,6 +101,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         currency: 'USD'
       }).format(price * (1 - discountPercent / 100))
     : null;
+
+  const addToCart = useCart().addToCart; //Accessing addToCart from useCart hook
+
 
   return (
     <Card className="overflow-hidden cosmic-glass-card cosmic-scale in">
