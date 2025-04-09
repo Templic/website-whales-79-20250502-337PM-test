@@ -135,7 +135,7 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
             </div>
             
             <CosmicSlider
-              variant="nebula"
+              variant="cosmic"
               min={minPrice}
               max={maxPrice}
               step={5}
@@ -281,4 +281,5 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
   );
 };
 
+export { ProductFilter };
 export default ProductFilter;

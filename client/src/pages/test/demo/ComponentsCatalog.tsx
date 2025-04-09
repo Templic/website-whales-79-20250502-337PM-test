@@ -11,11 +11,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { AccessibilityControls } from "../../../components/common/accessibility-controls";
 import {
   Settings, Code, Music, Palette, Filter, Sliders, Box, 
-  Headphones, Compass, Layers, Aperture
+  Headphones, Compass, Layers, Aperture, LayoutGrid, Database,
+  SlidersHorizontal, ShoppingBag, PanelLeft, Sparkles, FileText,
+  Users, BookOpen, Maximize, Eye, Zap, LifeBuoy
 } from 'lucide-react';
 
 /**
- * ComponentsCatalog - A centralized page to navigate all component demos
+ * ComponentsCatalog - A centralized repository for navigating all app components
+ * This serves as the main index to access all component demos and archives
  */
 export default function ComponentsCatalog() {
   const [starSettings] = useState({
@@ -38,17 +41,17 @@ export default function ComponentsCatalog() {
       
       <div className="container mx-auto py-12 px-4 relative z-10">
         <CosmicHeading level={1} align="center" withAccent glow>
-          Cosmic Components Catalog
+          Component Repository Central
         </CosmicHeading>
         
         <CosmicText className="mt-4 text-center max-w-2xl mx-auto mb-12">
-          A comprehensive collection of all UI and functional components used throughout 
-          the Cosmic Experience application, organized by category.
+          The centralized archive of all UI and functional components in the Cosmic Experience 
+          application, organized by category for easy reference and testing.
         </CosmicText>
 
         <div className="mb-12">
           <Tabs defaultValue="core" className="w-full">
-            <TabsList className="grid grid-cols-4 mb-8">
+            <TabsList className="grid grid-cols-6 mb-8">
               <TabsTrigger value="core">
                 <Box className="mr-2 h-4 w-4" />
                 Core UI
@@ -61,6 +64,14 @@ export default function ComponentsCatalog() {
                 <Compass className="mr-2 h-4 w-4" />
                 New Features
               </TabsTrigger>
+              <TabsTrigger value="shop">
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                Shop
+              </TabsTrigger>
+              <TabsTrigger value="pages">
+                <LayoutGrid className="mr-2 h-4 w-4" />
+                Page Patterns
+              </TabsTrigger>
               <TabsTrigger value="experimental">
                 <Aperture className="mr-2 h-4 w-4" />
                 Experimental
@@ -71,24 +82,45 @@ export default function ComponentsCatalog() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Core UI Components */}
                 <ComponentCard 
-                  title="Cosmic Components" 
-                  description="Core cosmic-themed UI components and design system"
+                  title="Cosmic UI Components" 
+                  description="Core cosmic-themed UI components and complete design system"
                   icon={<Palette className="h-8 w-8" />}
                   href="/cosmic-components"
                 />
                 
                 <ComponentCard 
                   title="UI Component Tests" 
-                  description="Interactive UI components with cosmic aesthetics"
+                  description="Interactive UI components with cosmic aesthetics and animations"
                   icon={<Filter className="h-8 w-8" />}
                   href="/test/cosmic"
                 />
                 
                 <ComponentCard 
-                  title="Cosmic Test" 
-                  description="Comprehensive component showcase with animations"
+                  title="Cosmic Showcase" 
+                  description="Complete interactive component showcase with visual effects"
                   icon={<Layers className="h-8 w-8" />}
                   href="/cosmic-test"
+                />
+
+                <ComponentCard 
+                  title="Form Components" 
+                  description="Specialized form inputs, validation, and submission components"
+                  icon={<FileText className="h-8 w-8" />}
+                  href="/cosmic-components#forms"
+                />
+
+                <ComponentCard 
+                  title="Navigation Elements" 
+                  description="Headers, footers, menus, and navigation patterns"
+                  icon={<PanelLeft className="h-8 w-8" />}
+                  href="/cosmic-components#navigation"
+                />
+
+                <ComponentCard 
+                  title="Layout Systems" 
+                  description="Grid layouts, containers, responsive designs and spacing systems"
+                  icon={<LayoutGrid className="h-8 w-8" />}
+                  href="/cosmic-components#layouts"
                 />
               </div>
               
@@ -107,6 +139,8 @@ export default function ComponentsCatalog() {
                         <li>Alerts & Notifications</li>
                         <li>Animations & Transitions</li>
                         <li>Sacred Geometry Visualizations</li>
+                        <li>Cosmic-Themed Styling Guidelines</li>
+                        <li>Responsive Design Patterns</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -123,6 +157,20 @@ export default function ComponentsCatalog() {
                   icon={<Music className="h-8 w-8" />}
                   href="/test/audio"
                 />
+
+                <ComponentCard 
+                  title="Binaural Components" 
+                  description="Frequency and binaural beat generators with visualization"
+                  icon={<Zap className="h-8 w-8" />}
+                  href="/test/audio#binaural"
+                />
+
+                <ComponentCard 
+                  title="Album Collection" 
+                  description="Music album display, interaction, and playback components"
+                  icon={<BookOpen className="h-8 w-8" />}
+                  href="/test/audio#albums"
+                />
               </div>
               
               <Accordion type="single" collapsible className="mt-8">
@@ -138,6 +186,8 @@ export default function ComponentsCatalog() {
                         <li>Spatial Audio Experience</li>
                         <li>Voice Controlled Player</li>
                         <li>Sound Meditation Tools</li>
+                        <li>Frequency Presets Library</li>
+                        <li>Sound Healing Components</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -154,6 +204,20 @@ export default function ComponentsCatalog() {
                   icon={<Compass className="h-8 w-8" />}
                   href="/test/new"
                 />
+
+                <ComponentCard 
+                  title="Accessibility Suite" 
+                  description="Complete accessibility control panel with user preferences"
+                  icon={<Eye className="h-8 w-8" />}
+                  href="/test/new#accessibility"
+                />
+
+                <ComponentCard 
+                  title="Digital Collectibles" 
+                  description="NFT and digital collectible interface components"
+                  icon={<Sparkles className="h-8 w-8" />}
+                  href="/test/new#collectibles"
+                />
               </div>
               
               <Accordion type="single" collapsible className="mt-8">
@@ -167,6 +231,101 @@ export default function ComponentsCatalog() {
                         <li>Album Showcase</li>
                         <li>Cosmic Collectibles</li>
                         <li>Wallet Connect Integration</li>
+                        <li>Voice Navigation System</li>
+                        <li>Immersive Experience Controls</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </TabsContent>
+
+            <TabsContent value="shop" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Shop Components */}
+                <ComponentCard 
+                  title="Product Components" 
+                  description="Product cards, grids, and display components"
+                  icon={<ShoppingBag className="h-8 w-8" />}
+                  href="/cosmic-components#products"
+                />
+
+                <ComponentCard 
+                  title="Cart System" 
+                  description="Shopping cart and checkout components"
+                  icon={<SlidersHorizontal className="h-8 w-8" />}
+                  href="/cosmic-components#cart"
+                />
+
+                <ComponentCard 
+                  title="Product Data" 
+                  description="Product data management and display components"
+                  icon={<Database className="h-8 w-8" />}
+                  href="/cosmic-components#product-data"
+                />
+              </div>
+              
+              <Accordion type="single" collapsible className="mt-8">
+                <AccordionItem value="shop-details">
+                  <AccordionTrigger className="text-white">View Component Details</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 p-4 bg-black/20 rounded-lg">
+                      <h3 className="text-lg font-medium">Shop Components Include:</h3>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>Product Cards and Grids</li>
+                        <li>Product Detail Views</li>
+                        <li>Shopping Cart Interface</li>
+                        <li>Checkout Forms</li>
+                        <li>Payment Processing UI</li>
+                        <li>Order Confirmation Components</li>
+                        <li>Product Filtering Systems</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </TabsContent>
+
+            <TabsContent value="pages" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Page Pattern Components */}
+                <ComponentCard 
+                  title="Landing Patterns" 
+                  description="Home page and landing page template components"
+                  icon={<Maximize className="h-8 w-8" />}
+                  href="/cosmic-components#landing"
+                />
+
+                <ComponentCard 
+                  title="Community Templates" 
+                  description="User community and forum UI patterns"
+                  icon={<Users className="h-8 w-8" />}
+                  href="/cosmic-components#community"
+                />
+
+                <ComponentCard 
+                  title="Support Layouts" 
+                  description="Help, FAQ, and support page components"
+                  icon={<LifeBuoy className="h-8 w-8" />}
+                  href="/cosmic-components#support"
+                />
+              </div>
+              
+              <Accordion type="single" collapsible className="mt-8">
+                <AccordionItem value="pages-details">
+                  <AccordionTrigger className="text-white">View Component Details</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 p-4 bg-black/20 rounded-lg">
+                      <h3 className="text-lg font-medium">Page Pattern Components Include:</h3>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>Hero Sections and Banners</li>
+                        <li>Feature Showcases</li>
+                        <li>Testimonial Layouts</li>
+                        <li>Pricing Tables</li>
+                        <li>FAQ Accordions</li>
+                        <li>Contact Forms</li>
+                        <li>Blog and Article Layouts</li>
+                        <li>User Profile Layouts</li>
                       </ul>
                     </div>
                   </AccordionContent>
@@ -198,18 +357,25 @@ export default function ComponentsCatalog() {
         <CosmicSection variant="gradient" className="rounded-xl">
           <div className="text-center p-4">
             <CosmicHeading level={2} align="center" withAccent className="mb-4">
-              Component Development Guidelines
+              Component Documentation
             </CosmicHeading>
             <p className="mb-4 max-w-3xl mx-auto">
-              All components are built following our cosmic design system principles.
-              For developers, our components adhere to accessibility standards and
-              provide consistent theming across the application.
+              All components follow our cosmic design system principles with consistent theming,
+              accessibility standards, and responsive design. Use this catalog as your central 
+              reference for all available components in the application.
             </p>
-            <Link href="/">
-              <CosmicButton variant="secondary">
-                Return to Home
-              </CosmicButton>
-            </Link>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Link href="/">
+                <CosmicButton variant="secondary">
+                  Return to Home
+                </CosmicButton>
+              </Link>
+              <Link href="/cosmic-components">
+                <CosmicButton variant="primary">
+                  View All Components
+                </CosmicButton>
+              </Link>
+            </div>
           </div>
         </CosmicSection>
       </div>
