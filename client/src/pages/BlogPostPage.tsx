@@ -164,16 +164,15 @@ export default function BlogPostPage() {
             post.content
               .replace(/<p>/g, '')
               .replace(/<\/p>/g, '\n\n')
-              .replace(/<br>/g, '\n')
-              .replace(/<br\/>/g, '\n')
-              .replace(/<br \/>/g, '\n')
+              .replace(/<br\s*\/?>/g, '\n')
               .replace(/<div>/g, '')
               .replace(/<\/div>/g, '\n\n')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
               .split('\n\n')
+              .filter(para => para.trim().length > 0) // Filter out empty paragraphs
               .map((paragraph, index) => (
-                paragraph.trim() && (
-                  <p key={index} className="mb-4">{paragraph}</p>
-                )
+                <p key={index} className="mb-4">{paragraph.trim()}</p>
               ))
           ) : (
             <>

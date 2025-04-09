@@ -139,11 +139,11 @@ export const playlists: Playlist[] = [
     id: "playlist-3",
     title: "Cosmic Sleep Journey",
     description: "Ambient soundscapes designed to induce deep delta wave sleep patterns",
-    coverArt: "/images/products/meditation-cushion.jpg", 
+    coverArt: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg", 
     category: "sleep",
     mood: "relaxing",
     frequency: 432,
-    image: "/images/products/meditation-cushion.jpg", 
+    image: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg", 
     tracks: [
       {
         id: "track-12",
@@ -175,10 +175,10 @@ export const playlists: Playlist[] = [
     id: "playlist-4",
     title: "Astral Projection Suite",
     description: "Carefully crafted frequencies to facilitate out-of-body experiences",
-    coverArt: "/images/products/crystal-bowl.jpg", 
+    coverArt: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg", 
     category: "astral",
     mood: "transcendent",
-    image: "/images/products/crystal-bowl.jpg", 
+    image: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg", 
     tracks: [
       {
         id: "track-15",
@@ -218,10 +218,10 @@ export const playlists: Playlist[] = [
     id: "playlist-5",
     title: "Sacred Geometry Harmonics",
     description: "Sound frequencies based on the mathematical ratios of sacred geometry",
-    coverArt: "/images/products/cosmic-frequency-album.png", 
+    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg", 
     category: "geometry",
     mood: "enlightening",
-    image: "/images/products/cosmic-frequency-album.png", 
+    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg", 
     tracks: [
       {
         id: "track-19",
@@ -262,8 +262,8 @@ export const playlists: Playlist[] = [
     title: "Ethereal Meditation Ambient",
     description: "Ambient soundscapes for deep meditation",
     category: "meditation",
-    image: "/images/products/sacred-geometry.jpg",
-    coverArt: "/images/products/meditation-ambient-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg",
     duration: "45:00",
     tracks: []
   },
@@ -272,8 +272,8 @@ export const playlists: Playlist[] = [
     title: "Astral Projection Suite",
     description: "Binaural beats for astral travel and lucid dreaming",
     category: "astral",
-    image: "/images/products/crystal-bowl.jpg",
-    coverArt: "/images/products/astral-travel-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg",
     duration: "30:00",
     tracks: []
   },
@@ -282,8 +282,8 @@ export const playlists: Playlist[] = [
     title: "Chakra Alignment Series",
     description: "Frequency-tuned meditation for chakra balancing",
     category: "healing",
-    image: "/images/products/sacred-geometry.jpg",
-    coverArt: "/images/products/chakra-balancing-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
     duration: "60:00",
     tracks: []
   },
@@ -292,8 +292,8 @@ export const playlists: Playlist[] = [
     title: "Cosmic Harmony Meditation",
     description: "Sacred geometry sound healing",
     category: "meditation",
-    image: "/images/products/meditation-cushion.jpg",
-    coverArt: "/images/products/sacred-geometry-meditation-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/aba795/6453363387/il_1588xN.6453363387_iosd.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/aba795/6453363387/il_1588xN.6453363387_iosd.jpg",
     duration: "40:00",
     tracks: []
   },
@@ -302,8 +302,8 @@ export const playlists: Playlist[] = [
     title: "Delta Wave Sleep Journey",
     description: "Deep sleep frequency entrainment",
     category: "sleep",
-    image: "/images/products/cosmic-frequency-album.png",
-    coverArt: "/images/products/delta-sleep-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg",
     duration: "60:00",
     tracks: []
   },
@@ -312,8 +312,8 @@ export const playlists: Playlist[] = [
     title: "Quantum Resonance Field",
     description: "Harmonic frequencies aligned with universal constants",
     category: "healing",
-    image: "/images/products/cosmic-frequency-album.png",
-    coverArt: "/images/products/quantum-resonance-1.jpg",
+    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
+    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
     duration: "55:00",
     tracks: []
   },

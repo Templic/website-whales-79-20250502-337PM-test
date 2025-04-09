@@ -37,6 +37,7 @@ import SitemapPage from "@/pages/SitemapPage";
 import TermsOfService from "@/pages/TermsOfService";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import DataRequestPage from "@/pages/DataRequest";
+import FAQPage from "@/pages/FAQPage";
 import CosmicTest from "@/pages/test/CosmicTest";
 import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
@@ -162,6 +163,7 @@ function AppRouter() {
           <Route path="/sitemap" component={SitemapPage} />
           <Route path="/terms" component={TermsOfService} />
           <Route path="/privacy" component={PrivacyPolicy} />
+          <Route path="/faq" component={FAQPage} />
           <Route path="/data-request" component={DataRequestPage} />
 
           {/* Demo Pages */}

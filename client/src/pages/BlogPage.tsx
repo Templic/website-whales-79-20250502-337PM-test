@@ -53,7 +53,18 @@ export default function BlogPage() {
                   </div>
                 )}
                 <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1">{post.title.replace(/<[^>]*>/g, '')}</h2>
-                <p className="text-gray-300 mb-4 line-clamp-3 text-sm flex-grow">{post.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')}</p>
+                <p className="text-gray-300 mb-4 line-clamp-3 text-sm flex-grow">
+                  {post.content
+                    .replace(/<p>/g, '')
+                    .replace(/<\/p>/g, ' ')
+                    .replace(/<br\s*\/?>/g, ' ')
+                    .replace(/<div>/g, '')
+                    .replace(/<\/div>/g, ' ')
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                  }
+                </p>
                 <div className="flex justify-between items-center mt-auto">
                   <p className="text-xs text-[#fe0064]">
                     {formatDisplayDate(post.createdAt)}
