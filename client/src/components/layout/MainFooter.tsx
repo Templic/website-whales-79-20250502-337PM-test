@@ -362,7 +362,7 @@ export function MainFooter() {
               >
                 {isSubmitting ? "Subscribing..." : "Subscribe"}
               </button>
-              
+
               {subscriptionStatus === "success" && (
                 <p className="text-green-400 text-xs">Thank you for subscribing!</p>
               )}
