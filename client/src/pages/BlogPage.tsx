@@ -40,10 +40,12 @@ export default function BlogPage() {
         ) : posts && posts.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-8">
             {posts.map((post) => (
-              <article key={post.id} className="bg-[rgba(10,50,92,0.3)] p-8 rounded-xl shadow-lg backdrop-blur-sm border border-[rgba(0,235,214,0.2)]">
-                {post.imageUrl && (
+              <article key={post.id} className="relative">
+                <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
+                <div className="relative z-10 p-8">
+                {post.featuredImage && (
                   <img 
-                    src={post.imageUrl} 
+                    src={post.featuredImage} 
                     alt={post.title}
                     className="w-full h-48 object-cover rounded-lg mb-4"
                   />
@@ -53,6 +55,7 @@ export default function BlogPage() {
                 <p className="text-sm text-[#fe0064]">
                   Published: {formatDisplayDate(post.createdAt)}
                 </p>
+                </div>
               </article>
             ))}
           </div>
@@ -63,7 +66,7 @@ export default function BlogPage() {
         {posts && posts.length > 0 && (
           <footer className="flex justify-center mt-12">
             <Button
-              className="bg-[#00ebd6] text-black px-8 py-6 rounded-full transition-all duration-300 hover:bg-[#fe0064] hover:text-white hover:translate-y-[-2px] hover:shadow-lg"
+              className="bg-[#00ebd6] text-black px-8 py-6 rounded-full transition-all duration-300 hover:bg-[#fe0064] hover:text-white hover:translate-y-[-2px] hover:shadow-lg cosmic-hover-glow"
               onClick={handleLoadMore}
             >
               Load More Posts

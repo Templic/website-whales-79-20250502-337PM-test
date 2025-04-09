@@ -62,7 +62,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Cosmic Frequency Crystal Pendant",
     description: "Handcrafted pendant that resonates with cosmic frequencies to harmonize your energy field.",
     price: 49.99,
-    image: "/placeholder.svg?height=300&width=300&text=Crystal+Pendant",
+    image: "/images/products/samples/cosmic-pendant.jpg",
     rating: 4.9,
     reviewCount: 127,
     tags: ["Crystal", "Energy", "Handcrafted"],
@@ -73,7 +73,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Galactic Sound Journey Tee",
     description: "Organic cotton t-shirt with sacred geometry design that represents cosmic soundwaves.",
     price: 34.99,
-    image: "/placeholder.svg?height=300&width=300&text=Cosmic+Tee",
+    image: "/images/products/samples/sacred-geometry-tshirt.jpg",
     rating: 4.7,
     reviewCount: 89,
     tags: ["Apparel", "Organic", "Sacred Geometry"]
@@ -83,7 +83,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Starlight Meditation Cushion",
     description: "Sustainable cork and organic cotton meditation cushion for your cosmic journeys within.",
     price: 59.99,
-    image: "/placeholder.svg?height=300&width=300&text=Meditation+Cushion",
+    image: "/images/products/samples/meditation-cushion.jpg",
     rating: 4.8,
     reviewCount: 103,
     tags: ["Meditation", "Sustainable", "Home"]
@@ -159,6 +159,31 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                     src={product.image} 
                     alt={product.name}
                     className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null; // Prevent infinite loops
+                      
+                      // Use tag-specific fallback
+                      const fallbacks: Record<string, string> = {
+                        'Crystal': '/images/products/samples/cosmic-pendant.jpg',
+                        'Energy': '/images/products/samples/clear-quartz.jpg',
+                        'Apparel': '/images/products/samples/sacred-geometry-tshirt.jpg',
+                        'Meditation': '/images/products/samples/meditation-cushion.jpg',
+                        'Sustainable': '/images/products/samples/meditation-cushion.jpg',
+                        'Sacred Geometry': '/images/products/samples/sacred-geometry.jpg'
+                      };
+                      
+                      // Find a matching tag
+                      let fallbackImg = '/images/products/samples/cosmic-pendant.jpg';
+                      for (const tag of product.tags) {
+                        if (fallbacks[tag]) {
+                          fallbackImg = fallbacks[tag];
+                          break;
+                        }
+                      }
+                      
+                      target.src = fallbackImg;
+                    }}
                   />
                 </div>
                 
@@ -181,8 +206,8 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                   ))}
                 </div>
                 
-                <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-                <p className="text-muted-foreground text-sm mb-4 flex-1">{product.description}</p>
+                <h3 className="text-xl font-semibold mb-2 line-clamp-1">{product.name}</h3>
+                <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-2 h-10 overflow-hidden">{product.description}</p>
                 
                 <div className="flex items-center mb-4">
                   <div className="flex mr-2">

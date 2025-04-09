@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import "./main.css";
 import "./components/cosmic/cosmic-animations.css";
+import "./components/shop/shop-animations.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");

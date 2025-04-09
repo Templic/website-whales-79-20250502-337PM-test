@@ -109,7 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     <Card className="overflow-hidden cosmic-glass-card cosmic-scale in">
       <div className="relative">
         <Link href={`/shop/product/${id}`}>
-          <div className="overflow-hidden aspect-square relative group cursor-pointer">
+          <div className="overflow-hidden aspect-square relative group cursor-pointer clip-path-octagon">
             <img
               src={image || getProductPlaceholderImage(name, description, categories)}
               alt={name}
@@ -118,22 +118,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
                 const target = e.target as HTMLImageElement;
                 target.onerror = null; // Prevent infinite loops
                 target.src = getProductPlaceholderImage(name, description, categories);
+                console.log("Image error for product:", name, "Using fallback:", target.src);
               }}
             />
             {(featured || isNew || discountPercent) && (
               <div className="absolute top-2 right-2 flex flex-col gap-2">
                 {featured && (
-                  <Badge variant="default" className="cosmic-badge">
+                  <Badge variant="default" className="cosmic-badge cosmic-hover-glow">
                     Featured
                   </Badge>
                 )}
                 {isNew && (
-                  <Badge variant="outline" className="bg-primary/20 cosmic-badge">
+                  <Badge variant="outline" className="bg-primary/20 cosmic-badge cosmic-hover-glow">
                     New
                   </Badge>
                 )}
                 {discountPercent && (
-                  <Badge variant="destructive" className="cosmic-badge-highlight">
+                  <Badge variant="destructive" className="cosmic-badge-highlight cosmic-hover-glow">
                     -{discountPercent}%
                   </Badge>
                 )}
@@ -145,7 +146,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <Button
           size="icon"
           variant="secondary"
-          className="absolute top-2 left-2 h-8 w-8 rounded-full opacity-70 hover:opacity-100 cosmic-btn-icon"
+          className="absolute top-2 left-2 h-8 w-8 rounded-full opacity-70 hover:opacity-100 cosmic-btn-icon cosmic-hover-glow"
         >
           <Heart className="h-4 w-4" />
         </Button>
@@ -155,7 +156,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <div className="flex flex-col sm:flex-row justify-between mb-2">
           <div className="space-y-1">
             <Link href={`/shop/product/${id}`}>
-              <h3 className="font-medium cosmic-hover-text cursor-pointer">{name}</h3>
+              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg">{name}</h3>
             </Link>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               {categories.slice(0, 1).map((category) => (
@@ -171,7 +172,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </div>
         </div>
 
-        <div className="truncate text-sm text-muted-foreground mb-4">
+        <div className="line-clamp-2 text-sm text-muted-foreground mb-4 h-10 overflow-hidden">
           {description}
         </div>
       </CardContent>
@@ -192,7 +193,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <Button
           size="sm"
           className={cn(
-            "cosmic-btn w-full sm:w-auto",
+            "cosmic-btn cosmic-hover-glow w-full sm:w-auto",
             !inStock && "opacity-50 cursor-not-allowed"
           )}
           disabled={!inStock}

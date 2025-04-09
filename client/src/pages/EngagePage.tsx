@@ -53,12 +53,12 @@ export default function EngagePage() {
             />
             <div className="cta-buttons flex flex-wrap gap-4 justify-center">
               <Link to="/newsletter">
-                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap cosmic-hover-glow">
                   Join The Whale Pod
                 </button>
               </Link>
               <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer">
-                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap cosmic-hover-glow">
                   Share Your Experience
                 </button>
               </a>
@@ -125,7 +125,7 @@ export default function EngagePage() {
               <div className="text-center mb-8">
                 <a 
                   href="/community" 
-                  className="inline-block px-4 py-2 bg-[#00ebd6]/20 text-white hover:text-[#00ebd6] border border-[#00ebd6] rounded-lg shadow-lg transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] mx-auto"
+                  className="inline-block px-4 py-2 bg-[#00ebd6]/20 text-white hover:text-[#00ebd6] border border-[#00ebd6] rounded-lg shadow-lg transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] mx-auto cosmic-hover-glow"
                 >
                   <span className="flex items-center">
                     <FaUsers className="mr-2" />

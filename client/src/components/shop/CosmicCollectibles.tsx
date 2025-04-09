@@ -135,13 +135,13 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid grid-cols-6 mb-8">
-          <TabsTrigger value="all">All Items</TabsTrigger>
-          <TabsTrigger value="jewelry">Jewelry</TabsTrigger>
-          <TabsTrigger value="spiritual">Spiritual</TabsTrigger>
-          <TabsTrigger value="clothing">Clothing</TabsTrigger>
-          <TabsTrigger value="accessories">Accessories</TabsTrigger>
-          <TabsTrigger value="home">Home</TabsTrigger>
+        <TabsList className="flex flex-wrap mb-8 gap-1 justify-center">
+          <TabsTrigger value="all" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">All Items</TabsTrigger>
+          <TabsTrigger value="jewelry" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Jewelry</TabsTrigger>
+          <TabsTrigger value="spiritual" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Spiritual</TabsTrigger>
+          <TabsTrigger value="clothing" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Clothing</TabsTrigger>
+          <TabsTrigger value="accessories" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Access.</TabsTrigger>
+          <TabsTrigger value="home" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Home</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
@@ -199,6 +199,21 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
               src={item.image} 
               alt={item.name} 
               className="w-full h-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null; // Prevent infinite loops
+                
+                // Use category-specific fallback
+                const fallbacks: Record<string, string> = {
+                  'jewelry': '/images/products/samples/cosmic-pendant.jpg',
+                  'spiritual': '/images/products/samples/sacred-geometry.jpg',
+                  'clothing': '/images/products/samples/sacred-geometry-tshirt.jpg',
+                  'accessories': '/images/products/samples/spiritual-journal.jpg',
+                  'home': '/images/products/samples/meditation-cushion.jpg'
+                };
+                
+                target.src = fallbacks[item.category] || '/images/products/samples/cosmic-pendant.jpg';
+              }}
             />
           </div>
 

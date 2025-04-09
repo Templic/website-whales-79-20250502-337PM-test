@@ -122,7 +122,7 @@ export default function NewsletterPage() {
                 <div className="flex justify-center mt-6">
                   <Button 
                     onClick={() => window.open("https://www.youtube.com/watch?v=jzpvkq3Krjg", "_blank")}
-                    className="bg-[#00ebd6] text-[#303436] px-5 py-2 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
+                    className="bg-[#00ebd6] text-[#303436] px-5 py-2 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] cosmic-hover-glow"
                   >
                     Listen to "Feels So Good"
                   </Button>
@@ -180,7 +180,7 @@ export default function NewsletterPage() {
 
                   <Button
                     type="submit"
-                    className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
+                    className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] cosmic-hover-glow"
                   >
                     Subscribe
                   </Button>

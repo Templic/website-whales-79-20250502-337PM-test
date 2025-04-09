@@ -40,15 +40,21 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ filters, products: ini
   const displayProducts = products.length > 0 ? products : initialProducts;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
       {/* Map through filtered products and render ProductCards */}
-      {displayProducts.map(product => (
-        <ProductCard 
-          key={product.id}
-          product={product}
-          onAddToCart={addToCart}
-        />
-      ))}
+      {displayProducts.length > 0 ? (
+        displayProducts.map(product => (
+          <ProductCard 
+            key={product.id}
+            product={product}
+            onAddToCart={addToCart}
+          />
+        ))
+      ) : (
+        <div className="col-span-full flex items-center justify-center p-10">
+          <p className="text-center text-muted-foreground">No products found matching your criteria</p>
+        </div>
+      )}
     </div>
   )
 }
