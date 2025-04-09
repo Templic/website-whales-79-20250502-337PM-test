@@ -96,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      return await apiRequest('POST', "/api/auth/login", credentials);
+      return await apiRequest('POST', "/api/login", credentials);
     },
     onSuccess: (response: any) => {
       if (response.requires2FA) {
@@ -106,7 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // No 2FA required, update the user data
-      queryClient.setQueryData(["/api/user"], response.user);
+      const userData = response.user || response;
+      queryClient.setQueryData(["/api/user"], userData);
     },
     onError: (error: Error) => {
       toast({

@@ -141,16 +141,16 @@ function AppRouter() {
           <Route path="/auth" component={AuthPage} />
           <Route path="/recover-password" component={PasswordRecoveryPage} />
           <Route path="/reset-password" component={PasswordRecoveryPage} />
-          <ProtectedRoute path="/portal" component={UserPortal} />
+          <ProtectedRoute path="/portal" component={UserPortal} requiredRole="user" />
           <Route path="/login" component={LoginPage}/>
 
-          {/* Admin Routes */}
-          <ProtectedRoute path="/admin" component={AdminPortalPage} />
-          <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} />
-          <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} />
-          <ProtectedRoute path="/admin/users" component={UsersPage} />
-          <ProtectedRoute path="/admin/posts" component={PostsPage} />
-          <ProtectedRoute path="/admin/music" component={MusicPage} />
+          {/* Admin Routes - require admin or super_admin role */}
+          <ProtectedRoute path="/admin" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/posts" component={PostsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/music" component={MusicPage} requiredRole="admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />

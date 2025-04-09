@@ -53,6 +53,8 @@ router.post('/login', async (req: Request, res: Response, next) => {
       });
     }
 
+    console.log(`Login attempt for username: ${req.body.username}`);
+
     // Check if account is locked
     const userRecord = await db.query.users.findFirst({
       where: eq(users.username, req.body.username)
