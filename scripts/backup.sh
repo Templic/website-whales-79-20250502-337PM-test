@@ -12,7 +12,7 @@ DATE=$(date +"%Y-%m-%d")
 TIME=$(date +"%H-%M-%S")
 BACKUP_ID="${DATE}_${TIME}"
 ENCRYPTION_KEY_FILE="./.backup_key"
-RETENTION_DAYS=2
+RETENTION_DAYS=30
 DATABASE_URL=${DATABASE_URL:-"postgres://localhost:5432/cosmicdb"}
 
 # Ensure directories exist
