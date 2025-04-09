@@ -196,33 +196,43 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ products: externa
         </TabsContent>
       </Tabs>
 
-      <div className="mt-12 bg-black/10 backdrop-blur-sm p-6 rounded-xl">
-        <h3 className="text-xl font-semibold mb-4 flex items-center">
-          <CosmicIcon name="sparkles" size={20} className="mr-2 text-amber-400" />
-          Shopping Guide
-        </h3>
-        <div className="space-y-4">
-          <p className="text-muted-foreground">
-            When choosing cosmic products, consider these key factors:
-          </p>
-          <ul className="space-y-2">
-            <li className="flex items-start gap-2">
-              <CosmicIcon name="star" size={16} className="mt-1 text-purple-400" />
-              <span><span className="font-medium">Energetic Resonance:</span> Select items that resonate with your current spiritual needs.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CosmicIcon name="moon" size={16} className="mt-1 text-purple-400" />
-              <span><span className="font-medium">Authenticity:</span> We ensure all products are authentic and ethically sourced.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CosmicIcon name="headphones" size={16} className="mt-1 text-purple-400" />
-              <span><span className="font-medium">Quality:</span> Higher quality materials provide clearer energy transmission and longer-lasting benefits.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CosmicIcon name="sparkles" size={16} className="mt-1 text-purple-400" />
-              <span><span className="font-medium">Intuition:</span> Trust your intuition when selecting cosmic tools—your higher self knows what you need.</span>
-            </li>
-          </ul>
+      <div className="mt-12 relative">
+        <div className="absolute inset-0 -z-10"
+          style={{
+            clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+            backgroundColor: "rgba(155, 135, 245, 0.05)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(138, 75, 255, 0.2)"
+          }}
+        ></div>
+        <div className="p-8 relative z-10">
+          <h3 className="text-xl font-semibold mb-4 flex items-center bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 cosmic-text-glow">
+            <CosmicIcon name="sparkles" size={20} className="mr-2 text-amber-400" />
+            Shopping Guide
+          </h3>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              When choosing cosmic products, consider these key factors:
+            </p>
+            <ul className="space-y-2">
+              <li className="flex items-start gap-2">
+                <CosmicIcon name="star" size={16} className="mt-1 text-purple-400" />
+                <span><span className="font-medium">Energetic Resonance:</span> Select items that resonate with your current spiritual needs.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CosmicIcon name="moon" size={16} className="mt-1 text-purple-400" />
+                <span><span className="font-medium">Authenticity:</span> We ensure all products are authentic and ethically sourced.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CosmicIcon name="headphones" size={16} className="mt-1 text-purple-400" />
+                <span><span className="font-medium">Quality:</span> Higher quality materials provide clearer energy transmission and longer-lasting benefits.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CosmicIcon name="sparkles" size={16} className="mt-1 text-purple-400" />
+                <span><span className="font-medium">Intuition:</span> Trust your intuition when selecting cosmic tools—your higher self knows what you need.</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -281,7 +291,7 @@ const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: a
 
                   <Button 
                     size="sm" 
-                    className="mt-2"
+                    className="mt-2 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
                     onClick={() => onAddToCart && onAddToCart(product)}
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />

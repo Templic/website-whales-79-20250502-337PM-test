@@ -54,7 +54,7 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
                 </p>
                 <Button 
                   variant="outline" 
-                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
+                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 cosmic-hover-glow"
                   onClick={onStartSession}
                 >
                   <Users className="h-4 w-4 mr-2" /> Start Session
@@ -77,7 +77,7 @@ const EnhancedShoppingVenn: React.FC<EnhancedShoppingVennProps> = ({
                 </p>
                 <Button 
                   variant="outline" 
-                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60"
+                  className="bg-indigo-900/40 border-purple-400/30 hover:bg-indigo-800/60 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 cosmic-hover-glow"
                   onClick={onCreateDesign}
                 >
                   <Plus className="h-4 w-4 mr-2" /> Create Design

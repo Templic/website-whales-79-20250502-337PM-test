@@ -113,7 +113,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
         <div 
           className="absolute inset-0 -z-10 bg-indigo-950/20 backdrop-blur-sm border border-purple-500/20 overflow-hidden"
           style={{
-            clipPath: "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)",
+            clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
             backgroundColor: "rgba(155, 135, 245, 0.05)"
           }}
         />
@@ -126,7 +126,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
             <span className="mr-2 text-sm text-purple-200">1250 Points</span>
             <Button 
               variant="link" 
-              className="text-purple-300 hover:text-purple-100 p-0 h-auto text-sm"
+              className="text-purple-300 hover:text-purple-100 p-0 h-auto text-sm cosmic-hover-glow"
             >
               View Collectibles
             </Button>
@@ -166,7 +166,10 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
       </Tabs>
 
       <div className="text-center mt-12">
-        <Button size="lg">
+        <Button 
+          size="lg" 
+          className="bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-600/30 transition-all duration-300 border-0 cosmic-hover-glow"
+        >
           View All Collectibles
         </Button>
       </div>
@@ -177,14 +180,18 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
 // Card component for collection items with elliptical image container
 const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: any) => void }> = ({ item, onAddToCart }) => {
   return (
-    <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20">
-      <div className="p-4 flex flex-col items-center">
-        {/* Elliptical image container */}
+    <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
+      style={{
+        clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+        backgroundColor: "rgba(155, 135, 245, 0.05)"
+      }}>
+      <div className="p-4 pt-8 flex flex-col items-center">
+        {/* Octagon image container */}
         <div className="relative w-full aspect-[5/4] mb-4 overflow-hidden">
           <div 
             className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
             style={{
-              borderRadius: "50%",
+              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
               background: "linear-gradient(to bottom, rgba(75, 0, 130, 0.1), rgba(20, 20, 60, 0.2))"
             }}
           >
@@ -198,7 +205,9 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
           {/* Purple border overlay */}
           <div 
             className="absolute inset-0 border border-purple-500/30 pointer-events-none"
-            style={{ borderRadius: "50%" }}
+            style={{
+              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+            }}
           ></div>
 
           {/* Heart button */}
@@ -206,7 +215,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white"
+              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white cosmic-hover-glow"
             >
               <Heart className="h-4 w-4" />
             </Button>
@@ -263,7 +272,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
 
             <Button 
               size="sm" 
-              className="gap-1 ml-auto"
+              className="gap-1 ml-auto bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
               onClick={() => onAddToCart && onAddToCart(item)}
             >
               <ShoppingCart className="h-4 w-4" />

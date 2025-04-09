@@ -102,11 +102,11 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
           Discover hand-selected products that enhance your cosmic journey, from energy-infused crystals to sustainable apparel and home goods that raise your vibration.
         </p>
         <div className="flex flex-wrap justify-center gap-4 mt-6">
-          <Button size="lg" className="group">
+          <Button size="lg" className="group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-600/30 transition-all duration-300 border-0 cosmic-hover-glow">
             <ShoppingCart className="mr-2 h-5 w-5 group-hover:animate-bounce" />
             Browse All Products
           </Button>
-          <Button size="lg" variant="outline">
+          <Button size="lg" variant="outline" className="border-purple-400/30 hover:border-purple-400/60 text-purple-300 hover:text-purple-100 shadow-md shadow-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cosmic-hover-glow">
             New Arrivals
           </Button>
         </div>
@@ -115,8 +115,12 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
       {/* Feature cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6">
         {shoppingFeatures.map((feature) => (
-          <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card">
-            <div className="flex flex-col items-center text-center">
+          <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card" 
+            style={{
+              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+              backgroundColor: "rgba(155, 135, 245, 0.05)"
+            }}>
+            <div className="flex flex-col items-center text-center mt-6">
               <div className="mb-4 bg-primary/10 p-3 rounded-full">
                 {feature.icon}
               </div>
@@ -130,22 +134,36 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
       {/* Featured products */}
       <div>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold">Featured Products</h2>
-          <Button variant="ghost" size="sm">View All</Button>
+          <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 cosmic-text-glow">Featured Products</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="border border-purple-500/20 shadow-sm shadow-purple-500/10 hover:shadow-md hover:shadow-purple-500/20 bg-black/10 backdrop-blur-sm text-purple-300 hover:text-purple-100 transition-all duration-300 cosmic-hover-glow"
+          >
+            View All
+          </Button>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 px-4 md:px-0">
           {featuredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden cosmic-glass-card p-4 h-full flex flex-col">
-              <div className="relative mb-4">
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-full h-64 object-cover rounded-md"
-                />
+            <Card key={product.id} className="overflow-hidden cosmic-glass-card p-4 h-full flex flex-col"
+              style={{
+                clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+                backgroundColor: "rgba(155, 135, 245, 0.05)"
+              }}>
+              <div className="relative mb-4 mt-6 px-4">
+                <div className="relative overflow-hidden" style={{
+                  clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+                }}>
+                  <img 
+                    src={product.image} 
+                    alt={product.name}
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
                 
                 {product.limited && (
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-8">
                     <Badge className="bg-amber-500 text-white flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       Limited Edition
@@ -154,7 +172,7 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                 )}
               </div>
               
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col px-4">
                 <div className="flex flex-wrap gap-2 mb-2">
                   {product.tags.map((tag, i) => (
                     <Badge key={i} variant="outline" className="text-xs">
@@ -181,11 +199,12 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                   </span>
                 </div>
                 
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-6">
                   <span className="text-xl font-bold">${product.price.toFixed(2)}</span>
                   <Button 
                     size="sm"
                     onClick={() => onProductView && onProductView(product.id)}
+                    className="bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 cosmic-hover-glow"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     View Product

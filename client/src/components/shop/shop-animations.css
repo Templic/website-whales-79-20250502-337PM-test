@@ -111,6 +111,41 @@
   transform: scale(1);
 }
 
+/* Cosmic hover glow for buttons */
+.cosmic-hover-glow {
+  transition: all 0.3s ease-out;
+  position: relative;
+}
+
+.cosmic-hover-glow::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: inherit;
+  z-index: -1;
+  background: linear-gradient(45deg, #00ebd6, #7c3aed, #fe0064);
+  opacity: 0;
+  filter: blur(12px);
+  transition: opacity 0.3s ease-out;
+}
+
+.cosmic-hover-glow:hover::before {
+  opacity: 0.7;
+  animation: pulse-glow 1.5s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% {
+    filter: blur(12px);
+  }
+  100% {
+    filter: blur(18px);
+  }
+}
+
 /* Cart animation */
 .cart-bump {
   animation: cart-bump 0.3s ease-out;
