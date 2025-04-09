@@ -10,7 +10,9 @@ import { AlbumShowcase } from "../../components/features/audio/AlbumShowcase"
 import { 
   Play, Pause, Volume2, VolumeX, Music, Mic, Brain, Cloud, Wind, 
   ArrowLeft, ArrowRight, Info, Settings, Headphones, Layers, 
-  BookOpen, Zap, RotateCcw, MusicIcon, Radio, Disc, BarChart2
+  BookOpen, Zap, RotateCcw, MusicIcon, Radio, Disc, BarChart2,
+  Wand2, Waves, Activity, HelpCircle, Heart, Clock, Globe,
+  Lightbulb, Download, Share2, Save, FileAudio, PlusCircle
 } from "lucide-react"
 import { BinauralBeatGenerator } from "../../components/features/audio/binaural-beat-generator"
 import { BreathSyncPlayer } from "../../components/features/audio/breath-sync-player"
@@ -19,6 +21,7 @@ import { SpatialAudioExperience } from "../../components/features/audio/SpatialA
 import { VoiceControlledPlayer } from "../../components/features/audio/voice-controlled-player"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { AccessibilityControls } from "../../components/common/accessibility-controls"
 
 // Mock albums for showcase
 const mockAlbums = [
@@ -93,7 +96,7 @@ export default function AudioComponentsDemo() {
               window.location.hash = value;
             }}
           >
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-8 bg-black/30">
+            <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8 bg-black/30">
               <TabsTrigger value="binaural" id="binaural">
                 <Zap className="mr-2 h-4 w-4" />
                 Binaural Audio
@@ -109,6 +112,10 @@ export default function AudioComponentsDemo() {
               <TabsTrigger value="interactive" id="interactive">
                 <Headphones className="mr-2 h-4 w-4" />
                 Interactive Audio
+              </TabsTrigger>
+              <TabsTrigger value="healing" id="healing">
+                <Heart className="mr-2 h-4 w-4" />
+                Sound Healing
               </TabsTrigger>
             </TabsList>
             
@@ -410,6 +417,172 @@ export default function AudioComponentsDemo() {
                 </AccordionItem>
               </Accordion>
             </TabsContent>
+            
+            {/* Sound Healing Tab */}
+            <TabsContent value="healing" className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <CosmicSection>
+                  <CosmicCard>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-semibold">Chakra Tuning</h2>
+                        <Wand2 className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <p className="text-gray-300 mb-4 text-sm">
+                        Frequency-based sound therapy targeting specific chakra energy centers
+                      </p>
+                      <div className="bg-black/40 rounded-lg p-4">
+                        <div className="flex flex-col space-y-4">
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-violet-500 mr-3"></div>
+                            <span className="text-sm">Crown Chakra - 963Hz</span>
+                            <button className="ml-auto p-2 rounded-full bg-indigo-600 hover:bg-indigo-500">
+                              <Play className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-indigo-500 mr-3"></div>
+                            <span className="text-sm">Third Eye Chakra - 852Hz</span>
+                            <button className="ml-auto p-2 rounded-full bg-indigo-600 hover:bg-indigo-500">
+                              <Play className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-blue-500 mr-3"></div>
+                            <span className="text-sm">Throat Chakra - 741Hz</span>
+                            <button className="ml-auto p-2 rounded-full bg-indigo-600 hover:bg-indigo-500">
+                              <Play className="h-4 w-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 rounded-full bg-green-500 mr-3"></div>
+                            <span className="text-sm">Heart Chakra - 639Hz</span>
+                            <button className="ml-auto p-2 rounded-full bg-indigo-600 hover:bg-indigo-500">
+                              <Play className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CosmicCard>
+                </CosmicSection>
+
+                <CosmicSection>
+                  <CosmicCard>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-semibold">Solfeggio Frequencies</h2>
+                        <Waves className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <p className="text-gray-300 mb-4 text-sm">
+                        Ancient healing tones with specific vibrational properties
+                      </p>
+                      <div className="bg-black/40 rounded-lg p-4">
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { freq: '396 Hz', desc: 'Liberation' },
+                            { freq: '417 Hz', desc: 'Change' },
+                            { freq: '528 Hz', desc: 'Healing' },
+                            { freq: '639 Hz', desc: 'Connection' },
+                            { freq: '741 Hz', desc: 'Expression' },
+                            { freq: '852 Hz', desc: 'Intuition' },
+                          ].map((item) => (
+                            <div key={item.freq} className="bg-indigo-900/30 p-3 rounded-lg text-center hover:bg-indigo-800/40 cursor-pointer transition-colors">
+                              <p className="font-semibold text-indigo-300">{item.freq}</p>
+                              <p className="text-xs text-gray-400">{item.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CosmicCard>
+                </CosmicSection>
+              </div>
+              
+              <div className="bg-black/30 p-6 rounded-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-semibold">Sound Bath Session</h2>
+                  <Globe className="h-5 w-5 text-blue-400" />
+                </div>
+                <p className="text-gray-300 mb-4">
+                  Immersive sound experience with multiple instruments and healing frequencies
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="col-span-1 md:col-span-3">
+                    <div className="h-40 bg-black/40 rounded-lg flex flex-col items-center justify-center">
+                      <div className="flex space-x-6">
+                        <button className="p-3 rounded-full bg-indigo-700 hover:bg-indigo-600 transition-colors">
+                          <RotateCcw className="h-5 w-5" />
+                        </button>
+                        <button className="p-4 rounded-full bg-indigo-600 hover:bg-indigo-500 transition-colors">
+                          <Play className="h-6 w-6" />
+                        </button>
+                        <button className="p-3 rounded-full bg-indigo-700 hover:bg-indigo-600 transition-colors">
+                          <ArrowRight className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <div className="w-3/4 mt-6 h-2 bg-black/40 rounded-full">
+                        <div className="h-2 bg-indigo-500 rounded-full w-1/5"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-span-1 bg-black/40 rounded-lg p-4">
+                    <h3 className="text-lg font-medium mb-2">Instruments</h3>
+                    <ul className="space-y-2 text-sm text-gray-300">
+                      <li className="flex items-center">
+                        <MusicIcon className="h-4 w-4 mr-2 text-indigo-400" />
+                        Crystal Bowls
+                      </li>
+                      <li className="flex items-center">
+                        <MusicIcon className="h-4 w-4 mr-2 text-indigo-400" />
+                        Tibetan Bells
+                      </li>
+                      <li className="flex items-center">
+                        <MusicIcon className="h-4 w-4 mr-2 text-indigo-400" />
+                        Gongs
+                      </li>
+                      <li className="flex items-center">
+                        <MusicIcon className="h-4 w-4 mr-2 text-indigo-400" />
+                        Ocean Drum
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <Accordion type="single" collapsible className="mt-8">
+                <AccordionItem value="healing-info">
+                  <AccordionTrigger className="text-white">
+                    <span className="flex items-center">
+                      <Info className="h-4 w-4 mr-2" />
+                      About Sound Healing Components
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 p-4 bg-black/20 rounded-lg">
+                      <h3 className="text-lg font-medium">Component Documentation:</h3>
+                      <p className="text-gray-300">
+                        Sound healing components utilize specific frequencies and tones that have 
+                        therapeutic effects on the mind and body. These components offer customizable 
+                        sound therapy experiences including chakra tuning, solfeggio frequencies, and 
+                        immersive sound baths with various instruments.
+                      </p>
+                      <h4 className="font-medium mt-4">Implementation Notes:</h4>
+                      <ul className="list-disc pl-5 space-y-1 text-gray-300 text-sm">
+                        <li>Precisely calibrated frequencies for therapeutic applications</li>
+                        <li>Customizable mixes of multiple sound sources</li>
+                        <li>Timer functionality for guided sessions</li>
+                        <li>Background information and educational content for each frequency</li>
+                        <li>Optional binaural processing for enhanced effectiveness</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </TabsContent>
           </Tabs>
         </div>
         
@@ -441,6 +614,9 @@ export default function AudioComponentsDemo() {
           </div>
         </CosmicSection>
       </div>
+      
+      {/* Add Accessibility Controls */}
+      <AccessibilityControls />
     </div>
   )
 }

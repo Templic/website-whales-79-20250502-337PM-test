@@ -14,7 +14,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { 
   ArrowLeft, Eye, Settings, Sparkles, Disc, Wrench, 
   Lightbulb, Code, Zap, VolumeIcon, Shield, Puzzle,
-  Maximize, Info, Mic, FileText, Loader2, BookOpen
+  Maximize, Info, Mic, FileText, Loader2, BookOpen,
+  Globe, Waves, Activity, Heart, RotateCcw, MusicIcon
 } from "lucide-react"
 
 // Mock collectible data for demonstration
@@ -531,6 +532,77 @@ export function NewComponentsDemo() {
                     <p className="text-xs text-center text-gray-400">
                       Component in development
                     </p>
+                  </div>
+                </CosmicCard>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+                <CosmicCard className="p-6 opacity-75 hover:opacity-100 transition-opacity">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Collaborative Meditation</h3>
+                    <Globe className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <p className="text-gray-300 text-sm mb-6">
+                    Multi-user synchronized meditation with shared biofeedback
+                  </p>
+                  <div className="relative bg-black/40 rounded-lg p-4 flex flex-col items-center justify-center min-h-[120px]">
+                    <div className="grid grid-cols-3 gap-2 w-full">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-black/40 rounded-lg p-2 text-center">
+                          <div className="w-6 h-6 rounded-full bg-indigo-500 mx-auto mb-1"></div>
+                          <div className="text-xs">User {i}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 w-full h-2 bg-black/40 rounded-full">
+                      <div className="h-2 bg-indigo-500 rounded-full w-2/3 animate-pulse"></div>
+                    </div>
+                  </div>
+                </CosmicCard>
+                
+                <CosmicCard className="p-6 opacity-75 hover:opacity-100 transition-opacity">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="text-lg font-semibold">DNA Sound Transcription</h3>
+                    <Mic className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <p className="text-gray-300 text-sm mb-6">
+                    Converts DNA sequences into unique harmonic audio patterns
+                  </p>
+                  <div className="relative bg-black/40 rounded-lg p-4 flex flex-col items-center justify-center min-h-[120px]">
+                    <div className="flex space-x-1 w-full justify-between">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="w-3 bg-gradient-to-t from-indigo-500 to-purple-400 rounded-t"
+                          style={{ 
+                            height: `${Math.sin(i / 2) * 30 + 30}px`,
+                          }}
+                        ></div>
+                      ))}
+                    </div>
+                    <div className="mt-4 text-xs text-center">
+                      <code className="font-mono bg-black/30 p-1 rounded">AGTC-TGCA-GCTA</code>
+                    </div>
+                  </div>
+                </CosmicCard>
+                
+                <CosmicCard className="p-6 opacity-75 hover:opacity-100 transition-opacity">
+                  <div className="flex justify-between mb-4">
+                    <h3 className="text-lg font-semibold">Synesthetic Visualizer</h3>
+                    <Waves className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <p className="text-gray-300 text-sm mb-6">
+                    Creates visual patterns based on emotional responses to music
+                  </p>
+                  <div className="relative bg-black/40 rounded-lg p-4 flex flex-col items-center justify-center min-h-[120px]">
+                    <div className="flex h-20 w-full justify-center items-center overflow-hidden relative">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-purple-500/30 to-transparent animate-pulse rounded-full"></div>
+                      <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-gradient-radial from-indigo-500/40 to-transparent animate-pulse rounded-full" style={{ animationDelay: '0.5s' }}></div>
+                      <div className="absolute top-1/3 left-1/3 w-1/3 h-1/3 bg-gradient-radial from-blue-500/50 to-transparent animate-pulse rounded-full" style={{ animationDelay: '1s' }}></div>
+                    </div>
+                    <div className="mt-2 text-xs text-center text-gray-400">
+                      Emotion: Tranquility
+                    </div>
                   </div>
                 </CosmicCard>
               </div>

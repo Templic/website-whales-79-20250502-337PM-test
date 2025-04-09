@@ -13,7 +13,9 @@ import {
   Settings, Code, Music, Palette, Filter, Sliders, Box, 
   Headphones, Compass, Layers, Aperture, LayoutGrid, Database,
   SlidersHorizontal, ShoppingBag, PanelLeft, Sparkles, FileText,
-  Users, BookOpen, Maximize, Eye, Zap, LifeBuoy
+  Users, BookOpen, Maximize, Eye, Zap, LifeBuoy, Server,
+  Shield, Globe, BellRing, Store, MessageCircle, Brain, Fingerprint,
+  Key, Lock, BarChart
 } from 'lucide-react';
 
 /**
@@ -170,6 +172,27 @@ export default function ComponentsCatalog() {
                   description="Music album display, interaction, and playback components"
                   icon={<BookOpen className="h-8 w-8" />}
                   href="/test/audio#albums"
+                />
+                
+                <ComponentCard 
+                  title="Sound Visualization" 
+                  description="Audio frequency and waveform visualization tools"
+                  icon={<BarChart className="h-8 w-8" />}
+                  href="/test/audio#visualization"
+                />
+                
+                <ComponentCard 
+                  title="Interactive Audio" 
+                  description="User-controlled audio experiences with interaction models"
+                  icon={<Headphones className="h-8 w-8" />}
+                  href="/test/audio#interactive"
+                />
+                
+                <ComponentCard 
+                  title="Sound Healing" 
+                  description="Therapeutic sound frequencies and healing audio tools"
+                  icon={<Brain className="h-8 w-8" />}
+                  href="/test/audio#healing"
                 />
               </div>
               
@@ -337,19 +360,124 @@ export default function ComponentsCatalog() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Experimental Components */}
                 <ComponentCard 
-                  title="Under Development" 
-                  description="Experimental components still in progress"
-                  icon={<Code className="h-8 w-8" />}
-                  href="#"
-                  disabled
+                  title="API Integration" 
+                  description="Components for connecting to external data sources and APIs"
+                  icon={<Server className="h-8 w-8" />}
+                  href="/cosmic-components#api"
+                />
+                
+                <ComponentCard 
+                  title="Security Components" 
+                  description="Authentication, authorization, and data protection components"
+                  icon={<Shield className="h-8 w-8" />}
+                  href="/cosmic-components#security"
+                />
+                
+                <ComponentCard 
+                  title="Global Data" 
+                  description="Components for managing global state and application data"
+                  icon={<Globe className="h-8 w-8" />}
+                  href="/cosmic-components#global-data"
+                />
+                
+                <ComponentCard 
+                  title="Notification System" 
+                  description="Alert, toast, and notification management components"
+                  icon={<BellRing className="h-8 w-8" />}
+                  href="/cosmic-components#notifications"
+                />
+                
+                <ComponentCard 
+                  title="Analytics Dashboard" 
+                  description="Components for data visualization and metrics reporting"
+                  icon={<BarChart className="h-8 w-8" />}
+                  href="/cosmic-components#analytics"
+                />
+                
+                <ComponentCard 
+                  title="AI Integration" 
+                  description="Components that integrate with AI and ML services"
+                  icon={<Brain className="h-8 w-8" />}
+                  href="/cosmic-components#ai"
                 />
               </div>
               
-              <div className="p-6 text-center bg-black/20 rounded-lg mt-4">
-                <p className="text-gray-400">
-                  Experimental components are still under development. Check back soon for updates.
-                </p>
+              <div className="border-t border-indigo-800/30 pt-8 mt-8">
+                <h2 className="text-2xl font-semibold mb-6 flex items-center">
+                  <Shield className="h-6 w-6 mr-3 text-indigo-400" />
+                  Security & API Components
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <ComponentCard 
+                    title="Authentication" 
+                    description="User authentication flow components with multi-factor options"
+                    icon={<Fingerprint className="h-8 w-8" />}
+                    href="/cosmic-components#auth"
+                  />
+                  
+                  <ComponentCard 
+                    title="API Integration" 
+                    description="Components for external API connections and data management"
+                    icon={<Globe className="h-8 w-8" />}
+                    href="/cosmic-components#api-integration"
+                  />
+                  
+                  <ComponentCard 
+                    title="Data Encryption" 
+                    description="End-to-end encryption components for sensitive data"
+                    icon={<Lock className="h-8 w-8" />}
+                    href="/cosmic-components#encryption"
+                  />
+                  
+                  <ComponentCard 
+                    title="Key Management" 
+                    description="API key and token management components"
+                    icon={<Key className="h-8 w-8" />}
+                    href="/cosmic-components#key-management"
+                  />
+                  
+                  <ComponentCard 
+                    title="Data Visualization" 
+                    description="Interactive charts and data display components"
+                    icon={<BarChart className="h-8 w-8" />}
+                    href="/cosmic-components#data-viz"
+                  />
+                  
+                  <ComponentCard 
+                    title="Real-time Updates" 
+                    description="WebSocket and real-time data synchronization"
+                    icon={<MessageCircle className="h-8 w-8" />}
+                    href="/cosmic-components#realtime"
+                  />
+                </div>
               </div>
+              
+              <Accordion type="single" collapsible className="mt-8">
+                <AccordionItem value="experimental-details">
+                  <AccordionTrigger className="text-white">View Component Details</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-4 p-4 bg-black/20 rounded-lg">
+                      <h3 className="text-lg font-medium">Experimental Components Include:</h3>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>API Connection & Data Fetching</li>
+                        <li>JWT Authentication Flow</li>
+                        <li>Two-Factor Authentication</li>
+                        <li>Biometric Authentication</li>
+                        <li>Real-time Data Visualization</li>
+                        <li>AI-Powered Content Generation</li>
+                        <li>WebSocket Communication</li>
+                        <li>Push Notification System</li>
+                        <li>Multi-tenant Architecture</li>
+                        <li>Event-driven Components</li>
+                        <li>End-to-End Encryption</li>
+                        <li>API Key Rotation</li>
+                        <li>OAuth Integration</li>
+                        <li>Data Visualization Libraries</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </TabsContent>
           </Tabs>
         </div>
