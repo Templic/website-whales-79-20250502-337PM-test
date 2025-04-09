@@ -1,10 +1,4 @@
-/**
- * ArchivedMusic Page Component
- * Displays the archive of consciousness-transforming music and healing frequencies
- * Includes search, filtering, and dynamic content loading capabilities
- */
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -31,7 +25,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
   useEffect(() => {
     fetchMusic();
-
+    
     // Notify user about work in progress features
     toast({
       title: "Archive Features",
@@ -89,12 +83,10 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
-      {/* Background Effects */}
       <CosmicBackground />
       <SpotlightEffect />
-
+      
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
             Archived Music
@@ -104,8 +96,8 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             guided meditations designed to elevate your vibration.
           </p>
         </div>
-
-        {/* Hero Image Section */}
+        
+        {/* Hero Image */}
         <div className="relative h-[500px] w-full overflow-hidden rounded-lg mb-12">
           <img
             src="uploads/silhouette stars.jpg"
@@ -113,30 +105,31 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             className="w-full h-full object-cover"
           />
         </div>
-
-        {/* Search and Filter Controls */}
+        
+        {/* Search and Filter */}
         <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 mb-8">
           <div className="grid md:grid-cols-4 gap-4">
-            {/* Search Input with Icon */}
             <div className="md:col-span-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input 
                   type="text"
                   placeholder="Search by title, frequency or description..."
-                  className="pl-10"
+                  className="pl-10 bg-black/20 border-white/10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
-
-            {/* Filter Controls */}
-            <div className="flex gap-4">
+            
+            <div>
               <Button variant="outline" className="w-full border-white/10">
                 <Clock className="mr-2 h-4 w-4" />
                 Sort by Date
               </Button>
+            </div>
+            
+            <div>
               <Button variant="outline" className="w-full border-white/10">
                 <Disc className="mr-2 h-4 w-4" />
                 Filter by Type
@@ -144,7 +137,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             </div>
           </div>
         </div>
-
+        
         {/* Main Content */}
         <div className="mb-16">
           <Tabs defaultValue="albums" className="space-y-8">
@@ -162,12 +155,13 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 Meditations
               </TabsTrigger>
             </TabsList>
-
+            
             <TabsContent value="albums" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6 text-center">Featured Albums</h2>
-                <AlbumShowcase albums={albums} onDelete={handleDeleteAlbum} user={user}/>
+                <AlbumShowcase />
               </div>
+              
               <section className="albums-section">
                 <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -202,13 +196,13 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 </div>
               </section>
             </TabsContent>
-
+            
             <TabsContent value="singles" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6 text-center">Recent Singles</h2>
-
+                
                 <CosmicReveal delay={0.2}>
-                  <RecommendedPlaylists
+                  <RecommendedPlaylists 
                     playlists={playlists.filter(p => p.category === 'sleep' || p.category === 'astral')}
                     onSelect={(playlist) => {
                       toast({
@@ -220,7 +214,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                   />
                 </CosmicReveal>
               </div>
-
+              
               <section className="tracks-section">
                 <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">All Tracks</h2>
                 <div className="grid gap-4">
@@ -260,11 +254,11 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 </div>
               </section>
             </TabsContent>
-
+            
             <TabsContent value="meditation" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="text-2xl font-semibold mb-6 text-center">Guided Meditations</h2>
-                <DynamicPlaylists
+                <DynamicPlaylists 
                   playlists={playlists.filter(p => p.category === 'meditation' || p.category === 'healing')}
                   onPlay={(trackId) => {
                     toast({
@@ -278,7 +272,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             </TabsContent>
           </Tabs>
         </div>
-
+        
         {/* Call to Action */}
         <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-8 mb-16 text-center">
           <h2 className="text-2xl font-semibold mb-3">Join Our Archive Community</h2>
