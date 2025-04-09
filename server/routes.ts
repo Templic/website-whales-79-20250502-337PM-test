@@ -63,10 +63,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
-  
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-  
+
   // Serve public images
   app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
@@ -264,7 +264,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         message: "Successfully subscribed!", 
         subscriber 
       });
-      
+
     } catch (error) {
       if (error.code === '23505') { // PostgreSQL unique violation
         res.status(400).json({ message: "This email is already subscribed" });
@@ -347,7 +347,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
-  
+
   // Test endpoint - initialize security settings (for testing purposes only)
   app.get("/api/test/security/init", (req, res) => {
     try {
@@ -361,23 +361,23 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: "Error initializing security settings" });
     }
   });
-  
+
   // Test endpoint - update security settings (for testing purposes only)
   app.post("/api/test/security/settings", (req, res) => {
     try {
       const { setting, enabled } = req.body;
-      
+
       // Validate inputs
       if (!setting || typeof enabled !== 'boolean') {
         return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
       }
-      
+
       // Check if setting is valid
       const validSettings = Object.keys(getSecuritySettings());
       if (!validSettings.includes(setting)) {
         return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
       }
-      
+
       // Update the setting
       const success = updateSecuritySetting(
         setting as keyof SecuritySettings, 
@@ -385,11 +385,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         999, // Fake user ID for testing
         'super_admin' // Fake role for testing
       );
-      
+
       if (!success) {
         return res.status(500).json({ message: 'Failed to update security setting' });
       }
-      
+
       res.json({ 
         message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
         setting,
@@ -401,7 +401,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
-  
+
   // Test endpoint - view security settings (for testing purposes only)
   app.get("/api/test/security/settings", (req, res) => {
     try {
@@ -418,7 +418,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-  
+
   // Test endpoint - simulate unauthorized access (for testing purposes only)
   app.get("/api/test/security/simulate-unauthorized", (req, res) => {
     try {
@@ -432,7 +432,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         path: '/api/test/security/simulate-unauthorized',
         method: 'GET'
       });
-      
+
       res.status(401).json({
         message: 'Unauthorized access attempt logged successfully',
         details: 'This endpoint simulates an unauthorized access attempt to test security logging'
@@ -445,7 +445,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-  
+
   // Test endpoint - get security statistics (for testing purposes only)
   app.get("/api/test/security/stats", (req, res) => {
     try {
@@ -463,9 +463,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         });
       }
-      
+
       const logFilePath = path.join(logsDir, 'security.log');
-      
+
       // Check if the file exists, and create it if it doesn't
       if (!fs.existsSync(logFilePath)) {
         fs.writeFileSync(logFilePath, '', 'utf8');
@@ -479,10 +479,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         });
       }
-      
+
       // Read the log file
       const logData = fs.readFileSync(logFilePath, 'utf8');
-      
+
       // If log file is empty, return empty stats
       if (!logData.trim()) {
         return res.json({ 
@@ -495,7 +495,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         });
       }
-      
+
       // Parse the log entries
       const logEntries = logData
         .split('\n')
@@ -507,7 +507,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return { rawLog: line, parseError: true };
           }
         });
-      
+
       // Calculate statistics
       const stats = {
         total: logEntries.length,
@@ -515,7 +515,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         bySetting: {},
         recentEvents: logEntries.slice(-5).reverse() // Get the 5 most recent events
       };
-      
+
       // Count events by type and setting
       logEntries.forEach(entry => {
         // Count by type
@@ -525,7 +525,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         } else {
           stats.byType[type]++;
         }
-        
+
         // Count by setting
         if (entry.setting) {
           const setting = entry.setting;
@@ -536,7 +536,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         }
       });
-      
+
       res.json({ 
         message: 'Security statistics retrieved successfully',
         stats
@@ -558,9 +558,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(logsDir, { recursive: true });
       }
-      
+
       const logFilePath = path.join(logsDir, 'security.log');
-      
+
       // Check if the file exists, and create it if it doesn't
       if (!fs.existsSync(logFilePath)) {
         // Create an empty log file
@@ -571,10 +571,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           count: 0
         });
       }
-      
+
       // Read the log file
       const logData = fs.readFileSync(logFilePath, 'utf8');
-      
+
       // If log file is empty, return empty array
       if (!logData.trim()) {
         return res.json({ 
@@ -583,7 +583,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           count: 0
         });
       }
-      
+
       // Parse the log entries and format them
       const logEntries = logData
         .split('\n')
@@ -595,7 +595,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return { rawLog: line, parseError: true };
           }
         });
-      
+
       res.json({ 
         message: 'Security logs retrieved successfully',
         logs: logEntries,
@@ -609,7 +609,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-  
+
   // Security scan endpoint
   app.get("/api/security/scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -624,10 +624,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const scanResults = await scanProject();
-      
+
       res.json({
         message: 'Security scan completed successfully',
         timestamp: scanResults.timestamp,
@@ -648,12 +648,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     }
   });
-  
+
   // Test security scan endpoint (for testing purposes)
   app.get("/api/test/security/scan", async (req, res) => {
     try {
       const scanResults = await scanProject();
-      
+
       res.json({
         message: 'Security scan completed successfully',
         timestamp: scanResults.timestamp,
@@ -1073,7 +1073,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         postId: Number(req.params.postId),
         approved: isAdmin // Auto-approve if admin
       });
-      
+
       console.log("Creating comment with data:", data);
       const comment = await storage.createComment(data);
       console.log("Created comment:", comment);
@@ -1140,10 +1140,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     // Input is already validated by our middleware
     const { insertContactSchema } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
-    
+
     // Create database entry
     const message = await db.insert(contactMessages).values(data).returning();
-    
+
     // Send success response
     res.json({ 
       message: "Message sent successfully!", 
@@ -1488,9 +1488,16 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   }, dbMonitorRoutes);
 
   // Shop routes
-  app.use('/api/shop', shopRoutes);
+  const router = express.Router();
+  // Forward /api/products to /api/shop/products for compatibility
+  app.get('/api/products', (req, res) => {
+    req.url = '/api/shop/products';
+    app.handle(req, res);
+  });
+
+  app.use('/api/shop', router);
   app.use('/api/payments', paymentRoutes);
-  
+
   // Security routes
   app.use('/api/security', securityRouter);
   app.use('/api/test', testSecurityRouter);
@@ -1502,14 +1509,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.post('/api/contact/submit', contactValidation, validate, async (req, res) => {
     try {
       const { name, email, message } = req.body;
-      
+
       // Input has been validated by our middleware
       await db.insert(contactMessages).values({
         name,
         email, 
         message
       });
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error('Failed to save contact form:', error);
@@ -1532,13 +1539,13 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       });
     }
   });
-  
+
   // Get security settings (admin only)
   app.get('/api/security/settings', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const settings = getSecuritySettings();
       res.json(settings);
@@ -1547,27 +1554,27 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ message: 'Failed to fetch security settings' });
     }
   });
-  
+
   // Update a security setting (admin only)
   app.post('/api/security/settings', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const { setting, enabled } = req.body;
-      
+
       // Validate inputs
       if (!setting || typeof enabled !== 'boolean') {
         return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
       }
-      
+
       // Check if setting is valid
       const validSettings = Object.keys(getSecuritySettings());
       if (!validSettings.includes(setting)) {
         return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
       }
-      
+
       // Update the setting
       const success = updateSecuritySetting(
         setting as keyof SecuritySettings, 
@@ -1575,11 +1582,11 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         req.user?.id,
         req.user?.role
       );
-      
+
       if (!success) {
         return res.status(500).json({ message: 'Failed to update security setting' });
       }
-      
+
       res.json({ 
         message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
         setting,
@@ -1590,21 +1597,21 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
-  
+
   // Get security logs (admin only)
   app.get('/api/security/logs', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
-    
+
     try {
       const securityLogsDir = path.join(process.cwd(), 'logs', 'security');
       const securityLogFile = path.join(securityLogsDir, 'security.log');
-      
+
       if (!fs.existsSync(securityLogFile)) {
         return res.json({ logs: [] });
       }
-      
+
       // Read the log file (in a production app, you might want to paginate this)
       const logContent = fs.readFileSync(securityLogFile, 'utf8');
       const logs = logContent
@@ -1617,7 +1624,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
             return { raw: line, error: 'Failed to parse log entry' };
           }
         });
-      
+
       res.json({ logs });
     } catch (error) {
       console.error('Error fetching security logs:', error);
