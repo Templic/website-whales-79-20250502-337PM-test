@@ -33,6 +33,16 @@ export default function BlogPostPage() {
 
   const { data: post, isLoading: postLoading, error: postError } = useQuery<Post>({
     queryKey: ['/api/posts', postId],
+    queryFn: async () => {
+      if (isNaN(postId)) {
+        throw new Error('Invalid post ID');
+      }
+      const response = await fetch(`/api/posts/${postId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch post');
+      }
+      return response.json();
+    },
     enabled: !isNaN(postId)
   });
 
@@ -166,11 +176,19 @@ export default function BlogPostPage() {
 
         <div className="prose prose-invert max-w-none mt-8 text-lg">
           {post.content ? (
-            post.content.split('\n').map((paragraph, index) => (
-              paragraph.trim() && (
-                <p key={index} className="mb-4">{paragraph}</p>
-              )
-            ))
+            post.content
+              .replace(/<p>/g, '')
+              .replace(/<\/p>/g, '\n\n')
+              .replace(/<br\s*\/?>/g, '\n')
+              .replace(/<div>/g, '')
+              .replace(/<\/div>/g, '\n\n')
+              .replace(/&nbsp;/g, ' ')
+              .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
+              .split('\n\n')
+              .filter(para => para.trim().length > 0) // Filter out empty paragraphs
+              .map((paragraph, index) => (
+                <p key={index} className="mb-4">{paragraph.trim()}</p>
+              ))
           ) : (
             <>
               <p className="mb-4">

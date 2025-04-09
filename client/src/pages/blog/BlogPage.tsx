@@ -103,7 +103,7 @@ export default function BlogPage() {
                   )}
                   <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
                   
-                  <div className="text-gray-300 mb-4">
+                  <div className="text-gray-300 mb-4 line-clamp-4 text-sm">
                     {typeof post.content === 'string' 
                      ? post.content
                         .replace(/<p>/g, '')
@@ -112,9 +112,10 @@ export default function BlogPage() {
                         .replace(/<div>/g, '')
                         .replace(/<\/div>/g, ' ')
                         .replace(/&nbsp;/g, ' ')
+                        .replace(/<[^>]*>/g, '') // Remove any other HTML tags
                         .replace(/\s+/g, ' ')
                         .trim()
-                     : post.content}
+                     : ''}
                   </div>
                   
                   <div className="flex justify-between items-center mt-6">
