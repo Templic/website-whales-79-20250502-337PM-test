@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Menu, 
   X, 
@@ -84,6 +85,7 @@ export function MainHeader() {
   const [, navigate] = useLocation();
   const { autoHideNav } = useAccessibility();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Handle scroll event for auto-hiding navigation
   useEffect(() => {
@@ -125,14 +127,26 @@ export function MainHeader() {
     }, 300); // 300ms delay to allow for smooth scroll
   }, [navigate]);
 
-  // Handle search submit
+  // Handle search submit for site-wide search
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Navigate to search page with query parameter for site-wide search
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&scope=all`);
+      // Reset search input after submission
       setSearchQuery("");
+      
+      // Log search action for analytics
+      console.log(`Site-wide search performed: "${searchQuery.trim()}"`);
+      
+      // Display toast notification
+      toast({
+        title: "Searching entire site",
+        description: `Finding results for "${searchQuery.trim()}" across all pages`,
+        variant: "default",
+      });
     }
-  }, [searchQuery, navigate]);
+  }, [searchQuery, navigate, toast]);
 
   // Define hover animation variants for nav items
   const navItemVariants = {

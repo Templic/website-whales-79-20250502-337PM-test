@@ -77,7 +77,7 @@ export function MainFooter() {
     { name: "About", path: "/about", icon: <MoonStar className="h-4 w-4 mr-2" /> },
     { name: "Tour", path: "/tour", icon: <Calendar className="h-4 w-4 mr-2" /> },
     { name: "Engage", path: "/engage", icon: <Heart className="h-4 w-4 mr-2" /> },
-    { name: "Blog", path: "/blog", icon: <Book className="h-4 w-4 mr-2" /> },
+    { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-2" /> },
   ];
 
   const musicLinks: FooterLink[] = [

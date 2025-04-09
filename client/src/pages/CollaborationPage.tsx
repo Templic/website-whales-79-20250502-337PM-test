@@ -84,29 +84,32 @@ export default function CollaborationPage() {
               <SacredGeometry variant="octagon" size={80} animated={false} />
             </div>
             
-            <div className="relative z-10 p-8">
-              <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Musical Collaborations</h2>
-              <p className="mb-6">Let's create something extraordinary together. We're always open to innovative musical partnerships.</p>
-              <ul className="space-y-4 list-none mb-8">
-                <li className="flex items-start space-x-2">
-                  <span className="text-[#fe0064]">★</span>
-                  <span>Studio Recording Sessions</span>
+            {/* Further reduced padding and adjusted font sizes to ensure proper fit within geometric shape */}
+            <div className="relative z-10 p-4 md:p-6 mx-auto max-w-lg">
+              <h2 className="text-lg md:text-xl font-bold text-[#00ebd6] mb-2 text-center">Musical Collaborations</h2>
+              <p className="mb-2 text-xs md:text-sm text-center mx-auto max-w-xs">Let's create something extraordinary together. We're always open to innovative musical partnerships.</p>
+              <ul className="space-y-1 list-none mb-3 max-w-xs mx-auto">
+                <li className="flex items-start space-x-1">
+                  <span className="text-[#fe0064] text-xs">★</span>
+                  <span className="text-xs md:text-sm">Studio Recording Sessions</span>
                 </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-[#fe0064]">★</span>
-                  <span>Live Performance Features</span>
+                <li className="flex items-start space-x-1">
+                  <span className="text-[#fe0064] text-xs">★</span>
+                  <span className="text-xs md:text-sm">Live Performance Features</span>
                 </li>
-                <li className="flex items-start space-x-2">
-                  <span className="text-[#fe0064]">★</span>
-                  <span>Remote Production Projects</span>
+                <li className="flex items-start space-x-1">
+                  <span className="text-[#fe0064] text-xs">★</span>
+                  <span className="text-xs md:text-sm">Remote Production Projects</span>
                 </li>
               </ul>
-              <Button
-                onClick={handleProposalClick}
-                className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
-              >
-                Submit Collaboration Proposal
-              </Button>
+              <div className="max-w-[200px] mx-auto">
+                <Button
+                  onClick={handleProposalClick}
+                  className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] text-xs py-1.5"
+                >
+                  Submit Collaboration Proposal
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -121,32 +124,35 @@ export default function CollaborationPage() {
               <SacredGeometry variant="merkaba" size={80} animated={false} />
             </div>
             
-            <div className="relative z-10 p-8">
-              <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Support Options</h2>
-              <div className="space-y-6 mb-8">
+            {/* Further reduced padding and adjusted font sizes to ensure proper fit within geometric shape */}
+            <div className="relative z-10 p-4 md:p-6 mx-auto max-w-lg">
+              <h2 className="text-lg md:text-xl font-bold text-[#00ebd6] mb-2 text-center">Support Options</h2>
+              <div className="space-y-2 mb-3 max-w-xs mx-auto">
                 <div>
-                  <h3 className="text-xl font-semibold mb-2">Cosmic Patron Tiers</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-center justify-between p-3 bg-[rgba(48,52,54,0.5)] rounded-lg">
-                      <span>Stardust Supporter</span>
-                      <span className="text-[#00ebd6]">$5/month</span>
+                  <h3 className="text-base font-semibold mb-1.5 text-center">Cosmic Patron Tiers</h3>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-center justify-between p-1.5 bg-[rgba(48,52,54,0.5)] rounded-lg">
+                      <span className="text-xs md:text-sm">Stardust Supporter</span>
+                      <span className="text-[#00ebd6] text-xs md:text-sm">$5/month</span>
                     </li>
-                    <li className="flex items-center justify-between p-3 bg-[rgba(48,52,54,0.5)] rounded-lg">
-                      <span>Nebula Navigator</span>
-                      <span className="text-[#00ebd6]">$15/month</span>
+                    <li className="flex items-center justify-between p-1.5 bg-[rgba(48,52,54,0.5)] rounded-lg">
+                      <span className="text-xs md:text-sm">Nebula Navigator</span>
+                      <span className="text-[#00ebd6] text-xs md:text-sm">$15/month</span>
                     </li>
-                    <li className="flex items-center justify-between p-3 bg-[rgba(48,52,54,0.5)] rounded-lg">
-                      <span>Galaxy Guardian</span>
-                      <span className="text-[#00ebd6]">$30/month</span>
+                    <li className="flex items-center justify-between p-1.5 bg-[rgba(48,52,54,0.5)] rounded-lg">
+                      <span className="text-xs md:text-sm">Galaxy Guardian</span>
+                      <span className="text-[#00ebd6] text-xs md:text-sm">$30/month</span>
                     </li>
                   </ul>
                 </div>
-                <Button
-                  onClick={handleDonateClick}
-                  className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
-                >
-                  Become a Patron
-                </Button>
+                <div className="max-w-[200px] mx-auto">
+                  <Button
+                    onClick={handleDonateClick}
+                    className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] text-xs py-1.5"
+                  >
+                    Become a Patron
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
