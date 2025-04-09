@@ -408,8 +408,25 @@ const ShopPage: React.FC = () => {
             <aside className="md:col-span-1">
               {/* Product filtering sidebar */}
               <ProductFilter
-                currentFilters={filters}
-                onFilterChange={handleFilterChange}
+                categories={allCategories.map((name, index) => ({ id: index, name }))}
+                initialFilters={{
+                  categories: filters.category.map((_, i) => i),
+                  priceRange: filters.priceRange,
+                  inStock: false,
+                  onSale: false,
+                  featured: false,
+                  sortBy: filters.sortBy as any
+                }}
+                onFilterChange={(newFilters) => {
+                  // Map the filter options back to our internal structure
+                  handleFilterChange({
+                    category: newFilters.categories.map(id => allCategories[id]),
+                    priceRange: newFilters.priceRange,
+                    sortBy: newFilters.sortBy
+                  });
+                }}
+                minPrice={0}
+                maxPrice={1000}
               />
             </aside>
 

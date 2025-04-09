@@ -4,8 +4,13 @@ import CosmicButton from '../ui/cosmic-button';
 import CosmicSlider from '../ui/cosmic-slider';
 import CosmicCheckbox from '../ui/cosmic-checkbox';
 import CosmicHeading from '../ui/cosmic-heading';
-import { ProductCategory } from '@shared/schema';
 import { formatCurrency } from '@/lib/utils';
+
+// Define a simplified ProductCategory type for frontend use
+export interface ProductCategory {
+  id: number;
+  name: string;
+}
 
 export interface FilterOptions {
   categories: number[];
