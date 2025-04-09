@@ -15,6 +15,31 @@ export default function SitemapPage() {
     <div className="max-w-4xl mx-auto py-8 space-y-8">
       <h1 className="text-4xl font-bold mb-8">Sitemap</h1>
 
+      <section className="text-gray-500">
+        <h2 className="text-2xl font-semibold mb-4">Demo Pages</h2>
+        <ul className="space-y-2">
+          <li><Link href="/test/demo/ComponentsCatalog">Components Catalog</Link></li>
+          <li><Link href="/test/demo/CosmicComponentsDemo">Cosmic Components Demo</Link></li>
+        </ul>
+      </section>
+
+      <section className="text-gray-500">
+        <h2 className="text-2xl font-semibold mb-4">Test Pages</h2>
+        <ul className="space-y-2">
+          <li><Link href="/test/AudioComponentsDemo">Audio Components Test</Link></li>
+          <li><Link href="/test/ButtonDemo">Button Test</Link></li>
+          <li><Link href="/test/CosmicTest">Cosmic Features Test</Link></li>
+          <li><Link href="/test/NewComponentsDemo">New Components Test</Link></li>
+        </ul>
+      </section>
+
+      <section className="text-gray-500">
+        <h2 className="text-2xl font-semibold mb-4">Legacy Demo Pages</h2>
+        <ul className="space-y-2">
+          <li><Link href="/archived/test/ButtonDemo">Legacy Button Demo</Link></li>
+        </ul>
+      </section>
+
       <div className="grid gap-8 md:grid-cols-3">
         <section>
           <h2 className="text-2xl font-semibold mb-4">Main Pages</h2>
