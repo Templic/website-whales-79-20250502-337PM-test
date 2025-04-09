@@ -6,16 +6,25 @@
  */
 
 import React from "react"
-import { ProductCard } from "./ProductCard"
+import { Product } from "@/pages/shop/ShopPage"
+import ProductCard from "./ProductCard"
 import { useProducts } from "@/hooks/use-products"
 
-interface ProductGridProps {
-  filters: FilterState // Inherited from ShopPage filters
+interface FilterState {
+  category: string[];
+  priceRange: [number, number];
+  sortBy: string;
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ filters }) => {
+interface ProductGridProps {
+  filters: FilterState;
+  products: Product[];
+  addToCart: (product: Product) => void;
+}
+
+export const ProductGrid: React.FC<ProductGridProps> = ({ filters, products: initialProducts, addToCart }) => {
   // Custom hook for product data fetching and management
-  const { products, loading, error } = useProducts(filters)
+  const { products, loading, error } = useProducts(filters);
 
   // Loading state handler
   if (loading) {
@@ -27,13 +36,17 @@ const ProductGrid: React.FC<ProductGridProps> = ({ filters }) => {
     return <div className="error-message">{error}</div>
   }
 
+  // Determine which products to show - either from the hook or the provided initialProducts
+  const displayProducts = products.length > 0 ? products : initialProducts;
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Map through filtered products and render ProductCards */}
-      {products.map(product => (
+      {displayProducts.map(product => (
         <ProductCard 
           key={product.id}
           product={product}
+          onAddToCart={addToCart}
         />
       ))}
     </div>

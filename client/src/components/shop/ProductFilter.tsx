@@ -281,4 +281,5 @@ const ProductFilter: React.FC<ProductFilterProps> = ({
   );
 };
 
+export { ProductFilter };
 export default ProductFilter;
