@@ -7,18 +7,18 @@
  */
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Book, Mail, Heart, ShoppingBag, Music, MoonStar, Headphones, Facebook, Twitter, Instagram, Youtube, ExternalLink, Shield } from 'lucide-react';
+import { Book, Mail, Heart, ShoppingBag, Music, MoonStar, Headphones, Facebook, Twitter, Instagram, Youtube, ExternalLink } from 'lucide-react';
 import { motion } from "framer-motion";
-import { useMockAuth } from "../../hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth";
 import SacredGeometry from "@/components/ui/sacred-geometry";
 import FlowerOfLifePattern from "@/components/ui/sacred-geometry"; // Assuming this is defined elsewhere
 
 
-export const MainFooter: React.FC = () => {
+const MainFooter: React.FC = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<"idle" | "success" | "error">("idle");
-  const { user } = useMockAuth();
+  const { user } = useAuth();
 
   const communityLinks = [
     { name: "Blog", path: "/blog", icon: <Book className="h-4 w-4 mr-2" /> },

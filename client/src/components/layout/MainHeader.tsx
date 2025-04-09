@@ -1,15 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
-import { useMockAuth } from '../../hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { navigationLinks } from '../../data/navigation';
+import { navigationLinks } from '@/data/navigation';
 
 /* MainHeader: Primary navigation component 
  * Handles main navigation, authentication state, and responsive menu
  * Contains primary navigation links and authentication controls
  */
-export const MainHeader: React.FC = () => {
-  const { user, logout } = useMockAuth();
+const MainHeader: React.FC = () => {
+  const { user, logout } = useAuth();
 
   // Navigation link structure object for top-level menu items
   const primaryNavLinks = navigationLinks.filter(link => !link.parent);

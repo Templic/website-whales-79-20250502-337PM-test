@@ -1,6 +1,3 @@
-// Import process shim before anything else
-import './lib/process-shim';
-
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";

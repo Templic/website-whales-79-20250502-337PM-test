@@ -6,8 +6,8 @@
  */
 
 import React from "react"
-import ProductCard from "./ProductCard"
-import { useProducts, FilterState, Product } from "../../hooks/use-products"
+import { ProductCard } from "./ProductCard"
+import { useProducts } from "@/hooks/use-products"
 
 interface ProductGridProps {
   filters: FilterState // Inherited from ShopPage filters
@@ -40,5 +40,4 @@ const ProductGrid: React.FC<ProductGridProps> = ({ filters }) => {
   )
 }
 
-export { ProductGrid }
 export default ProductGrid

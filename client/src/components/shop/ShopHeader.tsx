@@ -247,5 +247,4 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
   );
 };
 
-export { ShopHeader };
 export default ShopHeader;
