@@ -18,6 +18,7 @@ import { playlists } from "@/data/playlists";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal";
+import SacredGeometry from "@/components/ui/sacred-geometry";
 
 interface ArchivedMusicProps {}
 
@@ -102,43 +103,68 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
           </p>
         </div>
         
-        {/* Hero Image */}
+        {/* Hero Image with Sacred Geometry */}
         <div className="relative h-[500px] w-full overflow-hidden rounded-lg mb-12">
           <img
-            src="uploads/silhouette stars.jpg"
+            src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg"
             alt="Music Archive"
             className="w-full h-full object-cover"
           />
+          
+          {/* Sacred geometry overlays */}
+          <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '30s' }}>
+            <SacredGeometry variant="merkaba" size={120} animated={false} intensity="medium" />
+          </div>
+          <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
+            <SacredGeometry variant="octagon" size={100} animated={false} intensity="medium" />
+          </div>
         </div>
         
         {/* Search and Filter */}
-        <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 mb-8">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input 
-                  type="text"
-                  placeholder="Search by title, frequency or description..."
-                  className="pl-10 bg-black/20 border-white/10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+        <div className="relative mb-8">
+          {/* Octagon shape container with clip-path */}
+          <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
+               clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
+               
+          <div className="relative z-10 p-6">
+            {/* Sacred geometry in the corner */}
+            <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
+              <SacredGeometry variant="octagon" size={80} animated={false} />
+            </div>
+          
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input 
+                    type="text"
+                    placeholder="Search by title, frequency or description..."
+                    className="pl-10 bg-black/20 border-white/10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div>
-              <Button variant="outline" className="w-full border-white/10">
-                <Clock className="mr-2 h-4 w-4" />
-                Sort by Date
-              </Button>
-            </div>
-            
-            <div>
-              <Button variant="outline" className="w-full border-white/10">
-                <Disc className="mr-2 h-4 w-4" />
-                Filter by Type
-              </Button>
+              
+              <div>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-white/10 hover:bg-[#00ebd6]/20 hover:border-[#00ebd6] transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.3)]"
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  Sort by Date
+                </Button>
+              </div>
+              
+              <div>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-white/10 hover:bg-[#00ebd6]/20 hover:border-[#00ebd6] transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.3)]"
+                >
+                  <Disc className="mr-2 h-4 w-4" />
+                  Filter by Type
+                </Button>
+              </div>
             </div>
           </div>
         </div>

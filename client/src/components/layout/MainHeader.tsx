@@ -50,7 +50,8 @@ const primaryNavItems: NavItem[] = [
 // Second row nav items - secondary navigation
 const secondaryNavItems: NavItem[] = [
   { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
-  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "cyan" }
+  { name: "Engage", path: "/engage", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
+  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "purple" }
 ];
 
 // Community links that should be accessible

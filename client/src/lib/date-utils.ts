@@ -1,11 +1,12 @@
 import { format, parseISO, isValid } from "date-fns";
 
-export const formatDisplayDate = (dateString: string | null | undefined) => {
-  if (!dateString) return "Recent";
+export const formatDisplayDate = (date: string | Date | null | undefined) => {
+  if (!date) return "Recent";
   
   try {
-    const date = parseISO(dateString);
-    return isValid(date) ? format(date, 'MMM dd, yyyy') : "Recent";
+    // Handle different types: string or Date object
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    return isValid(dateObj) ? format(dateObj, 'MMM dd, yyyy') : "Recent";
   } catch (e) {
     console.error("Error formatting date:", e);
     return "Recent";

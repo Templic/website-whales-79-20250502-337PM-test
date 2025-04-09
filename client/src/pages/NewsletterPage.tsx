@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
+import SacredGeometry from "@/components/ui/sacred-geometry";
 
 const newsletterSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -60,77 +61,163 @@ export default function NewsletterPage() {
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Newsletter</h1>
-        <div className="space-y-6"> {/* This line has been changed */}
+        <div className="space-y-8">
+          {/* Hero Section with Sacred Geometry */}
           <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
             <img
               src={images[currentImageIndex]}
               alt="Newsletter"
               className="absolute w-full h-full object-cover transition-opacity duration-1000"
             />
+            {/* Sacred geometry overlay */}
+            <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '30s' }}>
+              <SacredGeometry variant="merkaba" size={120} animated={false} intensity="medium" />
+            </div>
+            <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
+              <SacredGeometry variant="octagon" size={100} animated={false} intensity="medium" />
+            </div>
           </div>
-          <section className="text-center">
-            <p className="text-xl mb-8">Stay updated with the latest news, releases, and cosmic adventures!</p>
-          </section>
-
-          <section className="cosmic-glow-box p-8 rounded-xl cosmic-slide-up">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Name</label>
-                  <Input
-                    {...form.register("name")}
-                    className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                    placeholder="Enter your name"
-                  />
-                  {form.formState.errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
-                  )}
+          
+          {/* Newsletter Content Section */}
+          <div className="relative cosmic-glow-box p-8 rounded-xl cosmic-slide-up">
+            {/* Octagon shape container with clip-path */}
+            <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
+                 clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
+                 
+            <div className="relative z-10 p-6">
+              {/* Sacred geometry hidden on mobile for performance */}
+              <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
+                <SacredGeometry variant="octagon" size={80} animated={false} />
+              </div>
+              
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#00ebd6] mb-6 text-center">Cosmic Update: A Journey of Creation</h2>
+              
+              <div className="text-center my-8">
+                <img src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" 
+                  alt="Dale The Whale" 
+                  className="max-w-full h-auto mx-auto rounded-lg shadow-lg"
+                  style={{ maxHeight: '300px', objectFit: 'contain' }} />
+              </div>
+              
+              <div className="space-y-6 text-white">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-[#00ebd6] mb-3">The Birth of the Cosmic Site</h3>
+                  <p className="text-lg">We are thrilled to announce the launch of our new website, a hub where cosmic vibes meet the vibrational frequencies of music! Designed with a modern, visually appealing layout, the site reflects Dale The Whale's artistic journey and commitment to spreading cosmic consciousness.</p>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <Input
-                    {...form.register("email")}
-                    type="email"
-                    className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                    placeholder="Enter your email"
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
-                  )}
+                
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-[#00ebd6] mb-3">New Release: "Feels So Good"</h3>
+                  <p className="text-lg">We are excited to introduce Dale's latest single, "Feels So Good." This track encapsulates the essence of joy and the euphoric experience of connecting with the universe. Available now on all streaming platforms, it promises to uplift your spirit and resonate with your cosmic energy.</p>
                 </div>
+                
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-[#00ebd6] mb-3">Pioneering 'Cosmic Consciousness'</h3>
+                  <p className="text-lg">Dale is not just about music; he is leading a movement toward 'Cosmic Consciousness.' This philosophy encourages exploration of our interconnectedness with the universe through sound, art, and community. Join us in this transformative journey and embrace the collective awakening.</p>
+                </div>
+                
+                <div className="flex justify-center mt-8">
+                  <Button 
+                    onClick={() => window.open("https://www.youtube.com/watch?v=jzpvkq3Krjg", "_blank")}
+                    className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
+                  >
+                    Listen to "Feels So Good"
+                  </Button>
+                </div>
+                
+                <div className="text-center mt-10 italic text-gray-300">
+                  <p className="text-xl">"Let the cosmic waves carry your spirit through the universe"</p>
+                  <p className="mt-4 text-lg">- Dale 🐋</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-                >
-                  Subscribe
-                </Button>
-              </form>
-            </Form>
-          </section>
+          {/* Subscribe Form Section */}
+          <div className="relative">
+            {/* Octagon shape container with clip-path */}
+            <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
+                 clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
+                 
+            <div className="relative z-10 p-8">
+              {/* Sacred geometry hidden on mobile for performance */}
+              <div className="absolute -top-6 -left-6 opacity-10 hidden md:block">
+                <SacredGeometry variant="octagon" size={80} animated={false} />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-[#00ebd6] mb-6 text-center">Subscribe to Our Cosmic Newsletter</h2>
+              <p className="text-xl mb-8 text-center">Stay updated with the latest news, releases, and cosmic adventures!</p>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-md mx-auto">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Name</label>
+                    <Input
+                      {...form.register("name")}
+                      className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                      placeholder="Enter your name"
+                    />
+                    {form.formState.errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.name.message}</p>
+                    )}
+                  </div>
 
-          <section className="bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">
-            <h2 className="text-2xl font-bold text-[#00ebd6] mb-4">What You'll Get</h2>
-            <ul className="space-y-4 list-none">
-              <li className="flex items-start space-x-2">
-                <span className="text-[#fe0064]">★</span>
-                <span>Exclusive behind-the-scenes content</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-[#fe0064]">★</span>
-                <span>Early access to new releases</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-[#fe0064]">★</span>
-                <span>Special subscriber-only offers</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-[#fe0064]">★</span>
-                <span>Updates on upcoming tours and events</span>
-              </li>
-            </ul>
-          </section>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email</label>
+                    <Input
+                      {...form.register("email")}
+                      type="email"
+                      className="w-full p-2 rounded bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                      placeholder="Enter your email"
+                    />
+                    {form.formState.errors.email && (
+                      <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)]"
+                  >
+                    Subscribe
+                  </Button>
+                </form>
+              </Form>
+            </div>
+          </div>
+
+          {/* Benefits Section */}
+          <div className="relative">
+            {/* Octagon shape container with clip-path */}
+            <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
+                 clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
+                 
+            <div className="relative z-10 p-8">
+              {/* Sacred geometry in the corner */}
+              <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
+                <SacredGeometry variant="octagon" size={80} animated={false} />
+              </div>
+              
+              <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">What You'll Get</h2>
+              <ul className="space-y-4 list-none">
+                <li className="flex items-start space-x-2">
+                  <span className="text-[#fe0064]">★</span>
+                  <span>Exclusive behind-the-scenes content</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-[#fe0064]">★</span>
+                  <span>Early access to new releases</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-[#fe0064]">★</span>
+                  <span>Special subscriber-only offers</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <span className="text-[#fe0064]">★</span>
+                  <span>Updates on upcoming tours and events</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </>

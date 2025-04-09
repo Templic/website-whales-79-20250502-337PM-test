@@ -14,7 +14,7 @@ import SocialMediaLinks from "@/components/common/SocialMediaLinks";
 import FanReactions from "@/components/common/FanReactions";
 import FeaturedMerchandise from "@/components/common/FeaturedMerchandise";
 import SacredGeometry from "@/components/ui/sacred-geometry";
-import { FaYoutube, FaInstagram, FaSpotify, FaPodcast, FaMusic, FaEnvelope, FaPhone, FaCalendarAlt } from 'react-icons/fa';
+import { FaYoutube, FaInstagram, FaSpotify, FaPodcast, FaMusic, FaEnvelope, FaPhone, FaCalendarAlt, FaUsers } from 'react-icons/fa';
 
 export default function EngagePage() {
   useEffect(() => {
@@ -53,12 +53,12 @@ export default function EngagePage() {
             />
             <div className="cta-buttons flex flex-wrap gap-4 justify-center">
               <Link to="/newsletter">
-                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg whitespace-nowrap">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap">
                   Join The Whale Pod
                 </button>
               </Link>
               <a href="https://www.instagram.com/dalethewhalemusic" target="_blank" rel="noopener noreferrer">
-                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-colors shadow-lg whitespace-nowrap">
+                <button className="bg-[#00ebd6] text-[#303436] px-6 py-3 rounded-full hover:bg-[#fe0064] hover:text-white transition-all shadow-lg hover:shadow-[0_0_15px_rgba(254,0,100,0.7)] whitespace-nowrap">
                   Share Your Experience
                 </button>
               </a>
@@ -108,29 +108,45 @@ export default function EngagePage() {
             </div>
           </section>
 
-          {/* Connect With Us Section - Removed gradient background */}
-          <section className="social-media p-4 md:p-8 shadow-lg relative overflow-hidden">
-            {/* Reduced sacred geometry */}
-            <div className="absolute bottom-0 right-0 opacity-5 hidden md:block">
-              <SacredGeometry variant="octahedron" size={100} animated={false} />
+          {/* Connect With Us Section - Restored gradient background */}
+          <section className="social-media p-4 md:p-8 shadow-lg backdrop-blur-sm relative overflow-hidden">
+            {/* Background with sacred geometry */}
+            <div className="absolute inset-0 bg-[rgba(10,50,92,0.6)]">
+              <div className="absolute top-0 left-0 opacity-10">
+                <SacredGeometry variant="octagon" size={160} animated={false} />
+              </div>
+              <div className="absolute bottom-0 right-0 opacity-10">
+                <SacredGeometry variant="octagon" size={160} animated={false} />
+              </div>
             </div>
             
             <div className="relative z-10">
-              <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center">Dive Into Our Cosmic Ocean</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#00ebd6] mb-4 text-center">Dive Into Our Cosmic Ocean</h2>
+              <div className="text-center mb-8">
+                <a 
+                  href="/community" 
+                  className="inline-block px-4 py-2 bg-[#00ebd6]/20 text-white hover:text-[#00ebd6] border border-[#00ebd6] rounded-lg shadow-lg transition-all hover:shadow-[0_0_15px_rgba(0,235,214,0.5)] mx-auto"
+                >
+                  <span className="flex items-center">
+                    <FaUsers className="mr-2" />
+                    Visit Our Community
+                  </span>
+                </a>
+              </div>
 
               {/* Dale The Whale Section */}
               <div className="mb-12">
                 <h3 className="text-xl sm:text-2xl font-bold mb-6 text-[#fe0064] text-center border-b border-[#fe0064] pb-2">🐳 Dale The Whale Music & Content 🐳</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
                   <div className="relative group min-h-[270px] flex">
-                    {/* Hexagon shape container with clip-path */}
+                    {/* Octagon shape container with clip-path */}
                     <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
-                         clip-path-hexagon border-2 border-[#00ebd6]/30 z-0"></div>
+                         clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                     
                     <div className="relative z-10 p-4 sm:p-6 py-8 flex flex-col items-center w-full">
                       {/* Sacred geometry hidden on mobile for performance */}
                       <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
-                        <SacredGeometry variant="hexagon" size={60} animated={false} />
+                        <SacredGeometry variant="octagon" size={60} animated={false} />
                       </div>
                       
                       <h4 className="text-lg font-bold mb-4 text-[#00ebd6] text-center">Cosmic Social Channels</h4>
@@ -162,14 +178,14 @@ export default function EngagePage() {
                   </div>
 
                   <div className="relative group min-h-[270px] flex">
-                    {/* Pentagon shape container with clip-path */}
+                    {/* Octagon shape container with clip-path */}
                     <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
-                         clip-path-pentagon border-2 border-[#00ebd6]/30 z-0"></div>
+                         clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                     
                     <div className="relative z-10 p-4 sm:p-6 py-8 flex flex-col items-center w-full">
                       {/* Sacred geometry hidden on mobile for performance */}
                       <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
-                        <SacredGeometry variant="pentagon" size={60} animated={false} />
+                        <SacredGeometry variant="octagon" size={60} animated={false} />
                       </div>
                       
                       <h4 className="text-lg font-bold mb-4 text-[#00ebd6] text-center">Ethereal Sounds & Words</h4>
@@ -237,14 +253,14 @@ export default function EngagePage() {
                   </div>
 
                   <div className="relative group min-h-[230px] flex">
-                    {/* Heptagon shape container with clip-path */}
+                    {/* Octagon shape container with clip-path */}
                     <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
-                         clip-path-heptagon border-2 border-[#00ebd6]/30 z-0"></div>
+                         clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                     
                     <div className="relative z-10 p-4 sm:p-6 py-8 flex flex-col items-center w-full">
                       {/* Sacred geometry hidden on mobile for performance */}
                       <div className="absolute -bottom-6 -right-6 opacity-10 hidden md:block">
-                        <SacredGeometry variant="heptagon" size={60} animated={false} />
+                        <SacredGeometry variant="octagon" size={60} animated={false} />
                       </div>
                       
                       <h4 className="text-lg font-bold mb-4 text-[#00ebd6] text-center">Universal Connections</h4>
@@ -279,8 +295,39 @@ export default function EngagePage() {
             </div>
           </section>
 
-          {/* Featured Merchandise Component (moved to the bottom) */}
-          <FeaturedMerchandise />
+          {/* Featured Merchandise - Images made clickable to Etsy */}
+          <div className="featured-merchandise-banners grid md:grid-cols-2 gap-6 mb-12">
+            <a
+              href="https://www.etsy.com/listing/1814098203/dale-loves-whale-digital-art?ls=r&content_source=6ac43cb79853f47bac6e7ec5dc1b9ff1195be02a%253A1814098203"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-xl"
+            >
+              <img 
+                src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg" 
+                alt="Orca Sunrise Cove by Dale The Whale on Etsy" 
+                className="w-full h-48 object-cover rounded-xl transition-transform duration-500 group-hover:scale-110" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                <span className="text-white p-4 font-bold">Shop on Etsy →</span>
+              </div>
+            </a>
+            <a
+              href="https://www.etsy.com/listing/1823352422/dale-loves-whales-divine-digital-cosmic"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-xl"
+            >
+              <img 
+                src="https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg" 
+                alt="Dale Loves Whales Divine Digital Cosmic Art" 
+                className="w-full h-48 object-cover rounded-xl transition-transform duration-500 group-hover:scale-110" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                <span className="text-white p-4 font-bold">Shop on Etsy →</span>
+              </div>
+            </a>
+          </div>
         </div>
       </div>
     </>

@@ -1,0 +1,38 @@
+import React from 'react';
+import { Button } from '@/components/ui/button';
+
+const Newsletter: React.FC = () => {
+  return (
+    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '600px', margin: '0 auto', padding: '20px', color: '#333', backgroundColor: '#f9f9f9' }}>
+      <h1 style={{ color: '#4A90E2', textAlign: 'center' }}>Cosmic Update: A Journey of Creation</h1>
+      <div style={{ textAlign: 'center', margin: '20px 0' }}>
+        <img src="https://via.placeholder.com/600x300" alt="Dale The Whale" style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px' }} />
+      </div>
+
+      <h2 style={{ color: '#4A90E2' }}>The Birth of the Cosmic Site</h2>
+      <p>We are thrilled to announce the launch of our new website, a hub where cosmic vibes meet the vibrational frequencies of music! Designed with a modern, visually appealing layout, the site reflects Dale The Whale's artistic journey and commitment to spreading cosmic consciousness.</p>
+      
+      <h2 style={{ color: '#4A90E2' }}>New Release: "Feels So Good"</h2>
+      <p>We are excited to introduce Dale's latest single, "Feels So Good." This track encapsulates the essence of joy and the euphoric experience of connecting with the universe. Available now on all streaming platforms, it promises to uplift your spirit and resonate with your cosmic energy.</p>
+
+      <h2 style={{ color: '#4A90E2' }}>Pioneering 'Cosmic Consciousness'</h2>
+      <p>Dale is not just about music; he is leading a movement toward 'Cosmic Consciousness.' This philosophy encourages exploration of our interconnectedness with the universe through sound, art, and community. Join us in this transformative journey and embrace the collective awakening.</p>
+
+      <p style={{ textAlign: 'center' }}>
+        <Button 
+          onClick={() => window.open("https://www.yourwebsite.com/music/feels-so-good", "_blank")}
+          style={{ display: 'inline-block', marginTop: '10px', padding: '10px 20px', backgroundColor: '#4A90E2', color: 'white', textDecoration: 'none', borderRadius: '4px' }}
+        >
+          Listen to "Feels So Good"
+        </Button>
+      </p>
+
+      <div style={{ textAlign: 'center', marginTop: '30px', fontStyle: 'italic', color: '#666' }}>
+        <p>"Let the cosmic waves carry your spirit through the universe"</p>
+        <p style={{ marginTop: '15px' }}>- Dale 🐋</p>
+      </div>
+    </div>
+  );
+};
+
+export default Newsletter;
