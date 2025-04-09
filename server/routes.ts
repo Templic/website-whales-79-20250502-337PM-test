@@ -1490,12 +1490,16 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Shop routes
   const router = express.Router();
   // Forward /api/products to /api/shop/products for compatibility
-  app.get('/api/products', (req, res) => {
-    req.url = '/api/shop/products';
-    app.handle(req, res);
+  app.get('/api/products', (req, res, next) => {
+    res.redirect('/api/shop/products');
+  });
+  
+  // Test page route
+  app.get('/test-shop', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'test-page.html'));
   });
 
-  app.use('/api/shop', router);
+  app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
 
   // Security routes

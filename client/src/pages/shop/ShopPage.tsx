@@ -73,7 +73,7 @@ const sampleProducts: Product[] = [
     name: "Celestial Crystal Sound Bowl",
     description: "Hand-crafted crystal bowl tuned to 432Hz frequency for deep healing vibrations. Each bowl is cleansed and charged under the full moon.",
     price: 129.99,
-    image: "/images/products/crystal-bowl.jpg", // Crystal singing bowl
+    image: "/images/products/samples/crystal-bowl.jpg",
     rating: 4.8,
     inStock: true,
     categories: ["Healing Tools", "Sound Therapy", "Premium"],
@@ -89,7 +89,7 @@ const sampleProducts: Product[] = [
     name: "Cosmic Energy Pendant",
     description: "Handcrafted pendant containing specialized crystals that resonate with cosmic frequencies. Designed to balance your energy field and enhance intuition.",
     price: 45.99,
-    image: "/images/products/energy-pendant.jpg",
+    image: "/images/products/samples/cosmic-pendant.jpg",
     rating: 4.6,
     inStock: true,
     categories: ["Jewelry", "Energy Tools"],
@@ -105,7 +105,7 @@ const sampleProducts: Product[] = [
     name: "Cosmic Frequency Digital Album",
     description: "A collection of 12 tracks specifically designed to activate different energy centers. Features binaural beats and isochronic tones layered with ambient sounds.",
     price: 18.99,
-    image: "/images/products/cosmic-frequency-album.png",
+    image: "/images/products/samples/album-cover.jpg",
     rating: 4.9,
     inStock: true,
     categories: ["Digital", "Music", "Featured"],
@@ -121,7 +121,7 @@ const sampleProducts: Product[] = [
     name: "Meditation Cushion Set",
     description: "Ergonomically designed meditation cushion set with cosmic pattern. Created for proper alignment during extended meditation sessions.",
     price: 89.99,
-    image: "/images/products/meditation-cushion.jpg",
+    image: "/images/products/samples/meditation-cushion.jpg",
     rating: 4.7,
     inStock: true,
     categories: ["Meditation", "Home"],
@@ -136,7 +136,7 @@ const sampleProducts: Product[] = [
     name: "Sacred Geometry Wall Art",
     description: "Hand-painted sacred geometry artwork design to enhance the energetic field of your space. Available in multiple geometric patterns.",
     price: 149.99,
-    image: "/images/products/sacred-geometry.jpg",
+    image: "/images/products/samples/sacred-geometry.jpg",
     rating: 4.9,
     inStock: false,
     categories: ["Art", "Home", "Premium"],
@@ -152,7 +152,7 @@ const sampleProducts: Product[] = [
     name: "Cosmic Journey Journal",
     description: "Beautifully designed journal with prompts to document your spiritual journey, dreams, and cosmic insights. Includes moon phase tracking.",
     price: 24.99,
-    image: "/images/products/cosmic-journal.jpg",
+    image: "/images/products/samples/spiritual-journal.jpg",
     rating: 4.5,
     inStock: true,
     categories: ["Books", "Self-Development"],
@@ -182,7 +182,8 @@ interface FilterState {
 const ShopPage: React.FC = () => {
   const [, params] = useRoute('/shop/:category?');
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>(sampleProducts);
+  // Always use the sample products for demonstration
+  const [products] = useState<Product[]>(sampleProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(sampleProducts);
   const [cart, setCart] = useState<CartItem[]>(() => {
     // Load cart from localStorage on initial render
