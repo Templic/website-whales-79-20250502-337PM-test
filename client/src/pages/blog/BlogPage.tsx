@@ -12,9 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDisplayDate } from "@/lib/date-utils";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 import SacredGeometry from "@/components/ui/sacred-geometry";
+import { useLocation } from "wouter";
 
 export default function BlogPage() {
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const { data: posts, isLoading, error } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
     queryFn: async () => {
@@ -102,7 +104,17 @@ export default function BlogPage() {
                   <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
                   
                   <div className="text-gray-300 mb-4">
-                    {post.content}
+                    {typeof post.content === 'string' 
+                     ? post.content
+                        .replace(/<p>/g, '')
+                        .replace(/<\/p>/g, ' ')
+                        .replace(/<br\s*\/?>/g, ' ')
+                        .replace(/<div>/g, '')
+                        .replace(/<\/div>/g, ' ')
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                     : post.content}
                   </div>
                   
                   <div className="flex justify-between items-center mt-6">
@@ -111,6 +123,7 @@ export default function BlogPage() {
                     </p>
                     <Button 
                       className="text-sm bg-transparent border border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6]/10 hover:shadow-[0_0_10px_rgba(0,235,214,0.4)]"
+                      onClick={() => navigate(`/blog/${post.id}`)}
                     >
                       Read More
                     </Button>
