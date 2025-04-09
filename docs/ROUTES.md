@@ -13,12 +13,13 @@ The routes are organized into several categories:
 1. **Main Pages**: Core application pages
 2. **Music & Experience**: Music and cosmic experience pages
 3. **Community Pages**: Community-related features
-4. **Blog**: Blog posts and listings
-5. **Shop Routes**: E-commerce functionality
-6. **User Account**: Authentication and user portal
-7. **Admin Routes**: Administrative functions
-8. **Legal & Info**: Terms, privacy, and site information
-9. **Demo Pages**: Component demonstrations
+4. **Resource Pages**: Educational and informational resources
+5. **Blog**: Blog posts and listings
+6. **Shop Routes**: E-commerce functionality
+7. **User Account**: Authentication and user portal
+8. **Admin Routes**: Administrative functions
+9. **Legal & Info**: Terms, privacy, and site information
+10. **Demo Pages**: Component demonstrations
 
 ## Active Routes
 
@@ -52,6 +53,15 @@ The routes are organized into several categories:
 | `/cosmic-immersive-experience` | `CosmicImmersivePage` | Alternative path to immersive experience |
 | `/cosmic-experience-immersive` | `CosmicImmersivePage` | Another path to immersive experience |
 
+### Resource Pages
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/resources` | `ResourcesPage` | Main resources page |
+| `/resources/frequency-guide` | `FrequencyGuidePage` | Frequency guide |
+| `/resources/sacred-geometry` | `SacredGeometryPage` | Sacred geometry information |
+| `/resources/sound-healing` | `SoundHealingPage` | Sound healing resources |
+| `/resources/meditation` | `MeditationTechniquesPage` | Meditation techniques |
+
 ### Blog
 | Route | Component | Description |
 |-------|-----------|-------------|
@@ -62,11 +72,13 @@ The routes are organized into several categories:
 | Route | Component | Description |
 |-------|-----------|-------------|
 | `/shop` | `ShopPage` | Main shop page |
-| `/shop/product/:slug` | `ProductPage` | Individual product page |
+| `/shop/product/:productId` | `ProductDetailPage` | Individual product page |
 | `/cart` | `CartPage` | Shopping cart |
 | `/shop/cart` | `CartPage` | Alternative path to cart |
 | `/checkout` | `CheckoutPage` | Checkout process |
 | `/shop/checkout` | `CheckoutPage` | Alternative path to checkout |
+| `/shop/order/:orderId` | `OrderConfirmationPage` | Order confirmation page |
+| `/shop/track-order` | `OrderTrackingPage` | Order tracking page |
 | `/collaborative-shopping` | `CollaborativeShoppingPage` | Collaborative shopping experience |
 | `/shop/collaborative` | `CollaborativeShoppingPage` | Alternative path to collaborative shopping |
 | `/shop/collaborative/room/:roomId` | `CollaborativeShoppingPage` | Specific collaborative shopping room |
@@ -75,6 +87,7 @@ The routes are organized into several categories:
 | Route | Component | Description |
 |-------|-----------|-------------|
 | `/auth` | `AuthPage` | Authentication page |
+| `/login` | `LoginPage` | Login page |
 | `/recover-password` | `PasswordRecoveryPage` | Password recovery |
 | `/reset-password` | `PasswordRecoveryPage` | Password reset |
 | `/portal` | `UserPortal` | Protected user portal |
@@ -84,6 +97,7 @@ The routes are organized into several categories:
 |-------|-----------|-------------|
 | `/admin` | `AdminPortalPage` | Admin dashboard |
 | `/admin/analytics` | `AnalyticsPage` | Analytics dashboard |
+| `/admin/security` | `SecuritySettingsPage` | Security settings |
 | `/admin/users` | `UsersPage` | User management |
 | `/admin/posts` | `PostsPage` | Post management |
 | `/admin/music` | `MusicPage` | Music management |
@@ -94,6 +108,7 @@ The routes are organized into several categories:
 | `/sitemap` | `SitemapPage` | Site navigation map |
 | `/terms` | `TermsOfService` | Terms of service |
 | `/privacy` | `PrivacyPolicy` | Privacy policy |
+| `/data-request` | `DataRequestPage` | Data access request |
 
 ### Demo Pages
 | Route | Component | Description |
@@ -131,3 +146,7 @@ When deprecating routes:
 2. Add a comment indicating the replacement route (if applicable)
 3. Update this documentation to move the route to the deprecated section
 4. Retain the component for reference
+
+---
+
+*Last updated: 2025-04-09*

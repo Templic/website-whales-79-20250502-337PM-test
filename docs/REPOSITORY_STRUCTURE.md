@@ -6,62 +6,99 @@ This document provides a comprehensive overview of the repository structure and 
 
 ```
 /
-├── .config/                      # Configuration files
-├── .storybook/                   # Storybook configuration
+├── attached_assets/              # Project assets
 ├── client/                       # Frontend code
+│   ├── public/                   # Public static assets
+│   │   └── images/               # Image assets
 │   └── src/
+│       ├── assets/               # Frontend assets
 │       ├── components/           # React components
+│       │   ├── admin/            # Admin components
+│       │   ├── audio/            # Audio components
+│       │   ├── auth/             # Authentication components
+│       │   ├── common/           # Common utility components
+│       │   ├── community/        # Community features
+│       │   ├── cosmic/           # Cosmic-themed components
+│       │   ├── demo/             # Demonstration components
 │       │   ├── features/         # Feature-specific components
-│       │   │   ├── audio/        # Audio-related components
-│       │   │   ├── blog/         # Blog-related components
-│       │   │   ├── cosmic/       # Cosmic-themed components
-│       │   │   ├── music/        # Music-related components
-│       │   │   ├── shop/         # Shop-related components
-│       │   │   └── ...
+│       │   │   ├── admin/        # Admin feature components
+│       │   │   ├── audio/        # Audio feature components
+│       │   │   ├── community/    # Community feature components
+│       │   │   ├── cosmic/       # Cosmic feature components
+│       │   │   ├── design-system/# Design system components
+│       │   │   ├── immersive/    # Immersive experience components
+│       │   │   ├── music/        # Music feature components
+│       │   │   ├── privacy/      # Privacy-related components
+│       │   │   └── shop/         # Shop components
+│       │   ├── immersive/        # Immersive experience components
 │       │   ├── layout/           # Layout components
-│       │   ├── ui/               # UI components (shadcn)
-│       │   └── ...
+│       │   ├── music/            # Music components
+│       │   ├── shop/             # Shop components
+│       │   ├── system/           # System components
+│       │   └── ui/               # UI components (shadcn)
+│       ├── contexts/             # React contexts
+│       ├── data/                 # Data files
+│       ├── features/             # Feature modules
 │       ├── hooks/                # Custom React hooks
 │       ├── lib/                  # Utility functions
 │       ├── pages/                # Page components
+│       │   ├── admin/            # Admin pages
 │       │   ├── archived/         # Archived pages
-│       │   ├── HomePage.tsx      # Home page
-│       │   ├── AboutPage.tsx     # About page
-│       │   └── ...
+│       │   ├── blog/             # Blog pages
+│       │   ├── community/        # Community pages
+│       │   ├── experience/       # Experience pages
+│       │   ├── music/            # Music pages
+│       │   ├── resources/        # Resource pages
+│       │   ├── shop/             # Shop pages
+│       │   └── test/             # Test pages
 │       ├── store/                # State management
+│       ├── styles/               # CSS styles
 │       ├── types/                # TypeScript type definitions
 │       ├── App.tsx               # Main application component
 │       └── main.tsx              # Application entry point
+├── config/                       # Configuration files
+├── dev docs/                     # Development documentation
 ├── docs/                         # Documentation
 │   ├── examples/                 # Example code and templates
+│   ├── replit-integration/       # Replit integration documentation
 │   ├── ARCHITECTURE.md           # Architecture documentation
 │   ├── COMPONENT_DOCUMENTATION_GUIDE.md # Documentation guidelines
-│   ├── IMPLEMENTATION_PLAN.md    # Implementation plan
 │   ├── README.md                 # Documentation index
-│   ├── REPOSITORY_REORGANIZATION_PLAN.md # Reorganization plan
 │   ├── REPOSITORY_STRUCTURE.md   # This file
 │   ├── ROUTES.md                 # Routes documentation
 │   └── UPDATING_DOCUMENTATION.md # Documentation update guidelines
-├── public/                       # Static assets
+├── logs/                         # Application logs
+│   ├── error/                    # Error logs
+│   └── security/                 # Security logs
+├── migrations/                   # Database migrations
+├── public/                       # Public static assets
+│   ├── audio/                    # Audio files
+│   └── images/                   # Image assets
+├── reports/                      # Security and analytics reports
 ├── scripts/                      # Utility scripts
 ├── server/                       # Backend code
-│   ├── controllers/              # Request handlers
-│   ├── middlewares/              # Express middlewares
+│   ├── middleware/               # Express middleware
+│   ├── middlewares/              # Additional middlewares
+│   ├── routes/                   # Route modules
+│   ├── security/                 # Security modules
+│   ├── types/                    # TypeScript type definitions
 │   ├── routes.ts                 # API route definitions
 │   ├── storage.ts                # Data storage interface
-│   ├── vite.ts                   # Vite server setup
-│   └── ...
+│   └── vite.ts                   # Vite server setup
 ├── shared/                       # Shared code
-│   ├── schema.ts                 # Database schema
-│   └── ...
+│   └── schema.ts                 # Database schema
 ├── static/                       # Static files
+│   ├── css/                      # CSS files
+│   ├── images/                   # Image files
+│   └── js/                       # JavaScript files
 ├── templates/                    # Template files
 ├── uploads/                      # User uploads
-├── .gitignore                    # Git ignore file
 ├── app.py                        # Flask application
 ├── drizzle.config.ts             # Drizzle ORM configuration
 ├── forms.py                      # Flask forms
 ├── package.json                  # NPM package configuration
+├── postcss.config.js             # PostCSS configuration
+├── README.md                     # Repository readme
 ├── tailwind.config.ts            # Tailwind CSS configuration
 ├── theme.json                    # Theme configuration
 ├── tsconfig.json                 # TypeScript configuration
@@ -74,44 +111,77 @@ This document provides a comprehensive overview of the repository structure and 
 
 The `client` directory contains all the frontend code, organized as follows:
 
-- `src/components`: React components, organized by feature
-- `src/hooks`: Custom React hooks
-- `src/lib`: Utility functions
-- `src/pages`: Page components that map to routes
+- `src/components`: React components, organized by type and feature
+  - `components/admin`: Admin interface components
+  - `components/audio`: Audio playback and visualization components
+  - `components/cosmic`: Cosmic-themed UI components
+  - `components/features`: Feature-specific components organized by domain
+  - `components/layout`: Layout components like Header, Footer, and Sidebar
+  - `components/shop`: E-commerce components
+  - `components/ui`: Shadcn UI components and custom UI elements
+- `src/contexts`: React context providers for state management
+- `src/data`: Static data files and content
+- `src/hooks`: Custom React hooks for shared functionality
+- `src/lib`: Utility functions and helpers
+- `src/pages`: Page components organized by section
+  - `pages/admin`: Administration pages
+  - `pages/blog`: Blog and content pages
+  - `pages/community`: Community features
+  - `pages/music`: Music-related pages
+  - `pages/resources`: Educational resource pages
+  - `pages/shop`: E-commerce pages
 - `src/store`: State management
+- `src/styles`: CSS and styling utilities
 - `src/types`: TypeScript type definitions
-- `src/App.tsx`: Main application component defining routes
+- `src/App.tsx`: Main application component with route definitions
 - `src/main.tsx`: Application entry point
 
 ### Server
 
 The `server` directory contains all the backend code, organized as follows:
 
-- `controllers`: Request handlers
-- `middlewares`: Express middlewares
-- `routes.ts`: API route definitions
+- `middleware`: Express middleware for request processing
+- `middlewares`: Additional specialized middleware
+- `routes`: Route module definitions
+- `security`: Security-related modules and utilities
+- `types`: TypeScript type definitions
+- `routes.ts`: Main API route definitions
 - `storage.ts`: Data storage interface
+- `auth.ts`: Authentication logic
+- `security.ts`: Security implementation
+- `validation.ts`: Data validation utilities
 - `vite.ts`: Vite server setup
 
 ### Shared
 
 The `shared` directory contains code shared between the frontend and backend:
 
-- `schema.ts`: Database schema definitions with Drizzle ORM
+- `schema.ts`: Database schema definitions with Drizzle ORM and type definitions
 
-### Docs
+### Docs and Reports
 
-The `docs` directory contains all documentation:
+The project contains multiple documentation directories:
 
-- `examples`: Example code and templates
-- `ARCHITECTURE.md`: Architecture documentation
-- `COMPONENT_DOCUMENTATION_GUIDE.md`: Documentation guidelines
-- `IMPLEMENTATION_PLAN.md`: Implementation plan
-- `README.md`: Documentation index
-- `REPOSITORY_REORGANIZATION_PLAN.md`: Reorganization plan
-- `REPOSITORY_STRUCTURE.md`: Repository structure overview
-- `ROUTES.md`: Routes documentation
-- `UPDATING_DOCUMENTATION.md`: Documentation update guidelines
+- `docs`: Core documentation
+  - `examples`: Example code and templates
+  - `replit-integration`: Replit platform integration docs
+  - `ARCHITECTURE.md`: Architecture documentation
+  - `ROUTES.md`: Routes documentation
+  - Other guides and documentation files
+- `reports`: Security reports and audits
+  - `security_implementation_report.md`: Security implementation details
+  - `vulnerability_remediation_plan.md`: Security vulnerability plans
+  - `security_best_practices_guide.md`: Best practices
+- `dev docs`: Development-specific documentation and plans
+
+### Static Assets
+
+Static assets are stored in multiple locations:
+
+- `public`: Main public assets directory with audio and images
+- `client/public`: Client-specific public assets
+- `static`: Additional static files organized by type (CSS, JS, images)
+- `uploads`: User-uploaded content
 
 ## Component Organization
 
@@ -186,3 +256,7 @@ When modifying existing features:
 ## Conclusion
 
 This repository structure provides a clear organization for the codebase, with components organized by feature and clear documentation. Following these conventions ensures consistency and maintainability.
+
+---
+
+*Last updated: 2025-04-09*
