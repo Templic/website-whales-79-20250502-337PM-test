@@ -1,154 +1,160 @@
 # Updating Documentation Guide
 
-This guide provides instructions on how to update documentation when making changes to the repository structure, components, or architecture.
+This guide provides instructions for maintaining and updating documentation throughout the codebase.
+
+## Documentation Locations
+
+The project documentation is organized in these key locations:
+
+- `/docs/` - Core documentation and guides
+- `/dev docs/` - Development-specific documentation
+- `/reports/` - Security and audit reports
+- `/scripts/README.md` - Utility scripts documentation
+- Component-level README files - Feature-specific documentation
 
 ## When to Update Documentation
 
-Documentation should be updated in the following cases:
+Documentation updates are required when:
 
-1. Adding new features or components
-2. Modifying existing components
-3. Reorganizing directory structure
-4. Deprecating components or features
-5. Changing API endpoints
-6. Updating the database schema
+1. Adding or modifying components/features
+2. Changing security implementations
+3. Updating UI/UX elements
+4. Modifying API endpoints
+5. Restructuring the codebase
+6. Implementing new workflows
+7. Adding new resource pages
+8. Updating accessibility features
 
-## Documentation Files to Update
+## Documentation Update Process
 
-### Repository Structure Documentation
+### 1. Identify Documentation Scope
 
-When changing the repository structure:
+- Determine which documentation files need updates
+- Review related component README files
+- Check for impacts on security documentation
+- Assess effects on architecture documentation
 
-1. Update `docs/REPOSITORY_STRUCTURE.md` with the new directory structure
-2. Update any affected feature README files
-3. Create README files for new directories
+### 2. Update Component Documentation
 
-Example update to REPOSITORY_STRUCTURE.md:
-
-```diff
- client/src/
- ├── components/
- │   ├── features/
- │   │   ├── shop/
-+│   │   ├── payment/        # New payment processing components
- │   │   ├── music/
- │   │   └── ...
-```
-
-### Component Documentation
-
-When adding or modifying components:
-
-1. Update or create component JSDoc comments
-2. Update the corresponding feature README.md
-3. Update `docs/COMPONENT_DOCUMENTATION_GUIDE.md` if documentation standards change
-
-Example component documentation:
+When updating components, ensure:
 
 ```tsx
 /**
- * @file PaymentForm.tsx
- * @description Handles payment form processing and validation
- * @author Jane Smith
- * @created 2025-04-10
- * @status Active
+ * @file ComponentName.tsx
+ * @description Component purpose and functionality
+ * @author [Author Name]
+ * @updated [YYYY-MM-DD]
  */
+```
 
+### 3. Update Feature Documentation
+
+For feature-level changes:
+
+1. Update the feature's README.md
+2. Document any new dependencies
+3. Update relevant sections in architecture docs
+4. Add security considerations if applicable
+
+### 4. Security Documentation Updates
+
+When updating security-related features:
+
+1. Update relevant files in `/reports/`
+2. Document compliance impacts
+3. Update security implementation details
+4. Maintain sensitive information handling guidelines
+
+### 5. Resource Documentation
+
+For resource page updates:
+
+1. Update relevant files in `/client/src/pages/resources/`
+2. Document any new media assets
+3. Update accessibility documentation
+4. Verify content accuracy
+
+### 6. Testing Documentation
+
+Include in documentation updates:
+
+1. New test scenarios
+2. Updated test procedures
+3. Changes to testing requirements
+4. Accessibility testing guidelines
+
+## Documentation Standards
+
+### Component Documentation
+
+Use consistent formatting:
+
+```tsx
 /**
- * PaymentForm
+ * ComponentName
  * 
- * A form component for processing payments securely.
- * Integrates with the payment gateway API.
- * 
+ * @description Detailed component description
  * @example
- * ```tsx
- * <PaymentForm 
- *   amount={50}
- *   currency="USD"
- *   onSuccess={handleSuccess}
- * />
- * ```
+ * <ComponentName prop="value" />
+ * @props {PropType} propName - Prop description
  */
 ```
 
-### Route Documentation
+### File Organization
 
-When changing routes:
+Maintain documentation hierarchy:
 
-1. Update `docs/ROUTES.md` with the new routes
-2. Update the route comments in `App.tsx`
-
-Example update to ROUTES.md:
-
-```diff
- ### Shop Routes
- | Route | Component | Description |
- |-------|-----------|-------------|
- | `/shop` | `ShopPage` | Main shop page |
-+| `/shop/payment` | `PaymentPage` | Payment processing page |
- | `/shop/product/:slug` | `ProductPage` | Individual product page |
+```
+/docs/
+  ├── core/          - Core documentation
+  ├── features/      - Feature documentation
+  ├── security/      - Security documentation
+  └── README.md      - Documentation index
 ```
 
-### Architecture Documentation
+### Version Control
 
-When changing architectural components:
+Include in documentation updates:
+- Last modified date
+- Version number (if applicable)
+- Change summary
+- Author information
 
-1. Update `docs/ARCHITECTURE.md` with the new architecture
-2. Update any affected diagrams or flowcharts
+## Review Process
 
-Example update to ARCHITECTURE.md:
+Before finalizing documentation:
 
-```diff
- ### API Structure
- 
- ```
- /api
- ├── /auth
- │   ├── POST /login
- │   ├── POST /logout
- │   └── POST /register
- ├── /users
-+├── /payments
-+│   ├── POST /process
-+│   └── GET /status/:id
- ├── /music
- ```
-```
+1. Verify technical accuracy
+2. Check cross-references
+3. Validate examples
+4. Confirm formatting
+5. Review security implications
 
-## Documentation Process
+## Automated Documentation
 
-### 1. Identify Documentation Needs
+When using automated tools:
 
-Before making changes, identify which documentation will need to be updated.
+1. Verify generated content
+2. Update timestamps
+3. Check cross-references
+4. Validate links
 
-### 2. Update Documentation In Sync with Code Changes
-
-Update documentation as part of the same commit or pull request as the code changes. This ensures documentation stays in sync with the code.
-
-### 3. Review Documentation Changes
-
-When reviewing code changes, also review documentation changes for accuracy and completeness.
-
-### 4. Test Documentation
-
-Ensure that any code examples in documentation are correct and up-to-date with the current API.
+---
+*Last updated: [Current Date]*
 
 ## Documentation Best Practices
 
 ### Keep It Simple and Clear
-
 - Use clear, concise language
 - Use examples to illustrate usage
 - Use lists and tables for easy scanning
 
 ### Maintain Consistency
-
 - Follow the established documentation format
 - Use consistent terminology
 - Adhere to the directory structure conventions
 
 ### Document Decisions
-
 When making significant changes, document the reasoning:
 
 ```markdown
@@ -162,7 +168,6 @@ The v1 API has been deprecated in favor of the v2 API for the following reasons:
 ```
 
 ### Update Changelogs
-
 When making significant changes, update the changelog with:
 
 ```markdown
