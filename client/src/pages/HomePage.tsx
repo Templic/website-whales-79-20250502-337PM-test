@@ -22,10 +22,7 @@ export default function HomePage() {
 
 
         {/* Hero Section */}
-        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8"
-          style={{
-            background: `linear-gradient(rgba(48, 52, 54, 0.7), rgba(10, 50, 92, 0.8))`
-          }}>
+        <section className="hero min-h-[90vh] relative flex items-center justify-center text-center text-white mb-8">
           <GeometricSection
             variant="cosmic"
             shape="hexagon"
@@ -39,7 +36,7 @@ export default function HomePage() {
             <p className="text-[clamp(1rem,2vw,1.4rem)] mb-8 max-w-[800px] mx-auto leading-relaxed font-cormorant px-4 whitespace-normal text-[#00ebd6]">
               🐋 Immerse yourself in the sonic universe of Dale Loves Whales 🎵 Experience the vibe, explore the depths, and join us on a journey through sound and consciousness ✨
             </p>
-            <Link href="/music"
+            <Link href="/archived-music"
               className="cta-button bg-[#00ebd6] text-[#303436] px-8 py-3 text-xl rounded-[50px] border-none
                 cursor-pointer transition-colors duration-300 hover:bg-[#fe0064] hover:text-white
                 shadow-[0_0_15px_#00ebd6] hover:shadow-[0_0_20px_#fe0064] inline-block">
@@ -99,7 +96,7 @@ export default function HomePage() {
               <div className="flex justify-center gap-4 flex-wrap">
                 <Link href="/music-release">
                   <Button variant="outline" className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd6]/20 min-w-[140px]">
-                    New Releases
+                    New Music
                   </Button>
                 </Link>
                 <Link href="/tour">
@@ -107,7 +104,7 @@ export default function HomePage() {
                     Tour Dates
                   </Button>
                 </Link>
-                <Link href="/cosmic-experience">
+                <Link href="/cosmic-connectivity">
                   <Button variant="outline" className="text-[#e15554] border-[#e15554] hover:bg-[#e15554]/20 min-w-[140px]">
                     Cosmic Experience
                   </Button>
