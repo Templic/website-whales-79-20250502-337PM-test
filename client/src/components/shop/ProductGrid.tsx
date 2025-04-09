@@ -17,12 +17,11 @@ interface FilterState {
 }
 
 interface ProductGridProps {
-  filters: FilterState;
+  filters?: FilterState;
   products: Product[];
-  addToCart: (product: Product) => void;
 }
 
-export const ProductGrid: React.FC<ProductGridProps> = ({ filters, products: initialProducts, addToCart }) => {
+export const ProductGrid: React.FC<ProductGridProps> = ({ filters = { category: [], priceRange: [0, 1000], sortBy: "popular" }, products: initialProducts }) => {
   // Custom hook for product data fetching and management
   const { products, loading, error } = useProducts(filters);
 
@@ -47,7 +46,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({ filters, products: ini
           <ProductCard 
             key={product.id}
             product={product}
-            onAddToCart={addToCart}
           />
         ))
       ) : (

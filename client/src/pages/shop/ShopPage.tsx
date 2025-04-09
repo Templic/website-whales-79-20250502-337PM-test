@@ -16,6 +16,7 @@ import ProductComparison from "@/components/shop/ProductComparison";
 import EnhancedShoppingVenn from "@/components/shop/EnhancedShoppingVenn";
 import "@/components/shop/shop-animations.css";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -185,14 +186,8 @@ const ShopPage: React.FC = () => {
   // Always use the sample products for demonstration
   const [products] = useState<Product[]>(sampleProducts);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(sampleProducts);
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    // Load cart from localStorage on initial render
-    if (typeof window !== 'undefined') {
-      const savedCart = localStorage.getItem('cosmic-cart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    }
-    return [];
-  });
+  // Use cart context
+  const { items: cart, addToCart: addItemToCart, removeFromCart, getCartTotal, getItemCount } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [sortOrder, setSortOrder] = useState<string>("featured");
@@ -263,38 +258,8 @@ const ShopPage: React.FC = () => {
 
   // The filtered products are managed by the useEffect hook above
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    if (cart.length > 0) {
-      localStorage.setItem('cosmic-cart', JSON.stringify(cart));
-    } else {
-      localStorage.removeItem('cosmic-cart');
-    }
-  }, [cart]);
-
-
-  // Add item to cart
-  const addToCart = (product: Product) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.product.id === product.id);
-
-      if (existingItem) {
-        return prevCart.map((item) =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        return [...prevCart, { product, quantity: 1 }];
-      }
-    });
-
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
-
-    // Add an animation to the cart button
+  // Add animation to the cart button when adding items
+  const animateCartButton = () => {
     const cartButton = document.querySelector('.cart-floating-button');
     if (cartButton) {
       cartButton.classList.add('cart-bump');
@@ -302,33 +267,22 @@ const ShopPage: React.FC = () => {
         cartButton.classList.remove('cart-bump');
       }, 300);
     }
+  };
 
+  // When adding to cart, animate and add points 
+  const handleAddProduct = (product: Product) => {
+    // Add to cart using our context
+    addItemToCart(product);
+    
+    // Add animation to the cart button
+    animateCartButton();
+    
     // Add points for each item added to cart (in a real app this would happen on purchase)
     setUserPoints((prev) => prev + Math.round(product.price));
   };
-
-  // Remove item from cart
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.product.id === productId);
-
-      if (existingItem && existingItem.quantity > 1) {
-        return prevCart.map((item) =>
-          item.product.id === productId
-            ? { ...item, quantity: item.quantity - 1 }
-            : item
-        );
-      } else {
-        return prevCart.filter((item) => item.product.id !== productId);
-      }
-    });
-  };
-
-  // Calculate total cart value
-  const cartTotal = cart.reduce(
-    (total, item) => total + item.product.price * item.quantity,
-    0
-  );
+  
+  // Get the cart total
+  const cartTotal = getCartTotal();
 
   // Handle viewing a product
   const handleProductView = (productId: string) => {
@@ -433,7 +387,7 @@ const ShopPage: React.FC = () => {
 
             <main className="md:col-span-3">
               {/* Main product display area */}
-              <ProductGrid filters={filters} products={filteredProducts} addToCart={addToCart} />
+              <ProductGrid filters={filters} products={filteredProducts} />
             </main>
           </div>
 

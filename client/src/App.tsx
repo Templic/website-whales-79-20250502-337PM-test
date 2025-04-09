@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import Layout from "./components/layout";
 import { AuthProvider } from "@/hooks/use-auth";
+import { CartProvider } from "@/hooks/use-cart";
 import { ProtectedRoute } from "@/lib/protected-route";
 import NotFound from "./pages/not-found";
 import { useEffect } from "react";
@@ -207,14 +208,16 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AccessibilityProvider>
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <StarBackground starCount={150} />
-            <AppRouter />
-            <CookieConsent />
-            <Toaster />
-          </ErrorBoundary>
-        </AccessibilityProvider>
+        <CartProvider>
+          <AccessibilityProvider>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <StarBackground starCount={150} />
+              <AppRouter />
+              <CookieConsent />
+              <Toaster />
+            </ErrorBoundary>
+          </AccessibilityProvider>
+        </CartProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

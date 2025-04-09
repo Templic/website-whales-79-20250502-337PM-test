@@ -1,173 +1,146 @@
-/**
- * Custom hook for cart management
- * Provides functions for adding, removing, and updating cart items
- */
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
+import { Product } from "@/pages/shop/ShopPage";
 
-import { useState, useEffect, createContext, useContext } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Product } from '@/pages/shop/ShopPage';
-import { useToast } from '@/hooks/use-toast';
-
-// Cart item interface
-export interface CartItem {
+interface CartItem {
   product: Product;
   quantity: number;
 }
 
-// Cart context interface
 interface CartContextType {
   items: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeFromCart: (productId: number | string) => void;
+  updateQuantity: (productId: number | string, quantity: number) => void;
   clearCart: () => void;
-  isLoading: boolean;
-  total: number;
+  getItemCount: () => number;
+  getCartTotal: () => number;
+  isItemInCart: (productId: number | string) => boolean;
 }
 
-// Create context with default values
-const CartContext = createContext<CartContextType>({
-  items: [],
-  addToCart: () => {},
-  removeFromCart: () => {},
-  updateQuantity: () => {},
-  clearCart: () => {},
-  isLoading: false,
-  total: 0,
-});
+const CartContext = createContext<CartContextType | null>(null);
 
-// Provider component
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isClientLoaded, setIsClientLoaded] = useState(false);
-  
-  // Initialize on client-side
+  const { toast } = useToast();
+
+  // Load cart from localStorage on mount
   useEffect(() => {
-    setIsClientLoaded(true);
-  }, []);
-  
-  // Fetch cart data
-  const { data: cartData, isLoading } = useQuery({
-    queryKey: ['/api/cart'],
-    queryFn: () => apiRequest('GET', '/api/cart'),
-    enabled: isClientLoaded,
-  });
-  
-  // Update local state when cart data changes
-  useEffect(() => {
-    if (cartData?.items) {
-      setItems(cartData.items);
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        setItems(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.error('Failed to load cart from localStorage:', error);
     }
-  }, [cartData]);
-  
-  // Calculate total
-  const total = items.reduce(
-    (sum, item) => sum + (item.product.price * item.quantity),
-    0
-  );
-  
-  // Add to cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async ({ product, quantity = 1 }: { product: Product, quantity: number }) => {
-      return await apiRequest('POST', '/api/cart/items', {
-        productId: product.id,
-        quantity,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to add item to cart: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Remove from cart mutation
-  const removeFromCartMutation = useMutation({
-    mutationFn: async (productId: string) => {
-      return await apiRequest('DELETE', `/api/cart/items/${productId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      toast({
-        title: 'Item removed',
-        description: 'Item has been removed from your cart.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to remove item: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Update quantity mutation
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ productId, quantity }: { productId: string, quantity: number }) => {
-      return await apiRequest('PATCH', `/api/cart/items/${productId}`, {
-        quantity,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to update quantity: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Clear cart mutation
-  const clearCartMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest('DELETE', '/api/cart');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
-      toast({
-        title: 'Cart cleared',
-        description: 'All items have been removed from your cart.',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to clear cart: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-  
-  // Handler functions
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('cart', JSON.stringify(items));
+    } catch (error) {
+      console.error('Failed to save cart to localStorage:', error);
+    }
+  }, [items]);
+
   const addToCart = (product: Product, quantity = 1) => {
-    addToCartMutation.mutate({ product, quantity });
+    setItems(prevItems => {
+      const existingItemIndex = prevItems.findIndex(
+        item => item.product.id === product.id
+      );
+
+      if (existingItemIndex >= 0) {
+        // Item exists, update quantity
+        const updatedItems = [...prevItems];
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          quantity: updatedItems[existingItemIndex].quantity + quantity
+        };
+        
+        toast({
+          title: "Cart updated",
+          description: `${product.name} quantity updated in your cart.`,
+          variant: "default",
+        });
+        
+        return updatedItems;
+      } else {
+        // Item does not exist, add it
+        toast({
+          title: "Added to cart",
+          description: `${product.name} added to your cart.`,
+          variant: "default",
+        });
+        
+        return [...prevItems, { product, quantity }];
+      }
+    });
   };
-  
-  const removeFromCart = (productId: string) => {
-    removeFromCartMutation.mutate(productId);
+
+  const removeFromCart = (productId: number | string) => {
+    setItems(prevItems => {
+      const updatedItems = prevItems.filter(item => item.product.id !== productId);
+      
+      if (updatedItems.length !== prevItems.length) {
+        toast({
+          title: "Item removed",
+          description: "Item has been removed from your cart.",
+          variant: "default",
+        });
+      }
+      
+      return updatedItems;
+    });
   };
-  
-  const updateQuantity = (productId: string, quantity: number) => {
-    updateQuantityMutation.mutate({ productId, quantity });
+
+  const updateQuantity = (productId: number | string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.product.id === productId 
+          ? { ...item, quantity } 
+          : item
+      )
+    );
   };
-  
+
   const clearCart = () => {
-    clearCartMutation.mutate();
+    setItems([]);
+    toast({
+      title: "Cart cleared",
+      description: "All items have been removed from your cart.",
+      variant: "default",
+    });
+  };
+
+  const getItemCount = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getCartTotal = () => {
+    return items.reduce((total, item) => {
+      const price = typeof item.product.price === 'string' 
+        ? parseFloat(item.product.price) 
+        : item.product.price;
+      
+      const discountedPrice = item.product.discountPercent 
+        ? price * (1 - item.product.discountPercent / 100) 
+        : price;
+      
+      return total + (discountedPrice * item.quantity);
+    }, 0);
   };
   
-  // Provide the context
+  const isItemInCart = (productId: number | string) => {
+    return items.some(item => item.product.id === productId);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -176,8 +149,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         removeFromCart,
         updateQuantity,
         clearCart,
-        isLoading,
-        total,
+        getItemCount,
+        getCartTotal,
+        isItemInCart
       }}
     >
       {children}
@@ -185,7 +159,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Hook for using the cart context
-export const useCart = () => useContext(CartContext);
-
-export default useCart;
+export const useCart = () => {
+  const context = useContext(CartContext);
+  
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  
+  return context;
+};

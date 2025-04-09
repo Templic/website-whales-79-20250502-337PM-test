@@ -72,10 +72,9 @@ const getProductPlaceholderImage = (name: string, description: string, categorie
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, quantity?: number) => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const {
     id,
     name,
@@ -102,7 +101,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       }).format(price * (1 - discountPercent / 100))
     : null;
 
-  const addToCart = useCart().addToCart; //Accessing addToCart from useCart hook
+  const { addToCart, isItemInCart } = useCart(); // Accessing cart functions
+  const isProductInCart = isItemInCart(id);
+  
+  // Handle add to cart with optional notification
+  const handleAddToCart = () => {
+    if (inStock) {
+      addToCart(product, 1);
+    }
+  }
 
 
   return (
@@ -194,13 +201,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           size="sm"
           className={cn(
             "cosmic-btn cosmic-hover-glow w-full sm:w-auto",
-            !inStock && "opacity-50 cursor-not-allowed"
+            !inStock && "opacity-50 cursor-not-allowed",
+            isProductInCart && "bg-green-700 hover:bg-green-800"
           )}
-          disabled={!inStock}
-          onClick={() => onAddToCart(product)}
+          disabled={!inStock || isProductInCart}
+          onClick={isProductInCart ? undefined : handleAddToCart}
         >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          {inStock ? "Add to Cart" : "Out of Stock"}
+          {isProductInCart ? (
+            <>
+              <Link href="/cart">
+                <span className="flex items-center">
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  View in Cart
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {inStock ? "Add to Cart" : "Out of Stock"}
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>
