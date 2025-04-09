@@ -4,7 +4,7 @@
  * Handles product display, filtering, and layout management
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ProductFilter } from "@/components/shop/ProductFilter";
 import { ShopHeader } from "@/components/shop/ShopHeader";
@@ -183,6 +183,7 @@ const ShopPage: React.FC = () => {
   const [, params] = useRoute('/shop/:category?');
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(sampleProducts);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>(sampleProducts);
   const [cart, setCart] = useState<CartItem[]>(() => {
     // Load cart from localStorage on initial render
     if (typeof window !== 'undefined') {
@@ -259,9 +260,7 @@ const ShopPage: React.FC = () => {
     setFilteredProducts(filtered);
   }, [products, searchQuery, filters]);
 
-  const setFilteredProducts = (filtered: Product[]) => {
-    setFilteredProducts(filtered);
-  };
+  // The filtered products are managed by the useEffect hook above
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
@@ -416,7 +415,7 @@ const ShopPage: React.FC = () => {
 
             <main className="md:col-span-3">
               {/* Main product display area */}
-              <ProductGrid filters={filters} products={products} addToCart={addToCart} />
+              <ProductGrid filters={filters} products={filteredProducts} addToCart={addToCart} />
             </main>
           </div>
 
