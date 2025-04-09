@@ -185,9 +185,9 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
         clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
         backgroundColor: "rgba(155, 135, 245, 0.05)"
       }}>
-      <div className="p-4 pt-8 flex flex-col items-center">
+      <div className="p-4 pt-6 pb-8 flex flex-col items-center">
         {/* Octagon image container */}
-        <div className="relative w-full aspect-[5/4] mb-4 overflow-hidden">
+        <div className="relative w-full aspect-[5/4] mb-2 overflow-hidden">
           <div 
             className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
             style={{
@@ -230,26 +230,26 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white cosmic-hover-glow"
+              className="h-7 w-7 rounded-full bg-black/20 backdrop-blur-md text-white hover:bg-black/40 hover:text-white cosmic-hover-glow"
             >
-              <Heart className="h-4 w-4" />
+              <Heart className="h-3 w-3" />
             </Button>
           </div>
 
           {/* Badges */}
-          <div className="absolute left-4 top-2 flex flex-col gap-2 z-10">
+          <div className="absolute left-4 top-2 flex flex-col gap-1 z-10">
             {item.isExclusive && (
-              <Badge className="bg-purple-500 text-white">
+              <Badge className="bg-purple-500 text-white text-xs py-0">
                 Exclusive
               </Badge>
             )}
             {item.isBestseller && (
-              <Badge className="bg-amber-500 text-white">
+              <Badge className="bg-amber-500 text-white text-xs py-0">
                 Bestseller
               </Badge>
             )}
             {item.discount && (
-              <Badge className="bg-emerald-500 text-white">
+              <Badge className="bg-emerald-500 text-white text-xs py-0">
                 {item.discount}% Off
               </Badge>
             )}
@@ -257,10 +257,10 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
         </div>
 
         <div className="w-full text-center">
-          <h3 className="text-lg font-semibold mb-2 line-clamp-1">{item.name}</h3>
-          <p className="text-muted-foreground text-sm mb-3 line-clamp-2">{item.description}</p>
+          <h3 className="text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
+          <p className="text-muted-foreground text-sm mb-2 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
 
-          <div className="flex items-center justify-center mb-3">
+          <div className="flex items-center justify-center mb-2">
             <div className="flex items-center">
               <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
               <span className="ml-1 text-sm font-medium">{item.rating}</span>
@@ -269,28 +269,28 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
           </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center px-2">
             <div>
               {item.discount ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-bold">
+                <div className="flex flex-col items-start">
+                  <span className="text-lg font-bold">
                     ${(item.price * (1 - item.discount / 100)).toFixed(2)}
                   </span>
-                  <span className="text-sm text-muted-foreground line-through">
+                  <span className="text-xs text-muted-foreground line-through">
                     ${item.price.toFixed(2)}
                   </span>
                 </div>
               ) : (
-                <span className="text-xl font-bold">${item.price.toFixed(2)}</span>
+                <span className="text-lg font-bold">${item.price.toFixed(2)}</span>
               )}
             </div>
 
             <Button 
               size="sm" 
-              className="gap-1 ml-auto bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
+              className="gap-1 ml-auto bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow h-8 px-3"
               onClick={() => onAddToCart && onAddToCart(item)}
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-3 w-3 mr-1" />
               Add
             </Button>
           </div>

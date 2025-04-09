@@ -93,26 +93,7 @@ const featuredProducts: FeaturedProduct[] = [
 const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({ onProductView, products }) => {
   return (
     <div className="space-y-12">
-      {/* Hero section */}
-      <div className="text-center space-y-6">
-        <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">
-          Cosmic Merchandise Shop
-        </h1>
-        <p className="text-lg max-w-3xl mx-auto text-muted-foreground">
-          Discover hand-selected products that enhance your cosmic journey, from energy-infused crystals to sustainable apparel and home goods that raise your vibration.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4 mt-6">
-          <Button size="lg" className="group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-600/30 transition-all duration-300 border-0 cosmic-hover-glow">
-            <ShoppingCart className="mr-2 h-5 w-5 group-hover:animate-bounce" />
-            Browse All Products
-          </Button>
-          <Button size="lg" variant="outline" className="border-purple-400/30 hover:border-purple-400/60 text-purple-300 hover:text-purple-100 shadow-md shadow-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cosmic-hover-glow">
-            New Arrivals
-          </Button>
-        </div>
-      </div>
-
-      {/* Feature cards */}
+      {/* Feature cards (Quality Guarantee section) - Moved to top as requested */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-6">
         {shoppingFeatures.map((feature) => (
           <Card key={feature.id} className="p-4 md:p-6 cosmic-glass-card" 
@@ -129,6 +110,25 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
             </div>
           </Card>
         ))}
+      </div>
+
+      {/* Hero section - Cosmic Shop */}
+      <div className="text-center space-y-6">
+        <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500">
+          Cosmic Shop
+        </h1>
+        <p className="text-lg max-w-3xl mx-auto text-muted-foreground">
+          Discover hand-selected products that enhance your cosmic journey, from energy-infused crystals to sustainable apparel and home goods that raise your vibration.
+        </p>
+        <div className="flex flex-wrap justify-center gap-4 mt-6">
+          <Button size="lg" className="group bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 shadow-lg shadow-purple-500/20 hover:shadow-xl hover:shadow-purple-600/30 transition-all duration-300 border-0 cosmic-hover-glow">
+            <ShoppingCart className="mr-2 h-5 w-5 group-hover:animate-bounce" />
+            Browse All Products
+          </Button>
+          <Button size="lg" variant="outline" className="border-purple-400/30 hover:border-purple-400/60 text-purple-300 hover:text-purple-100 shadow-md shadow-cyan-500/10 hover:shadow-lg hover:shadow-cyan-500/20 transition-all duration-300 cosmic-hover-glow">
+            New Arrivals
+          </Button>
+        </div>
       </div>
 
       {/* Featured products */}
@@ -206,8 +206,8 @@ const EnhancedShoppingExperience: React.FC<EnhancedShoppingExperienceProps> = ({
                   ))}
                 </div>
                 
-                <h3 className="text-xl font-semibold mb-2 line-clamp-1">{product.name}</h3>
-                <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-2 h-10 overflow-hidden">{product.description}</p>
+                <h3 className="text-xl font-semibold mb-2 line-clamp-1 overflow-ellipsis">{product.name}</h3>
+                <p className="text-muted-foreground text-sm mb-4 flex-1 line-clamp-3 min-h-[4.5rem] overflow-hidden">{product.description}</p>
                 
                 <div className="flex items-center mb-4">
                   <div className="flex mr-2">

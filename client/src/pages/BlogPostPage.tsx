@@ -161,11 +161,20 @@ export default function BlogPostPage() {
 
         <div className="prose prose-invert max-w-none mt-8 text-lg">
           {post.content ? (
-            post.content.split('\n').map((paragraph, index) => (
-              paragraph.trim() && (
-                <p key={index} className="mb-4">{paragraph}</p>
-              )
-            ))
+            post.content
+              .replace(/<p>/g, '')
+              .replace(/<\/p>/g, '\n\n')
+              .replace(/<br>/g, '\n')
+              .replace(/<br\/>/g, '\n')
+              .replace(/<br \/>/g, '\n')
+              .replace(/<div>/g, '')
+              .replace(/<\/div>/g, '\n\n')
+              .split('\n\n')
+              .map((paragraph, index) => (
+                paragraph.trim() && (
+                  <p key={index} className="mb-4">{paragraph}</p>
+                )
+              ))
           ) : (
             <>
               <p className="mb-4">

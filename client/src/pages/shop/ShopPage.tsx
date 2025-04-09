@@ -359,7 +359,16 @@ const ShopPage: React.FC = () => {
             setViewType={setViewType}
           />
 
-          <div className="shop-content grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Enhanced Shopping Components - Order adjusted per request */}
+          <div className="mt-4">
+            <EnhancedShoppingVenn />
+          </div>
+          
+          <div className="mt-16">
+            <EnhancedShoppingExperience />
+          </div>
+
+          <div className="shop-content grid grid-cols-1 md:grid-cols-4 gap-6 mt-16">
             <aside className="md:col-span-1">
               {/* Product filtering sidebar */}
               <ProductFilter
@@ -390,18 +399,13 @@ const ShopPage: React.FC = () => {
               <ProductGrid filters={filters} products={filteredProducts} />
             </main>
           </div>
-
-
-          {/* Enhanced Shopping Components */}
-          <EnhancedShoppingExperience />
-          <div className="mt-16">
-            <EnhancedShoppingVenn />
-          </div>
-          <div className="mt-16">
-            <CosmicCollectibles />
-          </div>
+          
           <div className="mt-16">
             <ProductComparison />
+          </div>
+          
+          <div className="mt-16">
+            <CosmicCollectibles />
           </div>
         </div>
 

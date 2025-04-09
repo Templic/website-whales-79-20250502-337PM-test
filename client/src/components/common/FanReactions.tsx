@@ -11,17 +11,17 @@ export default function FanReactions() {
     { 
       comment: "Amazing performance! The cosmic vibes were unreal!",
       name: "Sarah W.",
-      geometry: "pentagon" 
+      geometry: "octagon" 
     },
     { 
       comment: "Dale's music takes you on a journey through space and time.",
       name: "Michael R.",
-      geometry: "hexagon" 
+      geometry: "octagon" 
     },
     { 
       comment: "This is the best experience I've ever had!",
       name: "Jamie T.",
-      geometry: "triangle" 
+      geometry: "octagon" 
     },
     { 
       comment: "Absolutely love the community!",
@@ -31,12 +31,12 @@ export default function FanReactions() {
     { 
       comment: "Can't wait for the next event!",
       name: "Taylor M.",
-      geometry: "heptagon" 
+      geometry: "octagon" 
     },
     { 
       comment: "The cosmic ocean aesthetic speaks to my soul! Pure magic.",
       name: "Jordan K.",
-      geometry: "merkaba" 
+      geometry: "octagon" 
     }
   ];
 

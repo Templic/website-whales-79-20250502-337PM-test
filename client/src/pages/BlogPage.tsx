@@ -42,19 +42,31 @@ export default function BlogPage() {
             {posts.map((post) => (
               <article key={post.id} className="relative">
                 <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
-                <div className="relative z-10 p-8">
+                <div className="relative z-10 p-6 flex flex-col h-full">
                 {post.featuredImage && (
-                  <img 
-                    src={post.featuredImage} 
-                    alt={post.title}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
-                  />
+                  <div className="clip-path-octagon overflow-hidden mx-auto mb-4 w-11/12 aspect-video">
+                    <img 
+                      src={post.featuredImage} 
+                      alt={post.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
-                <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title.replace(/<[^>]*>/g, '')}</h2>
-                <p className="text-gray-300 mb-4">{post.content.replace(/<[^>]*>/g, '')}</p>
-                <p className="text-sm text-[#fe0064]">
-                  Published: {formatDisplayDate(post.createdAt)}
-                </p>
+                <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1">{post.title.replace(/<[^>]*>/g, '')}</h2>
+                <p className="text-gray-300 mb-4 line-clamp-3 text-sm flex-grow">{post.content.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ')}</p>
+                <div className="flex justify-between items-center mt-auto">
+                  <p className="text-xs text-[#fe0064]">
+                    {formatDisplayDate(post.createdAt)}
+                  </p>
+                  <Button 
+                    size="sm"
+                    variant="outline" 
+                    className="border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6] hover:text-black"
+                    onClick={() => window.location.href = `/blog/${post.id}`}
+                  >
+                    Read More
+                  </Button>
+                </div>
                 </div>
               </article>
             ))}

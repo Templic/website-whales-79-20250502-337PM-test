@@ -179,7 +179,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         </div>
 
-        <div className="line-clamp-3 text-sm text-muted-foreground mb-4 min-h-[60px] max-h-[60px] overflow-hidden">
+        <div className="line-clamp-3 text-sm text-muted-foreground mb-4 min-h-[70px] max-h-[70px] overflow-hidden">
           {description}
         </div>
       </CardContent>
