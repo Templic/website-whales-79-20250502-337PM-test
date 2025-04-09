@@ -218,10 +218,10 @@ export const playlists: Playlist[] = [
     id: "playlist-5",
     title: "Sacred Geometry Harmonics",
     description: "Sound frequencies based on the mathematical ratios of sacred geometry",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg", 
+    coverArt: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1074", 
     category: "geometry",
     mood: "enlightening",
-    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg", 
+    image: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1074", 
     tracks: [
       {
         id: "track-19",
@@ -262,8 +262,8 @@ export const playlists: Playlist[] = [
     title: "Ethereal Meditation Ambient",
     description: "Ambient soundscapes for deep meditation",
     category: "meditation",
-    image: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg",
+    image: "https://images.unsplash.com/photo-1539717758882-0c07bbbc711e?q=80&w=1074",
+    coverArt: "https://images.unsplash.com/photo-1539717758882-0c07bbbc711e?q=80&w=1074",
     duration: "45:00",
     tracks: []
   },
@@ -272,8 +272,8 @@ export const playlists: Playlist[] = [
     title: "Astral Projection Suite",
     description: "Binaural beats for astral travel and lucid dreaming",
     category: "astral",
-    image: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg",
+    image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1074",
+    coverArt: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1074",
     duration: "30:00",
     tracks: []
   },
@@ -282,8 +282,8 @@ export const playlists: Playlist[] = [
     title: "Chakra Alignment Series",
     description: "Frequency-tuned meditation for chakra balancing",
     category: "healing",
-    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
+    image: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=1078",
+    coverArt: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=1078",
     duration: "60:00",
     tracks: []
   },
@@ -292,8 +292,8 @@ export const playlists: Playlist[] = [
     title: "Cosmic Harmony Meditation",
     description: "Sacred geometry sound healing",
     category: "meditation",
-    image: "https://i.etsystatic.com/54804470/r/il/aba795/6453363387/il_1588xN.6453363387_iosd.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/aba795/6453363387/il_1588xN.6453363387_iosd.jpg",
+    image: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=1074",
+    coverArt: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=1074",
     duration: "40:00",
     tracks: []
   },
@@ -302,8 +302,8 @@ export const playlists: Playlist[] = [
     title: "Delta Wave Sleep Journey",
     description: "Deep sleep frequency entrainment",
     category: "sleep",
-    image: "https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg",
+    image: "https://images.unsplash.com/photo-1517925035435-7976539b920d?q=80&w=1015",
+    coverArt: "https://images.unsplash.com/photo-1517925035435-7976539b920d?q=80&w=1015",
     duration: "60:00",
     tracks: []
   },
@@ -312,8 +312,8 @@ export const playlists: Playlist[] = [
     title: "Quantum Resonance Field",
     description: "Harmonic frequencies aligned with universal constants",
     category: "healing",
-    image: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/5eb74f/6431467064/il_1588xN.6431467064_g3jp.jpg",
+    image: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1170",
+    coverArt: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1170",
     duration: "55:00",
     tracks: []
   },
@@ -327,7 +327,7 @@ export const defaultProducts: Product[] = [
     description: "Dale The Whale's signature digital art piece capturing the serene beauty of orcas at sunrise.",
     shortDescription: "Signature digital art print",
     price: "45.00",
-    images: ["https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg"],
+    images: ["https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1111"],
     inventory: 100,
     featured: true,
     categoryId: 1
@@ -339,7 +339,7 @@ export const defaultProducts: Product[] = [
     description: "A mesmerizing digital art piece featuring cosmic themes and sacred geometry.",
     shortDescription: "Cosmic themed digital art",
     price: "45.00",
-    images: ["https://i.etsystatic.com/54804470/r/il/15c48e/6530624025/il_1588xN.6530624025_7yel.jpg"],
+    images: ["https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?q=80&w=1013"],
     inventory: 100,
     featured: true,
     categoryId: 1

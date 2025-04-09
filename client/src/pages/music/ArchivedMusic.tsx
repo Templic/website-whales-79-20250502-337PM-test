@@ -106,8 +106,8 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         {/* Hero Image with Sacred Geometry */}
         <div className="relative h-[500px] w-full overflow-hidden rounded-lg mb-12">
           <img
-            src="https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg"
-            alt="Music Archive"
+            src="https://images.unsplash.com/photo-1496715976403-7e36dc43f17b?q=80&w=1170"
+            alt="Cosmic Music Archive"
             className="w-full h-full object-cover"
           />
           
