@@ -1,67 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'wouter';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Search,
-  ShoppingCart,
-  Mic, 
-  MicOff,
-  Home,
-  ShoppingBag
-} from 'lucide-react';
-import CosmicButton from '@/components/features/cosmic/cosmic-button';
+import React, { useState, useRef, useEffect } from "react";
+import { Link } from "wouter";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Home, Search, ShoppingCart } from "lucide-react";
+import CosmicButton from "../ui/cosmic-button";
 
-// Voice recognition types
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResult {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: Event) => void;
-  onend: () => void;
-}
-
-// Add the interfaces to the Window object
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
+/**
+ * ShopHeader component
+ * Provides search functionality and navigation for the shop page
+ */
 
 export interface ShopHeaderProps {
-  onSearch: (query: string) => void;
-  onVoiceSearch?: (transcript: string) => void;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  allCategories: string[];
+  categoryFilter: string[];
+  setCategoryFilter: (categories: string[]) => void;
+  priceRange: [number, number];
+  setPriceRange: (range: [number, number]) => void;
+  sortOrder: string;
+  setSortOrder: (sort: string) => void;
+  viewType: "list" | "grid";
+  setViewType: React.Dispatch<React.SetStateAction<"list" | "grid">>;
+  onSearch?: (query: string) => void;
   cartItemCount?: number;
 }
 
 const ShopHeader: React.FC<ShopHeaderProps> = ({ 
-  onSearch, 
-  onVoiceSearch,
+  searchQuery,
+  setSearchQuery,
+  allCategories,
+  categoryFilter,
+  setCategoryFilter,
+  priceRange,
+  setPriceRange,
+  sortOrder,
+  setSortOrder,
+  viewType,
+  setViewType,
+  onSearch,
   cartItemCount = 0
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle search input change with debounce
@@ -74,78 +54,14 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      onSearch(value);
+      if (onSearch) onSearch(value);
     }, 300);
   };
 
   // Handle search form submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(searchQuery);
-  };
-
-  // Toggle voice search
-  const toggleVoiceSearch = () => {
-    if (isRecording) {
-      stopSpeechRecognition();
-    } else {
-      startSpeechRecognition();
-    }
-  };
-
-  // Start speech recognition
-  const startSpeechRecognition = () => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      try {
-        const recognitionInstance = new SpeechRecognition();
-
-        recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = true;
-        recognitionInstance.lang = 'en-US';
-
-        recognitionInstance.onresult = (event) => {
-          const transcript = Array.from(event.results)
-            .map(result => result[0])
-            .map(result => result.transcript)
-            .join('');
-
-          setSearchQuery(transcript);
-
-          if (event.results[0].isFinal) {
-            setIsRecording(false);
-            onVoiceSearch?.(transcript);
-          }
-        };
-
-        recognitionInstance.onerror = () => {
-          setIsRecording(false);
-        };
-
-        recognitionInstance.onend = () => {
-          setIsRecording(false);
-        };
-
-        recognitionInstance.start();
-        setIsRecording(true);
-
-        // Set as any to bypass TypeScript type checking as these are incompatible types
-        setRecognition(recognitionInstance as any);
-      } catch (error) {
-        console.error('Error initializing speech recognition:', error);
-      }
-    } else {
-      alert('Speech recognition is not supported in your browser.');
-    }
-  };
-
-  // Stop speech recognition
-  const stopSpeechRecognition = () => {
-    if (recognition) {
-      recognition.stop();
-      setIsRecording(false);
-    }
+    if (onSearch) onSearch(searchQuery);
   };
 
   // Clean up on unmount
@@ -154,12 +70,8 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-
-      if (recognition) {
-        recognition.stop();
-      }
     };
-  }, [recognition]);
+  }, []);
 
   return (
     <div className="w-full cosmic-glass-card p-4 rounded-lg">
@@ -210,18 +122,6 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
             </Button>
           </form>
 
-          {(onVoiceSearch && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
-            <Button
-              type="button"
-              size="icon"
-              variant={isRecording ? "destructive" : "outline"}
-              onClick={toggleVoiceSearch}
-              className="cosmic-hover-glow"
-            >
-              {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            </Button>
-          )}
-
           <Link href="/shop/cart">
             <div className="relative">
               <CosmicButton
@@ -247,4 +147,4 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
   );
 };
 
-export default ShopHeader;
+export { ShopHeader };

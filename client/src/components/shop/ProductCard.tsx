@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Star, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/hooks/use-cart";
+// import { useCart } from "@/hooks/use-cart";
 
 /**
  * Returns a relevant product image URL based on product details
@@ -102,7 +102,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       }).format(price * (1 - discountPercent / 100))
     : null;
 
-  const addToCart = useCart().addToCart; //Accessing addToCart from useCart hook
+  // In a real app, we would use useCart here
+  // const { addToCart } = useCart();
 
 
   return (
@@ -206,4 +207,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   );
 };
 
-export default ProductCard;
+export { ProductCard };

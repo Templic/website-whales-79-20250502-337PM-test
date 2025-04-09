@@ -7,37 +7,33 @@
 
 import React from "react"
 import { ProductCard } from "./ProductCard"
-import { useProducts } from "@/hooks/use-products"
+import { ProductFilterOptions } from "@/hooks/use-products"
+import { Product } from "@/pages/shop/ShopPage"
 
 interface ProductGridProps {
-  filters: FilterState // Inherited from ShopPage filters
+  filters: ProductFilterOptions; // Inherited from ShopPage filters
+  products: Product[]; // Products to display
+  addToCart: (product: Product) => void; // Function to add a product to cart
 }
 
-const ProductGrid: React.FC<ProductGridProps> = ({ filters }) => {
-  // Custom hook for product data fetching and management
-  const { products, loading, error } = useProducts(filters)
-
-  // Loading state handler
-  if (loading) {
-    return <div className="loading-spinner" />
-  }
-
-  // Error state handler
-  if (error) {
-    return <div className="error-message">{error}</div>
+const ProductGrid: React.FC<ProductGridProps> = ({ filters, products, addToCart }) => {
+  // Loading state handler shown when products aren't ready
+  if (!products || products.length === 0) {
+    return <div className="flex justify-center py-12">No products found matching your criteria</div>
   }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {/* Map through filtered products and render ProductCards */}
+      {/* Map through products and render ProductCards */}
       {products.map(product => (
         <ProductCard 
           key={product.id}
           product={product}
+          onAddToCart={addToCart}
         />
       ))}
     </div>
   )
 }
 
-export default ProductGrid
+export { ProductGrid }
