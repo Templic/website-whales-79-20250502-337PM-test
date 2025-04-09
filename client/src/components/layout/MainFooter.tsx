@@ -7,7 +7,7 @@
  */
 import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Book, Mail, Heart, ShoppingBag, Music, MoonStar, Headphones, Facebook, Twitter, Instagram, Youtube, ExternalLink, Shield } from 'lucide-react';
+import { Book, Mail, Heart, ShoppingBag, Music, MoonStar, Headphones, Facebook, Twitter, Instagram, Youtube, ExternalLink } from 'lucide-react';
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import SacredGeometry from "@/components/ui/sacred-geometry";
@@ -151,7 +151,7 @@ const MainFooter: React.FC = () => {
           <div>
             <h4 className="text-xl font-semibold mb-4">Shop</h4>
             {renderLinkList(shopLinks)}
-            {user && user.role === 'admin' ? (
+            {user?.role === 'admin' || user?.role === 'super_admin' ? (
               <div className="mt-6 pt-4 border-t border-white/10">
                 <Link href="/admin" className="text-[#fe0064] hover:text-cyan-400 font-semibold flex items-center">
                   <Shield className="h-4 w-4 mr-2" />
@@ -180,4 +180,4 @@ const MainFooter: React.FC = () => {
   );
 };
 
-export { MainFooter };
+export default MainFooter;

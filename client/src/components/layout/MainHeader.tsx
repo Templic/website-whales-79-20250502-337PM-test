@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'wouter';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { navigationLinks } from '@/data/navigation';
@@ -33,7 +33,7 @@ const MainHeader: React.FC = () => {
               href={link.path}
               className="text-gray-300 hover:text-white transition-colors"
             >
-              {link.title}
+              {link.name}
             </Link>
           ))}
         </div>
@@ -67,4 +67,4 @@ const MainHeader: React.FC = () => {
   );
 };
 
-export { MainHeader };
+export default MainHeader;
