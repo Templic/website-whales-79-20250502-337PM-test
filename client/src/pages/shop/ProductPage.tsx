@@ -193,11 +193,11 @@ export default function ProductPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
         {/* Product Images */}
         <div className="space-y-4">
-          <div className="relative h-[400px] md:h-[500px] rounded-lg overflow-hidden border border-gray-800">
+          <div className="relative h-[400px] md:h-[500px] overflow-hidden border border-gray-800 clip-path-octagon">
             <img 
               src={productImages[activeImageIndex]}
               alt={product.name}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain p-4"
             />
             {hasDiscount && (
               <div className="absolute top-4 left-4 z-10">
@@ -214,9 +214,9 @@ export default function ProductPage() {
               {productImages.map((image, index) => (
                 <button
                   key={index}
-                  className={`flex-shrink-0 w-20 h-20 border-2 rounded overflow-hidden 
+                  className={`flex-shrink-0 w-20 h-20 border-2 overflow-hidden clip-path-octagon
                     ${activeImageIndex === index 
-                      ? 'border-cosmic-primary' 
+                      ? 'border-cosmic-primary cosmic-hover-glow' 
                       : 'border-gray-700 hover:border-gray-500'}`}
                   onClick={() => setActiveImageIndex(index)}
                 >
@@ -299,11 +299,11 @@ export default function ProductPage() {
                     size="sm"
                     onClick={decreaseQuantity}
                     disabled={quantity <= 1}
-                    className="h-10 w-10 p-0 rounded-r-none"
+                    className="h-10 w-10 p-0 rounded-r-none cosmic-hover-glow"
                   >
                     -
                   </CosmicButton>
-                  <div className="h-10 w-16 flex items-center justify-center border-y border-gray-700">
+                  <div className="h-10 w-16 flex items-center justify-center border-y border-gray-700 font-medium">
                     {quantity}
                   </div>
                   <CosmicButton 
@@ -311,7 +311,7 @@ export default function ProductPage() {
                     size="sm"
                     onClick={increaseQuantity}
                     disabled={quantity >= (product.inventory || 10)}
-                    className="h-10 w-10 p-0 rounded-l-none"
+                    className="h-10 w-10 p-0 rounded-l-none cosmic-hover-glow"
                   >
                     +
                   </CosmicButton>
@@ -327,7 +327,7 @@ export default function ProductPage() {
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={addToCartMutation.isPending || isOutOfStock}
-                  className="flex-grow"
+                  className="flex-grow cosmic-hover-glow"
                 >
                   {addToCartMutation.isPending ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -337,11 +337,11 @@ export default function ProductPage() {
                   Add to Cart
                 </CosmicButton>
                 
-                <CosmicButton variant="outline" size="lg">
+                <CosmicButton variant="outline" size="lg" className="cosmic-hover-glow">
                   <Heart className="h-4 w-4" />
                 </CosmicButton>
                 
-                <CosmicButton variant="outline" size="lg">
+                <CosmicButton variant="outline" size="lg" className="cosmic-hover-glow">
                   <Share2 className="h-4 w-4" />
                 </CosmicButton>
               </div>

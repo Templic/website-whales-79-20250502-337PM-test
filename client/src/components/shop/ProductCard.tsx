@@ -156,7 +156,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         <div className="flex flex-col sm:flex-row justify-between mb-2">
           <div className="space-y-1">
             <Link href={`/shop/product/${id}`}>
-              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg">{name}</h3>
+              <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg line-clamp-1 min-h-[28px]">{name}</h3>
             </Link>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               {categories.slice(0, 1).map((category) => (
@@ -172,7 +172,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </div>
         </div>
 
-        <div className="line-clamp-2 text-sm text-muted-foreground mb-4 h-10 overflow-hidden">
+        <div className="line-clamp-3 text-sm text-muted-foreground mb-4 min-h-[60px] max-h-[60px] overflow-hidden">
           {description}
         </div>
       </CardContent>
