@@ -1,24 +1,11 @@
 import React from 'react';
-import { Product } from '@/pages/shop/ShopPage';
+import { Product, CartItem, ShoppingCartProps } from '@/types/shop';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import CosmicButton from '@/components/features/cosmic/cosmic-button';
 import {useLocation} from 'wouter'; // Using wouter instead of react-router-dom
-
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
-
-interface ShoppingCartProps {
-  cartItems: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
-  onCheckout: () => void;
-  total: number;
-}
 
 const ShoppingCart: React.FC<ShoppingCartProps> = ({
   cartItems,

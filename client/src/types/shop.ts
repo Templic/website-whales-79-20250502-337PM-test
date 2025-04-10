@@ -83,13 +83,23 @@ export interface SpeechRecognition extends EventTarget {
 }
 
 /**
+ * Speech Recognition Constructor type
+ */
+export interface SpeechRecognitionConstructor {
+  new(): SpeechRecognition;
+}
+
+// The global type declarations need to be exported to avoid conflicts
+export {}
+
+/**
  * Global SpeechRecognition type extension
  */
 // This is a type declaration, not an actual interface implementation
 // Use this in components where speech recognition is used
 declare global {
   interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
   }
 }

@@ -50,23 +50,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-// Product interface
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  rating: number;
-  inStock: boolean;
-  categories: string[];
-  featured?: boolean;
-  new?: boolean;
-  discountPercent?: number;
-  attributes?: {
-    [key: string]: string;
-  };
-}
+// Import types from the centralized types
+import { Product, CartItem } from '@/types/shop';
 
 // Sample products data
 const sampleProducts: Product[] = [
@@ -168,11 +153,7 @@ const sampleProducts: Product[] = [
   }
 ];
 
-// Cart item interface
-interface CartItem {
-  product: Product;
-  quantity: number;
-}
+// We're now using the CartItem interface from the centralized types
 
 // Interface for product filtering options
 interface FilterState {

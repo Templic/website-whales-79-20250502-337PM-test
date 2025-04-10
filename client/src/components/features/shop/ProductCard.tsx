@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { Link } from 'wouter';
-import { Product } from '@/pages/shop/ShopPage';
+import { Product } from '@/types/shop';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
