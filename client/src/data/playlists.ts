@@ -38,7 +38,7 @@ export const playlists: Playlist[] = [
         title: "Root Chakra Grounding",
         artist: "Cosmic Harmony",
         duration: "10:30",
-        coverArt: "/images/products/chakra-root.jpg", 
+        coverArt: "/images/cosmic-music/root-chakra-grounding.svg", 
         audioSrc: "/audio/root-chakra.mp3",
       },
       {
@@ -282,8 +282,8 @@ export const playlists: Playlist[] = [
     title: "Chakra Alignment Series",
     description: "Frequency-tuned meditation for chakra balancing",
     category: "healing",
-    image: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=1078",
-    coverArt: "https://images.unsplash.com/photo-1465101162946-4377e57745c3?q=80&w=1078",
+    image: "/images/cosmic-music/cosmic-healing-album.svg",
+    coverArt: "/images/cosmic-music/cosmic-healing-album.svg",
     duration: "60:00",
     tracks: []
   },
@@ -292,8 +292,8 @@ export const playlists: Playlist[] = [
     title: "Cosmic Harmony Meditation",
     description: "Sacred geometry sound healing",
     category: "meditation",
-    image: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=1074",
-    coverArt: "https://images.unsplash.com/photo-1614313913007-2b4ae8ce32d6?q=80&w=1074",
+    image: "/images/cosmic-music/ethereal-meditation-album.svg",
+    coverArt: "/images/cosmic-music/ethereal-meditation-album.svg",
     duration: "40:00",
     tracks: []
   },
@@ -302,8 +302,8 @@ export const playlists: Playlist[] = [
     title: "Delta Wave Sleep Journey",
     description: "Deep sleep frequency entrainment",
     category: "sleep",
-    image: "https://images.unsplash.com/photo-1517925035435-7976539b920d?q=80&w=1015",
-    coverArt: "https://images.unsplash.com/photo-1517925035435-7976539b920d?q=80&w=1015",
+    image: "/images/cosmic-music/cosmic-healing-album.svg",
+    coverArt: "/images/cosmic-music/cosmic-healing-album.svg",
     duration: "60:00",
     tracks: []
   },
@@ -312,8 +312,8 @@ export const playlists: Playlist[] = [
     title: "Quantum Resonance Field",
     description: "Harmonic frequencies aligned with universal constants",
     category: "healing",
-    image: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1170",
-    coverArt: "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1170",
+    image: "/images/cosmic-music/quantum-resonance-album.svg",
+    coverArt: "/images/cosmic-music/quantum-resonance-album.svg",
     duration: "55:00",
     tracks: []
   },
