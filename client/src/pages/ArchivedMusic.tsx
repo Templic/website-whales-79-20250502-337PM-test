@@ -107,10 +107,10 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
       
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
+          <h1 className="cosmic-heading-responsive-lg font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
             Archived Music
           </h1>
-          <p className="text-gray-300 max-w-2xl mx-auto">
+          <p className="cosmic-text-responsive text-gray-300 max-w-2xl mx-auto cosmic-text-container">
             Explore our collection of consciousness-transforming music, healing frequencies, and 
             guided meditations designed to elevate your vibration.
           </p>
@@ -177,18 +177,18 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             
             <TabsContent value="albums" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
-                <h2 className="text-2xl font-semibold mb-6 text-center">Featured Albums</h2>
+                <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Featured Albums</h2>
                 <AlbumShowcase />
               </div>
               
               <section className="albums-section">
-                <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
+                <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {albums.map(album => (
                     <div key={album.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl hover:transform hover:-translate-y-2 transition-all duration-300 relative">
-                      <h3 className="text-2xl text-[#00ebd6] mb-3">{album.title}</h3>
-                      <p className="text-sm mb-2">Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
-                      <p className="text-sm mb-4">{album.description || 'No description available'}</p>
+                      <h3 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-3">{album.title}</h3>
+                      <p className="cosmic-text-responsive-sm mb-2">Release Date: {album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'TBA'}</p>
+                      <p className="cosmic-text-responsive-sm mb-4">{album.description || 'No description available'}</p>
                       <a
                         href={`/album/${album.id}`}
                         target="_blank"
@@ -218,7 +218,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             
             <TabsContent value="singles" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
-                <h2 className="text-2xl font-semibold mb-6 text-center">Recent Singles</h2>
+                <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Recent Singles</h2>
                 
                 <CosmicReveal delay={0.2}>
                   <RecommendedPlaylists 
@@ -235,14 +235,14 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
               </div>
               
               <section className="tracks-section">
-                <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">All Tracks</h2>
+                <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">All Tracks</h2>
                 <div className="grid gap-4">
                   {tracks.map(track => (
                     <div key={track.id} className="bg-[rgba(10,50,92,0.6)] p-4 rounded-lg hover:bg-[rgba(10,50,92,0.8)] transition-all relative">
-                      <h3 className="text-xl mb-2 text-[#00ebd6]">{track.title}</h3>
+                      <h3 className="cosmic-heading-responsive-sm mb-2 text-[#00ebd6]">{track.title}</h3>
                       <div className="flex flex-col space-y-2 mb-4">
-                        <p className="text-sm">Artist: {track.artist}</p>
-                        <p className="text-sm">Duration: {track.duration || 'Unknown'}</p>
+                        <p className="cosmic-text-responsive-sm">Artist: {track.artist}</p>
+                        <p className="cosmic-text-responsive-sm">Duration: {track.duration || 'Unknown'}</p>
                       </div>
                       <audio
                         controls
@@ -276,7 +276,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             
             <TabsContent value="meditation" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
-                <h2 className="text-2xl font-semibold mb-6 text-center">Guided Meditations</h2>
+                <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Guided Meditations</h2>
                 <DynamicPlaylists 
                   playlists={playlists.filter(p => p.category === 'meditation' || p.category === 'healing')}
                   onPlay={(trackId) => {
@@ -294,8 +294,8 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         
         {/* Call to Action */}
         <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-8 mb-16 text-center">
-          <h2 className="text-2xl font-semibold mb-3">Join Our Archive Community</h2>
-          <p className="text-gray-300 max-w-2xl mx-auto mb-6">
+          <h2 className="cosmic-heading-responsive font-semibold mb-3">Join Our Archive Community</h2>
+          <p className="cosmic-text-responsive text-gray-300 max-w-2xl mx-auto mb-6 cosmic-text-container">
             Get early access to new releases, exclusive ceremonies, and cosmic events
             by joining our community of frequency explorers.
           </p>

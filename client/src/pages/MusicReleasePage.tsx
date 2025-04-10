@@ -50,11 +50,11 @@ export default function MusicReleasePage() {
             />
           </div>
           <div className="w-full md:w-1/2 space-y-6">
-            <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
-            <div className="space-y-4">
-              <p className="text-xl">Release Date: March 14, 2025</p>
-              <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
-              <p className="text-xl">
+            <h1 className="cosmic-heading-responsive-lg font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
+            <div className="space-y-4 cosmic-margin-y-responsive">
+              <p className="cosmic-text-responsive">Release Date: March 14, 2025</p>
+              <p className="cosmic-text-responsive">Genre: R&B, Soulful, Cosmic, Conscious</p>
+              <p className="cosmic-text-responsive">
                 Artist: Dale The Whale<br />
                 Featuring: AC3-2085
               </p>
