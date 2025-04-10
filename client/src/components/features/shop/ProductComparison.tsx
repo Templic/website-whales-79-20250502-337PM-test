@@ -40,7 +40,7 @@ const crystalProducts: Product[] = [
     id: "crystal-1",
     name: "Celestial Quartz Point",
     price: 49.99,
-    image: "/placeholder.svg?height=100&width=100&text=Quartz",
+    image: "/images/merchandise/quartz-crystal.svg",
     rating: 4.7,
     description: "A powerful clear quartz point for energy amplification and spiritual clarity.",
     features: {
@@ -61,7 +61,7 @@ const crystalProducts: Product[] = [
     id: "crystal-2",
     name: "Amethyst Cluster",
     price: 79.99,
-    image: "/placeholder.svg?height=100&width=100&text=Amethyst",
+    image: "/images/merchandise/amethyst-cluster.svg",
     rating: 4.9,
     description: "Premium quality amethyst cluster for spiritual growth and meditation enhancement.",
     features: {
@@ -82,7 +82,7 @@ const crystalProducts: Product[] = [
     id: "crystal-3",
     name: "Labradorite Palm Stone",
     price: 34.99,
-    image: "/placeholder.svg?height=100&width=100&text=Labradorite",
+    image: "/images/merchandise/labradorite-stone.svg",
     rating: 4.5,
     description: "Smooth labradorite palm stone for protection and enhancing intuitive abilities.",
     features: {
@@ -106,7 +106,7 @@ const soundProducts: Product[] = [
     id: "sound-1",
     name: "Crystal Singing Bowl - Crown Chakra",
     price: 149.99,
-    image: "/placeholder.svg?height=100&width=100&text=Bowl",
+    image: "/images/merchandise/crystal-singing-bowl.svg",
     rating: 5.0,
     description: "Clear quartz singing bowl tuned to the frequency of the Crown Chakra (B note).",
     features: {
@@ -127,7 +127,7 @@ const soundProducts: Product[] = [
     id: "sound-2",
     name: "Koshi Chimes - Earth Element",
     price: 89.99,
-    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80",
+    image: "/images/merchandise/tibetan-bowl.svg",
     rating: 4.5,
     description: "Handcrafted Koshi Chimes tuned to the Earth element for grounding and calm.",
     features: {
@@ -147,7 +147,7 @@ const soundProducts: Product[] = [
     id: "sound-3",
     name: "Tibetan Singing Bowl Set",
     price: 189.99,
-    image: "/placeholder.svg?height=100&width=100&text=Tibetan",
+    image: "/images/merchandise/tibetan-bowl.svg",
     rating: 4.9,
     description: "Traditional hand-hammered 7-metal Tibetan singing bowl set with accessories.",
     features: {
