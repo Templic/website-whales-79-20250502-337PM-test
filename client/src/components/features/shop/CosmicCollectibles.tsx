@@ -129,7 +129,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
             Cosmic Collectibles & Rewards
           </h2>
           <div className="ml-auto bg-indigo-900/80 px-6 py-2 rounded-md flex items-center">
-            <span className="mr-2 text-sm text-purple-200">1250 Points</span>
+            <span className="mr-2 text-sm text-purple-200">777 Points</span>
             <Button 
               variant="link" 
               className="text-purple-300 hover:text-purple-100 p-0 h-auto text-sm"
