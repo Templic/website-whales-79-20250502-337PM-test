@@ -37,14 +37,32 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
   const fetchMusic = async () => {
     try {
+      // First try to fetch from API
       const [tracksRes, albumsRes] = await Promise.all([
         axios.get('/api/tracks'),
         axios.get('/api/albums')
       ]);
-      setTracks(tracksRes.data);
-      setAlbums(albumsRes.data);
+      
+      // If API returned data, use it
+      if (tracksRes.data && tracksRes.data.length > 0) {
+        setTracks(tracksRes.data);
+      } else {
+        // Otherwise use the cosmic tracks as placeholder
+        setTracks(cosmicTracks as unknown as Track[]);
+      }
+      
+      // Same for albums
+      if (albumsRes.data && albumsRes.data.length > 0) {
+        setAlbums(albumsRes.data);
+      } else {
+        // Otherwise use the cosmic albums as placeholder
+        setAlbums(cosmicAlbums as unknown as Album[]);
+      }
     } catch (error) {
-      console.error('Error fetching music:', error);
+      console.error('Error fetching music from API:', error);
+      // Fallback to cosmic data
+      setTracks(cosmicTracks as unknown as Track[]);
+      setAlbums(cosmicAlbums as unknown as Album[]);
     }
   };
 

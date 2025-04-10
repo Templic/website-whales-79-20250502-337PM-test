@@ -28,10 +28,10 @@ export const playlists: Playlist[] = [
     id: "playlist-1",
     title: "Chakra Alignment Series",
     description: "A complete journey through all seven chakras to balance your energy",
-    coverArt: "/images/products/sacred-geometry.jpg", 
+    coverArt: "/images/cosmic-music/cosmic-healing-album.svg", 
     category: "meditation",
     mood: "balancing",
-    image: "/images/products/sacred-geometry.jpg", 
+    image: "/images/cosmic-music/cosmic-healing-album.svg", 
     tracks: [
       {
         id: "track-1",
@@ -95,11 +95,11 @@ export const playlists: Playlist[] = [
     id: "playlist-2",
     title: "Quantum Healing Frequencies",
     description: "Precise frequencies based on quantum physics principles for deep cellular healing",
-    coverArt: "/images/products/cosmic-frequency-album.png", 
+    coverArt: "/images/cosmic-music/quantum-resonance-album.svg", 
     category: "healing",
     mood: "restorative",
     frequency: 528,
-    image: "/images/products/cosmic-frequency-album.png", 
+    image: "/images/cosmic-music/quantum-resonance-album.svg", 
     tracks: [
       {
         id: "track-8",
@@ -262,8 +262,8 @@ export const playlists: Playlist[] = [
     title: "Ethereal Meditation Ambient",
     description: "Ambient soundscapes for deep meditation",
     category: "meditation",
-    image: "https://images.unsplash.com/photo-1539717758882-0c07bbbc711e?q=80&w=1074",
-    coverArt: "https://images.unsplash.com/photo-1539717758882-0c07bbbc711e?q=80&w=1074",
+    image: "/images/cosmic-music/ethereal-meditation-album.svg",
+    coverArt: "/images/cosmic-music/ethereal-meditation-album.svg",
     duration: "45:00",
     tracks: []
   },
