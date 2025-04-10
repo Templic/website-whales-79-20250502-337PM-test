@@ -33,21 +33,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FormatAction, EditMenuProps } from "@/types/admin";
 import "./admin.css";
-
-// Define FormatAction directly in this component to avoid import issues
-interface FormatAction {
-  type: string;
-  value?: string | boolean | number;
-}
-
-interface EditMenuProps {
-  contentId: string | number;
-  position?: "top" | "bottom" | "left" | "right";
-  isOpen: boolean;
-  onClose: () => void;
-  onFormatApply?: (format: FormatAction) => void;
-}
 
 /**
  * EditMenu component
