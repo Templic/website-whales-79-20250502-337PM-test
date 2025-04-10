@@ -1,87 +1,101 @@
 /**
  * API Types
  * 
- * This file contains type definitions for API requests and responses.
- * It ensures consistent typing for data sent to and received from the server.
+ * This file contains type definitions for API-related data structures.
+ * These types represent the shape of request and response objects for API calls.
  */
 
-import { Product, User, BlogPost, Track, Album, TourDate } from './models';
-import { ProductId } from './utils';
-
 /**
- * Common API response structure
+ * Generic API response structure
  */
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
-  timestamp: string;
+  errors?: Record<string, string[]>;
+  timestamp?: string;
 }
 
 /**
- * Error response
+ * Error response with validation errors
  */
 export interface ApiErrorResponse {
   success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: any;
+  message: string;
+  errors?: Record<string, string[]>;
+  code?: string;
+  timestamp?: string;
+}
+
+/**
+ * Response for paginated data
+ */
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
   };
+}
+
+/**
+ * JSON-API specific response format
+ */
+export interface JsonApiResponse<T> {
+  data: {
+    id: string;
+    type: string;
+    attributes: T;
+    relationships?: Record<string, {
+      data: { id: string; type: string; } | { id: string; type: string; }[] | null;
+    }>;
+  } | {
+    id: string;
+    type: string;
+    attributes: T;
+    relationships?: Record<string, {
+      data: { id: string; type: string; } | { id: string; type: string; }[] | null;
+    }>;
+  }[];
+  included?: {
+    id: string;
+    type: string;
+    attributes: Record<string, any>;
+  }[];
+  meta?: Record<string, any>;
+  links?: {
+    self?: string;
+    first?: string;
+    last?: string;
+    prev?: string;
+    next?: string;
+  };
+}
+
+/**
+ * Health check response
+ */
+export interface HealthCheckResponse {
+  status: 'ok' | 'degraded' | 'down';
+  version: string;
   timestamp: string;
-}
-
-/**
- * Paginated response
- */
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
-
-/**
- * Product list response
- */
-export interface ProductListResponse extends PaginatedResponse<Product> {}
-
-/**
- * Product detail response
- */
-export interface ProductDetailResponse extends ApiResponse<Product> {
-  relatedProducts?: Product[];
-}
-
-/**
- * Create product request
- */
-export interface CreateProductRequest {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  categories?: string[];
-  inStock: boolean;
-  tags?: string[];
-  featured?: boolean;
-}
-
-/**
- * Update product request
- */
-export interface UpdateProductRequest {
-  id: ProductId;
-  name?: string;
-  description?: string;
-  price?: number;
-  image?: string;
-  category?: string;
-  categories?: string[];
-  inStock?: boolean;
-  tags?: string[];
-  featured?: boolean;
+  services: {
+    database: {
+      status: 'ok' | 'degraded' | 'down';
+      responseTime?: number;
+    };
+    cache?: {
+      status: 'ok' | 'degraded' | 'down';
+      responseTime?: number;
+    };
+    externalServices?: Record<string, {
+      status: 'ok' | 'degraded' | 'down';
+      responseTime?: number;
+    }>;
+  };
+  uptime: number;
 }
 
 /**
@@ -96,66 +110,96 @@ export interface AuthRequest {
 /**
  * Authentication response
  */
-export interface AuthResponse extends ApiResponse<{
-  user: User;
+export interface AuthResponse {
   token: string;
   expiresAt: string;
-}> {}
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
+}
 
 /**
- * Register request
+ * Registration request
  */
 export interface RegisterRequest {
-  name: string;
   email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  confirmPassword: string;
+}
+
+/**
+ * Password reset request
+ */
+export interface PasswordResetRequest {
+  email: string;
+}
+
+/**
+ * Password update request
+ */
+export interface PasswordUpdateRequest {
+  token: string;
   password: string;
   confirmPassword: string;
 }
 
 /**
- * Contact form request
+ * Response for file uploads
  */
-export interface ContactFormRequest {
-  name: string;
-  email: string;
+export interface FileUploadResponse {
+  url: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  id: string;
+}
+
+/**
+ * Analytics data point
+ */
+export interface AnalyticsDataPoint {
+  date: string;
+  value: number;
+}
+
+/**
+ * Analytics time series data
+ */
+export interface AnalyticsTimeSeriesData {
+  label: string;
+  data: AnalyticsDataPoint[];
+}
+
+/**
+ * Analytics metrics response
+ */
+export interface AnalyticsMetricsResponse {
+  timeSeries: AnalyticsTimeSeriesData[];
+  totalCount: number;
+  previousPeriodCount: number;
+  percentChange: number;
+  topItems?: {
+    label: string;
+    value: number;
+  }[];
+}
+
+/**
+ * Notification API response
+ */
+export interface NotificationResponse {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
   message: string;
-  subject?: string;
-}
-
-/**
- * Newsletter subscription request
- */
-export interface NewsletterSubscriptionRequest {
-  email: string;
-  name?: string;
-  subscribeToUpdates?: boolean;
-}
-
-/**
- * Blog posts response
- */
-export interface BlogPostsResponse extends PaginatedResponse<BlogPost> {
-  categories?: string[];
-  featuredPost?: BlogPost;
-}
-
-/**
- * Music tracks response
- */
-export interface MusicTracksResponse extends PaginatedResponse<Track> {
-  featuredTrack?: Track;
-}
-
-/**
- * Albums response
- */
-export interface AlbumsResponse extends PaginatedResponse<Album> {
-  featuredAlbum?: Album;
-}
-
-/**
- * Tour dates response
- */
-export interface TourDatesResponse extends PaginatedResponse<TourDate> {
-  upcomingDates?: TourDate[];
+  timestamp: string;
+  read: boolean;
+  actionUrl?: string;
+  actionText?: string;
 }

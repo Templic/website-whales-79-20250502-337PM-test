@@ -2,53 +2,30 @@
  * Admin Types
  * 
  * This file contains type definitions for admin-related components and features.
- * These types provide a consistent interface for admin functionality.
+ * These types are used across the admin interfaces and dashboards.
  */
 
 import { ReactNode } from 'react';
-import { ButtonProps } from '@/components/ui/button';
+import { ButtonHTMLAttributes } from 'react';
 
 /**
- * Admin button appearance variants
+ * Button variant types for admin UI
  */
 export type AdminButtonVariant = 
   | 'default'
-  | 'cosmic'
+  | 'primary'
+  | 'secondary'
   | 'destructive'
   | 'outline'
-  | 'secondary'
+  | 'subtle'
   | 'ghost'
   | 'link'
-  | 'primary';
+  | 'cosmic';
 
 /**
- * Admin button size variants
+ * Button size types for admin UI
  */
-export type AdminButtonSize = 'default' | 'sm' | 'lg' | 'icon' | 'md';
-
-/**
- * Edit button props
- */
-export interface EditButtonProps extends Omit<ButtonProps, 'variant' | 'size'> {
-  variant?: AdminButtonVariant;
-  size?: AdminButtonSize;
-  onEdit?: () => void;
-  onSave?: () => void;
-  onCancel?: () => void;
-  isEditing?: boolean;
-  saveLabel?: string;
-  editLabel?: string;
-  cancelLabel?: string;
-  showIcon?: boolean;
-  position?: 'top' | 'bottom' | 'left' | 'right';
-  iconPosition?: 'left' | 'right';
-  confirmOnSave?: boolean;
-  confirmMessage?: string;
-  confirmTitle?: string;
-  cancelText?: string;
-  confirmText?: string;
-  loading?: boolean;
-}
+export type AdminButtonSize = 'sm' | 'default' | 'lg' | 'icon';
 
 /**
  * Format actions for rich text editing
@@ -58,255 +35,277 @@ export type FormatAction =
   | 'italic'
   | 'underline'
   | 'strikethrough'
-  | 'subscript'
-  | 'superscript'
   | 'code'
-  | 'heading1'
-  | 'heading2'
-  | 'heading3'
-  | 'bulletList'
-  | 'numberedList'
-  | 'blockquote'
+  | 'heading'
+  | 'subheading'
+  | 'paragraph'
+  | 'quote'
+  | 'bullet'
+  | 'number'
   | 'link'
   | 'image'
-  | 'video'
-  | 'table'
-  | 'divider'
-  | 'clearFormatting'
-  | 'undo'
-  | 'redo'
+  | 'color'
   | 'align-left'
   | 'align-center'
   | 'align-right'
   | 'align-justify'
   | 'indent'
-  | 'outdent'
-  | 'number';
+  | 'outdent';
 
 /**
- * Format value for rich text editing
+ * Value for format actions
  */
-export type FormatValue = {
-  type: FormatAction;
-  value?: string;
+export interface FormatValue {
+  type: string;
+  value?: string | number | boolean;
+  url?: string;
+  color?: string;
+  level?: number;
 }
 
 /**
- * Edit menu props
- */
-export interface EditMenuProps {
-  onAction?: (action: FormatAction, value?: string) => void;
-  position?: 'top' | 'bottom';
-  children?: ReactNode;
-  className?: string;
-  showAdvanced?: boolean;
-  actions?: FormatAction[];
-  disabled?: boolean;
-}
-
-/**
- * Data table column definition
- */
-export interface DataTableColumn<T> {
-  id: string;
-  header: string;
-  accessor: keyof T | ((row: T) => any);
-  cell?: (value: any, row: T) => ReactNode;
-  sortable?: boolean;
-  width?: string;
-  minWidth?: string;
-  maxWidth?: string;
-  className?: string;
-  headerClassName?: string;
-  hidden?: boolean;
-}
-
-/**
- * Data table props
- */
-export interface DataTableProps<T> {
-  data: T[];
-  columns: DataTableColumn<T>[];
-  onRowClick?: (row: T) => void;
-  onSort?: (column: string, direction: 'asc' | 'desc') => void;
-  sortColumn?: string;
-  sortDirection?: 'asc' | 'desc';
-  loading?: boolean;
-  emptyMessage?: string;
-  pagination?: {
-    pageSize: number;
-    currentPage: number;
-    totalPages: number;
-    onPageChange: (page: number) => void;
-  };
-  rowClassName?: string | ((row: T) => string);
-  selectedRows?: T[];
-  onRowSelect?: (row: T, selected: boolean) => void;
-  onSelectAll?: (selected: boolean) => void;
-  selectable?: boolean;
-  className?: string;
-  showHeader?: boolean;
-  stickyHeader?: boolean;
-  highlightOnHover?: boolean;
-  striped?: boolean;
-  dense?: boolean;
-  bordered?: boolean;
-}
-
-/**
- * Admin panel props
- */
-export interface AdminPanelProps {
-  title: string;
-  subtitle?: string;
-  icon?: ReactNode;
-  children: ReactNode;
-  actions?: ReactNode;
-  collapsible?: boolean;
-  defaultCollapsed?: boolean;
-  className?: string;
-  headerClassName?: string;
-  bodyClassName?: string;
-  onCollapse?: (collapsed: boolean) => void;
-  loading?: boolean;
-}
-
-/**
- * Admin card props
- */
-export interface AdminCardProps {
-  title?: string;
-  subtitle?: string;
-  icon?: ReactNode;
-  children: ReactNode;
-  actions?: ReactNode;
-  className?: string;
-  headerClassName?: string;
-  bodyClassName?: string;
-  onClick?: () => void;
-  loading?: boolean;
-  variant?: 'default' | 'bordered' | 'ghost';
-  color?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'cosmic';
-}
-
-/**
- * Admin dashboard metrics
- */
-export interface DashboardMetrics {
-  totalUsers: number;
-  activeUsers: number;
-  totalSales: number;
-  revenue: number;
-  newSignups: number;
-  growthRate: number;
-  conversionRate: number;
-  userRetention: number;
-  avgSessionDuration: number;
-  pageViews: number;
-}
-
-/**
- * Admin dashboard chart data
- */
-export interface DashboardChartData {
-  labels: string[];
-  datasets: {
-    label: string;
-    data: number[];
-    borderColor?: string;
-    backgroundColor?: string;
-  }[];
-}
-
-/**
- * Security scan result
- */
-export interface SecurityScanResult {
-  id: string;
-  timestamp: string;
-  status: 'complete' | 'in_progress' | 'failed';
-  issues: {
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
-    info: number;
-  };
-  findings: {
-    id: string;
-    severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-    category: string;
-    description: string;
-    affected: string;
-    recommendation: string;
-  }[];
-}
-
-/**
- * Admin notification
- */
-export interface AdminNotification {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  timestamp: string;
-  read: boolean;
-  link?: string;
-  icon?: ReactNode;
-}
-
-/**
- * Admin settings
- */
-export interface AdminSettings {
-  theme: 'light' | 'dark' | 'system';
-  notifications: {
-    email: boolean;
-    browser: boolean;
-    mobile: boolean;
-  };
-  security: {
-    twoFactorAuth: boolean;
-    sessionTimeout: number;
-    passwordExpiry: number;
-  };
-  display: {
-    denseMode: boolean;
-    animate: boolean;
-    showHelpText: boolean;
-  };
-}
-
-/**
- * Admin action log
- */
-export interface AdminActionLog {
-  id: string;
-  user: string;
-  action: string;
-  target: string;
-  timestamp: string;
-  details?: string;
-  ip?: string;
-  userAgent?: string;
-}
-
-/**
- * Export admin types namespace
+ * Admin namespace to group related admin types
  */
 export namespace AdminTypes {
-  export type EditButton = EditButtonProps;
-  export type EditMenu = EditMenuProps;
-  export type DataTable<T> = DataTableProps<T>;
-  export type AdminPanel = AdminPanelProps;
-  export type AdminCard = AdminCardProps;
-  export type Dashboard = DashboardMetrics;
-  export type ChartData = DashboardChartData;
-  export type SecurityScan = SecurityScanResult;
-  export type Notification = AdminNotification;
-  export type Settings = AdminSettings;
-  export type ActionLog = AdminActionLog;
-}
+  /**
+   * Edit button props
+   */
+  export interface EditButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    content?: string;
+    contentId?: string;
+    variant?: AdminButtonVariant;
+    size?: AdminButtonSize;
+    text?: string;
+    iconOnly?: boolean;
+    showFormatMenu?: boolean;
+    menuPosition?: 'top' | 'bottom' | 'left' | 'right';
+    onFormatApply?: (format: FormatAction | FormatValue) => void;
+    className?: string;
+  }
 
-export default AdminTypes;
+  /**
+   * Edit menu props
+   */
+  export interface EditMenuProps {
+    contentId?: string;
+    position?: 'top' | 'bottom' | 'left' | 'right';
+    isOpen?: boolean;
+    onClose?: () => void;
+    onFormatApply?: (format: FormatAction | FormatValue) => void;
+    className?: string;
+  }
+
+  /**
+   * Analytics chart type
+   */
+  export type ChartType = 'line' | 'bar' | 'pie' | 'doughnut' | 'radar' | 'polarArea';
+
+  /**
+   * Analytics time range
+   */
+  export type TimeRange = 'day' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+  /**
+   * Analytics chart props
+   */
+  export interface AnalyticsChartProps {
+    type: ChartType;
+    data: {
+      labels: string[];
+      datasets: {
+        label: string;
+        data: number[];
+        backgroundColor?: string | string[];
+        borderColor?: string | string[];
+        borderWidth?: number;
+        fill?: boolean;
+      }[];
+    };
+    timeRange?: TimeRange;
+    title?: string;
+    subtitle?: string;
+    height?: number | string;
+    width?: number | string;
+    options?: Record<string, any>;
+    loading?: boolean;
+    error?: Error | null;
+    className?: string;
+  }
+
+  /**
+   * Dashboard widget props
+   */
+  export interface DashboardWidgetProps {
+    title: string;
+    value: number | string;
+    previousValue?: number | string;
+    percentChange?: number;
+    icon?: ReactNode;
+    trend?: 'up' | 'down' | 'neutral';
+    loading?: boolean;
+    error?: Error | null;
+    className?: string;
+    onClick?: () => void;
+  }
+
+  /**
+   * Dashboard section props
+   */
+  export interface DashboardSectionProps {
+    title: string;
+    subtitle?: string;
+    children: ReactNode;
+    className?: string;
+    collapsible?: boolean;
+    defaultCollapsed?: boolean;
+  }
+
+  /**
+   * Data table column definition
+   */
+  export interface TableColumn<T> {
+    header: string;
+    accessor: keyof T | ((row: T) => any);
+    cell?: (value: any, row: T) => ReactNode;
+    sortable?: boolean;
+    filterable?: boolean;
+    width?: number | string;
+    align?: 'left' | 'center' | 'right';
+    className?: string;
+  }
+
+  /**
+   * Data table props
+   */
+  export interface DataTableProps<T> {
+    data: T[];
+    columns: TableColumn<T>[];
+    pagination?: {
+      pageSize: number;
+      page: number;
+      totalItems: number;
+      totalPages: number;
+      onPageChange: (page: number) => void;
+      onPageSizeChange?: (pageSize: number) => void;
+    };
+    sorting?: {
+      sortBy: keyof T | null;
+      sortDirection: 'asc' | 'desc';
+      onSortChange: (sortBy: keyof T | null, sortDirection: 'asc' | 'desc') => void;
+    };
+    selection?: {
+      selectedItems: T[];
+      onSelectionChange: (selectedItems: T[]) => void;
+      selectionMode?: 'single' | 'multiple';
+    };
+    loading?: boolean;
+    error?: Error | null;
+    emptyMessage?: string;
+    className?: string;
+  }
+
+  /**
+   * Admin form field
+   */
+  export interface FormField {
+    name: string;
+    label: string;
+    type: 'text' | 'textarea' | 'number' | 'email' | 'password' | 'select' | 'multiselect' | 'checkbox' | 'radio' | 'date' | 'time' | 'datetime' | 'file' | 'color' | 'richtext';
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    readOnly?: boolean;
+    options?: { label: string; value: string | number | boolean }[];
+    defaultValue?: any;
+    validation?: {
+      min?: number;
+      max?: number;
+      minLength?: number;
+      maxLength?: number;
+      pattern?: string;
+      patternMessage?: string;
+    };
+    helpText?: string;
+    className?: string;
+  }
+
+  /**
+   * Admin form props
+   */
+  export interface AdminFormProps {
+    fields: FormField[];
+    onSubmit: (values: Record<string, any>) => void;
+    initialValues?: Record<string, any>;
+    submitText?: string;
+    cancelText?: string;
+    onCancel?: () => void;
+    loading?: boolean;
+    error?: Error | null;
+    successMessage?: string;
+    className?: string;
+  }
+
+  /**
+   * User role for admin purposes
+   */
+  export type UserRole = 'user' | 'admin' | 'super_admin' | 'moderator' | 'editor' | 'guest';
+
+  /**
+   * Permission for admin features
+   */
+  export type Permission = 
+    | 'view:users' 
+    | 'create:users' 
+    | 'edit:users' 
+    | 'delete:users'
+    | 'view:content' 
+    | 'create:content' 
+    | 'edit:content' 
+    | 'delete:content'
+    | 'view:analytics' 
+    | 'manage:settings'
+    | 'manage:payments'
+    | 'manage:security';
+
+  /**
+   * Security level for access control
+   */
+  export type SecurityLevel = 'low' | 'medium' | 'high' | 'critical';
+
+  /**
+   * Notification type for admin alerts
+   */
+  export type NotificationType = 'info' | 'success' | 'warning' | 'error';
+
+  /**
+   * Admin notification
+   */
+  export interface AdminNotification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    timestamp: string;
+    read: boolean;
+    actionUrl?: string;
+    actionText?: string;
+  }
+
+  /**
+   * Admin menu item
+   */
+  export interface AdminMenuItem {
+    id: string;
+    label: string;
+    icon?: ReactNode;
+    url?: string;
+    onClick?: () => void;
+    children?: AdminMenuItem[];
+    requiredPermission?: Permission;
+    badge?: {
+      value: number | string;
+      type?: 'default' | 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
+    };
+    divider?: boolean;
+  }
+}

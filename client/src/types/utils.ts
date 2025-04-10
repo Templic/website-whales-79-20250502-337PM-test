@@ -2,149 +2,169 @@
  * Utility Types
  * 
  * This file contains utility type definitions that are used throughout the application.
- * These types provide common type patterns and branded types for type safety.
+ * These types provide reusable patterns for common type transformations.
  */
 
 /**
- * Branded type utility
- * Creates a type that is branded with a specific tag for type safety
+ * Makes all properties in T optional, including nested objects
  */
-export type Branded<K, T> = K & { __brand: T };
+export type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;
 
 /**
- * Branded ID types
+ * Makes specified keys K of type T optional
  */
+export type OptionalFields<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+
+/**
+ * Makes specified keys K of type T required
+ */
+export type RequiredFields<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
+
+/**
+ * Makes specified keys K of type T readonly
+ */
+export type ReadonlyFields<T, K extends keyof T> = Omit<T, K> & Readonly<Pick<T, K>>;
+
+/**
+ * Branded type for type-safe IDs
+ * This prevents mixing different ID types even though they share the same base type
+ */
+export type Branded<T, Brand extends string> = T & { __brand: Brand };
+
+// ID branded types
 export type ProductId = Branded<string, 'ProductId'>;
-export type UserId = Branded<string, 'UserId'>;
 export type OrderId = Branded<string, 'OrderId'>;
+export type UserId = Branded<string, 'UserId'>;
 export type BlogPostId = Branded<string, 'BlogPostId'>;
 export type CommentId = Branded<string, 'CommentId'>;
+export type CategoryId = Branded<string, 'CategoryId'>;
 export type TrackId = Branded<string, 'TrackId'>;
 export type AlbumId = Branded<string, 'AlbumId'>;
 export type TourDateId = Branded<string, 'TourDateId'>;
+export type InvoiceId = Branded<string, 'InvoiceId'>;
+export type SubscriptionId = Branded<string, 'SubscriptionId'>;
+export type FileId = Branded<string, 'FileId'>;
 
 /**
- * Make all properties in T optional
+ * Represents a record with dynamic keys and specified value type
  */
-export type DeepPartial<T> = {
-  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+export type DynamicRecord<T> = Record<string, T>;
+
+/**
+ * Represents an entity that has an ID
+ */
+export interface Identifiable {
+  id: string;
+}
+
+/**
+ * Represents an entity with timestamps
+ */
+export interface Timestamped {
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Handles nullable values for form fields
+ * This is useful for form inputs that may have empty values
+ */
+export type FormValue<T> = T | null | undefined;
+
+/**
+ * Helper type for handling async operations
+ */
+export type AsyncResult<T> = {
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
 };
 
 /**
- * Make specific properties in T required
+ * Options for pagination
  */
-export type RequiredFields<T, K extends keyof T> = T & {
-  [P in K]-?: T[P];
-};
+export interface PaginationOptions {
+  page: number;
+  pageSize: number;
+  totalItems?: number;
+}
 
 /**
- * Make specific properties in T optional
+ * Represents a response with paginated results
  */
-export type OptionalFields<T, K extends keyof T> = Omit<T, K> & {
-  [P in K]?: T[P];
-};
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+}
 
 /**
- * Make all properties in T readonly
+ * Type for callback functions handling errors
  */
-export type ReadonlyFields<T> = {
-  readonly [P in keyof T]: T[P];
-};
+export type ErrorHandler = (error: Error) => void;
 
 /**
- * Pick properties from T that are of type U
+ * Type for async function returning a value or error
  */
-export type PickByType<T, U> = {
-  [P in keyof T as T[P] extends U ? P : never]: T[P];
-};
+export type AsyncFunction<T> = () => Promise<T>;
 
 /**
- * Omit properties from T that are of type U
+ * Type for async request with loading state
  */
-export type OmitByType<T, U> = {
-  [P in keyof T as T[P] extends U ? never : P]: T[P];
-};
+export interface AsyncRequest<T> {
+  data: T | null;
+  loading: boolean;
+  error: Error | null;
+  execute: () => Promise<T>;
+  reset: () => void;
+}
 
 /**
- * Make certain properties in T nullable
+ * Validation result type
  */
-export type Nullable<T> = T | null;
+export interface ValidationResult {
+  valid: boolean;
+  errors: Record<string, string[]>;
+}
 
 /**
- * Create a union type of all values in T
+ * Filter operator type
+ */
+export type FilterOperator = 
+  | 'eq' // equals
+  | 'neq' // not equals
+  | 'gt' // greater than
+  | 'gte' // greater than or equal
+  | 'lt' // less than
+  | 'lte' // less than or equal
+  | 'contains' // contains substring
+  | 'startsWith' // starts with
+  | 'endsWith' // ends with
+  | 'in' // in array
+  | 'notIn' // not in array
+  | 'between'; // between two values
+
+/**
+ * Creates a union type from an object's values
  */
 export type ValueOf<T> = T[keyof T];
 
 /**
- * Pagination parameters
+ * Makes all properties in T non-nullable
  */
-export interface PaginationParams {
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-}
-
-/**
- * Sorting parameters
- */
-export interface SortParams {
-  field: string;
-  direction: 'asc' | 'desc';
-}
-
-/**
- * Filtering parameters
- */
-export interface FilterParams {
-  field: string;
-  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'startsWith' | 'endsWith';
-  value: string | number | boolean;
-}
-
-/**
- * A function with no parameters and no return value
- */
-export type Nullary = () => void;
-
-/**
- * A function with one parameter and no return value
- */
-export type Unary<T> = (arg: T) => void;
-
-/**
- * A function with two parameters and no return value
- */
-export type Binary<T, U> = (arg1: T, arg2: U) => void;
-
-/**
- * A function that creates a value of type T
- */
-export type Factory<T> = () => T;
-
-/**
- * A function that maps a value of type T to a value of type U
- */
-export type Mapper<T, U> = (value: T) => U;
-
-/**
- * A function that predicate for a value of type T
- */
-export type Predicate<T> = (value: T) => boolean;
-
-/**
- * Creates an ID creator function for a specific branded ID type
- */
-export const createIdFactory = <T extends string>(brand: T) => {
-  return (id: string): Branded<string, T> => id as Branded<string, T>;
+export type NonNullable<T> = {
+  [P in keyof T]: NonNullable<T[P]>;
 };
 
-// ID creator functions
-export const createProductId = createIdFactory('ProductId');
-export const createUserId = createIdFactory('UserId');
-export const createOrderId = createIdFactory('OrderId');
-export const createBlogPostId = createIdFactory('BlogPostId');
-export const createCommentId = createIdFactory('CommentId');
-export const createTrackId = createIdFactory('TrackId');
-export const createAlbumId = createIdFactory('AlbumId');
-export const createTourDateId = createIdFactory('TourDateId');
+/**
+ * Create a type that allows only one property to be defined at a time
+ */
+export type OneOf<T> = {
+  [K in keyof T]: Record<K, T[K]> & Partial<Record<Exclude<keyof T, K>, never>>;
+}[keyof T];

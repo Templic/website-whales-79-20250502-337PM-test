@@ -6,14 +6,73 @@
  */
 
 import { ReactNode } from 'react';
-import { CartItem, Product } from './models';
+import { CartItem as CartItemType, Product as ProductType } from './models';
+
+// Re-export these types to maintain compatibility
+export type Product = ProductType;
+export type CartItem = CartItemType;
+
+/**
+ * Speech Recognition interfaces for voice searching
+ */
+export interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+  interpretation: any;
+}
+
+export interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+}
+
+export interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+export interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+export interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition;
+  prototype: SpeechRecognition;
+}
+
+export interface SpeechRecognition extends EventTarget {
+  grammars: any;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  serviceURI: string;
+  onstart: (event: Event) => void;
+  onend: (event: Event) => void;
+  onerror: (event: Event) => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onnomatch: (event: Event) => void;
+  onaudiostart: (event: Event) => void;
+  onaudioend: (event: Event) => void;
+  onsoundstart: (event: Event) => void;
+  onsoundend: (event: Event) => void;
+  onspeechstart: (event: Event) => void;
+  onspeechend: (event: Event) => void;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
 
 /**
  * Shopping cart context
  */
 export interface ShoppingCartContext {
-  items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
+  items: CartItemType[];
+  addItem: (product: ProductType, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -30,7 +89,7 @@ export interface ShoppingCartProps {
   isOpen?: boolean;
   onClose?: () => void;
   className?: string;
-  cartItems?: CartItem[]; 
+  cartItems?: CartItemType[]; 
   onUpdateQuantity?: (id: string, quantity: number) => void;
   onRemoveItem?: (id: string) => void;
   onCheckout?: () => void;
@@ -41,9 +100,9 @@ export interface ShoppingCartProps {
  * Product card props
  */
 export interface ProductCardProps {
-  product: Product;
-  onAddToCart?: (product: Product) => void;
-  onQuickView?: (product: Product) => void;
+  product: ProductType;
+  onAddToCart?: (product: ProductType) => void;
+  onQuickView?: (product: ProductType) => void;
   layout?: 'grid' | 'list';
   className?: string;
   hoverEffect?: boolean;
@@ -57,9 +116,9 @@ export interface ProductCardProps {
  * Product list props
  */
 export interface ProductListProps {
-  products: Product[];
-  onAddToCart?: (product: Product) => void;
-  onQuickView?: (product: Product) => void;
+  products: ProductType[];
+  onAddToCart?: (product: ProductType) => void;
+  onQuickView?: (product: ProductType) => void;
   layout?: 'grid' | 'list';
   className?: string;
   loading?: boolean;
@@ -87,9 +146,9 @@ export interface ShopFilter {
  * Product detail props
  */
 export interface ProductDetailProps {
-  product: Product;
-  onAddToCart?: (product: Product, quantity: number) => void;
-  relatedProducts?: Product[];
+  product: ProductType;
+  onAddToCart?: (product: ProductType, quantity: number) => void;
+  relatedProducts?: ProductType[];
   loading?: boolean;
   className?: string;
 }
@@ -98,7 +157,7 @@ export interface ProductDetailProps {
  * Shop page props
  */
 export interface ShopPageProps {
-  products?: Product[];
+  products?: ProductType[];
   loading?: boolean;
   filter?: ShopFilter;
   onFilterChange?: (filter: ShopFilter) => void;
@@ -184,65 +243,10 @@ export interface ProductGalleryProps {
  * Quick view props
  */
 export interface QuickViewProps {
-  product: Product;
+  product: ProductType;
   isOpen: boolean;
   onClose: () => void;
-  onAddToCart?: (product: Product, quantity: number) => void;
-}
-
-/**
- * SpeechRecognition event for voice search
- */
-export interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-  interpretation: any;
-}
-
-export interface SpeechRecognitionResultList {
-  [index: number]: SpeechRecognitionResult;
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-}
-
-export interface SpeechRecognitionResult {
-  [index: number]: SpeechRecognitionAlternative;
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  isFinal: boolean;
-}
-
-export interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-export interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
-  prototype: SpeechRecognition;
-}
-
-export interface SpeechRecognition extends EventTarget {
-  grammars: any;
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  serviceURI: string;
-  onstart: (event: Event) => void;
-  onend: (event: Event) => void;
-  onerror: (event: Event) => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onnomatch: (event: Event) => void;
-  onaudiostart: (event: Event) => void;
-  onaudioend: (event: Event) => void;
-  onsoundstart: (event: Event) => void;
-  onsoundend: (event: Event) => void;
-  onspeechstart: (event: Event) => void;
-  onspeechend: (event: Event) => void;
-  start(): void;
-  stop(): void;
-  abort(): void;
+  onAddToCart?: (product: ProductType, quantity: number) => void;
 }
 
 /**
