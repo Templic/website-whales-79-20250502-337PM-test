@@ -285,20 +285,22 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   };
 
   // Calculate content width based on shape type and the contentWidth prop
-  // Now with responsive widths for mobile devices
+  // Now with responsive widths for mobile devices, giving more space for text
   const getContentWidthStyle = () => {
     if (typeof contentWidth === 'number') {
-      // For numerical width, make it slightly narrower on mobile
-      return isMobile ? `${contentWidth * 0.9}px` : `${contentWidth}px`;
+      // For numerical width, make it wider on mobile to use more space
+      // We avoid using window.innerWidth since it might not be available during SSR
+      return isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`;
     }
 
-    // Helper to get mobile-adjusted width
+    // Helper to get mobile-adjusted width - using MORE width on mobile, not less
     const getMobileWidth = (standardWidth: string): string => {
-      // Parse the percentage and make it narrower on mobile
+      // Parse the percentage and make it wider on mobile
       const percentage = parseInt(standardWidth);
       if (!isNaN(percentage) && isMobile) {
-        // Reduce width by 10% on mobile to ensure better fit
-        const mobilePercentage = Math.max(percentage - 10, 50); // Don't go below 50%
+        // On mobile, we want to use more screen real estate, not less
+        // Increase width by 10-15% on mobile for better text display
+        const mobilePercentage = Math.min(percentage + 15, 95); // Don't exceed 95%
         return `${mobilePercentage}%`;
       }
       return standardWidth;
@@ -309,123 +311,93 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
       switch(shape) {
         case 'diamond':
         case 'rounded-diamond':
-          return getMobileWidth('70%'); // Diamond shapes need narrower content
+          // For mobile, we want to actually use MORE space, not less
+          return isMobile ? '90%' : '70%';
         case 'hexagon':
         case 'symmetric-hexagon':
         case 'octagon':
-          return getMobileWidth('75%'); // Hexagons need moderately narrower content
+          return isMobile ? '92%' : '75%';
         case 'shield':
         case 'pentagon':
         case 'pointed-pentagon':
         case 'pentagram':
-          return getMobileWidth('80%'); // These shapes need somewhat narrower content
+          return isMobile ? '93%' : '80%';
         case 'wave':
-          return getMobileWidth('85%'); // Wave shape needs slightly narrower content
         case 'trapezoid':
         case 'parallelogram':
-          return getMobileWidth('85%'); // Trapezoid shapes need slightly narrower content
+          return isMobile ? '94%' : '85%';
         case 'rectangular':
-          return getMobileWidth('95%'); // Rectangular shapes can use almost full width
+          return isMobile ? '95%' : '95%';
         default:
-          return getMobileWidth('80%'); // Default safe value for any shape
+          return isMobile ? '92%' : '80%';
       }
     }
 
     // If textContained is false or contentWidth is explicitly set
     switch(contentWidth) {
       case 'narrow':
-        return getMobileWidth('60%');
+        return isMobile ? '90%' : '60%';
       case 'standard':
-        return getMobileWidth('80%');
+        return isMobile ? '92%' : '80%';
       case 'wide':
-        return getMobileWidth('95%');
+        return isMobile ? '95%' : '95%';
       case 'auto':
       default:
-        return '100%'; // Keep 100% as is for auto
+        return '100%';
     }
   };
 
   // Calculate padding based on shape to ensure text doesn't overflow
-  // Now with responsive padding that increases on mobile for better readability
+  // For mobile, we use much less padding to maximize text space
   const getPaddingStyle = () => {
     if (!textContained) return {};
 
-    // Helper function to determine if we're in mobile view
-    const getMobilePadding = (standard: string, mobile: string = '') => {
-      return isMobile ? (mobile || `calc(${standard} + 3%)`) : standard;
-    };
-
+    // On mobile we want LESS padding, not more, to give text more room
+    if (isMobile) {
+      // For mobile, use minimal padding regardless of shape
+      switch(shape) {
+        case 'diamond':
+        case 'rounded-diamond':
+          return { padding: '6%' };
+        case 'pentagon':
+        case 'pointed-pentagon':
+          // These shapes need a bit more top padding due to their pointy top
+          return { paddingLeft: '5%', paddingRight: '5%', paddingTop: '15%', paddingBottom: '5%' };
+        case 'pentagram':
+          return { padding: '8%' };
+        case 'shield':
+          return { paddingLeft: '5%', paddingRight: '5%', paddingTop: '5%', paddingBottom: '10%' };
+        default:
+          // For all other shapes use very minimal padding on mobile
+          return { padding: '5%' };
+      }
+    }
+    
+    // Non-mobile padding (unchanged from original)
     switch(shape) {
       case 'diamond':
       case 'rounded-diamond':
-        return { 
-          paddingLeft: getMobilePadding('15%', '18%'), 
-          paddingRight: getMobilePadding('15%', '18%'), 
-          paddingTop: getMobilePadding('8%', '12%'), 
-          paddingBottom: getMobilePadding('8%', '12%')
-        };
+        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '8%', paddingBottom: '8%' };
       case 'hexagon':
       case 'symmetric-hexagon':
-        return { 
-          paddingLeft: getMobilePadding('12%', '16%'), 
-          paddingRight: getMobilePadding('12%', '16%'), 
-          paddingTop: getMobilePadding('5%', '8%'), 
-          paddingBottom: getMobilePadding('5%', '8%')
-        };
+        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '5%', paddingBottom: '5%' };
       case 'shield':
-        return { 
-          paddingLeft: getMobilePadding('10%', '14%'), 
-          paddingRight: getMobilePadding('10%', '14%'), 
-          paddingTop: getMobilePadding('5%', '8%'), 
-          paddingBottom: getMobilePadding('15%', '18%')
-        };
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '15%' };
       case 'pentagon':
       case 'pointed-pentagon':
-        return { 
-          paddingLeft: getMobilePadding('10%', '14%'), 
-          paddingRight: getMobilePadding('10%', '14%'), 
-          paddingTop: getMobilePadding('25%', '28%'), 
-          paddingBottom: getMobilePadding('8%', '10%') 
-        };
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '25%', paddingBottom: '8%' };
       case 'pentagram':
-        return { 
-          paddingLeft: getMobilePadding('15%', '18%'), 
-          paddingRight: getMobilePadding('15%', '18%'), 
-          paddingTop: getMobilePadding('15%', '18%'), 
-          paddingBottom: getMobilePadding('15%', '18%')
-        };
+        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '15%', paddingBottom: '15%' };
       case 'trapezoid':
-        return { 
-          paddingLeft: getMobilePadding('10%', '14%'), 
-          paddingRight: getMobilePadding('10%', '14%'), 
-          paddingTop: getMobilePadding('5%', '8%'), 
-          paddingBottom: getMobilePadding('5%', '8%')
-        };
+        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '5%' };
       case 'wave':
-        return { 
-          paddingLeft: getMobilePadding('8%', '12%'), 
-          paddingRight: getMobilePadding('8%', '12%'), 
-          paddingTop: getMobilePadding('5%', '8%'), 
-          paddingBottom: getMobilePadding('12%', '15%')
-        };
+        return { paddingLeft: '8%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '12%' };
       case 'octagon':
-        return { 
-          paddingLeft: getMobilePadding('12%', '16%'), 
-          paddingRight: getMobilePadding('12%', '16%'), 
-          paddingTop: getMobilePadding('8%', '10%'), 
-          paddingBottom: getMobilePadding('8%', '10%')
-        };
+        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '8%', paddingBottom: '8%' };
       case 'parallelogram':
-        return { 
-          paddingLeft: getMobilePadding('15%', '18%'), 
-          paddingRight: getMobilePadding('8%', '12%'), 
-          paddingTop: getMobilePadding('5%', '8%'), 
-          paddingBottom: getMobilePadding('5%', '8%')
-        };
+        return { paddingLeft: '15%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '5%' };
       default:
-        return { 
-          padding: getMobilePadding('8%', '10%')
-        };
+        return { padding: '8%' };
     }
   };
 

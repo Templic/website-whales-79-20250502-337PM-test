@@ -30,6 +30,25 @@
 .sacred-geometry-container {
   padding: 1rem;
   margin: 0.5rem 0;
+  /* Remove limits that might be restricting text */
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Special handling for when inside mobile geometric sections */
+.geometric-section-mobile .sacred-geometry-container {
+  padding: 0.5rem !important; /* Much smaller padding to maximize text space */
+  width: 100% !important;
+  max-width: 100% !important;
+  text-align: left; /* Override any centered text that might be squeezing content */
+}
+
+/* Don't limit text length on mobile - show everything */
+.geometric-section-mobile .sacred-geometry-text {
+  display: block !important; /* Override any truncation */
+  -webkit-line-clamp: unset !important; 
+  overflow: visible !important;
+  max-height: none !important;
 }
 
 /* Ensure text doesn't overflow in geometric shapes */
@@ -37,7 +56,7 @@
   max-width: 100%;
   word-break: break-word;
   overflow-wrap: break-word;
-  /* Truncate text with ellipsis after 6 lines for very long content on small screens */
+  /* Truncate text with ellipsis after 6 lines for very long content on small screens, except on mobile */
   display: -webkit-box;
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
@@ -65,9 +84,37 @@
   padding: 1rem;
 }
 
-/* Improve margin for geometric sections on mobile */
+/* Mobile-specific improvements for geometric sections */
 .geometric-section + .geometric-section {
   margin-top: 2rem;
+}
+
+/* Mobile-optimized geometric section content */
+.geometric-section-mobile {
+  /* Use more horizontal space on mobile devices */
+  max-width: 98% !important;
+  margin: 0.75rem auto !important;
+}
+
+.geometric-section-mobile .section-content {
+  /* Ensure content uses full available width */
+  width: 100% !important;
+  /* Remove any overflow restrictions that might truncate text */
+  overflow: visible !important;
+  /* Better font size for readability */
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Add specific handling for longer text content */
+.geometric-section-mobile .section-content p {
+  margin-bottom: 0.75rem; 
+}
+
+/* Add word breaking for very long text without spaces */
+.geometric-section-mobile .section-content * {
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Add specific adjustments for text in different shape containers */
