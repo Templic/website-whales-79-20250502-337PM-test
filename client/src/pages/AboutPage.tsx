@@ -161,15 +161,15 @@ export default function AboutPage() {
                 <div className="absolute top-0 right-0 opacity-10">
                   <SacredGeometry type="golden-spiral" size={100} color="#00ebd6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Resonating With Purpose</h3>
+                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Resonating With Purpose</h3>
                 <ul className="space-y-3">
                   <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span>Benefit concerts under the stars, with proceeds supporting ocean conservation and community development initiatives.</span>
+                    <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
+                    <span className="cosmic-text-responsive-sm">Benefit concerts under the stars, with proceeds supporting ocean conservation and community development initiatives.</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span>Interactive digital experiences where fans can share their stories and connect through the universal language of music.</span>
+                    <span className="text-[#fe0064] mr-2 mt-1 flex-shrink-0">★</span>
+                    <span className="cosmic-text-responsive-sm">Interactive digital experiences where fans can share their stories and connect through the universal language of music.</span>
                   </li>
                 </ul>
               </div>
@@ -179,14 +179,14 @@ export default function AboutPage() {
               <div className="absolute left-1/2 -translate-x-1/2 -top-12 opacity-30">
                 <SacredGeometry type="vesica-piscis" size={80} color="#fe0064" />
               </div>
-              <p className="text-xl max-w-3xl mx-auto relative z-10">Through these initiatives, Dale the Whale continues to foster a creative and inclusive environment that empowers individuals and celebrates the transformative power of music. His community-centered approach reflects his belief that music, like the cosmic forces that inspire it, has the power to unite, heal, and inspire across all boundaries.</p>
+              <p className="cosmic-text-responsive max-w-3xl mx-auto relative z-10 cosmic-text-container">Through these initiatives, Dale the Whale continues to foster a creative and inclusive environment that empowers individuals and celebrates the transformative power of music. His community-centered approach reflects his belief that music, like the cosmic forces that inspire it, has the power to unite, heal, and inspire across all boundaries.</p>
             </div>
           </div>
         </GeometricSection>
         
         {/* Artistic Journey image section */}
         <div className="mb-16 mt-10 cosmic-fade-in">
-          <h2 className="text-3xl font-bold text-[#00ebd6] mb-8 text-center">Artistic Journey</h2>
+          <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-8 text-center">Artistic Journey</h2>
           <div className="relative rounded-xl overflow-hidden shadow-lg max-w-3xl mx-auto">
             <img
               src="/images/dale-with-flowers-and-staff.jpg"
@@ -211,20 +211,20 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-3 gap-4 p-8">
             <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
               <SacredGeometry type="flower-of-life" size={80} color="#00ebd6" />
-              <h3 className="text-xl font-bold text-[#00ebd6] my-4">Harmonic Unity</h3>
-              <p>Sound frequencies that align with the natural harmonics of the universe, creating resonance between listener and cosmos.</p>
+              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Harmonic Unity</h3>
+              <p className="cosmic-text-responsive-sm">Sound frequencies that align with the natural harmonics of the universe, creating resonance between listener and cosmos.</p>
             </div>
 
             <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
               <SacredGeometry type="metatron-cube" size={80} color="#fe0064" />
-              <h3 className="text-xl font-bold text-[#00ebd6] my-4">Geometric Rhythms</h3>
-              <p>Structured patterns of sound that mirror sacred geometry, forming mathematical relationships that speak to our deepest consciousness.</p>
+              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Geometric Rhythms</h3>
+              <p className="cosmic-text-responsive-sm">Structured patterns of sound that mirror sacred geometry, forming mathematical relationships that speak to our deepest consciousness.</p>
             </div>
 
             <div className="cosmic-glow-box p-6 rounded-lg text-center flex flex-col items-center">
               <SacredGeometry type="sri-yantra" size={80} color="#00ebd6" />
-              <h3 className="text-xl font-bold text-[#00ebd6] my-4">Oceanic Flow</h3>
-              <p>Fluid, evolving soundscapes inspired by the rhythmic movements of ocean waves and the mysterious songs of whales.</p>
+              <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] my-4">Oceanic Flow</h3>
+              <p className="cosmic-text-responsive-sm">Fluid, evolving soundscapes inspired by the rhythmic movements of ocean waves and the mysterious songs of whales.</p>
             </div>
           </div>
         </GeometricSection>
