@@ -166,7 +166,7 @@ export const playlists: Playlist[] = [
         title: "Nocturnal Neural Reset",
         artist: "Cosmic Harmony",
         duration: "90:00",
-        coverArt: "/images/products/sleep-journey-3.jpg", 
+        coverArt: "/images/cosmic-music/sleep-journey.svg", 
         audioSrc: "/audio/neural-reset.mp3",
       },
     ],
