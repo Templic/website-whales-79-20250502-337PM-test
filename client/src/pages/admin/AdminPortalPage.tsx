@@ -47,7 +47,7 @@ const ShopManagementComponent = lazy(() => import('@/components/features/admin/S
 const NewsletterManagementComponent = lazy(() => import('@/components/features/admin/NewsletterManagement'));
 
 export default function AdminPortalPage() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("overview");
@@ -95,7 +95,7 @@ export default function AdminPortalPage() {
           'Content-Type': 'application/json'
         }
       });
-      
+
       // Generate success message based on action
       let successMessage = '';
       switch (action) {
@@ -115,7 +115,7 @@ export default function AdminPortalPage() {
           successMessage = 'User demoted successfully';
           break;
       }
-      
+
       toast({
         title: 'User Action Success',
         description: successMessage
@@ -131,20 +131,25 @@ export default function AdminPortalPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
       toast({
         title: "Success",
         description: "Logged out successfully"
       });
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Error",
         description: "Failed to logout",
         variant: "destructive"
       });
     }
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   const healthStatus = useMemo(() => {
@@ -184,9 +189,9 @@ export default function AdminPortalPage() {
           <Button
             variant="outline"
             onClick={handleLogout}
-            disabled={logoutMutation.isPending}
+            disabled={logoutMutation.isLoading}
           >
-            {logoutMutation.isPending ? (
+            {logoutMutation.isLoading ? (
               "Logging out..."
             ) : (
               <>
@@ -361,25 +366,25 @@ export default function AdminPortalPage() {
               <TabsTrigger value="review">Content Review</TabsTrigger>
               <TabsTrigger value="shop">Shop</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="posts" className="mt-4">
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
                 <BlogPostManagementComponent />
               </Suspense>
             </TabsContent>
-            
+
             <TabsContent value="comments" className="mt-4">
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
                 <CommentManagementComponent />
               </Suspense>
             </TabsContent>
-            
+
             <TabsContent value="review" className="mt-4">
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
                 <ContentReviewComponent />
               </Suspense>
             </TabsContent>
-            
+
             <TabsContent value="shop" className="mt-4">
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
                 <ShopManagementComponent />
@@ -416,7 +421,7 @@ export default function AdminPortalPage() {
                 <SecurityHealthCheck />
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -432,7 +437,7 @@ export default function AdminPortalPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="mt-6">
             <Card>
               <CardHeader>
@@ -450,7 +455,7 @@ export default function AdminPortalPage() {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="settings">
           <Card>
             <CardHeader>
