@@ -27,7 +27,7 @@ export default function AboutPage() {
     <>
       <SpotlightEffect />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-5xl font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float text-center">About</h1>
+        <h1 className="cosmic-heading-responsive-lg font-nebula font-bold text-[#00ebd6] mb-6 cosmic-float text-center">About</h1>
 
         {/* Sacred geometry decoration - floating in background */}
         <div className="fixed top-20 right-10 opacity-20 z-0 cosmic-pulse hidden lg:block">
@@ -106,19 +106,19 @@ export default function AboutPage() {
             <div className="px-8 space-y-4 mx-auto" style={{ maxWidth: "min(90%, 900px)" }}>
               <div className="flex items-center justify-center mb-3">
                 <Music className="w-7 h-7 text-[#00ebd6] mr-3" />
-                <h3 className="text-2xl font-bold text-[#00ebd6]">Sonic Explorer</h3>
+                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6]">Sonic Explorer</h3>
               </div>
               
-              <div className="text-center max-w-4xl mx-auto">
-                <p className="text-xl leading-relaxed">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
+              <div className="text-center max-w-4xl mx-auto cosmic-text-container">
+                <p className="cosmic-text-responsive">Dale the Whale is an innovative musician whose sounds traverse the cosmic depths and tropical shores of our imagination. Blending celestial synths with organic rhythms, Dale creates a unique auditory experience that transports listeners to vibrant new dimensions.</p>
               </div>
               
               <div className="grid md:grid-cols-2 gap-4 mt-6">
                 <div>
-                  <p className="text-lg leading-relaxed">Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life.</p>
+                  <p className="cosmic-text-responsive">Born under starry skies and raised with a deep connection to the ocean, Dale's musical journey has been shaped by both the mysteries of the cosmos and the fluid, graceful nature of marine life.</p>
                 </div>
                 <div>
-                  <p className="text-lg leading-relaxed">This duality is reflected in every note, every beat, and every lyric of his transformative compositions. With influences ranging from cosmic jazz to tropical ambient, Dale creates soundscapes that resonate with the universe.</p>
+                  <p className="cosmic-text-responsive">This duality is reflected in every note, every beat, and every lyric of his transformative compositions. With influences ranging from cosmic jazz to tropical ambient, Dale creates soundscapes that resonate with the universe.</p>
                 </div>
               </div>
             </div>
@@ -136,7 +136,7 @@ export default function AboutPage() {
           <div className="p-8">
             <div className="flex items-center gap-2 mb-6 mt-4">
               <Volume2 className="w-6 h-6 text-[#fe0064]" />
-              <p className="text-xl">Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in community projects aimed at spreading creative energy and healing positivity.</p>
+              <p className="cosmic-text-responsive">Dale is not only known for his innovative sound but also for his dedication to the community. He actively collaborates with like-minded artists and participates in community projects aimed at spreading creative energy and healing positivity.</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -144,15 +144,15 @@ export default function AboutPage() {
                 <div className="absolute top-0 right-0 opacity-10">
                   <SacredGeometry type="metatron-cube" size={100} color="#00ebd6" />
                 </div>
-                <h3 className="text-xl font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Harmonizing With Others</h3>
+                <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6] mb-4 relative z-10 text-shadow-lg">Harmonizing With Others</h3>
                 <ul className="space-y-3">
                   <li className="flex items-start">
                     <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span>Collaborative music projects with emerging and established artists, creating cosmic jams that transcend traditional boundaries.</span>
+                    <span className="cosmic-text-responsive-sm">Collaborative music projects with emerging and established artists, creating cosmic jams that transcend traditional boundaries.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-[#fe0064] mr-2 mt-1">★</span>
-                    <span>Immersive workshops and masterclasses aimed at nurturing local talent, where participants learn to channel their inner celestial creativity.</span>
+                    <span className="cosmic-text-responsive-sm">Immersive workshops and masterclasses aimed at nurturing local talent, where participants learn to channel their inner celestial creativity.</span>
                   </li>
                 </ul>
               </div>
