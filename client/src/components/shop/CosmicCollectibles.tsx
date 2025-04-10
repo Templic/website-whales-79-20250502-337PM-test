@@ -53,7 +53,7 @@ const collectionItems: CollectionItem[] = [
     name: "Zodiac Crystal Collection",
     description: "A set of 12 crystals aligned with each zodiac sign, enhancing your connection to cosmic energies.",
     price: 111.11,
-    image: "/images/products/samples/crystal-bowl.jpg",
+    image: "/images/products/zodiac-crystal-collection.svg",
     category: "spiritual",
     isBestseller: true,
     rating: 4.8,
@@ -98,7 +98,7 @@ const collectionItems: CollectionItem[] = [
     name: "Sacred Geometry Wall Tapestry",
     description: "Handwoven tapestry featuring interconnected sacred geometry patterns that enhance the energy of any space.",
     price: 66.66,
-    image: "/images/products/samples/sacred-geometry.jpg",
+    image: "/images/products/sacred-geometry-tapestry.svg",
     category: "home",
     rating: 4.8,
     reviews: 67
