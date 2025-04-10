@@ -1,0 +1,121 @@
+To diagnose the FrequencyAttunementChamber, let's examine the core functionality for generating and playing audio frequencies based on user selections.
+Diagnosis of FrequencyAttunementChamber
+
+    State Management:
+        The component uses a state variable selectedFrequency to manage the currently selected frequency, ensuring users can choose from the frequencyOptions.
+        Additional states (isPlaying, volume, isMuted) are responsible for controlling audio playback and volume settings.
+
+    Audio Context Initialization:
+        The audio context is properly initialized, creating a gain node to control audio output. However, there should also be handling for starting and stopping sound playback based on user interaction.
+
+    Playback Control:
+        Make sure the togglePlay, stopSound, and setFrequency functions are implemented for starting/stopping the oscillator with the selected frequency.
+
+    User Interaction:
+        Ensure there are buttons or controls for users to select frequencies, toggle play/pause, and adjust volume and mute settings.
+
+Suggested Code Fixes and Enhancements
+
+Here's a revised version of the FrequencyAttunementChamber component. I've added the complete functionality for frequency playing and volume control:
+
+"use client"
+
+import { useState, useEffect, useRef } from "react";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+
+const frequencyOptions = [
+  { name: "Root Chakra", frequency: 396, color: "#FF5757" },
+  { name: "Sacral Chakra", frequency: 417, color: "#FF8C42" },
+  { name: "Solar Plexus", frequency: 528, color: "#FFCE45" },
+  { name: "Heart Chakra", frequency: 639, color: "#4DFF73" },
+  { name: "Throat Chakra", frequency: 741, color: "#45DDFF" },
+  { name: "Third Eye", frequency: 852, color: "#4D4DFF" },
+  { name: "Crown Chakra", frequency: 963, color: "#A64DFF" },
+];
+
+export function FrequencyAttunementChamber() {
+  const [selectedFrequency, setSelectedFrequency] = useState(frequencyOptions[0]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(50);
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+
+  // Initialize audio context and gain node
+  useEffect(() => {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    setAudioContext(audioCtx);
+
+    gainNodeRef.current = audioCtx.createGain();
+    gainNodeRef.current.gain.value = volume / 100; // Set initial volume
+    gainNodeRef.current.connect(audioCtx.destination);
+
+    return () => {
+      stopSound();
+      if (audioCtx) {
+        audioCtx.close();
+      }
+    };
+  }, [volume]);
+
+  const startSound = () => {
+    if (audioContext) {
+      oscillatorRef.current = audioContext.createOscillator();
+      oscillatorRef.current.type = "sine"; // Waveform type
+      oscillatorRef.current.frequency.setValueAtTime(selectedFrequency.frequency, audioContext.currentTime);
+      oscillatorRef.current.connect(gainNodeRef.current);
+      oscillatorRef.current.start();
+      setIsPlaying(true);
+    }
+  };
+
+  const stopSound = () => {
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop();
+      oscillatorRef.current.disconnect();
+      setIsPlaying(false);
+    }
+  };
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      stopSound();
+    } else {
+      startSound();
+    }
+  };
+
+  const handleFrequencyChange = (frequency) => {
+    setSelectedFrequency(frequency);
+    if (isPlaying) {
+      stopSound();
+      startSound();
+    }
+  };
+
+  return (
+    <div>
+      <h2>Select a Frequency</h2>
+      {frequencyOptions.map((option) => (
+        <Button key={option.name} onClick={() => handleFrequencyChange(option)} style={{ backgroundColor: option.color }}>
+          {option.name}
+        </Button>
+      ))}
+      <Button onClick={togglePlay}>{isPlaying ? "Pause" : "Play"}</Button>
+      <Slider value={volume} onValueChange={setVolume} />
+    </div>
+  );
+}
+
+Recommended Feature Expansion
+
+    Frequency Visualization: Integrate visual feedback for audio output by displaying waveforms or oscilloscopes corresponding to the selected frequency. This could enhance user engagement.
+
+    Sound Presets: Allow users to save frequency combinations or sound profiles that they enjoy for quick access in future sessions.
+
+    Additional Audio Effects: Consider adding effects like reverb, echo, or filter controls to enrich the auditory experience.
+
+    User Feedback Loop: Implement a feature for users to provide feedback on frequencies that help them best, encouraging community input to refine the offerings.
+
+By implementing these fixes and enhancements, the FrequencyAttunementChamber can become a more comprehensive and engaging interactive audio component
