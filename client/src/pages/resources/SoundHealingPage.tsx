@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Music, Waves, Zap, Heart, VolumeX, Sparkles } from "lucide-react";
+import StarBackground from "@/components/cosmic/StarBackground";
 
 export default function SoundHealingPage() {
   useEffect(() => {
@@ -11,8 +12,9 @@ export default function SoundHealingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-indigo-950 to-violet-950 text-white">
-      <div className="max-w-5xl mx-auto py-16 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-950 via-indigo-950 to-violet-950 text-white relative overflow-hidden">
+      <StarBackground />
+      <div className="max-w-5xl mx-auto py-16 px-4 relative z-10">
         {/* Header */}
         <div className="relative">
           <div className="absolute -top-6 -left-6 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl"></div>
