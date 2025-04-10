@@ -54,7 +54,7 @@ export const playlists: Playlist[] = [
         title: "Solar Plexus Empowerment",
         artist: "Cosmic Harmony",
         duration: "8:21",
-        coverArt: "/images/products/chakra-solar-plexus.jpg", 
+        coverArt: "/images/cosmic-music/solar-plexus-activation.svg", 
         audioSrc: "/audio/solar-plexus.mp3",
       },
       {
@@ -62,7 +62,7 @@ export const playlists: Playlist[] = [
         title: "Heart Chakra Opening",
         artist: "Cosmic Harmony",
         duration: "12:15",
-        coverArt: "/images/products/chakra-heart.jpg", 
+        coverArt: "/images/cosmic-music/heart-chakra-resonance.svg", 
         audioSrc: "/audio/heart-chakra.mp3",
       },
       {
@@ -70,7 +70,7 @@ export const playlists: Playlist[] = [
         title: "Throat Chakra Expression",
         artist: "Cosmic Harmony",
         duration: "7:42",
-        coverArt: "/images/products/chakra-throat.jpg", 
+        coverArt: "/images/cosmic-music/throat-chakra-expression.svg", 
         audioSrc: "/audio/throat-chakra.mp3",
       },
       {
@@ -78,7 +78,7 @@ export const playlists: Playlist[] = [
         title: "Third Eye Awakening",
         artist: "Cosmic Harmony",
         duration: "11:11",
-        coverArt: "/images/products/chakra-third-eye.jpg", 
+        coverArt: "/images/cosmic-music/third-eye-awakening.svg", 
         audioSrc: "/audio/third-eye.mp3",
       },
       {
@@ -86,7 +86,7 @@ export const playlists: Playlist[] = [
         title: "Crown Connection",
         artist: "Cosmic Harmony",
         duration: "14:22",
-        coverArt: "/images/products/chakra-crown.jpg", 
+        coverArt: "/images/cosmic-music/crown-connection.svg", 
         audioSrc: "/audio/crown-chakra.mp3",
       },
     ],
@@ -139,11 +139,11 @@ export const playlists: Playlist[] = [
     id: "playlist-3",
     title: "Cosmic Sleep Journey",
     description: "Ambient soundscapes designed to induce deep delta wave sleep patterns",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg", 
+    coverArt: "/images/cosmic-music/cosmic-healing-album.svg", 
     category: "sleep",
     mood: "relaxing",
     frequency: 432,
-    image: "https://i.etsystatic.com/54804470/r/il/807304/6419058755/il_1588xN.6419058755_xyt9.jpg", 
+    image: "/images/cosmic-music/cosmic-healing-album.svg", 
     tracks: [
       {
         id: "track-12",
@@ -175,10 +175,10 @@ export const playlists: Playlist[] = [
     id: "playlist-4",
     title: "Astral Projection Suite",
     description: "Carefully crafted frequencies to facilitate out-of-body experiences",
-    coverArt: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg", 
+    coverArt: "/images/cosmic-music/ethereal-meditation-album.svg", 
     category: "astral",
     mood: "transcendent",
-    image: "https://i.etsystatic.com/54804470/r/il/af4a91/6479493312/il_1588xN.6479493312_hlw5.jpg", 
+    image: "/images/cosmic-music/ethereal-meditation-album.svg", 
     tracks: [
       {
         id: "track-15",
@@ -218,10 +218,10 @@ export const playlists: Playlist[] = [
     id: "playlist-5",
     title: "Sacred Geometry Harmonics",
     description: "Sound frequencies based on the mathematical ratios of sacred geometry",
-    coverArt: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1074", 
+    coverArt: "/images/cosmic-music/quantum-resonance-album.svg", 
     category: "geometry",
     mood: "enlightening",
-    image: "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?q=80&w=1074", 
+    image: "/images/cosmic-music/quantum-resonance-album.svg", 
     tracks: [
       {
         id: "track-19",
@@ -272,8 +272,8 @@ export const playlists: Playlist[] = [
     title: "Astral Projection Suite",
     description: "Binaural beats for astral travel and lucid dreaming",
     category: "astral",
-    image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1074",
-    coverArt: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1074",
+    image: "/images/cosmic-music/ethereal-meditation-album.svg",
+    coverArt: "/images/cosmic-music/ethereal-meditation-album.svg",
     duration: "30:00",
     tracks: []
   },
