@@ -11,25 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Edit, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import EditMenu from "./NewEditMenu";
-// Define FormatAction directly in this component to avoid import issues
-interface FormatAction {
-  type: string;
-  value?: string | boolean | number;
-}
+import { FormatAction, EditButtonProps } from "@/types/admin";
 import "./admin.css";
-
-interface EditButtonProps {
-  contentId: string | number;
-  onEdit?: (contentId: string | number) => void;
-  className?: string;
-  variant?: string;
-  size?: string;
-  text?: string;
-  iconOnly?: boolean;
-  showFormatMenu?: boolean;
-  menuPosition?: "top" | "bottom" | "left" | "right";
-  onFormatApply?: (format: FormatAction) => void;
-}
 
 /**
  * EditButton component for admin editing functionality

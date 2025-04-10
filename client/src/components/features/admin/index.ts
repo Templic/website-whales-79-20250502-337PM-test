@@ -10,11 +10,7 @@ import AdminEditor from './AdminEditor';
 import AdminEditorDemo from './AdminEditorDemo';
 import NewEditMenu from './NewEditMenu';
 import EditMenuDemo from './EditMenuDemo';
-// Define the types directly here instead of importing
-export interface FormatAction {
-  type: string;
-  value?: string | boolean | number;
-}
+import { FormatAction } from '@/types/admin';
 
 export interface EditorSaveData {
   text?: string;

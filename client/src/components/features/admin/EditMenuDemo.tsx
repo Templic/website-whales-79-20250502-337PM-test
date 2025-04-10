@@ -7,11 +7,7 @@
 
 import React, { useState, useRef } from "react";
 import { EditButton } from "./EditButton";
-// Define FormatAction directly in this component to avoid import issues
-interface FormatAction {
-  type: string;
-  value?: string | boolean | number;
-}
+import { FormatAction } from "@/types/admin";
 import { 
   Card, 
   CardContent, 
