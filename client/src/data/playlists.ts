@@ -46,7 +46,7 @@ export const playlists: Playlist[] = [
         title: "Sacral Creativity Flow",
         artist: "Cosmic Harmony",
         duration: "9:45",
-        coverArt: "/images/products/chakra-sacral.jpg", 
+        coverArt: "/images/cosmic-music/sacral-creativity-flow.svg", 
         audioSrc: "/audio/sacral-chakra.mp3",
       },
       {
@@ -106,7 +106,7 @@ export const playlists: Playlist[] = [
         title: "DNA Repair",
         artist: "Cosmic Harmony",
         duration: "20:33",
-        coverArt: "/images/products/quantum-healing-1.jpg", 
+        coverArt: "/images/cosmic-music/quantum-healing.svg", 
         audioSrc: "/audio/dna-repair.mp3",
       },
       {
@@ -114,7 +114,7 @@ export const playlists: Playlist[] = [
         title: "Cellular Regeneration",
         artist: "Cosmic Harmony",
         duration: "18:47",
-        coverArt: "/images/products/quantum-healing-2.jpg", 
+        coverArt: "/images/cosmic-music/quantum-healing.svg", 
         audioSrc: "/audio/cellular-regeneration.mp3",
       },
       {
@@ -122,7 +122,7 @@ export const playlists: Playlist[] = [
         title: "Quantum Field Harmonizer",
         artist: "Cosmic Harmony",
         duration: "15:21",
-        coverArt: "/images/products/quantum-healing-3.jpg", 
+        coverArt: "/images/cosmic-music/quantum-healing.svg", 
         audioSrc: "/audio/quantum-field.mp3",
       },
       {
@@ -130,7 +130,7 @@ export const playlists: Playlist[] = [
         title: "Mitochondrial Activation",
         artist: "Cosmic Harmony",
         duration: "12:15",
-        coverArt: "/images/products/quantum-healing-4.jpg", 
+        coverArt: "/images/cosmic-music/quantum-healing.svg", 
         audioSrc: "/audio/mitochondrial.mp3",
       },
     ],
@@ -150,7 +150,7 @@ export const playlists: Playlist[] = [
         title: "Theta Gateway",
         artist: "Cosmic Harmony",
         duration: "45:00",
-        coverArt: "/images/products/sleep-journey-1.jpg", 
+        coverArt: "/images/cosmic-music/sleep-journey.svg", 
         audioSrc: "/audio/theta-gateway.mp3",
       },
       {
@@ -158,7 +158,7 @@ export const playlists: Playlist[] = [
         title: "Delta Dreamscape",
         artist: "Cosmic Harmony",
         duration: "60:00",
-        coverArt: "/images/products/sleep-journey-2.jpg", 
+        coverArt: "/images/cosmic-music/sleep-journey.svg", 
         audioSrc: "/audio/delta-dreamscape.mp3",
       },
       {
@@ -185,7 +185,7 @@ export const playlists: Playlist[] = [
         title: "Vibrational Tuning",
         artist: "Cosmic Harmony",
         duration: "15:30",
-        coverArt: "/images/products/astral-projection-1.jpg", 
+        coverArt: "/images/cosmic-music/astral-projection.svg", 
         audioSrc: "/audio/vibrational-tuning.mp3",
       },
       {
@@ -193,7 +193,7 @@ export const playlists: Playlist[] = [
         title: "Silver Cord Activation",
         artist: "Cosmic Harmony",
         duration: "22:15",
-        coverArt: "/images/products/astral-projection-2.jpg", 
+        coverArt: "/images/cosmic-music/astral-projection.svg", 
         audioSrc: "/audio/silver-cord.mp3",
       },
       {
@@ -201,7 +201,7 @@ export const playlists: Playlist[] = [
         title: "Etheric Separation",
         artist: "Cosmic Harmony",
         duration: "30:00",
-        coverArt: "/images/products/astral-projection-3.jpg", 
+        coverArt: "/images/cosmic-music/astral-projection.svg", 
         audioSrc: "/audio/etheric-separation.mp3",
       },
       {
@@ -209,7 +209,7 @@ export const playlists: Playlist[] = [
         title: "Astral Guide",
         artist: "Cosmic Harmony",
         duration: "45:00",
-        coverArt: "/images/products/astral-projection-4.jpg", 
+        coverArt: "/images/cosmic-music/astral-projection.svg", 
         audioSrc: "/audio/astral-guide.mp3",
       },
     ],
@@ -228,7 +228,7 @@ export const playlists: Playlist[] = [
         title: "Fibonacci Sequence",
         artist: "Cosmic Harmony",
         duration: "13:21",
-        coverArt: "/images/products/sacred-geometry-1.jpg", 
+        coverArt: "/images/cosmic-music/sacred-geometry.svg", 
         audioSrc: "/audio/fibonacci.mp3",
       },
       {
@@ -236,7 +236,7 @@ export const playlists: Playlist[] = [
         title: "Golden Ratio",
         artist: "Cosmic Harmony",
         duration: "17:08",
-        coverArt: "/images/products/sacred-geometry-2.jpg", 
+        coverArt: "/images/cosmic-music/sacred-geometry.svg", 
         audioSrc: "/audio/golden-ratio.mp3",
       },
       {
@@ -244,7 +244,7 @@ export const playlists: Playlist[] = [
         title: "Metatron's Cube",
         artist: "Cosmic Harmony",
         duration: "19:19",
-        coverArt: "/images/products/sacred-geometry-3.jpg", 
+        coverArt: "/images/cosmic-music/sacred-geometry.svg", 
         audioSrc: "/audio/metatron.mp3",
       },
       {
@@ -252,7 +252,7 @@ export const playlists: Playlist[] = [
         title: "Flower of Life",
         artist: "Cosmic Harmony",
         duration: "21:00",
-        coverArt: "/images/products/sacred-geometry-4.jpg", 
+        coverArt: "/images/cosmic-music/sacred-geometry.svg", 
         audioSrc: "/audio/flower-of-life.mp3",
       },
     ],
