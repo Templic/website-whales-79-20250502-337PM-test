@@ -185,18 +185,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
             <span className="font-semibold cosmic-price">{formattedPrice}</span>
           )}
         </div>
-        <Button
-          size="sm"
-          className={cn(
-            "cosmic-btn w-full sm:w-auto",
-            !inStock && "opacity-50 cursor-not-allowed"
-          )}
-          disabled={!inStock}
-          onClick={() => onAddToCart(product)}
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          {inStock ? "Add to Cart" : "Out of Stock"}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href={`/shop/product/${id}`}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="cosmic-btn-secondary w-full sm:w-auto"
+            >
+              View Product
+            </Button>
+          </Link>
+          <Button
+            size="sm"
+            className={cn(
+              "cosmic-btn w-full sm:w-auto",
+              !inStock && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={!inStock}
+            onClick={() => onAddToCart(product)}
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            {inStock ? "Add to Cart" : "Out of Stock"}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
