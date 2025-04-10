@@ -18,6 +18,20 @@ import {
 import { eq, and, or, like, desc, asc, between, gt, lt, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import { sql } from 'drizzle-orm';
+
+// Utility function to create URL-friendly slugs
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')        // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')     // Remove all non-word chars
+    .replace(/\-\-+/g, '-')       // Replace multiple - with single -
+    .replace(/^-+/, '')           // Trim - from start of text
+    .replace(/-+$/, '');          // Trim - from end of text
+}
 
 const router = express.Router();
 
@@ -136,6 +150,131 @@ router.get('/products', async (req: Request, res: Response) => {
   }
 });
 
+// Create new product (admin only)
+router.post('/products', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const productData = req.body;
+    
+    // Validate required fields
+    if (!productData.name || !productData.description || !productData.price) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    
+    // Format price as cents
+    const priceInCents = Math.round(parseFloat(productData.price) * 100);
+    
+    // Create product
+    const newProduct = await db.insert(products).values({
+      name: productData.name,
+      slug: productData.slug || slugify(productData.name),
+      description: productData.description,
+      price: priceInCents,
+      inventory: productData.inventory || 0,
+      categoryId: productData.categoryId || null,
+      imageUrl: productData.imageUrl || null,
+      type: productData.type || 'physical',
+      digitalFileUrl: productData.digitalFileUrl || null,
+      featuredProduct: productData.featuredProduct || false,
+      salePrice: productData.salePrice ? Math.round(parseFloat(productData.salePrice) * 100) : null,
+      weight: productData.weight || null,
+      dimensions: productData.dimensions || null,
+      metadata: productData.metadata || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    res.status(201).json(newProduct[0]);
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ message: 'Error creating product' });
+  }
+});
+
+// Update product (admin only)
+router.patch('/products/:id', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const productId = parseInt(req.params.id);
+    const updateData = req.body;
+    
+    // Check if product exists
+    const existingProduct = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+      
+    if (!existingProduct.length) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    // Process price fields to convert to cents
+    const updates: any = { ...updateData, updatedAt: new Date() };
+    
+    if (updates.price !== undefined) {
+      updates.price = Math.round(parseFloat(updates.price) * 100);
+    }
+    
+    if (updates.salePrice !== undefined && updates.salePrice !== null) {
+      updates.salePrice = Math.round(parseFloat(updates.salePrice) * 100);
+    }
+    
+    // Update the product
+    const updatedProduct = await db
+      .update(products)
+      .set(updates)
+      .where(eq(products.id, productId))
+      .returning();
+      
+    res.json(updatedProduct[0]);
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ message: 'Error updating product' });
+  }
+});
+
+// Delete product (admin only)
+router.delete('/products/:id', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const productId = parseInt(req.params.id);
+    
+    // Check if product exists
+    const existingProduct = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId))
+      .limit(1);
+      
+    if (!existingProduct.length) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    // Delete the product
+    await db
+      .delete(products)
+      .where(eq(products.id, productId));
+      
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ message: 'Error deleting product' });
+  }
+});
+
 // Get a single product by ID or slug
 router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
   try {
@@ -167,6 +306,136 @@ router.get('/categories', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
+// Create product category (admin only)
+router.post('/categories', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const { name, description, slug, parentId } = req.body;
+    
+    // Validate required fields
+    if (!name || !description) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    
+    // Create category
+    const newCategory = await db.insert(productCategories).values({
+      name,
+      description,
+      slug: slug || slugify(name),
+      parentId: parentId || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
+    
+    res.status(201).json(newCategory[0]);
+  } catch (error) {
+    console.error('Error creating product category:', error);
+    res.status(500).json({ message: 'Error creating product category' });
+  }
+});
+
+// Update product category (admin only)
+router.patch('/categories/:id', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const categoryId = parseInt(req.params.id);
+    const updateData = req.body;
+    
+    // Check if category exists
+    const existingCategory = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.id, categoryId))
+      .limit(1);
+      
+    if (!existingCategory.length) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    
+    // Update the category
+    const updatedCategory = await db
+      .update(productCategories)
+      .set({
+        ...updateData,
+        updatedAt: new Date()
+      })
+      .where(eq(productCategories.id, categoryId))
+      .returning();
+      
+    res.json(updatedCategory[0]);
+  } catch (error) {
+    console.error('Error updating product category:', error);
+    res.status(500).json({ message: 'Error updating product category' });
+  }
+});
+
+// Delete product category (admin only)
+router.delete('/categories/:id', async (req: Request, res: Response) => {
+  // Check for admin permissions
+  if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+  
+  try {
+    const categoryId = parseInt(req.params.id);
+    
+    // Check if category exists
+    const existingCategory = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.id, categoryId))
+      .limit(1);
+      
+    if (!existingCategory.length) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+    
+    // Check if category has products
+    const productsInCategory = await db
+      .select()
+      .from(products)
+      .where(eq(products.categoryId, categoryId))
+      .limit(1);
+      
+    if (productsInCategory.length > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete category with products. Remove products first or move them to another category.' 
+      });
+    }
+    
+    // Check if category has child categories
+    const childCategories = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.parentId, categoryId))
+      .limit(1);
+      
+    if (childCategories.length > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete category with child categories. Remove child categories first.' 
+      });
+    }
+    
+    // Delete the category
+    await db
+      .delete(productCategories)
+      .where(eq(productCategories.id, categoryId));
+      
+    res.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product category:', error);
+    res.status(500).json({ message: 'Error deleting product category' });
   }
 });
 

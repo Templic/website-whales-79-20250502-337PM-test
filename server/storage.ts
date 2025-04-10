@@ -357,6 +357,38 @@ export class PostgresStorage implements IStorage {
       .where(sql`approved = false`)
       .orderBy(sql`created_at DESC`);
   }
+  
+  async deletePost(id: number): Promise<void> {
+    try {
+      // Check if post exists
+      const post = await db.select()
+        .from(posts)
+        .where(eq(posts.id, id))
+        .limit(1);
+        
+      if (!post.length) {
+        throw new Error('Post not found');
+      }
+      
+      // Delete post category associations using raw SQL
+      // (postCategories is a junction table)
+      await db.execute(sql`
+        DELETE FROM post_categories 
+        WHERE post_id = ${id}
+      `);
+      
+      // Delete post comments
+      await db.delete(comments)
+        .where(eq(comments.postId, id));
+      
+      // Delete post
+      await db.delete(posts)
+        .where(eq(posts.id, id));
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      throw error;
+    }
+  }
 
   async getUnapprovedComments(): Promise<Comment[]> {
     console.log('Attempting to fetch unapproved comments...');

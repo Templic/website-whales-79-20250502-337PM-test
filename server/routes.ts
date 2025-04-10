@@ -74,7 +74,7 @@ import { handleSecurityLog, rotateSecurityLogs, logSecurityEvent } from './secur
 import { scanProject } from './securityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
-import authRoutes from './routes/authRoutes.js';
+import authRoutes from './routes/authRoutes';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -1271,6 +1271,69 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       } else {
         res.status(400).json({ message: "Invalid post data" });
       }
+    }
+  });
+  
+  app.patch("/api/posts/:id", async (req, res) => {
+    // Check authentication and authorization
+    if (!req.isAuthenticated()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const postId = parseInt(req.params.id);
+      const existingPost = await storage.getPostById(postId);
+      
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is authorized to edit this post
+      const isAuthor = existingPost.authorId === req.user.id;
+      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
+      
+      if (!isAuthor && !isAdmin) {
+        return res.status(403).json({ message: "Unauthorized to edit this post" });
+      }
+      
+      // Update the post
+      const updatedData = req.body;
+      const updatedPost = await storage.updatePost(postId, updatedData);
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating post:", error);
+      res.status(500).json({ message: "Error updating post" });
+    }
+  });
+  
+  app.delete("/api/posts/:id", async (req, res) => {
+    // Check authentication
+    if (!req.isAuthenticated()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    
+    try {
+      const postId = parseInt(req.params.id);
+      const existingPost = await storage.getPostById(postId);
+      
+      if (!existingPost) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+      
+      // Check if user is authorized to delete this post
+      const isAuthor = existingPost.authorId === req.user.id;
+      const isAdmin = req.user?.role === 'admin' || req.user?.role === 'super_admin';
+      
+      if (!isAuthor && !isAdmin) {
+        return res.status(403).json({ message: "Unauthorized to delete this post" });
+      }
+      
+      // Delete the post
+      await storage.deletePost(postId);
+      res.json({ success: true, message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      res.status(500).json({ message: "Error deleting post" });
     }
   });
 
