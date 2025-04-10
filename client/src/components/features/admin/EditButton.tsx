@@ -2,95 +2,65 @@
  * EditButton.tsx
  * 
  * Component Type: feature/admin
- * A reusable edit button component that renders only for users with admin or super_admin roles.
- * This button is designed to be placed near text and image elements throughout the site.
+ * A button component that allows administrators to initiate content editing.
+ * This button is only visible to users with 'admin' or 'super_admin' roles.
  */
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil } from "lucide-react";
+import "./admin.css";
 
-export interface EditButtonProps {
-  /**
-   * The unique identifier for the content to be edited
-   */
+interface EditButtonProps {
   contentId: string | number;
-  
-  /**
-   * Function to call when the edit button is clicked
-   */
   onEdit?: (contentId: string | number) => void;
-  
-  /**
-   * Additional CSS classes to apply to the button
-   */
   className?: string;
-  
-  /**
-   * Optional variant for the button styling
-   * @default "ghost"
-   */
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | 
-            "cosmic" | "energetic" | "ethereal" | "sunbeam" | "stardust" | "nebula" | "nova";
-  
-  /**
-   * Optional size for the button
-   * @default "sm"
-   */
-  size?: "default" | "sm" | "lg" | "xl" | "icon";
-  
-  /**
-   * Text to display alongside or instead of the icon
-   */
+  variant?: string;
+  size?: string;
   text?: string;
-  
-  /**
-   * Whether to show only the icon (no text)
-   * @default true
-   */
   iconOnly?: boolean;
 }
 
 /**
- * EditButton component that renders only for admin and super_admin users
+ * EditButton component for admin editing functionality
  */
-export const EditButton = ({
+export const EditButton: React.FC<EditButtonProps> = ({
   contentId,
   onEdit,
   className = "",
   variant = "ghost",
   size = "sm",
   text = "Edit",
-  iconOnly = true
-}: EditButtonProps) => {
+  iconOnly = true,
+}) => {
+  // Check if user is authenticated and has admin/super_admin role
   const { user } = useAuth();
   
-  // Don't render the button if user is not admin or super_admin
+  // Only render for admin users
   if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
     return null;
   }
   
-  // Default edit handler if none provided
-  const handleEdit = () => {
+  // Handle click event
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     if (onEdit) {
       onEdit(contentId);
-    } else {
-      // Default behavior - could be replaced with a modal or navigation
-      console.log(`Edit content with ID: ${contentId}`);
     }
   };
   
   return (
     <Button
-      onClick={handleEdit}
-      className={`edit-button ${className}`}
-      variant={variant}
-      size={size}
-      aria-label={`Edit ${contentId}`}
+      variant={variant as any}
+      size={size as any}
+      className={className}
+      onClick={handleClick}
     >
-      <Pencil className={iconOnly ? "h-4 w-4" : "h-4 w-4 mr-2"} />
-      {!iconOnly && text}
+      <Edit className={`h-4 w-4 ${!iconOnly ? "mr-2" : ""}`} />
+      {!iconOnly && <span>{text}</span>}
     </Button>
   );
 };

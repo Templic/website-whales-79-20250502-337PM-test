@@ -1804,6 +1804,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
 
   app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
+  app.use('/api/content', contentRoutes);
 
   // Security routes
   app.use('/api/security', securityRouter);

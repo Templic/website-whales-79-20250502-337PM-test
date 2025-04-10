@@ -2,69 +2,90 @@
  * Modal.tsx
  * 
  * Component Type: feature/admin
- * A simple modal component for editing content.
+ * A reusable modal component for admin interfaces.
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ModalProps {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
 }
 
-export const Modal = ({ title, onClose, children }: ModalProps) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-  
-  // Close modal when clicking outside
+/**
+ * Modal component
+ */
+export const Modal: React.FC<ModalProps> = ({
+  title,
+  onClose,
+  children,
+  size = "md"
+}) => {
+  // Close modal when Escape key is pressed
   useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         onClose();
       }
     };
     
-    // Close modal with Escape key
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
+    document.addEventListener("keydown", handleEscape);
     
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("keydown", handleKeyDown);
-    
-    // Prevent scrolling on body when modal is open
+    // Prevent scrolling on the body while modal is open
     document.body.style.overflow = "hidden";
     
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "auto";
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "visible";
     };
   }, [onClose]);
   
+  // Determine modal size
+  const getSizeClass = () => {
+    switch (size) {
+      case "sm":
+        return "max-w-md";
+      case "md":
+        return "max-w-2xl";
+      case "lg":
+        return "max-w-4xl";
+      case "xl":
+        return "max-w-6xl";
+      case "full":
+        return "max-w-full mx-4";
+      default:
+        return "max-w-2xl";
+    }
+  };
+  
+  // Stop propagation of clicks inside the modal content
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div 
-        ref={modalRef}
-        className="w-full max-w-md rounded-lg bg-gradient-to-b from-[#030110] to-[#0c0235] border border-[#00ebd6]/20 shadow-[0_0_15px_rgba(0,235,214,0.2)] overflow-hidden"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className={`relative bg-[#0a0a0a] rounded-lg shadow-lg w-full ${getSizeClass()} overflow-hidden`}
+        onClick={handleContentClick}
       >
         <div className="flex items-center justify-between p-4 border-b border-[#00ebd6]/20">
-          <h3 className="text-xl font-bold text-white">{title}</h3>
-          <Button 
-            onClick={onClose} 
-            variant="ghost" 
-            size="icon" 
-            aria-label="Close modal"
+          <h2 className="text-xl font-semibold">{title}</h2>
+          <button
+            className="p-1 rounded-full hover:bg-[#112233] transition-colors"
+            onClick={onClose}
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <X className="h-5 w-5" />
+          </button>
         </div>
         
-        <div className="max-h-[80vh] overflow-y-auto">
+        <div className="max-h-[calc(100vh-10rem)] overflow-y-auto">
           {children}
         </div>
       </div>

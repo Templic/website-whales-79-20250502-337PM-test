@@ -1,11 +1,13 @@
-/* 
-  admin.css
-  Styles for admin components, including positioning for edit buttons
-*/
+/**
+ * admin.css
+ * 
+ * Styles for the admin components, particularly the EditButton and its positioning options.
+ */
 
-/* Base positioning styles for edit buttons */
+/* Basic container for positioning edit buttons */
 .edit-button-container {
   position: relative;
+  display: block;
 }
 
 /* Absolute positioning for edit buttons */
@@ -14,102 +16,65 @@
   z-index: 10;
 }
 
-/* Top-right positioning */
+/* Position: Top Right */
 .edit-button-top-right {
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 8px;
+  right: 8px;
 }
 
-/* Top-left positioning */
+/* Position: Top Left */
 .edit-button-top-left {
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 8px;
+  left: 8px;
 }
 
-/* Bottom-right positioning */
+/* Position: Bottom Right */
 .edit-button-bottom-right {
-  bottom: 0.5rem;
-  right: 0.5rem;
+  bottom: 8px;
+  right: 8px;
 }
 
-/* Bottom-left positioning */
+/* Position: Bottom Left */
 .edit-button-bottom-left {
-  bottom: 0.5rem;
-  left: 0.5rem;
+  bottom: 8px;
+  left: 8px;
 }
 
-/* Inline positioning for text content */
+/* Inline positioning for edit buttons */
 .edit-button-inline {
-  display: inline-flex;
-  margin-left: 0.5rem;
+  display: inline-block;
   vertical-align: middle;
+  margin-left: 0.25rem;
 }
 
-/* Hover reveal effect */
-.edit-button-hover-reveal {
+/* Hover reveal effect for edit buttons */
+.edit-button-hover-reveal button {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
 
-.edit-button-container:hover .edit-button-hover-reveal,
-.group:hover .edit-button-hover-reveal {
+.edit-button-container:hover .edit-button-hover-reveal button {
   opacity: 1;
 }
 
-/* For buttons that should appear on text hover */
+/* Row layout for content with edit buttons */
+.edit-button-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Content with an edit button that appears on hover */
 .text-with-edit {
   position: relative;
   display: inline-block;
 }
 
-.text-with-edit .edit-button {
-  visibility: hidden;
+.text-with-edit .edit-button-inline {
   opacity: 0;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition: opacity 0.2s ease-in-out;
 }
 
-.text-with-edit:hover .edit-button {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* For buttons that float over images */
-.image-with-edit {
-  position: relative;
-  display: inline-block;
-}
-
-.image-with-edit .edit-button {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-/* Make edit button container span full width for alignment */
-.edit-button-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-/* For content blocks with multiple editable sections */
-.editable-content-block {
-  position: relative;
-}
-
-.editable-content-block .edit-button-panel {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: flex;
-  gap: 0.25rem;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.editable-content-block:hover .edit-button-panel {
+.text-with-edit:hover .edit-button-inline {
   opacity: 1;
 }

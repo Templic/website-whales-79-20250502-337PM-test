@@ -10,7 +10,13 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db';
-import { isAuthenticated, isAdmin } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+// Get the __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const router = express.Router();
 
@@ -20,12 +26,12 @@ router.use(fileUpload({
   abortOnLimit: true,
   responseOnLimit: "File size is too large. Maximum 5MB allowed.",
   useTempFiles: true,
-  tempFileDir: path.join(__dirname, '../', 'temp'),
+  tempFileDir: path.join(process.cwd(), 'temp'),
   createParentPath: true,
 }));
 
 // Configure upload path
-const UPLOAD_PATH = path.join(__dirname, '../../', 'client/public/uploads');
+const UPLOAD_PATH = path.join(process.cwd(), 'client/public/uploads');
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_PATH)) {
@@ -36,7 +42,7 @@ if (!fs.existsSync(UPLOAD_PATH)) {
  * Update text content
  * POST /api/content/text
  */
-router.post('/text', isAuthenticated, isAdmin, async (req, res) => {
+router.post('/text', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { contentId, text } = req.body;
     
@@ -84,7 +90,7 @@ router.post('/text', isAuthenticated, isAdmin, async (req, res) => {
  * Update image content
  * POST /api/content/image
  */
-router.post('/image', isAuthenticated, isAdmin, async (req, res) => {
+router.post('/image', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const { contentId } = req.body;
     
@@ -102,10 +108,13 @@ router.post('/image', isAuthenticated, isAdmin, async (req, res) => {
       });
     }
     
-    const imageFile = req.files.image;
+    // We know the image exists from the check above, but need to handle array vs single file
+    const imageFile = Array.isArray(req.files.image) 
+      ? req.files.image[0] 
+      : req.files.image;
     
     // Validate file is an image
-    if (!imageFile.mimetype.startsWith('image/')) {
+    if (!imageFile.mimetype || !imageFile.mimetype.startsWith('image/')) {
       return res.status(400).json({
         success: false,
         message: 'Only image files are allowed'
@@ -113,7 +122,7 @@ router.post('/image', isAuthenticated, isAdmin, async (req, res) => {
     }
     
     // Generate a unique filename
-    const fileExtension = path.extname(imageFile.name);
+    const fileExtension = path.extname(imageFile.name || 'image.jpg');
     const fileName = `${uuidv4()}${fileExtension}`;
     const filePath = path.join(UPLOAD_PATH, fileName);
     
