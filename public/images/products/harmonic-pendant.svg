@@ -1,50 +1,112 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#000022"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <!-- Metal gradients -->
+    <linearGradient id="silver-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0E0E0"/>
+      <stop offset="25%" stop-color="#F5F5F5"/>
+      <stop offset="50%" stop-color="#C0C0C0"/>
+      <stop offset="75%" stop-color="#EBEBEB"/>
+      <stop offset="100%" stop-color="#D0D0D0"/>
+    </linearGradient>
+    
+    <!-- Crystal gradients -->
+    <radialGradient id="crystal-gradient" cx="50%" cy="50%" r="50%" fx="60%" fy="40%">
+      <stop offset="0%" stop-color="#AACCFF" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#88AAEE" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#5577DD" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#3344AA" stop-opacity="0.8"/>
+    </radialGradient>
+    
+    <!-- Background cosmic gradient -->
+    <radialGradient id="cosmic-bg" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#191970" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#000033" stop-opacity="0.8"/>
+    </radialGradient>
+    
+    <!-- Glow filters -->
+    <filter id="crystal-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.4  0 0 0 0 0.6  0 0 0 0 1  0 0 0 18 -7" result="glow"/>
+      <feComposite in="SourceGraphic" in2="glow" operator="over"/>
+    </filter>
+    
+    <filter id="vibration-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.6  0 0 0 0 0.6  0 0 0 0 1  0 0 0 12 -5" result="glow"/>
+      <feBlend in="SourceGraphic" in2="glow" mode="screen"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#cosmic-bg)"/>
   
-  <!-- Glowing background aura -->
-  <radialGradient id="aura" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
-    <stop offset="0%" stop-color="#6600cc" stop-opacity="0.4"/>
-    <stop offset="100%" stop-color="#000022" stop-opacity="0"/>
-  </radialGradient>
-  <circle cx="200" cy="200" r="150" fill="url(#aura)"/>
+  <!-- Chain -->
+  <path d="M200 30 L200 120" stroke="url(#silver-gradient)" stroke-width="3" fill="none"/>
   
-  <!-- Silver chain -->
-  <path d="M200,50 C200,50 200,120 200,120" stroke="#c0c0c0" stroke-width="3" fill="none"/>
-  
-  <!-- Pendant base - silver -->
-  <path d="M170,160 L230,160 L210,240 L190,240 Z" fill="#c0c0c0" stroke="#a0a0a0" stroke-width="1"/>
-  
-  <!-- Crystal in pendant -->
-  <path d="M180,170 L220,170 L205,230 L195,230 Z" fill="#9966ff" stroke="#cc99ff" stroke-width="1">
-    <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" />
-  </path>
-  
-  <!-- Harmonic frequency lines -->
-  <g stroke="#ffffff" stroke-width="0.5" opacity="0.5">
-    <path d="M185,180 L215,180" stroke-dasharray="2,2">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4s" repeatCount="indefinite" />
-    </path>
-    <path d="M183,190 L217,190" stroke-dasharray="2,2">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.5s" repeatCount="indefinite" />
-    </path>
-    <path d="M182,200 L218,200" stroke-dasharray="2,2">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="5s" repeatCount="indefinite" />
-    </path>
-    <path d="M180,210 L220,210" stroke-dasharray="2,2">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4.5s" repeatCount="indefinite" />
-    </path>
-    <path d="M179,220 L221,220" stroke-dasharray="2,2">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.8s" repeatCount="indefinite" />
-    </path>
+  <!-- Small chain links with gradient -->
+  <g>
+    <path d="M200 40 C195 40, 195 45, 200 45 C205 45, 205 40, 200 40" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 50 C195 50, 195 55, 200 55 C205 55, 205 50, 200 50" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 60 C195 60, 195 65, 200 65 C205 65, 205 60, 200 60" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 70 C195 70, 195 75, 200 75 C205 75, 205 70, 200 70" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 80 C195 80, 195 85, 200 85 C205 85, 205 80, 200 80" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 90 C195 90, 195 95, 200 95 C205 95, 205 90, 200 90" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 100 C195 100, 195 105, 200 105 C205 105, 205 100, 200 100" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
+    <path d="M200 110 C195 110, 195 115, 200 115 C205 115, 205 110, 200 110" fill="url(#silver-gradient)" stroke="#BBB" stroke-width="0.5"/>
   </g>
   
-  <!-- Glow effect -->
-  <circle cx="200" cy="200" r="45" fill="#9966ff" opacity="0.2">
-    <animate attributeName="r" values="40;50;40" dur="4s" repeatCount="indefinite" />
-    <animate attributeName="opacity" values="0.1;0.3;0.1" dur="4s" repeatCount="indefinite" />
-  </circle>
+  <!-- Pendant body - circular frame -->
+  <g filter="url(#vibration-glow)">
+    <circle cx="200" cy="180" r="60" fill="none" stroke="url(#silver-gradient)" stroke-width="6"/>
+    
+    <!-- Decorative geometric patterns on the frame -->
+    <path d="M200 120 L200 240" fill="none" stroke="url(#silver-gradient)" stroke-width="2" opacity="0.7"/>
+    <path d="M140 180 L260 180" fill="none" stroke="url(#silver-gradient)" stroke-width="2" opacity="0.7"/>
+    <path d="M157 137 L243 223" fill="none" stroke="url(#silver-gradient)" stroke-width="2" opacity="0.5"/>
+    <path d="M157 223 L243 137" fill="none" stroke="url(#silver-gradient)" stroke-width="2" opacity="0.5"/>
+    
+    <!-- Inner frame -->
+    <circle cx="200" cy="180" r="45" fill="none" stroke="url(#silver-gradient)" stroke-width="1.5" opacity="0.7"/>
+  </g>
   
-  <text x="200" y="300" font-family="Arial" font-size="20" text-anchor="middle" fill="white">Celestial Harmonic Pendant</text>
-  <text x="200" y="330" font-family="Arial" font-size="16" text-anchor="middle" fill="#cc99ff">Tuned to cosmic frequencies</text>
+  <!-- Crystal at the center with glow effect -->
+  <g filter="url(#crystal-glow)">
+    <!-- Main crystal -->
+    <circle cx="200" cy="180" r="30" fill="url(#crystal-gradient)"/>
+    
+    <!-- Internal crystal structure - sacred geometry pattern -->
+    <path d="M200 150 L218 165 L210 188 L190 188 L182 165 Z" fill="#88AAEE" opacity="0.5" stroke="#AACCFF" stroke-width="0.5"/>
+    <path d="M200 150 L200 210 M182 165 L218 165" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.6"/>
+    <circle cx="200" cy="180" r="15" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.8"/>
+  </g>
+  
+  <!-- Vibration lines (harmonic waves) -->
+  <g opacity="0.4" filter="url(#vibration-glow)">
+    <circle cx="200" cy="180" r="70" fill="none" stroke="#AACCFF" stroke-width="0.5" stroke-dasharray="2,3"/>
+    <circle cx="200" cy="180" r="80" fill="none" stroke="#AACCFF" stroke-width="0.5" stroke-dasharray="2,3"/>
+    <circle cx="200" cy="180" r="90" fill="none" stroke="#AACCFF" stroke-width="0.5" stroke-dasharray="2,3"/>
+  </g>
+  
+  <!-- Small stars around the pendant -->
+  <g filter="url(#crystal-glow)" opacity="0.8">
+    <circle cx="150" cy="130" r="1" fill="white"/>
+    <circle cx="250" cy="130" r="1" fill="white"/>
+    <circle cx="130" cy="230" r="1" fill="white"/>
+    <circle cx="270" cy="230" r="1" fill="white"/>
+    <circle cx="200" cy="100" r="1" fill="white"/>
+    <circle cx="200" cy="260" r="1" fill="white"/>
+    
+    <!-- Sparkles on the crystal -->
+    <circle cx="190" cy="170" r="1" fill="white"/>
+    <circle cx="210" cy="175" r="1.5" fill="white"/>
+    <path d="M187 173 L193 167 M190 165 L190 175" stroke="white" stroke-width="0.5" opacity="0.8"/>
+  </g>
+  
+  <!-- Product name label -->
+  <text x="200" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#AACCFF" font-weight="bold">
+    Celestial Harmonic Pendant
+  </text>
+  <text x="200" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#88AAEE">
+    Sterling Silver with Harmonic Crystal
+  </text>
 </svg>

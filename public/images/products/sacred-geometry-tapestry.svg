@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="tapestry-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#24243e"/>
+      <stop offset="50%" stop-color="#302b63"/>
+      <stop offset="100%" stop-color="#0f0c29"/>
+    </linearGradient>
+    
+    <!-- Sacred geometry patterns -->
+    <pattern id="flower-of-life" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <!-- Partial flower of life pattern -->
+      <circle cx="50" cy="50" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="100" cy="50" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="75" cy="93.3" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="25" cy="93.3" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="50" cy="136.6" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="100" cy="136.6" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="150" cy="93.3" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="125" cy="136.6" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="150" cy="50" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="125" cy="6.7" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="75" cy="6.7" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="25" cy="6.7" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+      <circle cx="0" cy="50" r="30" fill="none" stroke="#8080D0" stroke-width="0.3" opacity="0.5"/>
+    </pattern>
+    
+    <!-- Metatron's Cube pattern -->
+    <pattern id="metatron-cube" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <g stroke="#D0D0FF" stroke-width="0.2" fill="none" opacity="0.4">
+        <!-- Basic structure -->
+        <circle cx="100" cy="100" r="50" />
+        <circle cx="150" cy="100" r="50" />
+        <circle cx="125" cy="143.3" r="50" />
+        <circle cx="75" cy="143.3" r="50" />
+        <circle cx="50" cy="100" r="50" />
+        <circle cx="75" cy="56.7" r="50" />
+        <circle cx="125" cy="56.7" r="50" />
+        
+        <!-- Inner connections -->
+        <path d="M50 100 L150 100 M75 56.7 L125 143.3 M125 56.7 L75 143.3" />
+      </g>
+    </pattern>
+    
+    <!-- Golden ratio spiral -->
+    <pattern id="golden-spiral" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+      <path d="M100 100 
+               Q130 100, 130 70 
+               Q130 40, 100 40 
+               Q70 40, 70 70 
+               Q70 100, 100 100
+               Q130 100, 130 130
+               Q130 160, 100 160
+               Q70 160, 70 130
+               Q70 100, 100 100" 
+            fill="none" stroke="#FFD700" stroke-width="0.3" opacity="0.4"/>
+    </pattern>
+    
+    <!-- Fabric texture pattern -->
+    <pattern id="fabric-texture" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#302b63" fill-opacity="0.05"/>
+      <path d="M0 0L10 10M10 0L0 10" stroke="#FFFFFF" stroke-width="0.1" opacity="0.1"/>
+    </pattern>
+    
+    <!-- Gold accent -->
+    <linearGradient id="gold-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BF953F"/>
+      <stop offset="50%" stop-color="#FBF5B7"/>
+      <stop offset="100%" stop-color="#AA771C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background with gradient -->
+  <rect width="400" height="400" fill="url(#tapestry-bg)"/>
+  
+  <!-- Fabric texture overlay -->
+  <rect width="400" height="400" fill="url(#fabric-texture)"/>
+  
+  <!-- Wall tapestry with border -->
+  <rect x="50" y="50" width="300" height="300" rx="3" ry="3" fill="#1A1A3A" stroke="url(#gold-accent)" stroke-width="4"/>
+  
+  <!-- Sacred geometry main design -->
+  <g>
+    <!-- Central Mandala -->
+    <g transform="translate(200, 200)">
+      <!-- Flower of Life background -->
+      <circle cx="0" cy="0" r="140" fill="url(#flower-of-life)" opacity="0.7"/>
+      
+      <!-- Metatron's Cube overlay -->
+      <circle cx="0" cy="0" r="120" fill="url(#metatron-cube)" opacity="0.8"/>
+      
+      <!-- Golden ratio spiral overlay -->
+      <circle cx="0" cy="0" r="100" fill="url(#golden-spiral)" opacity="0.9"/>
+      
+      <!-- Star Tetrahedron (Merkaba) -->
+      <g opacity="0.7">
+        <!-- Upward pointing tetrahedron -->
+        <path d="M0 -80 L69.3 40 L-69.3 40 Z" fill="none" stroke="#8A2BE2" stroke-width="0.7"/>
+        <path d="M0 -80 L69.3 40 L0 -20 Z" fill="#8A2BE2" fill-opacity="0.1" stroke="#8A2BE2" stroke-width="0.3"/>
+        <path d="M0 -80 L-69.3 40 L0 -20 Z" fill="#8A2BE2" fill-opacity="0.1" stroke="#8A2BE2" stroke-width="0.3"/>
+        <path d="M69.3 40 L-69.3 40 L0 -20 Z" fill="#8A2BE2" fill-opacity="0.1" stroke="#8A2BE2" stroke-width="0.3"/>
+        
+        <!-- Downward pointing tetrahedron -->
+        <path d="M0 80 L69.3 -40 L-69.3 -40 Z" fill="none" stroke="#4B0082" stroke-width="0.7"/>
+        <path d="M0 80 L69.3 -40 L0 20 Z" fill="#4B0082" fill-opacity="0.1" stroke="#4B0082" stroke-width="0.3"/>
+        <path d="M0 80 L-69.3 -40 L0 20 Z" fill="#4B0082" fill-opacity="0.1" stroke="#4B0082" stroke-width="0.3"/>
+        <path d="M69.3 -40 L-69.3 -40 L0 20 Z" fill="#4B0082" fill-opacity="0.1" stroke="#4B0082" stroke-width="0.3"/>
+      </g>
+      
+      <!-- Sri Yantra -->
+      <g opacity="0.8">
+        <!-- Outer triangles -->
+        <path d="M0 -60 L52 30 L-52 30 Z" fill="none" stroke="#9370DB" stroke-width="0.5"/>
+        <path d="M0 60 L52 -30 L-52 -30 Z" fill="none" stroke="#9370DB" stroke-width="0.5"/>
+        
+        <!-- Inner triangles -->
+        <path d="M0 -40 L34.6 20 L-34.6 20 Z" fill="none" stroke="#9370DB" stroke-width="0.5"/>
+        <path d="M0 40 L34.6 -20 L-34.6 -20 Z" fill="none" stroke="#9370DB" stroke-width="0.5"/>
+        
+        <!-- Central point -->
+        <circle cx="0" cy="0" r="4" fill="#E6E6FA" opacity="0.6"/>
+      </g>
+    </g>
+    
+    <!-- Decorative symbols in corners -->
+    <g opacity="0.7">
+      <!-- Platonic solids representations simplified -->
+      <!-- Tetrahedron (top left) -->
+      <path d="M80 80 L110 100 L90 120 Z" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      
+      <!-- Cube (top right) -->
+      <rect x="290" y="80" width="20" height="20" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      <rect x="295" y="85" width="20" height="20" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      <line x1="290" y1="80" x2="295" y2="85" stroke="#B19CD9" stroke-width="0.7"/>
+      <line x1="310" y1="80" x2="315" y2="85" stroke="#B19CD9" stroke-width="0.7"/>
+      <line x1="290" y1="100" x2="295" y2="105" stroke="#B19CD9" stroke-width="0.7"/>
+      <line x1="310" y1="100" x2="315" y2="105" stroke="#B19CD9" stroke-width="0.7"/>
+      
+      <!-- Octahedron (bottom left) -->
+      <path d="M90 300 L80 320 L100 320 Z" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      <path d="M90 340 L80 320 L100 320 Z" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      
+      <!-- Icosahedron (bottom right) simplified -->
+      <path d="M300 310 L320 310 L310 290 Z" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+      <path d="M300 310 L320 310 L310 330 Z" fill="none" stroke="#B19CD9" stroke-width="0.7"/>
+    </g>
+  </g>
+  
+  <!-- Hanging cords at top -->
+  <line x1="100" y1="40" x2="100" y2="50" stroke="#886622" stroke-width="2"/>
+  <line x1="200" y1="30" x2="200" y2="50" stroke="#886622" stroke-width="2"/>
+  <line x1="300" y1="40" x2="300" y2="50" stroke="#886622" stroke-width="2"/>
+  
+  <!-- Decorative tassels at bottom -->
+  <path d="M90 350 Q 100 370, 110 350" stroke="#886622" stroke-width="1" fill="none"/>
+  <path d="M95 350 Q 105 370, 115 350" stroke="#886622" stroke-width="1" fill="none"/>
+  <path d="M190 350 Q 200 370, 210 350" stroke="#886622" stroke-width="1" fill="none"/>
+  <path d="M195 350 Q 205 370, 215 350" stroke="#886622" stroke-width="1" fill="none"/>
+  <path d="M290 350 Q 300 370, 310 350" stroke="#886622" stroke-width="1" fill="none"/>
+  <path d="M295 350 Q 305 370, 315 350" stroke="#886622" stroke-width="1" fill="none"/>
+  
+  <!-- Product name -->
+  <text x="200" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#E6E6FA" font-weight="bold">
+    Sacred Geometry Wall Tapestry
+  </text>
+</svg>
