@@ -1,184 +1,150 @@
 /**
  * Utility Types
  * 
- * This file contains reusable type utilities for the application.
- * These types provide enhanced type safety and DX improvements.
+ * This file contains utility type definitions that are used throughout the application.
+ * These types provide common type patterns and branded types for type safety.
  */
 
-// Type-safe ID branding to prevent string IDs from being used interchangeably
+/**
+ * Branded type utility
+ * Creates a type that is branded with a specific tag for type safety
+ */
 export type Branded<K, T> = K & { __brand: T };
 
-// Domain-specific ID types (branded strings)
+/**
+ * Branded ID types
+ */
 export type ProductId = Branded<string, 'ProductId'>;
 export type UserId = Branded<string, 'UserId'>;
 export type OrderId = Branded<string, 'OrderId'>;
 export type BlogPostId = Branded<string, 'BlogPostId'>;
+export type CommentId = Branded<string, 'CommentId'>;
 export type TrackId = Branded<string, 'TrackId'>;
 export type AlbumId = Branded<string, 'AlbumId'>;
-export type CommentId = Branded<string, 'CommentId'>;
 export type TourDateId = Branded<string, 'TourDateId'>;
 
 /**
- * Partial<T> but with specific keys made required
+ * Make all properties in T optional
  */
-export type PartialWithRequired<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 /**
- * Make specific properties in type T optional
+ * Make specific properties in T required
  */
-export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-/**
- * Make specific properties in type T required
- */
-export type Required<T, K extends keyof T> = Omit<T, K> & {
+export type RequiredFields<T, K extends keyof T> = T & {
   [P in K]-?: T[P];
 };
 
 /**
- * Omit properties from type T where values have type U
+ * Make specific properties in T optional
  */
-export type OmitByType<T, U> = {
-  [K in keyof T as T[K] extends U ? never : K]: T[K];
+export type OptionalFields<T, K extends keyof T> = Omit<T, K> & {
+  [P in K]?: T[P];
 };
 
 /**
- * Pick properties from type T where values have type U
+ * Make all properties in T readonly
+ */
+export type ReadonlyFields<T> = {
+  readonly [P in keyof T]: T[P];
+};
+
+/**
+ * Pick properties from T that are of type U
  */
 export type PickByType<T, U> = {
-  [K in keyof T as T[K] extends U ? K : never]: T[K];
+  [P in keyof T as T[P] extends U ? P : never]: T[P];
 };
 
 /**
- * Deep partial type (makes all nested properties optional)
+ * Omit properties from T that are of type U
  */
-export type DeepPartial<T> = T extends object
-  ? { [P in keyof T]?: DeepPartial<T[P]> }
-  : T;
-
-/**
- * Ensures all properties in a type are non-nullable (not null or undefined)
- */
-export type NonNullableProps<T> = {
-  [P in keyof T]: NonNullable<T[P]>;
+export type OmitByType<T, U> = {
+  [P in keyof T as T[P] extends U ? never : P]: T[P];
 };
 
 /**
- * Type for record with specific keys and values
+ * Make certain properties in T nullable
  */
-export type RecordWithKeys<K extends string | number | symbol, V> = {
-  [P in K]: V;
-};
+export type Nullable<T> = T | null;
 
 /**
- * Creates a type for a discriminated union based on a key
+ * Create a union type of all values in T
  */
-export type Discriminate<T, K extends keyof T, V extends T[K]> = T extends {
-  [key in K]: V;
+export type ValueOf<T> = T[keyof T];
+
+/**
+ * Pagination parameters
+ */
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
-  ? T
-  : never;
 
 /**
- * Type for function with explicit parameters and return type
+ * Sorting parameters
  */
-export type Func<Args extends any[], Return> = (...args: Args) => Return;
+export interface SortParams {
+  field: string;
+  direction: 'asc' | 'desc';
+}
 
 /**
- * Type for asyncronous function
+ * Filtering parameters
  */
-export type AsyncFunc<Args extends any[], Return> = (
-  ...args: Args
-) => Promise<Return>;
+export interface FilterParams {
+  field: string;
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'startsWith' | 'endsWith';
+  value: string | number | boolean;
+}
 
 /**
- * Type that extracts the parameters from a function type
+ * A function with no parameters and no return value
  */
-export type Parameters<T extends (...args: any[]) => any> = T extends (
-  ...args: infer P
-) => any
-  ? P
-  : never;
+export type Nullary = () => void;
 
 /**
- * Type that extracts the return type from a function type
+ * A function with one parameter and no return value
  */
-export type ReturnType<T extends (...args: any[]) => any> = T extends (
-  ...args: any[]
-) => infer R
-  ? R
-  : any;
+export type Unary<T> = (arg: T) => void;
 
 /**
- * React-specific utility types
+ * A function with two parameters and no return value
  */
-export type EventHandler<E extends React.SyntheticEvent> = (
-  event: E
-) => void | Promise<void>;
+export type Binary<T, U> = (arg1: T, arg2: U) => void;
 
 /**
- * Readonly array type
+ * A function that creates a value of type T
  */
-export type ReadonlyArray<T> = readonly T[];
+export type Factory<T> = () => T;
 
 /**
- * A deep readonly version of a type (makes all nested properties readonly)
+ * A function that maps a value of type T to a value of type U
  */
-export type DeepReadonly<T> = T extends (infer R)[]
-  ? DeepReadonlyArray<R>
-  : T extends Function
-  ? T
-  : T extends object
-  ? DeepReadonlyObject<T>
-  : T;
+export type Mapper<T, U> = (value: T) => U;
 
-type DeepReadonlyArray<T> = ReadonlyArray<DeepReadonly<T>>;
+/**
+ * A function that predicate for a value of type T
+ */
+export type Predicate<T> = (value: T) => boolean;
 
-type DeepReadonlyObject<T> = {
-  readonly [P in keyof T]: DeepReadonly<T[P]>;
+/**
+ * Creates an ID creator function for a specific branded ID type
+ */
+export const createIdFactory = <T extends string>(brand: T) => {
+  return (id: string): Branded<string, T> => id as Branded<string, T>;
 };
 
-/**
- * Type for a component that accepts all HTML attributes for a given element
- */
-export type HTMLAttributes<T extends keyof JSX.IntrinsicElements> = React.ComponentPropsWithoutRef<T>;
-
-/**
- * Type-safe object keys
- */
-export type ObjectKeys<T extends object> = Extract<keyof T, string>[];
-
-/**
- * Type-safe string enums
- */
-export type StringEnum<T extends string> = { [K in T]: K };
-
-/**
- * Creates a union type from an array type
- */
-export type ArrayElement<ArrayType extends readonly unknown[]> =
-  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
-
-/**
- * Helper for JSON parsing with type safety
- */
-export type JSONParse<T> = (text: string) => T;
-
-/**
- * Helper for type-safe environment variables
- */
-export type EnvVar<T extends string> = T | undefined;
-
-/**
- * Helper for status types
- */
-export type Status = 'idle' | 'loading' | 'success' | 'error';
-
-/**
- * Helper for async operation state
- */
-export type AsyncState<T, E = Error> = {
-  status: Status;
-  data?: T;
-  error?: E;
-};
+// ID creator functions
+export const createProductId = createIdFactory('ProductId');
+export const createUserId = createIdFactory('UserId');
+export const createOrderId = createIdFactory('OrderId');
+export const createBlogPostId = createIdFactory('BlogPostId');
+export const createCommentId = createIdFactory('CommentId');
+export const createTrackId = createIdFactory('TrackId');
+export const createAlbumId = createIdFactory('AlbumId');
+export const createTourDateId = createIdFactory('TourDateId');

@@ -1,68 +1,70 @@
 /**
  * Domain Models
  * 
- * This file contains type definitions for the core domain models of the application.
- * These types represent the data structures used throughout the system.
+ * This file contains type definitions for the core data models used throughout the application.
+ * These types represent the primary domain entities and their relationships.
  */
 
 import { 
   ProductId, 
-  UserId, 
   OrderId, 
+  UserId, 
   BlogPostId, 
-  TrackId, 
-  AlbumId, 
-  CommentId, 
-  TourDateId 
+  CommentId,
+  TrackId,
+  AlbumId,
+  TourDateId
 } from './utils';
 
 /**
- * User
- */
-export interface User {
-  id: UserId;
-  email: string;
-  name: string;
-  avatar?: string;
-  role: 'admin' | 'user' | 'artist';
-  createdAt: string;
-  lastLogin?: string;
-  isVerified: boolean;
-  preferences?: UserPreferences;
-}
-
-/**
- * User preferences
- */
-export interface UserPreferences {
-  theme?: 'light' | 'dark' | 'system';
-  emailNotifications?: boolean;
-  marketingEmails?: boolean;
-  newReleaseNotifications?: boolean;
-  tourNotifications?: boolean;
-}
-
-/**
- * Product
+ * Product model representing items for sale
  */
 export interface Product {
   id: ProductId;
   name: string;
   description: string;
   price: number;
-  image: string;
-  category: string;
+  images: string[];
+  category?: string;
   categories?: string[];
-  inStock: boolean;
-  rating: number;
-  reviewCount: number;
   tags?: string[];
+  rating?: number;
+  reviewCount?: number;
+  stock?: number;
+  sku?: string;
+  dimensions?: {
+    width: number;
+    height: number;
+    depth: number;
+    unit: 'cm' | 'in';
+  };
+  weight?: {
+    value: number;
+    unit: 'kg' | 'lb';
+  };
   featured?: boolean;
+  new?: boolean;
+  discountPercent?: number;
+  releaseDate?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 /**
- * Cart item
+ * ProductCategory model
+ */
+export interface ProductCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  parentId?: string;
+  image?: string;
+  productCount?: number;
+}
+
+/**
+ * CartItem model representing an item in the shopping cart
  */
 export interface CartItem {
   id: string;
@@ -75,112 +77,160 @@ export interface CartItem {
 }
 
 /**
- * Order
+ * Order model representing a customer order
  */
 export interface Order {
   id: OrderId;
   userId: UserId;
   items: CartItem[];
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: Address;
+  billingAddress: Address;
+  paymentMethod: {
+    type: 'credit_card' | 'paypal' | 'bank_transfer';
+    details: Record<string, string>;
+  };
   subtotal: number;
   tax: number;
   shipping: number;
   total: number;
-  shippingAddress: Address;
-  billingAddress: Address;
-  paymentMethod: string;
-  createdAt: string;
-  updatedAt?: string;
+  notes?: string;
   trackingNumber?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
- * Address
+ * Address model for shipping and billing
  */
 export interface Address {
-  fullName: string;
-  line1: string;
-  line2?: string;
+  firstName: string;
+  lastName: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
-  phone?: string;
+  phone: string;
+  isDefault?: boolean;
 }
 
 /**
- * Blog post
+ * User model
+ */
+export interface User {
+  id: UserId;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'user' | 'admin' | 'artist';
+  avatar?: string;
+  addresses?: Address[];
+  orders?: OrderId[];
+  createdAt: string;
+  updatedAt: string;
+  lastLogin?: string;
+  isActive: boolean;
+  preferences?: {
+    theme: 'light' | 'dark' | 'system';
+    notifications: boolean;
+    language: string;
+  };
+}
+
+/**
+ * Blog post model
  */
 export interface BlogPost {
   id: BlogPostId;
   title: string;
   slug: string;
   content: string;
-  excerpt?: string;
-  authorId: UserId;
-  authorName: string;
-  publishedAt?: string;
-  createdAt: string;
-  updatedAt?: string;
+  excerpt: string;
+  author: {
+    id: UserId;
+    name: string;
+    avatar?: string;
+  };
   featuredImage?: string;
+  categories?: string[];
   tags?: string[];
-  category: string;
-  status: 'draft' | 'published';
-  comments?: Comment[];
+  publishedAt: string;
+  updatedAt?: string;
+  status: 'draft' | 'published' | 'archived';
+  commentCount: number;
+  viewCount: number;
+  likeCount: number;
+  readTime: number;
 }
 
 /**
- * Comment
+ * Comment model
  */
 export interface Comment {
   id: CommentId;
   postId: BlogPostId;
-  authorId?: UserId;
-  authorName: string;
-  authorEmail: string;
+  parentId?: CommentId;
+  author: {
+    id?: UserId;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
   content: string;
   createdAt: string;
+  updatedAt?: string;
+  likes: number;
+  replies?: Comment[];
   approved: boolean;
 }
 
 /**
- * Track
+ * Music track model
  */
 export interface Track {
   id: TrackId;
   title: string;
   artist: string;
   albumId?: AlbumId;
-  duration?: string;
+  duration: string;
   audioUrl: string;
-  coverImage?: string;
+  coverArt?: string;
   releaseDate?: string;
+  genre?: string[];
   lyrics?: string;
-  isExplicit?: boolean;
-  featuredArtists?: string[];
+  playCount: number;
+  downloadCount: number;
+  price?: number;
+  isFeatured?: boolean;
+  isExclusive?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
 
 /**
- * Album
+ * Music album model
  */
 export interface Album {
   id: AlbumId;
   title: string;
   artist: string;
-  coverImage: string;
+  coverArt: string;
   releaseDate: string;
-  tracks: Track[];
+  genre?: string[];
   description?: string;
-  genre?: string;
-  type: 'album' | 'ep' | 'single' | 'compilation';
+  tracks: Track[];
+  trackCount: number;
+  totalDuration: string;
+  price?: number;
+  isFeatured?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
 
 /**
- * Tour date
+ * Tour date model
  */
 export interface TourDate {
   id: TourDateId;
@@ -189,53 +239,22 @@ export interface TourDate {
   state?: string;
   country: string;
   date: string;
-  time: string;
+  doorTime?: string;
+  startTime: string;
+  endTime?: string;
   ticketUrl?: string;
-  status: 'scheduled' | 'cancelled' | 'sold_out' | 'postponed';
+  ticketPrice?: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  isSoldOut: boolean;
   description?: string;
+  venueDetails?: {
+    address: string;
+    capacity: number;
+    mapUrl?: string;
+  };
   createdAt: string;
   updatedAt?: string;
-}
-
-/**
- * Product category
- */
-export interface ProductCategory {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  parentId?: number;
-}
-
-/**
- * Analytics data
- */
-export interface AnalyticsData {
-  pageViews: number;
-  uniqueVisitors: number;
-  averageSessionDuration: number;
-  bounceRate: number;
-  topPages: {
-    path: string;
-    title: string;
-    views: number;
-    uniqueVisitors: number;
-  }[];
-  traffic: {
-    dates: string[];
-    pageViews: number[];
-    uniqueVisitors: number[];
-  };
-  referrers: {
-    source: string;
-    visits: number;
-    percentage: number;
-  }[];
-  devices: {
-    type: 'desktop' | 'mobile' | 'tablet';
-    count: number;
-    percentage: number;
-  }[];
 }

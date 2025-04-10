@@ -6,7 +6,7 @@
  */
 
 import { ReactNode } from 'react';
-import { Product, CartItem } from './models';
+import type { Product, CartItem } from './models';
 import { ProductId } from './utils';
 
 /**

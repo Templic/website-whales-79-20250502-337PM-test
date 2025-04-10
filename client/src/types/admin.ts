@@ -86,7 +86,7 @@ export type FormatAction =
 /**
  * Format value for rich text editing
  */
-export interface FormatValue {
+export type FormatValue = {
   type: FormatAction;
   value?: string;
 }
@@ -293,20 +293,20 @@ export interface AdminActionLog {
 }
 
 /**
- * Export admin types
+ * Export admin types namespace
  */
-export type AdminTypes = {
-  EditButtonProps: EditButtonProps;
-  EditMenuProps: EditMenuProps;
-  DataTableProps<T>: DataTableProps<T>;
-  AdminPanelProps: AdminPanelProps;
-  AdminCardProps: AdminCardProps;
-  DashboardMetrics: DashboardMetrics;
-  DashboardChartData: DashboardChartData;
-  SecurityScanResult: SecurityScanResult;
-  AdminNotification: AdminNotification;
-  AdminSettings: AdminSettings;
-  AdminActionLog: AdminActionLog;
-};
+export namespace AdminTypes {
+  export type EditButton = EditButtonProps;
+  export type EditMenu = EditMenuProps;
+  export type DataTable<T> = DataTableProps<T>;
+  export type AdminPanel = AdminPanelProps;
+  export type AdminCard = AdminCardProps;
+  export type Dashboard = DashboardMetrics;
+  export type ChartData = DashboardChartData;
+  export type SecurityScan = SecurityScanResult;
+  export type Notification = AdminNotification;
+  export type Settings = AdminSettings;
+  export type ActionLog = AdminActionLog;
+}
 
 export default AdminTypes;

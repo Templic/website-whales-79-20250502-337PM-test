@@ -1,155 +1,254 @@
-import React from 'react';
+import { FormEvent, useState } from 'react';
 import { 
-  Product,
+  Product, 
+  CartItem, 
   User,
-  CartItem,
-  FormatAction,
-  Branded,
-  ProductId,
-  UserId,
-  Optional,
-  DeepPartial,
-  PaginationParams,
-  FilterParams,
-  contactFormSchema
-} from '@/types';
+  Order,
+  Track,
+  Album,
+  TourDate,
+  BlogPost,
+  Comment 
+} from '@/types/models';
+import { DeepPartial, OptionalFields, RequiredFields, ReadonlyFields, ProductId, Branded } from '@/types/utils';
+import { AdminButtonVariant, AdminButtonSize, FormatAction, FormatValue } from '@/types/admin';
+import { SortParams, FilterParams, PaginationParams } from '@/types';
 
 /**
  * TypeSystemDemo
  * 
- * This page demonstrates the use of the centralized type system.
- * It shows how to import and use the various types defined in the system.
+ * This page is used to demonstrate the centralized type system.
+ * It shows how the types can be imported from a central location and used consistently
+ * across the application.
  */
-const TypeSystemDemo: React.FC = () => {
-  // Example of using branded types
-  const createProductId = (id: string): ProductId => id as ProductId;
-  const productId = createProductId("prod_123");
-  
-  // Example of optional types
-  type OptionalUser = Optional<User, 'avatar' | 'lastLogin'>;
-  
-  // Example of deep partial types
-  type EditableProduct = DeepPartial<Product>;
-  
-  // Example of a function using the FormatAction type
-  const applyFormat = (format: FormatAction, text: string): string => {
-    switch (format) {
-      case 'bold':
-        return `<strong>${text}</strong>`;
-      case 'italic':
-        return `<em>${text}</em>`;
-      case 'underline':
-        return `<u>${text}</u>`;
-      default:
-        return text;
-    }
-  };
-  
-  // Example of using the pagination params
-  const pagination: PaginationParams = {
+const TypeSystemDemo = () => {
+  // Using domain models from models.ts
+  const [product, setProduct] = useState<DeepPartial<Product>>({
+    name: 'Sample Product',
+    price: 99.99
+  });
+
+  // Using utility types from utils.ts
+  const [user, setUser] = useState<OptionalFields<User, 'avatar' | 'lastLogin'>>({
+    id: '123' as Branded<string, 'UserId'>,
+    email: 'user@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    role: 'user',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isActive: true
+  });
+
+  // Using admin types from admin.ts
+  const [buttonVariant, setButtonVariant] = useState<AdminButtonVariant>('default');
+  const [buttonSize, setButtonSize] = useState<AdminButtonSize>('default');
+  const [formatAction, setFormatAction] = useState<FormatAction>('bold');
+  const [formatValue, setFormatValue] = useState<FormatValue>({ type: 'bold' });
+
+  // Using pagination and sorting types
+  const [pagination, setPagination] = useState<PaginationParams>({
     page: 1,
     pageSize: 10,
     totalCount: 100,
     totalPages: 10
+  });
+
+  const [sortParams, setSortParams] = useState<SortParams>({
+    field: 'name',
+    direction: 'asc'
+  });
+
+  const [filterParams, setFilterParams] = useState<FilterParams>({
+    field: 'category',
+    operator: 'eq',
+    value: 'electronics'
+  });
+
+  // Event handlers
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    console.log('Product:', product);
+    console.log('User:', user);
   };
-  
-  // Example of using the filter params
-  const filter: FilterParams = {
-    field: 'price',
-    operator: 'gt',
-    value: 50
+
+  // Demonstrating type enforcement
+  const updateProduct = () => {
+    // TypeScript will enforce the correct types here
+    setProduct({
+      ...product,
+      price: 149.99,
+      stock: 10,
+      rating: 4.5
+    });
   };
-  
-  // Example of using a validation schema
-  const validateContactForm = (data: any) => {
-    const result = contactFormSchema.safeParse(data);
-    return result.success;
+
+  const updateUser = () => {
+    // TypeScript will enforce the correct types here
+    setUser({
+      ...user,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      role: 'admin' // Type-safe: only 'user', 'admin', or 'artist' allowed
+    });
   };
-  
+
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Type System Demo</h1>
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Branded Types</h2>
-        <p className="mb-2">Product ID: {String(productId)}</p>
-        <p className="text-gray-600 text-sm">
-          Branded types provide type safety for string IDs to prevent them from being used interchangeably.
+      <div className="bg-white shadow-md rounded p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Domain Models</h2>
+        <p className="mb-4">
+          This section demonstrates the use of domain models imported from the 
+          centralized type system.
         </p>
-        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
-          {`
-const createProductId = (id: string): ProductId => id as ProductId;
-const productId = createProductId("prod_123");
-
-// This would cause a type error:
-// const userId: UserId = productId; // Error!
-          `}
-        </pre>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <h3 className="font-medium mb-2">Product Model</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify(product, null, 2)}
+            </pre>
+            <button 
+              onClick={updateProduct}
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Update Product
+            </button>
+          </div>
+          
+          <div>
+            <h3 className="font-medium mb-2">User Model</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify({
+                ...user,
+                id: String(user.id) // Convert branded type for display
+              }, null, 2)}
+            </pre>
+            <button 
+              onClick={updateUser}
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Update User
+            </button>
+          </div>
+        </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div className="bg-white shadow-md rounded p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Utility Types</h2>
-        <p className="mb-2">Optional, DeepPartial, etc.</p>
-        <p className="text-gray-600 text-sm">
-          Utility types provide powerful type transformations to ensure type safety.
+        <p className="mb-4">
+          These are examples of utility types that can be used throughout the application.
         </p>
-        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
-          {`
-type OptionalUser = Optional<User, 'avatar' | 'lastLogin'>;
-// The avatar and lastLogin fields are optional, but other fields are required
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-medium mb-2">DeepPartial&lt;Product&gt;</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Makes all properties and nested properties optional.
+            </p>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {`const product: DeepPartial<Product> = {
+  name: 'Sample Product',
+  price: 99.99
+  // All other properties are optional
+};`}
+            </pre>
+          </div>
+          
+          <div>
+            <h3 className="font-medium mb-2">OptionalFields&lt;User, 'avatar' | 'lastLogin'&gt;</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Makes specific properties optional.
+            </p>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {`const user: OptionalFields<User, 'avatar' | 'lastLogin'> = {
+  id: '123' as UserId,
+  email: 'user@example.com',
+  // avatar and lastLogin are optional
+  // other fields are required
+};`}
+            </pre>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-white shadow-md rounded p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Admin UI Types</h2>
+        <p className="mb-4">
+          These types are specific to the admin UI components.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h3 className="font-medium mb-2">AdminButtonVariant</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Defines the allowed button variants.
+            </p>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {`type AdminButtonVariant = 
+  | 'default'
+  | 'cosmic'
+  | 'destructive'
+  | 'outline'
+  | 'secondary'
+  | 'ghost'
+  | 'link'
+  | 'primary';
 
-type EditableProduct = DeepPartial<Product>;
-// All fields and nested fields are optional
-          `}
-        </pre>
+// Current value: ${buttonVariant}`}
+            </pre>
+          </div>
+          
+          <div>
+            <h3 className="font-medium mb-2">FormatAction</h3>
+            <p className="text-sm text-gray-600 mb-2">
+              Defines text formatting actions for rich text editors.
+            </p>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {`type FormatAction = 
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'code'
+  | 'link'
+  // ...and many more
+
+// Current value: ${formatAction}`}
+            </pre>
+          </div>
+        </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Domain Types</h2>
-        <p className="mb-2">Product, User, CartItem, etc.</p>
-        <p className="text-gray-600 text-sm">
-          Domain types represent the core data structures of the application.
+      <div className="bg-white shadow-md rounded p-6">
+        <h2 className="text-xl font-semibold mb-4">Data Access Types</h2>
+        <p className="mb-4">
+          These types are used for data access patterns like pagination, sorting, and filtering.
         </p>
-        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
-          {`
-// Example of Product type
-interface Product {
-  id: ProductId;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  inStock: boolean;
-  rating: number;
-  reviewCount: number;
-  // etc.
-}
-          `}
-        </pre>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Validation Schemas</h2>
-        <p className="mb-2">Form validation with Zod</p>
-        <p className="text-gray-600 text-sm">
-          Validation schemas ensure that data meets specified requirements.
-        </p>
-        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
-          {`
-// Contact form schema
-export const contactFormSchema = z.object({
-  name: z.string()
-    .min(2, { message: 'Name must be at least 2 characters' })
-    .max(100, { message: 'Name must be less than 100 characters' }),
-  email: z.string()
-    .email({ message: 'Please enter a valid email address' }),
-  message: z.string()
-    .min(10, { message: 'Message must be at least 10 characters' })
-    .max(2000, { message: 'Message must be less than 2000 characters' }),
-});
-          `}
-        </pre>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h3 className="font-medium mb-2">PaginationParams</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify(pagination, null, 2)}
+            </pre>
+          </div>
+          
+          <div>
+            <h3 className="font-medium mb-2">SortParams</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify(sortParams, null, 2)}
+            </pre>
+          </div>
+          
+          <div>
+            <h3 className="font-medium mb-2">FilterParams</h3>
+            <pre className="bg-gray-100 p-2 rounded text-sm">
+              {JSON.stringify(filterParams, null, 2)}
+            </pre>
+          </div>
+        </div>
       </div>
     </div>
   );
