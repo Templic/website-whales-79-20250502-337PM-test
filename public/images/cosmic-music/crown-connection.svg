@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Background gradient and filters -->
+  <defs>
+    <radialGradient id="crownGradient" cx="50%" cy="50%" r="65%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#B388FF" />
+      <stop offset="60%" stop-color="#7C4DFF" />
+      <stop offset="100%" stop-color="#651FFF" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <linearGradient id="nebula" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9575CD" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#7E57C2" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#673AB7" stop-opacity="0.3" />
+    </linearGradient>
+    <linearGradient id="cosmicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D0221" />
+      <stop offset="50%" stop-color="#170B3B" />
+      <stop offset="100%" stop-color="#0D0221" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Deep cosmic background -->
+  <rect width="500" height="500" fill="url(#cosmicBackground)" />
+  
+  <!-- Star field -->
+  <g>
+    <circle cx="50" cy="60" r="1" fill="white" opacity="0.8" />
+    <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.7" />
+    <circle cx="200" cy="90" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="30" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="70" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="90" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="50" r="1" fill="white" opacity="0.8" />
+    <circle cx="40" cy="150" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="90" cy="200" r="1" fill="white" opacity="0.9" />
+    <circle cx="30" cy="280" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="70" cy="350" r="1" fill="white" opacity="0.7" />
+    <circle cx="50" cy="420" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="90" cy="470" r="1" fill="white" opacity="0.8" />
+    <circle cx="150" cy="450" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="200" cy="470" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="450" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="480" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="450" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="420" r="1" fill="white" opacity="0.8" />
+    <circle cx="450" cy="350" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="480" cy="280" r="1" fill="white" opacity="0.9" />
+    <circle cx="450" cy="200" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="480" cy="150" r="1" fill="white" opacity="0.7" />
+    <!-- Additional stars -->
+    <circle cx="150" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="250" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="250" r="0.8" fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Cosmic nebula in background -->
+  <g opacity="0.4">
+    <path d="M 0,0 Q 100,150 250,50 T 500,0 V 500 H 0 Z" fill="url(#nebula)" />
+  </g>
+  
+  <!-- Crown Chakra Geometric Pattern -->
+  <g transform="translate(250, 250)">
+    <!-- Glowing center -->
+    <circle cx="0" cy="0" r="90" fill="url(#crownGradient)" filter="url(#glow)" opacity="0.9" />
+    
+    <!-- Crown Chakra Symbol -->
+    <g transform="scale(1.2)">
+      <!-- Thousand-petaled lotus symbolizing the Crown chakra -->
+      <!-- Simplified to representative petals -->
+      <g>
+        <!-- Inner crown petals -->
+        <g transform="rotate(0)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(15)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(30)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(45)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(60)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(75)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(90)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(105)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(120)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(135)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(150)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(165)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(180)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(195)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(210)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(225)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(240)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(255)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(270)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(285)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(300)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(315)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(330)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        <g transform="rotate(345)">
+          <path d="M 0,-50 Q 10,-45 0,-40 Q -10,-45 0,-50" fill="#D1C4E9" opacity="0.9" />
+        </g>
+        
+        <!-- Outer crown petals -->
+        <g transform="rotate(0)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(30)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(60)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(90)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(120)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(150)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(180)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(210)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(240)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(270)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(300)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+        <g transform="rotate(330)">
+          <path d="M 0,-70 Q 15,-60 0,-50 Q -15,-60 0,-70" fill="#B39DDB" opacity="0.9" />
+        </g>
+      </g>
+      
+      <!-- Crown center -->
+      <circle cx="0" cy="0" r="30" fill="#9C27B0" opacity="0.9" />
+      <circle cx="0" cy="0" r="20" fill="#BA68C8" opacity="0.8" />
+      <circle cx="0" cy="0" r="10" fill="#E1BEE7" opacity="0.9" />
+    </g>
+    
+    <!-- Energy wave patterns -->
+    <g opacity="0.5">
+      <circle cx="0" cy="0" r="115" fill="none" stroke="#B39DDB" stroke-width="1" />
+      <circle cx="0" cy="0" r="125" fill="none" stroke="#B39DDB" stroke-width="0.7" />
+      <circle cx="0" cy="0" r="135" fill="none" stroke="#B39DDB" stroke-width="0.5" />
+    </g>
+    
+    <!-- Frequency waves (representing 963 Hz) -->
+    <g opacity="0.7" stroke="#B39DDB" stroke-width="1.5" fill="none">
+      <path d="M -180,0 Q -170,8 -160,0 Q -150,-8 -140,0 Q -130,8 -120,0 Q -110,-8 -100,0 Q -90,8 -80,0 Q -70,-8 -60,0 Q -50,8 -40,0 Q -30,-8 -20,0 Q -10,8 0,0 Q 10,-8 20,0 Q 30,8 40,0 Q 50,-8 60,0 Q 70,8 80,0 Q 90,-8 100,0 Q 110,8 120,0 Q 130,-8 140,0 Q 150,8 160,0 Q 170,-8 180,0" />
+    </g>
+  </g>
+  
+  <!-- Light rays emanating from center (cosmic connection) -->
+  <g opacity="0.3">
+    <path d="M 250,250 L 50,50" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 450,50" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 50,450" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 450,450" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 50,250" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 450,250" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 250,50" stroke="#E1BEE7" stroke-width="1" />
+    <path d="M 250,250 L 250,450" stroke="#E1BEE7" stroke-width="1" />
+  </g>
+  
+  <!-- Text label for frequency -->
+  <text x="250" y="420" font-family="Arial, sans-serif" font-size="16" fill="#B39DDB" text-anchor="middle" font-weight="bold">963 Hz</text>
+  <text x="250" y="445" font-family="Arial, sans-serif" font-size="14" fill="#EEEEEE" text-anchor="middle">Crown Connection</text>
+</svg>

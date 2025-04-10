@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Background gradient and filters -->
+  <defs>
+    <radialGradient id="throatGradient" cx="50%" cy="50%" r="65%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#80DEEA" />
+      <stop offset="60%" stop-color="#26C6DA" />
+      <stop offset="100%" stop-color="#00ACC1" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <linearGradient id="nebula" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4DD0E1" stop-opacity="0.2" />
+      <stop offset="50%" stop-color="#00BCD4" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#00838F" stop-opacity="0.2" />
+    </linearGradient>
+    <linearGradient id="cosmicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0A1929" />
+      <stop offset="50%" stop-color="#102A43" />
+      <stop offset="100%" stop-color="#0A1929" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Dark cosmic background -->
+  <rect width="500" height="500" fill="url(#cosmicBackground)" />
+  
+  <!-- Star field -->
+  <g>
+    <circle cx="50" cy="60" r="1" fill="white" opacity="0.8" />
+    <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.7" />
+    <circle cx="200" cy="90" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="30" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="70" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="90" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="50" r="1" fill="white" opacity="0.8" />
+    <circle cx="40" cy="150" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="90" cy="200" r="1" fill="white" opacity="0.9" />
+    <circle cx="30" cy="280" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="70" cy="350" r="1" fill="white" opacity="0.7" />
+    <circle cx="50" cy="420" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="90" cy="470" r="1" fill="white" opacity="0.8" />
+    <circle cx="150" cy="450" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="200" cy="470" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="450" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="480" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="450" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="420" r="1" fill="white" opacity="0.8" />
+    <circle cx="450" cy="350" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="480" cy="280" r="1" fill="white" opacity="0.9" />
+    <circle cx="450" cy="200" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="480" cy="150" r="1" fill="white" opacity="0.7" />
+    <!-- Additional stars -->
+    <circle cx="150" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="250" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="250" r="0.8" fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Cosmic nebula in background -->
+  <path d="M 50,100 Q 150,50 250,100 T 450,150 Q 500,250 450,350 T 250,400 Q 150,450 50,400 T 0,250 Q 50,150 50,100" fill="url(#nebula)" opacity="0.6" />
+  
+  <!-- Throat Chakra Geometric Pattern -->
+  <g transform="translate(250, 250)">
+    <!-- Glowing center -->
+    <circle cx="0" cy="0" r="90" fill="url(#throatGradient)" filter="url(#glow)" opacity="0.9" />
+    
+    <!-- Throat Chakra Symbol -->
+    <g transform="scale(1.3)">
+      <!-- Sixteen-petaled lotus symbolizing the Throat chakra -->
+      <g transform="rotate(0)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(22.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(45)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(67.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(90)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(112.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(135)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(157.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(180)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(202.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(225)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(247.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(270)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(292.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(315)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      <g transform="rotate(337.5)">
+        <path d="M 0,-65 Q 12,-55 0,-45 Q -12,-55 0,-65" fill="#4DD0E1" opacity="0.9" />
+      </g>
+      
+      <!-- Throat chakra center symbol (crescent/chalice) -->
+      <path d="M -25,5 Q 0,-25 25,5 Q 20,15 0,20 Q -20,15 -25,5 Z" fill="#80DEEA" opacity="0.95" />
+      <circle cx="0" cy="0" r="5" fill="#00838F" opacity="0.9" />
+    </g>
+    
+    <!-- Energy wave patterns -->
+    <g opacity="0.5">
+      <circle cx="0" cy="0" r="115" fill="none" stroke="#4DD0E1" stroke-width="1" />
+      <circle cx="0" cy="0" r="125" fill="none" stroke="#4DD0E1" stroke-width="0.7" />
+      <circle cx="0" cy="0" r="135" fill="none" stroke="#4DD0E1" stroke-width="0.5" />
+    </g>
+    
+    <!-- Frequency waves (representing 741 Hz) -->
+    <g opacity="0.7" stroke="#80DEEA" stroke-width="1.5" fill="none">
+      <path d="M -180,0 Q -165,12 -150,0 Q -135,-12 -120,0 Q -105,12 -90,0 Q -75,-12 -60,0 Q -45,12 -30,0 Q -15,-12 0,0 Q 15,12 30,0 Q 45,-12 60,0 Q 75,12 90,0 Q 105,-12 120,0 Q 135,12 150,0 Q 165,-12 180,0" />
+    </g>
+  </g>
+  
+  <!-- Sound wave patterns (representing voice/expression) -->
+  <g opacity="0.3" transform="translate(250, 250)">
+    <path d="M -180,-50 C -150,-30 -120,-60 -90,-30 C -60,-10 -30,-40 0,-10 C 30,-40 60,-10 90,-30 C 120,-60 150,-30 180,-50" stroke="#B2EBF2" stroke-width="1" fill="none" />
+    <path d="M -180,50 C -150,30 -120,60 -90,30 C -60,10 -30,40 0,10 C 30,40 60,10 90,30 C 120,60 150,30 180,50" stroke="#B2EBF2" stroke-width="1" fill="none" />
+  </g>
+  
+  <!-- Text label for frequency -->
+  <text x="250" y="420" font-family="Arial, sans-serif" font-size="16" fill="#80DEEA" text-anchor="middle" font-weight="bold">741 Hz</text>
+  <text x="250" y="445" font-family="Arial, sans-serif" font-size="14" fill="#EEEEEE" text-anchor="middle">Throat Chakra Expression</text>
+</svg>

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Background gradient and filters -->
+  <defs>
+    <linearGradient id="cosmicBackground" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0033" />
+      <stop offset="50%" stop-color="#1A0057" />
+      <stop offset="100%" stop-color="#0B0033" />
+    </linearGradient>
+    <radialGradient id="cosmicGlow" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#9C27B0" stop-opacity="0.7" />
+      <stop offset="50%" stop-color="#3F51B5" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#000051" stop-opacity="0.1" />
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Deep cosmic background -->
+  <rect width="500" height="500" fill="url(#cosmicBackground)" />
+  
+  <!-- Star field -->
+  <g>
+    <circle cx="50" cy="60" r="1" fill="white" opacity="0.8" />
+    <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.7" />
+    <circle cx="200" cy="90" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="30" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="70" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="90" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="50" r="1" fill="white" opacity="0.8" />
+    <circle cx="40" cy="150" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="90" cy="200" r="1" fill="white" opacity="0.9" />
+    <circle cx="30" cy="280" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="70" cy="350" r="1" fill="white" opacity="0.7" />
+    <circle cx="50" cy="420" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="90" cy="470" r="1" fill="white" opacity="0.8" />
+    <circle cx="150" cy="450" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="200" cy="470" r="1" fill="white" opacity="0.9" />
+    <circle cx="280" cy="450" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="350" cy="480" r="1" fill="white" opacity="0.7" />
+    <circle cx="420" cy="450" r="1.4" fill="white" opacity="0.9" />
+    <circle cx="470" cy="420" r="1" fill="white" opacity="0.8" />
+    <circle cx="450" cy="350" r="1.3" fill="white" opacity="0.7" />
+    <circle cx="480" cy="280" r="1" fill="white" opacity="0.9" />
+    <circle cx="450" cy="200" r="1.2" fill="white" opacity="0.8" />
+    <circle cx="480" cy="150" r="1" fill="white" opacity="0.7" />
+    <!-- Additional stars -->
+    <circle cx="150" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="150" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="250" cy="350" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="150" cy="250" r="0.8" fill="white" opacity="0.6" />
+    <circle cx="350" cy="250" r="0.8" fill="white" opacity="0.6" />
+  </g>
+  
+  <!-- Cosmic energy field -->
+  <circle cx="250" cy="250" r="200" fill="url(#cosmicGlow)" opacity="0.6" />
+  
+  <!-- Sacred geometry central figure -->
+  <g transform="translate(250, 250)">
+    <!-- Main circle -->
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#9575CD" stroke-width="1" opacity="0.7" />
+    
+    <!-- Flower of Life pattern (simplified) -->
+    <g opacity="0.8">
+      <circle cx="0" cy="-58" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+      <circle cx="50" cy="-29" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+      <circle cx="50" cy="29" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+      <circle cx="0" cy="58" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+      <circle cx="-50" cy="29" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+      <circle cx="-50" cy="-29" r="58" fill="none" stroke="#7E57C2" stroke-width="1" />
+    </g>
+    
+    <!-- Metatron's Cube (simplified) -->
+    <g opacity="0.6">
+      <line x1="0" y1="-100" x2="86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="-50" x2="86.6" y2="50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="50" x2="0" y2="100" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="0" y1="100" x2="-86.6" y2="50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="-86.6" y1="50" x2="-86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="-86.6" y1="-50" x2="0" y2="-100" stroke="#3F51B5" stroke-width="0.5" />
+      
+      <line x1="0" y1="-100" x2="86.6" y2="50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="0" y1="-100" x2="-86.6" y2="50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="-50" x2="-86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="-50" x2="0" y2="100" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="50" x2="-86.6" y2="50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="86.6" y1="50" x2="-86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="0" y1="100" x2="-86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="0" y1="100" x2="86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+      <line x1="-86.6" y1="50" x2="86.6" y2="-50" stroke="#3F51B5" stroke-width="0.5" />
+    </g>
+    
+    <!-- Central energy symbol -->
+    <circle cx="0" cy="0" r="30" fill="#7B1FA2" filter="url(#glow)" opacity="0.9" />
+    
+    <!-- Energy chakra diamonds -->
+    <g opacity="0.9">
+      <rect x="-10" y="-10" width="20" height="20" fill="#F44336" transform="rotate(45)" /> <!-- Root -->
+      <rect x="-8" y="-8" width="16" height="16" fill="#FF9800" transform="rotate(45) translate(0, -30)" /> <!-- Sacral -->
+      <rect x="-7" y="-7" width="14" height="14" fill="#FFEB3B" transform="rotate(45) translate(0, -55)" /> <!-- Solar Plexus -->
+      <rect x="-6" y="-6" width="12" height="12" fill="#4CAF50" transform="rotate(45) translate(0, -75)" /> <!-- Heart -->
+      <rect x="-5" y="-5" width="10" height="10" fill="#00BCD4" transform="rotate(45) translate(0, -90)" /> <!-- Throat -->
+      <rect x="-4" y="-4" width="8" height="8" fill="#673AB7" transform="rotate(45) translate(0, -102)" /> <!-- Third Eye -->
+      <rect x="-3" y="-3" width="6" height="6" fill="#9C27B0" transform="rotate(45) translate(0, -110)" /> <!-- Crown -->
+    </g>
+  </g>
+  
+  <!-- Text label for album -->
+  <text x="250" y="410" font-family="Arial, sans-serif" font-size="24" fill="#EEEEEE" text-anchor="middle" font-weight="bold">Cosmic Healing</text>
+  <text x="250" y="440" font-family="Arial, sans-serif" font-size="18" fill="#B39DDB" text-anchor="middle">Frequencies</text>
+</svg>

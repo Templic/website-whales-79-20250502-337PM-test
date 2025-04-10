@@ -10,6 +10,7 @@ import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground"
 import { AlbumShowcase } from "@/components/music/AlbumShowcase";
 import { DynamicPlaylists, RecommendedPlaylists } from "@/components/music/DynamicPlaylists";
 import { playlists } from "@/data/playlists";
+import { cosmicAlbums, cosmicTracks } from "@/data/archived-music";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal";
