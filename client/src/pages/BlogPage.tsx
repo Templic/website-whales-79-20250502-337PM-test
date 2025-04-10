@@ -36,7 +36,19 @@ export default function BlogPage() {
         {isLoading ? (
           <Skeleton className="h-64 w-full" />
         ) : error ? (
-          <p>Error loading posts.</p>
+          <div className="relative">
+            <div className="absolute inset-0 bg-red-500/10 backdrop-blur-sm transform transition-all 
+                clip-path-octagon border-2 border-red-500/30 z-0"></div>
+            <div className="relative z-10 p-8 text-center">
+              <p className="text-red-400 mb-4">Failed to load blog posts. Please try again later.</p>
+              <Button 
+                onClick={() => window.location.reload()}
+                className="bg-[#00ebd6] text-black hover:bg-[#fe0064] hover:text-white"
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
         ) : posts && posts.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-8">
             {posts.map((post) => (
