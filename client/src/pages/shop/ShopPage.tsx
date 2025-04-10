@@ -14,6 +14,7 @@ import EnhancedShoppingExperience from "@/components/shop/EnhancedShoppingExperi
 import CosmicCollectibles from "@/components/shop/CosmicCollectibles";
 import ProductComparison from "@/components/shop/ProductComparison";
 import EnhancedShoppingVenn from "@/components/shop/EnhancedShoppingVenn";
+import SacredGeometry from "@/components/ui/sacred-geometry";
 import "@/components/shop/shop-animations.css";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
@@ -308,6 +309,22 @@ const ShopPage: React.FC = () => {
   return (
     <div className="min-h-screen relative">
       <CosmicBackground opacity={0.4} />
+      
+      {/* Sacred geometry elements in page margins */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Left margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry variant="merkaba" size={120} animated={true} />
+        </div>
+        <div className="absolute bottom-40 left-5 opacity-10 hidden md:block">
+          <SacredGeometry variant="dodecahedron" size={120} animated={true} />
+        </div>
+        
+        {/* Right margin sacred geometry - one at top, one at bottom */}
+        <div className="absolute top-40 right-5 opacity-10 hidden md:block">
+          <SacredGeometry variant="icosahedron" size={120} animated={true} />
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
         {loading && (
