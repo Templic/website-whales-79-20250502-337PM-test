@@ -7,10 +7,17 @@
 
 import React from "react";
 import { Helmet } from "react-helmet";
-import { EditButtonDemo } from "@/components/features/admin";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+
+// Import components from index file
+import { 
+  EditButtonDemo, 
+  AdminEditorDemo, 
+  EditMenuDemo 
+} from "@/components/features/admin";
 
 const EditButtonPage: React.FC = () => {
   const { setRole, user } = useAuth();
@@ -18,13 +25,13 @@ const EditButtonPage: React.FC = () => {
   return (
     <div className="container py-8">
       <Helmet>
-        <title>Admin - Edit Button Demo | Dale Loves Whales</title>
+        <title>Admin - Content Editor Components | Dale Loves Whales</title>
       </Helmet>
       
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Admin Content Editor</h1>
         <p className="text-gray-400">
-          This page demonstrates the EditButton component and content editor functionality.
+          This page demonstrates the content editor components and functionality for administrators.
         </p>
       </div>
       
@@ -32,7 +39,7 @@ const EditButtonPage: React.FC = () => {
         <CardHeader>
           <CardTitle>Role Switcher (For Demo Purposes)</CardTitle>
           <CardDescription>
-            Switch between user roles to see how the EditButton behaves with different permissions
+            Switch between user roles to see how the components behave with different permissions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,15 +73,49 @@ const EditButtonPage: React.FC = () => {
       </Card>
       
       <div className="space-y-8">
-        <section>
-          <h2 className="text-2xl font-bold mb-4">EditButton Components</h2>
-          <p className="mb-4 text-gray-400">
-            The EditButton components below demonstrate various ways to integrate content editing functionality
-            throughout your application. These buttons are only visible to users with 'admin' or 'super_admin' roles.
-          </p>
+        <Tabs defaultValue="edit-button">
+          <TabsList className="mb-4">
+            <TabsTrigger value="edit-button">Edit Button</TabsTrigger>
+            <TabsTrigger value="admin-editor">Content Editor</TabsTrigger>
+            <TabsTrigger value="format-menu">Format Menu</TabsTrigger>
+          </TabsList>
           
-          <EditButtonDemo />
-        </section>
+          <TabsContent value="edit-button">
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Edit Button Components</h2>
+              <p className="mb-4 text-gray-400">
+                The EditButton components below demonstrate various ways to integrate content editing functionality
+                throughout your application. These buttons are only visible to users with 'admin' or 'super_admin' roles.
+              </p>
+              
+              <EditButtonDemo />
+            </section>
+          </TabsContent>
+          
+          <TabsContent value="admin-editor">
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Content Editor Demo</h2>
+              <p className="mb-4 text-gray-400">
+                The AdminEditor component provides a modal interface for editing text and image content.
+                Click the edit buttons to open the editor and try making changes.
+              </p>
+              
+              <AdminEditorDemo />
+            </section>
+          </TabsContent>
+          
+          <TabsContent value="format-menu">
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Text Formatting Menu</h2>
+              <p className="mb-4 text-gray-400">
+                The EditMenu component provides text formatting capabilities to the editor.
+                This floating menu appears near the EditButton and offers various formatting options.
+              </p>
+              
+              <EditMenuDemo />
+            </section>
+          </TabsContent>
+        </Tabs>
         
         <section>
           <Card>
@@ -88,13 +129,21 @@ const EditButtonPage: React.FC = () => {
               </p>
               <pre>{`import { EditButton } from "@/components/features/admin";
 
-// Near content
-<p>Editable content <EditButton contentId="my-content-1" /></p>
+// Basic edit button
+<EditButton contentId="my-content-1" onEdit={handleEdit} />
+
+// With formatting menu
+<EditButton 
+  contentId="my-content-2"
+  showFormatMenu={true}
+  menuPosition="top"
+  onFormatApply={handleFormatApply}
+/>
 
 // Positioned absolute inside container
 <div className="edit-button-container">
   <div className="edit-button-absolute edit-button-top-right">
-    <EditButton contentId="my-content-2" />
+    <EditButton contentId="my-content-3" onEdit={handleEdit} />
   </div>
   <div>Your content here...</div>
 </div>`}</pre>
@@ -107,6 +156,9 @@ const EditButtonPage: React.FC = () => {
                 <li><strong>size</strong> - Optional: button size (sm, md, lg, etc.)</li>
                 <li><strong>text</strong> - Optional: button text (default: "Edit")</li>
                 <li><strong>iconOnly</strong> - Optional: show icon only without text (default: true)</li>
+                <li><strong>showFormatMenu</strong> - Optional: show formatting menu (default: false)</li>
+                <li><strong>menuPosition</strong> - Optional: position of the formatting menu (top, bottom, left, right)</li>
+                <li><strong>onFormatApply</strong> - Optional: function to call when a format is applied</li>
               </ul>
               
               <h3>Styling Options</h3>

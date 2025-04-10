@@ -1,11 +1,23 @@
 /**
- * Admin Feature Components Index
+ * admin/index.ts
  * 
- * This file exports all the admin-related components for easier imports
+ * Export all admin-related components for easier importing.
  */
 
-export { default as EditButton } from './EditButton';
-export { default as Modal } from './Modal';
-export { default as AdminEditor } from './AdminEditor';
-export { default as AdminEditorDemo } from './AdminEditorDemo';
-export { default as EditButtonDemo } from './EditButtonDemo';
+import { EditButton } from './EditButton';
+import EditButtonDemo from './EditButtonDemo';
+import AdminEditor from './AdminEditor';
+import AdminEditorDemo from './AdminEditorDemo';
+import EditMenu, { FormatAction } from './EditMenu';
+import EditMenuDemo from './EditMenuDemo';
+
+export {
+  EditButton,
+  EditButtonDemo,
+  AdminEditor,
+  AdminEditorDemo,
+  EditMenu,
+  EditMenuDemo,
+  // Types
+  FormatAction
+};

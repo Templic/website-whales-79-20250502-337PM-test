@@ -6,10 +6,11 @@
  * This button is only visible to users with 'admin' or 'super_admin' roles.
  */
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import EditMenu, { FormatAction } from "./EditMenu";
 import "./admin.css";
 
 interface EditButtonProps {
@@ -20,6 +21,9 @@ interface EditButtonProps {
   size?: string;
   text?: string;
   iconOnly?: boolean;
+  showFormatMenu?: boolean;
+  menuPosition?: "top" | "bottom" | "left" | "right";
+  onFormatApply?: (format: FormatAction) => void;
 }
 
 /**
@@ -33,9 +37,14 @@ export const EditButton: React.FC<EditButtonProps> = ({
   size = "sm",
   text = "Edit",
   iconOnly = true,
+  showFormatMenu = false,
+  menuPosition = "top",
+  onFormatApply,
 }) => {
   // Check if user is authenticated and has admin/super_admin role
   const { user } = useAuth();
+  const [formatMenuOpen, setFormatMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Only render for admin users
   if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
@@ -47,21 +56,51 @@ export const EditButton: React.FC<EditButtonProps> = ({
     e.preventDefault();
     e.stopPropagation();
     
-    if (onEdit) {
+    if (showFormatMenu) {
+      setFormatMenuOpen(prev => !prev);
+    } else if (onEdit) {
       onEdit(contentId);
     }
   };
   
+  // Handle format application
+  const handleFormatApply = (format: FormatAction) => {
+    if (onFormatApply) {
+      onFormatApply(format);
+    }
+  };
+  
+  // Close format menu
+  const closeFormatMenu = () => {
+    setFormatMenuOpen(false);
+  };
+  
   return (
-    <Button
-      variant={variant as any}
-      size={size as any}
-      className={className}
-      onClick={handleClick}
-    >
-      <Edit className={`h-4 w-4 ${!iconOnly ? "mr-2" : ""}`} />
-      {!iconOnly && <span>{text}</span>}
-    </Button>
+    <div ref={containerRef} className="relative inline-block">
+      <Button
+        variant={variant as any}
+        size={size as any}
+        className={className}
+        onClick={handleClick}
+      >
+        {showFormatMenu ? (
+          <PenTool className={`h-4 w-4 ${!iconOnly ? "mr-2" : ""}`} />
+        ) : (
+          <Edit className={`h-4 w-4 ${!iconOnly ? "mr-2" : ""}`} />
+        )}
+        {!iconOnly && <span>{text}</span>}
+      </Button>
+      
+      {showFormatMenu && formatMenuOpen && (
+        <EditMenu
+          contentId={contentId}
+          position={menuPosition}
+          isOpen={formatMenuOpen}
+          onClose={closeFormatMenu}
+          onFormatApply={handleFormatApply}
+        />
+      )}
+    </div>
   );
 };
 
