@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#1a0033"/>
+  <circle cx="200" cy="200" r="150" fill="#330066" opacity="0.7"/>
+  
+  <!-- Cosmic background with stars -->
+  <g>
+    <circle cx="100" cy="100" r="1.5" fill="white"/>
+    <circle cx="150" cy="75" r="1.5" fill="white"/>
+    <circle cx="300" cy="125" r="1.5" fill="white"/>
+    <circle cx="250" cy="50" r="1.5" fill="white"/>
+    <circle cx="75" cy="200" r="1.5" fill="white"/>
+    <circle cx="325" cy="225" r="1.5" fill="white"/>
+    <circle cx="350" cy="300" r="1.5" fill="white"/>
+    <circle cx="250" cy="350" r="1.5" fill="white"/>
+    <circle cx="150" cy="325" r="1.5" fill="white"/>
+    <circle cx="50" cy="350" r="1.5" fill="white"/>
+  </g>
+  
+  <!-- Oracle deck -->
+  <rect x="130" y="120" width="140" height="200" rx="5" fill="#660099"/>
+  <rect x="140" y="130" width="120" height="180" rx="3" fill="#9900cc"/>
+  
+  <!-- Sacred geometry on the deck -->
+  <circle cx="200" cy="190" r="50" fill="none" stroke="#ffcc00" stroke-width="2"/>
+  <path d="M200,140 L235,174 L217,220 L183,220 L165,174 Z" fill="none" stroke="#ffcc00" stroke-width="2"/>
+  <circle cx="200" cy="190" r="25" fill="none" stroke="#ffcc00" stroke-width="2"/>
+  
+  <!-- Card fanned out -->
+  <rect x="220" y="100" width="80" height="120" rx="3" transform="rotate(15, 260, 160)" fill="#660099" opacity="0.6"/>
+  <rect x="100" y="100" width="80" height="120" rx="3" transform="rotate(-15, 140, 160)" fill="#660099" opacity="0.6"/>
+  
+  <text x="200" y="350" font-family="Arial" font-size="20" text-anchor="middle" fill="white">Starseed Oracle Deck</text>
+  <text x="200" y="380" font-family="Arial" font-size="16" text-anchor="middle" fill="#cc99ff">Cosmic guidance for your spiritual path</text>
+</svg>

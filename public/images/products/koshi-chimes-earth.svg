@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#003366"/>
+  <circle cx="200" cy="200" r="120" fill="#004d00" opacity="0.8"/>
+  <path d="M160,120 L240,120 L280,160 L280,240 L240,280 L160,280 L120,240 L120,160 Z" fill="#90ee90" opacity="0.5"/>
+  <rect x="180" y="100" width="40" height="200" fill="#996633"/>
+  <ellipse cx="200" cy="110" rx="25" ry="10" fill="#996633"/>
+  <text x="200" y="350" font-family="Arial" font-size="20" text-anchor="middle" fill="white">Koshi Chimes - Earth Element</text>
+  <text x="200" y="380" font-family="Arial" font-size="16" text-anchor="middle" fill="#90ee90">Tuned to Earth's resonant frequency</text>
+</svg>

@@ -34,74 +34,74 @@ interface CosmicCollectiblesProps {
   userPoints?: number;
 }
 
-// Sample collection items data
+// Sample collection items data - these are exclusive to the Cosmic Collectibles section
 const collectionItems: CollectionItem[] = [
   {
-    id: "item-1",
-    name: "Celestial Harmonic Pendant",
-    description: "This pendant is tuned to the frequency of celestial harmonies, helping you connect with cosmic energies.",
-    price: 89.99,
-    image: "/placeholder.svg?height=200&width=200&text=Pendant",
-    category: "jewelry",
+    id: "cosmic-reward-1",
+    name: "Koshi Chimes - Earth Element",
+    description: "Unique handcrafted chimes tuned to Earth's resonant frequency, creating harmonious tones that ground your energy.",
+    price: 77.77,
+    image: "/images/products/koshi-chimes-earth.jpg",
+    category: "spiritual",
     isFeatured: true,
     isExclusive: true,
     rating: 4.9,
-    reviews: 128
+    reviews: 77
   },
   {
-    id: "item-2",
-    name: "Cosmic Voyager Journal",
-    description: "Record your spiritual journeys with this handcrafted journal made from recycled materials.",
-    price: 34.99,
-    image: "/placeholder.svg?height=200&width=200&text=Journal",
-    category: "accessories",
+    id: "cosmic-reward-2",
+    name: "Zodiac Crystal Collection",
+    description: "A set of 12 crystals aligned with each zodiac sign, enhancing your connection to cosmic energies.",
+    price: 111.11,
+    image: "/images/products/samples/crystal-bowl.jpg",
+    category: "spiritual",
     isBestseller: true,
     rating: 4.8,
-    reviews: 97,
-    discount: 15
+    reviews: 93,
+    discount: 7
   },
   {
-    id: "item-3",
+    id: "cosmic-reward-3",
     name: "Starseed Oracle Deck",
-    description: "A beautifully illustrated oracle deck to guide your spiritual practice and cosmic connection.",
-    price: 42.99,
-    image: "/placeholder.svg?height=200&width=200&text=Oracle+Deck",
+    description: "Limited edition oracle deck featuring cosmic artwork that helps reveal your spiritual path and cosmic origins.",
+    price: 44.44,
+    image: "/images/products/starseed-oracle.jpg",
     category: "spiritual",
     isFeatured: true,
-    rating: 4.7,
-    reviews: 156
+    rating: 5.0,
+    reviews: 144
   },
   {
-    id: "item-4",
+    id: "cosmic-reward-4",
     name: "Nebula Meditation Cushion",
-    description: "Ergonomic meditation cushion with cosmic-inspired design for comfort during long sessions.",
-    price: 64.99,
-    image: "/placeholder.svg?height=200&width=200&text=Cushion",
+    description: "Ergonomic meditation cushion with cosmic nebula design, filled with organic buckwheat hulls for ultimate comfort.",
+    price: 55.55,
+    image: "/images/products/nebula-cushion.jpg",
     category: "home",
-    rating: 4.6,
-    reviews: 83
+    rating: 4.7,
+    reviews: 89
   },
   {
-    id: "item-5",
-    name: "Astral Journey Incense Set",
-    description: "Handcrafted incense made from ethically sourced herbs to enhance your meditation experience.",
-    price: 19.99,
-    image: "/placeholder.svg?height=200&width=200&text=Incense",
-    category: "spiritual",
+    id: "cosmic-reward-5",
+    name: "Celestial Harmonic Pendant",
+    description: "Sterling silver pendant embedded with a crystal that vibrates at the frequency of cosmic harmony.",
+    price: 88.88,
+    image: "/images/products/harmonic-pendant.jpg",
+    category: "jewelry",
     isBestseller: true,
-    rating: 4.5,
-    reviews: 211,
-    discount: 10
+    rating: 4.9,
+    reviews: 121,
+    discount: 11
   },
   {
-    id: "item-6",
-    name: "Cosmic Frequency T-Shirt",
-    description: "Organic cotton tee with sacred geometry design that resonates with cosmic frequencies.",
-    price: 29.99,
-    image: "/placeholder.svg?height=200&width=200&text=Tshirt",
-    category: "clothing",
-    rating: 4.4,
-    reviews: 76
+    id: "cosmic-reward-6",
+    name: "Sacred Geometry Wall Tapestry",
+    description: "Handwoven tapestry featuring interconnected sacred geometry patterns that enhance the energy of any space.",
+    price: 66.66,
+    image: "/images/products/samples/sacred-geometry.jpg",
+    category: "home",
+    rating: 4.8,
+    reviews: 67
   }
 ];
 
@@ -123,7 +123,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
             Cosmic Collectibles & Rewards
           </h2>
           <div className="ml-auto bg-indigo-900/80 px-6 py-2 rounded-md flex items-center">
-            <span className="mr-2 text-sm text-purple-200">1250 Points</span>
+            <span className="mr-2 text-sm text-purple-200">777 Points</span>
             <Button 
               variant="link" 
               className="text-purple-300 hover:text-purple-100 p-0 h-auto text-sm cosmic-hover-glow"
@@ -177,21 +177,26 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
   );
 };
 
-// Card component for collection items with elliptical image container
+// Card component for collection items with modified octagon shape to prevent overflow
 const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: any) => void }> = ({ item, onAddToCart }) => {
+  const handleViewProduct = () => {
+    console.log(`Viewing product details for ${item.name}`);
+    // In a real app, this would navigate to product detail page
+  };
+
   return (
     <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
       style={{
-        clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+        clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
         backgroundColor: "rgba(155, 135, 245, 0.05)"
       }}>
-      <div className="p-4 pt-6 pb-8 flex flex-col items-center">
+      <div className="p-6 pt-8 pb-10 flex flex-col items-center"> {/* Increased padding to prevent text overflow */}
         {/* Octagon image container */}
-        <div className="relative w-full aspect-[5/4] mb-2 overflow-hidden">
+        <div className="relative w-full aspect-[5/4] mb-3 overflow-hidden">
           <div 
             className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
             style={{
-              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+              clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
               background: "linear-gradient(to bottom, rgba(75, 0, 130, 0.1), rgba(20, 20, 60, 0.2))"
             }}
           >
@@ -221,7 +226,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
           <div 
             className="absolute inset-0 border border-purple-500/30 pointer-events-none"
             style={{
-              clipPath: "polygon(29% 0%, 71% 0%, 100% 29%, 100% 71%, 71% 100%, 29% 100%, 0% 71%, 0% 29%)",
+              clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
             }}
           ></div>
 
@@ -258,9 +263,9 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
 
         <div className="w-full text-center">
           <h3 className="text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
-          <p className="text-muted-foreground text-sm mb-2 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
+          <p className="text-muted-foreground text-sm mb-3 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
 
-          <div className="flex items-center justify-center mb-2">
+          <div className="flex items-center justify-center mb-3">
             <div className="flex items-center">
               <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
               <span className="ml-1 text-sm font-medium">{item.rating}</span>
@@ -269,7 +274,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
             <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
           </div>
 
-          <div className="flex justify-between items-center px-2">
+          <div className="flex justify-between items-center px-2 mb-3">
             <div>
               {item.discount ? (
                 <div className="flex flex-col items-start">
@@ -284,14 +289,26 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
                 <span className="text-lg font-bold">${item.price.toFixed(2)}</span>
               )}
             </div>
+          </div>
 
+          {/* Two-button layout with View Product and Add to Cart */}
+          <div className="flex w-full gap-2 mt-1">
             <Button 
               size="sm" 
-              className="gap-1 ml-auto bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow h-8 px-3"
+              variant="outline"
+              className="flex-1 h-9 border-purple-400 text-purple-500 hover:text-purple-700 hover:bg-purple-50 cosmic-hover-glow"
+              onClick={handleViewProduct}
+            >
+              View Product
+            </Button>
+            
+            <Button 
+              size="sm" 
+              className="flex-1 h-9 gap-1 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
               onClick={() => onAddToCart && onAddToCart(item)}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              Add
+              Add to Cart
             </Button>
           </div>
         </div>
