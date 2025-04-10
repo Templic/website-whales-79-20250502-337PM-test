@@ -154,7 +154,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               <h3 className="font-medium cosmic-hover-text cursor-pointer text-lg md:text-xl">{name}</h3>
             </Link>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
-              {categories.slice(0, 1).map((category) => (
+              {categories.slice(0, 1).map((category: string) => (
                 <Link key={category} href={`/shop/${category.toLowerCase()}`}>
                   <span className="cosmic-hover-text cursor-pointer">{category}</span>
                 </Link>

@@ -348,11 +348,11 @@ const ShopPage: React.FC = () => {
             setSearchQuery={setSearchQuery} 
             allCategories={allCategories} 
             categoryFilter={filters.category} 
-            setCategoryFilter={cat => handleFilterChange({ category: cat })}
+            setCategoryFilter={(cat: string[]) => handleFilterChange({ category: cat })}
             priceRange={filters.priceRange}
-            setPriceRange={range => handleFilterChange({ priceRange: range })}
+            setPriceRange={(range: [number, number]) => handleFilterChange({ priceRange: range })}
             sortOrder={filters.sortBy}
-            setSortOrder={sort => handleFilterChange({ sortBy: sort })}
+            setSortOrder={(sort: string) => handleFilterChange({ sortBy: sort })}
             viewType={viewType}
             setViewType={setViewType}
           />

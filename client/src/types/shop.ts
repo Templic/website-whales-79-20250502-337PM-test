@@ -48,9 +48,23 @@ export interface ShoppingCartProps {
  * Props for the ShopHeader component
  */
 export interface ShopHeaderProps {
+  // Original props
   onSearch: (query: string) => void;
   onVoiceSearch?: (transcript: string) => void;
   cartItemCount?: number;
+  
+  // Additional props used in ShopPage
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  allCategories: string[];
+  categoryFilter: string[];
+  setCategoryFilter: (categories: string[]) => void;
+  priceRange: [number, number];
+  setPriceRange: (range: [number, number]) => void;
+  sortOrder: string;
+  setSortOrder: (sort: string) => void;
+  viewType: "grid" | "list";
+  setViewType: React.Dispatch<React.SetStateAction<"grid" | "list">>;
 }
 
 /**
