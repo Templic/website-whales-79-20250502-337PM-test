@@ -6,6 +6,9 @@
  */
 
 import React, { useState } from 'react';
+
+// Add named export for backward compatibility
+export { default as UserManagement } from './UserManagement';
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { useQuery } from '@tanstack/react-query';

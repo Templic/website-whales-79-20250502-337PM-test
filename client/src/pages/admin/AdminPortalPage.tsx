@@ -38,9 +38,13 @@ interface AdminStats {
   };
 }
 
-const UserManagementComponent = lazy(() => import('@/components/admin/UserManagement'));
-const ContentReviewComponent = lazy(() => import('@/components/admin/ContentReview'));
-const DatabaseMonitorComponent = lazy(() => import('@/components/admin/DatabaseMonitor'));
+const UserManagementComponent = lazy(() => import('@/components/features/admin/UserManagement'));
+const ContentReviewComponent = lazy(() => import('@/components/features/admin/ContentReview'));
+const DatabaseMonitorComponent = lazy(() => import('@/components/features/admin/DatabaseMonitor'));
+const BlogPostManagementComponent = lazy(() => import('@/components/features/admin/BlogPostManagement'));
+const CommentManagementComponent = lazy(() => import('@/components/features/admin/CommentManagement'));
+const ShopManagementComponent = lazy(() => import('@/components/features/admin/ShopManagement'));
+const NewsletterManagementComponent = lazy(() => import('@/components/features/admin/NewsletterManagement'));
 
 export default function AdminPortalPage() {
   const { user, logoutMutation } = useAuth();
@@ -350,9 +354,38 @@ export default function AdminPortalPage() {
         </TabsContent>
 
         <TabsContent value="content">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <ContentReviewComponent />
-          </Suspense>
+          <Tabs defaultValue="posts" className="mb-6">
+            <TabsList>
+              <TabsTrigger value="posts">Blog Posts</TabsTrigger>
+              <TabsTrigger value="comments">Comments</TabsTrigger>
+              <TabsTrigger value="review">Content Review</TabsTrigger>
+              <TabsTrigger value="shop">Shop</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="posts" className="mt-4">
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <BlogPostManagementComponent />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="comments" className="mt-4">
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <CommentManagementComponent />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="review" className="mt-4">
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <ContentReviewComponent />
+              </Suspense>
+            </TabsContent>
+            
+            <TabsContent value="shop" className="mt-4">
+              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+                <ShopManagementComponent />
+              </Suspense>
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="database">
@@ -362,34 +395,9 @@ export default function AdminPortalPage() {
         </TabsContent>
 
         <TabsContent value="subscribers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Newsletter Subscribers</CardTitle>
-              <CardDescription>Manage your newsletter subscribers</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <div className="space-y-2">
-                  {Array(5).fill(0).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 font-bold pb-2 border-b">
-                    <div>Name</div>
-                    <div>Email</div>
-                  </div>
-                  {subscribers?.map((subscriber: { id: string | number, name: string, email: string }) => (
-                    <div key={subscriber.id} className="grid grid-cols-2">
-                      <div>{subscriber.name}</div>
-                      <div>{subscriber.email}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
+            <NewsletterManagementComponent />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="security">

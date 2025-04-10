@@ -5,6 +5,9 @@
  * Migrated as part of the repository reorganization.
  */
 import React, { useState } from 'react';
+
+// Add named export for backward compatibility
+export { default as ContentReview } from './ContentReview';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

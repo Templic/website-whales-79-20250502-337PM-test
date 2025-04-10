@@ -79,8 +79,8 @@ export interface IStorage {
 
   // Advanced admin methods
   updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User>;
-  banUser(userId: number): Promise<void>;
-  unbanUser(userId: number): Promise<void>;
+  banUser(userId: number): Promise<User>;
+  unbanUser(userId: number): Promise<User>;
   getSystemSettings(): Promise<any>;
   updateSystemSettings(settings: any): Promise<void>;
   getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
@@ -883,7 +883,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async banUser(userId: number): Promise<void> {
+  async banUser(userId: number): Promise<User> {
     try {
       await db.update(users)
         .set({ 
@@ -891,13 +891,20 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .where(eq(users.id, userId));
+      
+      // Return the updated user
+      const updatedUser = await this.getUser(userId);
+      if (!updatedUser) {
+        throw new Error(`User with ID ${userId} not found after banning`);
+      }
+      return updatedUser;
     } catch (error) {
       console.error("Error banning user:", error);
       throw error;
     }
   }
 
-  async unbanUser(userId: number): Promise<void> {
+  async unbanUser(userId: number): Promise<User> {
     try {
       await db.update(users)
         .set({ 
@@ -905,6 +912,13 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .where(eq(users.id, userId));
+      
+      // Return the updated user
+      const updatedUser = await this.getUser(userId);
+      if (!updatedUser) {
+        throw new Error(`User with ID ${userId} not found after unbanning`);
+      }
+      return updatedUser;
     } catch (error) {
       console.error("Error unbanning user:", error);
       throw error;

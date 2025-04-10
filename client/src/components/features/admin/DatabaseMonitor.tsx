@@ -5,6 +5,9 @@
  * Migrated as part of the repository reorganization.
  */
 import { useState, useEffect } from 'react';
+
+// Add named export for backward compatibility
+export { default as DatabaseMonitor } from './DatabaseMonitor';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';

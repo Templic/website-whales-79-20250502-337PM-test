@@ -18,6 +18,7 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import csurf from "csurf";
 import authRoutes from './routes/authRoutes'; // Added import for auth routes
+import { safeUserMiddleware } from './middleware/safeUserMiddleware'; // Added import for safe user middleware
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -183,6 +184,9 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Add safe user middleware to protect from exposing sensitive data
+app.use(safeUserMiddleware);
 
 // Import global error handling middleware
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';

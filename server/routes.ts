@@ -111,39 +111,68 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     
-    // For debugging: Directly query the database
-    const userRows = await db.select().from(users).where(eq(users.username, username));
-    console.log(`Direct DB query for ${username} found ${userRows.length} rows`);
-    
     try {
       console.log("Attempting login for user:", username);
-      // Try to get the user from the database
-      const user = await storage.getUserByUsername(username);
       
-      console.log("User lookup result:", user ? "User found" : "User not found");
+      // First, try to use a direct database query to get full user information
+      // This bypasses any caching or middleware that might interfere
+      let fullUserRecord = null;
       
-      if (user) {
-        console.log("User found in database:", user.username);
-        // For test users, check the hardcoded passwords - in a real app, we'd validate against the hashed password
+      try {
+        // Direct database query to get user
+        const userRows = await db.select().from(users).where(eq(users.username, username));
+        console.log(`Direct DB query for ${username} found ${userRows.length} rows`);
+        
+        if (userRows.length > 0) {
+          fullUserRecord = userRows[0];
+        }
+      } catch (dbError) {
+        console.error("Database query error:", dbError);
+      }
+      
+      // If we didn't find the user with direct query, try the storage method
+      if (!fullUserRecord) {
+        fullUserRecord = await storage.getUserByUsername(username);
+      }
+      
+      // User exists in database
+      if (fullUserRecord) {
+        console.log("User found in database:", fullUserRecord.username);
+        
+        // For demo purposes, using hardcoded password verification
+        // In a real app, we'd use bcrypt to compare against stored hash
         if ((username === 'admin' && password === 'admin123') || 
             (username === 'superadmin' && password === 'superadmin123') || 
             (username === 'user' && password === 'user123')) {
           
-          // Create a safe user object without sensitive fields
-          const safeUser = createSafeUser(user);
+          // IMPORTANT: Create a sanitized user object without sensitive fields
+          const sanitizedUser = {
+            id: fullUserRecord.id,
+            username: fullUserRecord.username,
+            email: fullUserRecord.email,
+            role: fullUserRecord.role,
+            isBanned: fullUserRecord.isBanned,
+            twoFactorEnabled: fullUserRecord.twoFactorEnabled,
+            lastLogin: fullUserRecord.lastLogin,
+            createdAt: fullUserRecord.createdAt,
+            updatedAt: fullUserRecord.updatedAt
+          };
+          
+          console.log("Sanitized login response for:", sanitizedUser.username);
           
           // Set user in session if authentication is successful
           if (req.session) {
-            console.log("Setting safe user in session");
-            req.session.user = safeUser;
+            console.log("Setting user in session");
+            req.session.user = sanitizedUser;
           }
           
-          console.log("Returning safe user response");
-          return res.json(safeUser);
+          // Return sanitized user data
+          return res.json(sanitizedUser);
         }
       } else {
-        console.log("User not found in database, using mock users");
-        // If user not in database, check our hardcoded test users
+        console.log("User not found in database, checking mock users");
+        
+        // For demo only - hardcoded users
         const mockUsers = {
           'admin': {
             id: 1,
@@ -174,31 +203,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         };
         
-        // Simple test account validation (for demo purposes)
-        // Now using the mock users with standardized fields (no password included)
+        // Simple test account validation
         if (username === 'admin' && password === 'admin123') {
-          // Set user in session if authentication is successful
           if (req.session) {
             req.session.user = mockUsers.admin;
           }
-          
-          // Return the safe mock user
           return res.json(mockUsers.admin);
         } else if (username === 'superadmin' && password === 'superadmin123') {
-          // Set user in session if authentication is successful
           if (req.session) {
             req.session.user = mockUsers.superadmin;
           }
-          
-          // Return the safe mock user
           return res.json(mockUsers.superadmin);
         } else if (username === 'user' && password === 'user123') {
-          // Set user in session if authentication is successful
           if (req.session) {
             req.session.user = mockUsers.user;
           }
-          
-          // Return the safe mock user
           return res.json(mockUsers.user);
         }
       }
@@ -359,6 +378,46 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
           await storage.deleteUser(userId);
           return res.json({ success: true, message: "User deleted successfully" });
+          
+        case 'ban':
+          // Check if user is trying to ban themselves
+          if (userId === req.user.id) {
+            return res.status(400).json({ message: "You cannot ban your own account" });
+          }
+
+          // Get user to ban and perform role checks
+          const userToBan = await storage.getUser(userId);
+          if (!userToBan) {
+            return res.status(404).json({ message: "User not found" });
+          }
+
+          // Prevent banning of super_admin
+          if (userToBan.role === 'super_admin') {
+            return res.status(403).json({ message: "Super admin accounts cannot be banned" });
+          }
+
+          // Prevent admin from banning other admins
+          if (userToBan.role === 'admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can ban admin accounts" });
+          }
+
+          const bannedUser = await storage.banUser(userId);
+          return res.json(createSafeUser(bannedUser));
+          
+        case 'unban':
+          // Get user to unban and perform role checks
+          const userToUnban = await storage.getUser(userId);
+          if (!userToUnban) {
+            return res.status(404).json({ message: "User not found" });
+          }
+
+          // Prevent admin from unbanning other admins
+          if (userToUnban.role === 'admin' && req.user.role !== 'super_admin') {
+            return res.status(403).json({ message: "Only super admins can unban admin accounts" });
+          }
+
+          const unbannedUser = await storage.unbanUser(userId);
+          return res.json(createSafeUser(unbannedUser));
 
         default:
           return res.status(400).json({ message: "Invalid action" });
