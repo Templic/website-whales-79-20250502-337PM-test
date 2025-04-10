@@ -2,6 +2,7 @@
  * ArchivedMusic.tsx
  * 
  * Migrated as part of the repository reorganization.
+ * Updated to include New Music content (merged from MusicReleasePage).
  */
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -30,6 +31,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
   const { toast } = useToast();
 
   useEffect(() => {
+    document.title = "Music Collection - Dale Loves Whales";
     fetchMusic();
     
     // Notify user about work in progress features
@@ -95,12 +97,57 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
-            Archived Music
+            Music Collection
           </h1>
           <p className="text-gray-300 max-w-2xl mx-auto">
             Explore our collection of consciousness-transforming music, healing frequencies, and 
             guided meditations designed to elevate your vibration.
           </p>
+        </div>
+
+        {/* New Music Feature - From MusicReleasePage */}
+        <div className="mb-12 bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6">
+          <h2 className="text-3xl font-bold text-[#00ebd6] mb-6">New Release: FEELS SO GOOD</h2>
+          <section className="flex flex-col md:flex-row gap-8 items-start relative">
+            <div className="w-full md:w-1/2 bg-gray-900 rounded-lg shadow-xl relative overflow-hidden">
+              <div className="pt-[56.25%] relative">
+                <iframe
+                  src="https://www.youtube.com/embed/jzpvkq3Krjg?rel=0&showinfo=0&controls=1"
+                  title="Feels So Good - Music Video"
+                  className="absolute inset-0 w-full h-full rounded-lg"
+                  frameBorder="0"
+                  loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+              {/* Fallback message in case the iframe doesn't load */}
+              <div className="hidden youtube-fallback absolute inset-0 flex items-center justify-center bg-gray-900 text-white p-4 text-center">
+                <div>
+                  <p className="text-lg font-medium mb-2">Video not available</p>
+                  <a 
+                    href="https://www.youtube.com/watch?v=jzpvkq3Krjg" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-[#00ebd6] hover:underline"
+                  >
+                    Watch "Feels So Good" on YouTube
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div className="w-full md:w-1/2 space-y-6">
+              <h3 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h3>
+              <div className="space-y-4">
+                <p className="text-xl">Release Date: March 14, 2025</p>
+                <p className="text-xl">Genre: R&B, Soulful, Cosmic, Conscious</p>
+                <p className="text-xl">
+                  Artist: Dale The Whale<br />
+                  Featuring: AC3-2085
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
         
         {/* Hero Image with Sacred Geometry */}

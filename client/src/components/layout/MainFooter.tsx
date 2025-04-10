@@ -81,8 +81,7 @@ export function MainFooter() {
   ];
 
   const musicLinks: FooterLink[] = [
-    { name: "New Music", path: "/music-release", icon: <Music className="h-4 w-4 mr-2" /> },
-    { name: "Archived Music", path: "/archived-music", icon: <Music className="h-4 w-4 mr-2" /> },
+    { name: "Music Collection", path: "/archived-music", icon: <Music className="h-4 w-4 mr-2" /> },
     { name: "Cosmic Connectivity", path: "/cosmic-connectivity", icon: <MoonStar className="h-4 w-4 mr-2" /> }
   ];
 

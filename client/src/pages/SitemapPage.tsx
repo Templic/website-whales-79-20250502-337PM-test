@@ -30,14 +30,14 @@ export default function SitemapPage() {
         <section>
           <h2 className="text-2xl font-semibold mb-4">Music Experience</h2>
           <ul className="space-y-2">
-            <li><Link href="/music-release">New Music</Link></li>
-            <li><Link href="/archived-music">Archived Music</Link></li>
+            <li><Link href="/archived-music">Music Collection</Link></li>
             <li><Link href="/cosmic-connectivity">Cosmic Connectivity</Link></li>
             <li><Link href="/cosmic-experience-immersive">Cosmic Experience & Immersive (Legacy)</Link></li>
           </ul>
 
           <h3 className="text-xl font-semibold mt-6 mb-2 text-gray-400">Archive Legacy Pages</h3>
           <ul className="space-y-2 text-gray-400">
+            <li><Link href="/music-release">New Music (Legacy)</Link></li>
             <li><Link href="/legacy/archived-music">Archived Music (Legacy)</Link></li>
             <li><Link href="/legacy/cosmic-experience">Cosmic Experience (Legacy)</Link></li>
             <li><Link href="/legacy/immersive">Immersive Experience (Legacy)</Link></li>

@@ -18,7 +18,6 @@ import CookieConsent from "@/components/common/CookieConsent";
 // Pages
 import HomePage from "@/pages/HomePage";
 import AboutPage from "@/pages/AboutPage";
-import NewMusicPage from "@/pages/music/MusicReleasePage";
 import ArchivedMusicPage from "@/pages/music/ArchivedMusic";
 import TourPage from "@/pages/TourPage";
 import EngagePage from "@/pages/EngagePage";
@@ -79,7 +78,9 @@ import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
-import EditButtonPage from '@/pages/admin/EditButtonPage';
+// Convert FC component to match ProtectedRoute's expected type
+import EditButtonPageFC from '@/pages/admin/EditButtonPage';
+const EditButtonPage = () => <EditButtonPageFC />;
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -108,7 +109,7 @@ function AppRouter() {
           <Route path="/enhanced-community" component={EnhancedCommunityPage} />
 
           {/* Music & Experience */}
-          <Route path="/music-release" component={NewMusicPage} />
+          <Route path="/music-release" component={ArchivedMusicPage} />
           <Route path="/archived-music" component={ArchivedMusicPage} />
           <Route path="/music-archive" component={ArchivedMusicPage} />
           {/* Experience Routes */}
