@@ -8,16 +8,27 @@ import { EditButton } from './EditButton';
 import EditButtonDemo from './EditButtonDemo';
 import AdminEditor from './AdminEditor';
 import AdminEditorDemo from './AdminEditorDemo';
-import EditMenu, { FormatAction } from './EditMenu';
+import NewEditMenu from './NewEditMenu';
 import EditMenuDemo from './EditMenuDemo';
+// Define the types directly here instead of importing
+export interface FormatAction {
+  type: string;
+  value?: string | boolean | number;
+}
+
+export interface EditorSaveData {
+  text?: string;
+  html?: string;
+  imageUrl?: string;
+  imageFile?: File;
+  meta?: Record<string, any>;
+}
 
 export {
   EditButton,
   EditButtonDemo,
   AdminEditor,
   AdminEditorDemo,
-  EditMenu,
-  EditMenuDemo,
-  // Types
-  FormatAction
+  NewEditMenu as EditMenu,
+  EditMenuDemo
 };

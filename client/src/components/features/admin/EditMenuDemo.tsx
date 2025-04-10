@@ -7,7 +7,11 @@
 
 import React, { useState, useRef } from "react";
 import { EditButton } from "./EditButton";
-import { FormatAction } from "./EditMenu";
+// Define FormatAction directly in this component to avoid import issues
+interface FormatAction {
+  type: string;
+  value?: string | boolean | number;
+}
 import { 
   Card, 
   CardContent, 

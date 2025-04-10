@@ -1,5 +1,5 @@
 /**
- * EditMenu.tsx
+ * SimpleEditMenu.tsx
  * 
  * Component Type: feature/admin
  * A floating menu for text formatting that appears near the EditButton.
@@ -17,7 +17,6 @@ import {
   List, 
   ListOrdered, 
   Heading1, 
-  Heading2, 
   Link, 
   Type, 
   Palette, 
@@ -35,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import "./admin.css";
+
 // Define FormatAction directly in this component to avoid import issues
 interface FormatAction {
   type: string;
@@ -52,7 +52,7 @@ interface EditMenuProps {
 /**
  * EditMenu component
  */
-const EditMenu: React.FC<EditMenuProps> = ({
+const SimpleEditMenu: React.FC<EditMenuProps> = ({
   contentId,
   position = "top",
   isOpen,
@@ -378,4 +378,4 @@ const EditMenu: React.FC<EditMenuProps> = ({
   );
 };
 
-export default EditMenu;
+export default SimpleEditMenu;

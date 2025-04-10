@@ -2,255 +2,253 @@
  * AdminEditorDemo.tsx
  * 
  * Component Type: feature/admin
- * A demonstration component to showcase the AdminEditor functionality.
+ * A demo component to showcase the AdminEditor functionality.
  */
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import AdminEditor from "./AdminEditor";
-import { updateContent } from "@/lib/content-editor";
+
+// Define EditorSaveData directly in this component to avoid import issues
+interface EditorSaveData {
+  text?: string;
+  html?: string;
+  imageUrl?: string;
+  imageFile?: File;
+  meta?: Record<string, any>;
+}
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EditButton } from "./EditButton";
+import { useAuth } from "@/hooks/use-auth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { 
+  Image, 
+  FileText, 
+  RotateCcw, 
+  Settings
+} from "lucide-react";
+
+const placeholderText = `# Cosmic Consciousness
+
+Welcome to the world of cosmic consciousness, where the boundaries of perception expand beyond the ordinary.
+
+## Key Features
+
+- Deep connection to universal energy
+- Enhanced awareness of cosmic patterns
+- Integration of mind, body, and spirit
+
+> "The cosmos is within us. We are made of star-stuff." - Carl Sagan
+
+Learn more about [cosmic consciousness](https://example.com/cosmic).
+`;
+
+const placeholderImage = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGNvc21pY3xlbnwwfHwwfHx8MA%3D%3D";
 
 const AdminEditorDemo: React.FC = () => {
-  const [activeEditor, setActiveEditor] = useState<string | null>(null);
-  const [demoTextContent, setDemoTextContent] = useState<string>(
-    "This is demo text content that can be edited. Click the edit button to make changes."
-  );
-  const [demoImageSrc, setDemoImageSrc] = useState<string>(
-    "https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=500&auto=format&fit=crop&q=60"
-  );
-  const [combinedText, setCombinedText] = useState<string>(
-    "This is a combined text and image editor demo. You can edit both text and image."
-  );
-  const [combinedImage, setCombinedImage] = useState<string>(
-    "https://images.unsplash.com/photo-1551244072-5d12893278ab?w=500&auto=format&fit=crop&q=60"
-  );
-  
   const { toast } = useToast();
+  const { user, setRole } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editorType, setEditorType] = useState("text-only");
+  const [savedContent, setSavedContent] = useState<EditorSaveData>({
+    text: placeholderText,
+    html: `<h1>Cosmic Consciousness</h1>
+<p>Welcome to the world of cosmic consciousness, where the boundaries of perception expand beyond the ordinary.</p>
+<h2>Key Features</h2>
+<ul>
+  <li>Deep connection to universal energy</li>
+  <li>Enhanced awareness of cosmic patterns</li>
+  <li>Integration of mind, body, and spirit</li>
+</ul>
+<blockquote>
+  <p>"The cosmos is within us. We are made of star-stuff." - Carl Sagan</p>
+</blockquote>
+<p>Learn more about <a href="https://example.com/cosmic">cosmic consciousness</a>.</p>`,
+    imageUrl: editorType === "image-only" || editorType === "full" ? placeholderImage : "",
+  });
   
-  const handleSaveContent = async (data: {
-    contentId: string | number;
-    text?: string;
-    image?: File;
-    imageUrl?: string;
-  }) => {
-    try {
-      // Simulate API call
-      // In a real application, this would call the updateContent function
-      console.log("Saving content:", data);
-      
-      // In demo mode, we'll bypass the actual API call and update the state directly
-      if (data.contentId === "demo-text") {
-        if (data.text) {
-          setDemoTextContent(data.text);
-        }
-      } else if (data.contentId === "demo-image") {
-        if (data.imageUrl) {
-          setDemoImageSrc(data.imageUrl);
-        }
-      } else if (data.contentId === "demo-combined") {
-        if (data.text) {
-          setCombinedText(data.text);
-        }
-        if (data.imageUrl) {
-          setCombinedImage(data.imageUrl);
-        }
-      }
-      
-      // Close the editor
-      setActiveEditor(null);
-      
-      // Show success toast
-      toast({
-        title: "Content updated",
-        description: "Demo content has been updated successfully",
-        variant: "default",
-      });
-      
-      return true;
-    } catch (error) {
-      console.error("Error saving content:", error);
-      
-      // Show error toast
-      toast({
-        title: "Error",
-        description: "Failed to update content",
-        variant: "destructive",
-      });
-      
-      return false;
-    }
+  // Change user role for testing
+  const handleRoleChange = (role: string) => {
+    setRole(role as "user" | "admin" | "super_admin");
+    
+    toast({
+      title: "Role changed",
+      description: `User role changed to ${role}`,
+      variant: "default",
+    });
   };
   
-  // Function to handle edit button clicks
-  const handleEdit = (contentId: string | number) => {
-    setActiveEditor(contentId.toString());
+  // Handle save
+  const handleSave = async (contentId: string | number, data: EditorSaveData) => {
+    // Simulate saving to server with a delay
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        setSavedContent(data);
+        setIsEditing(false);
+        resolve();
+      }, 1000);
+    });
   };
   
-  // Function to close the editor
-  const handleCloseEditor = () => {
-    setActiveEditor(null);
+  // Reset to defaults
+  const handleReset = () => {
+    setSavedContent({
+      text: placeholderText,
+      html: `<h1>Cosmic Consciousness</h1>
+<p>Welcome to the world of cosmic consciousness, where the boundaries of perception expand beyond the ordinary.</p>
+<h2>Key Features</h2>
+<ul>
+  <li>Deep connection to universal energy</li>
+  <li>Enhanced awareness of cosmic patterns</li>
+  <li>Integration of mind, body, and spirit</li>
+</ul>
+<blockquote>
+  <p>"The cosmos is within us. We are made of star-stuff." - Carl Sagan</p>
+</blockquote>
+<p>Learn more about <a href="https://example.com/cosmic">cosmic consciousness</a>.</p>`,
+      imageUrl: editorType === "image-only" || editorType === "full" ? placeholderImage : "",
+    });
+    
+    toast({
+      title: "Content reset",
+      description: "The content has been reset to default values.",
+      variant: "default",
+    });
   };
   
   return (
     <div className="space-y-8">
-      <Tabs defaultValue="text">
-        <TabsList>
-          <TabsTrigger value="text">Text Editor</TabsTrigger>
-          <TabsTrigger value="image">Image Editor</TabsTrigger>
-          <TabsTrigger value="combined">Combined Editor</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="text" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Text Content Editor</span>
-                <EditButton
-                  contentId="demo-text"
-                  onEdit={handleEdit}
-                  text="Edit Text"
-                  iconOnly={false}
-                  variant="default"
-                />
-              </CardTitle>
-              <CardDescription>
-                This demonstrates editing text content only
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="min-h-[100px] p-4 border rounded-md bg-[#0a0a0a]">
-              <p className="whitespace-pre-wrap">{demoTextContent}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="image" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Image Content Editor</span>
-                <EditButton
-                  contentId="demo-image"
-                  onEdit={handleEdit}
-                  text="Edit Image"
-                  iconOnly={false}
-                  variant="default"
-                />
-              </CardTitle>
-              <CardDescription>
-                This demonstrates editing image content only
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="edit-button-container">
-                <div className="edit-button-absolute edit-button-top-right">
-                  <EditButton
-                    contentId="demo-image-positioned"
-                    onEdit={() => handleEdit("demo-image")}
-                    variant="cosmic"
-                  />
-                </div>
-                <div className="relative rounded-md overflow-hidden h-[300px] w-full">
-                  <img
-                    src={demoImageSrc}
-                    alt="Demo"
-                    className="object-cover w-full h-full"
-                  />
+      <Card>
+        <CardHeader>
+          <CardTitle>Admin Editor Demo</CardTitle>
+          <CardDescription>
+            Comprehensive content editor for administrators
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6 space-y-4">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">Editor Configuration</h3>
+                <Select 
+                  value={editorType} 
+                  onValueChange={setEditorType}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select editor type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="text-only">Text Only</SelectItem>
+                    <SelectItem value="image-only">Image Only</SelectItem>
+                    <SelectItem value="full">Text & Image</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">User Role (for testing)</h3>
+                <Select 
+                  value={user?.role || "user"} 
+                  onValueChange={handleRoleChange}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          
+          {!isEditing ? (
+            <div className="border rounded-lg p-6 space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Content Preview</h3>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleReset}
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="combined" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <span>Combined Text & Image Editor</span>
-                <EditButton
-                  contentId="demo-combined"
-                  onEdit={handleEdit}
-                  text="Edit Content"
-                  iconOnly={false}
-                  variant="default"
-                />
-              </CardTitle>
-              <CardDescription>
-                This demonstrates editing both text and image content
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="edit-button-container">
-                  <div className="edit-button-absolute edit-button-top-right edit-button-hover-reveal">
-                    <EditButton
-                      contentId="demo-combined-positioned"
-                      onEdit={() => handleEdit("demo-combined")}
-                      variant="cosmic"
-                    />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span>Text Content</span>
                   </div>
-                  <div className="relative rounded-md overflow-hidden h-[250px] w-full">
-                    <img
-                      src={combinedImage}
-                      alt="Demo Combined"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
+                  <div 
+                    className="border rounded-md p-4 prose dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: savedContent.html || "" }}
+                  />
                 </div>
-                <div className="min-h-[100px] p-4 border rounded-md bg-[#0a0a0a]">
-                  <div className="edit-button-row">
-                    <p className="whitespace-pre-wrap">{combinedText}</p>
-                    <div className="edit-button-inline ml-2">
-                      <EditButton
-                        contentId="demo-combined-inline"
-                        onEdit={() => handleEdit("demo-combined")}
-                        size="sm"
-                      />
+                
+                {(editorType === "image-only" || editorType === "full") && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <Image className="h-4 w-4" />
+                      <span>Image Content</span>
+                    </div>
+                    <div className="border rounded-md p-4 flex items-center justify-center min-h-[200px]">
+                      {savedContent.imageUrl ? (
+                        <img 
+                          src={savedContent.imageUrl} 
+                          alt="Content" 
+                          className="max-h-[200px] object-contain rounded-md"
+                        />
+                      ) : (
+                        <p className="text-muted-foreground">No image available</p>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Text Editor Modal */}
-      {activeEditor === "demo-text" && (
-        <AdminEditor
-          contentId="demo-text"
-          contentType="text"
-          initialText={demoTextContent}
-          onClose={handleCloseEditor}
-          onSave={handleSaveContent}
-        />
-      )}
-      
-      {/* Image Editor Modal */}
-      {activeEditor === "demo-image" && (
-        <AdminEditor
-          contentId="demo-image"
-          contentType="image"
-          initialImageSrc={demoImageSrc}
-          onClose={handleCloseEditor}
-          onSave={handleSaveContent}
-        />
-      )}
-      
-      {/* Combined Editor Modal */}
-      {activeEditor === "demo-combined" && (
-        <AdminEditor
-          contentId="demo-combined"
-          contentType="both"
-          initialText={combinedText}
-          initialImageSrc={combinedImage}
-          onClose={handleCloseEditor}
-          onSave={handleSaveContent}
-        />
-      )}
+            </div>
+          ) : (
+            <AdminEditor
+              contentId="demo-content-1"
+              initialContent={savedContent.text || ""}
+              initialImage={savedContent.imageUrl || ""}
+              onSave={handleSave}
+              onCancel={() => setIsEditing(false)}
+              allowImages={editorType === "image-only" || editorType === "full"}
+              allowFormatting={editorType === "text-only" || editorType === "full"}
+              title="Edit Demo Content"
+              description="Make changes to the demo content below and save to see the result."
+            />
+          )}
+        </CardContent>
+        <CardFooter className="text-sm text-muted-foreground border-t p-4">
+          <p>
+            The AdminEditor component provides a comprehensive editing experience with support for 
+            both text content and images. It includes features like preview mode, image upload, and validation.
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 };

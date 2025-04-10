@@ -10,7 +10,12 @@ import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, PenTool } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import EditMenu, { FormatAction } from "./EditMenu";
+import EditMenu from "./NewEditMenu";
+// Define FormatAction directly in this component to avoid import issues
+interface FormatAction {
+  type: string;
+  value?: string | boolean | number;
+}
 import "./admin.css";
 
 interface EditButtonProps {
