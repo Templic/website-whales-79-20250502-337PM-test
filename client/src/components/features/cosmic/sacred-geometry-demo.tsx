@@ -22,82 +22,19 @@ import { Button } from "@/components/ui/button"
 "use client"
 
 import { useState } from "react"
-// Placeholder components for the demo
-// These will be replaced with actual components when the import issues are resolved
-
-// Placeholder container components
-const HexagonContainer = ({ children, className }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const OctagonContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-blue-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const PentagonContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-pink-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const TriangleInterlockContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-teal-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const AdaptiveTextContainer = ({ children, className, clipPath, glowColor, maxLines }: { 
-  children: React.ReactNode, 
-  className?: string, 
-  clipPath?: string, 
-  glowColor?: string,
-  maxLines?: number 
-}) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-// Other shapes used in the second demo
-const TriangleContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-cyan-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const InvertedTriangleContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-blue-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-const CircleContainer = ({ children, className, glowColor, rotateSpeed }: { 
-  children: React.ReactNode, 
-  className?: string, 
-  glowColor?: string,
-  rotateSpeed?: number
-}) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-teal-500/30 rounded-full p-4", className)}>
-    {children}
-  </div>
-)
-
-const StarburstContainer = ({ children, className, glowColor }: { children: React.ReactNode, className?: string, glowColor?: string }) => (
-  <div className={cn("bg-black/30 backdrop-blur-md border border-purple-500/30 rounded-xl p-4", className)}>
-    {children}
-  </div>
-)
-
-// CSS Component
-const SacredGeometryCss = () => <style>{`
-  .sacred-geometry-glow {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
-  }
-`}</style>
+// Import the sacred geometry components
+import {
+  HexagonContainer,
+  OctagonContainer,
+  PentagonContainer,
+  TriangleInterlockContainer,
+  TriangleContainer,
+  InvertedTriangleContainer,
+  CircleContainer,
+  StarburstContainer,
+  AdaptiveTextContainer,
+  SacredGeometryCss
+} from "@/components/ui/cosmic/sacred-geometry"
 
 export function SacredGeometryDemo() {
   const [textContent, setTextContent] = useState({
@@ -111,51 +48,54 @@ export function SacredGeometryDemo() {
 
   return (
     <div className="space-y-8 py-8">
-      <div className="flex justify-center space-x-4 mb-8">
+      {/* Add the global CSS for sacred geometry components */}
+      <SacredGeometryCss />
+      
+      <div className="flex flex-wrap justify-center gap-2 mb-8">
         <button
           onClick={() => setCurrentText("short")}
-          className={`px-4 py-2 rounded-md ${currentText === "short" ? "bg-purple-600" : "bg-purple-900"}`}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base ${currentText === "short" ? "bg-purple-600" : "bg-purple-900"}`}
         >
           Short Text
         </button>
         <button
           onClick={() => setCurrentText("medium")}
-          className={`px-4 py-2 rounded-md ${currentText === "medium" ? "bg-purple-600" : "bg-purple-900"}`}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base ${currentText === "medium" ? "bg-purple-600" : "bg-purple-900"}`}
         >
           Medium Text
         </button>
         <button
           onClick={() => setCurrentText("long")}
-          className={`px-4 py-2 rounded-md ${currentText === "long" ? "bg-purple-600" : "bg-purple-900"}`}
+          className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md text-sm sm:text-base ${currentText === "long" ? "bg-purple-600" : "bg-purple-900"}`}
         >
           Long Text
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
         <div className="h-64">
-          <HexagonContainer className="w-full h-full">
+          <HexagonContainer className="w-full h-full" maxLines={4}>
             <h3 className="text-xl font-bold mb-2">Hexagon Container</h3>
             <p>{textContent[currentText]}</p>
           </HexagonContainer>
         </div>
 
         <div className="h-64">
-          <OctagonContainer className="w-full h-full" glowColor="rgba(14, 165, 233, 0.5)">
+          <OctagonContainer className="w-full h-full" glowColor="rgba(14, 165, 233, 0.5)" maxLines={4}>
             <h3 className="text-xl font-bold mb-2">Octagon Container</h3>
             <p>{textContent[currentText]}</p>
           </OctagonContainer>
         </div>
 
         <div className="h-64">
-          <PentagonContainer className="w-full h-full" glowColor="rgba(217, 70, 239, 0.5)">
+          <PentagonContainer className="w-full h-full" glowColor="rgba(217, 70, 239, 0.5)" maxLines={4}>
             <h3 className="text-xl font-bold mb-2">Pentagon Container</h3>
             <p>{textContent[currentText]}</p>
           </PentagonContainer>
         </div>
 
         <div className="h-64">
-          <TriangleInterlockContainer className="w-full h-full" glowColor="rgba(20, 184, 166, 0.5)">
+          <TriangleInterlockContainer className="w-full h-full" glowColor="rgba(20, 184, 166, 0.5)" maxLines={4}>
             <h3 className="text-xl font-bold mb-2">Triangle Interlock</h3>
             <p>{textContent[currentText]}</p>
           </TriangleInterlockContainer>
@@ -166,7 +106,7 @@ export function SacredGeometryDemo() {
             className="w-full h-full"
             clipPath="polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
             glowColor="rgba(139, 92, 246, 0.5)"
-            maxLines={8}
+            maxLines={6}
           >
             <h3 className="text-xl font-bold mb-2">Advanced Adaptive Container</h3>
             <p>{textContent[currentText]}</p>
@@ -281,44 +221,47 @@ function SacredGeometryDemoSecondOriginal() {
     <div className="space-y-8 py-8">
       <SacredGeometryCss />
 
-      <div className="flex justify-center space-x-4 mb-8">
+      <div className="flex flex-wrap justify-center gap-2 mb-8">
         <Button
           onClick={() => setCurrentText("short")}
+          size="sm"
           className={`${currentText === "short" ? "bg-cyan-600" : "bg-cyan-900"}`}
         >
           Short Text
         </Button>
         <Button
           onClick={() => setCurrentText("medium")}
+          size="sm"
           className={`${currentText === "medium" ? "bg-cyan-600" : "bg-cyan-900"}`}
         >
           Medium Text
         </Button>
         <Button
           onClick={() => setCurrentText("long")}
+          size="sm"
           className={`${currentText === "long" ? "bg-cyan-600" : "bg-cyan-900"}`}
         >
           Long Text
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <div className="h-64">
-          <HexagonContainer className="w-full h-full">
+          <HexagonContainer className="w-full h-full" maxLines={3}>
             <h3 className="text-lg font-bold mb-2">Hexagon</h3>
             <p className="text-sm">{textContent[currentText]}</p>
           </HexagonContainer>
         </div>
 
         <div className="h-64">
-          <TriangleContainer className="w-full h-full" glowColor="rgba(6, 182, 212, 0.5)">
+          <TriangleContainer className="w-full h-full" glowColor="rgba(6, 182, 212, 0.5)" maxLines={3}>
             <h3 className="text-lg font-bold mb-2">Triangle</h3>
             <p className="text-sm">{textContent[currentText]}</p>
           </TriangleContainer>
         </div>
 
         <div className="h-64">
-          <InvertedTriangleContainer className="w-full h-full" glowColor="rgba(14, 165, 233, 0.5)">
+          <InvertedTriangleContainer className="w-full h-full" glowColor="rgba(14, 165, 233, 0.5)" maxLines={3}>
             <h3 className="text-lg font-bold mb-2">Inverted Triangle</h3>
             <p className="text-sm">{textContent[currentText]}</p>
           </InvertedTriangleContainer>
@@ -329,6 +272,7 @@ function SacredGeometryDemoSecondOriginal() {
             className="w-full h-full"
             glowColor="rgba(20, 184, 166, 0.5)"
             rotateSpeed={120}
+            maxLines={3}
           >
             <h3 className="text-lg font-bold mb-2">Circle</h3>
             <p className="text-sm">{textContent[currentText]}</p>
@@ -339,6 +283,7 @@ function SacredGeometryDemoSecondOriginal() {
           <OctagonContainer
             className="w-full h-full"
             glowColor="rgba(8, 145, 178, 0.5)"
+            maxLines={3}
           >
             <h3 className="text-lg font-bold mb-2">Octagon</h3>
             <p className="text-sm">{textContent[currentText]}</p>
@@ -349,6 +294,7 @@ function SacredGeometryDemoSecondOriginal() {
           <StarburstContainer
             className="w-full h-full"
             glowColor="rgba(147, 51, 234, 0.5)"
+            maxLines={3}
           >
             <h3 className="text-lg font-bold mb-2">Starburst</h3>
             <p className="text-sm">{textContent[currentText]}</p>
