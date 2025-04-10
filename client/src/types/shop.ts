@@ -103,9 +103,6 @@ export interface SpeechRecognitionConstructor {
   new(): SpeechRecognition;
 }
 
-// The global type declarations need to be exported to avoid conflicts
-export {}
-
 /**
  * Global SpeechRecognition type extension
  */
@@ -117,3 +114,6 @@ declare global {
     webkitSpeechRecognition: SpeechRecognitionConstructor;
   }
 }
+
+// Export an empty object to make this file a module
+export {}

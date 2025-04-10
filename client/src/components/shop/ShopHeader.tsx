@@ -12,54 +12,34 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import CosmicButton from '@/components/features/cosmic/cosmic-button';
-
-// Voice recognition types
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResult {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: Event) => void;
-  onend: () => void;
-}
-
-// Add the interfaces to the Window object
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-export interface ShopHeaderProps {
-  onSearch: (query: string) => void;
-  onVoiceSearch?: (transcript: string) => void;
-  cartItemCount?: number;
-}
+import { 
+  ShopHeaderProps, 
+  SpeechRecognition, 
+  SpeechRecognitionEvent 
+} from '@/types/shop';
 
 const ShopHeader: React.FC<ShopHeaderProps> = ({ 
   onSearch, 
   onVoiceSearch,
-  cartItemCount = 0
+  cartItemCount = 0,
+  // Additional props for advanced filtering
+  searchQuery: externalSearchQuery,
+  setSearchQuery: externalSetSearchQuery,
+  allCategories,
+  categoryFilter,
+  setCategoryFilter,
+  priceRange,
+  setPriceRange,
+  sortOrder,
+  setSortOrder,
+  viewType,
+  setViewType
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  // Use local state if external state management is not provided
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  // Use either the external or local search query
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : localSearchQuery;
+  const setSearchQueryValue = externalSetSearchQuery || setLocalSearchQuery;
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -67,7 +47,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
   // Handle search input change with debounce
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setSearchQuery(value);
+    setSearchQueryValue(value);
 
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -111,7 +91,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
             .map(result => result.transcript)
             .join('');
 
-          setSearchQuery(transcript);
+          setSearchQueryValue(transcript);
 
           if (event.results[0].isFinal) {
             setIsRecording(false);

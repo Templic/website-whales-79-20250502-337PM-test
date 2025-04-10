@@ -344,6 +344,15 @@ const ShopPage: React.FC = () => {
 
         <div className="max-w-7xl mx-auto">
           <ShopHeader 
+            onSearch={(query) => {
+              setSearchQuery(query);
+              // Additional search logic if needed
+            }}
+            onVoiceSearch={(transcript) => {
+              setSearchQuery(transcript);
+              // Additional voice search logic if needed
+            }}
+            cartItemCount={cart.length}
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
             allCategories={allCategories} 
