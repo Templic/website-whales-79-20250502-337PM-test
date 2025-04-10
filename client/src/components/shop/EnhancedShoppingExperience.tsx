@@ -62,7 +62,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Cosmic Frequency Crystal Pendant",
     description: "Handcrafted pendant that resonates with cosmic frequencies to harmonize your energy field.",
     price: 49.99,
-    image: "/images/products/samples/cosmic-pendant.jpg",
+    image: "/images/merchandise/cosmic-pendant.svg",
     rating: 4.9,
     reviewCount: 127,
     tags: ["Crystal", "Energy", "Handcrafted"],
@@ -73,7 +73,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Galactic Sound Journey Tee",
     description: "Organic cotton t-shirt with sacred geometry design that represents cosmic soundwaves.",
     price: 34.99,
-    image: "/images/products/samples/sacred-geometry-tshirt.jpg",
+    image: "/images/merchandise/cosmic-tshirt.svg",
     rating: 4.7,
     reviewCount: 89,
     tags: ["Apparel", "Organic", "Sacred Geometry"]
@@ -83,7 +83,7 @@ const featuredProducts: FeaturedProduct[] = [
     name: "Starlight Meditation Cushion",
     description: "Sustainable cork and organic cotton meditation cushion for your cosmic journeys within.",
     price: 59.99,
-    image: "/images/products/samples/meditation-cushion.jpg",
+    image: "/images/merchandise/meditation-cushion.svg",
     rating: 4.8,
     reviewCount: 103,
     tags: ["Meditation", "Sustainable", "Home"]

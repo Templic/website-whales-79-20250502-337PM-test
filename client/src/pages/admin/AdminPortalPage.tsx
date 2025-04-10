@@ -44,6 +44,7 @@ const DatabaseMonitorComponent = lazy(() => import('@/components/features/admin/
 const BlogPostManagementComponent = lazy(() => import('@/components/features/admin/BlogPostManagement'));
 const CommentManagementComponent = lazy(() => import('@/components/features/admin/CommentManagement'));
 const ShopManagementComponent = lazy(() => import('@/components/features/admin/ShopManagement'));
+const EnhancedShopManagementComponent = lazy(() => import('@/components/features/admin/EnhancedShopManagement'));
 const NewsletterManagementComponent = lazy(() => import('@/components/features/admin/NewsletterManagement'));
 
 export default function AdminPortalPage() {
@@ -387,7 +388,7 @@ export default function AdminPortalPage() {
 
             <TabsContent value="shop" className="mt-4">
               <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <ShopManagementComponent />
+                <EnhancedShopManagementComponent />
               </Suspense>
             </TabsContent>
           </Tabs>
