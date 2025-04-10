@@ -518,14 +518,30 @@ async function checkForSQLInjectionVulnerabilities(): Promise<string[]> {
   return vulnerableFiles;
 }
 
+// Import the server configuration
+import { loadConfig, ServerConfig } from './config';
+
 /**
  * Initialize the security scanning service
  * @param intervalHours The interval in hours at which to run scans (default: 24)
+ * @param config Optional server configuration to use (loads from environment if not provided)
  */
-export function initializeSecurityScans(intervalHours: number = 24): NodeJS.Timeout {
+export function initializeSecurityScans(intervalHours: number = 24, config?: ServerConfig): NodeJS.Timeout | null {
+  // Load configuration if not provided
+  const serverConfig = config || loadConfig();
+  
+  // Check if security scans are enabled
+  if (!serverConfig.enableSecurityScans) {
+    console.log('Security scans disabled by configuration');
+    return null;
+  }
+  
   console.log(`Initializing security scans with ${intervalHours} hour interval`);
   
-  // Run an initial scan but on a slight delay to not block startup
+  // Use the configured delay for security scans
+  const initialDelay = serverConfig.securityScanDelay || 5000;
+  
+  // Run an initial scan with the configured delay to not block startup
   // and to allow other services to initialize first
   setTimeout(() => {
     console.log('Starting initial security scan...');
@@ -543,7 +559,7 @@ export function initializeSecurityScans(intervalHours: number = 24): NodeJS.Time
     }).catch(error => {
       console.error('Initial security scan failed:', error);
     });
-  }, 5000); // 5 second delay
+  }, initialDelay);
   
   // Set up periodic scans
   const intervalMilliseconds = intervalHours * 60 * 60 * 1000;

@@ -10,6 +10,8 @@ Welcome to the project documentation. This repository contains comprehensive doc
 - [Security Guide](SECURITY_GUIDE.md) - Security implementation and best practices
 - [Repository Structure](REPOSITORY_STRUCTURE.md) - Codebase organization
 - [Routes Documentation](ROUTES.md) - Application routing overview
+- [Server Initialization](SERVER_INITIALIZATION.md) - Server startup process
+- [Server Optimization](SERVER_OPTIMIZATION.md) - Server performance recommendations
 
 ### Development Guidelines
 - [Component Documentation Guide](COMPONENT_DOCUMENTATION_GUIDE.md) - Component documentation standards
@@ -53,4 +55,4 @@ Welcome to the project documentation. This repository contains comprehensive doc
 3. Use Markdown for consistent formatting
 4. Include last updated dates
 
-*Last updated: 2025-04-09*
+*Last updated: 2025-04-10*

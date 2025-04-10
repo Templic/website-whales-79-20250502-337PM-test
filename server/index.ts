@@ -197,30 +197,76 @@ const port = parseInt(process.env.PORT || "5000", 10) || 5000;
 // Add session cleanup interval
 let cleanupInterval: NodeJS.Timeout;
 
+// Import server configuration
+import { loadConfig } from './config';
+
 async function startServer() {
+  const startTime = Date.now();
   console.log('Starting server initialization...');
+
+  // Load configuration
+  const config = loadConfig();
+  console.log(`Server startup priority: ${config.startupPriority}`);
 
   try {
     // Essential initialization first: database connection only
     // This is necessary before anything else can work
     await initializeDatabase();
+    console.log(`Database connected in ${Date.now() - startTime}ms`);
 
-    // Start non-essential services in parallel but don't wait for them
-    // This allows the server to start handling requests while these complete in the background
-    Promise.all([
-      initDatabaseOptimization().catch(err => {
-        console.warn('Database optimization initialization failed, continuing:', err);
-      }),
-      initBackgroundServices().catch(err => {
-        console.warn('Background services initialization failed, continuing:', err);
-      })
-    ]);
-
-    // Start security scans asynchronously after server is up
-    // This doesn't block the initialization process
-    setTimeout(() => {
-      initializeSecurityScans(24);
-    }, 1000);
+    // Initialize non-critical services based on configuration
+    if (config.deferNonCriticalServices) {
+      // Deferred initialization - start the server first, then initialize background services
+      console.log('Using deferred initialization for non-critical services');
+      
+      // Start these services after server is listening
+      setTimeout(() => {
+        console.log('Starting deferred database optimization...');
+        if (config.enableDatabaseOptimization) {
+          initDatabaseOptimization().catch(err => {
+            console.warn('Database optimization initialization failed:', err);
+          });
+        }
+        
+        // Stagger background service initialization
+        setTimeout(() => {
+          console.log('Starting deferred background services...');
+          if (config.enableBackgroundServices) {
+            initBackgroundServices().catch(err => {
+              console.warn('Background services initialization failed:', err);
+            });
+          }
+          
+          // Start security scans last
+          setTimeout(() => {
+            console.log('Starting deferred security scan initialization...');
+            if (config.enableSecurityScans) {
+              initializeSecurityScans(config.securityScanInterval, config);
+            }
+          }, config.securityScanDelay);
+        }, config.nonCriticalServicesDelay);
+      }, config.nonCriticalServicesDelay);
+    } else {
+      // Immediate initialization - start services in parallel but don't wait for them
+      if (config.enableDatabaseOptimization) {
+        initDatabaseOptimization().catch(err => {
+          console.warn('Database optimization initialization failed, continuing:', err);
+        });
+      }
+      
+      if (config.enableBackgroundServices) {
+        initBackgroundServices().catch(err => {
+          console.warn('Background services initialization failed, continuing:', err);
+        });
+      }
+      
+      // Start security scans with a short delay
+      if (config.enableSecurityScans) {
+        setTimeout(() => {
+          initializeSecurityScans(config.securityScanInterval, config);
+        }, 1000);
+      }
+    }
 
     // Setup authentication first (before any routes are registered)
     setupAuth(app);
@@ -331,10 +377,23 @@ async function startServer() {
 
     await new Promise((resolve, reject) => {
       httpServer.listen(port, '0.0.0.0', () => {
+        const totalStartupTime = Date.now() - startTime;
         console.log(`Server successfully listening on port ${port}`);
         log(`Server listening on port ${port}`);
 
-        console.log('Server initialization complete');
+        console.log(`Server initialization complete in ${totalStartupTime}ms`);
+        
+        // Log performance metrics for monitoring
+        if (config.enableFullLogging) {
+          console.log('=== Server Startup Performance ===');
+          console.log(`Total startup time: ${totalStartupTime}ms`);
+          console.log(`Startup priority: ${config.startupPriority}`);
+          console.log(`Database optimization: ${config.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
+          console.log(`Background services: ${config.enableBackgroundServices ? 'enabled' : 'disabled'}`);
+          console.log(`Security scans: ${config.enableSecurityScans ? 'enabled' : 'disabled'}`);
+          console.log(`Non-critical services deferred: ${config.deferNonCriticalServices ? 'yes' : 'no'}`);
+          console.log('=================================');
+        }
 
         resolve(true);
       }).on('error', (err: Error) => {

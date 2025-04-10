@@ -7,9 +7,10 @@ This document provides an overview of the application architecture, including th
 The application follows a modern web application architecture with the following components:
 
 1. **React Frontend**: UI components and client-side logic
-2. **Express Backend**: API endpoints and server-side logic
+2. **Express Backend**: API endpoints, server-side logic, and advanced database maintenance
 3. **PostgreSQL Database**: Data storage using Neon serverless database
 4. **Shared Types**: TypeScript types shared between frontend and backend
+5. **Background Services**: Database optimization, maintenance, and security scanning
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
@@ -22,12 +23,24 @@ The application follows a modern web application architecture with the following
         │                        │                        │
         ▼                        ▼                        ▼
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│    TanStack     │     │     Express     │     │     Drizzle     │
-│   React Query   │     │     Routes      │     │       ORM       │
+│                 │     │    Express &    │     │     Drizzle     │
+│    TanStack     │     │  Background     │     │       ORM       │
+│   React Query   │     │    Services     │     │                 │
 │                 │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
+
+### Server Initialization Process
+
+The server has a multi-stage initialization process:
+
+1. **Database Connection**: Establishes connection to PostgreSQL
+2. **Background Services**: Initializes maintenance tasks for database health
+3. **Security Scans**: Sets up periodic security vulnerability scanning
+4. **WebSocket/Socket.IO**: Initializes real-time communication
+5. **Vite Development Server**: Configures the frontend development server
+
+This comprehensive initialization contributes to the server's startup time but ensures database health, security monitoring, and optimal performance.
 
 ## Frontend Architecture
 
@@ -74,7 +87,7 @@ App
 
 ## Backend Architecture
 
-The backend is built with Express and follows a RESTful API architecture:
+The backend is built with Express and follows a RESTful API architecture with additional background services for database maintenance and security:
 
 ### Key Technologies
 - **Express**: Web framework
@@ -83,14 +96,43 @@ The backend is built with Express and follows a RESTful API architecture:
 - **Zod**: Schema validation
 - **Express Session**: Authentication
 - **Passport**: User authentication
+- **PgBoss**: Background job processing
+- **WebSockets**: Real-time communication
 
 ### Directory Structure
+- **server/index.ts**: Main server initialization and setup
 - **server/routes.ts**: API route definitions
 - **server/storage.ts**: Data storage interface
+- **server/db.ts**: Database connection and core functionality
+- **server/db-optimize.ts**: Database optimization tasks
+- **server/db-background.ts**: Background database maintenance services
+- **server/securityScan.ts**: Security vulnerability scanning
 - **server/middlewares/**: Express middlewares
 - **server/controllers/**: Request handlers
 - **server/services/**: Business logic
 - **server/utils/**: Utility functions
+
+### Background Services
+
+The backend includes several background services for database maintenance:
+
+1. **Database Optimization (db-optimize.ts)**:
+   - Query performance monitoring
+   - VACUUM ANALYZE scheduling
+   - Database reindexing
+   - Slow query analysis
+
+2. **Background Jobs (db-background.ts)**:
+   - Session cleanup
+   - Database metrics collection
+   - Automated table maintenance
+   - Dead tuple management
+
+3. **Security Scanning (securityScan.ts)**:
+   - Vulnerability detection
+   - Dependency checking
+   - Security headers validation
+   - Input validation assessment
 
 ### API Structure
 
