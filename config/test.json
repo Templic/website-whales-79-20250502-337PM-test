@@ -1,0 +1,17 @@
+{
+  "deferBackgroundServices": false,
+  "features": {
+    "enableDatabaseOptimization": false,
+    "enableSecurityScans": false,
+    "enableBackgroundTasks": false,
+    "enableRateLimiting": false,
+    "enableExtraLogging": true
+  },
+  "database": {
+    "enableOptimization": false
+  },
+  "security": {
+    "enableScans": false,
+    "enableRateLimiting": false
+  }
+}

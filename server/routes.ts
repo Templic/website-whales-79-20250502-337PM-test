@@ -71,7 +71,7 @@ import dbMonitorRoutes from './routes/db-monitor';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
 import { handleSecurityLog, rotateSecurityLogs, logSecurityEvent } from './security/security';
-import { scanProject } from './securityScan';
+import { runSecurityScan } from './securityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import authRoutes from './routes/authRoutes';
@@ -865,7 +865,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     try {
-      const scanResults = await scanProject();
+      const scanResults = await runSecurityScan();
 
       res.json({
         message: 'Security scan completed successfully',
@@ -891,7 +891,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Test security scan endpoint (for testing purposes)
   app.get("/api/test/security/scan", async (req, res) => {
     try {
-      const scanResults = await scanProject();
+      const scanResults = await runSecurityScan();
 
       res.json({
         message: 'Security scan completed successfully',

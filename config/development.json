@@ -1,0 +1,14 @@
+{
+  "features": {
+    "enableExtraLogging": true
+  },
+  "database": {
+    "enableOptimization": true,
+    "maintenanceInterval": 86400000,
+    "excludeTables": ["_migrations", "pg_stat_statements", "sessions"]
+  },
+  "security": {
+    "enableScans": true,
+    "enableRateLimiting": false
+  }
+}

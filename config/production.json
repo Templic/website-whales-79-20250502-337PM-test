@@ -1,0 +1,23 @@
+{
+  "enableHttps": true,
+  "deferBackgroundServices": true,
+  "csrfProtection": true,
+  "features": {
+    "enableDatabaseOptimization": true,
+    "enableSecurityScans": true,
+    "enableBackgroundTasks": true,
+    "enableRateLimiting": true,
+    "enableExtraLogging": false
+  },
+  "database": {
+    "maintenanceInterval": 86400000,
+    "vacuumThreshold": 5000,
+    "analyzeThreshold": 1000
+  },
+  "security": {
+    "enableScans": true,
+    "scanInterval": 43200000,
+    "enableRateLimiting": true,
+    "csrfProtection": true
+  }
+}

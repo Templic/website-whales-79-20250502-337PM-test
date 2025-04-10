@@ -1,310 +1,307 @@
 /**
- * Database Maintenance Module
+ * Intelligent Database Maintenance Operations
  * 
- * Provides intelligent database maintenance operations
- * that only target tables that need maintenance.
+ * Provides automated maintenance for PostgreSQL with intelligent targeting of
+ * tables that need optimization based on actual usage patterns.
  */
 
-import { pgPool } from './db';
+import { QueryResult } from 'pg';
+import { db, pgPool } from './db';
+import { config } from './config';
 import { log } from './vite';
-import { loadConfig } from './config';
+import { sql } from 'drizzle-orm';
 
-interface TableStatus {
+// Track last maintenance time
+let lastMaintenanceRun: number | null = null;
+
+// Statistics for each table
+interface TableStats {
   tableName: string;
-  liveRows: number;
-  deadRows: number;
-  deadRowsPercent: number;
+  schemaName: string;
+  rowCount: number;
+  deadTuples: number;
+  modifiedTuples: number;
+  lastVacuum: Date | null;
+  lastAnalyze: Date | null;
   lastAutoVacuum: Date | null;
-  lastAnalyzed: Date | null;
-  estimatedRowCount: number;
-  needsVacuum: boolean;
-  needsAnalyze: boolean;
-  needsReindex: boolean;
-  fragmentation: number | null;
-}
-
-interface MaintenanceStats {
-  tablesAnalyzed: number;
-  tablesVacuumed: number;
-  tablesReindexed: number;
-  tablesSkipped: number;
-  totalTables: number;
-  startTime: Date;
-  endTime: Date | null;
-  elapsedMs: number | null;
-  maintenanceMode: 'intelligent' | 'full' | 'minimal';
+  lastAutoAnalyze: Date | null;
 }
 
 /**
- * Get detailed status of all tables in the database
+ * Schedule intelligent database maintenance based on configuration
  */
-export async function getTableStatus(): Promise<TableStatus[]> {
+export async function scheduleIntelligentMaintenance(): Promise<void> {
+  // Skip if optimization is disabled
+  if (!config.features.enableDatabaseOptimization || !config.database.enableOptimization) {
+    log('Database optimization is disabled, skipping maintenance scheduling', 'db-maintenance');
+    return;
+  }
+
+  // Run maintenance immediately if it's the first run
+  if (lastMaintenanceRun === null) {
+    log('Initial database maintenance run scheduled', 'db-maintenance');
+    await runIntelligentMaintenance();
+  }
+
+  // Schedule regular maintenance
+  const interval = config.database.maintenanceInterval;
+  log(`Scheduled regular database maintenance every ${interval / (1000 * 60 * 60)} hours`, 'db-maintenance');
+  
+  setInterval(async () => {
+    await runIntelligentMaintenance();
+  }, interval);
+}
+
+/**
+ * Run intelligent database maintenance operations
+ * This analyzes table statistics and only runs maintenance on tables that need it
+ */
+export async function runIntelligentMaintenance(): Promise<void> {
   try {
-    const result = await pgPool.query(`
-      SELECT
-        t.relname as table_name,
-        s.n_live_tup as live_rows,
-        s.n_dead_tup as dead_rows,
-        CASE WHEN s.n_live_tup > 0 
-          THEN ROUND((s.n_dead_tup::float / s.n_live_tup::float) * 100, 2)
-          ELSE 0
-        END as dead_rows_percent,
-        s.last_autovacuum,
-        s.last_analyze,
-        s.n_tup_ins + s.n_tup_upd + s.n_tup_del as write_activity,
-        pg_stat_get_live_tuples(t.oid) as estimated_row_count,
-        CASE 
-          WHEN s.n_dead_tup > 1000 OR (s.n_live_tup > 0 AND (s.n_dead_tup::float / s.n_live_tup::float) > 0.1)
-          THEN true
-          ELSE false
-        END as needs_vacuum,
-        CASE 
-          WHEN s.last_analyze IS NULL OR 
-              (s.last_analyze < NOW() - INTERVAL '3 days' AND s.n_tup_ins + s.n_tup_upd + s.n_tup_del > 1000)
-          THEN true
-          ELSE false
-        END as needs_analyze,
-        -- Detect index bloat/fragmentation (simplified heuristic)
-        CASE
-          WHEN i.fragmentation > 30 THEN true
-          ELSE false
-        END as needs_reindex,
-        i.fragmentation
-      FROM pg_class t
-      JOIN pg_stat_user_tables s ON t.relname = s.relname
-      LEFT JOIN (
-        -- Subquery to estimate index fragmentation
-        SELECT
-          relname,
-          CASE 
-            WHEN (pg_stat_get_numscans(indexrelid) > 0 AND pg_relation_size(indexrelid) > 8192*100)
-            THEN 
-              ROUND(((pg_relation_size(indexrelid) - (pg_stat_get_live_tuples(indrelid) * 8))::float / 
-                GREATEST(pg_relation_size(indexrelid), 1)::float) * 100)
-            ELSE NULL
-          END as fragmentation
-        FROM pg_index i
-        JOIN pg_class c ON i.indexrelid = c.oid
-        WHERE i.indisprimary
-      ) i ON t.relname = i.relname
-      WHERE t.relkind = 'r' AND t.relname NOT LIKE 'pg_%' AND t.relname NOT LIKE 'sql_%'
-      ORDER BY dead_rows_percent DESC, table_name ASC
-    `);
+    const startTime = Date.now();
+    log('Starting intelligent database maintenance...', 'db-maintenance');
+
+    // Get table statistics
+    const tableStats = await getTableStatistics();
     
+    // Get tables needing maintenance
+    const vacuumCandidates = identifyVacuumCandidates(tableStats);
+    const analyzeCandidates = identifyAnalyzeCandidates(tableStats);
+
+    // Log what we're going to do
+    log(`Found ${vacuumCandidates.length} tables needing VACUUM`, 'db-maintenance');
+    log(`Found ${analyzeCandidates.length} tables needing ANALYZE`, 'db-maintenance');
+
+    // Run VACUUM on tables needing it
+    if (vacuumCandidates.length > 0) {
+      await runVacuum(vacuumCandidates);
+    }
+
+    // Run ANALYZE on tables needing it
+    if (analyzeCandidates.length > 0) {
+      await runAnalyze(analyzeCandidates);
+    }
+
+    // Update last maintenance time
+    lastMaintenanceRun = Date.now();
+    const duration = lastMaintenanceRun - startTime;
+    
+    log(`Database maintenance completed in ${duration}ms`, 'db-maintenance');
+    
+    // Log statistics of maintenance
+    if (vacuumCandidates.length > 0 || analyzeCandidates.length > 0) {
+      log('Maintenance summary:', 'db-maintenance');
+      log(`- VACUUM performed on ${vacuumCandidates.length} tables`, 'db-maintenance');
+      log(`- ANALYZE performed on ${analyzeCandidates.length} tables`, 'db-maintenance');
+    } else {
+      log('No tables required maintenance at this time', 'db-maintenance');
+    }
+    
+    return;
+  } catch (error) {
+    log(`Error during database maintenance: ${error}`, 'db-maintenance');
+    console.error('Database maintenance error:', error);
+  }
+}
+
+/**
+ * Get database table statistics for maintenance decisions
+ */
+async function getTableStatistics(): Promise<TableStats[]> {
+  try {
+    // Direct query to get table statistics
+    const statsQuery = `
+      SELECT
+        s.schemaname AS schema_name,
+        s.relname AS table_name,
+        c.reltuples AS row_count,
+        COALESCE(s.n_dead_tup, 0) AS dead_tuples,
+        COALESCE(s.n_mod_since_analyze, 0) AS modified_tuples,
+        s.last_vacuum,
+        s.last_analyze,
+        s.last_autovacuum,
+        s.last_autoanalyze
+      FROM pg_stat_user_tables s
+      JOIN pg_class c ON s.relname = c.relname
+      WHERE s.schemaname = 'public'
+      ORDER BY s.relname
+    `;
+
+    const client = await pgPool.connect();
+    const result: QueryResult = await client.query(statsQuery);
+    client.release();
+
     return result.rows.map(row => ({
+      schemaName: row.schema_name,
       tableName: row.table_name,
-      liveRows: parseInt(row.live_rows),
-      deadRows: parseInt(row.dead_rows),
-      deadRowsPercent: parseFloat(row.dead_rows_percent),
+      rowCount: parseInt(row.row_count) || 0,
+      deadTuples: parseInt(row.dead_tuples) || 0,
+      modifiedTuples: parseInt(row.modified_tuples) || 0,
+      lastVacuum: row.last_vacuum,
+      lastAnalyze: row.last_analyze,
       lastAutoVacuum: row.last_autovacuum,
-      lastAnalyzed: row.last_analyze,
-      estimatedRowCount: parseInt(row.estimated_row_count),
-      needsVacuum: row.needs_vacuum,
-      needsAnalyze: row.needs_analyze,
-      needsReindex: row.needs_reindex,
-      fragmentation: row.fragmentation === null ? null : parseFloat(row.fragmentation)
+      lastAutoAnalyze: row.last_autoanalyze
     }));
   } catch (error) {
-    console.error('Error getting table status:', error);
+    log(`Error fetching table statistics: ${error}`, 'db-maintenance');
     return [];
   }
 }
 
 /**
- * Perform intelligent database maintenance
- * Only targets tables that need it based on their status
+ * Identify tables that need VACUUM based on dead tuples
  */
-export async function performIntelligentMaintenance(mode: 'intelligent' | 'full' | 'minimal' = 'intelligent'): Promise<MaintenanceStats> {
-  const stats: MaintenanceStats = {
-    tablesAnalyzed: 0,
-    tablesVacuumed: 0,
-    tablesReindexed: 0,
-    tablesSkipped: 0,
-    totalTables: 0,
-    startTime: new Date(),
-    endTime: null,
-    elapsedMs: null,
-    maintenanceMode: mode
-  };
-  
+function identifyVacuumCandidates(tableStats: TableStats[]): string[] {
+  const { excludeTables, targetTables, vacuumThreshold } = config.database;
+  const candidates: string[] = [];
+
+  for (const stats of tableStats) {
+    // Skip excluded tables
+    if (excludeTables.includes(stats.tableName)) {
+      continue;
+    }
+
+    // Only check specific tables if specified
+    if (targetTables.length > 0 && !targetTables.includes(stats.tableName)) {
+      continue;
+    }
+
+    // Vacuum if dead tuples exceed threshold or if it's never been vacuumed
+    if (stats.deadTuples >= vacuumThreshold || 
+        (!stats.lastVacuum && !stats.lastAutoVacuum && stats.rowCount > 0)) {
+      candidates.push(stats.tableName);
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Identify tables that need ANALYZE based on modified tuples
+ */
+function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
+  const { excludeTables, targetTables, analyzeThreshold } = config.database;
+  const candidates: string[] = [];
+
+  for (const stats of tableStats) {
+    // Skip excluded tables
+    if (excludeTables.includes(stats.tableName)) {
+      continue;
+    }
+
+    // Only check specific tables if specified
+    if (targetTables.length > 0 && !targetTables.includes(stats.tableName)) {
+      continue;
+    }
+
+    // Analyze if modified tuples exceed threshold or if it's never been analyzed
+    if (stats.modifiedTuples >= analyzeThreshold ||
+        (!stats.lastAnalyze && !stats.lastAutoAnalyze && stats.rowCount > 0)) {
+      candidates.push(stats.tableName);
+    }
+  }
+
+  return candidates;
+}
+
+/**
+ * Run VACUUM operation on specific tables
+ */
+async function runVacuum(tables: string[]): Promise<void> {
+  if (tables.length === 0) return;
+
   try {
-    // Get table status
-    const tableStatus = await getTableStatus();
-    stats.totalTables = tableStatus.length;
+    const client = await pgPool.connect();
+
+    for (const table of tables) {
+      const startTime = Date.now();
+      log(`Running VACUUM on table '${table}'...`, 'db-maintenance');
+      
+      await client.query(`VACUUM (ANALYZE, VERBOSE) "${table}"`);
+      
+      const duration = Date.now() - startTime;
+      log(`VACUUM on '${table}' completed in ${duration}ms`, 'db-maintenance');
+    }
+
+    client.release();
+  } catch (error) {
+    log(`Error during VACUUM: ${error}`, 'db-maintenance');
+  }
+}
+
+/**
+ * Run ANALYZE operation on specific tables
+ */
+async function runAnalyze(tables: string[]): Promise<void> {
+  if (tables.length === 0) return;
+
+  try {
+    const client = await pgPool.connect();
+
+    for (const table of tables) {
+      const startTime = Date.now();
+      log(`Running ANALYZE on table '${table}'...`, 'db-maintenance');
+      
+      await client.query(`ANALYZE VERBOSE "${table}"`);
+      
+      const duration = Date.now() - startTime;
+      log(`ANALYZE on '${table}' completed in ${duration}ms`, 'db-maintenance');
+    }
+
+    client.release();
+  } catch (error) {
+    log(`Error during ANALYZE: ${error}`, 'db-maintenance');
+  }
+}
+
+/**
+ * Force vacuum and analyze on all tables
+ * This is a utility function for manual maintenance
+ */
+export async function forceFullMaintenance(): Promise<void> {
+  try {
+    const startTime = Date.now();
+    log('Starting full database maintenance (VACUUM ANALYZE on all tables)...', 'db-maintenance');
+
+    const client = await pgPool.connect();
     
-    // Determine which tables need maintenance based on mode
-    for (const table of tableStatus) {
-      const shouldVacuum = mode === 'full' || 
-                          (mode === 'intelligent' && table.needsVacuum) ||
-                          (mode === 'minimal' && table.deadRowsPercent > 30);
-                          
-      const shouldAnalyze = mode === 'full' || 
-                           (mode === 'intelligent' && table.needsAnalyze) ||
-                           (mode === 'minimal' && table.deadRowsPercent > 30);
-                           
-      const shouldReindex = mode === 'full' || 
-                          (mode === 'intelligent' && table.needsReindex) ||
-                          (mode === 'minimal' && table.fragmentation !== null && table.fragmentation > 50);
+    // Get all tables except excluded ones
+    const tablesQuery = `
+      SELECT tablename
+      FROM pg_tables
+      WHERE schemaname = 'public'
+      ORDER BY tablename
+    `;
+    
+    const result = await client.query(tablesQuery);
+    const allTables = result.rows.map(row => row.tablename);
+    
+    // Filter out excluded tables
+    const { excludeTables } = config.database;
+    const tablesToMaintain = allTables.filter(table => !excludeTables.includes(table));
+    
+    log(`Running full maintenance on ${tablesToMaintain.length} tables`, 'db-maintenance');
+    
+    // Run vacuum analyze on each table
+    for (const table of tablesToMaintain) {
+      const tableStartTime = Date.now();
+      log(`Running VACUUM ANALYZE on table '${table}'...`, 'db-maintenance');
       
-      // Skip if no maintenance needed
-      if (!shouldVacuum && !shouldAnalyze && !shouldReindex) {
-        stats.tablesSkipped++;
-        continue;
-      }
+      await client.query(`VACUUM (ANALYZE, VERBOSE) "${table}"`);
       
-      // Perform vacuum if needed
-      if (shouldVacuum) {
-        try {
-          log(`Vacuuming table ${table.tableName}`, 'db-maintenance');
-          await pgPool.query(`VACUUM ${table.tableName}`);
-          stats.tablesVacuumed++;
-        } catch (err) {
-          console.error(`Error vacuuming table ${table.tableName}:`, err);
-        }
-      }
-      
-      // Perform analyze if needed
-      if (shouldAnalyze) {
-        try {
-          log(`Analyzing table ${table.tableName}`, 'db-maintenance');
-          await pgPool.query(`ANALYZE ${table.tableName}`);
-          stats.tablesAnalyzed++;
-        } catch (err) {
-          console.error(`Error analyzing table ${table.tableName}:`, err);
-        }
-      }
-      
-      // Perform reindex if needed
-      if (shouldReindex) {
-        try {
-          log(`Reindexing table ${table.tableName}`, 'db-maintenance');
-          await pgPool.query(`REINDEX TABLE ${table.tableName}`);
-          stats.tablesReindexed++;
-        } catch (err) {
-          console.error(`Error reindexing table ${table.tableName}:`, err);
-        }
-      }
+      const tableDuration = Date.now() - tableStartTime;
+      log(`Maintenance on '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
     }
     
-    // Update stats
-    stats.endTime = new Date();
-    stats.elapsedMs = stats.endTime.getTime() - stats.startTime.getTime();
+    client.release();
     
-    // Log summary
-    log(`Maintenance summary: ${stats.tablesVacuumed} vacuumed, ${stats.tablesAnalyzed} analyzed, ${stats.tablesReindexed} reindexed, ${stats.tablesSkipped} skipped out of ${stats.totalTables} total`, 'db-maintenance');
+    // Update last maintenance time
+    lastMaintenanceRun = Date.now();
+    const duration = lastMaintenanceRun - startTime;
     
-    return stats;
+    log(`Full database maintenance completed in ${duration}ms`, 'db-maintenance');
   } catch (error) {
-    console.error('Error during intelligent maintenance:', error);
-    
-    // Update stats even on error
-    stats.endTime = new Date();
-    stats.elapsedMs = stats.endTime.getTime() - stats.startTime.getTime();
-    
-    return stats;
-  }
-}
-
-/**
- * Schedule intelligent maintenance based on configuration
- */
-export async function scheduleIntelligentMaintenance() {
-  const config = loadConfig();
-  
-  // Skip scheduling if database optimization is disabled
-  if (!config.features.enableDatabaseOptimization) {
-    return;
-  }
-  
-  // Determine maintenance mode from config
-  let maintenanceMode: 'intelligent' | 'full' | 'minimal' = 'intelligent';
-  
-  if (config.startupPriority === 'maintenance') {
-    maintenanceMode = 'full';
-  } else if (config.startupPriority === 'speed') {
-    maintenanceMode = 'minimal';
-  }
-  
-  // Schedule initial maintenance with delay
-  setTimeout(async () => {
-    try {
-      log(`Starting ${maintenanceMode} database maintenance`, 'db-maintenance');
-      const stats = await performIntelligentMaintenance(maintenanceMode);
-      log(`Database maintenance completed in ${stats.elapsedMs}ms`, 'db-maintenance');
-    } catch (err) {
-      console.error('Error running scheduled maintenance:', err);
-    }
-  }, config.deferDatabaseMaintenance ? config.maintenanceDelay : 1000);
-  
-  // Schedule recurring maintenance (once a day at 3 AM)
-  const millisecondsUntil3AM = getMillisecondsUntil3AM();
-  setTimeout(() => {
-    setInterval(async () => {
-      try {
-        log('Running daily maintenance', 'db-maintenance');
-        await performIntelligentMaintenance('intelligent');
-      } catch (err) {
-        console.error('Error running daily maintenance:', err);
-      }
-    }, 24 * 60 * 60 * 1000); // Once per day
-  }, millisecondsUntil3AM);
-}
-
-/**
- * Calculate milliseconds until 3 AM for scheduling
- */
-function getMillisecondsUntil3AM(): number {
-  const now = new Date();
-  const target = new Date();
-  
-  // Set target time to 3 AM
-  target.setHours(3, 0, 0, 0);
-  
-  // If it's already past 3 AM, set target to 3 AM tomorrow
-  if (now.getTime() > target.getTime()) {
-    target.setDate(target.getDate() + 1);
-  }
-  
-  return target.getTime() - now.getTime();
-}
-
-/**
- * Get database maintenance metrics for monitoring
- */
-export async function getDatabaseMaintenanceMetrics() {
-  try {
-    const tableStatus = await getTableStatus();
-    
-    const needsVacuum = tableStatus.filter(t => t.needsVacuum).length;
-    const needsAnalyze = tableStatus.filter(t => t.needsAnalyze).length;
-    const needsReindex = tableStatus.filter(t => t.needsReindex).length;
-    
-    const totalTables = tableStatus.length;
-    const tablesWithDeadRows = tableStatus.filter(t => t.deadRows > 0).length;
-    
-    // Get additional database statistics
-    const dbSizeResult = await pgPool.query(`
-      SELECT pg_database_size(current_database()) as size_bytes
-    `);
-    
-    const connectionResult = await pgPool.query(`
-      SELECT count(*) as connection_count 
-      FROM pg_stat_activity 
-      WHERE datname = current_database()
-    `);
-    
-    return {
-      tableCount: totalTables,
-      tablesNeedingVacuum: needsVacuum,
-      tablesNeedingAnalyze: needsAnalyze, 
-      tablesNeedingReindex: needsReindex,
-      tablesWithDeadRows,
-      databaseSizeBytes: parseInt(dbSizeResult.rows[0].size_bytes),
-      connectionCount: parseInt(connectionResult.rows[0].connection_count),
-      timestamp: new Date()
-    };
-  } catch (error) {
-    console.error('Error getting database metrics:', error);
-    return null;
+    log(`Error during full database maintenance: ${error}`, 'db-maintenance');
+    console.error('Full database maintenance error:', error);
   }
 }

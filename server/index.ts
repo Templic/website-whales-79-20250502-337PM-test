@@ -1,7 +1,8 @@
 /**
  * Main Server Entry Point
  * 
- * Simple minimal version to get the server running without advanced features
+ * Provides a configurable, staged initialization process
+ * that prioritizes fast startup while still performing all necessary operations.
  */
 
 import express from 'express';
@@ -9,10 +10,15 @@ import { createServer } from 'http';
 import { log, setupVite } from './vite';
 import { initializeDatabase } from './db';
 import { registerRoutes } from './routes';
+import { runDeferredSecurityScan } from './securityScan';
+import { scheduleIntelligentMaintenance } from './db-maintenance';
+import { loadConfig, getEnabledFeatures, config } from './config';
+import { initBackgroundServices, stopBackgroundServices } from './background-services';
 import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
+import compression from 'compression';
 import crypto from 'crypto';
 
 // Start time tracking
@@ -22,20 +28,31 @@ const startTime = Date.now();
 const app = express();
 const httpServer = createServer(app);
 
-async function startServer() {
+/**
+ * Initialize the server in stages
+ * - First stage: Essential services (database)
+ * - Second stage: Core server components
+ * - Third stage: Deferred non-critical services
+ */
+async function initializeServer() {
   console.log('Starting server initialization...');
+  log(`Server startup priority: ${config.startupPriority}`, 'server');
   
   try {
-    // Connect to database
+    // === STAGE 1: Essential Services ===
+    // Connect to database (critical)
     const dbStartTime = Date.now();
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
     log(`Database connected in ${dbConnectTime}ms`, 'server');
     
+    // === STAGE 2: Core Server Components ===
     // Basic middleware
-    app.use(express.json({ limit: '50mb' }));
-    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    app.use(express.json({ limit: config.security.maxPayloadSize }));
+    app.use(express.urlencoded({ extended: true, limit: config.security.maxPayloadSize }));
     app.use(cookieParser());
+    
+    // Security middleware
     app.use(
       helmet({
         contentSecurityPolicy: {
@@ -53,10 +70,17 @@ async function startServer() {
         },
       })
     );
+    
+    // Enable CORS
     app.use(cors({
       origin: '*',
       credentials: true
     }));
+    
+    // Enable compression if configured
+    if (config.enableCompression) {
+      app.use(compression());
+    }
     
     // Session configuration
     const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -67,7 +91,7 @@ async function startServer() {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: config.enableHttps,
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
@@ -83,8 +107,8 @@ async function startServer() {
     }
     
     // Start listening for connections
-    const PORT = parseInt(process.env.PORT || '5000', 10);
-    httpServer.listen(PORT, '0.0.0.0', () => {
+    const PORT = config.port;
+    httpServer.listen(PORT, config.host, () => {
       log(`Server successfully listening on port ${PORT}`, 'server');
       console.log(`${new Date().toLocaleTimeString()} [express] Server listening on port ${PORT}`);
     });
@@ -92,9 +116,19 @@ async function startServer() {
     // Calculate and log server initialization time
     const initTime = Date.now() - startTime;
     console.log(`Server initialization complete in ${initTime}ms`);
-    console.log('=== Server Startup Performance ===');
-    console.log(`Total startup time: ${initTime}ms`);
-    console.log('=================================');
+    
+    // Log startup performance metrics
+    logStartupPerformance(initTime);
+    
+    // === STAGE 3: Deferred Non-Critical Services ===
+    if (config.deferBackgroundServices) {
+      log('Using deferred initialization for non-critical services', 'server');
+      initializeNonCriticalServices();
+    } else {
+      log('Initializing all services immediately (non-deferred mode)', 'server');
+      // Initialize all services immediately
+      await initializeAllServices();
+    }
     
   } catch (error) {
     console.error('Failed to initialize server:', error);
@@ -102,7 +136,74 @@ async function startServer() {
   }
 }
 
-// Handle graceful shutdown
+/**
+ * Initialize all non-critical services with deferred timing
+ */
+function initializeNonCriticalServices() {
+  // Initialize database optimization (if enabled)
+  if (config.features.enableDatabaseOptimization) {
+    setTimeout(() => {
+      log('Starting deferred database optimization...', 'server');
+      scheduleIntelligentMaintenance();
+    }, config.maintenanceDelay);
+  }
+  
+  // Initialize background services (if enabled)
+  if (config.features.enableBackgroundTasks) {
+    setTimeout(() => {
+      log('Starting deferred background services...', 'server');
+      initBackgroundServices();
+    }, config.backgroundServicesDelay);
+  }
+  
+  // Initialize security scans (if enabled)
+  if (config.features.enableSecurityScans) {
+    setTimeout(() => {
+      runDeferredSecurityScan();
+    }, config.securityScanDelay);
+  }
+}
+
+/**
+ * Initialize all services immediately (non-deferred mode)
+ */
+async function initializeAllServices() {
+  // Initialize database optimization
+  if (config.features.enableDatabaseOptimization) {
+    log('Initializing database optimization...', 'server');
+    await scheduleIntelligentMaintenance();
+  }
+  
+  // Initialize background services
+  if (config.features.enableBackgroundTasks) {
+    log('Initializing background services...', 'server');
+    await initBackgroundServices();
+  }
+  
+  // Initialize security scans
+  if (config.features.enableSecurityScans) {
+    log('Initializing security scans...', 'server');
+    await runDeferredSecurityScan();
+  }
+}
+
+/**
+ * Log startup performance metrics
+ */
+function logStartupPerformance(initTime: number) {
+  console.log('=== Server Startup Performance ===');
+  console.log(`Total startup time: ${initTime}ms`);
+  console.log(`Startup priority: ${config.startupPriority}`);
+  console.log(`Database optimization: ${config.features.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
+  console.log(`Background services: ${config.features.enableBackgroundTasks ? 'enabled' : 'disabled'}`);
+  console.log(`Security scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
+  console.log(`Non-critical services deferred: ${config.deferBackgroundServices ? 'yes' : 'no'}`);
+  console.log('=================================');
+}
+
+/**
+ * Handle graceful shutdown
+ */
 function setupGracefulShutdown() {
   // Handle process termination signals
   const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
@@ -111,7 +212,12 @@ function setupGracefulShutdown() {
     process.on(signal, async () => {
       console.log(`\nReceived ${signal} signal, shutting down gracefully...`);
       
-      // Close HTTP server first to stop accepting new connections
+      // Stop background services first
+      if (config.features.enableBackgroundTasks) {
+        await stopBackgroundServices();
+      }
+      
+      // Close HTTP server to stop accepting new connections
       if (httpServer) {
         httpServer.close(() => {
           console.log('HTTP server closed');
@@ -141,8 +247,8 @@ function setupGracefulShutdown() {
 // Set up graceful shutdown handler
 setupGracefulShutdown();
 
-// Start server
-startServer();
+// Start server initialization
+initializeServer();
 
 // Export for testing
 export { app, httpServer };
