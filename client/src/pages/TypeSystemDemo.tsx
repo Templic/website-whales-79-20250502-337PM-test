@@ -1,167 +1,155 @@
-/**
- * TypeSystemDemo Page
- * 
- * A comprehensive demonstration of the centralized type system
- * showing how to use various type features in a real-world application.
- */
-
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
-import ProductListExample from '@/components/examples/ProductListExample';
-import ContactFormExample from '@/components/examples/ContactFormExample';
-import { createUserId, createProductId, createPagination } from '@/utils/typeHelpers';
-import { Models, API, Schemas } from '@/types';
-import { UserId, ProductId } from '@/types/utils';
+import { 
+  Product,
+  User,
+  CartItem,
+  FormatAction,
+  Branded,
+  ProductId,
+  UserId,
+  Optional,
+  DeepPartial,
+  PaginationParams,
+  FilterParams,
+  contactFormSchema
+} from '@/types';
 
 /**
- * Type System Demo Page
+ * TypeSystemDemo
+ * 
+ * This page demonstrates the use of the centralized type system.
+ * It shows how to import and use the various types defined in the system.
  */
 const TypeSystemDemo: React.FC = () => {
-  /**
-   * Demo of branded types for type safety
-   */
-  const demoTypeConversion = () => {
-    // Create strongly typed IDs
-    const userId: UserId = createUserId('user-123');
-    const productId: ProductId = createProductId('prod-456');
-    
-    // This demonstrates type safety - the following would cause a type error:
-    // const productId2: ProductId = userId; // Error: Type 'UserId' is not assignable to type 'ProductId'
-    
-    console.log('Created user ID:', userId);
-    console.log('Created product ID:', productId);
-    
-    // Demo pagination params with utility
-    const paginationParams = createPagination({ page: 2, pageSize: 20 });
-    console.log('Pagination params:', paginationParams);
-    
-    // Demo type-safe API responses
-    const mockProductResponse: API.ProductListResponse = {
-      success: true,
-      data: [],
-      timestamp: new Date().toISOString(),
-      totalCount: 0,
-      page: 1,
-      pageSize: 10,
-      totalPages: 0
-    };
-    
-    console.log('Mock API response:', mockProductResponse);
+  // Example of using branded types
+  const createProductId = (id: string): ProductId => id as ProductId;
+  const productId = createProductId("prod_123");
+  
+  // Example of optional types
+  type OptionalUser = Optional<User, 'avatar' | 'lastLogin'>;
+  
+  // Example of deep partial types
+  type EditableProduct = DeepPartial<Product>;
+  
+  // Example of a function using the FormatAction type
+  const applyFormat = (format: FormatAction, text: string): string => {
+    switch (format) {
+      case 'bold':
+        return `<strong>${text}</strong>`;
+      case 'italic':
+        return `<em>${text}</em>`;
+      case 'underline':
+        return `<u>${text}</u>`;
+      default:
+        return text;
+    }
   };
   
-  // Run the demo
-  React.useEffect(() => {
-    demoTypeConversion();
-  }, []);
+  // Example of using the pagination params
+  const pagination: PaginationParams = {
+    page: 1,
+    pageSize: 10,
+    totalCount: 100,
+    totalPages: 10
+  };
+  
+  // Example of using the filter params
+  const filter: FilterParams = {
+    field: 'price',
+    operator: 'gt',
+    value: 50
+  };
+  
+  // Example of using a validation schema
+  const validateContactForm = (data: any) => {
+    const result = contactFormSchema.safeParse(data);
+    return result.success;
+  };
   
   return (
-    <div className="container py-10">
-      <div className="space-y-6">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold">Centralized Type System Demo</h1>
-          <p className="text-muted-foreground mt-2">
-            Demonstrating the power of a well-organized TypeScript type system
-          </p>
-        </div>
-        
-        <Alert className="mb-8">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Type System Improvements</AlertTitle>
-          <AlertDescription>
-            This page demonstrates the centralized type system with proper type definitions,
-            API response types, form schemas, utility types, and branded types.
-            Check the browser console for additional demos.
-          </AlertDescription>
-        </Alert>
-        
-        <Tabs defaultValue="product-list">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="product-list">Product List Demo</TabsTrigger>
-            <TabsTrigger value="form-demo">Form Validation Demo</TabsTrigger>
-            <TabsTrigger value="type-info">Type System Info</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="product-list" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Product List with TypeScript</CardTitle>
-                <CardDescription>
-                  This component demonstrates using API response types with React Query.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProductListExample initialCategory="all" pageSize={6} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="form-demo" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Type-Safe Form Validation</CardTitle>
-                <CardDescription>
-                  This form uses centralized Zod schemas for consistent validation.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ContactFormExample 
-                  onSubmitSuccess={(data) => {
-                    console.log('Form submitted with data:', data);
-                  }} 
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="type-info" className="mt-4">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Centralized Type System</CardTitle>
-                  <CardDescription>
-                    Key features of our TypeScript type organization
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <h3 className="font-semibold">Type Files Structure</h3>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li><code>/types/models.ts</code> - Core data models</li>
-                    <li><code>/types/api.ts</code> - API response types</li>
-                    <li><code>/types/schemas.ts</code> - Zod validation schemas</li>
-                    <li><code>/types/utils.ts</code> - Utility types and helpers</li>
-                    <li><code>/types/shop.ts</code> - Shop-specific component types</li>
-                    <li><code>/types/admin.ts</code> - Admin-specific component types</li>
-                    <li><code>/types/index.ts</code> - Centralized exports</li>
-                  </ul>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Type Safety Benefits</CardTitle>
-                  <CardDescription>
-                    Why we've implemented this type system
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <h3 className="font-semibold">Key Advantages</h3>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>Consistent data structures across the application</li>
-                    <li>Better developer experience with autocompletion</li>
-                    <li>Reduced bugs from type mismatches</li>
-                    <li>Self-documenting code with JSDoc comments</li>
-                    <li>Easier onboarding for new developers</li>
-                    <li>Enhanced refactoring safety</li>
-                    <li>Improved code maintainability</li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">Type System Demo</h1>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Branded Types</h2>
+        <p className="mb-2">Product ID: {String(productId)}</p>
+        <p className="text-gray-600 text-sm">
+          Branded types provide type safety for string IDs to prevent them from being used interchangeably.
+        </p>
+        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
+          {`
+const createProductId = (id: string): ProductId => id as ProductId;
+const productId = createProductId("prod_123");
+
+// This would cause a type error:
+// const userId: UserId = productId; // Error!
+          `}
+        </pre>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Utility Types</h2>
+        <p className="mb-2">Optional, DeepPartial, etc.</p>
+        <p className="text-gray-600 text-sm">
+          Utility types provide powerful type transformations to ensure type safety.
+        </p>
+        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
+          {`
+type OptionalUser = Optional<User, 'avatar' | 'lastLogin'>;
+// The avatar and lastLogin fields are optional, but other fields are required
+
+type EditableProduct = DeepPartial<Product>;
+// All fields and nested fields are optional
+          `}
+        </pre>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Domain Types</h2>
+        <p className="mb-2">Product, User, CartItem, etc.</p>
+        <p className="text-gray-600 text-sm">
+          Domain types represent the core data structures of the application.
+        </p>
+        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
+          {`
+// Example of Product type
+interface Product {
+  id: ProductId;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  inStock: boolean;
+  rating: number;
+  reviewCount: number;
+  // etc.
+}
+          `}
+        </pre>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Validation Schemas</h2>
+        <p className="mb-2">Form validation with Zod</p>
+        <p className="text-gray-600 text-sm">
+          Validation schemas ensure that data meets specified requirements.
+        </p>
+        <pre className="bg-gray-100 p-4 rounded mt-4 overflow-x-auto">
+          {`
+// Contact form schema
+export const contactFormSchema = z.object({
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  message: z.string()
+    .min(10, { message: 'Message must be at least 10 characters' })
+    .max(2000, { message: 'Message must be less than 2000 characters' }),
+});
+          `}
+        </pre>
       </div>
     </div>
   );

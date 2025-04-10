@@ -1,24 +1,47 @@
 /**
- * Centralized Type System
+ * Type System Index
  * 
- * This file exports all type definitions from their respective modules,
- * providing a single import point for accessing the application's type system.
+ * This file serves as the central export point for all types.
+ * Import from this file to access the entire type system.
  */
 
-// Feature-specific component types
-import * as Admin from './admin';
-import * as Shop from './shop';
+// Re-export all types from their individual domain files
+export * from './admin';
+export * from './api';
+export * from './models';
+export * from './shop';
+export * from './schemas';
+export * from './utils';
 
-// Domain-specific types
-import * as API from './api';
-import * as Models from './models';
-import * as Schemas from './schemas';
+// Export any additional types or interfaces that don't fit elsewhere
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
 
-// Export everything as named imports
-export {
-  Admin,
-  Shop,
-  API,
-  Models,
-  Schemas
-};
+export interface FilterParams {
+  field: string;
+  operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'startsWith' | 'endsWith';
+  value: string | number | boolean;
+}
+
+// Export composite types built from the base types
+export interface ShoppingCartProps {
+  items: import('./shop').CartItem[];
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onRemoveItem?: (itemId: string) => void;
+  onClearCart?: () => void;
+  loading?: boolean;
+}
+
+export interface ShopHeaderProps {
+  query: string;
+  onQueryChange: (query: string) => void;
+  onSearch: () => void;
+  voiceSearchEnabled?: boolean;
+  cartItemCount: number;
+  onCartClick: () => void;
+  onLogoClick: () => void;
+}

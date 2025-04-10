@@ -2,43 +2,39 @@
  * API Types
  * 
  * This file contains type definitions for API requests and responses.
- * These types ensure consistency between frontend requests and backend responses.
+ * It ensures consistent typing for data sent to and received from the server.
  */
 
-import { Product, User, Album, Track, BlogPost, TourDate, CollaborationProposal, ContactMessage } from './models';
+import { Product, User, BlogPost, Track, Album, TourDate } from './models';
+import { ProductId } from './utils';
 
 /**
- * Base API response structure with common fields
+ * Common API response structure
  */
-export interface BaseResponse {
+export interface ApiResponse<T> {
   success: boolean;
+  data: T;
+  message?: string;
   timestamp: string;
 }
 
 /**
- * Error response including error details
+ * Error response
  */
-export interface ErrorResponse extends BaseResponse {
+export interface ApiErrorResponse {
   success: false;
   error: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: any;
   };
+  timestamp: string;
 }
 
 /**
- * Generic successful response with data
+ * Paginated response
  */
-export interface SuccessResponse<T> extends BaseResponse {
-  success: true;
-  data: T;
-}
-
-/**
- * API response with pagination information
- */
-export interface PaginatedResponse<T> extends SuccessResponse<T[]> {
+export interface PaginatedResponse<T> extends ApiResponse<T[]> {
   page: number;
   pageSize: number;
   totalCount: number;
@@ -46,101 +42,120 @@ export interface PaginatedResponse<T> extends SuccessResponse<T[]> {
 }
 
 /**
- * Union type for API responses
+ * Product list response
  */
-export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
+export interface ProductListResponse extends PaginatedResponse<Product> {}
 
 /**
- * Union type for paginated API responses
+ * Product detail response
  */
-export type PaginatedApiResponse<T> = PaginatedResponse<T> | ErrorResponse;
+export interface ProductDetailResponse extends ApiResponse<Product> {
+  relatedProducts?: Product[];
+}
 
 /**
- * Product list response with pagination
+ * Create product request
  */
-export type ProductListResponse = PaginatedResponse<Product>;
+export interface CreateProductRequest {
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  categories?: string[];
+  inStock: boolean;
+  tags?: string[];
+  featured?: boolean;
+}
 
 /**
- * Product details response
+ * Update product request
  */
-export type ProductResponse = SuccessResponse<Product>;
+export interface UpdateProductRequest {
+  id: ProductId;
+  name?: string;
+  description?: string;
+  price?: number;
+  image?: string;
+  category?: string;
+  categories?: string[];
+  inStock?: boolean;
+  tags?: string[];
+  featured?: boolean;
+}
 
 /**
- * User profile response
+ * Authentication request
  */
-export type UserProfileResponse = SuccessResponse<User>;
-
-/**
- * User list response with pagination
- */
-export type UserListResponse = PaginatedResponse<User>;
-
-/**
- * Album list response with pagination
- */
-export type AlbumListResponse = PaginatedResponse<Album>;
-
-/**
- * Album details response
- */
-export type AlbumResponse = SuccessResponse<Album>;
-
-/**
- * Track list response with pagination
- */
-export type TrackListResponse = PaginatedResponse<Track>;
-
-/**
- * Blog post list response with pagination
- */
-export type BlogPostListResponse = PaginatedResponse<BlogPost>;
-
-/**
- * Blog post details response
- */
-export type BlogPostResponse = SuccessResponse<BlogPost>;
-
-/**
- * Tour dates response with pagination
- */
-export type TourDateListResponse = PaginatedResponse<TourDate>;
-
-/**
- * Collaboration proposals response with pagination
- */
-export type CollaborationProposalListResponse = PaginatedResponse<CollaborationProposal>;
-
-/**
- * Contact message submission response
- */
-export type ContactMessageResponse = SuccessResponse<ContactMessage>;
-
-/**
- * Authentication login request 
- */
-export interface LoginRequest {
+export interface AuthRequest {
   email: string;
   password: string;
   rememberMe?: boolean;
 }
 
 /**
- * Authentication registration request
+ * Authentication response
+ */
+export interface AuthResponse extends ApiResponse<{
+  user: User;
+  token: string;
+  expiresAt: string;
+}> {}
+
+/**
+ * Register request
  */
 export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
-  acceptTerms: boolean;
 }
 
 /**
- * Authentication response
+ * Contact form request
  */
-export interface AuthResponse extends BaseResponse {
-  success: true;
-  user: User;
-  token: string;
-  expiresAt: string;
+export interface ContactFormRequest {
+  name: string;
+  email: string;
+  message: string;
+  subject?: string;
+}
+
+/**
+ * Newsletter subscription request
+ */
+export interface NewsletterSubscriptionRequest {
+  email: string;
+  name?: string;
+  subscribeToUpdates?: boolean;
+}
+
+/**
+ * Blog posts response
+ */
+export interface BlogPostsResponse extends PaginatedResponse<BlogPost> {
+  categories?: string[];
+  featuredPost?: BlogPost;
+}
+
+/**
+ * Music tracks response
+ */
+export interface MusicTracksResponse extends PaginatedResponse<Track> {
+  featuredTrack?: Track;
+}
+
+/**
+ * Albums response
+ */
+export interface AlbumsResponse extends PaginatedResponse<Album> {
+  featuredAlbum?: Album;
+}
+
+/**
+ * Tour dates response
+ */
+export interface TourDatesResponse extends PaginatedResponse<TourDate> {
+  upcomingDates?: TourDate[];
 }

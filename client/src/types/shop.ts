@@ -1,29 +1,36 @@
 /**
- * Shop Component Types
+ * Shop Types
  * 
- * This file centralizes type definitions for shop-related components.
- * It provides consistent typing for shop UI components, modals, and pages.
+ * This file contains type definitions for shop-related components and features.
+ * These types provide a consistent interface for shop functionality.
  */
 
+import { ReactNode } from 'react';
 import { Product, CartItem } from './models';
 import { ProductId } from './utils';
 
 /**
- * Shop page props
+ * Shopping cart context
  */
-export interface ShopPageProps {
-  initialCategory?: string;
-  featuredProductId?: ProductId;
+export interface ShoppingCartContext {
+  items: CartItem[];
+  addItem: (product: Product, quantity?: number) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  itemCount: number;
+  subtotal: number;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
 /**
- * Product grid props
+ * Shopping cart props
  */
-export interface ProductGridProps {
-  products: Product[];
-  loading?: boolean;
-  error?: string;
-  onProductClick?: (productId: ProductId) => void;
+export interface ShoppingCartProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  className?: string;
 }
 
 /**
@@ -31,173 +38,209 @@ export interface ProductGridProps {
  */
 export interface ProductCardProps {
   product: Product;
-  onAddToCart?: () => void;
-  onViewDetails?: () => void;
-  compact?: boolean;
+  onAddToCart?: (product: Product) => void;
+  onQuickView?: (product: Product) => void;
+  layout?: 'grid' | 'list';
+  className?: string;
+  hoverEffect?: boolean;
+  showRating?: boolean;
+  showCategory?: boolean;
+  showPrice?: boolean;
+  showActions?: boolean;
+}
+
+/**
+ * Product list props
+ */
+export interface ProductListProps {
+  products: Product[];
+  onAddToCart?: (product: Product) => void;
+  onQuickView?: (product: Product) => void;
+  layout?: 'grid' | 'list';
+  className?: string;
+  loading?: boolean;
+  emptyMessage?: string;
+  columns?: 1 | 2 | 3 | 4;
+  showFilter?: boolean;
+  onFilterChange?: (filter: ShopFilter) => void;
+  filter?: ShopFilter;
+}
+
+/**
+ * Shop filter
+ */
+export interface ShopFilter {
+  categories?: string[];
+  priceRange?: [number, number];
+  rating?: number;
+  sortBy?: 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | 'rating';
+  search?: string;
+  inStock?: boolean;
+  tags?: string[];
+}
+
+/**
+ * Product detail props
+ */
+export interface ProductDetailProps {
+  product: Product;
+  onAddToCart?: (product: Product, quantity: number) => void;
+  relatedProducts?: Product[];
+  loading?: boolean;
+  className?: string;
+}
+
+/**
+ * Shop page props
+ */
+export interface ShopPageProps {
+  products?: Product[];
+  loading?: boolean;
+  filter?: ShopFilter;
+  onFilterChange?: (filter: ShopFilter) => void;
+  title?: string;
+  description?: string;
+  heading?: string;
+  subheading?: string;
+  className?: string;
+  sidebarPosition?: 'left' | 'right';
+  showSidebar?: boolean;
+  showHeader?: boolean;
+  showBreadcrumbs?: boolean;
+}
+
+/**
+ * Shop sidebar props
+ */
+export interface ShopSidebarProps {
+  filter?: ShopFilter;
+  onFilterChange?: (filter: ShopFilter) => void;
+  categories?: { id: string; name: string }[];
+  className?: string;
+  position?: 'left' | 'right';
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+/**
+ * Shop header props
+ */
+export interface ShopHeaderProps {
+  title?: string;
+  description?: string;
+  heading?: string;
+  subheading?: string;
+  className?: string;
+  backgroundImage?: string;
+  showSearch?: boolean;
+  onSearch?: (search: string) => void;
+  showFilter?: boolean;
+  filter?: ShopFilter;
+  onFilterChange?: (filter: ShopFilter) => void;
+  children?: ReactNode;
+}
+
+/**
+ * Gallery image
+ */
+export interface GalleryImage {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
 }
 
 /**
  * Product gallery props
  */
 export interface ProductGalleryProps {
-  images: string[];
-  initialImage?: string;
+  images: GalleryImage[];
+  className?: string;
+  thumbnailPosition?: 'left' | 'right' | 'bottom';
+  zoomEnabled?: boolean;
+  fullscreenEnabled?: boolean;
+  initialIndex?: number;
+  onImageChange?: (index: number) => void;
 }
 
 /**
- * Product filter props
+ * Quick view props
  */
-export interface ProductFilterProps {
-  categories: string[];
-  selectedCategory?: string;
-  onCategoryChange: (category: string) => void;
-  priceRange?: [number, number];
-  onPriceRangeChange?: (range: [number, number]) => void;
-  inStockOnly?: boolean;
-  onInStockChange?: (inStock: boolean) => void;
+export interface QuickViewProps {
+  product: Product;
+  isOpen: boolean;
+  onClose: () => void;
+  onAddToCart?: (product: Product, quantity: number) => void;
 }
 
-/**
- * Product sort props
- */
-export interface ProductSortProps {
-  sortOrder: ProductSortOrder;
-  onSortChange: (sortOrder: ProductSortOrder) => void;
+// Speech recognition types for shop voice search
+export interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+  interpretation: any;
 }
 
-/**
- * Product sort order
- */
-export type ProductSortOrder = 'price-asc' | 'price-desc' | 'newest' | 'popular' | 'rating';
-
-/**
- * Product search props
- */
-export interface ProductSearchProps {
-  query: string;
-  onQueryChange: (query: string) => void;
-  onSearch: () => void;
-  placeholder?: string;
-  voiceSearchEnabled?: boolean;
+export interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+  item(index: number): SpeechRecognitionResult;
 }
 
-/**
- * Cart display props
- */
-export interface CartDisplayProps {
-  items: CartItem[];
-  onUpdateQuantity?: (itemId: string, quantity: number) => void;
-  onRemoveItem?: (itemId: string) => void;
-  onClearCart?: () => void;
-  loading?: boolean;
+export interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  isFinal: boolean;
 }
 
-/**
- * Cart summary props
- */
-export interface CartSummaryProps {
-  subtotal: number;
-  tax?: number;
-  shipping?: number;
-  discount?: number;
-  total: number;
-  currency?: string;
-  onCheckout?: () => void;
-  checkoutDisabled?: boolean;
+export interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
 }
 
-/**
- * Checkout form props
- */
-export interface CheckoutFormProps {
-  onSubmit: (data: CheckoutFormData) => void;
-  isSubmitting?: boolean;
-  errors?: Record<string, string>;
-}
-
-/**
- * Checkout form data
- */
-export interface CheckoutFormData {
-  email: string;
-  shippingAddress: {
-    fullName: string;
-    line1: string;
-    line2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-  };
-  billingAddressSameAsShipping: boolean;
-  billingAddress?: {
-    fullName: string;
-    line1: string;
-    line2?: string;
-    city: string;
-    state: string;
-    postalCode: string;
-    country: string;
-    phone?: string;
-  };
-  paymentMethod: 'card' | 'paypal';
-  savePaymentInfo?: boolean;
-}
-
-/**
- * Payment form props
- */
-export interface PaymentFormProps {
-  amount: number;
-  currency?: string;
-  onPaymentSuccess: () => void;
-  onPaymentError: (error: string) => void;
-}
-
-/**
- * Order confirmation props
- */
-export interface OrderConfirmationProps {
-  orderNumber: string;
-  orderDate: string;
-  estimatedDelivery?: string;
-  items: CartItem[];
-  total: number;
-  onContinueShopping: () => void;
-  onViewOrderDetails: () => void;
-}
-
-/**
- * Order tracking props
- */
-export interface OrderTrackingProps {
-  orderNumber: string;
-  onTrackOrder: (orderNumber: string) => void;
-}
-
-/**
- * Collaborative shopping props
- */
-export interface CollaborativeShoppingProps {
-  roomId?: string;
-  onCreateRoom?: () => void;
-  onJoinRoom?: (roomId: string) => void;
-  onLeaveRoom?: () => void;
-}
-
-/**
- * Speech recognition interface for voice search
- */
 export interface SpeechRecognitionConstructor {
   new (): SpeechRecognition;
+  prototype: SpeechRecognition;
+}
+
+export interface SpeechRecognition extends EventTarget {
+  grammars: any;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  serviceURI: string;
+  onstart: (event: Event) => void;
+  onend: (event: Event) => void;
+  onerror: (event: Event) => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onnomatch: (event: Event) => void;
+  onaudiostart: (event: Event) => void;
+  onaudioend: (event: Event) => void;
+  onsoundstart: (event: Event) => void;
+  onsoundend: (event: Event) => void;
+  onspeechstart: (event: Event) => void;
+  onspeechend: (event: Event) => void;
+  start(): void;
+  stop(): void;
+  abort(): void;
 }
 
 /**
  * Voice search props
  */
 export interface VoiceSearchProps {
-  onResult: (transcript: string) => void;
-  onError?: (error: string) => void;
+  onSearch?: (query: string) => void;
+  onTextChange?: (text: string) => void;
+  className?: string;
+  placeholder?: string;
+  autoFocus?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  buttonPosition?: 'left' | 'right';
+  searchOnSubmit?: boolean;
+  searchOnInputChange?: boolean;
+  initialQuery?: string;
+  buttonOnly?: boolean;
+  disabled?: boolean;
   language?: string;
 }
