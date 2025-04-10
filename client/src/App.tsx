@@ -78,6 +78,7 @@ import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
+import EditButtonPage from '@/pages/admin/EditButtonPage';
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -151,6 +152,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/posts" component={PostsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/music" component={MusicPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />

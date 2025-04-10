@@ -1,0 +1,115 @@
+/* 
+  admin.css
+  Styles for admin components, including positioning for edit buttons
+*/
+
+/* Base positioning styles for edit buttons */
+.edit-button-container {
+  position: relative;
+}
+
+/* Absolute positioning for edit buttons */
+.edit-button-absolute {
+  position: absolute;
+  z-index: 10;
+}
+
+/* Top-right positioning */
+.edit-button-top-right {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+/* Top-left positioning */
+.edit-button-top-left {
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+/* Bottom-right positioning */
+.edit-button-bottom-right {
+  bottom: 0.5rem;
+  right: 0.5rem;
+}
+
+/* Bottom-left positioning */
+.edit-button-bottom-left {
+  bottom: 0.5rem;
+  left: 0.5rem;
+}
+
+/* Inline positioning for text content */
+.edit-button-inline {
+  display: inline-flex;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Hover reveal effect */
+.edit-button-hover-reveal {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.edit-button-container:hover .edit-button-hover-reveal,
+.group:hover .edit-button-hover-reveal {
+  opacity: 1;
+}
+
+/* For buttons that should appear on text hover */
+.text-with-edit {
+  position: relative;
+  display: inline-block;
+}
+
+.text-with-edit .edit-button {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.text-with-edit:hover .edit-button {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* For buttons that float over images */
+.image-with-edit {
+  position: relative;
+  display: inline-block;
+}
+
+.image-with-edit .edit-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Make edit button container span full width for alignment */
+.edit-button-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* For content blocks with multiple editable sections */
+.editable-content-block {
+  position: relative;
+}
+
+.editable-content-block .edit-button-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.editable-content-block:hover .edit-button-panel {
+  opacity: 1;
+}
