@@ -6,8 +6,7 @@
  */
 
 import { ReactNode } from 'react';
-import type { Product, CartItem } from './models';
-import { ProductId } from './utils';
+import { CartItem, Product } from './models';
 
 /**
  * Shopping cart context
@@ -31,6 +30,11 @@ export interface ShoppingCartProps {
   isOpen?: boolean;
   onClose?: () => void;
   className?: string;
+  cartItems?: CartItem[]; 
+  onUpdateQuantity?: (id: string, quantity: number) => void;
+  onRemoveItem?: (id: string) => void;
+  onCheckout?: () => void;
+  total?: number;
 }
 
 /**
@@ -138,6 +142,19 @@ export interface ShopHeaderProps {
   filter?: ShopFilter;
   onFilterChange?: (filter: ShopFilter) => void;
   children?: ReactNode;
+  onVoiceSearch?: (transcript: string) => void;
+  cartItemCount?: number;
+  searchQuery?: string;
+  setSearchQuery?: React.Dispatch<React.SetStateAction<string>>;
+  allCategories?: Array<{ id: string; name: string }>;
+  categoryFilter?: string;
+  setCategoryFilter?: React.Dispatch<React.SetStateAction<string>>;
+  priceRange?: [number, number];
+  setPriceRange?: React.Dispatch<React.SetStateAction<[number, number]>>;
+  sortOrder?: string;
+  setSortOrder?: React.Dispatch<React.SetStateAction<string>>;
+  viewType?: 'grid' | 'list';
+  setViewType?: React.Dispatch<React.SetStateAction<'grid' | 'list'>>;
 }
 
 /**
@@ -173,7 +190,9 @@ export interface QuickViewProps {
   onAddToCart?: (product: Product, quantity: number) => void;
 }
 
-// Speech recognition types for shop voice search
+/**
+ * SpeechRecognition event for voice search
+ */
 export interface SpeechRecognitionEvent extends Event {
   results: SpeechRecognitionResultList;
   resultIndex: number;
