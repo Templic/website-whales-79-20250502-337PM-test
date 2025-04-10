@@ -513,11 +513,14 @@ export const SacredGeometryCss: React.FC = () => (
       box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
     }
     
-    .text-container {
+    .sacred-geometry-text {
       display: -webkit-box;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
     }
     
     /* Mobile text optimizations */
@@ -530,10 +533,19 @@ export const SacredGeometryCss: React.FC = () => (
       .sacred-geometry-content p {
         font-size: 0.75rem !important;
         line-height: 1.2 !important;
+        margin-bottom: 0.5rem !important;
       }
       
       .sacred-geometry-content {
         padding: 0.75rem !important;
+      }
+      
+      .sacred-geometry-content .text-xl {
+        font-size: 1rem !important;
+      }
+      
+      .sacred-geometry-content .text-lg {
+        font-size: 0.875rem !important;
       }
     }
     
@@ -547,11 +559,30 @@ export const SacredGeometryCss: React.FC = () => (
       .sacred-geometry-content p {
         font-size: 0.85rem !important;
         line-height: 1.3 !important;
+        margin-bottom: 0.75rem !important;
       }
       
       .sacred-geometry-content {
         padding: 1rem !important;
       }
+      
+      .sacred-geometry-content .text-xl {
+        font-size: 1.15rem !important;
+      }
+      
+      .sacred-geometry-content .text-lg {
+        font-size: 1rem !important;
+      }
+    }
+    
+    /* Ensure buttons and interactive elements have enough touch area */
+    .sacred-geometry-content button,
+    .sacred-geometry-content a {
+      min-height: 36px;
+      min-width: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
   `}</style>
 );

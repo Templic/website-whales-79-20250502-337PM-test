@@ -1,0 +1,117 @@
+/* 
+  cosmic-containers.css
+  Shared styles for geometric containers and mobile optimizations
+*/
+
+/* Base styles for geometric shape containers */
+.sacred-geometry-container {
+  position: relative;
+  transition: transform 0.3s ease-out;
+}
+
+.sacred-geometry-container:hover {
+  transform: translateY(-2px);
+}
+
+/* Shared text styles within containers */
+.sacred-geometry-content {
+  padding: 1rem;
+  z-index: 1;
+  position: relative;
+}
+
+.sacred-geometry-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Mobile text optimizations */
+@media (max-width: 640px) {
+  .sacred-geometry-content {
+    padding: 0.75rem !important;
+  }
+  
+  .sacred-geometry-content h1,
+  .sacred-geometry-content h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .sacred-geometry-content h3,
+  .sacred-geometry-content h4 {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .sacred-geometry-content p {
+    font-size: 0.75rem !important;
+    line-height: 1.2 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .sacred-geometry-content .text-xl {
+    font-size: 1rem !important;
+  }
+  
+  .sacred-geometry-content .text-lg {
+    font-size: 0.875rem !important;
+  }
+  
+  /* Adjust line clamp for small screens */
+  .sacred-geometry-text {
+    -webkit-line-clamp: 6 !important;
+  }
+}
+
+/* Tablet text optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .sacred-geometry-content {
+    padding: 1rem !important;
+  }
+  
+  .sacred-geometry-content h1,
+  .sacred-geometry-content h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .sacred-geometry-content h3,
+  .sacred-geometry-content h4 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  
+  .sacred-geometry-content p {
+    font-size: 0.85rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .sacred-geometry-content .text-xl {
+    font-size: 1.15rem !important;
+  }
+  
+  .sacred-geometry-content .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  /* Adjust line clamp for medium screens */
+  .sacred-geometry-text {
+    -webkit-line-clamp: 8 !important;
+  }
+}
+
+/* Ensure buttons and interactive elements have enough touch area */
+.sacred-geometry-content button,
+.sacred-geometry-content a {
+  min-height: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
