@@ -19,7 +19,9 @@
     "downlevelIteration": true,
     "paths": {
       "@/*": ["./client/src/*"],
-      "@shared/*": ["./shared/*"]
+      "@shared/*": ["./shared/*"],
+      "@types": ["./client/src/types"],
+      "@types/*": ["./client/src/types/*"]
     }
   }
 }
