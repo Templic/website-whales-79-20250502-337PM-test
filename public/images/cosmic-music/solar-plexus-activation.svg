@@ -1,119 +1,158 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
-  <!-- Background gradient -->
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Definitions -->
   <defs>
-    <radialGradient id="solarGradient" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#FFE082" />
-      <stop offset="60%" stop-color="#FFB300" />
-      <stop offset="100%" stop-color="#FF8F00" />
+    <!-- Solar plexus chakra background -->
+    <radialGradient id="solar-plexus-bg" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#FFF265" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#FFD52E" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#F3B700" stop-opacity="0.3"/>
     </radialGradient>
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="10" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    
+    <!-- Deep space background -->
+    <linearGradient id="space-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000C1D"/>
+      <stop offset="50%" stop-color="#091E42"/>
+      <stop offset="100%" stop-color="#0C2A52"/>
+    </linearGradient>
+    
+    <!-- Energy pulse gradient -->
+    <linearGradient id="energy-pulse" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFF265" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#FFD52E" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#F3B700" stop-opacity="0"/>
+    </linearGradient>
+    
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
     </filter>
   </defs>
   
-  <!-- Dark cosmic background -->
-  <rect width="500" height="500" fill="#1A237E" />
+  <!-- Background -->
+  <rect width="400" height="400" fill="url(#space-bg)"/>
   
-  <!-- Star field -->
-  <g>
-    <circle cx="50" cy="60" r="1" fill="white" opacity="0.8" />
-    <circle cx="120" cy="40" r="1.5" fill="white" opacity="0.7" />
-    <circle cx="200" cy="90" r="1" fill="white" opacity="0.9" />
-    <circle cx="280" cy="30" r="1.2" fill="white" opacity="0.8" />
-    <circle cx="350" cy="70" r="1" fill="white" opacity="0.7" />
-    <circle cx="420" cy="90" r="1.4" fill="white" opacity="0.9" />
-    <circle cx="470" cy="50" r="1" fill="white" opacity="0.8" />
-    <circle cx="40" cy="150" r="1.3" fill="white" opacity="0.7" />
-    <circle cx="90" cy="200" r="1" fill="white" opacity="0.9" />
-    <circle cx="30" cy="280" r="1.2" fill="white" opacity="0.8" />
-    <circle cx="70" cy="350" r="1" fill="white" opacity="0.7" />
-    <circle cx="50" cy="420" r="1.4" fill="white" opacity="0.9" />
-    <circle cx="90" cy="470" r="1" fill="white" opacity="0.8" />
-    <circle cx="150" cy="450" r="1.3" fill="white" opacity="0.7" />
-    <circle cx="200" cy="470" r="1" fill="white" opacity="0.9" />
-    <circle cx="280" cy="450" r="1.2" fill="white" opacity="0.8" />
-    <circle cx="350" cy="480" r="1" fill="white" opacity="0.7" />
-    <circle cx="420" cy="450" r="1.4" fill="white" opacity="0.9" />
-    <circle cx="470" cy="420" r="1" fill="white" opacity="0.8" />
-    <circle cx="450" cy="350" r="1.3" fill="white" opacity="0.7" />
-    <circle cx="480" cy="280" r="1" fill="white" opacity="0.9" />
-    <circle cx="450" cy="200" r="1.2" fill="white" opacity="0.8" />
-    <circle cx="480" cy="150" r="1" fill="white" opacity="0.7" />
-    <!-- Additional stars -->
-    <circle cx="150" cy="150" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="350" cy="150" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="150" cy="350" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="350" cy="350" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="250" cy="150" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="250" cy="350" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="150" cy="250" r="0.8" fill="white" opacity="0.6" />
-    <circle cx="350" cy="250" r="0.8" fill="white" opacity="0.6" />
+  <!-- Stars (small, subtle) -->
+  <g id="stars">
+    <circle cx="40" cy="30" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="80" cy="60" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="120" cy="40" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="160" cy="70" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="200" cy="30" r="0.7" fill="white" opacity="0.7"/>
+    <circle cx="240" cy="50" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="280" cy="40" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="320" cy="60" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="360" cy="30" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="60" cy="100" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="100" cy="110" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="140" cy="90" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="180" cy="120" r="0.7" fill="white" opacity="0.7"/>
+    <circle cx="220" cy="100" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="260" cy="110" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="300" cy="90" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="340" cy="120" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="20" cy="150" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="60" cy="170" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="100" cy="160" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="140" cy="180" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="260" cy="180" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="300" cy="150" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="340" cy="170" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="380" cy="160" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="40" cy="240" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="80" cy="220" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="120" cy="250" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="160" cy="230" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="240" cy="230" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="280" cy="240" r="0.7" fill="white" opacity="0.7"/>
+    <circle cx="320" cy="220" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="360" cy="250" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="20" cy="300" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="60" cy="280" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="100" cy="310" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="140" cy="290" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="180" cy="310" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="220" cy="280" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="260" cy="300" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="300" cy="290" r="0.7" fill="white" opacity="0.7"/>
+    <circle cx="340" cy="310" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="380" cy="280" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="40" cy="350" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="80" cy="370" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="120" cy="340" r="0.5" fill="white" opacity="0.7"/>
+    <circle cx="160" cy="360" r="0.6" fill="white" opacity="0.6"/>
+    <circle cx="200" cy="350" r="0.7" fill="white" opacity="0.7"/>
+    <circle cx="240" cy="370" r="0.5" fill="white" opacity="0.6"/>
+    <circle cx="280" cy="340" r="0.6" fill="white" opacity="0.7"/>
+    <circle cx="320" cy="360" r="0.7" fill="white" opacity="0.6"/>
+    <circle cx="360" cy="350" r="0.5" fill="white" opacity="0.7"/>
   </g>
   
-  <!-- Solar Plexus Geometric Pattern -->
-  <g transform="translate(250, 250)">
-    <!-- Glowing center -->
-    <circle cx="0" cy="0" r="90" fill="url(#solarGradient)" filter="url(#glow)" opacity="0.9" />
+  <!-- Solar Plexus Chakra Symbol (Manipura) -->
+  <g filter="url(#glow)">
+    <!-- Central energy core -->
+    <circle cx="200" cy="200" r="60" fill="url(#solar-plexus-bg)" opacity="0.8"/>
     
-    <!-- Solar Plexus Chakra Symbol -->
-    <g transform="scale(1.4)">
-      <!-- Ten-petaled lotus symbolizing the Solar Plexus chakra -->
-      <g transform="rotate(0)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(36)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(72)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(108)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(144)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(180)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(216)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(252)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(288)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      <g transform="rotate(324)">
-        <path d="M 0,-65 Q 15,-55 0,-45 Q -15,-55 0,-65" fill="#FFC107" opacity="0.9" />
-      </g>
-      
-      <!-- Triangular core of the Solar Plexus chakra -->
-      <polygon points="0,-30 26,15 -26,15" fill="#FFEB3B" opacity="0.95" />
-    </g>
+    <!-- Yellow triangular symbol (traditional solar plexus chakra symbol) -->
+    <path d="M200,140 L260,230 L140,230 Z" 
+          stroke="#F3B700" 
+          stroke-width="5" 
+          fill="none" 
+          opacity="0.9"/>
     
-    <!-- Energy wave patterns -->
+    <!-- 528Hz frequency visualization - sine waves -->
+    <path d="M120,200 C140,180 160,220 180,200 C200,180 220,220 240,200 C260,180 280,220 300,200" 
+          stroke="#F3B700" 
+          stroke-width="3" 
+          fill="none" 
+          opacity="0.8"/>
+    
+    <!-- Frequency number -->
+    <text x="200" y="260" 
+          font-family="Arial" 
+          font-size="18" 
+          fill="#FFD52E" 
+          text-anchor="middle" 
+          opacity="0.9"
+          filter="url(#glow)">
+      528 Hz
+    </text>
+    
+    <!-- Energy rays -->
     <g opacity="0.5">
-      <circle cx="0" cy="0" r="115" fill="none" stroke="#FFC107" stroke-width="1" />
-      <circle cx="0" cy="0" r="125" fill="none" stroke="#FFC107" stroke-width="0.7" />
-      <circle cx="0" cy="0" r="135" fill="none" stroke="#FFC107" stroke-width="0.5" />
+      <line x1="200" y1="120" x2="200" y2="80" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="240" y1="140" x2="270" y2="110" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="260" y1="180" x2="300" y2="180" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="240" y1="220" x2="270" y2="250" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="200" y1="240" x2="200" y2="280" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="160" y1="220" x2="130" y2="250" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="140" y1="180" x2="100" y2="180" stroke="url(#energy-pulse)" stroke-width="2"/>
+      <line x1="160" y1="140" x2="130" y2="110" stroke="url(#energy-pulse)" stroke-width="2"/>
     </g>
     
-    <!-- Frequency waves (representing 528 Hz) -->
-    <g opacity="0.7" stroke="#FFD54F" stroke-width="1.5" fill="none">
-      <path d="M -180,0 Q -160,20 -140,0 Q -120,-20 -100,0 Q -80,20 -60,0 Q -40,-20 -20,0 Q 0,20 20,0 Q 40,-20 60,0 Q 80,20 100,0 Q 120,-20 140,0 Q 160,20 180,0" />
+    <!-- Small energy particles -->
+    <circle cx="200" cy="80" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="270" cy="110" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="300" cy="180" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="270" cy="250" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="200" cy="280" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="130" cy="250" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="100" cy="180" r="3" fill="#FFF265" opacity="0.8"/>
+    <circle cx="130" cy="110" r="3" fill="#FFF265" opacity="0.8"/>
+    
+    <!-- Ten-petaled lotus (traditional solar plexus has 10 petals) -->
+    <g opacity="0.6">
+      <path d="M200,140 Q210,110 220,140" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M220,140 Q240,115 240,150" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M240,150 Q260,135 250,170" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M250,170 Q265,160 250,190" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M250,190 Q260,210 235,200" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M235,200 Q240,220 215,215" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M215,215 Q210,240 190,215" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M190,215 Q170,230 170,200" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M170,200 Q150,210 160,180" stroke="#FFD52E" stroke-width="2" fill="none"/>
+      <path d="M160,180 Q145,170 165,160" stroke="#FFD52E" stroke-width="2" fill="none"/>
     </g>
   </g>
-  
-  <!-- Subtle cosmic nebula effects -->
-  <g opacity="0.15">
-    <ellipse cx="140" cy="140" rx="90" ry="70" fill="#7B1FA2" />
-    <ellipse cx="350" cy="380" rx="100" ry="80" fill="#1A237E" />
-  </g>
-  
-  <!-- Text label for frequency -->
-  <text x="250" y="420" font-family="Arial, sans-serif" font-size="16" fill="#FFD54F" text-anchor="middle" font-weight="bold">528 Hz</text>
-  <text x="250" y="445" font-family="Arial, sans-serif" font-size="14" fill="#EEEEEE" text-anchor="middle">Solar Plexus Activation</text>
 </svg>
