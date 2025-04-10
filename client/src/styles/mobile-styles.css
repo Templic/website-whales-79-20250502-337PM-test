@@ -1,0 +1,138 @@
+/* Mobile and tablet optimizations */
+
+/* Base typography adjustments for mobile */
+@media (max-width: 640px) {
+  /* Increase base text size for readability */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* More prominent headings on mobile */
+  h1 {
+    font-size: 2rem !important; /* 32px */
+    line-height: 1.2 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  h2 {
+    font-size: 1.75rem !important; /* 28px */
+    line-height: 1.2 !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  h3 {
+    font-size: 1.5rem !important; /* 24px */
+    line-height: 1.3 !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Improve paragraph readability */
+  p {
+    font-size: 1rem !important; /* 16px */
+    line-height: 1.5 !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  /* Reduce side margins to use more of the screen space */
+  .container, section {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  
+  /* Button size adjustments for touchscreens */
+  button, .btn {
+    padding: 0.5rem 1rem !important;
+    min-height: 2.5rem !important;
+    font-size: 1rem !important;
+    touch-action: manipulation;
+  }
+  
+  /* Image display adjustments */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+  }
+  
+  .landscape-image {
+    width: 100% !important;
+    max-height: 250px !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Typography for tablets */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* More proportional margins on tablet */
+  .container, section {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+  
+  /* Slightly larger buttons for tablets */
+  button, .btn {
+    padding: 0.5rem 1.25rem !important;
+    min-height: 2.75rem !important;
+  }
+}
+
+/* Common adjustments for both mobile and tablet */
+@media (max-width: 1024px) {
+  /* Ensure grid layouts are responsive */
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+  }
+  
+  /* Make sure flex layouts work well on smaller screens */
+  .flex-row {
+    flex-direction: column !important;
+  }
+  
+  /* Ensure images fit within their containers */
+  .image-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  
+  /* Adjust geometric containers */
+  .geometric-container {
+    margin: 0.5rem 0 !important;
+    width: 100% !important;
+  }
+  
+  /* Shop merchandise container adjustments */
+  .shop-item {
+    width: 100% !important;
+    margin: 0.5rem 0 !important;
+  }
+  
+  /* Ensure buttons in shop items fit width */
+  .shop-item-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Video embeds responsive */
+  .video-embed {
+    width: 100% !important;
+    aspect-ratio: 16/9 !important;
+    height: auto !important;
+  }
+  
+  /* Reduce margins and padding in cards and containers */
+  .card, .container-item {
+    margin: 0.75rem 0 !important;
+    padding: 1rem !important;
+  }
+}

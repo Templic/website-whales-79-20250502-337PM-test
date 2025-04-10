@@ -135,13 +135,13 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
       </div>
 
       <Tabs defaultValue="all" className="w-full">
-        <TabsList className="flex flex-wrap mb-8 gap-1 justify-center">
-          <TabsTrigger value="all" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">All Items</TabsTrigger>
-          <TabsTrigger value="jewelry" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Jewelry</TabsTrigger>
-          <TabsTrigger value="spiritual" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Spiritual</TabsTrigger>
-          <TabsTrigger value="clothing" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Clothing</TabsTrigger>
-          <TabsTrigger value="accessories" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Access.</TabsTrigger>
-          <TabsTrigger value="home" className="clip-path-octagon p-3 sm:p-4 flex-1 max-w-32 text-center cosmic-hover-glow">Home</TabsTrigger>
+        <TabsList className="flex flex-wrap mb-4 sm:mb-8 gap-1 justify-center">
+          <TabsTrigger value="all" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">All Items</TabsTrigger>
+          <TabsTrigger value="jewelry" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">Jewelry</TabsTrigger>
+          <TabsTrigger value="spiritual" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">Spiritual</TabsTrigger>
+          <TabsTrigger value="clothing" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">Clothing</TabsTrigger>
+          <TabsTrigger value="accessories" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">Access.</TabsTrigger>
+          <TabsTrigger value="home" className="clip-path-octagon p-2 sm:p-3 text-xs sm:text-sm flex-1 max-w-24 sm:max-w-32 text-center cosmic-hover-glow">Home</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-6">
@@ -185,18 +185,18 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
   };
 
   return (
-    <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
+    <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 shop-item"
       style={{
-        clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
+        clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Wider octagon shape for better content fit
         backgroundColor: "rgba(155, 135, 245, 0.05)"
       }}>
-      <div className="p-6 pt-8 pb-10 flex flex-col items-center"> {/* Increased padding to prevent text overflow */}
+      <div className="p-4 sm:p-6 pt-6 sm:pt-8 pb-8 sm:pb-10 flex flex-col items-center"> {/* Responsive padding */}
         {/* Octagon image container */}
         <div className="relative w-full aspect-[5/4] mb-3 overflow-hidden">
           <div 
             className="absolute inset-0 border border-purple-500/20 overflow-hidden flex items-center justify-center"
             style={{
-              clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
+              clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Matching octagon shape
               background: "linear-gradient(to bottom, rgba(75, 0, 130, 0.1), rgba(20, 20, 60, 0.2))"
             }}
           >
@@ -226,7 +226,7 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
           <div 
             className="absolute inset-0 border border-purple-500/30 pointer-events-none"
             style={{
-              clipPath: "polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)", // Wider octagon shape
+              clipPath: "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)", // Matching octagon shape
             }}
           ></div>
 
@@ -262,23 +262,23 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
         </div>
 
         <div className="w-full text-center">
-          <h3 className="text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
-          <p className="text-muted-foreground text-sm mb-3 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
+          <h3 className="text-base sm:text-lg font-semibold mb-1 line-clamp-1 overflow-ellipsis">{item.name}</h3>
+          <p className="text-muted-foreground text-sm mb-2 sm:mb-3 line-clamp-2 min-h-[2.5rem] overflow-hidden">{item.description}</p>
 
-          <div className="flex items-center justify-center mb-3">
+          <div className="flex items-center justify-center mb-2 sm:mb-3">
             <div className="flex items-center">
-              <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-              <span className="ml-1 text-sm font-medium">{item.rating}</span>
+              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-amber-400 fill-amber-400" />
+              <span className="ml-1 text-xs sm:text-sm font-medium">{item.rating}</span>
             </div>
-            <span className="mx-2 text-muted-foreground">·</span>
+            <span className="mx-1 sm:mx-2 text-muted-foreground">·</span>
             <span className="text-xs text-muted-foreground">{item.reviews} reviews</span>
           </div>
 
-          <div className="flex justify-between items-center px-2 mb-3">
+          <div className="flex justify-between items-center px-2 mb-2 sm:mb-3">
             <div>
               {item.discount ? (
                 <div className="flex flex-col items-start">
-                  <span className="text-lg font-bold">
+                  <span className="text-base sm:text-lg font-bold">
                     ${(item.price * (1 - item.discount / 100)).toFixed(2)}
                   </span>
                   <span className="text-xs text-muted-foreground line-through">
@@ -286,29 +286,29 @@ const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: 
                   </span>
                 </div>
               ) : (
-                <span className="text-lg font-bold">${item.price.toFixed(2)}</span>
+                <span className="text-base sm:text-lg font-bold">${item.price.toFixed(2)}</span>
               )}
             </div>
           </div>
 
-          {/* Two-button layout with View Product and Add to Cart */}
-          <div className="flex w-full gap-2 mt-1">
+          {/* Two-button layout with consistent naming as requested */}
+          <div className="shop-item-buttons flex w-full gap-2 mt-1">
             <Button 
               size="sm" 
               variant="outline"
-              className="flex-1 h-9 border-purple-400 text-purple-500 hover:text-purple-700 hover:bg-purple-50 cosmic-hover-glow"
+              className="flex-1 py-1 h-8 sm:h-9 text-xs sm:text-sm border-purple-400 text-purple-500 hover:text-purple-700 hover:bg-purple-50 cosmic-hover-glow"
               onClick={handleViewProduct}
             >
-              View Product
+              Explore
             </Button>
             
             <Button 
               size="sm" 
-              className="flex-1 h-9 gap-1 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
+              className="flex-1 py-1 h-8 sm:h-9 text-xs sm:text-sm gap-1 bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 border-0 cosmic-hover-glow"
               onClick={() => onAddToCart && onAddToCart(item)}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
-              Add to Cart
+              Buy Now
             </Button>
           </div>
         </div>

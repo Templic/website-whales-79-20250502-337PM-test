@@ -6,6 +6,7 @@
 @import url('./cosmic-styles.css');
 @import url('./components/cosmic/cosmic-animations.css');
 @import './styles/cosmic-theme.css';
+@import './styles/mobile-styles.css';
 
 @keyframes cosmic {
   0%, 100% {
