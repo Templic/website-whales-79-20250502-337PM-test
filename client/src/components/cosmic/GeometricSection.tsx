@@ -285,80 +285,147 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   };
 
   // Calculate content width based on shape type and the contentWidth prop
+  // Now with responsive widths for mobile devices
   const getContentWidthStyle = () => {
     if (typeof contentWidth === 'number') {
-      return `${contentWidth}px`;
+      // For numerical width, make it slightly narrower on mobile
+      return isMobile ? `${contentWidth * 0.9}px` : `${contentWidth}px`;
     }
+
+    // Helper to get mobile-adjusted width
+    const getMobileWidth = (standardWidth: string): string => {
+      // Parse the percentage and make it narrower on mobile
+      const percentage = parseInt(standardWidth);
+      if (!isNaN(percentage) && isMobile) {
+        // Reduce width by 10% on mobile to ensure better fit
+        const mobilePercentage = Math.max(percentage - 10, 50); // Don't go below 50%
+        return `${mobilePercentage}%`;
+      }
+      return standardWidth;
+    };
 
     // Default widths based on shape type if textContained is true
     if (textContained) {
       switch(shape) {
         case 'diamond':
         case 'rounded-diamond':
-          return '70%'; // Diamond shapes need narrower content
+          return getMobileWidth('70%'); // Diamond shapes need narrower content
         case 'hexagon':
         case 'symmetric-hexagon':
         case 'octagon':
-          return '75%'; // Hexagons need moderately narrower content
+          return getMobileWidth('75%'); // Hexagons need moderately narrower content
         case 'shield':
         case 'pentagon':
         case 'pointed-pentagon':
         case 'pentagram':
-          return '80%'; // These shapes need somewhat narrower content
+          return getMobileWidth('80%'); // These shapes need somewhat narrower content
         case 'wave':
-          return '85%'; // Wave shape needs slightly narrower content
+          return getMobileWidth('85%'); // Wave shape needs slightly narrower content
         case 'trapezoid':
         case 'parallelogram':
-          return '85%'; // Trapezoid shapes need slightly narrower content
+          return getMobileWidth('85%'); // Trapezoid shapes need slightly narrower content
         case 'rectangular':
-          return '95%'; // Rectangular shapes can use almost full width
+          return getMobileWidth('95%'); // Rectangular shapes can use almost full width
         default:
-          return '80%'; // Default safe value for any shape
+          return getMobileWidth('80%'); // Default safe value for any shape
       }
     }
 
     // If textContained is false or contentWidth is explicitly set
     switch(contentWidth) {
       case 'narrow':
-        return '60%';
+        return getMobileWidth('60%');
       case 'standard':
-        return '80%';
+        return getMobileWidth('80%');
       case 'wide':
-        return '95%';
+        return getMobileWidth('95%');
       case 'auto':
       default:
-        return '100%';
+        return '100%'; // Keep 100% as is for auto
     }
   };
 
   // Calculate padding based on shape to ensure text doesn't overflow
+  // Now with responsive padding that increases on mobile for better readability
   const getPaddingStyle = () => {
     if (!textContained) return {};
+
+    // Helper function to determine if we're in mobile view
+    const getMobilePadding = (standard: string, mobile: string = '') => {
+      return isMobile ? (mobile || `calc(${standard} + 3%)`) : standard;
+    };
 
     switch(shape) {
       case 'diamond':
       case 'rounded-diamond':
-        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '8%', paddingBottom: '8%' };
+        return { 
+          paddingLeft: getMobilePadding('15%', '18%'), 
+          paddingRight: getMobilePadding('15%', '18%'), 
+          paddingTop: getMobilePadding('8%', '12%'), 
+          paddingBottom: getMobilePadding('8%', '12%')
+        };
       case 'hexagon':
       case 'symmetric-hexagon':
-        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '5%', paddingBottom: '5%' };
+        return { 
+          paddingLeft: getMobilePadding('12%', '16%'), 
+          paddingRight: getMobilePadding('12%', '16%'), 
+          paddingTop: getMobilePadding('5%', '8%'), 
+          paddingBottom: getMobilePadding('5%', '8%')
+        };
       case 'shield':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '15%' };
+        return { 
+          paddingLeft: getMobilePadding('10%', '14%'), 
+          paddingRight: getMobilePadding('10%', '14%'), 
+          paddingTop: getMobilePadding('5%', '8%'), 
+          paddingBottom: getMobilePadding('15%', '18%')
+        };
       case 'pentagon':
       case 'pointed-pentagon':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '25%', paddingBottom: '8%' };
+        return { 
+          paddingLeft: getMobilePadding('10%', '14%'), 
+          paddingRight: getMobilePadding('10%', '14%'), 
+          paddingTop: getMobilePadding('25%', '28%'), 
+          paddingBottom: getMobilePadding('8%', '10%') 
+        };
       case 'pentagram':
-        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '15%', paddingBottom: '15%' };
+        return { 
+          paddingLeft: getMobilePadding('15%', '18%'), 
+          paddingRight: getMobilePadding('15%', '18%'), 
+          paddingTop: getMobilePadding('15%', '18%'), 
+          paddingBottom: getMobilePadding('15%', '18%')
+        };
       case 'trapezoid':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '5%' };
+        return { 
+          paddingLeft: getMobilePadding('10%', '14%'), 
+          paddingRight: getMobilePadding('10%', '14%'), 
+          paddingTop: getMobilePadding('5%', '8%'), 
+          paddingBottom: getMobilePadding('5%', '8%')
+        };
       case 'wave':
-        return { paddingLeft: '8%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '12%' };
+        return { 
+          paddingLeft: getMobilePadding('8%', '12%'), 
+          paddingRight: getMobilePadding('8%', '12%'), 
+          paddingTop: getMobilePadding('5%', '8%'), 
+          paddingBottom: getMobilePadding('12%', '15%')
+        };
       case 'octagon':
-        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '8%', paddingBottom: '8%' };
+        return { 
+          paddingLeft: getMobilePadding('12%', '16%'), 
+          paddingRight: getMobilePadding('12%', '16%'), 
+          paddingTop: getMobilePadding('8%', '10%'), 
+          paddingBottom: getMobilePadding('8%', '10%')
+        };
       case 'parallelogram':
-        return { paddingLeft: '15%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '5%' };
+        return { 
+          paddingLeft: getMobilePadding('15%', '18%'), 
+          paddingRight: getMobilePadding('8%', '12%'), 
+          paddingTop: getMobilePadding('5%', '8%'), 
+          paddingBottom: getMobilePadding('5%', '8%')
+        };
       default:
-        return { padding: '8%' };
+        return { 
+          padding: getMobilePadding('8%', '10%')
+        };
     }
   };
 
@@ -387,18 +454,22 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
                 alignment === 'right' ? '0 0 0 auto' : '0',
       }}>
         {title && (
-          <div className="section-header mb-8">
+          <div className="section-header mb-4 sm:mb-6 md:mb-8">
             <h2 
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="cosmic-heading-responsive text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4"
               style={{ color: variant === 'cosmic' ? '#e15554' : mainColor }}
             >
               {title}
             </h2>
-            {subtitle && <p className="text-xl">{subtitle}</p>}
+            {subtitle && (
+              <p className="cosmic-text-responsive text-base sm:text-lg md:text-xl">
+                {subtitle}
+              </p>
+            )}
           </div>
         )}
 
-        <div className="section-content">
+        <div className="section-content sacred-geometry-container">
           {children}
         </div>
       </div>
