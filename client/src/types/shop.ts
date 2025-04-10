@@ -1,119 +1,203 @@
 /**
- * shop.ts
+ * Shop Component Types
  * 
- * Contains centralized type definitions for the shop features
- * and components.
+ * This file centralizes type definitions for shop-related components.
+ * It provides consistent typing for shop UI components, modals, and pages.
  */
 
+import { Product, CartItem } from './models';
+import { ProductId } from './utils';
+
 /**
- * Represents a product in the shop
+ * Shop page props
  */
-export interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  rating: number;
-  inStock: boolean;
-  categories: string[];
-  featured?: boolean;
-  new?: boolean;
-  discountPercent?: number;
-  attributes?: {
-    [key: string]: string;
-  };
+export interface ShopPageProps {
+  initialCategory?: string;
+  featuredProductId?: ProductId;
 }
 
 /**
- * Represents an item in the shopping cart
+ * Product grid props
  */
-export interface CartItem {
+export interface ProductGridProps {
+  products: Product[];
+  loading?: boolean;
+  error?: string;
+  onProductClick?: (productId: ProductId) => void;
+}
+
+/**
+ * Product card props
+ */
+export interface ProductCardProps {
   product: Product;
-  quantity: number;
+  onAddToCart?: () => void;
+  onViewDetails?: () => void;
+  compact?: boolean;
 }
 
 /**
- * Props for the ShoppingCart component
+ * Product gallery props
  */
-export interface ShoppingCartProps {
-  cartItems: CartItem[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemoveItem: (productId: string) => void;
-  onCheckout: () => void;
+export interface ProductGalleryProps {
+  images: string[];
+  initialImage?: string;
+}
+
+/**
+ * Product filter props
+ */
+export interface ProductFilterProps {
+  categories: string[];
+  selectedCategory?: string;
+  onCategoryChange: (category: string) => void;
+  priceRange?: [number, number];
+  onPriceRangeChange?: (range: [number, number]) => void;
+  inStockOnly?: boolean;
+  onInStockChange?: (inStock: boolean) => void;
+}
+
+/**
+ * Product sort props
+ */
+export interface ProductSortProps {
+  sortOrder: ProductSortOrder;
+  onSortChange: (sortOrder: ProductSortOrder) => void;
+}
+
+/**
+ * Product sort order
+ */
+export type ProductSortOrder = 'price-asc' | 'price-desc' | 'newest' | 'popular' | 'rating';
+
+/**
+ * Product search props
+ */
+export interface ProductSearchProps {
+  query: string;
+  onQueryChange: (query: string) => void;
+  onSearch: () => void;
+  placeholder?: string;
+  voiceSearchEnabled?: boolean;
+}
+
+/**
+ * Cart display props
+ */
+export interface CartDisplayProps {
+  items: CartItem[];
+  onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onRemoveItem?: (itemId: string) => void;
+  onClearCart?: () => void;
+  loading?: boolean;
+}
+
+/**
+ * Cart summary props
+ */
+export interface CartSummaryProps {
+  subtotal: number;
+  tax?: number;
+  shipping?: number;
+  discount?: number;
   total: number;
+  currency?: string;
+  onCheckout?: () => void;
+  checkoutDisabled?: boolean;
 }
 
 /**
- * Props for the ShopHeader component
+ * Checkout form props
  */
-export interface ShopHeaderProps {
-  // Original props
-  onSearch: (query: string) => void;
-  onVoiceSearch?: (transcript: string) => void;
-  cartItemCount?: number;
-  
-  // Additional props used in ShopPage
-  searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
-  allCategories: string[];
-  categoryFilter: string[];
-  setCategoryFilter: (categories: string[]) => void;
-  priceRange: [number, number];
-  setPriceRange: (range: [number, number]) => void;
-  sortOrder: string;
-  setSortOrder: (sort: string) => void;
-  viewType: "grid" | "list";
-  setViewType: React.Dispatch<React.SetStateAction<"grid" | "list">>;
+export interface CheckoutFormProps {
+  onSubmit: (data: CheckoutFormData) => void;
+  isSubmitting?: boolean;
+  errors?: Record<string, string>;
 }
 
 /**
- * Voice recognition related types for shop components
+ * Checkout form data
  */
-export interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-}
-
-export interface SpeechRecognitionResult {
-  transcript: string;
-  confidence: number;
-}
-
-export interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-export interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: Event) => void;
-  onend: () => void;
+export interface CheckoutFormData {
+  email: string;
+  shippingAddress: {
+    fullName: string;
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
+  billingAddressSameAsShipping: boolean;
+  billingAddress?: {
+    fullName: string;
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    phone?: string;
+  };
+  paymentMethod: 'card' | 'paypal';
+  savePaymentInfo?: boolean;
 }
 
 /**
- * Speech Recognition Constructor type
+ * Payment form props
+ */
+export interface PaymentFormProps {
+  amount: number;
+  currency?: string;
+  onPaymentSuccess: () => void;
+  onPaymentError: (error: string) => void;
+}
+
+/**
+ * Order confirmation props
+ */
+export interface OrderConfirmationProps {
+  orderNumber: string;
+  orderDate: string;
+  estimatedDelivery?: string;
+  items: CartItem[];
+  total: number;
+  onContinueShopping: () => void;
+  onViewOrderDetails: () => void;
+}
+
+/**
+ * Order tracking props
+ */
+export interface OrderTrackingProps {
+  orderNumber: string;
+  onTrackOrder: (orderNumber: string) => void;
+}
+
+/**
+ * Collaborative shopping props
+ */
+export interface CollaborativeShoppingProps {
+  roomId?: string;
+  onCreateRoom?: () => void;
+  onJoinRoom?: (roomId: string) => void;
+  onLeaveRoom?: () => void;
+}
+
+/**
+ * Speech recognition interface for voice search
  */
 export interface SpeechRecognitionConstructor {
-  new(): SpeechRecognition;
+  new (): SpeechRecognition;
 }
 
 /**
- * Global SpeechRecognition type extension
+ * Voice search props
  */
-// This is a type declaration, not an actual interface implementation
-// Use this in components where speech recognition is used
-declare global {
-  interface Window {
-    SpeechRecognition: SpeechRecognitionConstructor;
-    webkitSpeechRecognition: SpeechRecognitionConstructor;
-  }
+export interface VoiceSearchProps {
+  onResult: (transcript: string) => void;
+  onError?: (error: string) => void;
+  language?: string;
 }
-
-// Export an empty object to make this file a module
-export {}

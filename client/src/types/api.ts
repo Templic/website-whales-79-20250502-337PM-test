@@ -1,152 +1,146 @@
 /**
- * API Response Types
+ * API Types
  * 
- * This file contains TypeScript interfaces for all API responses in the application.
- * Use these types with React Query hooks for better type safety.
+ * This file contains type definitions for API requests and responses.
+ * These types ensure consistency between frontend requests and backend responses.
  */
 
-// Import model types
-import type { 
-  Product, 
-  User, 
-  CartItem, 
-  Order, 
-  Music, 
-  BlogPost, 
-  Comment 
-} from './models';
+import { Product, User, Album, Track, BlogPost, TourDate, CollaborationProposal, ContactMessage } from './models';
 
 /**
- * Standard API Response wrapper
- * Wraps all API responses with standard metadata
+ * Base API response structure with common fields
  */
-export interface ApiResponse<T> {
+export interface BaseResponse {
   success: boolean;
-  data: T;
-  message?: string;
   timestamp: string;
 }
 
 /**
- * Error Response
+ * Error response including error details
  */
-export interface ApiErrorResponse {
+export interface ErrorResponse extends BaseResponse {
   success: false;
-  error: string;
-  message: string;
-  statusCode: number;
-  timestamp: string;
-}
-
-/**
- * Product API Responses
- */
-export interface ProductListResponse extends ApiResponse<Product[]> {
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
-  filters?: {
-    category?: string[];
-    priceRange?: [number, number];
-    sortBy?: string;
-    search?: string;
+  error: {
+    code: string;
+    message: string;
+    details?: Record<string, any>;
   };
 }
 
-export interface ProductDetailResponse extends ApiResponse<Product> {
-  relatedProducts?: Product[];
+/**
+ * Generic successful response with data
+ */
+export interface SuccessResponse<T> extends BaseResponse {
+  success: true;
+  data: T;
 }
 
 /**
- * User API Responses
+ * API response with pagination information
  */
-export interface UserProfileResponse extends ApiResponse<User> {
-  isAuthenticated: boolean;
-  permissions: string[];
+export interface PaginatedResponse<T> extends SuccessResponse<T[]> {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
 }
 
-export interface AuthResponse extends ApiResponse<{
+/**
+ * Union type for API responses
+ */
+export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
+
+/**
+ * Union type for paginated API responses
+ */
+export type PaginatedApiResponse<T> = PaginatedResponse<T> | ErrorResponse;
+
+/**
+ * Product list response with pagination
+ */
+export type ProductListResponse = PaginatedResponse<Product>;
+
+/**
+ * Product details response
+ */
+export type ProductResponse = SuccessResponse<Product>;
+
+/**
+ * User profile response
+ */
+export type UserProfileResponse = SuccessResponse<User>;
+
+/**
+ * User list response with pagination
+ */
+export type UserListResponse = PaginatedResponse<User>;
+
+/**
+ * Album list response with pagination
+ */
+export type AlbumListResponse = PaginatedResponse<Album>;
+
+/**
+ * Album details response
+ */
+export type AlbumResponse = SuccessResponse<Album>;
+
+/**
+ * Track list response with pagination
+ */
+export type TrackListResponse = PaginatedResponse<Track>;
+
+/**
+ * Blog post list response with pagination
+ */
+export type BlogPostListResponse = PaginatedResponse<BlogPost>;
+
+/**
+ * Blog post details response
+ */
+export type BlogPostResponse = SuccessResponse<BlogPost>;
+
+/**
+ * Tour dates response with pagination
+ */
+export type TourDateListResponse = PaginatedResponse<TourDate>;
+
+/**
+ * Collaboration proposals response with pagination
+ */
+export type CollaborationProposalListResponse = PaginatedResponse<CollaborationProposal>;
+
+/**
+ * Contact message submission response
+ */
+export type ContactMessageResponse = SuccessResponse<ContactMessage>;
+
+/**
+ * Authentication login request 
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
+
+/**
+ * Authentication registration request
+ */
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  acceptTerms: boolean;
+}
+
+/**
+ * Authentication response
+ */
+export interface AuthResponse extends BaseResponse {
+  success: true;
   user: User;
   token: string;
-}> {
   expiresAt: string;
 }
-
-/**
- * Shopping Cart API Responses
- */
-export interface CartResponse extends ApiResponse<{
-  items: CartItem[];
-  total: number;
-  count: number;
-}> {}
-
-/**
- * Order API Responses
- */
-export interface OrderResponse extends ApiResponse<Order> {}
-
-export interface OrderListResponse extends ApiResponse<Order[]> {
-  totalCount: number;
-  page: number;
-  pageSize: number;
-}
-
-/**
- * Music API Responses
- */
-export interface MusicListResponse extends ApiResponse<Music[]> {
-  totalCount: number;
-  featuredTracks?: Music[];
-}
-
-export interface MusicDetailResponse extends ApiResponse<Music> {
-  relatedTracks?: Music[];
-}
-
-/**
- * Blog API Responses
- */
-export interface BlogListResponse extends ApiResponse<BlogPost[]> {
-  totalCount: number;
-  page: number;
-  pageSize: number;
-  categories?: string[];
-}
-
-export interface BlogPostResponse extends ApiResponse<BlogPost> {
-  comments: Comment[];
-  relatedPosts?: BlogPost[];
-}
-
-/**
- * Analytics API Responses
- */
-export interface AnalyticsResponse extends ApiResponse<{
-  visits: number;
-  pageViews: number;
-  conversionRate: number;
-  averageOrderValue: number;
-  topProducts: Array<{ id: string; name: string; sales: number }>;
-  revenueByDay: Array<{ date: string; amount: number }>;
-}> {}
-
-/**
- * Security Scan Response
- */
-export interface SecurityScanResponse extends ApiResponse<{
-  timestamp: string;
-  totalIssues: number;
-  criticalIssues: number;
-  highIssues: number;
-  mediumIssues: number;
-  lowIssues: number;
-  vulnerabilities: Array<{
-    id: string;
-    severity: 'critical' | 'high' | 'medium' | 'low';
-    component: string;
-    description: string;
-    remediation?: string;
-  }>;
-}> {}

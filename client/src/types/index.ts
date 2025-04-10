@@ -1,42 +1,24 @@
 /**
- * Types Index File
+ * Centralized Type System
  * 
- * This file serves as a central export point for all type definitions.
- * Import from this file to access any type in the application.
- * 
- * @example
- * // Import specific types
- * import { Product, CartItem } from '@/types';
- * 
- * // Import from a specific category
- * import { loginSchema, registerSchema } from '@/types/schemas';
+ * This file exports all type definitions from their respective modules,
+ * providing a single import point for accessing the application's type system.
  */
 
-// Import and re-export model types
-import * as Models from './models';
-export { Models };
+// Feature-specific component types
+import * as Admin from './admin';
+import * as Shop from './shop';
 
-// Import and re-export API types
+// Domain-specific types
 import * as API from './api';
-export { API };
-
-// Re-export other type modules
-export * from './admin';
-export * from './shop';
-export * from './utils';
-
-// For schemas, use a namespace to avoid name collisions
+import * as Models from './models';
 import * as Schemas from './schemas';
-export { Schemas };
 
-// Export some commonly used utility types directly
-export { 
-  Nullable, 
-  DeepPartial, 
-  Branded,
-  UserId,
-  ProductId,
-  OrderId,
-  BlogPostId,
-  MusicId
-} from './utils';
+// Export everything as named imports
+export {
+  Admin,
+  Shop,
+  API,
+  Models,
+  Schemas
+};

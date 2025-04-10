@@ -40,6 +40,7 @@ import DataRequestPage from "@/pages/DataRequest";
 import FAQPage from "@/pages/FAQPage";
 import CosmicTest from "@/pages/test/CosmicTest";
 import CosmicComponentsDemo from "@/pages/test/demo/CosmicComponentsDemo";
+import TypeSystemDemo from "@/pages/TypeSystemDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
 import CommunityPage from "@/pages/community/CommunityPage";
 import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
@@ -175,6 +176,7 @@ function AppRouter() {
           <Route path="/test/audio" component={AudioComponentsDemo} />
           <Route path="/test/new" component={NewComponentsDemo} />
           <Route path="/cosmic-test" component={CosmicTest} />
+          <Route path="/type-system-demo" component={TypeSystemDemo} />
           {/* Archived Page - /button-demo */}
           {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 

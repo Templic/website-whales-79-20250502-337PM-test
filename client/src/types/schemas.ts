@@ -1,180 +1,150 @@
 /**
- * Form Schemas
+ * Form Validation Schemas
  * 
- * This file contains reusable Zod schemas for form validation.
- * Use these schemas with react-hook-form and zod resolver for consistent validation.
+ * This file contains centralized Zod schemas for form validation across the application.
+ * These schemas ensure consistent validation rules across different forms.
  */
 
 import { z } from 'zod';
 
 /**
- * Common validators and patterns
+ * Contact form validation schema
  */
-const PATTERNS = {
-  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-  PHONE: /^\+?[1-9]\d{1,14}$/,
-  URL: /^(https?:\/\/)?(www\.)?[a-zA-Z0-9][-a-zA-Z0-9]{0,62}(\.[a-zA-Z0-9][-a-zA-Z0-9]{0,62})+(:\d+)*(\/[-a-zA-Z0-9.~:/?#[\]@!$&'()*+,;=]*)?$/,
-  ZIPCODE: /^\d{5}(-\d{4})?$/,
-};
-
-const ERROR_MESSAGES = {
-  REQUIRED: 'This field is required',
-  EMAIL: 'Please enter a valid email address',
-  PASSWORD: 'Password must contain at least 8 characters, including uppercase, lowercase, number and special character',
-  PHONE: 'Please enter a valid phone number',
-  URL: 'Please enter a valid URL',
-  ZIPCODE: 'Please enter a valid ZIP code',
-  MIN_LENGTH: (min: number) => `Must be at least ${min} characters`,
-  MAX_LENGTH: (max: number) => `Must be at most ${max} characters`,
-  PASSWORDS_MATCH: 'Passwords must match',
-};
+export const contactFormSchema = z.object({
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  subject: z.string()
+    .min(3, { message: 'Subject must be at least 3 characters' })
+    .max(200, { message: 'Subject must be less than 200 characters' }),
+  message: z.string()
+    .min(10, { message: 'Message must be at least 10 characters' })
+    .max(2000, { message: 'Message must be less than 2000 characters' }),
+});
 
 /**
- * Basic field schemas
+ * Newsletter subscription form schema
  */
-export const emailSchema = z.string()
-  .trim()
-  .min(1, { message: ERROR_MESSAGES.REQUIRED })
-  .email({ message: ERROR_MESSAGES.EMAIL });
-
-export const passwordSchema = z.string()
-  .min(8, { message: ERROR_MESSAGES.MIN_LENGTH(8) })
-  .regex(PATTERNS.PASSWORD, { message: ERROR_MESSAGES.PASSWORD });
-
-export const nameSchema = z.string()
-  .trim()
-  .min(2, { message: ERROR_MESSAGES.MIN_LENGTH(2) })
-  .max(100, { message: ERROR_MESSAGES.MAX_LENGTH(100) });
-
-export const phoneSchema = z.string()
-  .trim()
-  .regex(PATTERNS.PHONE, { message: ERROR_MESSAGES.PHONE });
-
-export const urlSchema = z.string()
-  .trim()
-  .regex(PATTERNS.URL, { message: ERROR_MESSAGES.URL })
-  .optional()
-  .or(z.literal(''));
-
-export const zipCodeSchema = z.string()
-  .trim()
-  .regex(PATTERNS.ZIPCODE, { message: ERROR_MESSAGES.ZIPCODE });
+export const newsletterFormSchema = z.object({
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  name: z.string().optional(),
+  interests: z.array(z.string()).optional(),
+  acceptTerms: z.boolean()
+    .refine(val => val === true, { message: 'You must accept the terms' }),
+});
 
 /**
- * Authentication schemas
+ * Login form schema
  */
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, { message: ERROR_MESSAGES.REQUIRED }),
+export const loginFormSchema = z.object({
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  password: z.string()
+    .min(8, { message: 'Password must be at least 8 characters' }),
   rememberMe: z.boolean().optional(),
 });
 
-export const registerSchema = z.object({
-  name: nameSchema,
-  email: emailSchema,
-  password: passwordSchema,
+/**
+ * Registration form schema
+ */
+export const registerFormSchema = z.object({
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  password: z.string()
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
+    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
+    .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
   confirmPassword: z.string(),
-  terms: z.boolean().refine(val => val === true, {
-    message: 'You must accept the terms and conditions',
-  }),
+  acceptTerms: z.boolean()
+    .refine(val => val === true, { message: 'You must accept the terms and conditions' }),
 }).refine(data => data.password === data.confirmPassword, {
-  message: ERROR_MESSAGES.PASSWORDS_MATCH,
+  message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
 
-export const forgotPasswordSchema = z.object({
-  email: emailSchema,
-});
-
-export const resetPasswordSchema = z.object({
-  password: passwordSchema,
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: ERROR_MESSAGES.PASSWORDS_MATCH,
-  path: ['confirmPassword'],
+/**
+ * Product review form schema
+ */
+export const reviewFormSchema = z.object({
+  rating: z.number()
+    .min(1, { message: 'Please select a rating' })
+    .max(5, { message: 'Maximum rating is 5 stars' }),
+  title: z.string()
+    .min(3, { message: 'Title must be at least 3 characters' })
+    .max(100, { message: 'Title must be less than 100 characters' }),
+  comment: z.string()
+    .min(10, { message: 'Review must be at least 10 characters' })
+    .max(1000, { message: 'Review must be less than 1000 characters' }),
+  recommend: z.boolean().optional(),
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
 });
 
 /**
- * Contact and newsletter schemas
+ * Collaboration proposal form schema
  */
-export const contactFormSchema = z.object({
-  name: nameSchema,
-  email: emailSchema,
-  phone: phoneSchema.optional(),
-  subject: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  message: z.string().trim().min(10, { message: ERROR_MESSAGES.MIN_LENGTH(10) }),
-});
-
-export const newsletterSchema = z.object({
-  email: emailSchema,
-  name: nameSchema.optional(),
-  interests: z.array(z.string()).optional(),
+export const collaborationFormSchema = z.object({
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  projectType: z.string()
+    .min(2, { message: 'Project type must be at least 2 characters' }),
+  description: z.string()
+    .min(20, { message: 'Description must be at least 20 characters' })
+    .max(2000, { message: 'Description must be less than 2000 characters' }),
+  budget: z.string().optional(),
+  timeline: z.string().optional(),
 });
 
 /**
- * Product and order schemas
+ * User profile update form schema
  */
-export const productSchema = z.object({
-  name: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  description: z.string().trim().min(10, { message: ERROR_MESSAGES.MIN_LENGTH(10) }),
-  price: z.number().positive({ message: 'Price must be positive' }),
-  discountPrice: z.number().positive({ message: 'Discount price must be positive' }).optional(),
-  categories: z.array(z.string()).min(1, { message: 'Select at least one category' }),
-  inStock: z.boolean(),
-  isFeatured: z.boolean().optional(),
-});
-
-export const addressSchema = z.object({
-  firstName: nameSchema,
-  lastName: nameSchema,
-  streetAddress: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  city: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  state: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  postalCode: zipCodeSchema,
-  country: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  phone: phoneSchema,
-});
-
-export const checkoutSchema = z.object({
-  shippingAddress: addressSchema,
-  billingAddress: addressSchema,
-  sameAsBilling: z.boolean().optional(),
-  paymentMethod: z.enum(['credit_card', 'paypal', 'bank_transfer']),
-  notes: z.string().optional(),
-});
-
-/**
- * Blog and content schemas
- */
-export const blogPostSchema = z.object({
-  title: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  content: z.string().trim().min(100, { message: ERROR_MESSAGES.MIN_LENGTH(100) }),
-  excerpt: z.string().trim().min(10, { message: ERROR_MESSAGES.MIN_LENGTH(10) }),
-  categories: z.array(z.string()).min(1, { message: 'Select at least one category' }),
-  tags: z.array(z.string()).optional(),
-  status: z.enum(['draft', 'published', 'archived']),
-});
-
-export const commentSchema = z.object({
-  content: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  authorName: nameSchema,
-  authorEmail: emailSchema,
-});
-
-/**
- * Music schemas
- */
-export const musicSchema = z.object({
-  title: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  artist: z.string().trim().min(1, { message: ERROR_MESSAGES.REQUIRED }),
-  albumId: z.number().optional(),
-  isArchived: z.boolean().optional(),
-  features: z.object({
-    bpm: z.number().optional(),
-    key: z.string().optional(),
-    moods: z.array(z.string()).optional(),
-    instruments: z.array(z.string()).optional(),
-    energy: z.number().min(0).max(100).optional(),
-  }).optional(),
-});
+export const profileUpdateSchema = z.object({
+  name: z.string()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be less than 100 characters' }),
+  email: z.string()
+    .email({ message: 'Please enter a valid email address' }),
+  currentPassword: z.string().optional(),
+  newPassword: z.string().optional(),
+  confirmNewPassword: z.string().optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+  emailNotifications: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  marketingEmails: z.boolean().optional(),
+  newReleaseNotifications: z.boolean().optional(),
+  reduceMotion: z.boolean().optional(),
+  highContrast: z.boolean().optional(),
+  fontSize: z.enum(['small', 'medium', 'large']).optional(),
+  soundEffects: z.boolean().optional(),
+}).refine(
+  data => !data.newPassword || data.newPassword === data.confirmNewPassword,
+  {
+    message: 'New passwords do not match',
+    path: ['confirmNewPassword'],
+  }
+).refine(
+  data => !data.newPassword || data.currentPassword,
+  {
+    message: 'Current password is required to set a new password',
+    path: ['currentPassword'],
+  }
+).refine(
+  data => !data.newPassword || data.newPassword.length >= 8,
+  {
+    message: 'New password must be at least 8 characters',
+    path: ['newPassword'],
+  }
+);

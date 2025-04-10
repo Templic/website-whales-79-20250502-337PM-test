@@ -1,216 +1,235 @@
 /**
- * Model Types
+ * Core Data Models
  * 
- * This file contains the core data model types used throughout the application.
- * These types represent the domain entities and are used in components, 
- * API responses, and state management.
+ * This file contains the central definitions for all data models used throughout the application.
+ * These models represent the core data structures and business entities.
  */
 
+import { UserId, ProductId } from './utils';
+
 /**
- * User model
+ * User model representing application users
  */
 export interface User {
-  id: string;
-  name: string;
+  id: UserId;
   email: string;
-  avatar?: string;
-  role: 'admin' | 'customer' | 'guest';
+  name: string;
+  role: UserRole;
   createdAt: string;
-  updatedAt: string;
+  lastLogin?: string;
   preferences?: UserPreferences;
-}
-
-export interface UserPreferences {
-  theme?: 'light' | 'dark' | 'system';
-  emailNotifications: boolean;
-  marketingConsent: boolean;
+  avatar?: string;
+  isActive: boolean;
 }
 
 /**
- * Product model
+ * User role enum for access control
+ */
+export type UserRole = 'user' | 'admin' | 'super_admin';
+
+/**
+ * User preferences model for customization
+ */
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  notifications: NotificationSettings;
+  accessibility: AccessibilitySettings;
+}
+
+/**
+ * Notification settings for user preferences
+ */
+export interface NotificationSettings {
+  email: boolean;
+  push: boolean;
+  marketing: boolean;
+  newReleases: boolean;
+}
+
+/**
+ * Accessibility settings for user preferences
+ */
+export interface AccessibilitySettings {
+  reduceMotion: boolean;
+  highContrast: boolean;
+  fontSize: 'small' | 'medium' | 'large';
+  soundEffects: boolean;
+}
+
+/**
+ * Product model for shop items
  */
 export interface Product {
-  id: string;
+  id: ProductId;
   name: string;
   description: string;
   price: number;
-  discountPrice?: number;
   image: string;
-  images?: string[];
   categories: string[];
-  tags?: string[];
-  rating: number;
-  reviewCount: number;
   inStock: boolean;
-  attributes?: Record<string, string | number | boolean>;
+  rating: number;
+  reviews: number;
   createdAt: string;
   updatedAt: string;
-  isFeatured?: boolean;
+  features?: string[];
 }
 
 /**
- * Shopping Cart models
+ * Cart item model for shopping cart
  */
 export interface CartItem {
-  product: Product;
+  id: string;
+  productId: ProductId;
+  name: string;
+  price: number;
   quantity: number;
-}
-
-export interface Cart {
-  items: CartItem[];
-  total: number;
+  image?: string;
 }
 
 /**
- * Order models
+ * Order model for completed purchases
  */
 export interface Order {
   id: string;
-  userId: string;
-  items: OrderItem[];
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  userId: UserId;
+  items: CartItem[];
   total: number;
-  subtotal: number;
-  tax: number;
-  shipping: number;
-  paymentMethod: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
   shippingAddress: Address;
   billingAddress: Address;
   createdAt: string;
   updatedAt: string;
   trackingNumber?: string;
-  notes?: string;
 }
 
-export interface OrderItem {
-  productId: string;
-  productName: string;
-  productImage: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
+/**
+ * Order status enum
+ */
+export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+/**
+ * Payment status enum
+ */
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+
+/**
+ * Address model for shipping and billing
+ */
 export interface Address {
-  firstName: string;
-  lastName: string;
-  streetAddress: string;
+  fullName: string;
+  line1: string;
+  line2?: string;
   city: string;
   state: string;
   postalCode: string;
   country: string;
-  phone: string;
+  phone?: string;
 }
 
 /**
- * Blog models
+ * Blog post model
  */
 export interface BlogPost {
   id: string;
   title: string;
-  content: string;
-  excerpt: string;
   slug: string;
-  author: Author;
-  featuredImage?: string;
-  categories: string[];
-  tags: string[];
-  publishedAt: string;
-  updatedAt: string;
-  commentCount: number;
-  status: 'draft' | 'published' | 'archived';
-}
-
-export interface Author {
-  id: string;
-  name: string;
-  avatar?: string;
-  bio?: string;
-}
-
-export interface Comment {
-  id: number;
+  excerpt: string;
   content: string;
+  coverImage: string;
+  authorId: UserId;
   authorName: string;
-  authorEmail: string;
-  createdAt: string;
-  postId: number;
-  approved: boolean;
+  publishedAt: string;
+  updatedAt?: string;
+  tags: string[];
+  categories: string[];
+  isPublished: boolean;
 }
 
 /**
- * Music models
+ * Music album model
  */
-export interface Music {
-  id: number;
-  title: string;
-  artist: string;
-  duration: string | null;
-  albumId: number | null;
-  audioUrl: string;
-  coverArt?: string;
-  lyrics?: string;
-  createdAt: string;
-  updatedAt: string | null;
-  isArchived?: boolean;
-  features?: MusicFeatures;
-}
-
-export interface MusicFeatures {
-  bpm?: number;
-  key?: string;
-  moods?: string[];
-  instruments?: string[];
-  energy?: number;
-  frequency?: FrequencyData;
-}
-
-export interface FrequencyData {
-  low: number;
-  mid: number;
-  high: number;
-  description: string;
-}
-
 export interface Album {
   id: number;
   title: string;
   artist: string;
+  coverImage: string;
   releaseDate: string;
-  coverArt: string;
-  tracks: Music[];
+  description: string;
+  tracks: Track[];
+  price?: number;
+  genres: string[];
+  isArchived: boolean;
 }
 
 /**
- * Security and Analytics models
+ * Music track model
  */
-export interface ScanResult {
-  id: string;
-  timestamp: string;
-  type: 'security' | 'performance' | 'accessibility';
-  totalIssues: number;
-  criticalIssues: number;
-  highIssues: number;
-  mediumIssues: number;
-  lowIssues: number;
-  vulnerabilities: SecurityVulnerability[];
+export interface Track {
+  id: number;
+  title: string;
+  artist: string;
+  albumId: number;
+  duration: string;
+  audioUrl: string;
+  trackNumber: number;
+  isPreview: boolean;
+  price?: number;
 }
 
-export interface SecurityVulnerability {
-  id: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  component: string;
+/**
+ * Tour date model for events
+ */
+export interface TourDate {
+  id: number;
+  venue: string;
+  city: string;
+  state: string;
+  country: string;
+  date: string;
+  time: string;
+  ticketUrl?: string;
+  isSoldOut: boolean;
+  isPastEvent: boolean;
+}
+
+/**
+ * Newsletter subscription model
+ */
+export interface NewsletterSubscription {
+  id: number;
+  email: string;
+  name?: string;
+  subscriptionDate: string;
+  isActive: boolean;
+  interests: string[];
+}
+
+/**
+ * Collaboration proposal model
+ */
+export interface CollaborationProposal {
+  id: number;
+  name: string;
+  email: string;
+  projectType: string;
   description: string;
-  remediation?: string;
-  detectedAt: string;
-  status: 'open' | 'fixed' | 'ignored';
+  budget?: string;
+  timeline?: string;
+  submittedAt: string;
+  status: 'pending' | 'reviewing' | 'accepted' | 'declined';
 }
 
-export interface AnalyticsData {
-  visits: number;
-  pageViews: number;
-  conversionRate: number;
-  averageOrderValue: number;
-  topProducts: Array<{ id: string; name: string; sales: number }>;
-  revenueByDay: Array<{ date: string; amount: number }>;
+/**
+ * Contact message model
+ */
+export interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  submittedAt: string;
+  isRead: boolean;
+  isArchived: boolean;
 }
