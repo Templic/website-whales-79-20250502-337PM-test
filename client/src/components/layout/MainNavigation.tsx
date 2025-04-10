@@ -99,7 +99,7 @@ export function MainNavigation() {
       <header className="fixed top-0 z-[100] w-full bg-black/80 backdrop-blur-lg border-b border-white/5">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group z-10">
+          <Link to="/" className="flex items-center space-x-2 group z-10" onClick={() => window.scrollTo(0, 0)}>
             <div className="relative h-12 w-12">
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
@@ -118,6 +118,7 @@ export function MainNavigation() {
                 <Link
                   key={route.path}
                   to={route.path}
+                  onClick={() => window.scrollTo(0, 0)}
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-sm transition-all duration-300 border relative",
                     pathname === route.path 
@@ -163,6 +164,7 @@ export function MainNavigation() {
                 <Link
                   key={route.path}
                   to={route.path}
+                  onClick={() => window.scrollTo(0, 0)}
                   className={cn(
                     "flex items-center px-4 py-2 rounded-md text-sm transition-all duration-300 border relative",
                     pathname === route.path 
@@ -203,7 +205,10 @@ export function MainNavigation() {
                           ? `${route.color} shadow-[0_0_15px_rgba(0,0,0,0.1)] shadow-cyan-500/30`
                           : "text-white/80 border-white/10 hover:border-white/20 hover:bg-black/50 hover:shadow-[0_0_10px_rgba(0,0,0,0.1)] hover:shadow-purple-500/20"
                       )}
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        window.scrollTo(0, 0);
+                      }}
                     >
                       {pathname === route.path && (
                         <div className="absolute inset-0 opacity-20 bg-gradient-to-r from-cyan-500 to-purple-600 blur-sm rounded-lg pointer-events-none"></div>
