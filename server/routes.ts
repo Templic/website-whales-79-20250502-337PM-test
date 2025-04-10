@@ -75,6 +75,7 @@ import { runSecurityScan } from './securityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import authRoutes from './routes/authRoutes';
+import contentRoutes from './routes/content';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
