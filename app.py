@@ -28,13 +28,13 @@ csrf = CSRFProtect(app)
 # Configure CSP to allow external resources
 csp = {
     'default-src': ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\'', 'https:', 'http:', 'data:'],
-    'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com', 'https://i.ytimg.com', 'https://yt3.ggpht.com', 'https:'],
+    'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com', 'https://*.ytimg.com', 'https://yt3.ggpht.com', 'https:'],
     'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com', 'https:'],
     'font-src': ['\'self\'', 'https://fonts.gstatic.com', 'https:', 'data:'],
-    'frame-src': ['\'self\'', 'https://www.youtube.com', 'https://youtube.com', 'https://www.youtube-nocookie.com', 'https://www.google.com', 'https:'],
+    'frame-src': ['\'self\'', 'https://*.youtube.com', 'https://*.youtube-nocookie.com', 'https://www.google.com', 'https:'],
     'media-src': ['\'self\'', 'https://*', 'http://*', 'blob:'],
-    'script-src': ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\'', 'https://www.youtube.com', 'https://s.ytimg.com', 'https:'],
-    'connect-src': ['\'self\'', 'https://www.youtube.com', 'https:', 'http:', 'ws:', 'wss:']
+    'script-src': ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\'', 'https://*.youtube.com', 'https://*.ytimg.com', 'https:'],
+    'connect-src': ['\'self\'', 'https://*.youtube.com', 'https:', 'http:', 'ws:', 'wss:']
 }
 
 # Initialize Talisman with our CSP configuration
