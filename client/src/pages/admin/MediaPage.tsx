@@ -65,6 +65,11 @@ import {
   List,
   LayoutGrid,
   Columns,
+  Check,
+  MoreHorizontal,
+  Move,
+  Folder,
+  Tag,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -397,6 +402,195 @@ export default function MediaPage() {
     }
   };
   
+  // Bulk operation handlers
+  const handleToggleSelectMedia = (mediaId: number) => {
+    setSelectedMediaIds(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(mediaId)) {
+        newSelection.delete(mediaId);
+      } else {
+        newSelection.add(mediaId);
+      }
+      return newSelection;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (filteredMedia.length > 0 && selectedMediaIds.size === filteredMedia.length) {
+      // If all are selected, deselect all
+      setSelectedMediaIds(new Set());
+    } else {
+      // Otherwise, select all filtered media
+      const allIds = filteredMedia.map(media => media.id);
+      setSelectedMediaIds(new Set(allIds));
+    }
+  };
+
+  // Handle bulk page change for move operation
+  const handleBulkPageChange = (page: string) => {
+    setBulkTargetPage(page);
+    if (page && pageSectionMappings[page]) {
+      setBulkAvailableSections(pageSectionMappings[page]);
+      setBulkTargetSection(""); // Reset section when page changes
+    } else {
+      setBulkAvailableSections([]);
+    }
+  };
+
+  // Perform bulk delete operation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (mediaIds: number[]) => {
+      const res = await fetch('/api/media/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: mediaIds }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to delete files');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+      setIsBulkActionDialogOpen(false);
+      setSelectedMediaIds(new Set());
+      toast({
+        title: "Files Deleted",
+        description: "The selected files have been deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Delete Failed",
+        description: error instanceof Error ? error.message : 'Failed to delete files',
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Perform bulk move operation
+  const bulkMoveMutation = useMutation({
+    mutationFn: async ({ ids, page, section }: { ids: number[], page: string, section: string }) => {
+      const res = await fetch('/api/media/bulk-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ids, 
+          updates: { 
+            page, 
+            section 
+          } 
+        }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to move files');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+      setIsBulkActionDialogOpen(false);
+      setSelectedMediaIds(new Set());
+      toast({
+        title: "Files Moved",
+        description: "The selected files have been moved successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Move Failed",
+        description: error instanceof Error ? error.message : 'Failed to move files',
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Perform bulk categorize operation
+  const bulkCategorizeMutation = useMutation({
+    mutationFn: async ({ ids, section }: { ids: number[], section: string }) => {
+      const res = await fetch('/api/media/bulk-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ids, 
+          updates: { 
+            section 
+          } 
+        }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to categorize files');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+      setIsBulkActionDialogOpen(false);
+      setSelectedMediaIds(new Set());
+      toast({
+        title: "Files Categorized",
+        description: "The selected files have been categorized successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Categorize Failed",
+        description: error instanceof Error ? error.message : 'Failed to categorize files',
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Execute the appropriate bulk action
+  const executeBulkAction = () => {
+    const selectedIds = Array.from(selectedMediaIds);
+    
+    if (selectedIds.length === 0) {
+      toast({
+        title: "No Files Selected",
+        description: "Please select at least one file",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (bulkActionType === 'delete') {
+      bulkDeleteMutation.mutate(selectedIds);
+    } else if (bulkActionType === 'move') {
+      if (!bulkTargetPage) {
+        toast({
+          title: "Page Required",
+          description: "Please select a target page",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      bulkMoveMutation.mutate({ 
+        ids: selectedIds, 
+        page: bulkTargetPage, 
+        section: bulkTargetSection || bulkCustomSection || 'default' 
+      });
+    } else if (bulkActionType === 'categorize') {
+      if (!bulkTargetSection && !bulkCustomSection) {
+        toast({
+          title: "Section Required",
+          description: "Please select a target section or enter a custom one",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      bulkCategorizeMutation.mutate({ 
+        ids: selectedIds, 
+        section: bulkTargetSection || bulkCustomSection 
+      });
+    }
+  };
+
   // Filter media files based on search and filters
   const filteredMedia = mediaFiles?.filter(media => {
     // Search query filter
@@ -449,6 +643,46 @@ export default function MediaPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
           <div className="flex items-center gap-2">
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('delete');
+                  setIsBulkActionDialogOpen(true);
+                }}
+                className="text-red-500 border-red-200 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('move');
+                  setIsBulkActionDialogOpen(true);
+                }}
+              >
+                <Move className="h-4 w-4 mr-2" />
+                Move ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('categorize');
+                  setIsBulkActionDialogOpen(true);
+                }}
+              >
+                <Tag className="h-4 w-4 mr-2" />
+                Categorize ({selectedMediaIds.size})
+              </Button>
+            )}
+            
             <Button 
               variant="default" 
               onClick={() => setUploadDialogOpen(true)}
@@ -593,7 +827,17 @@ export default function MediaPage() {
                   viewMode === "grid" ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {paginatedMedia.map((media) => (
-                        <Card key={media.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                        <Card key={media.id} className="overflow-hidden hover:shadow-md transition-shadow relative">
+                          <div className="absolute top-3 left-3 z-10">
+                            <div className="bg-white rounded-md shadow">
+                              <Checkbox 
+                                checked={selectedMediaIds.has(media.id)}
+                                onCheckedChange={() => handleToggleSelectMedia(media.id)}
+                                aria-label={`Select ${media.originalFilename}`}
+                                className="border-gray-300"
+                              />
+                            </div>
+                          </div>
                           <div 
                             className="aspect-square bg-muted flex items-center justify-center cursor-pointer"
                             onClick={() => handleViewDetails(media)}
@@ -667,6 +911,13 @@ export default function MediaPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead className="w-[50px]">
+                              <Checkbox 
+                                checked={filteredMedia.length > 0 && selectedMediaIds.size === filteredMedia.length} 
+                                onCheckedChange={handleSelectAll}
+                                aria-label="Select all"
+                              />
+                            </TableHead>
                             <TableHead>File</TableHead>
                             <TableHead>Type</TableHead>
                             <TableHead>Size</TableHead>
@@ -678,6 +929,15 @@ export default function MediaPage() {
                         <TableBody>
                           {paginatedMedia.map((media) => (
                             <TableRow key={media.id}>
+                              <TableCell>
+                                <Checkbox 
+                                  checked={selectedMediaIds.has(media.id)}
+                                  onCheckedChange={(checked) => {
+                                    handleToggleSelectMedia(media.id);
+                                  }}
+                                  aria-label={`Select ${media.originalFilename}`}
+                                />
+                              </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-2">
                                   {media.mimeType.startsWith('image/') ? (
@@ -816,6 +1076,144 @@ export default function MediaPage() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Bulk Action Dialog */}
+      <Dialog open={isBulkActionDialogOpen} onOpenChange={setIsBulkActionDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {bulkActionType === 'delete' && 'Delete Multiple Files'}
+              {bulkActionType === 'move' && 'Move Multiple Files'}
+              {bulkActionType === 'categorize' && 'Categorize Multiple Files'}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkActionType === 'delete' && `You are about to delete ${selectedMediaIds.size} files. This action cannot be undone.`}
+              {bulkActionType === 'move' && `Update the page location for ${selectedMediaIds.size} files.`}
+              {bulkActionType === 'categorize' && `Update the section for ${selectedMediaIds.size} files within their current pages.`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {bulkActionType === 'delete' && (
+              <div className="bg-red-50 p-4 rounded-md border border-red-200 text-red-800 text-sm">
+                <p className="font-medium">Warning</p>
+                <p>Deleting files will remove them from all pages where they are used. This action cannot be undone.</p>
+              </div>
+            )}
+            
+            {bulkActionType === 'move' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bulkTargetPage">Target Page *</Label>
+                  <Select value={bulkTargetPage} onValueChange={handleBulkPageChange}>
+                    <SelectTrigger id="bulkTargetPage">
+                      <SelectValue placeholder="Select a page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availablePages.map(page => (
+                        <SelectItem key={page} value={page}>
+                          {page.charAt(0).toUpperCase() + page.slice(1).replace("_", " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="bulkTargetSection">Section</Label>
+                  <Select 
+                    value={bulkTargetSection} 
+                    onValueChange={setBulkTargetSection}
+                    disabled={!bulkTargetPage || bulkAvailableSections.length === 0}
+                  >
+                    <SelectTrigger id="bulkTargetSection">
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Custom Section</SelectItem>
+                      {bulkAvailableSections.map(section => (
+                        <SelectItem key={section} value={section}>
+                          {section.replace("-", " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {bulkTargetSection === "custom" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bulkCustomSection">Custom Section Name</Label>
+                    <Input
+                      id="bulkCustomSection"
+                      placeholder="Enter section name"
+                      value={bulkCustomSection}
+                      onChange={(e) => setBulkCustomSection(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {bulkActionType === 'categorize' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bulkTargetSection">Section *</Label>
+                  <Select 
+                    value={bulkTargetSection} 
+                    onValueChange={setBulkTargetSection}
+                  >
+                    <SelectTrigger id="bulkTargetSection">
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">Custom Section</SelectItem>
+                      {Object.values(pageSectionMappings).flat().map((section, index) => (
+                        <SelectItem key={index} value={section}>
+                          {section.replace("-", " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {bulkTargetSection === "custom" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bulkCustomSection">Custom Section Name</Label>
+                    <Input
+                      id="bulkCustomSection"
+                      placeholder="Enter section name"
+                      value={bulkCustomSection}
+                      onChange={(e) => setBulkCustomSection(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsBulkActionDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            
+            <Button 
+              variant={bulkActionType === 'delete' ? 'destructive' : 'default'}
+              onClick={executeBulkAction}
+              disabled={
+                (bulkActionType === 'move' && !bulkTargetPage) ||
+                (bulkActionType === 'categorize' && !bulkTargetSection && !bulkCustomSection)
+              }
+            >
+              {bulkActionType === 'delete' && 'Delete Files'}
+              {bulkActionType === 'move' && 'Move Files'}
+              {bulkActionType === 'categorize' && 'Categorize Files'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {/* File Upload Dialog */}
       <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
