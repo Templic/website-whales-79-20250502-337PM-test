@@ -14,7 +14,10 @@ import {
   ChevronRight, 
   ChevronLeft,
   LogOut,
-  Database
+  Database,
+  FileEdit,
+  LayoutDashboard,
+  Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -40,11 +43,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Admin navigation items
   const navItems: NavItem[] = [
-    { title: "Dashboard", href: "/admin", icon: <Gauge size={20} /> },
+    { title: "Dashboard", href: "/admin", icon: <LayoutDashboard size={20} /> },
     { title: "Users", href: "/admin/users", icon: <Users size={20} /> },
+    { title: "Content", href: "/admin/content", icon: <FileEdit size={20} /> },
     { title: "Blog Posts", href: "/admin/posts", icon: <FileText size={20} /> },
     { title: "Music", href: "/admin/music", icon: <Music size={20} /> },
-    { title: "Media", href: "/admin/media", icon: <FileText size={20} /> },
+    { title: "Media", href: "/admin/media", icon: <Image size={20} /> },
     { title: "Shop", href: "/admin/shop", icon: <ShoppingBag size={20} /> },
     { title: "Comments", href: "/admin/comments", icon: <MessageSquare size={20} /> },
     { title: "Newsletter", href: "/admin/newsletter", icon: <Mail size={20} /> },
