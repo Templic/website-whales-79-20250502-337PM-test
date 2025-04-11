@@ -1,7 +1,7 @@
 import express from 'express';
 import { storage } from '../storage';
 import { z } from 'zod';
-import { insertContentItemSchema } from '@shared/schema';
+import { insertContentHistorySchema, insertContentItemSchema, insertContentUsageSchema } from '@shared/schema';
 
 const router = express.Router();
 

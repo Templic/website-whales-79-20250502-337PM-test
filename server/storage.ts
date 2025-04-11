@@ -3,8 +3,22 @@ declare module 'connect-pg-simple' {
   export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
-import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, type ContentItem, type InsertContentItem, subscribers, posts, categories, comments, users, tracks, albums, newsletters, contentItems } from "@shared/schema";
-import { sql, eq, and } from "drizzle-orm";
+import { 
+  type Subscriber, type InsertSubscriber, 
+  type Post, type InsertPost, 
+  type Category, type InsertCategory, 
+  type Comment, type InsertComment, 
+  type User, type InsertUser, 
+  type Track, type Album, 
+  type Newsletter, type InsertNewsletter, 
+  type ContentItem, type InsertContentItem,
+  type ContentHistory, type InsertContentHistory,
+  type ContentUsage, type InsertContentUsage,
+  subscribers, posts, categories, comments, users, 
+  tracks, albums, newsletters, contentItems,
+  contentHistory, contentUsage
+} from "@shared/schema";
+import { sql, eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -1270,9 +1284,205 @@ export class PostgresStorage implements IStorage {
         throw new Error(`Content item with ID ${id} not found`);
       }
 
+      // Delete content usage records
+      await db.delete(contentUsage).where(eq(contentUsage.contentId, id));
+      
+      // Delete content history records
+      await db.delete(contentHistory).where(eq(contentHistory.contentId, id));
+      
+      // Finally delete the content item
       await db.delete(contentItems).where(eq(contentItems.id, id));
     } catch (error) {
       console.error(`Error deleting content item with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Content versioning methods
+  async getContentHistory(contentId: number): Promise<ContentHistory[]> {
+    try {
+      const history = await db.select()
+        .from(contentHistory)
+        .where(eq(contentHistory.contentId, contentId))
+        .orderBy(desc(contentHistory.modifiedAt));
+      
+      return history;
+    } catch (error) {
+      console.error(`Error fetching content history for content ID ${contentId}:`, error);
+      throw error;
+    }
+  }
+  
+  async createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<ContentHistory> {
+    try {
+      // Get current content item
+      const contentItem = await this.getContentItemById(contentId);
+      if (!contentItem) {
+        throw new Error(`Content item with ID ${contentId} not found`);
+      }
+      
+      // Create history record
+      const historyData = {
+        contentId,
+        version: contentItem.version + 1,
+        type: contentItem.type,
+        title: contentItem.title,
+        content: contentItem.content,
+        page: contentItem.page,
+        section: contentItem.section,
+        imageUrl: contentItem.imageUrl,
+        modifiedBy: userId,
+        changeDescription: changeDescription || 'Content updated'
+      };
+      
+      const [historyRecord] = await db.insert(contentHistory)
+        .values(historyData)
+        .returning();
+      
+      // Update the version number in the content item
+      await db.update(contentItems)
+        .set({ 
+          version: contentItem.version + 1,
+          lastModifiedBy: userId,
+          updatedAt: new Date()
+        })
+        .where(eq(contentItems.id, contentId));
+      
+      return historyRecord;
+    } catch (error) {
+      console.error(`Error creating content version for content ID ${contentId}:`, error);
+      throw error;
+    }
+  }
+  
+  async restoreContentVersion(historyId: number): Promise<ContentItem> {
+    try {
+      // Get history record
+      const [historyRecord] = await db.select()
+        .from(contentHistory)
+        .where(eq(contentHistory.id, historyId));
+      
+      if (!historyRecord) {
+        throw new Error(`Content history record with ID ${historyId} not found`);
+      }
+      
+      // Update content item with history data
+      const [updatedContent] = await db.update(contentItems)
+        .set({
+          title: historyRecord.title,
+          content: historyRecord.content,
+          type: historyRecord.type,
+          imageUrl: historyRecord.imageUrl,
+          updatedAt: new Date(),
+          version: historyRecord.version
+        })
+        .where(eq(contentItems.id, historyRecord.contentId))
+        .returning();
+      
+      return updatedContent;
+    } catch (error) {
+      console.error(`Error restoring content version from history ID ${historyId}:`, error);
+      throw error;
+    }
+  }
+  
+  // Content usage tracking methods
+  async recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage> {
+    try {
+      // Check if there's an existing usage record
+      const [existingUsage] = await db.select()
+        .from(contentUsage)
+        .where(
+          and(
+            eq(contentUsage.contentId, contentId),
+            eq(contentUsage.location, location),
+            eq(contentUsage.path, path)
+          )
+        );
+      
+      if (existingUsage) {
+        // Update existing record
+        const [updatedUsage] = await db.update(contentUsage)
+          .set({
+            views: existingUsage.views + 1,
+            lastViewed: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(contentUsage.id, existingUsage.id))
+          .returning();
+        
+        return updatedUsage;
+      } else {
+        // Create new record
+        const [newUsage] = await db.insert(contentUsage)
+          .values({
+            contentId,
+            location,
+            path,
+            views: 1,
+            lastViewed: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+        
+        return newUsage;
+      }
+    } catch (error) {
+      console.error(`Error recording content usage for content ID ${contentId}:`, error);
+      throw error;
+    }
+  }
+  
+  async incrementContentViews(contentId: number): Promise<void> {
+    try {
+      // Find all usage records for this content
+      const usageRecords = await db.select()
+        .from(contentUsage)
+        .where(eq(contentUsage.contentId, contentId));
+      
+      // Update the views and last viewed time for each record
+      for (const record of usageRecords) {
+        await db.update(contentUsage)
+          .set({
+            views: record.views + 1,
+            lastViewed: new Date(),
+            updatedAt: new Date()
+          })
+          .where(eq(contentUsage.id, record.id));
+      }
+    } catch (error) {
+      console.error(`Error incrementing content views for content ID ${contentId}:`, error);
+      throw error;
+    }
+  }
+  
+  async getContentUsageReport(contentId?: number): Promise<any[]> {
+    try {
+      let query = db.select({
+        id: contentItems.id,
+        key: contentItems.key,
+        title: contentItems.title,
+        page: contentItems.page,
+        section: contentItems.section,
+        type: contentItems.type,
+        totalViews: sql`SUM(COALESCE(${contentUsage.views}, 0))`.as('total_views'),
+        lastViewed: sql`MAX(${contentUsage.lastViewed})`.as('last_viewed'),
+        usageCount: sql`COUNT(${contentUsage.id})`.as('usage_count'),
+        locations: sql`ARRAY_AGG(DISTINCT ${contentUsage.location})`.as('locations'),
+        paths: sql`ARRAY_AGG(DISTINCT ${contentUsage.path})`.as('paths')
+      })
+      .from(contentItems)
+      .leftJoin(contentUsage, eq(contentItems.id, contentUsage.contentId))
+      .groupBy(contentItems.id);
+      
+      if (contentId) {
+        query = query.where(eq(contentItems.id, contentId));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error('Error generating content usage report:', error);
       throw error;
     }
   }
