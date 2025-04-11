@@ -77,6 +77,7 @@ import ComponentsCatalog from "@/pages/test/demo/ComponentsCatalog";
 import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
+import MediaPage from "@/pages/admin/MediaPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -154,6 +155,12 @@ function AppRouter() {
           <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/posts" component={PostsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/music" component={MusicPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/shop" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/comments" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/newsletter" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/database" component={AdminPortalPage} requiredRole="super_admin" />
+          <ProtectedRoute path="/admin/settings" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/media" component={MediaPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
 
           {/* Resource Pages */}
