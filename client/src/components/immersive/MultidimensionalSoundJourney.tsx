@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -111,6 +111,161 @@ export function MultidimensionalSoundJourney() {
     }
   ];
 
+  // Audio context and oscillators for layers
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const oscillatorsRef = useRef<{[key: number]: OscillatorNode | null}>({});
+  const gainNodesRef = useRef<{[key: number]: GainNode | null}>({});
+  const masterGainRef = useRef<GainNode | null>(null);
+
+  // Frequency ranges for different layer types
+  const baseFrequencies = {
+    ambient: { min: 100, max: 250 },
+    healing: { min: 396, max: 852 },  // Solfeggio frequencies
+    rhythmic: { min: 4, max: 12 },   // Hz for entrainment
+  };
+
+  // Initialize audio context
+  useEffect(() => {
+    return () => {
+      // Clean up on unmount
+      stopAllSounds();
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  // Start/stop sounds based on isPlaying state
+  useEffect(() => {
+    if (isPlaying) {
+      startSounds();
+    } else {
+      stopAllSounds();
+    }
+  }, [isPlaying]);
+
+  // Update master volume
+  useEffect(() => {
+    if (masterGainRef.current) {
+      masterGainRef.current.gain.value = isMuted ? 0 : masterVolume / 100;
+    }
+  }, [masterVolume, isMuted]);
+
+  // Update spatial settings
+  useEffect(() => {
+    // This would typically use more advanced WebAudio API spatial features
+    // Such as PannerNode. For simplicity, we're just adjusting gain values.
+    if (audioContextRef.current) {
+      adjustSpatialSettings();
+    }
+  }, [spatialDepth, rotationSpeed]);
+
+  // Start all active sound layers
+  const startSounds = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Create master gain node
+      masterGainRef.current = audioContextRef.current.createGain();
+      masterGainRef.current.gain.value = isMuted ? 0 : masterVolume / 100;
+      masterGainRef.current.connect(audioContextRef.current.destination);
+    }
+
+    // Start oscillators for each active layer
+    soundLayers.forEach((layer, index) => {
+      if (layer.active) {
+        startLayerSound(index);
+      }
+    });
+  };
+
+  // Start sound for a specific layer
+  const startLayerSound = (index: number) => {
+    if (!audioContextRef.current || !masterGainRef.current) return;
+    
+    const layer = soundLayers[index];
+    
+    // Create oscillator
+    oscillatorsRef.current[index] = audioContextRef.current.createOscillator();
+    
+    // Set frequency based on layer type
+    const freqRange = baseFrequencies[layer.type];
+    const baseFreq = freqRange.min + ((freqRange.max - freqRange.min) * (index / soundLayers.length));
+    
+    oscillatorsRef.current[index]!.type = "sine";
+    oscillatorsRef.current[index]!.frequency.value = baseFreq;
+    
+    // Create gain node for this layer
+    gainNodesRef.current[index] = audioContextRef.current.createGain();
+    gainNodesRef.current[index]!.gain.value = layer.volume / 100;
+    
+    // Connect nodes
+    oscillatorsRef.current[index]!.connect(gainNodesRef.current[index]!);
+    gainNodesRef.current[index]!.connect(masterGainRef.current);
+    
+    // Start oscillator
+    oscillatorsRef.current[index]!.start();
+
+    // Apply rotation effect (subtle frequency modulation)
+    if (rotationSpeed > 0) {
+      const lfo = audioContextRef.current.createOscillator();
+      lfo.frequency.value = rotationSpeed / 100; // Convert to Hz
+      
+      const lfoGain = audioContextRef.current.createGain();
+      lfoGain.gain.value = baseFreq * 0.02; // 2% modulation depth
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(oscillatorsRef.current[index]!.frequency);
+      lfo.start();
+    }
+  };
+
+  // Stop all sound layers
+  const stopAllSounds = () => {
+    soundLayers.forEach((_, index) => {
+      stopLayerSound(index);
+    });
+  };
+
+  // Stop a specific layer
+  const stopLayerSound = (index: number) => {
+    if (oscillatorsRef.current[index]) {
+      try {
+        oscillatorsRef.current[index]!.stop();
+        oscillatorsRef.current[index]!.disconnect();
+      } catch (e) {
+        // Oscillator might have already been stopped
+      }
+      oscillatorsRef.current[index] = null;
+    }
+    
+    if (gainNodesRef.current[index]) {
+      gainNodesRef.current[index]!.disconnect();
+      gainNodesRef.current[index] = null;
+    }
+  };
+
+  // Adjust spatial settings
+  const adjustSpatialSettings = () => {
+    // Here we would use PannerNode, etc. for true 3D audio
+    // This is a simplified version that just adjusts volumes based on "depth"
+    Object.entries(gainNodesRef.current).forEach(([indexStr, gainNode]) => {
+      if (gainNode) {
+        const index = parseInt(indexStr);
+        const layer = soundLayers[index];
+        // The deeper we go, the more we modulate by spatial settings
+        const depthFactor = spatialDepth / 100;
+        
+        // Adjust gain relative to depth
+        const newVolume = (layer.volume / 100) * (1 - (depthFactor * 0.3) + (index / soundLayers.length * depthFactor));
+        gainNode.gain.linearRampToValueAtTime(
+          newVolume, 
+          audioContextRef.current!.currentTime + 0.5
+        );
+      }
+    });
+  };
+
   // Toggle play/pause
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -124,8 +279,18 @@ export function MultidimensionalSoundJourney() {
   // Toggle layer active state
   const toggleLayer = (index: number) => {
     const updatedLayers = [...soundLayers];
-    updatedLayers[index].active = !updatedLayers[index].active;
+    const newActiveState = !updatedLayers[index].active;
+    updatedLayers[index].active = newActiveState;
     setSoundLayers(updatedLayers);
+    
+    // If we're playing, update the sound layer
+    if (isPlaying) {
+      if (newActiveState) {
+        startLayerSound(index);
+      } else {
+        stopLayerSound(index);
+      }
+    }
   };
 
   // Update layer volume
@@ -133,6 +298,14 @@ export function MultidimensionalSoundJourney() {
     const updatedLayers = [...soundLayers];
     updatedLayers[index].volume = volume;
     setSoundLayers(updatedLayers);
+    
+    // Update gain node if it exists
+    if (gainNodesRef.current[index] && audioContextRef.current) {
+      gainNodesRef.current[index]!.gain.linearRampToValueAtTime(
+        volume / 100,
+        audioContextRef.current.currentTime + 0.1
+      );
+    }
   };
 
   // Apply dimension preset
