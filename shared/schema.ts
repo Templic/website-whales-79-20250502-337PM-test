@@ -462,14 +462,83 @@ export const contentItems = pgTable("content_items", {
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
-  version: integer("version").notNull().default(1)
+  version: integer("version").notNull().default(1),
+  lastModifiedBy: integer("last_modified_by").references(() => users.id)
+});
+
+// Content version history table
+export const contentHistory = pgTable("content_history", {
+  id: serial("id").primaryKey(),
+  contentId: integer("content_id").notNull().references(() => contentItems.id),
+  version: integer("version").notNull(),
+  type: text("type", { enum: ["text", "image", "html"] }).notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  page: text("page").notNull(),
+  section: text("section").notNull(),
+  imageUrl: text("image_url"),
+  modifiedAt: timestamp("modified_at").notNull().defaultNow(),
+  modifiedBy: integer("modified_by").references(() => users.id),
+  changeDescription: text("change_description")
+});
+
+// Content usage tracking table
+export const contentUsage = pgTable("content_usage", {
+  id: serial("id").primaryKey(),
+  contentId: integer("content_id").notNull().references(() => contentItems.id),
+  location: text("location").notNull(), // Path or component where content is used
+  path: text("path").notNull(), // URL path where content is displayed
+  views: integer("views").notNull().default(0),
+  lastViewed: timestamp("last_viewed"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
 });
 
 export const insertContentItemSchema = createInsertSchema(contentItems)
-  .omit({ id: true, createdAt: true, updatedAt: true, version: true });
+  .omit({ id: true, createdAt: true, updatedAt: true, version: true, lastModifiedBy: true });
+  
+export const insertContentHistorySchema = createInsertSchema(contentHistory)
+  .omit({ id: true, modifiedAt: true });
+  
+export const insertContentUsageSchema = createInsertSchema(contentUsage)
+  .omit({ id: true, createdAt: true, updatedAt: true, views: true, lastViewed: true });
 
 export type ContentItem = typeof contentItems.$inferSelect;
 export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
+
+export type ContentHistory = typeof contentHistory.$inferSelect;
+export type InsertContentHistory = z.infer<typeof insertContentHistorySchema>;
+
+export type ContentUsage = typeof contentUsage.$inferSelect;
+export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
+
+// Content relations
+export const contentItemRelations = relations(contentItems, ({ one, many }) => ({
+  history: many(contentHistory),
+  usages: many(contentUsage),
+  lastModifier: one(users, {
+    fields: [contentItems.lastModifiedBy],
+    references: [users.id],
+  })
+}));
+
+export const contentHistoryRelations = relations(contentHistory, ({ one }) => ({
+  content: one(contentItems, {
+    fields: [contentHistory.contentId],
+    references: [contentItems.id],
+  }),
+  modifier: one(users, {
+    fields: [contentHistory.modifiedBy],
+    references: [users.id],
+  })
+}));
+
+export const contentUsageRelations = relations(contentUsage, ({ one }) => ({
+  content: one(contentItems, {
+    fields: [contentUsage.contentId],
+    references: [contentItems.id],
+  })
+}));
 
 // Define the schema relations
 export const productRelations = relations(products, ({ one, many }) => ({

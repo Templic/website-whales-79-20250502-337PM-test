@@ -93,6 +93,16 @@ export interface IStorage {
   createContentItem(contentItem: any): Promise<ContentItem>;
   updateContentItem(contentItem: any): Promise<ContentItem>;
   deleteContentItem(id: number): Promise<void>;
+  
+  // Content versioning methods
+  getContentHistory(contentId: number): Promise<ContentHistory[]>;
+  createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<ContentHistory>;
+  restoreContentVersion(historyId: number): Promise<ContentItem>;
+  
+  // Content usage tracking methods
+  recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage>;
+  incrementContentViews(contentId: number): Promise<void>;
+  getContentUsageReport(contentId?: number): Promise<any[]>;
 }
 
 export class PostgresStorage implements IStorage {
