@@ -3,7 +3,7 @@ declare module 'connect-pg-simple' {
   export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
-import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, subscribers, posts, categories, comments, users, tracks, albums, newsletters } from "@shared/schema";
+import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, type ContentItem, type InsertContentItem, subscribers, posts, categories, comments, users, tracks, albums, newsletters, contentItems } from "@shared/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
@@ -85,6 +85,14 @@ export interface IStorage {
   updateSystemSettings(settings: any): Promise<void>;
   getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
   getUserActivity(userId: number): Promise<any>;
+  
+  // Content management methods
+  getAllContentItems(): Promise<ContentItem[]>;
+  getContentItemById(id: number): Promise<ContentItem | null>;
+  getContentItemByKey(key: string): Promise<ContentItem | null>;
+  createContentItem(contentItem: any): Promise<ContentItem>;
+  updateContentItem(contentItem: any): Promise<ContentItem>;
+  deleteContentItem(id: number): Promise<void>;
 }
 
 export class PostgresStorage implements IStorage {
@@ -1166,6 +1174,96 @@ export class PostgresStorage implements IStorage {
         post_count: 0,
         comment_count: 0
       };
+    }
+  }
+
+  // Content management methods
+  async getAllContentItems(): Promise<ContentItem[]> {
+    try {
+      return await db.select().from(contentItems).orderBy(sql`updated_at DESC`);
+    } catch (error) {
+      console.error("Error fetching content items:", error);
+      throw error;
+    }
+  }
+
+  async getContentItemById(id: number): Promise<ContentItem | null> {
+    try {
+      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.id, id));
+      return contentItem || null;
+    } catch (error) {
+      console.error(`Error fetching content item by ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  async getContentItemByKey(key: string): Promise<ContentItem | null> {
+    try {
+      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.key, key));
+      return contentItem || null;
+    } catch (error) {
+      console.error(`Error fetching content item by key "${key}":`, error);
+      throw error;
+    }
+  }
+
+  async createContentItem(contentData: any): Promise<ContentItem> {
+    try {
+      const now = new Date();
+      const data = {
+        ...contentData,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      const [newContentItem] = await db.insert(contentItems).values(data).returning();
+      return newContentItem;
+    } catch (error) {
+      console.error("Error creating content item:", error);
+      throw error;
+    }
+  }
+
+  async updateContentItem(contentData: any): Promise<ContentItem> {
+    try {
+      const { id, ...updateData } = contentData;
+      
+      // Make sure the content item exists
+      const existingItem = await this.getContentItemById(id);
+      if (!existingItem) {
+        throw new Error(`Content item with ID ${id} not found`);
+      }
+
+      const now = new Date();
+      const data = {
+        ...updateData,
+        updatedAt: now
+      };
+
+      const [updatedContentItem] = await db.update(contentItems)
+        .set(data)
+        .where(eq(contentItems.id, id))
+        .returning();
+
+      return updatedContentItem;
+    } catch (error) {
+      console.error(`Error updating content item with ID ${contentData.id}:`, error);
+      throw error;
+    }
+  }
+
+  async deleteContentItem(id: number): Promise<void> {
+    try {
+      // Make sure the content item exists
+      const existingItem = await this.getContentItemById(id);
+      if (!existingItem) {
+        throw new Error(`Content item with ID ${id} not found`);
+      }
+
+      await db.delete(contentItems).where(eq(contentItems.id, id));
+    } catch (error) {
+      console.error(`Error deleting content item with ID ${id}:`, error);
+      throw error;
     }
   }
 }

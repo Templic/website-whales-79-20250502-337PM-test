@@ -1,167 +1,210 @@
-/**
- * content.ts
- * 
- * Routes for handling content management (text and image updates)
- */
-
 import express from 'express';
-import fileUpload from 'express-fileupload';
-import path from 'path';
-import fs from 'fs';
-import { v4 as uuidv4 } from 'uuid';
-import { db } from '../db';
-import { requireAuth, requireRole } from '../middleware/auth';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-// Get the __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { storage } from '../storage';
+import { z } from 'zod';
+import { insertContentItemSchema } from '@shared/schema';
 
 const router = express.Router();
 
-// Enable file upload middleware
-router.use(fileUpload({
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  abortOnLimit: true,
-  responseOnLimit: "File size is too large. Maximum 5MB allowed.",
-  useTempFiles: true,
-  tempFileDir: path.join(process.cwd(), 'temp'),
-  createParentPath: true,
-}));
-
-// Configure upload path
-const UPLOAD_PATH = path.join(process.cwd(), 'client/public/uploads');
-
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_PATH)) {
-  fs.mkdirSync(UPLOAD_PATH, { recursive: true });
-}
-
 /**
- * Update text content
- * POST /api/content/text
+ * @route   GET /api/content
+ * @desc    Get all content items
+ * @access  Admin
  */
-router.post('/text', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const { contentId, text } = req.body;
-    
-    if (!contentId || !text) {
-      return res.status(400).json({
-        success: false,
-        message: 'Content ID and text are required'
-      });
+    // Check for admin authorization 
+    const { user } = req.session;
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
-    
-    // Here you would normally update the text in your database
-    // This is a simplified example that would need to be adapted to your schema
-    
-    /*
-    // Example database call using your DB abstraction
-    await db.query(
-      'UPDATE content SET text = $1, updated_at = NOW() WHERE id = $2',
-      [text, contentId]
-    );
-    */
-    
-    // For now, we'll just return a success response
-    // In a real implementation, retrieve the updated content from the database
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Text content updated successfully',
-      data: {
-        id: contentId,
-        contentType: 'text',
-        text,
-        updatedAt: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    console.error('Error updating text content:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while updating text content'
-    });
+
+    // Get all content items
+    const contentItems = await storage.getAllContentItems();
+    return res.json(contentItems);
+  } catch (error: any) {
+    console.error('Error fetching content items:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 /**
- * Update image content
- * POST /api/content/image
+ * @route   GET /api/content/:id
+ * @desc    Get a content item by ID
+ * @access  Admin
  */
-router.post('/image', requireAuth, requireRole('admin'), async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const { contentId } = req.body;
+    // Check for admin authorization
+    const { user } = req.session;
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
+    }
+
+    const contentId = parseInt(req.params.id);
+    const contentItem = await storage.getContentItemById(contentId);
+
+    if (!contentItem) {
+      return res.status(404).json({ message: 'Content item not found' });
+    }
+
+    return res.json(contentItem);
+  } catch (error: any) {
+    console.error(`Error fetching content item by ID ${req.params.id}:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/content/key/:key
+ * @desc    Get a content item by key
+ * @access  Public
+ */
+router.get('/key/:key', async (req, res) => {
+  try {
+    const key = req.params.key;
+    const contentItem = await storage.getContentItemByKey(key);
+
+    if (!contentItem) {
+      return res.status(404).json({ message: 'Content item not found' });
+    }
+
+    return res.json(contentItem);
+  } catch (error: any) {
+    console.error(`Error fetching content item by key ${req.params.key}:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/content/page/:page
+ * @desc    Get content items by page
+ * @access  Public
+ */
+router.get('/page/:page', async (req, res) => {
+  try {
+    const page = req.params.page;
     
-    if (!contentId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Content ID is required'
+    // Get all content items
+    const allContentItems = await storage.getAllContentItems();
+    
+    // Filter by page
+    const pageContentItems = allContentItems.filter(item => item.page === page);
+
+    return res.json(pageContentItems);
+  } catch (error: any) {
+    console.error(`Error fetching content items for page ${req.params.page}:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/content
+ * @desc    Create a content item
+ * @access  Admin
+ */
+router.post('/', async (req, res) => {
+  try {
+    // Check for admin authorization
+    const { user } = req.session;
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
+    }
+
+    // Validate the request body
+    const validation = insertContentItemSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        message: 'Invalid data', 
+        errors: validation.error.errors 
       });
     }
+
+    // Create the content item
+    const contentItem = await storage.createContentItem(validation.data);
+    return res.status(201).json(contentItem);
+  } catch (error: any) {
+    console.error('Error creating content item:', error);
     
-    if (!req.files || !req.files.image) {
-      return res.status(400).json({
-        success: false,
-        message: 'No image file provided'
-      });
+    // Check for duplicate key error
+    if (error.code === '23505' && error.constraint?.includes('key')) {
+      return res.status(400).json({ message: 'A content item with this key already exists' });
     }
     
-    // We know the image exists from the check above, but need to handle array vs single file
-    const imageFile = Array.isArray(req.files.image) 
-      ? req.files.image[0] 
-      : req.files.image;
-    
-    // Validate file is an image
-    if (!imageFile.mimetype || !imageFile.mimetype.startsWith('image/')) {
-      return res.status(400).json({
-        success: false,
-        message: 'Only image files are allowed'
-      });
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   PUT /api/content/:id
+ * @desc    Update a content item
+ * @access  Admin
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    // Check for admin authorization
+    const { user } = req.session;
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
     }
+
+    const contentId = parseInt(req.params.id);
     
-    // Generate a unique filename
-    const fileExtension = path.extname(imageFile.name || 'image.jpg');
-    const fileName = `${uuidv4()}${fileExtension}`;
-    const filePath = path.join(UPLOAD_PATH, fileName);
-    
-    // Move the file to the upload directory
-    await imageFile.mv(filePath);
-    
-    // The URL to access the uploaded image
-    const imageUrl = `/uploads/${fileName}`;
-    
-    // Here you would update the image reference in your database
-    // This is a simplified example that would need to be adapted to your schema
-    
-    /*
-    // Example database call using your DB abstraction
-    await db.query(
-      'UPDATE content SET image_url = $1, updated_at = NOW() WHERE id = $2',
-      [imageUrl, contentId]
-    );
-    */
-    
-    // For now, we'll just return a success response with the new image URL
-    // In a real implementation, retrieve the updated content from the database
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Image content updated successfully',
-      data: {
-        id: contentId,
-        contentType: 'image',
-        imageUrl,
-        updatedAt: new Date().toISOString()
+    // Get the existing content item
+    const existingItem = await storage.getContentItemById(contentId);
+    if (!existingItem) {
+      return res.status(404).json({ message: 'Content item not found' });
+    }
+
+    // Check for duplicate key if the key is being updated
+    if (req.body.key && req.body.key !== existingItem.key) {
+      const itemWithSameKey = await storage.getContentItemByKey(req.body.key);
+      if (itemWithSameKey) {
+        return res.status(400).json({ message: 'A content item with this key already exists' });
       }
-    });
-  } catch (error) {
-    console.error('Error updating image content:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'An error occurred while updating image content'
-    });
+    }
+
+    // Update the content item
+    const updateData = {
+      id: contentId,
+      ...req.body,
+      version: existingItem.version + 1
+    };
+    
+    const updatedItem = await storage.updateContentItem(updateData);
+    return res.json(updatedItem);
+  } catch (error: any) {
+    console.error(`Error updating content item ${req.params.id}:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/content/:id
+ * @desc    Delete a content item
+ * @access  Admin
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    // Check for admin authorization
+    const { user } = req.session;
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
+    }
+
+    const contentId = parseInt(req.params.id);
+    
+    // Check if the content item exists
+    const contentItem = await storage.getContentItemById(contentId);
+    if (!contentItem) {
+      return res.status(404).json({ message: 'Content item not found' });
+    }
+
+    // Delete the content item
+    await storage.deleteContentItem(contentId);
+    return res.status(200).json({ message: 'Content item deleted successfully' });
+  } catch (error: any) {
+    console.error(`Error deleting content item ${req.params.id}:`, error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

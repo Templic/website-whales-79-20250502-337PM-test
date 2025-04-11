@@ -450,6 +450,27 @@ export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type Coupon = typeof coupons.$inferSelect;
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 
+// Content management table
+export const contentItems = pgTable("content_items", {
+  id: serial("id").primaryKey(),
+  type: text("type", { enum: ["text", "image", "html"] }).notNull(),
+  key: text("key").notNull().unique(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  page: text("page").notNull(),
+  section: text("section").notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  version: integer("version").notNull().default(1)
+});
+
+export const insertContentItemSchema = createInsertSchema(contentItems)
+  .omit({ id: true, createdAt: true, updatedAt: true, version: true });
+
+export type ContentItem = typeof contentItems.$inferSelect;
+export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
+
 // Define the schema relations
 export const productRelations = relations(products, ({ one, many }) => ({
   category: one(productCategories, {
