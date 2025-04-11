@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { apiRequest } from '@/lib/queryClient';
+import { queryClient } from '@/lib/queryClient';
 
 interface ContentItemType {
   id: number;
@@ -45,15 +46,31 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
   const [contentError, setContentError] = useState<boolean>(false);
 
   // Fetch content item by key
-  const { data: contentItem, isLoading, error } = useQuery<ContentItemType>({
+  const { data: contentItem, isLoading, error } = useQuery<ContentItemType, Error>({
     queryKey: [`/api/content/key/${contentKey}`],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/content/key/${contentKey}`);
+        if (!response.ok) {
+          throw new Error('Content not found');
+        }
+        return response.json();
+      } catch (err) {
+        console.error('Error loading content:', err);
+        throw err;
+      }
+    },
     refetchOnWindowFocus: false,
     retry: 1, // Only retry once to avoid flooding server with requests for non-existent content
-    enabled: contentKey.length > 0,
-    onError: () => {
+    enabled: contentKey.length > 0
+  });
+  
+  // Set error state when there's an error
+  useEffect(() => {
+    if (error) {
       setContentError(true);
     }
-  });
+  }, [error]);
 
   // Reset error state when contentKey changes
   useEffect(() => {

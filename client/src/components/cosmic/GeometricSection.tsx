@@ -7,8 +7,8 @@ import useIsMobile from './useIsMobile'; // Assuming this hook exists
 
 interface GeometricSectionProps {
   children: ReactNode;
-  title?: string;
-  subtitle?: string;
+  title?: ReactNode;
+  subtitle?: ReactNode;
   variant?: 'primary' | 'secondary' | 'accent' | 'cosmic' | 'minimal';
   className?: string;
   style?: React.CSSProperties;
