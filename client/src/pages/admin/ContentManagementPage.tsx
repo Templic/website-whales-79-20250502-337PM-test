@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminEditor from '@/components/admin/AdminEditor';
+import ContentHistoryView from '@/components/admin/ContentHistoryView';
+import ContentUsageReport from '@/components/admin/ContentUsageReport';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -53,7 +55,9 @@ import {
   Search, 
   FileText, 
   Image as ImageIcon, 
-  Code 
+  Code,
+  History,
+  BarChart
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -83,6 +87,8 @@ const ContentManagementPage: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isUsageReportOpen, setIsUsageReportOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -228,10 +234,16 @@ const ContentManagementPage: React.FC = () => {
               Manage website content across different pages and sections
             </p>
           </div>
-          <Button onClick={handleCreateNew}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => setIsUsageReportOpen(true)}>
+              <BarChart className="mr-2 h-4 w-4" />
+              Usage Report
+            </Button>
+            <Button onClick={handleCreateNew}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create New
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -327,6 +339,17 @@ const ContentManagementPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="icon"
+                              onClick={() => {
+                                setSelectedContent(item);
+                                setIsHistoryDialogOpen(true);
+                              }}
+                              title="Version History"
+                            >
+                              <History className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => handleEdit(item)}
                               title="Edit"
                             >
@@ -400,6 +423,39 @@ const ContentManagementPage: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Content History Dialog */}
+      <Dialog open={isHistoryDialogOpen} onOpenChange={setIsHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Content Version History</DialogTitle>
+            <DialogDescription>
+              View and manage previous versions of "{selectedContent?.title}"
+            </DialogDescription>
+          </DialogHeader>
+          {selectedContent && (
+            <ContentHistoryView 
+              contentId={selectedContent.id} 
+              onClose={() => setIsHistoryDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Usage Report Dialog */}
+      <Dialog open={isUsageReportOpen} onOpenChange={setIsUsageReportOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Content Usage Report</DialogTitle>
+            <DialogDescription>
+              Analytics showing how content is being used across the site
+            </DialogDescription>
+          </DialogHeader>
+          <ContentUsageReport 
+            onClose={() => setIsUsageReportOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
