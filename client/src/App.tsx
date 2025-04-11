@@ -84,6 +84,9 @@ import { LoginPage } from '@/pages/Login'; //Import added here
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
 const EditButtonPage = () => <EditButtonPageFC />;
 
+// Demo Pages
+import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
+
 // MainHeader is now included in MainLayout, no longer needed here
 
 
@@ -187,6 +190,7 @@ function AppRouter() {
           <Route path="/test/new" component={NewComponentsDemo} />
           <Route path="/cosmic-test" component={CosmicTest} />
           <Route path="/type-system-demo" component={TypeSystemDemo} />
+          <Route path="/dynamic-content-demo" component={DynamicContentDemo} />
           {/* Archived Page - /button-demo */}
           {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
