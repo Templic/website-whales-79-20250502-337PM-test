@@ -1823,6 +1823,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/content', contentRoutes);
+  app.use(mediaRoutes); // Adding media routes for file uploads and management
 
   // Security routes
   app.use('/api/security', securityRouter);

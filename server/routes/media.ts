@@ -4,7 +4,22 @@ import { mediaFiles } from '../../shared/schema';
 import path from 'path';
 import fs from 'fs';
 import fileUpload from 'express-fileupload';
-import { checkAuth, requireAdmin } from '../middleware/auth';
+// Import middleware for authentication
+// Using isAuthenticated for standard auth check
+const checkAuth = (req, res, next) => {
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+};
+
+// Middleware to require admin role
+const requireAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Forbidden: Admin access required' });
+};
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 
