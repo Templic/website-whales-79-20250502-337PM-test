@@ -58,8 +58,22 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
 
   // Set up mutations for creating and updating content
   const createContentMutation = useMutation({
-    mutationFn: (newContent: ContentItem) => 
-      apiRequest('/api/content', { method: 'POST', data: newContent }),
+    mutationFn: async (newContent: ContentItem) => {
+      const response = await fetch('/api/content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newContent),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create content');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/content'] });
       setSuccess('Content created successfully');
@@ -73,8 +87,22 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
   });
 
   const updateContentMutation = useMutation({
-    mutationFn: (updatedContent: ContentItem) => 
-      apiRequest(`/api/content/${updatedContent.id}`, { method: 'PUT', data: updatedContent }),
+    mutationFn: async (updatedContent: ContentItem) => {
+      const response = await fetch(`/api/content/${updatedContent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedContent),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update content');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/content'] });
       setSuccess('Content updated successfully');

@@ -94,12 +94,30 @@ const ContentManagementPage: React.FC = () => {
     error 
   } = useQuery<ContentItem[]>({ 
     queryKey: ['/api/content'],
+    queryFn: async () => {
+      const response = await fetch('/api/content');
+      if (!response.ok) {
+        throw new Error('Failed to fetch content');
+      }
+      return response.json();
+    },
     refetchOnWindowFocus: false
   });
 
   // Delete content mutation
   const deleteContentMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/content/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/content/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete content');
+      }
+      
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/content'] });
       toast({
@@ -234,28 +252,28 @@ const ContentManagementPage: React.FC = () => {
               </div>
               <div className="flex gap-4">
                 <Select
-                  value={pageFilter || ''}
-                  onValueChange={(value) => setPageFilter(value === '' ? null : value)}
+                  value={pageFilter || 'all'}
+                  onValueChange={(value) => setPageFilter(value === 'all' ? null : value)}
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Filter by page" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Pages</SelectItem>
+                    <SelectItem value="all">All Pages</SelectItem>
                     {pages.map((page) => (
                       <SelectItem key={page} value={page}>{page}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Select
-                  value={typeFilter || ''}
-                  onValueChange={(value) => setTypeFilter(value === '' ? null : value)}
+                  value={typeFilter || 'all'}
+                  onValueChange={(value) => setTypeFilter(value === 'all' ? null : value)}
                 >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="text">Text</SelectItem>
                     <SelectItem value="image">Image</SelectItem>
                     <SelectItem value="html">HTML</SelectItem>
