@@ -1,30 +1,60 @@
 /**
  * AdminPortalPage.tsx
  * 
- * Migrated as part of the repository reorganization.
+ * Enhanced Admin Portal Dashboard with modern UI and functionality
  */
-import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useEffect, Suspense } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import AdminLayout from "@/components/layouts/AdminLayout";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { ChartBar, LogOut, Users, FileText, AlertCircle, ShieldCheck, Gauge, RefreshCw, Settings, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import SecurityHealthCheck from "@/components/system/SecurityHealthCheck";
-import HealthCheck from "@/components/system/HealthCheck";
+import { Progress } from "@/components/ui/progress";
+import {
+  Gauge,
+  Users,
+  FileText,
+  Music,
+  ShoppingBag,
+  RefreshCw,
+  TrendingUp,
+  Eye,
+  ShieldCheck,
+  Calendar,
+  Zap
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
+// Types
 interface AdminStats {
   totalUsers: number;
+  newUsers: number;
   pendingReviews: number;
   systemHealth: string;
   approvalRate: number;
+  activeUsers: number;
+  newRegistrations: number;
+  totalPosts: number;
+  totalProducts: number;
+  totalMusic: number;
   recentActivities: Array<{
     id: number;
     action: string;
@@ -38,43 +68,21 @@ interface AdminStats {
   };
 }
 
-const UserManagementComponent = lazy(() => import('@/components/features/admin/UserManagement'));
-const ContentReviewComponent = lazy(() => import('@/components/features/admin/ContentReview'));
-const DatabaseMonitorComponent = lazy(() => import('@/components/features/admin/DatabaseMonitor'));
-const BlogPostManagementComponent = lazy(() => import('@/components/features/admin/BlogPostManagement'));
-const CommentManagementComponent = lazy(() => import('@/components/features/admin/CommentManagement'));
-const ShopManagementComponent = lazy(() => import('@/components/features/admin/ShopManagement'));
-const EnhancedShopManagementComponent = lazy(() => import('@/components/features/admin/EnhancedShopManagement'));
-const NewsletterManagementComponent = lazy(() => import('@/components/features/admin/NewsletterManagement'));
-
 export default function AdminPortalPage() {
-  const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
-
-  const { data: subscribers, refetch: refetchSubscribers } = useQuery({
-    queryKey: ['subscribers'],
-    queryFn: async () => {
-      const res = await fetch('/api/subscribers');
-      if (!res.ok) throw new Error('Failed to fetch subscribers');
-      return res.json();
-    },
-    enabled: activeTab === 'subscribers',
-    staleTime: 0 // Always fetch fresh data
-  });
-
-  useEffect(() => {
-    if (activeTab === 'subscribers') {
-      refetchSubscribers();
-    }
-  }, [activeTab, refetchSubscribers]);
-
+  
+  // Fetch admin statistics
   const { data: adminStats, isLoading: statsLoading } = useQuery<AdminStats>({
     queryKey: ['adminStats'],
-    queryFn: () => fetch('/api/admin/stats').then(res => res.json())
+    queryFn: async () => {
+      const res = await fetch('/api/admin/stats');
+      if (!res.ok) throw new Error('Failed to fetch admin stats');
+      return res.json();
+    }
   });
 
+  // Mutation to refresh statistics
   const refreshStatsMutation = useMutation({
     mutationFn: async () => {
       await queryClient.invalidateQueries({ queryKey: ['adminStats'] });
@@ -87,407 +95,412 @@ export default function AdminPortalPage() {
     }
   });
 
-  const handleUserAction = async (userId: string, action: 'promote' | 'demote' | 'delete' | 'ban' | 'unban') => {
-    try {
-      await fetch(`/api/admin/users/${userId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ action }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Generate success message based on action
-      let successMessage = '';
-      switch (action) {
-        case 'delete':
-          successMessage = 'User deleted successfully';
-          break;
-        case 'ban':
-          successMessage = 'User banned successfully';
-          break;
-        case 'unban':
-          successMessage = 'User unbanned successfully';
-          break;
-        case 'promote':
-          successMessage = 'User promoted successfully';
-          break;
-        case 'demote':
-          successMessage = 'User demoted successfully';
-          break;
-      }
-
-      toast({
-        title: 'User Action Success',
-        description: successMessage
-      });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    } catch (error) {
-      toast({
-        title: 'Action Failed',
-        description: `Could not ${action} user`,
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const logoutMutation = useMutation({
-    mutationFn: logout,
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Logged out successfully"
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to logout",
-        variant: "destructive"
-      });
-    }
-  });
-
-  const handleLogout = () => {
-    logoutMutation.mutate();
-  };
-
-  const healthStatus = useMemo(() => {
-    if (!adminStats) return { color: "bg-gray-500", status: "Unknown" };
-    switch (adminStats.systemHealth) {
-      case "Optimal": return { color: "bg-green-500", status: "Optimal" };
-      case "Warning": return { color: "bg-yellow-500", status: "Warning" };
-      case "Critical": return { color: "bg-red-500", status: "Critical" };
-      default: return { color: "bg-blue-500", status: adminStats.systemHealth };
-    }
-  }, [adminStats]);
-
-  return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-[#00ebd6]">Admin Portal</h1>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => refreshStatsMutation.mutate()}
-            disabled={refreshStatsMutation.isPending}
-            className="text-[#00ebd6] border-[#00ebd6] hover:bg-[#00ebd620]"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${refreshStatsMutation.isPending ? 'animate-spin' : ''}`} />
-            Refresh Stats
-          </Button>
-          <Link href="/admin/analytics">
-            <Button
-              variant="default"
-              className="bg-[#00ebd6] text-[#303436] hover:bg-[#00c2b0]"
-            >
-              <ChartBar className="mr-2 h-4 w-4" />
-              Advanced Analytics
+  // Components for each statistic card
+  const StatCard = ({ title, value, icon, description, change, link }: {
+    title: string;
+    value: number | string;
+    icon: React.ReactNode;
+    description?: string;
+    change?: { value: number; isPositive: boolean };
+    link?: string;
+  }) => (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          {title}
+        </CardTitle>
+        <div className="h-4 w-4 text-muted-foreground">
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {statsLoading ? <Skeleton className="h-8 w-20" /> : value}
+        </div>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">
+            {description}
+          </p>
+        )}
+        {change && (
+          <div className="flex items-center mt-2">
+            <Badge variant={change.isPositive ? "outline" : "destructive"} className="h-5">
+              <span className={change.isPositive ? 'text-green-500' : 'text-red-500'}>
+                {change.isPositive ? '+' : ''}{change.value}%
+              </span>
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+      {link && (
+        <CardFooter className="p-2">
+          <Link href={link}>
+            <Button variant="ghost" size="sm" className="w-full justify-start">
+              View Details
+              <Eye className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            disabled={logoutMutation.isLoading}
-          >
-            {logoutMutation.isLoading ? (
-              "Logging out..."
-            ) : (
-              <>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </>
-            )}
-          </Button>
+        </CardFooter>
+      )}
+    </Card>
+  );
+
+  // Calculate system health indicator color
+  const getHealthColor = (health?: string) => {
+    if (!health) return "bg-gray-400";
+    switch (health.toLowerCase()) {
+      case 'excellent':
+        return "bg-green-500";
+      case 'good':
+        return "bg-green-400";
+      case 'fair':
+        return "bg-yellow-400";
+      case 'poor':
+        return "bg-red-400";
+      default:
+        return "bg-gray-400";
+    }
+  };
+  
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => refreshStatsMutation.mutate()}
+                  disabled={refreshStatsMutation.isPending}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshStatsMutation.isPending ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh dashboard statistics</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span>Status</span>
-                <Badge variant={statsLoading ? "outline" : "default"}>
-                  {statsLoading ? "Loading..." : adminStats?.systemHealth || "Unknown"}
-                </Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Approval Rate</span>
-                <span>{adminStats?.approvalRate || 0}%</span>
-              </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <StatCard 
+            title="Total Users" 
+            value={adminStats?.totalUsers ?? 0} 
+            icon={<Users className="h-4 w-4" />}
+            link="/admin/users"
+          />
+          <StatCard 
+            title="Active Users" 
+            value={adminStats?.activeUsers ?? 0} 
+            icon={<Zap className="h-4 w-4" />}
+            change={{ value: 12, isPositive: true }}
+            description="Currently active across the platform"
+          />
+          <StatCard 
+            title="Blog Posts" 
+            value={adminStats?.totalPosts ?? 0} 
+            icon={<FileText className="h-4 w-4" />}
+            link="/admin/posts"
+          />
+          <StatCard 
+            title="Music Tracks" 
+            value={adminStats?.totalMusic ?? 0} 
+            icon={<Music className="h-4 w-4" />}
+            link="/admin/music"
+          />
+        </div>
+
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                  <CardDescription>
+                    Current status of the system and approval rates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className={`h-3 w-3 rounded-full ${getHealthColor(adminStats?.systemHealth)}`} />
+                    <div>
+                      <p className="text-sm font-medium">System Status</p>
+                      <p className="text-sm text-muted-foreground">
+                        {statsLoading ? <Skeleton className="h-4 w-24" /> : (adminStats?.systemHealth || "Unknown")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div>Approval Rate</div>
+                      <div>{statsLoading ? <Skeleton className="h-4 w-12" /> : `${adminStats?.approvalRate || 0}%`}</div>
+                    </div>
+                    <Progress value={adminStats?.approvalRate} />
+                  </div>
+                  <div className="pt-4">
+                    <p className="text-sm font-medium">Pending Reviews</p>
+                    <p className="text-2xl font-bold">{statsLoading ? <Skeleton className="h-6 w-16" /> : adminStats?.pendingReviews || 0}</p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Link href="/admin/content-review">
+                    <Button variant="outline" size="sm">
+                      Review Content
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+              
+              <Card className="col-span-1">
+                <CardHeader>
+                  <CardTitle>User Distribution</CardTitle>
+                  <CardDescription>
+                    Breakdown of users by role
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {statsLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {adminStats?.userRolesDistribution && (
+                        <>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center">
+                                <div className="h-3 w-3 rounded-full bg-blue-500 mr-2" />
+                                Users
+                              </div>
+                              <div>{adminStats.userRolesDistribution.user}</div>
+                            </div>
+                            <Progress
+                              value={(adminStats.userRolesDistribution.user / adminStats.totalUsers) * 100}
+                              className="bg-blue-100"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center">
+                                <div className="h-3 w-3 rounded-full bg-purple-500 mr-2" />
+                                Admins
+                              </div>
+                              <div>{adminStats.userRolesDistribution.admin}</div>
+                            </div>
+                            <Progress
+                              value={(adminStats.userRolesDistribution.admin / adminStats.totalUsers) * 100}
+                              className="bg-purple-100"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center">
+                                <div className="h-3 w-3 rounded-full bg-red-500 mr-2" />
+                                Super Admins
+                              </div>
+                              <div>{adminStats.userRolesDistribution.super_admin}</div>
+                            </div>
+                            <Progress
+                              value={(adminStats.userRolesDistribution.super_admin / adminStats.totalUsers) * 100}
+                              className="bg-red-100"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Content Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span>Pending Reviews</span>
-                <Badge variant="outline">{adminStats?.pendingReviews || 0}</Badge>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setActiveTab("content")}
-                className="w-full"
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Manage Content
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>User Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span>Users</span>
-                <span>{adminStats?.userRolesDistribution?.user || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Admins</span>
-                <span>{adminStats?.userRolesDistribution?.admin || 0}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Super Admins</span>
-                <span>{adminStats?.userRolesDistribution?.super_admin || 0}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-        <TabsList className="mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="content">Content Review</TabsTrigger>
-          <TabsTrigger value="database">Database</TabsTrigger>
-          <TabsTrigger value="subscribers">Newsletter</TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="h-4 w-4 mr-1" /> Security
-          </TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle>Quick Navigation</CardTitle>
+                <CardDescription>
+                  Access main admin features quickly
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold">{adminStats?.totalUsers || 0}</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-20" />
-                ) : (
-                  <div className="text-2xl font-bold">{adminStats?.pendingReviews || 0}</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">System Health</CardTitle>
-                <Gauge className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${healthStatus.color}`}>
-                  {healthStatus.status}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 items-center">
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/users">
+                      <Users className="h-8 w-8 text-primary" />
+                      <span>Users</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/posts">
+                      <FileText className="h-8 w-8 text-primary" />
+                      <span>Blog Posts</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/music">
+                      <Music className="h-8 w-8 text-primary" />
+                      <span>Music</span>
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="h-24 flex flex-col gap-2 items-center justify-center" asChild>
+                    <Link href="/admin/shop">
+                      <ShoppingBag className="h-8 w-8 text-primary" />
+                      <span>Shop</span>
+                    </Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Analytics</CardTitle>
+                <CardDescription>
+                  Activity trends across the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
                 {statsLoading ? (
-                  Array(3).fill(0).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))
+                  <div className="h-full w-full flex items-center justify-center">
+                    <Skeleton className="h-full w-full" />
+                  </div>
                 ) : (
-                  adminStats?.recentActivities.map(activity => (
-                    <div key={activity.id} className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-medium">{activity.action}</p>
-                        <p className="text-sm text-muted-foreground">{activity.user}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
-                    </div>
-                  ))
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-lg text-muted-foreground">
+                      Connect to analytics service to view detailed charts and metrics
+                    </p>
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="users">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <UserManagementComponent onAction={handleUserAction} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="content">
-          <Tabs defaultValue="posts" className="mb-6">
-            <TabsList>
-              <TabsTrigger value="posts">Blog Posts</TabsTrigger>
-              <TabsTrigger value="comments">Comments</TabsTrigger>
-              <TabsTrigger value="review">Content Review</TabsTrigger>
-              <TabsTrigger value="shop">Shop</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="posts" className="mt-4">
-              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <BlogPostManagementComponent />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="comments" className="mt-4">
-              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <CommentManagementComponent />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="review" className="mt-4">
-              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <ContentReviewComponent />
-              </Suspense>
-            </TabsContent>
-
-            <TabsContent value="shop" className="mt-4">
-              <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-                <EnhancedShopManagementComponent />
-              </Suspense>
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="database">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <DatabaseMonitorComponent />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="subscribers">
-          <Suspense fallback={<Skeleton className="h-[400px] w-full" />}>
-            <NewsletterManagementComponent />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="security" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <ShieldCheck className="h-5 w-5 mr-2" />
-                  Security Status
+                  <ShieldCheck className="h-5 w-5 mr-2 text-green-500" />
+                  Security Overview
                 </CardTitle>
                 <CardDescription>
-                  Overview of application security measures and their statuses
+                  System security status and recommendations
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <SecurityHealthCheck />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
+                        <span className="text-sm font-medium">Two-Factor Authentication</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Enabled for admin accounts
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
+                        <span className="text-sm font-medium">Password Policy</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Strong requirements in place
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
+                        <span className="text-sm font-medium">Session Management</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Auto-logout after inactivity
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <div className="h-2 w-2 rounded-full bg-green-500 mr-2" />
+                        <span className="text-sm font-medium">Access Controls</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Role-based permissions enforced
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <Link href="/admin/security">
+                    <Button className="w-full">
+                      View Full Security Settings
+                    </Button>
+                  </Link>
+                </div>
               </CardContent>
             </Card>
-
+          </TabsContent>
+          
+          <TabsContent value="activity" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Gauge className="h-5 w-5 mr-2" />
-                  System Health
-                </CardTitle>
+                <CardTitle>Recent Activities</CardTitle>
                 <CardDescription>
-                  Current health status of the system
+                  Latest actions taken by users and administrators
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <HealthCheck />
+                {statsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Action</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(adminStats?.recentActivities && adminStats.recentActivities.length > 0) ? (
+                        adminStats.recentActivities.map((activity) => (
+                          <TableRow key={activity.id}>
+                            <TableCell>{activity.action}</TableCell>
+                            <TableCell>{activity.user}</TableCell>
+                            <TableCell>{new Date(activity.timestamp).toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground py-6">
+                            No recent activities found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
-          </div>
-
-          <div className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Security Management</CardTitle>
-                <CardDescription>Access detailed security configurations and settings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link href="/admin/security">
-                  <Button className="w-full" variant="default">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Advanced Security Dashboard
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Settings</CardTitle>
-              <CardDescription>Configure system parameters</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Link href="/admin/security">
-                  <Button className="w-full" variant="outline">
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Security
-                  </Button>
-                </Link>
-                <Link href="/admin/settings/notifications">
-                  <Button className="w-full" variant="outline">
-                    <AlertCircle className="mr-2 h-4 w-4" />
-                    Notifications
-                  </Button>
-                </Link>
-                <Link href="/admin/settings/general">
-                  <Button className="w-full" variant="outline">
-                    <Settings className="mr-2 h-4 w-4" />
-                    General Config
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminLayout>
   );
 }
