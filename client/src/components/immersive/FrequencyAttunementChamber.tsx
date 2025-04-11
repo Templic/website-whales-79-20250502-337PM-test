@@ -1,11 +1,18 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Music, Waves, Volume2, VolumeX, Play, Pause } from "lucide-react";
+
+// Type definition for frequency presets
+interface FrequencyPreset {
+  name: string;
+  value: number;
+  description: string;
+}
 
 export function FrequencyAttunementChamber() {
   const [frequency, setFrequency] = useState(432);
@@ -14,17 +21,173 @@ export function FrequencyAttunementChamber() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(70);
   const [isMuted, setIsMuted] = useState(false);
-
+  
   // Frequency presets
-  const frequencyPresets = [
+  const frequencyPresets: FrequencyPreset[] = [
     { name: "Earth Resonance", value: 7.83, description: "Schumann Resonance - Earth's electromagnetic field frequency" },
     { name: "Deep Healing", value: 432, description: "Natural frequency alignment with universal mathematics" },
     { name: "Solfeggio", value: 528, description: "DNA repair frequency from ancient Solfeggio scale" },
     { name: "Heart Chakra", value: 639, description: "Heart chakra frequency for love and harmony" },
   ];
+  
+  // Audio refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
+  const harmonicOscillatorRef = useRef<OscillatorNode | null>(null);
+  const harmonicGainRef = useRef<GainNode | null>(null);
+
+  // Environment sound refs
+  const environmentSoundsRef = useRef<{
+    [key: string]: { gain: GainNode | null; active: boolean; level: number };
+  }>({
+    ocean: { gain: null, active: true, level: 60 },
+    bowls: { gain: null, active: true, level: 40 },
+    forest: { gain: null, active: true, level: 25 },
+    rain: { gain: null, active: true, level: 35 },
+  });
+
+  // Initialize audio context
+  useEffect(() => {
+    // Initialize the audio context only when needed
+    if (!audioContextRef.current && typeof window !== 'undefined') {
+      audioContextRef.current = new (window.AudioContext || 
+        (window as any).webkitAudioContext)();
+      
+      // Create the master gain node for volume control
+      gainNodeRef.current = audioContextRef.current.createGain();
+      gainNodeRef.current.gain.value = (isMuted ? 0 : volume / 100);
+      gainNodeRef.current.connect(audioContextRef.current.destination);
+      
+      // Create a harmonic gain node
+      harmonicGainRef.current = audioContextRef.current.createGain();
+      harmonicGainRef.current.gain.value = harmony / 100;
+      harmonicGainRef.current.connect(gainNodeRef.current);
+    }
+
+    return () => {
+      // Clean up audio context when component unmounts
+      if (audioContextRef.current) {
+        stopAllSounds();
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update gain node volume when volume or mute state changes
+  useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = isMuted ? 0 : volume / 100;
+    }
+  }, [volume, isMuted]);
+
+  // Update harmonic gain level when harmony changes
+  useEffect(() => {
+    if (harmonicGainRef.current) {
+      harmonicGainRef.current.gain.value = harmony / 200; // Reduced to avoid overwhelming
+    }
+  }, [harmony]);
+
+  // Start/stop oscillator based on isPlaying state
+  useEffect(() => {
+    if (isPlaying) {
+      startSound();
+    } else {
+      stopSound();
+    }
+    
+    return () => {
+      if (oscillatorRef.current) {
+        stopSound();
+      }
+    };
+  }, [isPlaying]);
+
+  // Update frequency when it changes
+  useEffect(() => {
+    if (oscillatorRef.current && audioContextRef.current) {
+      oscillatorRef.current.frequency.setValueAtTime(
+        frequency, 
+        audioContextRef.current.currentTime
+      );
+      
+      if (harmonicOscillatorRef.current) {
+        // Set harmonic to 1.5x main frequency (perfect fifth)
+        harmonicOscillatorRef.current.frequency.setValueAtTime(
+          frequency * 1.5, 
+          audioContextRef.current.currentTime
+        );
+      }
+    }
+  }, [frequency]);
+
+  // Start the sound
+  const startSound = () => {
+    if (!audioContextRef.current) return;
+    
+    // If suspended (browser policy), resume
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+    
+    // Create the main oscillator
+    oscillatorRef.current = audioContextRef.current.createOscillator();
+    oscillatorRef.current.type = 'sine';
+    oscillatorRef.current.frequency.setValueAtTime(
+      frequency, 
+      audioContextRef.current.currentTime
+    );
+    oscillatorRef.current.connect(gainNodeRef.current!);
+    
+    // Create a harmonic oscillator
+    harmonicOscillatorRef.current = audioContextRef.current.createOscillator();
+    harmonicOscillatorRef.current.type = 'sine';
+    harmonicOscillatorRef.current.frequency.setValueAtTime(
+      frequency * 1.5, 
+      audioContextRef.current.currentTime
+    );
+    harmonicOscillatorRef.current.connect(harmonicGainRef.current!);
+    
+    // Start oscillators
+    oscillatorRef.current.start();
+    harmonicOscillatorRef.current.start();
+  };
+
+  // Stop the sound
+  const stopSound = () => {
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop();
+      oscillatorRef.current.disconnect();
+      oscillatorRef.current = null;
+    }
+    
+    if (harmonicOscillatorRef.current) {
+      harmonicOscillatorRef.current.stop();
+      harmonicOscillatorRef.current.disconnect();
+      harmonicOscillatorRef.current = null;
+    }
+  };
+
+  // Stop all sounds including environment sounds
+  const stopAllSounds = () => {
+    stopSound();
+    
+    // Stop environment sounds if implemented
+    Object.values(environmentSoundsRef.current).forEach(sound => {
+      if (sound.gain) {
+        sound.gain.disconnect();
+        sound.gain = null;
+      }
+    });
+  };
 
   // Toggle play/pause
   const togglePlay = () => {
+    // Resume audio context if it's suspended (browser policy)
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
     setIsPlaying(!isPlaying);
   };
 
@@ -36,6 +199,15 @@ export function FrequencyAttunementChamber() {
   // Apply preset
   const applyPreset = (presetValue: number) => {
     setFrequency(presetValue);
+    
+    // If already playing, restart to apply new frequency immediately
+    if (isPlaying) {
+      stopSound();
+      // Short timeout to ensure clean restart
+      setTimeout(() => {
+        startSound();
+      }, 10);
+    }
   };
 
   return (
@@ -141,7 +313,7 @@ export function FrequencyAttunementChamber() {
 
             <TabsContent value="presets" className="space-y-4">
               <div className="grid gap-3">
-                {frequencyPresets.map((preset) => (
+                {frequencyPresets.map((preset: FrequencyPreset) => (
                   <div
                     key={preset.name}
                     className="p-3 rounded-lg cursor-pointer hover:bg-white/5 transition-colors border border-white/5"
@@ -164,10 +336,19 @@ export function FrequencyAttunementChamber() {
                     <Music className="h-4 w-4 text-cyan-400" />
                     <h4 className="font-medium text-white">Ocean Waves</h4>
                     <Slider
-                      value={[60]}
+                      value={[environmentSoundsRef.current.ocean.level]}
                       min={0}
                       max={100}
                       step={1}
+                      onValueChange={(value) => {
+                        const newLevel = value[0];
+                        environmentSoundsRef.current.ocean.level = newLevel;
+                        
+                        // Update gain node if it exists
+                        if (environmentSoundsRef.current.ocean.gain) {
+                          environmentSoundsRef.current.ocean.gain.gain.value = newLevel / 100;
+                        }
+                      }}
                       className="ml-auto w-24"
                     />
                   </div>
@@ -178,10 +359,19 @@ export function FrequencyAttunementChamber() {
                     <Music className="h-4 w-4 text-cyan-400" />
                     <h4 className="font-medium text-white">Singing Bowls</h4>
                     <Slider
-                      value={[40]}
+                      value={[environmentSoundsRef.current.bowls.level]}
                       min={0}
                       max={100}
                       step={1}
+                      onValueChange={(value) => {
+                        const newLevel = value[0];
+                        environmentSoundsRef.current.bowls.level = newLevel;
+                        
+                        // Update gain node if it exists
+                        if (environmentSoundsRef.current.bowls.gain) {
+                          environmentSoundsRef.current.bowls.gain.gain.value = newLevel / 100;
+                        }
+                      }}
                       className="ml-auto w-24"
                     />
                   </div>
@@ -192,10 +382,19 @@ export function FrequencyAttunementChamber() {
                     <Music className="h-4 w-4 text-cyan-400" />
                     <h4 className="font-medium text-white">Forest Night</h4>
                     <Slider
-                      value={[25]}
+                      value={[environmentSoundsRef.current.forest.level]}
                       min={0}
                       max={100}
                       step={1}
+                      onValueChange={(value) => {
+                        const newLevel = value[0];
+                        environmentSoundsRef.current.forest.level = newLevel;
+                        
+                        // Update gain node if it exists
+                        if (environmentSoundsRef.current.forest.gain) {
+                          environmentSoundsRef.current.forest.gain.gain.value = newLevel / 100;
+                        }
+                      }}
                       className="ml-auto w-24"
                     />
                   </div>
@@ -206,10 +405,19 @@ export function FrequencyAttunementChamber() {
                     <Waves className="h-4 w-4 text-cyan-400" />
                     <h4 className="font-medium text-white">Rain</h4>
                     <Slider
-                      value={[35]}
+                      value={[environmentSoundsRef.current.rain.level]}
                       min={0}
                       max={100}
                       step={1}
+                      onValueChange={(value) => {
+                        const newLevel = value[0];
+                        environmentSoundsRef.current.rain.level = newLevel;
+                        
+                        // Update gain node if it exists
+                        if (environmentSoundsRef.current.rain.gain) {
+                          environmentSoundsRef.current.rain.gain.gain.value = newLevel / 100;
+                        }
+                      }}
                       className="ml-auto w-24"
                     />
                   </div>
