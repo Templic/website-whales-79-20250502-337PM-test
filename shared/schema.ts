@@ -1,4 +1,4 @@
-import { pgTable, text, serial, boolean, timestamp, integer, numeric, pgEnum, varchar, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, boolean, timestamp, integer, numeric, pgEnum, varchar, json, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { sql, relations } from "drizzle-orm";
@@ -202,6 +202,36 @@ export type Comment = typeof comments.$inferSelect;
 export type InsertMusicUpload = z.infer<typeof insertMusicUploadSchema>;
 export type MusicUpload = typeof musicUploads.$inferSelect;
 
+// Media files table for comprehensive media management
+export const mediaFiles = pgTable("media_files", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull(),
+  originalFilename: text("original_filename").notNull(),
+  fileType: text("file_type").notNull(), // image, video, audio, document, etc.
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  fileUrl: text("file_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  page: text("page").notNull(), // Target page (home, about, blog, etc.)
+  section: text("section"), // Section within the page
+  position: jsonb("position").$type<{
+    x: number;
+    y: number;
+    size: number;
+    zIndex: number;
+  }>(),
+  metadata: jsonb("metadata").$type<{
+    title?: string;
+    description?: string;
+    alt?: string;
+    width?: number;
+    height?: number;
+    duration?: number;
+  }>(),
+  uploadedBy: integer("uploaded_by").notNull().references(() => users.id),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow()
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -209,6 +239,28 @@ export const contactMessages = pgTable("contact_messages", {
   message: text("message").notNull(),
   createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const insertMediaFileSchema = createInsertSchema(mediaFiles)
+  .omit({ id: true, uploadedAt: true })
+  .extend({
+    position: z.object({
+      x: z.number().min(0).max(100).default(50),
+      y: z.number().min(0).max(100).default(50),
+      size: z.number().min(10).max(200).default(100),
+      zIndex: z.number().default(0)
+    }).optional(),
+    metadata: z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      alt: z.string().optional(),
+      width: z.number().optional(),
+      height: z.number().optional(),
+      duration: z.number().optional()
+    }).optional()
+  });
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
 
 export const insertContactSchema = z.object({
   name: z.string().min(1, "Name is required"),

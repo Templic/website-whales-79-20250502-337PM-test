@@ -76,6 +76,7 @@ import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } fro
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import authRoutes from './routes/authRoutes';
 import contentRoutes from './routes/content';
+import mediaRoutes from './routes/media';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
