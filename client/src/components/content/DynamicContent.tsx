@@ -80,7 +80,8 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
             const createResponse = await fetch('/api/content', {
               method: 'POST',
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Auto-Creation': 'true'
               },
               body: JSON.stringify(newContent)
             });

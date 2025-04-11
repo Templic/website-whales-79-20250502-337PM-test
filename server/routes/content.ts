@@ -100,14 +100,19 @@ router.get('/page/:page', async (req, res) => {
 /**
  * @route   POST /api/content
  * @desc    Create a content item
- * @access  Admin
+ * @access  Admin or System Component
  */
 router.post('/', async (req, res) => {
   try {
-    // Check for admin authorization
-    const { user } = req.session;
-    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
-      return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
+    // Check if this is an auto-creation request from the DynamicContent component
+    const isAutoCreation = req.headers['x-auto-creation'] === 'true';
+    
+    // For non-auto-creation requests, enforce admin authorization
+    if (!isAutoCreation) {
+      const { user } = req.session;
+      if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+        return res.status(403).json({ message: 'Unauthorized - requires admin privileges' });
+      }
     }
 
     // Validate the request body
@@ -121,6 +126,14 @@ router.post('/', async (req, res) => {
 
     // Create the content item
     const contentItem = await storage.createContentItem(validation.data);
+    
+    // Log the action differently based on the source
+    if (isAutoCreation) {
+      console.info(`Auto-created content item with key: ${contentItem.key}`);
+    } else {
+      console.info(`Admin created content item with key: ${contentItem.key}`);
+    }
+    
     return res.status(201).json(contentItem);
   } catch (error: any) {
     console.error('Error creating content item:', error);
