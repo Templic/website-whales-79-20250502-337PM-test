@@ -98,6 +98,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use authRoutes for all /api/auth routes
   app.use('/api/auth', authRoutes);
+  
+  // Use search routes
+  app.use(searchRoutes);
+  
+  // Use media routes
+  app.use(mediaRoutes);
 
   // Get current user endpoint
   app.get('/api/user', (req, res) => {

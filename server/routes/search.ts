@@ -6,7 +6,6 @@ import {
   albums, 
   posts, 
   users,
-  events, 
   productCategories 
 } from '../../shared/schema';
 import { and, or, like, eq, desc, sql } from 'drizzle-orm';
@@ -42,8 +41,7 @@ router.get('/api/search', async (req, res) => {
       music: [],
       products: [],
       users: [],
-      posts: [],
-      events: []
+      posts: []
     };
     
     // Only fetch the requested type if specified
@@ -141,22 +139,7 @@ router.get('/api/search', async (req, res) => {
       results.users = [];
     }
     
-    // Search events if requested
-    if (fetchAll || type === 'events') {
-      const eventResults = await db.select()
-        .from(events)
-        .where(
-          or(
-            like(events.title, `%${searchTerm}%`),
-            like(events.description || '', `%${searchTerm}%`),
-            like(events.location || '', `%${searchTerm}%`)
-          )
-        )
-        .orderBy(events.eventDate)
-        .limit(limitNumber);
-      
-      results.events = eventResults;
-    }
+    // Events search disabled - events table not defined
     
     // Return combined results
     res.json(results);

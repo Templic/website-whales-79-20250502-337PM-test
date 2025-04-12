@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
 // The result types that can be returned from search
-type ResultType = 'all' | 'music' | 'products' | 'users' | 'posts' | 'events';
+type ResultType = 'all' | 'music' | 'products' | 'users' | 'posts';
 
 export default function SearchPage() {
   // Get the search query from URL parameters
@@ -62,7 +62,7 @@ export default function SearchPage() {
   const { data: results, isLoading, refetch } = useQuery({
     queryKey: ['search', searchQuery, resultType],
     queryFn: async () => {
-      if (!searchQuery.trim()) return { music: [], products: [], users: [], posts: [], events: [] };
+      if (!searchQuery.trim()) return { music: [], products: [], users: [], posts: [] };
       
       const params = new URLSearchParams();
       params.set('q', searchQuery);
