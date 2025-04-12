@@ -460,9 +460,20 @@ export const contentItems = pgTable("content_items", {
   page: text("page").notNull(),
   section: text("section").notNull(),
   imageUrl: text("image_url"),
+  // Workflow fields
+  status: text("status", { enum: ["draft", "review", "changes_requested", "approved", "published", "archived"] }).notNull().default("draft"),
+  reviewerId: integer("reviewer_id").references(() => users.id),
+  reviewStatus: text("review_status", { enum: ["pending", "in_progress", "completed"] }),
+  reviewStartedAt: timestamp("review_started_at"),
+  reviewCompletedAt: timestamp("review_completed_at"),
+  scheduledPublishAt: timestamp("scheduled_publish_at"),
+  expirationDate: timestamp("expiration_date"),
+  reviewNotes: text("review_notes"),
+  // Original fields
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at"),
   version: integer("version").notNull().default(1),
+  createdBy: integer("created_by").references(() => users.id),
   lastModifiedBy: integer("last_modified_by").references(() => users.id)
 });
 
@@ -495,7 +506,17 @@ export const contentUsage = pgTable("content_usage", {
 });
 
 export const insertContentItemSchema = createInsertSchema(contentItems)
-  .omit({ id: true, createdAt: true, updatedAt: true, version: true, lastModifiedBy: true });
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true, 
+    version: true,
+    createdBy: true,
+    lastModifiedBy: true,
+    reviewerId: true,
+    reviewStartedAt: true,
+    reviewCompletedAt: true 
+  });
   
 export const insertContentHistorySchema = createInsertSchema(contentHistory)
   .omit({ id: true, modifiedAt: true });
@@ -516,8 +537,16 @@ export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
 export const contentItemRelations = relations(contentItems, ({ one, many }) => ({
   history: many(contentHistory),
   usages: many(contentUsage),
+  creator: one(users, {
+    fields: [contentItems.createdBy],
+    references: [users.id],
+  }),
   lastModifier: one(users, {
     fields: [contentItems.lastModifiedBy],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [contentItems.reviewerId],
     references: [users.id],
   })
 }));
