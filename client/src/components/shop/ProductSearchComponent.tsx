@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, ShoppingBag, Tag, Star, XCircle } from 'lucide-react';
+import { Search, ShoppingBag, Tag, Star, XCircle, FileText } from 'lucide-react';
 import axios from 'axios';
 import { Product } from '@/types/shop';
 import { useCart } from '@/hooks/use-cart';
@@ -225,9 +225,9 @@ export default function ProductSearchComponent({
                             onSelect={() => handleResultClick(product)}
                           >
                             <div className="flex items-center gap-3 w-full">
-                              {product.image ? (
+                              {product.images && product.images[0] ? (
                                 <img
-                                  src={product.image}
+                                  src={product.images[0]}
                                   alt={product.name}
                                   className="h-12 w-12 rounded object-cover flex-shrink-0"
                                 />
@@ -248,16 +248,16 @@ export default function ProductSearchComponent({
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-2 mt-1">
-                                  {product.categories?.map((category, idx) => (
-                                    <Badge key={idx} variant="outline" className="text-xs py-0 px-1">
-                                      {highlightMatch(category, searchQuery)}
+                                  {product.category && (
+                                    <Badge variant="outline" className="text-xs py-0 px-1">
+                                      {highlightMatch(product.category, searchQuery)}
                                     </Badge>
-                                  ))}
+                                  )}
                                   
-                                  {product.rating && (
+                                  {product.ratings && product.ratings.average && (
                                     <div className="flex items-center text-amber-400 text-xs">
                                       <Star className="h-3 w-3 fill-amber-400 mr-0.5" />
-                                      {product.rating.toFixed(1)}
+                                      {product.ratings.average.toFixed(1)}
                                     </div>
                                   )}
                                 </div>

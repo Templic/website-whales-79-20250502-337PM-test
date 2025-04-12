@@ -17,6 +17,7 @@ import {
   SpeechRecognition, 
   SpeechRecognitionEvent 
 } from '@/types/shop';
+import ProductSearchComponent from '@/components/shop/ProductSearchComponent';
 
 const ShopHeader: React.FC<ShopHeaderProps> = ({ 
   onSearch, 
@@ -54,14 +55,14 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      onSearch(value);
+      onSearch?.(value);
     }, 300);
   };
 
   // Handle search form submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(searchQuery);
+    onSearch?.(searchQuery);
   };
 
   // Toggle voice search
