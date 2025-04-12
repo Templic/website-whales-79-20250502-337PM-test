@@ -169,26 +169,13 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
         </div>
 
         <div className="w-full md:w-auto flex items-center gap-2">
-          <form 
-            onSubmit={handleSearchSubmit}
-            className="relative w-full md:w-64 lg:w-80"
-          >
-            <Input
-              type="search"
+          {/* Replaced form with specialized ProductSearchComponent */}
+          <div className="w-full md:w-64 lg:w-80">
+            <ProductSearchComponent 
               placeholder="Search products..."
-              className="cosmic-glass-field pr-10"
-              value={searchQuery}
-              onChange={handleSearchChange}
+              className="w-full"
             />
-            <Button 
-              type="submit"
-              variant="ghost" 
-              size="icon"
-              className="absolute right-0 top-0 h-10 w-10"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </form>
+          </div>
 
           {(onVoiceSearch && 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window) && (
             <Button
