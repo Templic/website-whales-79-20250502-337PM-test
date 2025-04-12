@@ -76,6 +76,8 @@ import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } fro
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import authRoutes from './routes/authRoutes';
 import contentRoutes from './routes/content';
+import contentWorkflowRoutes from './routes/content-workflow';
+import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search';
 
@@ -1830,6 +1832,8 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
   app.use('/api/content', contentRoutes);
+  app.use('/api/content/workflow', contentWorkflowRoutes);
+  app.use('/api/notifications', notificationsRoutes);
   app.use(mediaRoutes); // Adding media routes for file uploads and management
 
   // Security routes

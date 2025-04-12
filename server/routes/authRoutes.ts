@@ -21,7 +21,7 @@ import {
   verifyToken, 
   verifyBackupCode 
 } from '../security/twoFactorAuth';
-import { requireAuth } from '../middleware/auth';
+import { isAuthenticated } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -457,7 +457,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
 });
 
 // Endpoint to set up 2FA
-router.post('/setup-2fa', requireAuth, async (req: Request, res: Response) => {
+router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
@@ -534,7 +534,7 @@ router.post('/setup-2fa', requireAuth, async (req: Request, res: Response) => {
 });
 
 // Endpoint to verify and activate 2FA
-router.post('/activate-2fa', requireAuth, async (req: Request, res: Response) => {
+router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
@@ -621,7 +621,7 @@ router.post('/activate-2fa', requireAuth, async (req: Request, res: Response) =>
 });
 
 // Endpoint to disable 2FA (requires password confirmation)
-router.post('/disable-2fa', requireAuth, async (req: Request, res: Response) => {
+router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
@@ -722,7 +722,7 @@ router.post('/disable-2fa', requireAuth, async (req: Request, res: Response) => 
 });
 
 // Generate new backup codes
-router.post('/backup-codes/regenerate', requireAuth, async (req: Request, res: Response) => {
+router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
