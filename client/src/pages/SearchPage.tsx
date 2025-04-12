@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { Search, Music, ShoppingBag, User, FileText, Calendar } from 'lucide-react';
+import { Search, Music, ShoppingBag, User, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -83,8 +83,7 @@ export default function SearchPage() {
       music: results.music?.length || 0,
       products: results.products?.length || 0, 
       users: results.users?.length || 0,
-      posts: results.posts?.length || 0,
-      events: results.events?.length || 0
+      posts: results.posts?.length || 0
     };
     
     const totalCount = Object.values(counts).reduce((acc, val) => acc + val, 0);
@@ -99,7 +98,6 @@ export default function SearchPage() {
             {counts.products > 0 && `${counts.music > 0 ? ', ' : ''}${counts.products} products`}
             {counts.users > 0 && `${counts.music > 0 || counts.products > 0 ? ', ' : ''}${counts.users} users`}
             {counts.posts > 0 && `${counts.music > 0 || counts.products > 0 || counts.users > 0 ? ', ' : ''}${counts.posts} posts`}
-            {counts.events > 0 && `${counts.music > 0 || counts.products > 0 || counts.users > 0 || counts.posts > 0 ? ', ' : ''}${counts.events} events`}
             )
           </>
         )}
@@ -151,7 +149,6 @@ export default function SearchPage() {
           {results.products?.length > 0 && <TabsTrigger value="products">Products</TabsTrigger>}
           {results.users?.length > 0 && <TabsTrigger value="users">Users</TabsTrigger>}
           {results.posts?.length > 0 && <TabsTrigger value="posts">Blog Posts</TabsTrigger>}
-          {results.events?.length > 0 && <TabsTrigger value="events">Events</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="all" className="space-y-8">
@@ -229,7 +226,7 @@ export default function SearchPage() {
             </section>
           )}
 
-          {/* Other sections (users, posts, events) would follow the same pattern */}
+          {/* Other sections (users, posts) would follow the same pattern */}
         </TabsContent>
 
         <TabsContent value="music" className="space-y-4">
@@ -322,7 +319,7 @@ export default function SearchPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search for music, products, events and more..."
+              placeholder="Search for music, products, blog posts and more..."
               className="pl-8"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
