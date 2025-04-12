@@ -62,6 +62,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
+import { WorkflowNotifications } from '@/components/admin/WorkflowNotifications';
 
 // Define types
 interface ContentItem {
@@ -89,7 +91,7 @@ const ContentManagementPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isUsageReportOpen, setIsUsageReportOpen] = useState(false);
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -116,12 +118,12 @@ const ContentManagementPage: React.FC = () => {
       const response = await fetch(`/api/content/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete content');
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -144,7 +146,7 @@ const ContentManagementPage: React.FC = () => {
 
   // Get unique pages for filtering
   const pages = Array.from(new Set(contentItems.map(item => item.page))).sort();
-  
+
   // Filter content items
   const filteredContentItems = contentItems.filter(item => {
     const matchesSearch = searchTerm 
@@ -152,7 +154,7 @@ const ContentManagementPage: React.FC = () => {
         item.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.section.toLowerCase().includes(searchTerm.toLowerCase())
       : true;
-    
+
     const matchesPage = pageFilter 
       ? item.page === pageFilter 
       : true;
@@ -160,7 +162,7 @@ const ContentManagementPage: React.FC = () => {
     const matchesType = typeFilter 
       ? item.type === typeFilter 
       : true;
-    
+
     return matchesSearch && matchesPage && matchesType;
   });
 
@@ -210,7 +212,7 @@ const ContentManagementPage: React.FC = () => {
         return <FileText className="w-4 h-4" />;
     }
   };
-  
+
   // Format the date
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -456,6 +458,8 @@ const ContentManagementPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+      <WorkflowNotifications />
+      <EnhancedContentReview />
     </AdminLayout>
   );
 };

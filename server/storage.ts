@@ -46,7 +46,7 @@ export interface IStorage {
   createSubscriber(subscriber: InsertSubscriber): Promise<Subscriber>;
   getAllSubscribers(): Promise<Subscriber[]>;
   findSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
-  
+
   // Newsletter methods
   createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter>;
   getAllNewsletters(): Promise<Newsletter[]>;
@@ -99,7 +99,7 @@ export interface IStorage {
   updateSystemSettings(settings: any): Promise<void>;
   getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
   getUserActivity(userId: number): Promise<any>;
-  
+
   // Content management methods
   getAllContentItems(): Promise<ContentItem[]>;
   getContentItemById(id: number): Promise<ContentItem | null>;
@@ -107,12 +107,12 @@ export interface IStorage {
   createContentItem(contentItem: any): Promise<ContentItem>;
   updateContentItem(contentItem: any): Promise<ContentItem>;
   deleteContentItem(id: number): Promise<void>;
-  
+
   // Content versioning methods
   getContentHistory(contentId: number): Promise<ContentHistory[]>;
   createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<ContentHistory>;
   restoreContentVersion(historyId: number): Promise<ContentItem>;
-  
+
   // Content usage tracking methods
   recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage>;
   incrementContentViews(contentId: number): Promise<void>;
@@ -183,7 +183,7 @@ export class PostgresStorage implements IStorage {
   async getAllSubscribers() {
     return await db.select().from(subscribers).orderBy(subscribers.createdAt);
   }
-  
+
   // Newsletter methods
   async createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
     const result = await db.insert(newsletters).values(newsletter).returning();
@@ -389,7 +389,7 @@ export class PostgresStorage implements IStorage {
       .where(sql`approved = false`)
       .orderBy(sql`created_at DESC`);
   }
-  
+
   async deletePost(id: number): Promise<void> {
     try {
       // Check if post exists
@@ -397,22 +397,22 @@ export class PostgresStorage implements IStorage {
         .from(posts)
         .where(eq(posts.id, id))
         .limit(1);
-        
+
       if (!post.length) {
         throw new Error('Post not found');
       }
-      
+
       // Delete post category associations using raw SQL
       // (postCategories is a junction table)
       await db.execute(sql`
         DELETE FROM post_categories 
         WHERE post_id = ${id}
       `);
-      
+
       // Delete post comments
       await db.delete(comments)
         .where(eq(comments.postId, id));
-      
+
       // Delete post
       await db.delete(posts)
         .where(eq(posts.id, id));
@@ -552,7 +552,7 @@ export class PostgresStorage implements IStorage {
           }
         ]);
       }
-      
+
       // Initialize sample newsletters
       const existingNewsletters = await db.select().from(newsletters);
       if (existingNewsletters.length === 0) {
@@ -651,7 +651,7 @@ export class PostgresStorage implements IStorage {
       const existingPosts = await db.select().from(posts);
       if (existingPosts.length === 0) {
         console.log("Initializing blog posts...");
-        
+
         // The categories should be available now
         const blogCategories = await db.select().from(categories);
         const categoryMap = blogCategories.reduce((map, category) => {
@@ -664,13 +664,13 @@ export class PostgresStorage implements IStorage {
           {
             title: "The Cosmic Symphony: Where Music Meets the Universe",
             content: `<p>In the vast expanse of the cosmos, there exists a harmony that transcends our understanding. As a musician who draws inspiration from both the depths of the ocean and the mysteries of space, I've always been fascinated by the cosmic symphony that surrounds us.</p>
-            
+
             <p>Recent discoveries in astrophysics have revealed that celestial bodies emit frequencies that can be translated into sound. These "cosmic melodies" have inspired my latest album, where I attempt to weave together the sounds of distant stars with the songs of the ocean's gentle giants.</p>
-            
+
             <p>When we listen closely to the universe, we find that rhythm is not just a human invention—it's a fundamental property of existence itself. From the pulsing of neutron stars to the oscillations of gas in distant nebulae, the cosmos is constantly creating its own music.</p>
-            
+
             <p>My journey to capture these sounds has taken me to remote observatories and deep-sea expeditions. The resulting compositions blend astronomical data sonification with whale songs recorded in the Pacific, creating a bridge between cosmic and oceanic realms.</p>
-            
+
             <p>Join me on this journey as we explore the universal language of vibration and harmony. My upcoming live performance at the Cosmic Ocean Concert will feature these new works, accompanied by stunning visualizations of the astronomical phenomena that inspired them.</p>`,
             excerpt: "Exploring the intersection of cosmic sounds and oceanic rhythms in my latest musical project.",
             featuredImage: "https://images.unsplash.com/photo-1515462277126-2dd0c162007a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
@@ -683,15 +683,15 @@ export class PostgresStorage implements IStorage {
           {
             title: "Ocean Conservation Efforts: Making Waves for Change",
             content: `<p>The oceans are the lifeblood of our planet, covering more than 70% of Earth's surface and providing a home to countless species. Yet, our marine ecosystems face unprecedented threats from pollution, overfishing, and climate change.</p>
-            
+
             <p>As someone who has found inspiration in the ocean's depths, I feel a profound responsibility to protect these precious waters. That's why I'm excited to announce our partnership with the Global Ocean Trust, a nonprofit organization dedicated to marine conservation.</p>
-            
+
             <p>Through this collaboration, a portion of all proceeds from my upcoming "Blue Planet" tour will go directly toward conservation efforts, including coral reef restoration and marine wildlife protection programs.</p>
-            
+
             <p>We're also launching a series of educational workshops at each tour location, where attendees can learn about local marine ecosystems and how to contribute to their preservation. These interactive sessions will feature marine biologists and conservation experts who will share their knowledge and passion for ocean protection.</p>
-            
+
             <p>Music has the power to move hearts and minds. By combining my artistic platform with concrete action, I hope to inspire a wave of change that extends far beyond the concert hall.</p>
-            
+
             <p>Join us in this vital mission. Together, we can ensure that the ocean's symphony continues to play for generations to come.</p>`,
             excerpt: "Announcing new partnerships and initiatives to protect our ocean ecosystems.",
             featuredImage: "https://images.unsplash.com/photo-1583212292454-1fe6229603b7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
@@ -704,15 +704,15 @@ export class PostgresStorage implements IStorage {
           {
             title: "Behind the Music: The Making of 'Cosmic Depths'",
             content: `<p>Creating an album is always a journey of discovery, but "Cosmic Depths" took me further than I ever imagined—from the ocean floor to the outer reaches of the universe.</p>
-            
+
             <p>The production process began almost a year ago, when I embarked on a deep-sea expedition with a team of marine biologists. Equipped with specialized hydrophones, we captured the haunting songs of humpback whales and the mysterious clicks and whistles of other marine creatures.</p>
-            
+
             <p>These recordings formed the foundation of the album, but I wanted to take the concept further. Working with astrophysicists from the National Observatory, we translated data from radio telescopes into audible frequencies, creating "portraits" of distant galaxies, pulsars, and even the cosmic microwave background radiation—echoes of the Big Bang itself.</p>
-            
+
             <p>In the studio, I combined these elements with traditional instruments and electronic production, creating a sound palette that moves seamlessly between oceanic and cosmic environments. Each track on the album represents a different stage in this journey from the deepest seas to the farthest stars.</p>
-            
+
             <p>The mixing process presented unique challenges, as we worked to preserve the authentic character of our unusual sound sources while creating music that resonates on a human level. The result is something I'm incredibly proud of—a collection that invites listeners to experience the wonder of realms beyond our everyday perception.</p>
-            
+
             <p>"Cosmic Depths" will be released next month, accompanied by an immersive visual experience that will be available both online and at select planetariums worldwide.</p>`,
             excerpt: "A behind-the-scenes look at the unique production process for my latest album.",
             featuredImage: "https://images.unsplash.com/photo-1520690214124-2405c5217036?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
@@ -726,17 +726,17 @@ export class PostgresStorage implements IStorage {
 
         // Get the inserted posts to link them with categories
         const insertedPosts = await db.select().from(posts);
-        
+
         // Link posts to categories (post_categories junction table)
         if (insertedPosts.length > 0) {
           // First post categories: Music, Cosmic Exploration
-          await db.execute(sql`
+          awaitdb.execute(sql`
             INSERT INTO post_categories (post_id, category_id)
             VALUES 
               (${insertedPosts[0].id}, ${categoryMap['music']}),
               (${insertedPosts[0].id}, ${categoryMap['cosmic-exploration']})
           `);
-          
+
           // Second post categories: Ocean Conservation, Events
           await db.execute(sql`
             INSERT INTO post_categories (post_id, category_id)
@@ -744,7 +744,7 @@ export class PostgresStorage implements IStorage {
               (${insertedPosts[1].id}, ${categoryMap['ocean-conservation']}),
               (${insertedPosts[1].id}, ${categoryMap['events']})
           `);
-          
+
           // Third post categories: Music
           await db.execute(sql`
             INSERT INTO post_categories (post_id, category_id)
@@ -955,7 +955,7 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .where(eq(users.id, userId));
-      
+
       // Return the updated user
       const updatedUser = await this.getUser(userId);
       if (!updatedUser) {
@@ -976,7 +976,7 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .where(eq(users.id, userId));
-      
+
       // Return the updated user
       const updatedUser = await this.getUser(userId);
       if (!updatedUser) {
@@ -1251,7 +1251,7 @@ export class PostgresStorage implements IStorage {
   async updateContentItem(contentData: any): Promise<ContentItem> {
     try {
       const { id, ...updateData } = contentData;
-      
+
       // Make sure the content item exists
       const existingItem = await this.getContentItemById(id);
       if (!existingItem) {
@@ -1286,10 +1286,10 @@ export class PostgresStorage implements IStorage {
 
       // Delete content usage records
       await db.delete(contentUsage).where(eq(contentUsage.contentId, id));
-      
+
       // Delete content history records
       await db.delete(contentHistory).where(eq(contentHistory.contentId, id));
-      
+
       // Finally delete the content item
       await db.delete(contentItems).where(eq(contentItems.id, id));
     } catch (error) {
@@ -1297,7 +1297,7 @@ export class PostgresStorage implements IStorage {
       throw error;
     }
   }
-  
+
   // Content versioning methods
   async getContentHistory(contentId: number): Promise<ContentHistory[]> {
     try {
@@ -1305,14 +1305,14 @@ export class PostgresStorage implements IStorage {
         .from(contentHistory)
         .where(eq(contentHistory.contentId, contentId))
         .orderBy(desc(contentHistory.modifiedAt));
-      
+
       return history;
     } catch (error) {
       console.error(`Error fetching content history for content ID ${contentId}:`, error);
       throw error;
     }
   }
-  
+
   async createContentVersion(contentId: number, version: any, userId: number, changeDescription?: string): Promise<ContentHistory> {
     try {
       // Get current content item
@@ -1320,7 +1320,7 @@ export class PostgresStorage implements IStorage {
       if (!contentItem) {
         throw new Error(`Content item with ID ${contentId} not found`);
       }
-      
+
       // Create history record
       const historyData = {
         contentId,
@@ -1334,11 +1334,11 @@ export class PostgresStorage implements IStorage {
         modifiedBy: userId,
         changeDescription: changeDescription || 'Content updated'
       };
-      
+
       const [historyRecord] = await db.insert(contentHistory)
         .values(historyData)
         .returning();
-      
+
       // Update the version number in the content item
       await db.update(contentItems)
         .set({ 
@@ -1347,25 +1347,25 @@ export class PostgresStorage implements IStorage {
           updatedAt: new Date()
         })
         .where(eq(contentItems.id, contentId));
-      
+
       return historyRecord;
     } catch (error) {
       console.error(`Error creating content version for content ID ${contentId}:`, error);
       throw error;
     }
   }
-  
+
   async restoreContentVersion(historyId: number): Promise<ContentItem> {
     try {
       // Get history record
       const [historyRecord] = await db.select()
         .from(contentHistory)
         .where(eq(contentHistory.id, historyId));
-      
+
       if (!historyRecord) {
         throw new Error(`Content history record with ID ${historyId} not found`);
       }
-      
+
       // Update content item with history data
       const [updatedContent] = await db.update(contentItems)
         .set({
@@ -1378,14 +1378,14 @@ export class PostgresStorage implements IStorage {
         })
         .where(eq(contentItems.id, historyRecord.contentId))
         .returning();
-      
+
       return updatedContent;
     } catch (error) {
       console.error(`Error restoring content version from history ID ${historyId}:`, error);
       throw error;
     }
   }
-  
+
   // Content usage tracking methods
   async recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage> {
     try {
@@ -1399,7 +1399,7 @@ export class PostgresStorage implements IStorage {
             eq(contentUsage.path, path)
           )
         );
-      
+
       if (existingUsage) {
         // Update existing record
         const [updatedUsage] = await db.update(contentUsage)
@@ -1410,7 +1410,7 @@ export class PostgresStorage implements IStorage {
           })
           .where(eq(contentUsage.id, existingUsage.id))
           .returning();
-        
+
         return updatedUsage;
       } else {
         // Create new record
@@ -1425,7 +1425,7 @@ export class PostgresStorage implements IStorage {
             updatedAt: new Date()
           })
           .returning();
-        
+
         return newUsage;
       }
     } catch (error) {
@@ -1433,14 +1433,14 @@ export class PostgresStorage implements IStorage {
       throw error;
     }
   }
-  
+
   async incrementContentViews(contentId: number): Promise<void> {
     try {
       // Find all usage records for this content
       const usageRecords = await db.select()
         .from(contentUsage)
         .where(eq(contentUsage.contentId, contentId));
-      
+
       // Update the views and last viewed time for each record
       for (const record of usageRecords) {
         await db.update(contentUsage)
@@ -1456,7 +1456,7 @@ export class PostgresStorage implements IStorage {
       throw error;
     }
   }
-  
+
   async getContentUsageReport(contentId?: number): Promise<any[]> {
     try {
       let query = db.select({
@@ -1475,11 +1475,11 @@ export class PostgresStorage implements IStorage {
       .from(contentItems)
       .leftJoin(contentUsage, eq(contentItems.id, contentUsage.contentId))
       .groupBy(contentItems.id);
-      
+
       if (contentId) {
         query = query.where(eq(contentItems.id, contentId));
       }
-      
+
       return await query;
     } catch (error) {
       console.error('Error generating content usage report:', error);
@@ -1490,3 +1490,28 @@ export class PostgresStorage implements IStorage {
 
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
+
+export const contentItems = pgTable('content_items', {
+  id: serial('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  type: text('type', { enum: ['text', 'html', 'image'] }).notNull(),
+  page: text('page').notNull(),
+  section: text('section').notNull(),
+  imageUrl: text('image_url'),
+  version: integer('version').notNull().default(1),
+  status: text('status', { enum: ['draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived'] }).notNull().default('draft'),
+  reviewerId: integer('reviewer_id').references(() => users.id),
+  reviewStatus: text('review_status', { enum: ['pending', 'in_progress', 'completed'] }),
+  reviewStartedAt: timestamp('review_started_at'),
+  reviewCompletedAt: timestamp('review_completed_at'),
+  scheduledPublishAt: timestamp('scheduled_publish_at'),
+  lastEditedAt: timestamp('last_edited_at'),
+  editHistory: json('edit_history'),
+  reviewNotes: text('review_notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  createdBy: integer('created_by').references(() => users.id),
+  updatedBy: integer('updated_by').references(() => users.id),
+});
