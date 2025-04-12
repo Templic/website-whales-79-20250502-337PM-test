@@ -7,6 +7,7 @@ This directory contains detailed documentation for ongoing development efforts, 
 - [COSMIC_MERGER.md](./COSMIC_MERGER.md) - Comprehensive guide on merging Cosmic Community and Cosmic Consciousness applications
 - [Blog_Page_Plan_Dale_the_Whale.md](./Blog_Page_Plan_Dale_the_Whale.md) - Development plan for the blog page feature
 - [Newsletter_Subscription_Feature_Development_Plan.md](./Newsletter_Subscription_Feature_Development_Plan.md) - Implementation plan for newsletter subscription functionality
+- [Content_Management_Implementation_Guide.md](./Content_Management_Implementation_Guide.md) - Technical guide for the CMS with content versioning and usage tracking
 
 ## Purpose
 
@@ -33,4 +34,4 @@ When adding new development documentation:
 
 ## Last Updated
 
-April 9, 2025
+April 12, 2025
