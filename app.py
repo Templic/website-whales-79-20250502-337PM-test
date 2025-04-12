@@ -31,10 +31,10 @@ csp = {
     'img-src': ['\'self\'', 'data:', '*', 'https://onlyinhawaii.org', 'https://*.googleapis.com', 'https://*.gstatic.com', 'https://*.ytimg.com', 'https://yt3.ggpht.com', 'https:'],
     'style-src': ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com', 'https:'],
     'font-src': ['\'self\'', 'https://fonts.gstatic.com', 'https:', 'data:'],
-    'frame-src': ['\'self\'', 'https://*.youtube.com', 'https://youtube.com', 'https://*.youtube-nocookie.com', 'https://www.google.com', 'https:'],
+    'frame-src': ['\'self\'', 'https://*.youtube.com', 'https://youtube.com', 'https://*.youtube-nocookie.com', 'https://www.google.com', 'https://maps.google.com', 'https://www.google.com/maps/', 'https://maps.googleapis.com', 'https:'],
     'media-src': ['\'self\'', 'https://*', 'http://*', 'blob:', 'https://*.youtube.com'],
-    'script-src': ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\'', 'https://*.youtube.com', 'https://*.ytimg.com', 'https://youtube.com', 'https:'],
-    'connect-src': ['\'self\'', 'https://*.youtube.com', 'https://youtube.com', 'https:', 'http:', 'ws:', 'wss:']
+    'script-src': ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\'', 'https://*.youtube.com', 'https://*.ytimg.com', 'https://youtube.com', 'https://maps.googleapis.com', 'https://maps.google.com', 'https:'],
+    'connect-src': ['\'self\'', 'https://*.youtube.com', 'https://youtube.com', 'https://maps.googleapis.com', 'https://maps.google.com', 'https:', 'http:', 'ws:', 'wss:']
 }
 
 # Initialize Talisman with our CSP configuration
@@ -43,7 +43,7 @@ talisman = Talisman(
     content_security_policy=csp,
     content_security_policy_nonce_in=['script-src'],
     feature_policy={
-        'geolocation': '\'none\'',
+        'geolocation': '*',
         'microphone': '\'none\'',
         'camera': '\'none\''
     }
