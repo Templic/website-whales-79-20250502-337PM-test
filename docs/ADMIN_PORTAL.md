@@ -88,10 +88,10 @@ For each content update, the system automatically:
 The Content History interface (`ContentHistoryView.tsx`) provides:
 
 - Chronological list of all versions of a content item
-- Timestamps and user information for each version
-- Option to view the content at each historical point
-- Ability to restore content to a previous version
-- Option to add change descriptions for better tracking
+- Timestamps for each version with formatted date display
+- Version numbers with visual badge indicators
+- One-click restoration to previous versions with confirmation
+- Ability to manually create new versions with custom descriptions
 
 ### Creating Manual Versions
 
@@ -117,10 +117,10 @@ The system automatically records:
 The Content Usage Report interface (`ContentUsageReport.tsx`) provides:
 
 - Overview of content usage across the site
-- Filtering by page, type, and other attributes
-- Analytics on most/least viewed content
-- Identification of unused content
-- Export capabilities for further analysis
+- Filtering by key, page, section, and type
+- Analytics on most viewed content (sorted by view count)
+- Display of locations where content is used
+- Refresh capability to get up-to-date usage metrics
 
 ## API Reference
 

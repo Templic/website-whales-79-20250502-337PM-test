@@ -24,6 +24,8 @@ Welcome to the project documentation. This repository contains comprehensive doc
   - Shop System
   - Community Features
   - Cosmic UI Components
+- [Admin Portal](ADMIN_PORTAL.md) - Admin interface and content management system
+- [CMS Future Recommendations](CMS_FUTURE_RECOMMENDATIONS.md) - Roadmap for content management enhancements
 
 ### Security & Compliance
 - [Security Implementation](reports/security_implementation_report.md)
@@ -55,4 +57,4 @@ Welcome to the project documentation. This repository contains comprehensive doc
 3. Use Markdown for consistent formatting
 4. Include last updated dates
 
-*Last updated: 2025-04-10*
+*Last updated: 2025-04-12*
