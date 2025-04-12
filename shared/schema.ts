@@ -505,6 +505,19 @@ export const contentUsage = pgTable("content_usage", {
   updatedAt: timestamp("updated_at")
 });
 
+// Workflow notifications table
+export const workflowNotifications = pgTable("workflow_notifications", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type", { enum: ["approval", "changes", "publish", "info"] }).notNull(),
+  contentId: integer("content_id").references(() => contentItems.id),
+  contentTitle: text("content_title"),
+  userId: integer("user_id").references(() => users.id),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
 export const insertContentItemSchema = createInsertSchema(contentItems)
   .omit({ 
     id: true, 
@@ -524,6 +537,9 @@ export const insertContentHistorySchema = createInsertSchema(contentHistory)
 export const insertContentUsageSchema = createInsertSchema(contentUsage)
   .omit({ id: true, createdAt: true, updatedAt: true, views: true, lastViewed: true });
 
+export const insertWorkflowNotificationSchema = createInsertSchema(workflowNotifications)
+  .omit({ id: true, createdAt: true, isRead: true });
+
 export type ContentItem = typeof contentItems.$inferSelect;
 export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
 
@@ -532,6 +548,9 @@ export type InsertContentHistory = z.infer<typeof insertContentHistorySchema>;
 
 export type ContentUsage = typeof contentUsage.$inferSelect;
 export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
+
+export type WorkflowNotification = typeof workflowNotifications.$inferSelect;
+export type InsertWorkflowNotification = z.infer<typeof insertWorkflowNotificationSchema>;
 
 // Content relations
 export const contentItemRelations = relations(contentItems, ({ one, many }) => ({
@@ -566,6 +585,17 @@ export const contentUsageRelations = relations(contentUsage, ({ one }) => ({
   content: one(contentItems, {
     fields: [contentUsage.contentId],
     references: [contentItems.id],
+  })
+}));
+
+export const workflowNotificationRelations = relations(workflowNotifications, ({ one }) => ({
+  content: one(contentItems, {
+    fields: [workflowNotifications.contentId],
+    references: [contentItems.id],
+  }),
+  user: one(users, {
+    fields: [workflowNotifications.userId],
+    references: [users.id],
   })
 }));
 
