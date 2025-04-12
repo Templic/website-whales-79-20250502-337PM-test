@@ -9,7 +9,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
-import { Search, Music, Disc, Radio, Waveform } from 'lucide-react';
+import { Search, Music, Disc, Radio, Waves } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -191,7 +191,7 @@ export default function MusicSearchComponent({
                               <div className="flex items-start gap-2 w-full">
                                 <div className="bg-muted rounded-md w-10 h-10 flex-shrink-0 flex items-center justify-center">
                                   {track.frequency ? (
-                                    <Waveform className="h-5 w-5 text-primary" />
+                                    <Waves className="h-5 w-5 text-primary" />
                                   ) : (
                                     <Music className="h-5 w-5 text-primary" />
                                   )}

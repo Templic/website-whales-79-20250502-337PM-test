@@ -19,6 +19,7 @@ import {
   contentHistory, contentUsage
 } from "@shared/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
+import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -1491,27 +1492,28 @@ export class PostgresStorage implements IStorage {
 // Export an instance of PostgresStorage
 export const storage = new PostgresStorage();
 
-export const contentItems = pgTable('content_items', {
-  id: serial('id').primaryKey(),
-  key: text('key').notNull().unique(),
-  title: text('title').notNull(),
-  content: text('content').notNull(),
-  type: text('type', { enum: ['text', 'html', 'image'] }).notNull(),
-  page: text('page').notNull(),
-  section: text('section').notNull(),
-  imageUrl: text('image_url'),
-  version: integer('version').notNull().default(1),
-  status: text('status', { enum: ['draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived'] }).notNull().default('draft'),
-  reviewerId: integer('reviewer_id').references(() => users.id),
-  reviewStatus: text('review_status', { enum: ['pending', 'in_progress', 'completed'] }),
-  reviewStartedAt: timestamp('review_started_at'),
-  reviewCompletedAt: timestamp('review_completed_at'),
-  scheduledPublishAt: timestamp('scheduled_publish_at'),
-  lastEditedAt: timestamp('last_edited_at'),
-  editHistory: json('edit_history'),
-  reviewNotes: text('review_notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at'),
-  createdBy: integer('created_by').references(() => users.id),
-  updatedBy: integer('updated_by').references(() => users.id),
-});
+// contentItems is already defined in shared/schema.ts so we don't need to define it again
+// export const contentItems = pgTable('content_items', {
+//   id: serial('id').primaryKey(),
+//   key: text('key').notNull().unique(),
+//   title: text('title').notNull(),
+//   content: text('content').notNull(),
+//   type: text('type', { enum: ['text', 'html', 'image'] }).notNull(),
+//   page: text('page').notNull(),
+//   section: text('section').notNull(),
+//   imageUrl: text('image_url'),
+//   version: integer('version').notNull().default(1),
+//   status: text('status', { enum: ['draft', 'in_review', 'changes_requested', 'approved', 'published', 'archived'] }).notNull().default('draft'),
+//   reviewerId: integer('reviewer_id').references(() => users.id),
+//   reviewStatus: text('review_status', { enum: ['pending', 'in_progress', 'completed'] }),
+//   reviewStartedAt: timestamp('review_started_at'),
+//   reviewCompletedAt: timestamp('review_completed_at'),
+//   scheduledPublishAt: timestamp('scheduled_publish_at'),
+//   lastEditedAt: timestamp('last_edited_at'),
+//   editHistory: json('edit_history'),
+//   reviewNotes: text('review_notes'),
+//   createdAt: timestamp('created_at').notNull().defaultNow(),
+//   updatedAt: timestamp('updated_at'),
+//   createdBy: integer('created_by').references(() => users.id),
+//   updatedBy: integer('updated_by').references(() => users.id),
+// });

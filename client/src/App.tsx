@@ -84,6 +84,11 @@ import { LoginPage } from '@/pages/Login'; //Import added here
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
 const EditButtonPage = () => <EditButtonPageFC />;
 
+// Search Pages
+import SearchPage from "@/pages/SearchPage";
+import MusicSearchPage from "@/pages/music/MusicSearchPage";
+import ShopSearchPage from "@/pages/shop/ShopSearchPage";
+
 // Demo Pages
 import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
 
@@ -109,6 +114,7 @@ function AppRouter() {
           <Route path="/engage" component={EngagePage} />
           <Route path="/newsletter" component={NewsletterPage} />
           <Route path="/collaboration" component={CollaborationPage} />
+          <Route path="/search" component={SearchPage} />
           {/* Community Pages */}
           <Route path="/community" component={CommunityPage} />
           <Route path="/enhanced-community" component={EnhancedCommunityPage} />
@@ -117,6 +123,7 @@ function AppRouter() {
           <Route path="/music-release" component={ArchivedMusicPage} />
           <Route path="/archived-music" component={ArchivedMusicPage} />
           <Route path="/music-archive" component={ArchivedMusicPage} />
+          <Route path="/music/search" component={MusicSearchPage} />
           {/* Experience Routes */}
           <Route path="/cosmic-connectivity" component={CosmicConnectivityPage} />
           <Route path="/experience/cosmic-connectivity" component={CosmicConnectivityPage} />
@@ -134,6 +141,7 @@ function AppRouter() {
           {/* Shop Routes */}
           <Route path="/shop" component={ShopPage} />
           <Route path="/shop/product/:productId" component={ProductDetailPage} />
+          <Route path="/shop/search" component={ShopSearchPage} />
           <Route path="/cart" component={CartPage} />
           <Route path="/shop/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
