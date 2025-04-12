@@ -120,12 +120,12 @@ export default function TourPage() {
           textContained={true}
           backgroundStyle="glass"
           className="mt-8 sm:mt-12 mb-16"
-          style={{ minHeight: '550px', display: 'flex', flexDirection: 'column' }}
+          style={{ minHeight: '700px', display: 'flex', flexDirection: 'column' }}
         >
           <div className="w-full h-full flex-grow overflow-hidden relative bg-black/30 backdrop-blur-sm rounded-xl p-2">
               <iframe 
                 src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d967162.6791891221!2d-157.87105924999998!3d21.289373449999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1sen!2sus!4v1645667421851!5m2!1sen!2sus"
-                className="w-full h-full min-h-[450px] rounded-lg border-0"
+                className="w-full h-full min-h-[650px] rounded-lg border-0"
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

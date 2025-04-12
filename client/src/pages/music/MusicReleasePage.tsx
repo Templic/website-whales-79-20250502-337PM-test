@@ -44,8 +44,8 @@ export default function MusicReleasePage() {
     <>
       <SpotlightEffect />
       <div className="space-y-8">
-        <section className="flex flex-col md:flex-row gap-8 items-start relative">
-          <div className="w-full md:w-1/2 bg-gray-900 rounded-lg shadow-xl relative overflow-hidden">
+        <section className="flex flex-col lg:flex-row gap-8 items-start relative">
+          <div className="w-full lg:w-2/3 bg-gray-900 rounded-lg shadow-xl relative overflow-hidden">
             <div className="pt-[56.25%] relative">
               <iframe
                 src="https://www.youtube.com/embed/jzpvkq3Krjg?rel=0&showinfo=0&controls=1"
@@ -72,7 +72,7 @@ export default function MusicReleasePage() {
               </div>
             </div>
           </div>
-          <div className="w-full md:w-1/2 space-y-6">
+          <div className="w-full lg:w-1/3 space-y-6">
             <h1 className="text-4xl font-bold text-[#00ebd6]">FEELS SO GOOD</h1>
             <div className="space-y-4">
               <p className="text-xl">Release Date: March 14, 2025</p>

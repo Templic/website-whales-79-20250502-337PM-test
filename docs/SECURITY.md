@@ -25,23 +25,33 @@ This application implements comprehensive security measures following industry b
 
 A strict Content Security Policy is enforced to mitigate cross-site scripting (XSS) attacks by controlling which resources can be loaded and executed by the browser.
 
+**Note**: This application implements CSP in two places:
+1. The NodeJS/Express server via Helmet
+2. The Flask server via Flask-Talisman
+
+Both must be properly configured to allow external content. For detailed implementation and troubleshooting, see the [CSP Configuration Guide](./CONTENT_SECURITY_POLICY.md).
+
+Current configuration for Express server:
+
 ```javascript
 // server/index.ts
-app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co; " +
-    "style-src 'self' 'unsafe-inline'; " +
-    "img-src 'self' data: blob:; " +
-    "connect-src 'self' wss: ws:; " +
-    "font-src 'self' data:; " +
-    "object-src 'none'; " +
-    "media-src 'self'; " +
-    "frame-src 'self' https://auth.util.repl.co;"
-  );
-  next();
-});
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://*.youtube.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "blob:", "https://*.googleapis.com", "https://*.ytimg.com"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'", "https://*.youtube.com"],
+        frameSrc: ["'self'", "https://*.youtube.com", "https://maps.google.com"],
+      },
+    },
+  })
+);
 ```
 
 ### HTTPS Enforcement
