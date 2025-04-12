@@ -26,7 +26,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
 
   useEffect(() => {
     fetchMusic();
-    
+
     // Notify user about work in progress features
     toast({
       title: "Archive Features",
@@ -42,7 +42,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         axios.get('/api/tracks'),
         axios.get('/api/albums')
       ]);
-      
+
       // If API returned data, use it
       if (tracksRes.data && tracksRes.data.length > 0) {
         setTracks(tracksRes.data);
@@ -50,7 +50,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         // Otherwise use the cosmic tracks as placeholder
         setTracks(cosmicTracks as unknown as Track[]);
       }
-      
+
       // Same for albums
       if (albumsRes.data && albumsRes.data.length > 0) {
         setAlbums(albumsRes.data);
@@ -104,7 +104,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
       <CosmicBackground />
       <SpotlightEffect />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="cosmic-heading-responsive-lg font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-cyan-500">
@@ -115,7 +115,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             guided meditations designed to elevate your vibration.
           </p>
         </div>
-        
+
         {/* Hero Image */}
         <div className="relative h-[500px] w-full overflow-hidden rounded-lg mb-12">
           <img
@@ -124,7 +124,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             className="w-full h-full object-cover"
           />
         </div>
-        
+
         {/* Search and Filter */}
         <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-6 mb-8">
           <div className="grid md:grid-cols-4 gap-4">
@@ -140,14 +140,14 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 />
               </div>
             </div>
-            
+
             <div>
               <Button variant="outline" className="w-full border-white/10">
                 <Clock className="mr-2 h-4 w-4" />
                 Sort by Date
               </Button>
             </div>
-            
+
             <div>
               <Button variant="outline" className="w-full border-white/10">
                 <Disc className="mr-2 h-4 w-4" />
@@ -156,7 +156,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Main Content */}
         <div className="mb-16">
           <Tabs defaultValue="albums" className="space-y-8">
@@ -174,16 +174,16 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 Meditations
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="albums" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Featured Albums</h2>
                 <AlbumShowcase />
               </div>
-              
+
               <section className="albums-section">
                 <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">Albums & EPs</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
                   {albums.map(album => (
                     <div key={album.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl hover:transform hover:-translate-y-2 transition-all duration-300 relative">
                       <h3 className="cosmic-heading-responsive-sm text-[#00ebd6] mb-3">{album.title}</h3>
@@ -215,11 +215,11 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 </div>
               </section>
             </TabsContent>
-            
+
             <TabsContent value="singles" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Recent Singles</h2>
-                
+
                 <CosmicReveal delay={0.2}>
                   <RecommendedPlaylists 
                     playlists={playlists.filter(p => p.category === 'sleep' || p.category === 'astral')}
@@ -233,7 +233,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                   />
                 </CosmicReveal>
               </div>
-              
+
               <section className="tracks-section">
                 <h2 className="cosmic-heading-responsive font-bold text-[#00ebd6] mb-6">All Tracks</h2>
                 <div className="grid gap-4">
@@ -273,7 +273,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                 </div>
               </section>
             </TabsContent>
-            
+
             <TabsContent value="meditation" className="space-y-8">
               <div className="bg-black/20 backdrop-blur-sm rounded-xl p-6">
                 <h2 className="cosmic-heading-responsive font-semibold mb-6 text-center">Guided Meditations</h2>
@@ -291,7 +291,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
             </TabsContent>
           </Tabs>
         </div>
-        
+
         {/* Call to Action */}
         <div className="bg-black/30 backdrop-blur-sm border border-cyan-500/20 rounded-xl p-8 mb-16 text-center">
           <h2 className="cosmic-heading-responsive font-semibold mb-3">Join Our Archive Community</h2>

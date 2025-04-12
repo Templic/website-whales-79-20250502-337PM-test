@@ -43,7 +43,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
         "font-src 'self' data:; " +
         "object-src 'none'; " +
         "media-src 'self' https://www.youtube.com; " +
-        "frame-src 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com;"
+        "frame-src 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com https://www.google.com https://*.google.com;"
       );
     next();
   });
