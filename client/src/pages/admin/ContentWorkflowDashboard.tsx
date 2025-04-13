@@ -201,30 +201,30 @@ const ContentWorkflowDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <div className="flex items-center justify-between mt-1">
-              <CardDescription>
-                Content workflow activity over the past 7 days
-              </CardDescription>
-              <div className="flex items-center gap-x-4 text-xs">
-                <div className="flex items-center gap-x-1">
-                  <Checkbox 
-                    id="show-drafts" 
-                    checked={showDrafts} 
-                    onCheckedChange={() => setShowDrafts(!showDrafts)}
-                  />
-                  <Label htmlFor="show-drafts">New Content</Label>
-                </div>
-                <div className="flex items-center gap-x-1">
-                  <Checkbox 
-                    id="show-rejected" 
-                    checked={showRejected} 
-                    onCheckedChange={() => setShowRejected(!showRejected)}
-                  />
-                  <Label htmlFor="show-rejected">Reviews</Label>
-                </div>
+            <CardDescription>
+              Content workflow activity over the past 7 days
+            </CardDescription>
+          </CardHeader>
+          <div className="px-6 pb-2">
+            <div className="flex items-center gap-x-4 text-xs">
+              <div className="flex items-center gap-x-1">
+                <Checkbox 
+                  id="show-drafts" 
+                  checked={showDrafts} 
+                  onCheckedChange={() => setShowDrafts(!showDrafts)}
+                />
+                <Label htmlFor="show-drafts">New Content</Label>
+              </div>
+              <div className="flex items-center gap-x-1">
+                <Checkbox 
+                  id="show-rejected" 
+                  checked={showRejected} 
+                  onCheckedChange={() => setShowRejected(!showRejected)}
+                />
+                <Label htmlFor="show-rejected">Reviews</Label>
               </div>
             </div>
-          </CardHeader>
+          </div>
           <CardContent className="h-[300px]">
             {metrics && (
               <ResponsiveContainer width="100%" height="100%">
