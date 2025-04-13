@@ -64,6 +64,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
 import { WorkflowNotifications } from '@/components/admin/WorkflowNotifications';
+import { ContentSchedulingAnalytics } from '@/components/admin/ContentSchedulingAnalytics';
 
 // Define types
 interface ContentItem {
@@ -91,6 +92,7 @@ const ContentManagementPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isUsageReportOpen, setIsUsageReportOpen] = useState(false);
+  const [isSchedulingAnalyticsOpen, setIsSchedulingAnalyticsOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
