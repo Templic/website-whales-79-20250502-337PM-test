@@ -187,16 +187,7 @@ function AppRouter() {
           <Route path="/test-minimal" component={WorkflowTestPage} />
           <Route path="/test-dom-nesting" component={TestDomNesting} />
           <Route path="/test-simple" component={TestSimplePage} />
-          {/* New test route for isolated component - using import instead of require */}
-          <Route path="/test-imports" component={() => {
-            const { lazy, Suspense } = React;
-            const TestComp = lazy(() => import('./test-imports'));
-            return (
-              <Suspense fallback={<div>Loading...</div>}>
-                <TestComp />
-              </Suspense>
-            );
-          }} />
+          {/* Removing problematic test-imports route */}
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />
