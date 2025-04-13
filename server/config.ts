@@ -40,6 +40,7 @@ export interface FeatureFlags {
   enableWebSockets: boolean;
   enableRateLimiting: boolean;
   enableExtraLogging: boolean;
+  enableContentScheduling: boolean;
 }
 
 export interface ServerConfig {
@@ -134,7 +135,8 @@ const defaultConfig: ServerConfig = {
     enableBackgroundTasks: true,
     enableWebSockets: true,
     enableRateLimiting: true,
-    enableExtraLogging: process.env.EXTRA_LOGGING === 'true'
+    enableExtraLogging: process.env.EXTRA_LOGGING === 'true',
+    enableContentScheduling: true
   },
   
   // Database configuration

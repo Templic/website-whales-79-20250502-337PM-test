@@ -9,6 +9,7 @@ import { log } from './vite';
 import { config } from './config';
 import { runDeferredSecurityScan } from './securityScan';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
+import { processScheduledContent } from './services/contentScheduler';
 
 // Track active background services
 interface ServiceStatus {
@@ -25,6 +26,7 @@ const backgroundServices: Record<string, ServiceStatus> = {
   securityScans: { name: 'Security Scanning', status: 'inactive' },
   metricsCollection: { name: 'Metrics Collection', status: 'inactive' },
   dataCleanup: { name: 'Data Cleanup', status: 'inactive' },
+  contentScheduler: { name: 'Content Scheduler', status: 'inactive' },
 };
 
 /**
@@ -47,6 +49,11 @@ export async function initBackgroundServices(): Promise<void> {
     // Security Scanning Service
     if (config.features.enableSecurityScans) {
       await initSecurityScanning();
+    }
+    
+    // Content Scheduler Service
+    if (config.features.enableContentScheduling) {
+      await initContentScheduler();
     }
     
     // Data Cleanup Service
@@ -243,6 +250,51 @@ function cleanupExpiredData(): void {
   // Example cleanup operations would be implemented here
   
   log('Data cleanup completed', 'cleanup');
+}
+
+/**
+ * Initialize content scheduler service
+ * This service automatically publishes scheduled content and archives expired content
+ */
+async function initContentScheduler(): Promise<void> {
+  try {
+    log('Initializing content scheduler service...', 'background');
+    
+    // Run immediately on startup
+    const initialResult = await processScheduledContent();
+    log(`Initial content scheduling run: ${initialResult.published} published, ${initialResult.archived} archived`, 'background');
+    
+    // Setup regular interval (every 5 minutes)
+    const schedulerInterval = 5 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        const result = await processScheduledContent();
+        if (result.published > 0 || result.archived > 0) {
+          log(`Content scheduling run: ${result.published} published, ${result.archived} archived`, 'background');
+        }
+        backgroundServices.contentScheduler.lastRunTime = Date.now();
+      } catch (error) {
+        log(`Error in content scheduler: ${error}`, 'background');
+      }
+    }, schedulerInterval);
+    
+    // Update service status
+    backgroundServices.contentScheduler = {
+      name: 'Content Scheduler',
+      status: 'active',
+      startTime: Date.now(),
+      interval: schedulerInterval,
+    };
+    
+    log('Content scheduler service initialized with 5 minute interval', 'background');
+  } catch (error) {
+    log(`Failed to initialize content scheduler: ${error}`, 'background');
+    backgroundServices.contentScheduler = {
+      name: 'Content Scheduler',
+      status: 'failed',
+      error: String(error),
+    };
+  }
 }
 
 /**
