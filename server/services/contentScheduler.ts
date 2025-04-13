@@ -2,9 +2,8 @@ import { db } from '../db';
 import { contentItems } from '@shared/schema';
 import { eq, and, lte, gte, ne } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-// Import the entire notification service instead of a specific function
-import { notificationService } from './notificationService';
-import logger from '../utils/logger';
+import { logger } from '../logger';
+import { sendNotification } from './notificationService';
 
 /**
  * Metrics to track content scheduling performance
@@ -68,12 +67,12 @@ export async function runContentScheduler() {
           .where(eq(contentItems.id, item.id));
         
         // Send notification
-        await notificationService.createNotification({
+        await sendNotification({
           type: 'content_published',
           userId: item.createdBy,
-          message: `Your content "${item.title}" has been published automatically.`,
-          relatedItemId: item.id,
-          relatedItemType: item.title
+          contentId: item.id,
+          contentTitle: item.title,
+          message: `Your content "${item.title}" has been published automatically.`
         });
         
         published++;
@@ -83,12 +82,13 @@ export async function runContentScheduler() {
         logger.error(`Failed to publish content ID ${item.id}:`, error);
         
         // Send failure notification to admin
-        await notificationService.createNotification({
-          type: 'system_alert',
-          userId: 1, // Send to admin user ID 1
+        await sendNotification({
+          type: 'system_message',
+          userId: null, // System notification, will be sent to all admins
+          contentId: item.id,
+          contentTitle: item.title,
           message: `Failed to automatically publish content "${item.title}". Manual intervention required.`,
-          relatedItemId: item.id,
-          relatedItemType: item.title
+          actionRequired: true
         });
       }
     }
@@ -121,12 +121,12 @@ export async function runContentScheduler() {
           .where(eq(contentItems.id, item.id));
         
         // Send notification
-        await notificationService.createNotification({
+        await sendNotification({
           type: 'content_expired',
           userId: item.createdBy,
-          message: `Your content "${item.title}" has been archived because it reached its expiration date.`,
-          relatedItemId: item.id,
-          relatedItemType: item.title
+          contentId: item.id,
+          contentTitle: item.title,
+          message: `Your content "${item.title}" has been archived because it reached its expiration date.`
         });
         
         archived++;
@@ -160,12 +160,14 @@ export async function runContentScheduler() {
         
         // Only send notifications for 7, 3, and 1 days before expiration to avoid spam
         if (daysUntilExpiration === 7 || daysUntilExpiration === 3 || daysUntilExpiration === 1) {
-          await notificationService.createNotification({
+          await sendNotification({
             type: 'expiration_warning',
             userId: item.createdBy,
+            contentId: item.id,
+            contentTitle: item.title,
             message: `Your content "${item.title}" will expire in ${daysUntilExpiration} day${daysUntilExpiration > 1 ? 's' : ''}.`,
-            relatedItemId: item.id,
-            relatedItemType: item.title
+            actionRequired: true,
+            dueDate: item.expirationDate
           });
           
           logger.info(`Sent expiration warning for content ID ${item.id}: ${daysUntilExpiration} days remaining`);

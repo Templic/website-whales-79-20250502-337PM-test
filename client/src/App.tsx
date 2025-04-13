@@ -79,11 +79,6 @@ import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 import MediaPage from "@/pages/admin/MediaPage";
 import ContentManagementPage from "@/pages/admin/ContentManagementPage";
-import ContentWorkflowManagementPage from "@/pages/admin/ContentWorkflowManagementPage";
-import ContentWorkflowDashboard from "@/pages/admin/ContentWorkflowDashboard";
-import WorkflowTestPage from "@/pages/TestMinimal";
-import TestDomNesting from "@/pages/admin/TestDomNesting";
-import TestSimplePage from "@/pages/TestSimplePage";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -180,14 +175,6 @@ function AppRouter() {
           <ProtectedRoute path="/admin/settings" component={AdminPortalPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media" component={MediaPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/content-workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/workflow-dashboard" component={ContentWorkflowDashboard} requiredRole="admin" />
-          <ProtectedRoute path="/admin/workflow-test" component={WorkflowTestPage} requiredRole="admin" />
-          <Route path="/test-minimal" component={WorkflowTestPage} />
-          <Route path="/test-dom-nesting" component={TestDomNesting} />
-          <Route path="/test-simple" component={TestSimplePage} />
-          {/* Removing problematic test-imports route */}
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />

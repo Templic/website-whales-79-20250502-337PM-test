@@ -106,12 +106,6 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use media routes
   app.use(mediaRoutes);
-  
-  // Use content workflow routes
-  app.use('/api/content-workflow', contentWorkflowRoutes);
-  
-  // Use notifications routes
-  app.use('/api/notifications', notificationsRoutes);
 
   // Get current user endpoint
   app.get('/api/user', (req, res) => {
