@@ -79,6 +79,7 @@ import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 import MediaPage from "@/pages/admin/MediaPage";
 import ContentManagementPage from "@/pages/admin/ContentManagementPage";
+import ContentWorkflowManagementPage from "@/pages/admin/ContentWorkflowManagementPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -175,6 +176,8 @@ function AppRouter() {
           <ProtectedRoute path="/admin/settings" component={AdminPortalPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media" component={MediaPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/content-workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />
