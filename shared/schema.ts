@@ -477,6 +477,24 @@ export const contentItems = pgTable("content_items", {
   lastModifiedBy: integer("last_modified_by").references(() => users.id)
 });
 
+// Content analytics tracking
+export const contentAnalytics = pgTable("content_analytics", {
+  id: serial("id").primaryKey(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+  metricsType: text("metrics_type").notNull(), // scheduling_performance, content_engagement, workflow_metrics
+  metricsData: jsonb("metrics_data").notNull().$type<{
+    totalScheduled?: number;
+    totalPublished?: number;
+    publishedRatio?: number;
+    contentId?: number;
+    engagementType?: string;
+    workflowMetric?: string;
+    value?: number;
+    timestamp?: Date;
+  }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow()
+});
+
 // Content version history table
 export const contentHistory = pgTable("content_history", {
   id: serial("id").primaryKey(),
@@ -540,11 +558,17 @@ export const insertContentUsageSchema = createInsertSchema(contentUsage)
 export const insertWorkflowNotificationSchema = createInsertSchema(workflowNotifications)
   .omit({ id: true, createdAt: true, isRead: true });
 
+export const insertContentAnalyticsSchema = createInsertSchema(contentAnalytics)
+  .omit({ id: true, createdAt: true });
+
 export type ContentItem = typeof contentItems.$inferSelect;
 export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
 
 export type ContentHistory = typeof contentHistory.$inferSelect;
 export type InsertContentHistory = z.infer<typeof insertContentHistorySchema>;
+
+export type ContentAnalytics = typeof contentAnalytics.$inferSelect;
+export type InsertContentAnalytics = z.infer<typeof insertContentAnalyticsSchema>;
 
 export type ContentUsage = typeof contentUsage.$inferSelect;
 export type InsertContentUsage = z.infer<typeof insertContentUsageSchema>;
