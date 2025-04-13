@@ -82,6 +82,7 @@ import ContentManagementPage from "@/pages/admin/ContentManagementPage";
 import ContentWorkflowManagementPage from "@/pages/admin/ContentWorkflowManagementPage";
 import ContentWorkflowDashboard from "@/pages/admin/ContentWorkflowDashboard";
 import WorkflowTestPage from "@/pages/TestMinimal";
+import TestDomNesting from "@/pages/admin/TestDomNesting";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -183,6 +184,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/workflow-dashboard" component={ContentWorkflowDashboard} requiredRole="admin" />
           <ProtectedRoute path="/admin/workflow-test" component={WorkflowTestPage} requiredRole="admin" />
           <Route path="/test-minimal" component={WorkflowTestPage} />
+          <Route path="/test-dom-nesting" component={TestDomNesting} />
           {/* New test route for isolated component */}
           <Route path="/test-imports" component={({}: any) => {
             // Use dynamic import instead of require which is not supported in ESM

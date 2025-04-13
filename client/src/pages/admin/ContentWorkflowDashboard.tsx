@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Tabs,
   TabsContent,
@@ -37,8 +37,7 @@ interface ContentMetrics {
 }
 
 // Dashboard component
-
-const ContentWorkflowDashboard: React.FC = () => {
+const ContentWorkflowDashboard = () => {
   const [showRejected, setShowRejected] = useState(true);
   const [showDrafts, setShowDrafts] = useState(true);
 
@@ -51,7 +50,6 @@ const ContentWorkflowDashboard: React.FC = () => {
         return response as ContentMetrics;
       } catch (error) {
         console.error("Error fetching metrics:", error);
-        // Return empty metrics data
         return {
           drafts: 0,
           inReview: 0,
@@ -161,12 +159,13 @@ const ContentWorkflowDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Content Status Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Content Status Overview</CardTitle>
-            <CardDescription>Distribution of content by current status</CardDescription>
+            <CardTitle>Content Status Distribution</CardTitle>
+            <CardDescription>
+              Breakdown of content by current status
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
             {metrics && (
@@ -181,7 +180,7 @@ const ContentWorkflowDashboard: React.FC = () => {
                     fill="#8884d8"
                     dataKey="value"
                     label={(entry) => 
-                      `${entry.name}: ${(entry.percent * 100).toFixed(0)}%`
+                      `${entry.name}: ${Math.round(entry.percent * 100)}%`
                     }
                   >
                     {metrics.statusDistribution.map((entry, index) => (
@@ -191,8 +190,8 @@ const ContentWorkflowDashboard: React.FC = () => {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
                   <Legend />
+                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -202,8 +201,10 @@ const ContentWorkflowDashboard: React.FC = () => {
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription className="flex items-center justify-between">
-              <span>Content workflow activity over the past 7 days</span>
+            <div className="flex items-center justify-between mt-1">
+              <CardDescription>
+                Content workflow activity over the past 7 days
+              </CardDescription>
               <div className="flex items-center gap-x-4 text-xs">
                 <div className="flex items-center gap-x-1">
                   <Checkbox 
@@ -222,7 +223,7 @@ const ContentWorkflowDashboard: React.FC = () => {
                   <Label htmlFor="show-rejected">Reviews</Label>
                 </div>
               </div>
-            </CardDescription>
+            </div>
           </CardHeader>
           <CardContent className="h-[300px]">
             {metrics && (
