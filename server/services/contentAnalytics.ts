@@ -49,7 +49,7 @@ export async function trackSchedulingPerformance(scheduledContent: any[], publis
  */
 export async function trackContentEngagement(contentId: number, engagementType: 'view' | 'like' | 'comment' | 'share') {
   try {
-    // Get existing engagement data for this content
+    // Get existing content to verify it exists
     const content = await db.select().from(contentItems).where(eq(contentItems.id, contentId));
     
     if (!content || content.length === 0) {
@@ -57,28 +57,12 @@ export async function trackContentEngagement(contentId: number, engagementType: 
       return false;
     }
 
-    // Update engagement counts
-    const engagementData = content[0].engagementData || { views: 0, likes: 0, comments: 0, shares: 0 };
-    
-    switch (engagementType) {
-      case 'view':
-        engagementData.views++;
-        break;
-      case 'like':
-        engagementData.likes++;
-        break;
-      case 'comment':
-        engagementData.comments++;
-        break;
-      case 'share':
-        engagementData.shares++;
-        break;
-    }
-
-    // Save updated engagement data
-    await db.update(contentItems)
-      .set({ engagementData })
-      .where(eq(contentItems.id, contentId));
+    // Save engagement data as separate analytics record instead of updating the content item
+    const engagementData = {
+      [engagementType]: 1,
+      contentId,
+      timestamp: new Date()
+    };
 
     // Record this engagement in analytics
     await db.insert(contentAnalytics).values({
@@ -132,14 +116,14 @@ export async function generateSchedulingReport(startDate: Date, endDate: Date) {
     const totalPublished = contentEvents.filter(item => item.status === 'published').length;
     const totalExpired = contentEvents.filter(item => item.status === 'archived' && item.expirationDate !== null).length;
     
-    // Calculate average publish time (time between creation and publication)
+    // Calculate average time between status changes
     let totalPublishTime = 0;
     let publishTimeCount = 0;
     
     contentEvents.forEach(item => {
-      if (item.status === 'published' && item.createdAt && item.publishedAt) {
+      if (item.status === 'published' && item.createdAt) {
         const createTime = new Date(item.createdAt).getTime();
-        const publishTime = new Date(item.publishedAt).getTime();
+        const publishTime = new Date(item.updatedAt || item.createdAt).getTime();
         totalPublishTime += (publishTime - createTime);
         publishTimeCount++;
       }

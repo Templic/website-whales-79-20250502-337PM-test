@@ -8,6 +8,7 @@
 import { db } from '../db';
 import { eq, lte, gt, and, isNotNull } from 'drizzle-orm';
 import { contentItems, workflowNotifications } from '../../shared/schema';
+import { trackSchedulingPerformance } from './contentAnalytics';
 
 /**
  * Processes content scheduled for publication and content that has expired
@@ -32,31 +33,44 @@ export async function processScheduledContent() {
     if (scheduledContent.length > 0) {
       console.log(`[Scheduler] Publishing ${scheduledContent.length} scheduled content items`);
       
+      // Create list of successfully published content
+      const publishedContent = [];
+      
       for (const content of scheduledContent) {
-        // Update content status to published
-        await db.update(contentItems)
-          .set({ 
-            status: 'published',
-            updatedAt: now
-          })
-          .where(eq(contentItems.id, content.id));
+        try {
+          // Update content status to published
+          await db.update(contentItems)
+            .set({ 
+              status: 'published',
+              updatedAt: now
+            })
+            .where(eq(contentItems.id, content.id));
+            
+          // Create notification for content creator
+          if (content.creator?.id) {
+            await db.insert(workflowNotifications)
+              .values({
+                title: 'Content Published',
+                message: `Your scheduled content "${content.title}" has been automatically published.`,
+                type: 'info',
+                contentId: content.id,
+                contentTitle: content.title,
+                userId: content.creator.id,
+                isRead: false
+              });
+          }
           
-        // Create notification for content creator
-        if (content.creator?.id) {
-          await db.insert(workflowNotifications)
-            .values({
-              title: 'Content Published',
-              message: `Your scheduled content "${content.title}" has been automatically published.`,
-              type: 'info',
-              contentId: content.id,
-              contentTitle: content.title,
-              userId: content.creator.id,
-              isRead: false
-            });
+          // Add to successfully published list
+          publishedContent.push(content);
+          
+          console.log(`[Scheduler] Published scheduled content: "${content.title}" (ID: ${content.id})`);
+        } catch (error) {
+          console.error(`[Scheduler] Error publishing content ID ${content.id}: ${error.message}`);
         }
-        
-        console.log(`[Scheduler] Published scheduled content: "${content.title}" (ID: ${content.id})`);
       }
+      
+      // Track scheduling performance in analytics
+      await trackSchedulingPerformance(scheduledContent, publishedContent);
     }
     
     // Process expired content

@@ -3,6 +3,7 @@ import { eq, and, or, gt, isNull } from 'drizzle-orm';
 import { db } from '../db';
 import { contentItems, workflowNotifications, users } from '../../shared/schema';
 import { isAdmin, isAuthenticated } from '../middleware/auth';
+import { generateSchedulingReport } from '../services/contentAnalytics';
 
 const router = express.Router();
 
