@@ -3,6 +3,9 @@ import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminEditor from '@/components/admin/AdminEditor';
 import ContentHistoryView from '@/components/admin/ContentHistoryView';
 import ContentUsageReport from '@/components/admin/ContentUsageReport';
+import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
+import { WorkflowNotifications } from '@/components/admin/WorkflowNotifications';
+import { ContentSchedulingAnalytics } from '@/components/admin/ContentSchedulingAnalytics';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -57,14 +60,12 @@ import {
   Image as ImageIcon, 
   Code,
   History,
-  BarChart
+  BarChart,
+  Calendar
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
-import { WorkflowNotifications } from '@/components/admin/WorkflowNotifications';
-import { ContentSchedulingAnalytics } from '@/components/admin/ContentSchedulingAnalytics';
 
 // Define types
 interface ContentItem {
@@ -242,6 +243,10 @@ const ContentManagementPage: React.FC = () => {
             <Button variant="outline" onClick={() => setIsUsageReportOpen(true)}>
               <BarChart className="mr-2 h-4 w-4" />
               Usage Report
+            </Button>
+            <Button variant="outline" onClick={() => setIsSchedulingAnalyticsOpen(true)}>
+              <Calendar className="mr-2 h-4 w-4" />
+              Scheduling Analytics
             </Button>
             <Button onClick={handleCreateNew}>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -434,7 +439,7 @@ const ContentManagementPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Content Version History</DialogTitle>
             <DialogDescription>
-              View and manage previous versions of "{selectedContent?.title}"
+              View and manage previous versions of &quot;{selectedContent?.title}&quot;
             </DialogDescription>
           </DialogHeader>
           {selectedContent && (
@@ -460,6 +465,20 @@ const ContentManagementPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Content Scheduling Analytics Dialog */}
+      <Dialog open={isSchedulingAnalyticsOpen} onOpenChange={setIsSchedulingAnalyticsOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Content Scheduling Analytics</DialogTitle>
+            <DialogDescription>
+              Monitor and analyze your scheduled content performance
+            </DialogDescription>
+          </DialogHeader>
+          <ContentSchedulingAnalytics />
+        </DialogContent>
+      </Dialog>
+      
       <WorkflowNotifications />
       <EnhancedContentReview />
     </AdminLayout>
