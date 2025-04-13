@@ -8,6 +8,9 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
   next();
 }
 
+// Alias for isAuthenticated (used in content-workflow.ts)
+export const requireAuth = isAuthenticated;
+
 // Check if user is admin
 export function isAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.session || !req.session.user) {
@@ -32,4 +35,19 @@ export function isSuperAdmin(req: Request, res: Response, next: NextFunction) {
   }
   
   next();
+}
+
+// Check if user has the required role
+export function requireRole(roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.session || !req.session.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    if (!roles.includes(req.session.user.role)) {
+      return res.status(403).json({ error: 'Access denied. Required role: ' + roles.join(' or ') });
+    }
+    
+    next();
+  };
 }

@@ -6,7 +6,7 @@
  * - Other periodic tasks
  */
 
-import { processScheduledContent } from './contentScheduler';
+import { runContentScheduler } from './contentScheduler';
 
 // Store interval IDs for cleanup
 const intervals: { [key: string]: NodeJS.Timeout } = {};
@@ -19,11 +19,11 @@ export function startContentScheduler(intervalMinutes = 1) {
   console.log(`[Background] Starting content scheduler (interval: ${intervalMinutes} minute(s))`);
   
   // Run immediately on startup
-  processScheduledContent()
-    .then(result => {
+  runContentScheduler()
+    .then((result: {published: number, failed: number, archived: number, archivedFailed: number, upcomingExpiring: number}) => {
       console.log(`[Background] Initial content scheduling run complete: ${result.published} published, ${result.archived} archived`);
     })
-    .catch(err => {
+    .catch((err: Error) => {
       console.error('[Background] Error during initial content scheduling run:', err);
     });
   
@@ -31,11 +31,11 @@ export function startContentScheduler(intervalMinutes = 1) {
   const intervalMs = intervalMinutes * 60 * 1000;
   intervals['contentScheduler'] = setInterval(async () => {
     try {
-      const result = await processScheduledContent();
+      const result = await runContentScheduler();
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Background] Error in content scheduler:', err);
     }
   }, intervalMs);

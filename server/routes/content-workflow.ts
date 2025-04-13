@@ -1,768 +1,713 @@
 import express from 'express';
-import { eq, and, or, gt, lt, gte, lte, isNull, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { contentItems, workflowNotifications, users, contentHistory } from '../../shared/schema';
-import { isAdmin, isAuthenticated } from '../middleware/auth';
-import { generateSchedulingReport } from '../services/contentAnalytics';
-import { formatDistanceToNow, format } from 'date-fns';
+import { contentItems, contentVersions, contentWorkflowHistory } from '@shared/schema';
+import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
+import { requireAuth, requireRole } from '../middleware/auth';
+import { logger } from '../logger';
+import { 
+  runContentScheduler, 
+  getSchedulingMetrics,
+  resetSchedulingMetrics 
+} from '../services/contentScheduler';
+import { 
+  getAllContentAnalytics,
+  getUpcomingScheduledContent,
+  getExpiringContent 
+} from '../services/contentAnalytics';
+import { format, parseISO, startOfDay, endOfDay, subDays } from 'date-fns';
 
 const router = express.Router();
 
-// Function to calculate percent change between two numbers
-function calculatePercentChange(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return ((current - previous) / previous) * 100;
-}
-
-// Format time in 12-hour format
-function formatTime(date: Date): string {
-  return format(date, 'h:mm a');
-}
-
-// Get content items in review queue
-router.get('/review-queue', isAuthenticated, async (req, res) => {
+// Get all content with pagination, filtering and sorting
+router.get('/content', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user?.id;
-    const userRole = req.session.user?.role;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const status = req.query.status as string || undefined;
+    const search = req.query.search as string || undefined;
+    const sortBy = req.query.sortBy as string || 'updatedAt';
+    const sortOrder = req.query.sortOrder as string === 'asc' ? asc : desc;
+    const offset = (page - 1) * limit;
+    
+    // Build the query based on filters
+    let query = db.select()
+      .from(contentItems)
+      .limit(limit)
+      .offset(offset);
+    
+    // Add filtering conditions
+    if (status) {
+      query = query.where(eq(contentItems.status, status));
     }
     
-    let query = and(
-      or(
-        eq(contentItems.status, 'review'), 
-        eq(contentItems.status, 'changes_requested')
-      )
-    );
-    
-    // If not admin, only show content assigned to this reviewer
-    if (userRole !== 'admin' && userRole !== 'super_admin') {
-      query = and(
-        query,
-        eq(contentItems.reviewerId, userId)
-      );
+    if (search) {
+      query = query.where(like(contentItems.title, `%${search}%`));
     }
     
-    const reviewQueue = await db.query.contentItems.findMany({
-      where: query,
-      orderBy: (contentItems, { desc }) => [desc(contentItems.updatedAt)],
-      with: {
-        creator: true,
-        reviewer: true
+    // If not admin, only show content created by the user
+    if (!isAdmin) {
+      query = query.where(eq(contentItems.createdBy, userId));
+    }
+    
+    // Add sorting
+    if (sortBy === 'createdAt') {
+      query = query.orderBy(sortOrder(contentItems.createdAt));
+    } else if (sortBy === 'updatedAt') {
+      query = query.orderBy(sortOrder(contentItems.updatedAt));
+    } else if (sortBy === 'title') {
+      query = query.orderBy(sortOrder(contentItems.title));
+    } else {
+      query = query.orderBy(desc(contentItems.updatedAt)); // Default sorting
+    }
+    
+    // Execute the query
+    const contentList = await query;
+    
+    // Get total count for pagination
+    const countResult = await db.select({ count: db.fn.count() })
+      .from(contentItems)
+      .where(isAdmin ? undefined : eq(contentItems.createdBy, userId))
+      .where(status ? eq(contentItems.status, status) : undefined)
+      .where(search ? like(contentItems.title, `%${search}%`) : undefined);
+    
+    const totalCount = parseInt(countResult[0].count.toString(), 10);
+    
+    res.json({
+      content: contentList,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit)
       }
     });
-    
-    return res.json(reviewQueue);
   } catch (error) {
-    console.error('Error fetching review queue:', error);
-    return res.status(500).json({ error: 'Failed to fetch review queue' });
+    logger.error('Error getting content list:', error);
+    res.status(500).json({ error: 'Failed to get content list' });
   }
 });
 
-// Get my content in workflow (items created by me)
-router.get('/my-content', isAuthenticated, async (req, res) => {
+// Get content details by ID
+router.get('/content/:id', requireAuth, async (req, res) => {
   try {
+    const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
+    // Get content item
+    const content = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
+    
+    if (!content.length) {
+      return res.status(404).json({ error: 'Content not found' });
     }
     
-    const myContent = await db.query.contentItems.findMany({
-      where: eq(contentItems.createdBy, userId),
-      orderBy: (contentItems, { desc }) => [desc(contentItems.updatedAt)],
-      with: {
-        reviewer: true
-      }
-    });
+    // Check permission
+    if (!isAdmin && content[0].createdBy !== userId) {
+      return res.status(403).json({ error: 'You do not have permission to view this content' });
+    }
     
-    return res.json(myContent);
+    // Get content versions
+    const versions = await db.select()
+      .from(contentVersions)
+      .where(eq(contentVersions.contentId, contentId))
+      .orderBy(desc(contentVersions.version));
+    
+    // Get workflow history
+    const workflowHistory = await db.select()
+      .from(contentWorkflowHistory)
+      .where(eq(contentWorkflowHistory.contentId, contentId))
+      .orderBy(desc(contentWorkflowHistory.createdAt));
+    
+    res.json({
+      content: content[0],
+      versions,
+      workflowHistory
+    });
   } catch (error) {
-    console.error('Error fetching my content:', error);
-    return res.status(500).json({ error: 'Failed to fetch content' });
+    logger.error('Error getting content details:', error);
+    res.status(500).json({ error: 'Failed to get content details' });
   }
 });
 
-// Get scheduled content (admin only)
-router.get('/scheduled', isAdmin, async (req, res) => {
+// Create new content
+router.post('/content', requireAuth, async (req, res) => {
   try {
-    const now = new Date();
+    const userId = req.session.user?.id;
+    const {
+      title,
+      content,
+      section,
+      type,
+      scheduledPublishAt,
+      expirationDate
+    } = req.body;
     
-    const scheduledContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'approved'),
-        or(
-          gt(contentItems.scheduledPublishAt, now),
-          isNull(contentItems.scheduledPublishAt)
-        )
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.scheduledPublishAt)],
-      with: {
-        creator: true,
-        reviewer: true
-      }
-    });
+    // Validate required fields
+    if (!title || !content || !section || !type) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
     
-    return res.json(scheduledContent);
+    // Convert date strings to Date objects if provided
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
+    
+    // Create new content item
+    const [newContent] = await db.insert(contentItems)
+      .values({
+        title,
+        content,
+        section,
+        type,
+        status: 'draft',
+        version: 1,
+        createdBy: userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        scheduledPublishAt: scheduledDate,
+        expirationDate: expirationDateObj,
+        key: `content_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+      })
+      .returning();
+    
+    // Create initial version
+    await db.insert(contentVersions)
+      .values({
+        contentId: newContent.id,
+        version: 1,
+        content: content,
+        createdBy: userId,
+        createdAt: new Date()
+      });
+    
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: newContent.id,
+        userId: userId,
+        action: 'created',
+        comments: 'Initial creation',
+        createdAt: new Date()
+      });
+    
+    logger.info(`New content created: ${newContent.id} by user ${userId}`);
+    res.status(201).json(newContent);
   } catch (error) {
-    console.error('Error fetching scheduled content:', error);
-    return res.status(500).json({ error: 'Failed to fetch scheduled content' });
+    logger.error('Error creating content:', error);
+    res.status(500).json({ error: 'Failed to create content' });
+  }
+});
+
+// Update content
+router.put('/content/:id', requireAuth, async (req, res) => {
+  try {
+    const contentId = parseInt(req.params.id);
+    const userId = req.session.user?.id;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
+    
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
+    
+    if (!existingContent.length) {
+      return res.status(404).json({ error: 'Content not found' });
+    }
+    
+    // Check permission
+    if (!isAdmin && existingContent[0].createdBy !== userId) {
+      return res.status(403).json({ error: 'You do not have permission to update this content' });
+    }
+    
+    // Check if content is in a state that allows updates
+    const allowUpdateStates = ['draft', 'changes_requested'];
+    if (!allowUpdateStates.includes(existingContent[0].status)) {
+      return res.status(400).json({ 
+        error: 'Cannot update content in its current state. Content must be in draft or changes_requested state.' 
+      });
+    }
+    
+    const {
+      title,
+      content,
+      section,
+      type,
+      scheduledPublishAt,
+      expirationDate
+    } = req.body;
+    
+    // Convert date strings to Date objects if provided
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
+    
+    // Increment version number
+    const newVersion = existingContent[0].version + 1;
+    
+    // Update content
+    const [updatedContent] = await db.update(contentItems)
+      .set({
+        title: title || existingContent[0].title,
+        content: content || existingContent[0].content,
+        section: section || existingContent[0].section,
+        type: type || existingContent[0].type,
+        version: newVersion,
+        status: 'draft', // Reset to draft when updated
+        updatedAt: new Date(),
+        lastModifiedBy: userId,
+        scheduledPublishAt: scheduledDate,
+        expirationDate: expirationDateObj
+      })
+      .where(eq(contentItems.id, contentId))
+      .returning();
+    
+    // Create new version
+    await db.insert(contentVersions)
+      .values({
+        contentId: contentId,
+        version: newVersion,
+        content: content || existingContent[0].content,
+        createdBy: userId,
+        createdAt: new Date()
+      });
+    
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: 'updated',
+        comments: req.body.comments || 'Content updated',
+        createdAt: new Date()
+      });
+    
+    logger.info(`Content updated: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
+  } catch (error) {
+    logger.error('Error updating content:', error);
+    res.status(500).json({ error: 'Failed to update content' });
   }
 });
 
 // Submit content for review
-router.post('/:id/submit-for-review', isAuthenticated, async (req, res) => {
+router.post('/submit/:id', requireAuth, async (req, res) => {
   try {
-    const contentId = parseInt(req.params.id, 10);
-    const { reviewerId } = req.body;
+    const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
     
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId)
-    });
-    
-    if (!contentItem) {
+    if (!existingContent.length) {
       return res.status(404).json({ error: 'Content not found' });
     }
     
-    // Check if user is the creator or admin
-    if (contentItem.createdBy !== userId && req.session.user?.role !== 'admin' && req.session.user?.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Not authorized to submit this content for review' });
+    // Check permission
+    if (!isAdmin && existingContent[0].createdBy !== userId) {
+      return res.status(403).json({ error: 'You do not have permission to submit this content for review' });
+    }
+    
+    // Check if content is in a state that allows submission
+    const allowSubmitStates = ['draft', 'changes_requested'];
+    if (!allowSubmitStates.includes(existingContent[0].status)) {
+      return res.status(400).json({ 
+        error: 'Cannot submit content in its current state. Content must be in draft or changes_requested state.' 
+      });
     }
     
     // Update content status
-    await db.update(contentItems)
-      .set({ 
+    const [updatedContent] = await db.update(contentItems)
+      .set({
         status: 'review',
-        reviewerId: reviewerId || null,
-        reviewStatus: 'pending',
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        lastModifiedBy: userId
       })
-      .where(eq(contentItems.id, contentId));
-      
-    // Create notification for reviewer if specified
-    if (reviewerId) {
-      await db.insert(workflowNotifications)
-        .values({
-          title: 'New Content Review Request',
-          message: `Content "${contentItem.title}" has been submitted for your review.`,
-          type: 'approval',
-          contentId,
-          contentTitle: contentItem.title,
-          userId: reviewerId
-        });
-    }
+      .where(eq(contentItems.id, contentId))
+      .returning();
     
-    return res.json({ success: true });
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: 'submitted',
+        comments: req.body.comments || 'Submitted for review',
+        createdAt: new Date()
+      });
+    
+    logger.info(`Content submitted for review: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
   } catch (error) {
-    console.error('Error submitting content for review:', error);
-    return res.status(500).json({ error: 'Failed to submit content for review' });
-  }
-});
-
-// Start review
-router.post('/:id/start-review', isAuthenticated, async (req, res) => {
-  try {
-    const contentId = parseInt(req.params.id, 10);
-    const userId = req.session.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-    
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId)
-    });
-    
-    if (!contentItem) {
-      return res.status(404).json({ error: 'Content not found' });
-    }
-    
-    // Check if user is the assigned reviewer or admin
-    if (contentItem.reviewerId !== userId && req.session.user?.role !== 'admin' && req.session.user?.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Not authorized to review this content' });
-    }
-    
-    // Update review status
-    await db.update(contentItems)
-      .set({ 
-        reviewStatus: 'in_progress',
-        reviewStartedAt: new Date(),
-        updatedAt: new Date()
-      })
-      .where(eq(contentItems.id, contentId));
-      
-    return res.json({ success: true });
-  } catch (error) {
-    console.error('Error starting review:', error);
-    return res.status(500).json({ error: 'Failed to start review' });
+    logger.error('Error submitting content for review:', error);
+    res.status(500).json({ error: 'Failed to submit content for review' });
   }
 });
 
 // Approve content
-router.post('/:id/approve', isAuthenticated, async (req, res) => {
+router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
-    const contentId = parseInt(req.params.id, 10);
-    const { scheduledPublishAt, reviewNotes } = req.body;
+    const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
     
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId),
-      with: {
-        creator: true
-      }
-    });
-    
-    if (!contentItem) {
+    if (!existingContent.length) {
       return res.status(404).json({ error: 'Content not found' });
     }
     
-    // Check if user is the assigned reviewer or admin
-    if (contentItem.reviewerId !== userId && req.session.user?.role !== 'admin' && req.session.user?.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Not authorized to approve this content' });
+    // Check if content is in a state that allows approval
+    if (existingContent[0].status !== 'review') {
+      return res.status(400).json({ 
+        error: 'Cannot approve content in its current state. Content must be in review state.' 
+      });
     }
     
-    // Parse date if provided
-    let publishDate = null;
-    if (scheduledPublishAt) {
-      publishDate = new Date(scheduledPublishAt);
-    }
+    // Check if should be published immediately or scheduled
+    const shouldPublishNow = !existingContent[0].scheduledPublishAt 
+      || new Date(existingContent[0].scheduledPublishAt) <= new Date();
     
-    // Update status to approved
-    await db.update(contentItems)
-      .set({ 
-        status: 'approved',
-        reviewStatus: 'completed',
-        reviewCompletedAt: new Date(),
-        scheduledPublishAt: publishDate,
-        reviewNotes: reviewNotes || null,
-        updatedAt: new Date()
+    // Update content status
+    const [updatedContent] = await db.update(contentItems)
+      .set({
+        status: shouldPublishNow ? 'published' : 'approved',
+        updatedAt: new Date(),
+        lastModifiedBy: userId,
+        // If publishing now, set publishedAt
+        ...(shouldPublishNow && { publishedAt: new Date() })
       })
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
+      .returning();
     
-    // Create notification for content creator
-    if (contentItem.creator?.id) {
-      await db.insert(workflowNotifications)
-        .values({
-          title: 'Content Approved',
-          message: `Your content "${contentItem.title}" has been approved.`,
-          type: 'publish',
-          contentId,
-          contentTitle: contentItem.title,
-          userId: contentItem.creator.id
-        });
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: shouldPublishNow ? 'published' : 'approved',
+        comments: req.body.comments || (shouldPublishNow ? 'Published immediately' : 'Approved for scheduled publishing'),
+        createdAt: new Date()
+      });
+    
+    logger.info(`Content ${shouldPublishNow ? 'published' : 'approved'}: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
+  } catch (error) {
+    logger.error('Error approving content:', error);
+    res.status(500).json({ error: 'Failed to approve content' });
+  }
+});
+
+// Reject content
+router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const contentId = parseInt(req.params.id);
+    const userId = req.session.user?.id;
+    
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
+    
+    if (!existingContent.length) {
+      return res.status(404).json({ error: 'Content not found' });
     }
     
-    return res.json({ success: true });
+    // Check if content is in a state that allows rejection
+    if (existingContent[0].status !== 'review') {
+      return res.status(400).json({ 
+        error: 'Cannot reject content in its current state. Content must be in review state.' 
+      });
+    }
+    
+    // Update content status
+    const [updatedContent] = await db.update(contentItems)
+      .set({
+        status: 'draft', // Reset to draft when rejected
+        updatedAt: new Date(),
+        lastModifiedBy: userId
+      })
+      .where(eq(contentItems.id, contentId))
+      .returning();
+    
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: 'rejected',
+        comments: req.body.comments || 'Content rejected',
+        createdAt: new Date()
+      });
+    
+    logger.info(`Content rejected: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
   } catch (error) {
-    console.error('Error approving content:', error);
-    return res.status(500).json({ error: 'Failed to approve content' });
+    logger.error('Error rejecting content:', error);
+    res.status(500).json({ error: 'Failed to reject content' });
   }
 });
 
 // Request changes
-router.post('/:id/request-changes', isAuthenticated, async (req, res) => {
+router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
-    const contentId = parseInt(req.params.id, 10);
-    const { reviewNotes } = req.body;
+    const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
-    if (!userId || !reviewNotes) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Make sure comments are provided
+    if (!req.body.comments) {
+      return res.status(400).json({ error: 'Comments are required when requesting changes' });
     }
     
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId),
-      with: {
-        creator: true
-      }
-    });
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
     
-    if (!contentItem) {
+    if (!existingContent.length) {
       return res.status(404).json({ error: 'Content not found' });
     }
     
-    // Check if user is the assigned reviewer or admin
-    if (contentItem.reviewerId !== userId && req.session.user?.role !== 'admin' && req.session.user?.role !== 'super_admin') {
-      return res.status(403).json({ error: 'Not authorized to review this content' });
+    // Check if content is in a state that allows requesting changes
+    if (existingContent[0].status !== 'review') {
+      return res.status(400).json({ 
+        error: 'Cannot request changes in its current state. Content must be in review state.' 
+      });
     }
     
-    // Update status to changes_requested
-    await db.update(contentItems)
-      .set({ 
+    // Update content status
+    const [updatedContent] = await db.update(contentItems)
+      .set({
         status: 'changes_requested',
-        reviewStatus: 'completed',
-        reviewCompletedAt: new Date(),
-        reviewNotes,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        lastModifiedBy: userId
       })
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
+      .returning();
     
-    // Create notification for content creator
-    if (contentItem.creator?.id) {
-      await db.insert(workflowNotifications)
-        .values({
-          title: 'Changes Requested',
-          message: `Changes have been requested for your content "${contentItem.title}".`,
-          type: 'changes',
-          contentId,
-          contentTitle: contentItem.title,
-          userId: contentItem.creator.id
-        });
-    }
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: 'requested_changes',
+        comments: req.body.comments,
+        createdAt: new Date()
+      });
     
-    return res.json({ success: true });
+    logger.info(`Changes requested for content: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
   } catch (error) {
-    console.error('Error requesting changes:', error);
-    return res.status(500).json({ error: 'Failed to request changes' });
+    logger.error('Error requesting changes:', error);
+    res.status(500).json({ error: 'Failed to request changes' });
   }
 });
 
-// Publish content
-router.post('/:id/publish', isAdmin, async (req, res) => {
+// Get content review history
+router.get('/review-history/:id', requireAuth, async (req, res) => {
   try {
-    const contentId = parseInt(req.params.id, 10);
+    const contentId = parseInt(req.params.id);
+    const userId = req.session.user?.id;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId),
-      with: {
-        creator: true
-      }
-    });
+    // Get content item to check permissions
+    const content = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
     
-    if (!contentItem) {
+    if (!content.length) {
       return res.status(404).json({ error: 'Content not found' });
     }
     
-    // Check if content is approved
-    if (contentItem.status !== 'approved') {
-      return res.status(400).json({ error: 'Content must be approved before publishing' });
+    // Check permission
+    if (!isAdmin && content[0].createdBy !== userId) {
+      return res.status(403).json({ error: 'You do not have permission to view this content history' });
     }
     
-    // Update status to published
-    await db.update(contentItems)
-      .set({ 
-        status: 'published',
-        updatedAt: new Date()
-      })
-      .where(eq(contentItems.id, contentId));
+    // Get workflow history with user details
+    const historyQuery = `
+      SELECT 
+        wh.id,
+        wh.content_id AS "contentId",
+        wh.user_id AS "userId",
+        u.username,
+        wh.action,
+        wh.comments,
+        wh.created_at AS "timestamp"
+      FROM 
+        content_workflow_history wh
+      LEFT JOIN
+        users u ON wh.user_id = u.id
+      WHERE 
+        wh.content_id = $1
+      ORDER BY 
+        wh.created_at DESC
+    `;
     
-    // Create notification for content creator
-    if (contentItem.creator?.id) {
-      await db.insert(workflowNotifications)
-        .values({
-          title: 'Content Published',
-          message: `Your content "${contentItem.title}" has been published.`,
-          type: 'info',
-          contentId,
-          contentTitle: contentItem.title,
-          userId: contentItem.creator.id
-        });
-    }
+    const result = await db.client.query(historyQuery, [contentId]);
     
-    return res.json({ success: true });
+    res.json(result.rows);
   } catch (error) {
-    console.error('Error publishing content:', error);
-    return res.status(500).json({ error: 'Failed to publish content' });
+    logger.error('Error getting review history:', error);
+    res.status(500).json({ error: 'Failed to get review history' });
   }
 });
 
 // Archive content
-router.post('/:id/archive', isAdmin, async (req, res) => {
+router.post('/archive/:id', requireAuth, async (req, res) => {
   try {
-    const contentId = parseInt(req.params.id, 10);
+    const contentId = parseInt(req.params.id);
+    const userId = req.session.user?.id;
+    const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
     
-    // Find content item
-    const contentItem = await db.query.contentItems.findFirst({
-      where: eq(contentItems.id, contentId),
-      with: {
-        creator: true
-      }
-    });
+    // Get existing content
+    const existingContent = await db.select()
+      .from(contentItems)
+      .where(eq(contentItems.id, contentId))
+      .limit(1);
     
-    if (!contentItem) {
+    if (!existingContent.length) {
       return res.status(404).json({ error: 'Content not found' });
     }
     
-    // Update status to archived
-    await db.update(contentItems)
-      .set({ 
+    // Check permission
+    if (!isAdmin && existingContent[0].createdBy !== userId) {
+      return res.status(403).json({ error: 'You do not have permission to archive this content' });
+    }
+    
+    // Update content status
+    const [updatedContent] = await db.update(contentItems)
+      .set({
         status: 'archived',
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        lastModifiedBy: userId,
+        archivedAt: new Date(),
+        archiveReason: req.body.reason || 'Manually archived'
       })
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
+      .returning();
     
-    // Create notification for content creator
-    if (contentItem.creator?.id) {
-      await db.insert(workflowNotifications)
-        .values({
-          title: 'Content Archived',
-          message: `Your content "${contentItem.title}" has been archived.`,
-          type: 'info',
-          contentId,
-          contentTitle: contentItem.title,
-          userId: contentItem.creator.id
-        });
-    }
+    // Create workflow history entry
+    await db.insert(contentWorkflowHistory)
+      .values({
+        contentId: contentId,
+        userId: userId,
+        action: 'archived',
+        comments: req.body.reason || 'Content archived',
+        createdAt: new Date()
+      });
     
-    return res.json({ success: true });
+    logger.info(`Content archived: ${contentId} by user ${userId}`);
+    res.json(updatedContent);
   } catch (error) {
-    console.error('Error archiving content:', error);
-    return res.status(500).json({ error: 'Failed to archive content' });
+    logger.error('Error archiving content:', error);
+    res.status(500).json({ error: 'Failed to archive content' });
   }
 });
 
-// Get scheduling analytics report
-router.get('/analytics/scheduling', isAdmin, async (req, res) => {
+// Run content scheduler manually (admin only)
+router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
-    // Parse date range from query parameters
-    const { start, end } = req.query;
+    // Run the scheduler
+    await runContentScheduler();
     
-    let startDate = new Date();
-    let endDate = new Date();
+    // Get updated metrics
+    const metrics = getSchedulingMetrics();
     
-    // Default to last 30 days if no dates provided
-    if (!start) {
-      startDate.setDate(startDate.getDate() - 30);
-    } else {
-      startDate = new Date(start as string);
-    }
-    
-    if (!end) {
-      // Default to current date if no end date
-    } else {
-      endDate = new Date(end as string);
-    }
-    
-    // Validate dates
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
-    }
-    
-    // Generate report
-    const report = await generateSchedulingReport(startDate, endDate);
-    
-    return res.json(report);
+    res.json({
+      success: true,
+      message: 'Content scheduler executed successfully',
+      metrics
+    });
   } catch (error) {
-    console.error('Error generating scheduling analytics report:', error);
-    return res.status(500).json({ error: 'Failed to generate analytics report' });
+    logger.error('Error running content scheduler:', error);
+    res.status(500).json({ error: 'Failed to run content scheduler' });
   }
 });
 
-// Get comprehensive content analytics
-router.get('/analytics', isAdmin, async (req, res) => {
+// Get content scheduler metrics (admin only)
+router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
-    // Parse date range from query parameters
-    const { start, end } = req.query;
-    
-    let startDate = new Date();
-    let endDate = new Date();
-    
-    // Default to last 30 days if no dates provided
-    if (!start) {
-      startDate.setDate(startDate.getDate() - 30);
-    } else {
-      startDate = new Date(start as string);
-    }
-    
-    if (!end) {
-      // Default to current date if no end date
-    } else {
-      endDate = new Date(end as string);
-    }
-    
-    // Validate dates
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
-    }
-    
-    // Calculate previous period for comparison
-    const periodDuration = endDate.getTime() - startDate.getTime();
-    const previousStartDate = new Date(startDate.getTime() - periodDuration);
-    const previousEndDate = new Date(endDate.getTime() - periodDuration);
-    
-    // Current period data
-    const schedulingReport = await generateSchedulingReport(startDate, endDate);
-    
-    // Get previous period data for comparison
-    const previousReport = await generateSchedulingReport(previousStartDate, previousEndDate);
-    
-    // Get content status distribution
-    const statusDistribution = await db.execute(sql`
-      SELECT status, COUNT(*) as count
-      FROM content_items
-      GROUP BY status
-      ORDER BY count DESC
-    `);
-    
-    // Format status distribution
-    const formattedStatusDistribution: Record<string, number> = {};
-    statusDistribution.forEach((row: any) => {
-      formattedStatusDistribution[row.status] = Number(row.count);
-    });
-    
-    // Get content needing attention (pending review, scheduled today, expiring soon)
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Content in review
-    const inReview = await db.query.contentItems.findMany({
-      where: eq(contentItems.status, 'review'),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.createdAt)],
-      limit: 5
-    });
-    
-    // Content scheduled for today
-    const scheduledToday = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'approved'),
-        isNotNull(contentItems.scheduledPublishAt),
-        sql`DATE(${contentItems.scheduledPublishAt}) = DATE(NOW())`
-      ),
-      limit: 5
-    });
-    
-    // Content expiring soon (in the next 2 days)
-    const twoDaysFromNow = new Date(now);
-    twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
-    
-    const expiringSoon = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'published'),
-        isNotNull(contentItems.expirationDate),
-        gte(contentItems.expirationDate, now),
-        lt(contentItems.expirationDate, twoDaysFromNow)
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.expirationDate)],
-      limit: 5
-    });
-    
-    // Format attention items
-    const attentionItems = [
-      ...inReview.map(item => ({
-        id: item.id,
-        title: item.title,
-        type: 'review_needed',
-        status: 'Review Needed',
-        message: 'Awaiting review',
-        dueTime: item.createdAt ? `Submitted ${formatDistanceToNow(item.createdAt, { addSuffix: true })}` : undefined
-      })),
-      ...scheduledToday.map(item => ({
-        id: item.id,
-        title: item.title,
-        type: 'scheduled_today',
-        status: 'Publishing Today',
-        message: 'Scheduled to be published today',
-        dueTime: item.scheduledPublishAt ? formatTime(item.scheduledPublishAt) : undefined
-      })),
-      ...expiringSoon.map(item => ({
-        id: item.id,
-        title: item.title,
-        type: 'expiring_soon',
-        status: 'Expiring Soon',
-        message: 'Content will be archived soon',
-        dueTime: item.expirationDate ? `Expires ${formatDistanceToNow(item.expirationDate, { addSuffix: true })}` : undefined
-      }))
-    ].slice(0, 10); // Limit to 10 total items
-    
-    // Get total content counts
-    const totalContent = await db.execute(sql`
-      SELECT COUNT(*) as count FROM content_items
-    `);
-    
-    const previousTotalContent = await db.execute(sql`
-      SELECT COUNT(*) as count 
-      FROM content_items 
-      WHERE created_at < ${startDate}
-    `);
-    
-    // Get workflow stage times
-    const workflowQuery = await db.execute(sql`
-      WITH status_changes AS (
-        SELECT 
-          content_id,
-          status,
-          modified_at AS change_time,
-          LEAD(modified_at) OVER (PARTITION BY content_id ORDER BY modified_at) AS next_change_time
-        FROM content_history
-        WHERE modified_at BETWEEN ${startDate} AND ${endDate}
-      )
-      SELECT 
-        status,
-        AVG(EXTRACT(EPOCH FROM (next_change_time - change_time)) / 3600) AS avg_hours_in_status
-      FROM status_changes
-      WHERE next_change_time IS NOT NULL
-      GROUP BY status
-    `);
-    
-    // Format workflow times
-    const workflowTimes: Record<string, number> = {};
-    workflowQuery.forEach((row: any) => {
-      workflowTimes[row.status] = Number(row.avg_hours_in_status);
-    });
-    
-    // Calculate percent changes for comparison metrics
-    const currentPeriodData = {
-      totalContent: Number(totalContent[0]?.count || 0),
-      publishRate: schedulingReport.summary?.publishRate || 0,
-      avgReviewTimeHours: schedulingReport.summary?.avgPublishTimeHours || 0,
-      pendingReview: inReview.length
-    };
-    
-    const previousPeriodData = {
-      totalContent: Number(previousTotalContent[0]?.count || 0),
-      publishRate: previousReport.summary?.publishRate || 0,
-      avgReviewTimeHours: previousReport.summary?.avgPublishTimeHours || 0
-    };
-    
-    const comparisonMetrics = {
-      contentChange: calculatePercentChange(
-        currentPeriodData.totalContent,
-        previousPeriodData.totalContent
-      ),
-      publishRateChange: calculatePercentChange(
-        currentPeriodData.publishRate,
-        previousPeriodData.publishRate
-      ),
-      reviewTimeChange: calculatePercentChange(
-        currentPeriodData.avgReviewTimeHours,
-        previousPeriodData.avgReviewTimeHours
-      )
-    };
-    
-    // Return the complete analytics report
-    return res.json({
-      period: {
-        start: startDate,
-        end: endDate
-      },
-      summary: {
-        ...schedulingReport.summary,
-        totalContent: currentPeriodData.totalContent,
-        pendingReview: inReview.length,
-        urgentReview: inReview.filter(item => {
-          // Items waiting > 48 hours need urgent review
-          if (!item.createdAt) return false;
-          const hoursWaiting = (now.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60);
-          return hoursWaiting > 48;
-        }).length
-      },
-      comparison: comparisonMetrics,
-      statusDistribution: formattedStatusDistribution,
-      workflowTimes,
-      dailyMetrics: schedulingReport.detailedMetrics,
-      attentionItems
-    });
+    const metrics = getSchedulingMetrics();
+    res.json(metrics);
   } catch (error) {
-    console.error('Error generating content analytics:', error instanceof Error ? error.message : 'Unknown error');
-    return res.status(500).json({ error: 'Failed to generate content analytics' });
+    logger.error('Error getting scheduler metrics:', error);
+    res.status(500).json({ error: 'Failed to get scheduler metrics' });
   }
 });
 
-// Get upcoming scheduled content analytics
-router.get('/analytics/upcoming', isAdmin, async (req, res) => {
+// Reset content scheduler metrics (admin only)
+router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
-    // Get days parameter or default to 7
-    const days = req.query.days ? parseInt(req.query.days as string, 10) : 7;
-    
-    if (isNaN(days) || days <= 0 || days > 90) {
-      return res.status(400).json({ error: 'Days parameter must be between 1 and 90.' });
-    }
-    
-    const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
-    
-    // Get upcoming scheduled content
-    const upcomingContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'approved'),
-        isNotNull(contentItems.scheduledPublishAt),
-        gt(contentItems.scheduledPublishAt, now)
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.scheduledPublishAt)],
-      with: {
-        creator: true,
-        reviewer: true
-      }
-    });
-    
-    // Get soon-to-expire content
-    const expiringContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'published'),
-        isNotNull(contentItems.expirationDate),
-        gt(contentItems.expirationDate, now),
-        lte(contentItems.expirationDate, futureDate)
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.expirationDate)],
-      with: {
-        creator: true
-      }
-    });
-    
-    // Calculate daily publishing load
-    const dayPublishCounts = Array(days).fill(0);
-    const dayExpireCounts = Array(days).fill(0);
-    
-    upcomingContent.forEach(content => {
-      if (content.scheduledPublishAt) {
-        const daysFromNow = Math.floor((content.scheduledPublishAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysFromNow >= 0 && daysFromNow < days) {
-          dayPublishCounts[daysFromNow]++;
-        }
-      }
-    });
-    
-    expiringContent.forEach(content => {
-      if (content.expirationDate) {
-        const daysFromNow = Math.floor((content.expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        if (daysFromNow >= 0 && daysFromNow < days) {
-          dayExpireCounts[daysFromNow]++;
-        }
-      }
-    });
-    
-    return res.json({
-      period: {
-        start: now,
-        end: futureDate,
-        days
-      },
-      summary: {
-        totalUpcoming: upcomingContent.length,
-        totalExpiring: expiringContent.length
-      },
-      dailySchedule: Array(days).fill(0).map((_, i) => {
-        const date = new Date(now);
-        date.setDate(date.getDate() + i);
-        return {
-          date: date.toISOString().split('T')[0],
-          publishing: dayPublishCounts[i],
-          expiring: dayExpireCounts[i]
-        };
-      }),
-      upcomingContent,
-      expiringContent
+    resetSchedulingMetrics();
+    res.json({
+      success: true,
+      message: 'Scheduler metrics reset successfully'
     });
   } catch (error) {
-    console.error('Error generating upcoming content analytics:', error);
-    return res.status(500).json({ error: 'Failed to generate upcoming content analytics' });
+    logger.error('Error resetting scheduler metrics:', error);
+    res.status(500).json({ error: 'Failed to reset scheduler metrics' });
+  }
+});
+
+// Get upcoming scheduled content
+router.get('/upcoming', requireAuth, async (req, res) => {
+  try {
+    const scheduledContent = await getUpcomingScheduledContent();
+    res.json(scheduledContent);
+  } catch (error) {
+    logger.error('Error getting upcoming scheduled content:', error);
+    res.status(500).json({ error: 'Failed to get upcoming scheduled content' });
+  }
+});
+
+// Get expiring content
+router.get('/expiring', requireAuth, async (req, res) => {
+  try {
+    const expiringContent = await getExpiringContent();
+    res.json(expiringContent);
+  } catch (error) {
+    logger.error('Error getting expiring content:', error);
+    res.status(500).json({ error: 'Failed to get expiring content' });
+  }
+});
+
+// Get content analytics
+router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
+  try {
+    const startDateStr = req.query.start as string;
+    const endDateStr = req.query.end as string;
+    
+    // Use provided dates or default to last 30 days
+    let startDate, endDate;
+    
+    if (startDateStr && endDateStr) {
+      startDate = startOfDay(parseISO(startDateStr));
+      endDate = endOfDay(parseISO(endDateStr));
+    } else {
+      endDate = endOfDay(new Date());
+      startDate = startOfDay(subDays(endDate, 30));
+    }
+    
+    const analytics = await getAllContentAnalytics();
+    res.json(analytics);
+  } catch (error) {
+    logger.error('Error getting content analytics:', error);
+    res.status(500).json({ error: 'Failed to get content analytics' });
   }
 });
 

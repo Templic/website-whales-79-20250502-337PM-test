@@ -1,171 +1,248 @@
-/**
- * Content Scheduler Service
- * 
- * This service handles the automatic publishing of scheduled content
- * and archiving of expired content based on their respective dates.
- */
-
 import { db } from '../db';
-import { eq, lte, gt, and, isNotNull } from 'drizzle-orm';
-import { contentItems, workflowNotifications } from '../../shared/schema';
-import { trackSchedulingPerformance } from './contentAnalytics';
+import { contentItems } from '@shared/schema';
+import { eq, and, lte, gte, ne } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
+import { logger } from '../logger';
+import { sendNotification } from './notificationService';
 
 /**
- * Processes content scheduled for publication and content that has expired
- * Should be called periodically (e.g., every minute) to ensure timely updates
+ * Metrics to track content scheduling performance
  */
-export async function processScheduledContent() {
+export interface ContentSchedulingMetrics {
+  totalScheduled: number;
+  successfullyPublished: number;
+  failedPublications: number;
+  upcomingExpiring: number;
+  successRate: number;
+  lastRunAt: Date;
+}
+
+// Initialize metrics
+let schedulingMetrics: ContentSchedulingMetrics = {
+  totalScheduled: 0,
+  successfullyPublished: 0,
+  failedPublications: 0,
+  upcomingExpiring: 0,
+  successRate: 0,
+  lastRunAt: new Date()
+};
+
+/**
+ * Run the content scheduler to publish scheduled content and archive expired content
+ * This function should be called periodically (e.g., every 5 minutes) by a background job
+ */
+export async function runContentScheduler() {
+  logger.info('Running content scheduler');
   const now = new Date();
+  let published = 0;
+  let failed = 0;
+  let archived = 0;
+  let archivedFailed = 0;
   
   try {
-    // Process content scheduled for publishing
-    const scheduledContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'approved'),
-        isNotNull(contentItems.scheduledPublishAt),
-        lte(contentItems.scheduledPublishAt, now)
-      ),
-      with: {
-        creator: true
-      }
-    });
+    // Find content that should be published now
+    const scheduledContent = await db.select()
+      .from(contentItems)
+      .where(
+        and(
+          eq(contentItems.status, 'approved'),
+          sql`${contentItems.scheduledPublishAt} IS NOT NULL`,
+          sql`${contentItems.scheduledPublishAt} <= ${now}`
+        )
+      );
     
-    if (scheduledContent.length > 0) {
-      console.log(`[Scheduler] Publishing ${scheduledContent.length} scheduled content items`);
-      
-      // Create list of successfully published content
-      const publishedContent = [];
-      
-      for (const content of scheduledContent) {
-        try {
-          // Update content status to published
-          await db.update(contentItems)
-            .set({ 
-              status: 'published',
-              updatedAt: now
-            })
-            .where(eq(contentItems.id, content.id));
-            
-          // Create notification for content creator
-          if (content.creator?.id) {
-            await db.insert(workflowNotifications)
-              .values({
-                title: 'Content Published',
-                message: `Your scheduled content "${content.title}" has been automatically published.`,
-                type: 'info',
-                contentId: content.id,
-                contentTitle: content.title,
-                userId: content.creator.id,
-                isRead: false
-              });
-          }
-          
-          // Add to successfully published list
-          publishedContent.push(content);
-          
-          console.log(`[Scheduler] Published scheduled content: "${content.title}" (ID: ${content.id})`);
-        } catch (error) {
-          console.error(`[Scheduler] Error publishing content ID ${content.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }
-      
-      // Track scheduling performance in analytics
-      await trackSchedulingPerformance(scheduledContent, publishedContent);
-    }
+    logger.info(`Found ${scheduledContent.length} items to publish`);
     
-    // Process expired content
-    const expiredContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'published'),
-        isNotNull(contentItems.expirationDate),
-        lte(contentItems.expirationDate, now)
-      ),
-      with: {
-        creator: true
-      }
-    });
-    
-    if (expiredContent.length > 0) {
-      console.log(`[Scheduler] Archiving ${expiredContent.length} expired content items`);
-      
-      for (const content of expiredContent) {
-        // Update content status to archived
+    // Process each scheduled content item
+    for (const item of scheduledContent) {
+      try {
+        // Update status to published
         await db.update(contentItems)
-          .set({ 
-            status: 'archived',
-            updatedAt: now
+          .set({
+            status: 'published',
+            updatedAt: now,
+            // We need to add a custom field for published date
+            publishedAt: now
           })
-          .where(eq(contentItems.id, content.id));
-          
-        // Create notification for content creator
-        if (content.creator?.id) {
-          await db.insert(workflowNotifications)
-            .values({
-              title: 'Content Archived',
-              message: `Your content "${content.title}" has been automatically archived as it reached its expiration date.`,
-              type: 'info',
-              contentId: content.id,
-              contentTitle: content.title,
-              userId: content.creator.id,
-              isRead: false
-            });
-        }
+          .where(eq(contentItems.id, item.id));
         
-        console.log(`[Scheduler] Archived expired content: "${content.title}" (ID: ${content.id})`);
+        // Send notification
+        await sendNotification({
+          type: 'content_published',
+          userId: item.createdBy,
+          contentId: item.id,
+          contentTitle: item.title,
+          message: `Your content "${item.title}" has been published automatically.`
+        });
+        
+        published++;
+        logger.info(`Published content ID ${item.id}: ${item.title}`);
+      } catch (error) {
+        failed++;
+        logger.error(`Failed to publish content ID ${item.id}:`, error);
+        
+        // Send failure notification to admin
+        await sendNotification({
+          type: 'system_message',
+          userId: null, // System notification, will be sent to all admins
+          contentId: item.id,
+          contentTitle: item.title,
+          message: `Failed to automatically publish content "${item.title}". Manual intervention required.`,
+          actionRequired: true
+        });
       }
     }
+    
+    // Find content that has expired
+    const expiredContent = await db.select()
+      .from(contentItems)
+      .where(
+        and(
+          eq(contentItems.status, 'published'),
+          sql`${contentItems.expirationDate} IS NOT NULL`,
+          sql`${contentItems.expirationDate} <= ${now}`
+        )
+      );
+    
+    logger.info(`Found ${expiredContent.length} items to archive due to expiration`);
+    
+    // Process each expired content item
+    for (const item of expiredContent) {
+      try {
+        // Update status to archived
+        await db.update(contentItems)
+          .set({
+            status: 'archived',
+            updatedAt: now,
+            // We need to add a custom field for archived date
+            archivedAt: now,
+            archiveReason: 'Automatically archived due to expiration'
+          })
+          .where(eq(contentItems.id, item.id));
+        
+        // Send notification
+        await sendNotification({
+          type: 'content_expired',
+          userId: item.createdBy,
+          contentId: item.id,
+          contentTitle: item.title,
+          message: `Your content "${item.title}" has been archived because it reached its expiration date.`
+        });
+        
+        archived++;
+        logger.info(`Archived expired content ID ${item.id}: ${item.title}`);
+      } catch (error) {
+        archivedFailed++;
+        logger.error(`Failed to archive expired content ID ${item.id}:`, error);
+      }
+    }
+    
+    // Find content that will expire soon (in the next 7 days) and send notifications
+    const expiringContent = await db.select()
+      .from(contentItems)
+      .where(
+        and(
+          eq(contentItems.status, 'published'),
+          sql`${contentItems.expirationDate} IS NOT NULL`,
+          sql`${contentItems.expirationDate} > ${now}`,
+          sql`${contentItems.expirationDate} <= ${new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)}`
+        )
+      );
+    
+    logger.info(`Found ${expiringContent.length} items expiring soon`);
+    
+    // Send expiration warning notifications
+    for (const item of expiringContent) {
+      try {
+        // Calculate days until expiration
+        const expirationDate = new Date(item.expirationDate!);
+        const daysUntilExpiration = Math.ceil((expirationDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+        
+        // Only send notifications for 7, 3, and 1 days before expiration to avoid spam
+        if (daysUntilExpiration === 7 || daysUntilExpiration === 3 || daysUntilExpiration === 1) {
+          await sendNotification({
+            type: 'expiration_warning',
+            userId: item.createdBy,
+            contentId: item.id,
+            contentTitle: item.title,
+            message: `Your content "${item.title}" will expire in ${daysUntilExpiration} day${daysUntilExpiration > 1 ? 's' : ''}.`,
+            actionRequired: true,
+            dueDate: item.expirationDate
+          });
+          
+          logger.info(`Sent expiration warning for content ID ${item.id}: ${daysUntilExpiration} days remaining`);
+        }
+      } catch (error) {
+        logger.error(`Failed to send expiration warning for content ID ${item.id}:`, error);
+      }
+    }
+    
+    // Update metrics
+    updateSchedulingMetrics({
+      published,
+      failed,
+      archived,
+      archivedFailed,
+      upcomingExpiring: expiringContent.length
+    });
+    
+    logger.info(`Content scheduler completed: Published ${published}, Failed ${failed}, Archived ${archived}, Archived Failed ${archivedFailed}`);
     
     return {
-      published: scheduledContent.length,
-      archived: expiredContent.length
+      published,
+      failed,
+      archived,
+      archivedFailed,
+      upcomingExpiring: expiringContent.length
     };
   } catch (error) {
-    console.error(`[Scheduler] Error processing scheduled content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    logger.error('Error running content scheduler:', error);
     throw error;
   }
 }
 
 /**
- * Gets upcoming scheduled content for the next X days
+ * Update scheduling metrics with new data
  */
-export async function getUpcomingScheduledContent(days = 7) {
-  const now = new Date();
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + days);
+function updateSchedulingMetrics(result: { 
+  published: number;
+  failed: number;
+  archived: number;
+  archivedFailed: number;
+  upcomingExpiring: number;
+}) {
+  schedulingMetrics.totalScheduled += result.published + result.failed;
+  schedulingMetrics.successfullyPublished += result.published;
+  schedulingMetrics.failedPublications += result.failed;
+  schedulingMetrics.upcomingExpiring = result.upcomingExpiring;
+  schedulingMetrics.lastRunAt = new Date();
   
-  return db.query.contentItems.findMany({
-    where: and(
-      eq(contentItems.status, 'approved'),
-      isNotNull(contentItems.scheduledPublishAt),
-      gt(contentItems.scheduledPublishAt, now),
-      lte(contentItems.scheduledPublishAt, futureDate)
-    ),
-    orderBy: (contentItems, { asc }) => [asc(contentItems.scheduledPublishAt)],
-    with: {
-      creator: true,
-      reviewer: true
-    }
-  });
+  if (schedulingMetrics.totalScheduled > 0) {
+    schedulingMetrics.successRate = Math.round(
+      (schedulingMetrics.successfullyPublished / schedulingMetrics.totalScheduled) * 100
+    );
+  }
 }
 
 /**
- * Gets soon-to-expire content for the next X days
+ * Get current content scheduling metrics
  */
-export async function getSoonToExpireContent(days = 7) {
-  const now = new Date();
-  const futureDate = new Date();
-  futureDate.setDate(futureDate.getDate() + days);
+export function getSchedulingMetrics(): ContentSchedulingMetrics {
+  return { ...schedulingMetrics };
+}
+
+/**
+ * Reset content scheduling metrics
+ */
+export function resetSchedulingMetrics() {
+  schedulingMetrics = {
+    totalScheduled: 0,
+    successfullyPublished: 0,
+    failedPublications: 0,
+    upcomingExpiring: 0,
+    successRate: 0,
+    lastRunAt: new Date()
+  };
   
-  return db.query.contentItems.findMany({
-    where: and(
-      eq(contentItems.status, 'published'),
-      isNotNull(contentItems.expirationDate),
-      gt(contentItems.expirationDate, now),
-      lte(contentItems.expirationDate, futureDate)
-    ),
-    orderBy: (contentItems, { asc }) => [asc(contentItems.expirationDate)],
-    with: {
-      creator: true
-    }
-  });
+  logger.info('Content scheduling metrics have been reset');
 }

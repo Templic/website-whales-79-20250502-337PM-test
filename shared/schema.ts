@@ -496,7 +496,8 @@ export const contentAnalytics = pgTable("content_analytics", {
 });
 
 // Content version history table
-export const contentHistory = pgTable("content_history", {
+// Content version history table (replaces contentHistory with more explicit name)
+export const contentVersions = pgTable("content_versions", {
   id: serial("id").primaryKey(),
   contentId: integer("content_id").notNull().references(() => contentItems.id),
   version: integer("version").notNull(),
@@ -509,6 +510,25 @@ export const contentHistory = pgTable("content_history", {
   modifiedAt: timestamp("modified_at").notNull().defaultNow(),
   modifiedBy: integer("modified_by").references(() => users.id),
   changeDescription: text("change_description")
+});
+
+// Alias for backward compatibility
+export const contentHistory = contentVersions;
+
+// Content workflow audit trail table
+export const contentWorkflowHistory = pgTable("content_workflow_history", {
+  id: serial("id").primaryKey(),
+  contentId: integer("content_id").notNull().references(() => contentItems.id),
+  fromStatus: text("from_status", { 
+    enum: ["draft", "review", "changes_requested", "approved", "published", "archived"] 
+  }),
+  toStatus: text("to_status", { 
+    enum: ["draft", "review", "changes_requested", "approved", "published", "archived"] 
+  }).notNull(),
+  actorId: integer("actor_id").references(() => users.id),
+  actionAt: timestamp("action_at").notNull().defaultNow(),
+  comments: text("comments"),
+  version: integer("version").notNull()
 });
 
 // Content usage tracking table
@@ -564,8 +584,14 @@ export const insertContentAnalyticsSchema = createInsertSchema(contentAnalytics)
 export type ContentItem = typeof contentItems.$inferSelect;
 export type InsertContentItem = z.infer<typeof insertContentItemSchema>;
 
+export type ContentVersions = typeof contentVersions.$inferSelect;
 export type ContentHistory = typeof contentHistory.$inferSelect;
 export type InsertContentHistory = z.infer<typeof insertContentHistorySchema>;
+
+export type ContentWorkflowHistory = typeof contentWorkflowHistory.$inferSelect;
+export const insertContentWorkflowHistorySchema = createInsertSchema(contentWorkflowHistory)
+  .omit({ id: true, actionAt: true });
+export type InsertContentWorkflowHistory = z.infer<typeof insertContentWorkflowHistorySchema>;
 
 export type ContentAnalytics = typeof contentAnalytics.$inferSelect;
 export type InsertContentAnalytics = z.infer<typeof insertContentAnalyticsSchema>;
@@ -579,6 +605,8 @@ export type InsertWorkflowNotification = z.infer<typeof insertWorkflowNotificati
 // Content relations
 export const contentItemRelations = relations(contentItems, ({ one, many }) => ({
   history: many(contentHistory),
+  versions: many(contentVersions),
+  workflowHistory: many(contentWorkflowHistory),
   usages: many(contentUsage),
   creator: one(users, {
     fields: [contentItems.createdBy],

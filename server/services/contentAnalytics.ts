@@ -1,176 +1,440 @@
-import { and, eq, gte, lte, lt, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { contentItems } from '../../shared/schema';
+import { contentItems } from '@shared/schema';
+import { eq, and, lte, gte, ne, desc, count, sql, sum } from 'drizzle-orm';
+import { logger } from '../logger';
+import { getSchedulingMetrics, ContentSchedulingMetrics } from './contentScheduler';
 
 /**
- * Tracks scheduling performance metrics
- * @param scheduledContent Content items that were scheduled to be published
- * @param publishedContent Content items that were successfully published
+ * Interface for content throughput statistics
  */
-export async function trackSchedulingPerformance(scheduledContent: any[], publishedContent: any[]) {
-  try {
-    // Calculate performance metrics
-    const successRate = scheduledContent.length > 0 
-      ? (publishedContent.length / scheduledContent.length) * 100 
-      : 0;
-    
-    console.log(`[Analytics] Content publishing performance: ${publishedContent.length}/${scheduledContent.length} (${successRate.toFixed(2)}%)`);
-    
-    // Here you could store these metrics in a database table for historical tracking
-    
-    return {
-      total: scheduledContent.length,
-      published: publishedContent.length,
-      successRate,
-      timestamp: new Date()
-    };
-  } catch (error) {
-    console.error('[Analytics] Error tracking scheduling performance:', error);
-    return null;
-  }
+export interface ContentThroughputMetrics {
+  last24Hours: {
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
+  last7Days: {
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
+  last30Days: {
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
 }
 
 /**
- * Generates a report on content scheduling performance for a given date range
+ * Interface for workflow statistics
  */
-export async function generateSchedulingReport(startDate: Date, endDate: Date) {
+export interface WorkflowMetrics {
+  avgTimeToApproval: number; // In hours
+  avgTimeToPublish: number; // In hours
+  approvalRate: number; // Percentage
+  rejectionRate: number; // Percentage
+  totalInDraft: number;
+  totalInReview: number;
+  totalApproved: number;
+  totalPublished: number;
+  totalArchived: number;
+}
+
+/**
+ * Interface for scheduling statistics
+ */
+export interface SchedulingMetrics extends ContentSchedulingMetrics {
+  upcomingPublications: number;
+  soonExpiring: number;
+}
+
+/**
+ * Interface for combined analytics
+ */
+export interface ContentAnalytics {
+  throughput: ContentThroughputMetrics;
+  workflow: WorkflowMetrics;
+  scheduling: SchedulingMetrics;
+  lastUpdated: Date;
+}
+
+/**
+ * Get content throughput metrics
+ */
+export async function getContentThroughputMetrics(): Promise<ContentThroughputMetrics> {
   try {
-    // Get all content items that were scheduled in the date range
-    const scheduledItems = await db.query.contentItems.findMany({
-      where: and(
-        gte(contentItems.scheduledPublishAt, startDate),
-        lte(contentItems.scheduledPublishAt, endDate),
-        eq(contentItems.status, 'published')
-      )
-    });
-
-    // Get all content items that were published in the date range (automatically or manually)
-    const publishedItems = await db.query.contentItems.findMany({
-      where: and(
-        gte(contentItems.publishedAt, startDate),
-        lte(contentItems.publishedAt, endDate),
-        eq(contentItems.status, 'published')
-      )
-    });
-
-    // Get all content items that expired in the date range
-    const expiredItems = await db.query.contentItems.findMany({
-      where: and(
-        gte(contentItems.archivedAt, startDate),
-        lte(contentItems.archivedAt, endDate),
-        eq(contentItems.status, 'archived'),
-        eq(contentItems.archiveReason, 'expired')
-      )
-    });
-
-    // Calculate average time from scheduling to publishing
-    let totalTimeMs = 0;
-    let itemsWithCompletedWorkflow = 0;
-
-    for (const item of scheduledItems) {
-      if (item.publishedAt && item.createdAt) {
-        const timeToPublish = item.publishedAt.getTime() - item.createdAt.getTime();
-        totalTimeMs += timeToPublish;
-        itemsWithCompletedWorkflow++;
-      }
-    }
-
-    const avgPublishTimeMs = itemsWithCompletedWorkflow > 0 
-      ? totalTimeMs / itemsWithCompletedWorkflow 
-      : 0;
-
-    const avgPublishTimeHours = avgPublishTimeMs / (1000 * 60 * 60);
-
-    // Calculate success rate
-    const publishRate = scheduledItems.length > 0 
-      ? (publishedItems.length / scheduledItems.length) * 100 
-      : 0;
-
-    // Get daily metrics for publishing volume
-    const dailyMetrics = await db.execute(sql`
-      SELECT DATE(published_at) as date, COUNT(*) as count
-      FROM content_items
-      WHERE published_at BETWEEN ${startDate} AND ${endDate}
-      GROUP BY DATE(published_at)
-      ORDER BY date ASC
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const lastWeek = new Date(now);
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    
+    const lastMonth = new Date(now);
+    lastMonth.setDate(lastMonth.getDate() - 30);
+    
+    // Get created counts
+    const createdLast24Hours = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(gte(contentItems.createdAt, yesterday));
+    
+    const createdLast7Days = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(gte(contentItems.createdAt, lastWeek));
+    
+    const createdLast30Days = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(gte(contentItems.createdAt, lastMonth));
+    
+    // Get published counts using raw SQL since we don't have a publishedAt column in the schema
+    const publishedLast24Hours = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'published' 
+      AND published_at >= ${yesterday}
     `);
-
-    // Build the report
+    
+    const publishedLast7Days = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'published' 
+      AND published_at >= ${lastWeek}
+    `);
+    
+    const publishedLast30Days = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'published' 
+      AND published_at >= ${lastMonth}
+    `);
+    
+    // Get updated counts
+    const updatedLast24Hours = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(
+      and(
+        gte(contentItems.updatedAt, yesterday),
+        ne(contentItems.updatedAt, contentItems.createdAt)
+      )
+    );
+    
+    const updatedLast7Days = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(
+      and(
+        gte(contentItems.updatedAt, lastWeek),
+        ne(contentItems.updatedAt, contentItems.createdAt)
+      )
+    );
+    
+    const updatedLast30Days = await db.select({
+      count: count()
+    })
+    .from(contentItems)
+    .where(
+      and(
+        gte(contentItems.updatedAt, lastMonth),
+        ne(contentItems.updatedAt, contentItems.createdAt)
+      )
+    );
+    
+    // Get archived counts using raw SQL since we don't have an archivedAt column in the schema
+    const archivedLast24Hours = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'archived' 
+      AND archived_at >= ${yesterday}
+    `);
+    
+    const archivedLast7Days = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'archived' 
+      AND archived_at >= ${lastWeek}
+    `);
+    
+    const archivedLast30Days = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'archived' 
+      AND archived_at >= ${lastMonth}
+    `);
+    
     return {
-      period: {
-        start: startDate,
-        end: endDate
+      last24Hours: {
+        totalCreated: parseInt(createdLast24Hours[0]?.count?.toString() || '0', 10),
+        totalPublished: parseInt(publishedLast24Hours.rows[0]?.count?.toString() || '0', 10),
+        totalUpdated: parseInt(updatedLast24Hours[0]?.count?.toString() || '0', 10),
+        totalArchived: parseInt(archivedLast24Hours.rows[0]?.count?.toString() || '0', 10)
       },
-      summary: {
-        totalScheduled: scheduledItems.length,
-        totalPublished: publishedItems.length,
-        totalExpired: expiredItems.length,
-        publishRate,
-        avgPublishTimeMs,
-        avgPublishTimeHours
+      last7Days: {
+        totalCreated: parseInt(createdLast7Days[0]?.count?.toString() || '0', 10),
+        totalPublished: parseInt(publishedLast7Days.rows[0]?.count?.toString() || '0', 10),
+        totalUpdated: parseInt(updatedLast7Days[0]?.count?.toString() || '0', 10),
+        totalArchived: parseInt(archivedLast7Days.rows[0]?.count?.toString() || '0', 10)
       },
-      detailedMetrics: dailyMetrics,
-      generatedAt: new Date()
+      last30Days: {
+        totalCreated: parseInt(createdLast30Days[0]?.count?.toString() || '0', 10),
+        totalPublished: parseInt(publishedLast30Days.rows[0]?.count?.toString() || '0', 10),
+        totalUpdated: parseInt(updatedLast30Days[0]?.count?.toString() || '0', 10),
+        totalArchived: parseInt(archivedLast30Days.rows[0]?.count?.toString() || '0', 10)
+      }
     };
   } catch (error) {
-    console.error('Error generating scheduling report:', error);
-    throw new Error('Failed to generate scheduling analytics report');
+    logger.error('Error getting content throughput metrics:', error);
+    // Return empty metrics in case of error
+    return {
+      last24Hours: {
+        totalCreated: 0,
+        totalPublished: 0,
+        totalUpdated: 0,
+        totalArchived: 0
+      },
+      last7Days: {
+        totalCreated: 0,
+        totalPublished: 0,
+        totalUpdated: 0,
+        totalArchived: 0
+      },
+      last30Days: {
+        totalCreated: 0,
+        totalPublished: 0,
+        totalUpdated: 0,
+        totalArchived: 0
+      }
+    };
   }
 }
 
 /**
- * Gets upcoming scheduled content for the next X days
+ * Get workflow metrics
  */
-export async function getUpcomingScheduledContent(days = 7) {
+export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
   try {
-    const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
+    // Get status counts
+    const statusCounts = await db.execute(sql`
+      SELECT 
+        status,
+        COUNT(*) as count
+      FROM content_items
+      GROUP BY status
+    `);
     
-    const upcomingContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'approved'),
-        gte(contentItems.scheduledPublishAt, now),
-        lt(contentItems.scheduledPublishAt, futureDate)
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.scheduledPublishAt)],
-      with: {
-        creator: true,
-        reviewer: true
-      }
+    // Calculate average time from draft to approval
+    const avgTimeToApproval = await db.execute(sql`
+      SELECT AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) as avg_time
+      FROM content_items
+      WHERE status IN ('approved', 'published')
+      AND approved_at IS NOT NULL
+    `);
+    
+    // Calculate average time from approval to publish
+    const avgTimeToPublish = await db.execute(sql`
+      SELECT AVG(EXTRACT(EPOCH FROM (published_at - approved_at))/3600) as avg_time
+      FROM content_items
+      WHERE status = 'published'
+      AND published_at IS NOT NULL
+      AND approved_at IS NOT NULL
+    `);
+    
+    // Calculate approval and rejection rates
+    const approvalRejectionStats = await db.execute(sql`
+      SELECT 
+        SUM(CASE WHEN status IN ('approved', 'published') THEN 1 ELSE 0 END) as approved_count,
+        SUM(CASE WHEN status = 'changes_requested' THEN 1 ELSE 0 END) as rejected_count,
+        COUNT(*) as total_reviewed
+      FROM content_items
+      WHERE status IN ('approved', 'published', 'changes_requested', 'archived')
+    `);
+    
+    // Extract values
+    const statusMap: Record<string, number> = {};
+    statusCounts.rows.forEach((row: any) => {
+      statusMap[row.status] = parseInt(row.count, 10);
     });
     
-    return upcomingContent;
+    const approvedCount = parseInt(approvalRejectionStats.rows[0]?.approved_count?.toString() || '0', 10);
+    const rejectedCount = parseInt(approvalRejectionStats.rows[0]?.rejected_count?.toString() || '0', 10);
+    const totalReviewed = parseInt(approvalRejectionStats.rows[0]?.total_reviewed?.toString() || '0', 10);
+    
+    // Calculate rates
+    const approvalRate = totalReviewed > 0 ? (approvedCount / totalReviewed) * 100 : 0;
+    const rejectionRate = totalReviewed > 0 ? (rejectedCount / totalReviewed) * 100 : 0;
+    
+    return {
+      avgTimeToApproval: parseFloat(avgTimeToApproval.rows[0]?.avg_time?.toString() || '0'),
+      avgTimeToPublish: parseFloat(avgTimeToPublish.rows[0]?.avg_time?.toString() || '0'),
+      approvalRate,
+      rejectionRate,
+      totalInDraft: statusMap['draft'] || 0,
+      totalInReview: statusMap['review'] || 0,
+      totalApproved: statusMap['approved'] || 0,
+      totalPublished: statusMap['published'] || 0,
+      totalArchived: statusMap['archived'] || 0
+    };
   } catch (error) {
-    console.error('Error fetching upcoming scheduled content:', error);
-    throw new Error('Failed to fetch upcoming scheduled content');
+    logger.error('Error getting workflow metrics:', error);
+    // Return empty metrics in case of error
+    return {
+      avgTimeToApproval: 0,
+      avgTimeToPublish: 0,
+      approvalRate: 0,
+      rejectionRate: 0,
+      totalInDraft: 0,
+      totalInReview: 0,
+      totalApproved: 0,
+      totalPublished: 0,
+      totalArchived: 0
+    };
   }
 }
 
 /**
- * Gets soon-to-expire content for the next X days
+ * Get scheduling metrics, combining data from contentScheduler and additional database queries
  */
-export async function getSoonToExpireContent(days = 7) {
+export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
   try {
     const now = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + days);
+    const baseMetrics = getSchedulingMetrics();
     
-    const expiringContent = await db.query.contentItems.findMany({
-      where: and(
-        eq(contentItems.status, 'published'),
-        gte(contentItems.expirationDate, now),
-        lt(contentItems.expirationDate, futureDate)
-      ),
-      orderBy: (contentItems, { asc }) => [asc(contentItems.expirationDate)],
-      with: {
-        creator: true
-      }
-    });
+    // Count upcoming publications (scheduled in future)
+    const upcomingPublications = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'approved'
+      AND scheduled_publish_at IS NOT NULL
+      AND scheduled_publish_at > ${now}
+    `);
     
-    return expiringContent;
+    // Count content expiring in next 7 days
+    const soonExpiring = await db.execute(sql`
+      SELECT COUNT(*) 
+      FROM content_items 
+      WHERE status = 'published'
+      AND expiration_date IS NOT NULL
+      AND expiration_date > ${now}
+      AND expiration_date <= ${new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)}
+    `);
+    
+    return {
+      ...baseMetrics,
+      upcomingPublications: parseInt(upcomingPublications.rows[0]?.count?.toString() || '0', 10),
+      soonExpiring: parseInt(soonExpiring.rows[0]?.count?.toString() || '0', 10)
+    };
   } catch (error) {
-    console.error('Error fetching soon-to-expire content:', error);
-    throw new Error('Failed to fetch soon-to-expire content');
+    logger.error('Error getting scheduling metrics:', error);
+    // Return base metrics with zeros in case of error
+    return {
+      ...getSchedulingMetrics(),
+      upcomingPublications: 0,
+      soonExpiring: 0
+    };
   }
+}
+
+/**
+ * Get all content with upcoming scheduled publishing date
+ */
+export async function getUpcomingScheduledContent() {
+  try {
+    const now = new Date();
+    
+    const upcomingContent = await db.execute(sql`
+      SELECT 
+        id, 
+        title, 
+        section, 
+        type, 
+        scheduled_publish_at,
+        created_by,
+        created_at
+      FROM content_items 
+      WHERE status = 'approved'
+      AND scheduled_publish_at IS NOT NULL
+      AND scheduled_publish_at > ${now}
+      ORDER BY scheduled_publish_at ASC
+    `);
+    
+    return upcomingContent.rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      section: row.section,
+      type: row.type,
+      scheduledPublishAt: row.scheduled_publish_at,
+      createdBy: row.created_by,
+      createdAt: row.created_at
+    }));
+  } catch (error) {
+    logger.error('Error getting upcoming scheduled content:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all content that will expire soon
+ */
+export async function getExpiringContent() {
+  try {
+    const now = new Date();
+    const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    
+    const expiringContent = await db.execute(sql`
+      SELECT 
+        id, 
+        title, 
+        section, 
+        type, 
+        expiration_date,
+        published_at,
+        created_by
+      FROM content_items 
+      WHERE status = 'published'
+      AND expiration_date IS NOT NULL
+      AND expiration_date > ${now}
+      AND expiration_date <= ${oneWeekLater}
+      ORDER BY expiration_date ASC
+    `);
+    
+    return expiringContent.rows.map((row: any) => ({
+      id: row.id,
+      title: row.title,
+      section: row.section,
+      type: row.type,
+      expirationDate: row.expiration_date,
+      publishedAt: row.published_at,
+      createdBy: row.created_by
+    }));
+  } catch (error) {
+    logger.error('Error getting expiring content:', error);
+    return [];
+  }
+}
+
+/**
+ * Get complete content analytics
+ */
+export async function getAllContentAnalytics(): Promise<ContentAnalytics> {
+  const throughput = await getContentThroughputMetrics();
+  const workflow = await getWorkflowMetrics();
+  const scheduling = await getSchedulingMetrics();
+  
+  return {
+    throughput,
+    workflow,
+    scheduling,
+    lastUpdated: new Date()
+  };
 }
