@@ -80,7 +80,7 @@ import MusicPage from "@/pages/admin/MusicPage";
 import MediaPage from "@/pages/admin/MediaPage";
 import ContentManagementPage from "@/pages/admin/ContentManagementPage";
 import ContentWorkflowManagementPage from "@/pages/admin/ContentWorkflowManagementPage";
-import WorkflowTestPage from "@/pages/admin/WorkflowTestPage";
+import WorkflowTestPage from "@/pages/TestMinimal";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -180,6 +180,17 @@ function AppRouter() {
           <ProtectedRoute path="/admin/content-workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/workflow" component={ContentWorkflowManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/workflow-test" component={WorkflowTestPage} requiredRole="admin" />
+          <Route path="/test-minimal" component={WorkflowTestPage} />
+          {/* New test route for isolated component */}
+          <Route path="/test-imports" component={({}: any) => {
+            // Use dynamic import instead of require which is not supported in ESM
+            const TestComp = React.lazy(() => import('./test-imports'));
+            return (
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <TestComp />
+              </React.Suspense>
+            );
+          }} />
 
           {/* Resource Pages */}
           <Route path="/resources" component={ResourcesPage} />
