@@ -76,7 +76,8 @@ const startupModes = {
       enableBackgroundTasks: false,
       enableWebSockets: true,
       enableRateLimiting: false,
-      enableExtraLogging: false
+      enableExtraLogging: false,
+      enableContentScheduling: false
     },
     maintenanceDelay: 60000, // 1 minute
     backgroundServicesDelay: 30000, // 30 seconds
@@ -90,7 +91,8 @@ const startupModes = {
       enableBackgroundTasks: true,
       enableWebSockets: true,
       enableRateLimiting: true,
-      enableExtraLogging: false
+      enableExtraLogging: false,
+      enableContentScheduling: true
     },
     maintenanceDelay: 10000, // 10 seconds
     backgroundServicesDelay: 5000, // 5 seconds
@@ -104,7 +106,8 @@ const startupModes = {
       enableBackgroundTasks: true,
       enableWebSockets: true,
       enableRateLimiting: true,
-      enableExtraLogging: true
+      enableExtraLogging: true,
+      enableContentScheduling: true
     },
     maintenanceDelay: 0, // immediate
     backgroundServicesDelay: 0, // immediate

@@ -9,7 +9,7 @@ import { log } from './vite';
 import { config } from './config';
 import { runDeferredSecurityScan } from './securityScan';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
-import { processScheduledContent } from './services/contentScheduler';
+import { startContentScheduler, stopContentScheduler } from './services/backgroundServices';
 
 // Track active background services
 interface ServiceStatus {
@@ -260,30 +260,15 @@ async function initContentScheduler(): Promise<void> {
   try {
     log('Initializing content scheduler service...', 'background');
     
-    // Run immediately on startup
-    const initialResult = await processScheduledContent();
-    log(`Initial content scheduling run: ${initialResult.published} published, ${initialResult.archived} archived`, 'background');
-    
-    // Setup regular interval (every 5 minutes)
-    const schedulerInterval = 5 * 60 * 1000;
-    setInterval(async () => {
-      try {
-        const result = await processScheduledContent();
-        if (result.published > 0 || result.archived > 0) {
-          log(`Content scheduling run: ${result.published} published, ${result.archived} archived`, 'background');
-        }
-        backgroundServices.contentScheduler.lastRunTime = Date.now();
-      } catch (error) {
-        log(`Error in content scheduler: ${error}`, 'background');
-      }
-    }, schedulerInterval);
+    // Start the content scheduler service (5-minute interval)
+    const intervalID = startContentScheduler(5);
     
     // Update service status
     backgroundServices.contentScheduler = {
       name: 'Content Scheduler',
       status: 'active',
       startTime: Date.now(),
-      interval: schedulerInterval,
+      interval: 5 * 60 * 1000, // 5 minutes
     };
     
     log('Content scheduler service initialized with 5 minute interval', 'background');
@@ -310,6 +295,17 @@ export function getServicesStatus(): ServiceStatus[] {
  */
 export async function stopBackgroundServices(): Promise<void> {
   log('Stopping background services...', 'background');
+  
+  // Stop content scheduler
+  if (backgroundServices.contentScheduler.status === 'active') {
+    try {
+      stopContentScheduler();
+      backgroundServices.contentScheduler.status = 'inactive';
+      log('Content scheduler stopped', 'background');
+    } catch (error) {
+      log(`Error stopping content scheduler: ${error}`, 'background');
+    }
+  }
   
   // In a real implementation, you would stop each service gracefully
   // For example, by clearing intervals and completing any pending operations
