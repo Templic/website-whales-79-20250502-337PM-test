@@ -1,11 +1,23 @@
 import express from 'express';
-import { eq, and, or, gt, isNull } from 'drizzle-orm';
+import { eq, and, or, gt, lt, gte, lte, isNull, sql } from 'drizzle-orm';
 import { db } from '../db';
-import { contentItems, workflowNotifications, users } from '../../shared/schema';
+import { contentItems, workflowNotifications, users, contentHistory } from '../../shared/schema';
 import { isAdmin, isAuthenticated } from '../middleware/auth';
 import { generateSchedulingReport } from '../services/contentAnalytics';
+import { formatDistanceToNow, format } from 'date-fns';
 
 const router = express.Router();
+
+// Function to calculate percent change between two numbers
+function calculatePercentChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return ((current - previous) / previous) * 100;
+}
+
+// Format time in 12-hour format
+function formatTime(date: Date): string {
+  return format(date, 'h:mm a');
+}
 
 // Get content items in review queue
 router.get('/review-queue', isAuthenticated, async (req, res) => {
@@ -448,6 +460,217 @@ router.get('/analytics/scheduling', isAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error generating scheduling analytics report:', error);
     return res.status(500).json({ error: 'Failed to generate analytics report' });
+  }
+});
+
+// Get comprehensive content analytics
+router.get('/analytics', isAdmin, async (req, res) => {
+  try {
+    // Parse date range from query parameters
+    const { start, end } = req.query;
+    
+    let startDate = new Date();
+    let endDate = new Date();
+    
+    // Default to last 30 days if no dates provided
+    if (!start) {
+      startDate.setDate(startDate.getDate() - 30);
+    } else {
+      startDate = new Date(start as string);
+    }
+    
+    if (!end) {
+      // Default to current date if no end date
+    } else {
+      endDate = new Date(end as string);
+    }
+    
+    // Validate dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+    }
+    
+    // Calculate previous period for comparison
+    const periodDuration = endDate.getTime() - startDate.getTime();
+    const previousStartDate = new Date(startDate.getTime() - periodDuration);
+    const previousEndDate = new Date(endDate.getTime() - periodDuration);
+    
+    // Current period data
+    const schedulingReport = await generateSchedulingReport(startDate, endDate);
+    
+    // Get previous period data for comparison
+    const previousReport = await generateSchedulingReport(previousStartDate, previousEndDate);
+    
+    // Get content status distribution
+    const statusDistribution = await db.execute(sql`
+      SELECT status, COUNT(*) as count
+      FROM content_items
+      GROUP BY status
+      ORDER BY count DESC
+    `);
+    
+    // Format status distribution
+    const formattedStatusDistribution: Record<string, number> = {};
+    statusDistribution.forEach((row: any) => {
+      formattedStatusDistribution[row.status] = Number(row.count);
+    });
+    
+    // Get content needing attention (pending review, scheduled today, expiring soon)
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    // Content in review
+    const inReview = await db.query.contentItems.findMany({
+      where: eq(contentItems.status, 'review'),
+      orderBy: (contentItems, { asc }) => [asc(contentItems.createdAt)],
+      limit: 5
+    });
+    
+    // Content scheduled for today
+    const scheduledToday = await db.query.contentItems.findMany({
+      where: and(
+        eq(contentItems.status, 'approved'),
+        isNotNull(contentItems.scheduledPublishAt),
+        sql`DATE(${contentItems.scheduledPublishAt}) = DATE(NOW())`
+      ),
+      limit: 5
+    });
+    
+    // Content expiring soon (in the next 2 days)
+    const twoDaysFromNow = new Date(now);
+    twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
+    
+    const expiringSoon = await db.query.contentItems.findMany({
+      where: and(
+        eq(contentItems.status, 'published'),
+        isNotNull(contentItems.expirationDate),
+        gte(contentItems.expirationDate, now),
+        lt(contentItems.expirationDate, twoDaysFromNow)
+      ),
+      orderBy: (contentItems, { asc }) => [asc(contentItems.expirationDate)],
+      limit: 5
+    });
+    
+    // Format attention items
+    const attentionItems = [
+      ...inReview.map(item => ({
+        id: item.id,
+        title: item.title,
+        type: 'review_needed',
+        status: 'Review Needed',
+        message: 'Awaiting review',
+        dueTime: item.createdAt ? `Submitted ${formatDistanceToNow(item.createdAt, { addSuffix: true })}` : undefined
+      })),
+      ...scheduledToday.map(item => ({
+        id: item.id,
+        title: item.title,
+        type: 'scheduled_today',
+        status: 'Publishing Today',
+        message: 'Scheduled to be published today',
+        dueTime: item.scheduledPublishAt ? formatTime(item.scheduledPublishAt) : undefined
+      })),
+      ...expiringSoon.map(item => ({
+        id: item.id,
+        title: item.title,
+        type: 'expiring_soon',
+        status: 'Expiring Soon',
+        message: 'Content will be archived soon',
+        dueTime: item.expirationDate ? `Expires ${formatDistanceToNow(item.expirationDate, { addSuffix: true })}` : undefined
+      }))
+    ].slice(0, 10); // Limit to 10 total items
+    
+    // Get total content counts
+    const totalContent = await db.execute(sql`
+      SELECT COUNT(*) as count FROM content_items
+    `);
+    
+    const previousTotalContent = await db.execute(sql`
+      SELECT COUNT(*) as count 
+      FROM content_items 
+      WHERE created_at < ${startDate}
+    `);
+    
+    // Get workflow stage times
+    const workflowQuery = await db.execute(sql`
+      WITH status_changes AS (
+        SELECT 
+          content_id,
+          status,
+          modified_at AS change_time,
+          LEAD(modified_at) OVER (PARTITION BY content_id ORDER BY modified_at) AS next_change_time
+        FROM content_history
+        WHERE modified_at BETWEEN ${startDate} AND ${endDate}
+      )
+      SELECT 
+        status,
+        AVG(EXTRACT(EPOCH FROM (next_change_time - change_time)) / 3600) AS avg_hours_in_status
+      FROM status_changes
+      WHERE next_change_time IS NOT NULL
+      GROUP BY status
+    `);
+    
+    // Format workflow times
+    const workflowTimes: Record<string, number> = {};
+    workflowQuery.forEach((row: any) => {
+      workflowTimes[row.status] = Number(row.avg_hours_in_status);
+    });
+    
+    // Calculate percent changes for comparison metrics
+    const currentPeriodData = {
+      totalContent: Number(totalContent[0]?.count || 0),
+      publishRate: schedulingReport.summary?.publishRate || 0,
+      avgReviewTimeHours: schedulingReport.summary?.avgPublishTimeHours || 0,
+      pendingReview: inReview.length
+    };
+    
+    const previousPeriodData = {
+      totalContent: Number(previousTotalContent[0]?.count || 0),
+      publishRate: previousReport.summary?.publishRate || 0,
+      avgReviewTimeHours: previousReport.summary?.avgPublishTimeHours || 0
+    };
+    
+    const comparisonMetrics = {
+      contentChange: calculatePercentChange(
+        currentPeriodData.totalContent,
+        previousPeriodData.totalContent
+      ),
+      publishRateChange: calculatePercentChange(
+        currentPeriodData.publishRate,
+        previousPeriodData.publishRate
+      ),
+      reviewTimeChange: calculatePercentChange(
+        currentPeriodData.avgReviewTimeHours,
+        previousPeriodData.avgReviewTimeHours
+      )
+    };
+    
+    // Return the complete analytics report
+    return res.json({
+      period: {
+        start: startDate,
+        end: endDate
+      },
+      summary: {
+        ...schedulingReport.summary,
+        totalContent: currentPeriodData.totalContent,
+        pendingReview: inReview.length,
+        urgentReview: inReview.filter(item => {
+          // Items waiting > 48 hours need urgent review
+          if (!item.createdAt) return false;
+          const hoursWaiting = (now.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60);
+          return hoursWaiting > 48;
+        }).length
+      },
+      comparison: comparisonMetrics,
+      statusDistribution: formattedStatusDistribution,
+      workflowTimes,
+      dailyMetrics: schedulingReport.detailedMetrics,
+      attentionItems
+    });
+  } catch (error) {
+    console.error('Error generating content analytics:', error instanceof Error ? error.message : 'Unknown error');
+    return res.status(500).json({ error: 'Failed to generate content analytics' });
   }
 });
 

@@ -6,6 +6,7 @@ import ContentUsageReport from '@/components/admin/ContentUsageReport';
 import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
 import { WorkflowNotifications } from '@/components/admin/WorkflowNotifications';
 import { ContentSchedulingAnalytics } from '@/components/admin/ContentSchedulingAnalytics';
+import { ContentAnalyticsDashboard } from '@/components/admin/ContentAnalyticsDashboard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
@@ -94,6 +95,7 @@ const ContentManagementPage: React.FC = () => {
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const [isUsageReportOpen, setIsUsageReportOpen] = useState(false);
   const [isSchedulingAnalyticsOpen, setIsSchedulingAnalyticsOpen] = useState(false);
+  const [isAnalyticsDashboardOpen, setIsAnalyticsDashboardOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -247,6 +249,10 @@ const ContentManagementPage: React.FC = () => {
             <Button variant="outline" onClick={() => setIsSchedulingAnalyticsOpen(true)}>
               <Calendar className="mr-2 h-4 w-4" />
               Scheduling Analytics
+            </Button>
+            <Button variant="outline" onClick={() => setIsAnalyticsDashboardOpen(true)}>
+              <BarChart className="mr-2 h-4 w-4" />
+              Workflow Analytics
             </Button>
             <Button onClick={handleCreateNew}>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -476,6 +482,19 @@ const ContentManagementPage: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <ContentSchedulingAnalytics />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Content Analytics Dashboard Dialog */}
+      <Dialog open={isAnalyticsDashboardOpen} onOpenChange={setIsAnalyticsDashboardOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Content Workflow Analytics Dashboard</DialogTitle>
+            <DialogDescription>
+              Comprehensive analytics for content workflow performance
+            </DialogDescription>
+          </DialogHeader>
+          <ContentAnalyticsDashboard />
         </DialogContent>
       </Dialog>
       

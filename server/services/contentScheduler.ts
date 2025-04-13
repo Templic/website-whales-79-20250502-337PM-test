@@ -65,7 +65,7 @@ export async function processScheduledContent() {
           
           console.log(`[Scheduler] Published scheduled content: "${content.title}" (ID: ${content.id})`);
         } catch (error) {
-          console.error(`[Scheduler] Error publishing content ID ${content.id}: ${error.message}`);
+          console.error(`[Scheduler] Error publishing content ID ${content.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       }
       
@@ -120,7 +120,7 @@ export async function processScheduledContent() {
       archived: expiredContent.length
     };
   } catch (error) {
-    console.error(`[Scheduler] Error processing scheduled content: ${error.message}`);
+    console.error(`[Scheduler] Error processing scheduled content: ${error instanceof Error ? error.message : 'Unknown error'}`);
     throw error;
   }
 }
