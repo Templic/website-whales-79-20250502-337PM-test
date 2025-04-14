@@ -113,12 +113,12 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
         <div className="absolute inset-0 flex items-center justify-center opacity-10">
           <div className="relative w-96 h-96">
             <SacredGeometry 
-              variant="hexagram" 
+              type="pentagon-star" 
               size={300}
               className="absolute inset-0 text-cyan-300 animate-spin-slow" 
             />
             <SacredGeometry 
-              variant="flower-of-life"
+              type="flower-of-life"
               size={250} 
               className="absolute inset-0 top-6 left-6 text-indigo-300 animate-pulse-slow" 
             />
@@ -141,9 +141,9 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
             <div className="relative">
               <div onClick={() => setHoverStar(!hoverStar)}>
                 <SacredGeometry 
-                  variant="star" 
+                  type="pentagon-star" 
                   size={24}
-                  strokeWidth={2}
+                  lineWidth={2}
                   className={`cursor-pointer transition-colors duration-300 ${hoverStar ? "text-cyan-300" : "text-cyan-600"}`}
                 />
               </div>
@@ -248,7 +248,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
             </div>
             
             <div className="flex items-center text-xs text-cyan-300/70">
-              <SacredGeometry variant="triangle" className="text-cyan-300 mr-2" size={16} />
+              <SacredGeometry type="vesica-piscis" className="text-cyan-300 mr-2" size={16} />
               <span>Cosmic Consciousness Portal</span>
             </div>
           </div>
