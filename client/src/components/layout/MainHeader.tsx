@@ -25,7 +25,8 @@ import {
   MoonStar,
   Calendar,
   ShoppingBag,
-  Home
+  Home,
+  MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
@@ -52,7 +53,8 @@ const primaryNavItems: NavItem[] = [
 const secondaryNavItems: NavItem[] = [
   { name: "Shop", path: "/shop", icon: <ShoppingBag className="h-4 w-4 mr-1" />, glowColor: "purple" },
   { name: "Engage", path: "/engage", icon: <MoonStar className="h-4 w-4 mr-1" />, glowColor: "cyan" },
-  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "purple" }
+  { name: "Blog", path: "/blog", icon: <Headphones className="h-4 w-4 mr-1" />, glowColor: "purple" },
+  { name: "AI Chat", path: "/chat", icon: <MessageSquare className="h-4 w-4 mr-1" />, glowColor: "cyan" }
 ];
 
 // Community links that should be accessible
