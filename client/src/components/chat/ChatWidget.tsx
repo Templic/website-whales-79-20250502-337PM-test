@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import ChatInterface from './ChatInterface';
+import TaskadeEmbed from './TaskadeEmbed';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, X } from 'lucide-react';
+import { MessageSquare, Code, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -11,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Map position string to actual position values for styling
 const positionMap = {
@@ -37,6 +39,9 @@ const ChatWidget = () => {
   
   // Support for mobile viewport
   const [isMobile, setIsMobile] = useState(false);
+  
+  // State to toggle between custom and embedded chat
+  const [chatMode, setChatMode] = useState<'custom' | 'embed'>('custom');
   
   useEffect(() => {
     const checkMobile = () => {
@@ -78,7 +83,42 @@ const ChatWidget = () => {
         <Sheet open={isChatOpen} onOpenChange={isChatOpen ? closeChat : openChat}>
           <SheetContent className="p-0 sm:max-w-md" side="bottom">
             <div className="h-[85vh]">
-              <ChatInterface isWidget onClose={closeChat} />
+              <div className="flex items-center justify-between p-2 border-b bg-muted/30">
+                <div className="flex space-x-1">
+                  <Button 
+                    variant={chatMode === 'custom' ? 'secondary' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setChatMode('custom')}
+                    className="flex items-center gap-1"
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    <span className="text-xs">Custom</span>
+                  </Button>
+                  <Button 
+                    variant={chatMode === 'embed' ? 'secondary' : 'ghost'} 
+                    size="sm"
+                    onClick={() => setChatMode('embed')}
+                    className="flex items-center gap-1"
+                  >
+                    <Code className="h-3 w-3" />
+                    <span className="text-xs">Taskade</span>
+                  </Button>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={closeChat} 
+                  className="p-1"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {chatMode === 'custom' ? (
+                <ChatInterface isWidget onClose={closeChat} />
+              ) : (
+                <TaskadeEmbed chatOnly={true} widgetMode={true} />
+              )}
             </div>
           </SheetContent>
         </Sheet>
@@ -118,7 +158,44 @@ const ChatWidget = () => {
           `}
           style={positionStyles}
         >
-          <ChatInterface isWidget onClose={closeChat} />
+          <div className="h-full">
+            <div className="flex items-center justify-between p-2 border-b bg-muted/30">
+              <div className="flex space-x-1">
+                <Button 
+                  variant={chatMode === 'custom' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setChatMode('custom')}
+                  className="flex items-center gap-1"
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  <span className="text-xs">Custom</span>
+                </Button>
+                <Button 
+                  variant={chatMode === 'embed' ? 'secondary' : 'ghost'} 
+                  size="sm"
+                  onClick={() => setChatMode('embed')}
+                  className="flex items-center gap-1"
+                >
+                  <Code className="h-3 w-3" />
+                  <span className="text-xs">Taskade</span>
+                </Button>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={closeChat}
+                className="p-1"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {chatMode === 'custom' ? (
+              <ChatInterface isWidget onClose={closeChat} />
+            ) : (
+              <TaskadeEmbed chatOnly={true} widgetMode={true} />
+            )}
+          </div>
         </div>
       )}
     </>

@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import ChatInterface from '@/components/chat/ChatInterface';
+import TaskadeEmbed from '@/components/chat/TaskadeEmbed';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { MessageSquare, Settings, Info, RefreshCcw } from 'lucide-react';
+import { MessageSquare, Settings, Info, RefreshCcw, Code } from 'lucide-react';
 import {
   Tabs,
   TabsContent,
@@ -35,6 +36,9 @@ const AIChatMenuPage: React.FC = () => {
   
   // Get accessibility context to coordinate settings
   const { reducedMotion } = useAccessibility();
+
+  // State to toggle between custom implementation and direct embed
+  const [chatMode, setChatMode] = useState<'custom' | 'embed'>('custom');
   
   return (
     <div className="container mx-auto py-8">
@@ -52,14 +56,44 @@ const AIChatMenuPage: React.FC = () => {
         {/* Main chat area */}
         <div className="lg:col-span-2">
           <Card className="h-full shadow-lg">
-            <CardHeader>
-              <CardTitle>Chat with Taskade AI</CardTitle>
-              <CardDescription>
-                Ask anything about our music, events, products, or services
-              </CardDescription>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Chat with Taskade AI</CardTitle>
+                  <CardDescription>
+                    Ask anything about our music, events, products, or services
+                  </CardDescription>
+                </div>
+                
+                {/* Toggle between chat implementations */}
+                <div className="flex items-center space-x-2 bg-black/30 p-2 rounded-md border border-[#00ebd6]/20">
+                  <Button 
+                    variant={chatMode === 'custom' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setChatMode('custom')}
+                    className="flex items-center gap-1"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Custom UI</span>
+                  </Button>
+                  <Button 
+                    variant={chatMode === 'embed' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setChatMode('embed')}
+                    className="flex items-center gap-1"
+                  >
+                    <Code className="h-4 w-4" />
+                    <span>Embedded</span>
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="h-[600px]">
-              <ChatInterface />
+              {chatMode === 'custom' ? (
+                <ChatInterface />
+              ) : (
+                <TaskadeEmbed chatOnly={true} />
+              )}
             </CardContent>
           </Card>
         </div>
