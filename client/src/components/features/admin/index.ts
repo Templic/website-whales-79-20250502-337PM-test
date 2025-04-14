@@ -12,6 +12,10 @@ import NewEditMenu from './NewEditMenu';
 import EditMenuDemo from './EditMenuDemo';
 import { FormatAction } from '@/types/admin';
 import WorkflowManagement from './WorkflowManagement';
+import RoleManagement from './RoleManagement';
+import ContentScheduler from './ContentScheduler';
+import SecurityAlerts from './SecurityAlerts';
+import UserActivityMonitor from './UserActivityMonitor';
 
 export interface EditorSaveData {
   text?: string;
@@ -28,5 +32,9 @@ export {
   AdminEditorDemo,
   NewEditMenu as EditMenu,
   EditMenuDemo,
-  WorkflowManagement
+  WorkflowManagement,
+  RoleManagement,
+  ContentScheduler,
+  SecurityAlerts,
+  UserActivityMonitor
 };
