@@ -1,161 +1,174 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface AccessibilityContextType {
-  // Text size
+type Contrast = 'default' | 'high' | 'dark';
+
+type AccessibilityContextType = {
+  // Text Size
   textSize: number;
   setTextSize: (size: number) => void;
   
   // Contrast
-  contrast: 'default' | 'high' | 'dark';
-  setContrast: (mode: 'default' | 'high' | 'dark') => void;
+  contrast: Contrast;
+  setContrast: (contrast: Contrast) => void;
   
-  // Motion
+  // Reduced Motion
   reducedMotion: boolean;
-  setReducedMotion: (reduced: boolean) => void;
+  setReducedMotion: (reducedMotion: boolean) => void;
   
-  // Voice control
+  // Voice Navigation
   voiceEnabled: boolean;
   setVoiceEnabled: (enabled: boolean) => void;
   
-  // Navigation auto-hide
+  // Auto Hide Navigation 
   autoHideNav: boolean;
   setAutoHideNav: (autoHide: boolean) => void;
   
-  // Panel controls
-  isAccessibilityOpen: boolean;
-  openAccessibilityPanel: () => void;
-  closeAccessibilityPanel: () => void;
-  toggleAccessibilityPanel: () => void;
-}
+  // Panel State
+  isPanelOpen: boolean;
+  openPanel: () => void;
+  closePanel: () => void;
+  togglePanel: () => void;
+};
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
-  // Core accessibility settings
-  const [textSize, setTextSize] = useState(() => {
-    const saved = localStorage.getItem('accessibility-text-size');
+export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Load settings from localStorage or use defaults
+  const [textSize, setTextSize] = useState<number>(() => {
+    const saved = localStorage.getItem('accessibilityTextSize');
     return saved ? parseInt(saved, 10) : 100;
   });
   
-  const [contrast, setContrast] = useState<'default' | 'high' | 'dark'>(() => {
-    const saved = localStorage.getItem('accessibility-contrast');
-    return (saved as 'default' | 'high' | 'dark') || 'default';
+  const [contrast, setContrast] = useState<Contrast>(() => {
+    const saved = localStorage.getItem('accessibilityContrast');
+    return (saved as Contrast) || 'default';
   });
   
-  const [reducedMotion, setReducedMotion] = useState(() => {
-    const saved = localStorage.getItem('accessibility-reduced-motion');
-    return saved === 'true';
+  const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
+    const saved = localStorage.getItem('accessibilityReducedMotion');
+    return saved ? saved === 'true' : false;
   });
   
-  const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    const saved = localStorage.getItem('accessibility-voice-enabled');
-    return saved === 'true';
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('accessibilityVoiceEnabled');
+    return saved ? saved === 'true' : false;
   });
   
-  // Navigation settings
-  const [autoHideNav, setAutoHideNav] = useState(() => {
-    const saved = localStorage.getItem('accessibility-auto-hide-nav');
-    // Default to true for auto-hiding navigation
-    return saved ? saved === 'true' : true;
+  const [autoHideNav, setAutoHideNav] = useState<boolean>(() => {
+    const saved = localStorage.getItem('accessibilityAutoHideNav');
+    return saved ? saved === 'true' : true; // Default to true
   });
   
-  // Panel state
-  const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState<boolean>(false);
   
-  // Text size effect
+  // Save settings to localStorage whenever they change
   useEffect(() => {
-    document.documentElement.style.fontSize = `${textSize}%`;
-    localStorage.setItem('accessibility-text-size', textSize.toString());
-    
-    return () => {
-      document.documentElement.style.fontSize = "100%";
-    };
+    localStorage.setItem('accessibilityTextSize', textSize.toString());
+    document.documentElement.style.setProperty('--accessibility-text-scale', `${textSize / 100}`);
   }, [textSize]);
   
-  // Contrast effect
   useEffect(() => {
-    if (contrast === "high") {
-      document.documentElement.classList.add("high-contrast");
-      document.documentElement.classList.remove("dark-mode");
-    } else if (contrast === "dark") {
-      document.documentElement.classList.add("dark-mode");
-      document.documentElement.classList.remove("high-contrast");
-    } else {
-      document.documentElement.classList.remove("high-contrast", "dark-mode");
-    }
-    
-    localStorage.setItem('accessibility-contrast', contrast);
-    
-    return () => {
-      document.documentElement.classList.remove("high-contrast", "dark-mode");
-    };
+    localStorage.setItem('accessibilityContrast', contrast);
+    // Apply contrast classes to root element
+    const root = document.documentElement;
+    root.classList.remove('contrast-default', 'contrast-high', 'contrast-dark');
+    root.classList.add(`contrast-${contrast}`);
   }, [contrast]);
   
-  // Reduced motion effect
   useEffect(() => {
+    localStorage.setItem('accessibilityReducedMotion', reducedMotion.toString());
+    const root = document.documentElement;
     if (reducedMotion) {
-      document.documentElement.classList.add("reduced-motion");
+      root.classList.add('reduced-motion');
     } else {
-      document.documentElement.classList.remove("reduced-motion");
+      root.classList.remove('reduced-motion');
     }
-    
-    localStorage.setItem('accessibility-reduced-motion', reducedMotion.toString());
-    
-    return () => {
-      document.documentElement.classList.remove("reduced-motion");
-    };
   }, [reducedMotion]);
   
-  // Save voice preference
   useEffect(() => {
-    localStorage.setItem('accessibility-voice-enabled', voiceEnabled.toString());
+    localStorage.setItem('accessibilityVoiceEnabled', voiceEnabled.toString());
+    // Initialize voice recognition if enabled
+    if (voiceEnabled) {
+      // Voice recognition logic would go here
+      console.log('Voice navigation enabled');
+    }
   }, [voiceEnabled]);
   
-  // Save nav auto-hide preference
   useEffect(() => {
-    localStorage.setItem('accessibility-auto-hide-nav', autoHideNav.toString());
-    
-    // Add or remove auto-hide class on the navigation
-    if (autoHideNav) {
-      document.documentElement.classList.add("nav-auto-hide");
-    } else {
-      document.documentElement.classList.remove("nav-auto-hide");
-    }
+    localStorage.setItem('accessibilityAutoHideNav', autoHideNav.toString());
   }, [autoHideNav]);
   
-  // Panel control functions
-  const openAccessibilityPanel = () => setIsAccessibilityOpen(true);
-  const closeAccessibilityPanel = () => setIsAccessibilityOpen(false);
-  const toggleAccessibilityPanel = () => setIsAccessibilityOpen(prev => !prev);
+  // Panel toggle functions
+  const openPanel = () => setIsPanelOpen(true);
+  const closePanel = () => setIsPanelOpen(false);
+  const togglePanel = () => setIsPanelOpen(prev => !prev);
   
-  const value = {
+  // Set reduced motion based on user's OS preference on initial load
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mediaQuery.matches && localStorage.getItem('accessibilityReducedMotion') === null) {
+      setReducedMotion(true);
+    }
+    
+    // Check for OS contrast preference
+    const highContrastQuery = window.matchMedia('(prefers-contrast: more)');
+    if (highContrastQuery.matches && localStorage.getItem('accessibilityContrast') === null) {
+      setContrast('high');
+    }
+    
+    // Check for dark mode preference
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (darkModeQuery.matches && localStorage.getItem('accessibilityContrast') === null) {
+      setContrast('dark');
+    }
+  }, []);
+  
+  // Listen for OS changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handleChange = () => {
+      if (localStorage.getItem('accessibilityReducedMotion') === null) {
+        setReducedMotion(mediaQuery.matches);
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+  
+  // Create context value
+  const contextValue: AccessibilityContextType = {
     textSize,
     setTextSize,
     contrast,
     setContrast,
     reducedMotion,
     setReducedMotion,
-    voiceEnabled, 
+    voiceEnabled,
     setVoiceEnabled,
     autoHideNav,
     setAutoHideNav,
-    isAccessibilityOpen,
-    openAccessibilityPanel,
-    closeAccessibilityPanel,
-    toggleAccessibilityPanel,
+    isPanelOpen,
+    openPanel,
+    closePanel,
+    togglePanel
   };
-  
+
   return (
-    <AccessibilityContext.Provider value={value}>
+    <AccessibilityContext.Provider value={contextValue}>
       {children}
     </AccessibilityContext.Provider>
   );
-}
+};
 
-export function useAccessibility() {
+export const useAccessibility = (): AccessibilityContextType => {
   const context = useContext(AccessibilityContext);
+  
   if (context === undefined) {
     throw new Error('useAccessibility must be used within an AccessibilityProvider');
   }
+  
   return context;
-}
+};
+
+export default AccessibilityContext;

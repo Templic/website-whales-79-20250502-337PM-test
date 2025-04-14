@@ -1,224 +1,368 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Send, Minimize, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
-import { useAgents, Agent } from '@/contexts/AgentContext';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Send, 
+  RefreshCw, 
+  X, 
+  ChevronDown, 
+  ChevronUp, 
+  Volume2,
+  VolumeX,
+  Copy, 
+  Info, 
+  HelpCircle 
+} from 'lucide-react';
+import { useAgents } from '@/contexts/AgentContext';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
-  content: string;
   sender: 'user' | 'agent';
+  content: string;
   timestamp: Date;
 }
 
-interface AIChatInterfaceProps {
-  isPopup?: boolean;
-  onClose?: () => void;
-}
-
-export function AIChatInterface({ isPopup = false, onClose }: AIChatInterfaceProps) {
-  const { activeAgent, deactivateAgent } = useAgents();
+export function AIChatInterface() {
+  const { activeAgent, deactivateAgent, isLoading } = useAgents();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Add welcome message when agent changes
+  const { toast } = useToast();
+  
+  // Add greeting message when agent changes
   useEffect(() => {
-    if (activeAgent) {
-      const welcomeMessage = {
-        id: `welcome-${Date.now()}`,
-        content: `Hello! I'm ${activeAgent.name}. ${activeAgent.description} How can I help you today?`,
-        sender: 'agent' as const,
+    if (activeAgent && messages.length === 0) {
+      const greetingMessage: Message = {
+        id: `agent-greeting-${Date.now()}`,
+        sender: 'agent',
+        content: activeAgent.greeting,
         timestamp: new Date()
       };
-      setMessages([welcomeMessage]);
+      setMessages([greetingMessage]);
     }
-  }, [activeAgent]);
-
+  }, [activeAgent, messages.length]);
+  
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Focus input when the chat opens
-  useEffect(() => {
-    if (isPopup) {
-      inputRef.current?.focus();
-    }
-  }, [isPopup]);
-
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      deactivateAgent();
-    }
-  };
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || !activeAgent) return;
-
-    // Add user message
+  
+  // Handle sending a message
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || !activeAgent) return;
+    
+    // Create and add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
-      content: input,
       sender: 'user',
+      content: inputValue,
       timestamp: new Date()
     };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-
-    // Simulate agent response
-    // In a real implementation, this would connect to the Taskade agent API
-    setTimeout(() => {
-      const agentResponse: Message = {
-        id: `agent-${Date.now()}`,
-        content: getSimulatedResponse(input, activeAgent),
-        sender: 'agent',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, agentResponse]);
-    }, 1000);
-  };
-
-  // Temporary function to generate simulated responses
-  // This would be replaced with actual API calls to the Taskade agent
-  const getSimulatedResponse = (userInput: string, agent: Agent): string => {
-    const lowercaseInput = userInput.toLowerCase();
     
-    // Generic responses based on the agent type
-    if (agent.category === 'shopping') {
-      if (lowercaseInput.includes('product') || lowercaseInput.includes('recommend')) {
-        return "I'd recommend checking out our cosmic crystal pendants or sound healing bowls. They're currently our most popular items!";
-      } else if (lowercaseInput.includes('discount') || lowercaseInput.includes('sale')) {
-        return "We currently have a special promotion on our meditation bundles. Use code COSMIC15 for 15% off!";
-      }
-    } else if (agent.category === 'music') {
-      if (lowercaseInput.includes('recommend') || lowercaseInput.includes('suggestion')) {
-        return "Based on our latest releases, I think you might enjoy 'Celestial Harmonies' or 'Quantum Resonance'. Both feature binaural beats that are perfect for deep meditation.";
-      } else if (lowercaseInput.includes('album') || lowercaseInput.includes('track')) {
-        return "Our most popular album right now is 'Cosmic Frequencies Vol. 3'. It features a blend of ambient sounds and healing frequencies.";
-      }
-    } else if (agent.category === 'education') {
-      if (lowercaseInput.includes('learn') || lowercaseInput.includes('teach')) {
-        return "I recommend starting with our 'Introduction to Sacred Geometry' or 'Beginner's Guide to Sound Healing'. Both are excellent resources for beginners.";
-      } else if (lowercaseInput.includes('meditation') || lowercaseInput.includes('technique')) {
-        return "The 432Hz meditation technique is particularly powerful for aligning with the natural frequency of the universe. Would you like me to explain more about it?";
-      }
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsSending(true);
+    
+    // Simulate agent response (in a real app, this would call an AI service)
+    setTimeout(() => {
+      generateResponse(userMessage.content);
+      setIsSending(false);
+    }, 1500);
+  };
+  
+  // Generate agent response (simulated)
+  const generateResponse = (userQuery: string) => {
+    if (!activeAgent) return;
+    
+    // Simple response simulation based on query content
+    let responseText = '';
+    
+    // Basic pattern matching for demo purposes
+    if (/help|assist|support/i.test(userQuery)) {
+      responseText = `I'd be happy to help you! As ${activeAgent.name}, I can ${activeAgent.capabilities.join(', ')}. What specific assistance do you need?`;
+    } 
+    else if (/who are you|what can you do|capabilities/i.test(userQuery)) {
+      responseText = `I am ${activeAgent.name}, your cosmic assistant. My capabilities include ${activeAgent.capabilities.join(', ')}. I communicate in a ${activeAgent.personality.tone} tone, with a ${activeAgent.personality.style} style.`;
+    }
+    else if (/thank|thanks/i.test(userQuery)) {
+      responseText = "You're welcome! I'm glad I could assist you on your cosmic journey. Is there anything else you'd like to explore?";
+    }
+    else {
+      // Default responses based on agent category
+      const responses = {
+        shopping: "I can help you find the perfect cosmic products for your journey. Would you like me to suggest some popular items or help you find something specific?",
+        music: "Music is a gateway to cosmic consciousness. I can guide you through our frequency-attuned tracks or explain the healing properties of specific sounds. What are you interested in exploring?",
+        education: "The cosmos contains infinite wisdom. I'd be happy to explain cosmic concepts, guide you through meditation techniques, or help you understand sacred geometry. Where would you like to begin?",
+        general: "I'm here to guide you through Dale's cosmic universe. I can help with navigation, answer questions about the website, or direct you to specific resources. How can I assist your journey today?"
+      };
+      
+      responseText = responses[activeAgent.category as keyof typeof responses] || 
+        "I understand your question. Let me guide you through our cosmic offerings to find what resonates with your journey.";
     }
     
-    // Default responses
-    const defaultResponses = [
-      `Thank you for your message. I'm here to help with any questions about ${agent.category}.`,
-      `I'm processing your request about "${userInput}". Is there anything specific you'd like to know?`,
-      `That's an interesting question! Let me guide you through what we offer related to ${agent.category}.`
-    ];
+    const agentResponse: Message = {
+      id: `agent-${Date.now()}`,
+      sender: 'agent',
+      content: responseText,
+      timestamp: new Date()
+    };
     
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    setMessages(prev => [...prev, agentResponse]);
+    
+    // Text-to-speech if not muted
+    if (!isMuted && 'speechSynthesis' in window) {
+      const speech = new SpeechSynthesisUtterance(responseText);
+      speech.rate = 0.9;
+      speech.pitch = 1;
+      window.speechSynthesis.speak(speech);
+    }
   };
-
+  
+  // Reset conversation
+  const handleReset = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel(); // Stop any ongoing speech
+    }
+    
+    setMessages([]);
+    
+    // Add greeting message after reset
+    if (activeAgent) {
+      setTimeout(() => {
+        const greetingMessage: Message = {
+          id: `agent-greeting-${Date.now()}`,
+          sender: 'agent',
+          content: activeAgent.greeting,
+          timestamp: new Date()
+        };
+        setMessages([greetingMessage]);
+      }, 300);
+    }
+    
+    toast({
+      title: "Conversation Reset",
+      description: "Starting a new conversation with your cosmic guide.",
+    });
+  };
+  
+  // Toggle mute state
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    
+    if (!isMuted && window.speechSynthesis) {
+      window.speechSynthesis.cancel(); // Stop speech if muting
+    }
+    
+    toast({
+      title: isMuted ? "Voice Enabled" : "Voice Disabled",
+      description: isMuted ? "Agent responses will now be spoken" : "Agent responses will be text only",
+    });
+  };
+  
+  // Copy conversation to clipboard
+  const copyConversation = () => {
+    const conversationText = messages
+      .map(msg => `${msg.sender === 'user' ? 'You' : activeAgent?.name}: ${msg.content}`)
+      .join('\n\n');
+      
+    navigator.clipboard.writeText(conversationText);
+    
+    toast({
+      title: "Copied to Clipboard",
+      description: "The entire conversation has been copied to your clipboard.",
+    });
+  };
+  
+  // Format timestamp
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  
   if (!activeAgent) return null;
-
+  
   return (
-    <Card 
-      className={cn(
-        "cosmic-glass-card cosmic-scale shadow-lg",
-        isPopup ? "fixed bottom-20 right-4 z-40 w-full max-w-md" : "w-full h-full"
-      )}
-    >
-      <CardHeader className="p-4 border-b space-y-0 flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Avatar className="h-8 w-8 cosmic-avatar">
-            <AvatarImage src={activeAgent.avatar} alt={activeAgent.name} />
-            <AvatarFallback className="bg-cosmic-primary text-white">
-              {activeAgent.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <CardTitle className="text-md cosmic-gradient-text">{activeAgent.name}</CardTitle>
-        </div>
-        <div className="flex items-center gap-1">
-          {isPopup && (
-            <Button
-              variant="ghost"
+    <Card className="h-full relative overflow-hidden cosmic-glass-card shadow-glow">
+      {/* Header */}
+      <div className="border-b border-white/10 p-4 bg-gradient-to-r from-purple-900/40 to-indigo-900/40">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10 cosmic-avatar">
+              <AvatarImage src={activeAgent.avatar} alt={activeAgent.name} />
+              <AvatarFallback className="bg-cosmic-primary text-white">
+                {activeAgent.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium">{activeAgent.name}</h3>
+              <p className="text-sm text-white/70">{activeAgent.personality.tone}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleMute}
+              title={isMuted ? "Enable voice" : "Disable voice"}
+            >
+              {isMuted ? (
+                <VolumeX className="h-5 w-5 text-white/70" />
+              ) : (
+                <Volume2 className="h-5 w-5 text-white/70" />
+              )}
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={handleReset}
+              title="Reset conversation"
+            >
+              <RefreshCw className="h-5 w-5 text-white/70" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={copyConversation}
+              title="Copy conversation"
+            >
+              <Copy className="h-5 w-5 text-white/70" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
               size="icon"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="h-7 w-7 rounded-full bg-white/10 text-white hover:bg-white/20"
+              title={isExpanded ? "Collapse" : "Expand"}
             >
-              {isExpanded ? <Minimize className="h-3.5 w-3.5" /> : <Maximize className="h-3.5 w-3.5" />}
-              <span className="sr-only">{isExpanded ? "Minimize" : "Maximize"}</span>
+              {isExpanded ? (
+                <ChevronDown className="h-5 w-5 text-white/70" />
+              ) : (
+                <ChevronUp className="h-5 w-5 text-white/70" />
+              )}
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="h-7 w-7 rounded-full bg-white/10 text-white hover:bg-white/20"
-          >
-            <X className="h-3.5 w-3.5" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </div>
-      </CardHeader>
-      
-      <CardContent className={cn(
-        "p-0",
-        isPopup ? (isExpanded ? "h-[400px]" : "h-[300px]") : "h-[calc(100%-110px)]"
-      )}>
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-4">
-            {messages.map((message) => (
-              <div 
-                key={message.id} 
-                className={cn(
-                  "flex",
-                  message.sender === 'user' ? "justify-end" : "justify-start"
-                )}
-              >
-                <div 
-                  className={cn(
-                    "max-w-[80%] rounded-lg px-3 py-2",
-                    message.sender === 'user' 
-                      ? "bg-cosmic-primary text-white" 
-                      : "bg-white/10 backdrop-blur-md"
-                  )}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={deactivateAgent}
+              title="Close chat"
+            >
+              <X className="h-5 w-5 text-white/70" />
+            </Button>
           </div>
-        </ScrollArea>
-      </CardContent>
+        </div>
+      </div>
       
-      <CardFooter className="p-3 border-t">
-        <form onSubmit={handleSendMessage} className="flex w-full gap-2">
+      {/* Agent Info Banner */}
+      <div className="bg-cosmic-secondary/20 px-4 py-2 border-b border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Info className="h-4 w-4 text-white/60" />
+          <p className="text-xs text-white/60">
+            {activeAgent.description}
+          </p>
+        </div>
+        <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+          <HelpCircle className="h-3 w-3" />
+          <span>Help</span>
+        </Button>
+      </div>
+      
+      {/* Chat Body */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: "calc(100% - 142px)" }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CardContent className="p-0 h-full">
+              <ScrollArea className="h-[calc(100vh-370px)] w-full p-4">
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${
+                        message.sender === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[80%] ${
+                          message.sender === 'user'
+                            ? 'bg-gradient-to-r from-purple-600/30 to-indigo-600/30 rounded-l-2xl rounded-tr-2xl'
+                            : 'bg-gradient-to-r from-slate-800/50 to-slate-700/40 rounded-r-2xl rounded-tl-2xl'
+                        } p-3`}
+                      >
+                        {message.sender === 'agent' && (
+                          <div className="flex items-center mb-2">
+                            <Avatar className="h-6 w-6 mr-2">
+                              <AvatarImage src={activeAgent.avatar} alt={activeAgent.name} />
+                              <AvatarFallback className="text-xs bg-purple-900">
+                                {activeAgent.name.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-medium text-white/80">{activeAgent.name}</span>
+                          </div>
+                        )}
+                        <p className="text-sm">{message.content}</p>
+                        <div
+                          className={`text-xs mt-1 ${
+                            message.sender === 'user' ? 'text-right' : 'text-left'
+                          } text-white/50`}
+                        >
+                          {formatTime(message.timestamp)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Input Area */}
+      <div className="p-4 border-t border-white/10 bg-gradient-to-r from-purple-900/40 to-indigo-900/40">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+          className="flex items-center space-x-2"
+        >
           <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow bg-white/5 border-white/10 focus-visible:ring-cosmic-primary"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="bg-white/5 border-white/10 focus:border-white/30"
           />
           <Button 
             type="submit" 
-            size="icon" 
-            disabled={!input.trim()}
-            className="cosmic-button"
+            disabled={!inputValue.trim() || isSending || isLoading}
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
           >
-            <Send className="h-4 w-4" />
-            <span className="sr-only">Send message</span>
+            {isSending ? (
+              <RefreshCw className="h-5 w-5 animate-spin" />
+            ) : (
+              <Send className="h-5 w-5" />
+            )}
           </Button>
         </form>
-      </CardFooter>
+      </div>
     </Card>
   );
 }
+
+export default AIChatInterface;
