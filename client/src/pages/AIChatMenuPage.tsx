@@ -3,13 +3,14 @@ import { useChat } from '@/contexts/ChatContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import ChatInterface from '@/components/chat/ChatInterface';
 import TaskadeEmbed from '@/components/chat/TaskadeEmbed';
+import OceanicPortal from '@/components/chat/OceanicPortal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { MessageSquare, Settings, Info, RefreshCcw, Code } from 'lucide-react';
+import { MessageSquare, Settings, Info, RefreshCcw, Code, Anchor, Droplets } from 'lucide-react';
 import {
   Tabs,
   TabsContent,
@@ -37,8 +38,8 @@ const AIChatMenuPage: React.FC = () => {
   // Get accessibility context to coordinate settings
   const { reducedMotion } = useAccessibility();
 
-  // State to toggle between custom implementation and direct embed
-  const [chatMode, setChatMode] = useState<'custom' | 'embed'>('custom');
+  // State to toggle between different chat implementations
+  const [chatMode, setChatMode] = useState<'custom' | 'embed' | 'oceanic'>('custom');
   
   return (
     <div className="container mx-auto py-8">
@@ -74,7 +75,7 @@ const AIChatMenuPage: React.FC = () => {
                     className="flex items-center gap-1"
                   >
                     <MessageSquare className="h-4 w-4" />
-                    <span>Custom UI</span>
+                    <span>Basic</span>
                   </Button>
                   <Button 
                     variant={chatMode === 'embed' ? 'default' : 'ghost'}
@@ -83,7 +84,16 @@ const AIChatMenuPage: React.FC = () => {
                     className="flex items-center gap-1"
                   >
                     <Code className="h-4 w-4" />
-                    <span>Embedded</span>
+                    <span>Standard</span>
+                  </Button>
+                  <Button 
+                    variant={chatMode === 'oceanic' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setChatMode('oceanic')}
+                    className="flex items-center gap-1"
+                  >
+                    <Droplets className="h-4 w-4" />
+                    <span>Oceanic</span>
                   </Button>
                 </div>
               </div>
@@ -91,8 +101,10 @@ const AIChatMenuPage: React.FC = () => {
             <CardContent className="h-[600px]">
               {chatMode === 'custom' ? (
                 <ChatInterface />
-              ) : (
+              ) : chatMode === 'embed' ? (
                 <TaskadeEmbed chatOnly={true} />
+              ) : (
+                <OceanicPortal />
               )}
             </CardContent>
           </Card>
