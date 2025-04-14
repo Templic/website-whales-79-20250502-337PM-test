@@ -103,6 +103,85 @@ def contact():
         return redirect(url_for('contact'))
     return render_template('contact_page.html', form=form)
 
+@app.route('/accessibility')
+def accessibility():
+    return render_template('accessibility_page.html')
+
+@app.route('/ai-chat')
+def ai_chat():
+    return render_template('ai_chat_page.html')
+
+@app.route('/api/ai-agents', methods=['GET'])
+def get_ai_agents():
+    """API endpoint to get AI agent information"""
+    agents = [
+        {
+            "id": "cosmic-guide",
+            "name": "Cosmic Guide",
+            "description": "A spiritual guide with deep knowledge of cosmic energies and meditation practices.",
+            "avatar": "/static/images/agents/cosmic-guide.svg",
+            "status": "available",
+            "tags": ["spiritual", "meditation", "guidance"]
+        },
+        {
+            "id": "harmonic-helper",
+            "name": "Harmonic Helper",
+            "description": "An expert in sound healing, frequencies and harmonics.",
+            "avatar": "/static/images/agents/harmonic-helper.svg",
+            "status": "available",
+            "tags": ["sound", "healing", "frequencies"]
+        },
+        {
+            "id": "wisdom-keeper",
+            "name": "Wisdom Keeper",
+            "description": "A repository of ancient wisdom and philosophical insights.",
+            "avatar": "/static/images/agents/wisdom-keeper.svg",
+            "status": "available",
+            "tags": ["philosophy", "wisdom", "knowledge"]
+        },
+        {
+            "id": "shop-oracle",
+            "name": "Shop Oracle",
+            "description": "Your personal guide to product recommendations and purchases.",
+            "avatar": "/static/images/agents/shop-oracle.svg",
+            "status": "available",
+            "tags": ["shopping", "products", "recommendations"]
+        }
+    ]
+    return jsonify(agents)
+
+@app.route('/api/ai-chat', methods=['POST'])
+def send_ai_message():
+    """API endpoint to send a message to an AI agent and receive a response"""
+    data = request.json
+    if not data or 'message' not in data or 'agentId' not in data:
+        return jsonify({"error": "Invalid message format"}), 400
+    
+    # In a production environment, you would connect to an actual AI service here
+    # For now, we'll return simulated responses
+    agent_id = data['agentId']
+    user_message = data['message']
+    
+    logger.info(f"AI chat message to {agent_id}: {user_message}")
+    
+    # Simulate response based on agent and message content
+    if agent_id == "cosmic-guide":
+        response = f"The cosmic energies are guiding you toward inner peace. Your question about '{user_message}' relates to the universal flow of consciousness."
+    elif agent_id == "harmonic-helper":
+        response = f"The frequency patterns in your message about '{user_message}' resonate with the 432 Hz healing frequency. This can harmonize your energy centers."
+    elif agent_id == "wisdom-keeper":
+        response = f"Ancient wisdom teaches us that questions like '{user_message}' lead us to deeper understanding. The path of self-discovery is eternal."
+    elif agent_id == "shop-oracle":
+        response = f"Based on your interest in '{user_message}', I recommend our new crystal sound bowls and harmonizing essential oils, available in our shop."
+    else:
+        response = f"I've received your message about '{user_message}' and I'm processing it thoughtfully."
+    
+    return jsonify({
+        "agentId": agent_id,
+        "message": response,
+        "timestamp": request.json.get('timestamp', '')
+    })
+
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404

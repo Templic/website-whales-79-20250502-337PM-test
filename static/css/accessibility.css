@@ -1,0 +1,300 @@
+/* Accessibility Controls Styling */
+
+.accessibility-controls {
+  background: rgba(10, 50, 92, 0.9);
+  border-radius: 12px;
+  padding: 30px;
+  margin: 20px 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.accessibility-section {
+  margin-bottom: 30px;
+}
+
+.accessibility-section h3 {
+  color: var(--fill-color);
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--accent-color);
+  padding-bottom: 10px;
+}
+
+.control-group {
+  margin-bottom: 15px;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--font-color);
+}
+
+/* Font Size Controls */
+.font-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.font-size-btn {
+  background-color: var(--fill-color);
+  color: var(--background-color);
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.font-size-btn:hover {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.font-size-display {
+  display: inline-block;
+  min-width: 50px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Toggle Switches */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: var(--accent-color);
+}
+
+input:focus + .toggle-slider {
+  box-shadow: 0 0 1px var(--accent-color);
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+/* Color Theme Options */
+.theme-options {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.theme-option {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.theme-option.active {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-color);
+}
+
+.theme-default {
+  background: linear-gradient(135deg, #303436 0%, #0a325c 50%, #9e140d 100%);
+}
+
+.theme-high-contrast {
+  background: linear-gradient(135deg, #000000 0%, #ffffff 100%);
+}
+
+.theme-soft {
+  background: linear-gradient(135deg, #edf2f7 0%, #a0aec0 50%, #4a5568 100%);
+}
+
+.theme-warm {
+  background: linear-gradient(135deg, #fffaf0 0%, #f6ad55 50%, #c05621 100%);
+}
+
+/* Text Spacing Controls */
+.spacing-slider {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.spacing-slider input[type="range"] {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: #4a5568;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.spacing-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+}
+
+.spacing-slider input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  border: none;
+}
+
+/* Reset Button */
+.reset-btn {
+  background-color: #4a5568;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.reset-btn:hover {
+  background-color: #2d3748;
+}
+
+/* Focus Styles for Accessibility */
+button:focus, input:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Font Size Classes */
+body.font-size-large {
+  font-size: 18px;
+}
+
+body.font-size-larger {
+  font-size: 20px;
+}
+
+body.font-size-largest {
+  font-size: 22px;
+}
+
+/* High Contrast Mode */
+body.high-contrast {
+  --background-color: #000;
+  --midground-color: #0f0f0f;
+  --foreground-color: #ff0000;
+  --fill-color: #ffff00;
+  --accent-color: #ff00ff;
+  --font-color: #ffffff;
+  color: #ffffff;
+}
+
+/* Reduced Motion */
+body.reduced-motion * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Accessibility Panel Toggle Button */
+.accessibility-toggle {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  background-color: var(--fill-color);
+  color: var(--background-color);
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.accessibility-toggle:hover {
+  background-color: var(--accent-color);
+  transform: scale(1.1);
+}
+
+.accessibility-toggle svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Accessibility Panel */
+.accessibility-panel {
+  position: fixed;
+  left: 20px;
+  bottom: 80px;
+  width: 320px;
+  background: rgba(10, 50, 92, 0.95);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  max-height: 80vh;
+  overflow-y: auto;
+  transform: translateY(20px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.accessibility-panel.visible {
+  transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 768px) {
+  .accessibility-panel {
+    left: 10px;
+    right: 10px;
+    width: calc(100% - 20px);
+  }
+}

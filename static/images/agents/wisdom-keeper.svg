@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Wisdom Keeper</title>
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="greenGradient">
+            <stop stop-color="#10B981" offset="0%"></stop>
+            <stop stop-color="#047857" offset="100%"></stop>
+        </linearGradient>
+        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="50%" id="glowGradient">
+            <stop stop-color="#10B981" stop-opacity="0.8" offset="0%"></stop>
+            <stop stop-color="#10B981" stop-opacity="0" offset="100%"></stop>
+        </radialGradient>
+    </defs>
+    <g fill="none" stroke="none">
+        <circle fill="url(#glowGradient)" cx="100" cy="100" r="95" opacity="0.3"></circle>
+        <circle fill="url(#greenGradient)" cx="100" cy="100" r="80"></circle>
+        
+        <!-- Ancient symbols and wisdom elements -->
+        <g transform="translate(50, 50)" fill="#FFFFFF">
+            <!-- Tree of Life symbol -->
+            <circle cx="50" cy="15" r="5" opacity="0.9"></circle>
+            <circle cx="35" cy="30" r="5" opacity="0.8"></circle>
+            <circle cx="65" cy="30" r="5" opacity="0.8"></circle>
+            <circle cx="20" cy="45" r="5" opacity="0.7"></circle>
+            <circle cx="50" cy="45" r="5" opacity="0.7"></circle>
+            <circle cx="80" cy="45" r="5" opacity="0.7"></circle>
+            <circle cx="35" cy="60" r="5" opacity="0.8"></circle>
+            <circle cx="65" cy="60" r="5" opacity="0.8"></circle>
+            <circle cx="50" cy="75" r="5" opacity="0.9"></circle>
+            
+            <!-- Connecting lines -->
+            <line x1="50" y1="15" x2="35" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="50" y1="15" x2="65" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="35" y1="30" x2="20" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="35" y1="30" x2="50" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="65" y1="30" x2="50" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="65" y1="30" x2="80" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="20" y1="45" x2="35" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="50" y1="45" x2="35" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="50" y1="45" x2="65" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="80" y1="45" x2="65" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="35" y1="60" x2="50" y2="75" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+            <line x1="65" y1="60" x2="50" y2="75" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
+        </g>
+        
+        <!-- Outer decorative rings -->
+        <circle stroke="#FFFFFF" stroke-width="1" cx="100" cy="100" r="85" opacity="0.2"></circle>
+        <circle stroke="#FFFFFF" stroke-width="0.5" cx="100" cy="100" r="90" opacity="0.1"></circle>
+    </g>
+</svg>

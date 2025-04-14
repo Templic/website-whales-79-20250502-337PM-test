@@ -1,45 +1,43 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+/* Base styles for the React application */
 :root {
-  --text-size-factor: 1;
-}
-
-.high-contrast {
-  --contrast-factor: 1.5;
-}
-
-.reduced-motion * {
-  transition-duration: 0ms !important;
-  animation-duration: 0ms !important;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-.reduced-motion html {
-  scroll-behavior: auto;
+  --background-color: #303436;
+  --midground-color: #0a325c;
+  --foreground-color: #9e140d;
+  --fill-color: #00ebd6;
+  --accent-color: #fe0064;
+  --font-color: #e8e6e3;
 }
 
 body {
-  font-size: calc(1rem * var(--text-size-factor));
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--font-color);
+  line-height: 1.6;
 }
 
-/* Dark mode */
-.dark-mode {
-  color-scheme: dark;
+.home-container,
+.about-container,
+.not-found-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-/* Custom themes */
-.theme-cosmic {
-  --primary-color: theme('colors.purple.600');
-  --secondary-color: theme('colors.indigo.600');
+h1 {
+  color: var(--fill-color);
+  margin-bottom: 1rem;
 }
 
-/* Accessibility focus styles */
-*:focus-visible {
-  outline: 2px solid var(--primary-color, theme('colors.purple.600'));
-  outline-offset: 2px;
+p {
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
 }
