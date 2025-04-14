@@ -14,10 +14,11 @@ import {
   type ContentItem, type InsertContentItem,
   type ContentHistory, type InsertContentHistory,
   type ContentUsage, type InsertContentUsage,
+  type ContentWorkflowHistory, type InsertContentWorkflowHistory,
   type Product,
   subscribers, posts, categories, comments, users, 
   tracks, albums, newsletters, contentItems,
-  contentHistory, contentUsage, products
+  contentHistory, contentUsage, contentWorkflowHistory, products
 } from "@shared/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -1526,6 +1527,102 @@ export class PostgresStorage implements IStorage {
       return await query;
     } catch (error) {
       console.error('Error generating content usage report:', error);
+      throw error;
+    }
+  }
+  
+  // Content workflow methods
+  async getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]> {
+    try {
+      const history = await db.select()
+        .from(contentWorkflowHistory)
+        .where(eq(contentWorkflowHistory.contentId, contentId))
+        .orderBy(desc(contentWorkflowHistory.actionAt));
+      
+      return history;
+    } catch (error) {
+      console.error("Error fetching content workflow history:", error);
+      throw error;
+    }
+  }
+  
+  async updateContentStatus(
+    contentId: number, 
+    status: string, 
+    userId: number, 
+    options?: { 
+      reviewNotes?: string;
+      scheduledPublishAt?: Date;
+      expirationDate?: Date;
+    }
+  ): Promise<ContentItem> {
+    try {
+      // Start a transaction
+      return await db.transaction(async (tx) => {
+        // Get current content item to record previous status
+        const [currentContent] = await tx.select()
+          .from(contentItems)
+          .where(eq(contentItems.id, contentId));
+        
+        if (!currentContent) {
+          throw new Error("Content item not found");
+        }
+        
+        // Build update data
+        const updateData: Record<string, any> = { 
+          status, 
+          updatedAt: new Date(),
+          lastModifiedBy: userId
+        };
+        
+        // Handle status-specific updates
+        if (status === 'review') {
+          updateData.reviewerId = userId;
+          updateData.reviewStatus = 'in_progress';
+          updateData.reviewStartedAt = new Date();
+        } else if (status === 'changes_requested' || status === 'approved') {
+          updateData.reviewStatus = 'completed';
+          updateData.reviewCompletedAt = new Date();
+          
+          if (options?.reviewNotes) {
+            updateData.reviewNotes = options.reviewNotes;
+          }
+        } else if (status === 'published') {
+          // If there's a scheduled publish date in the future, keep status as approved
+          if (options?.scheduledPublishAt && new Date(options.scheduledPublishAt) > new Date()) {
+            updateData.status = 'approved';
+            updateData.scheduledPublishAt = options.scheduledPublishAt;
+          } else {
+            // Otherwise publish immediately
+            updateData.status = 'published';
+          }
+          
+          // Set expiration date if provided
+          if (options?.expirationDate) {
+            updateData.expirationDate = options.expirationDate;
+          }
+        }
+        
+        // Update the content item
+        const [updatedContent] = await tx.update(contentItems)
+          .set(updateData)
+          .where(eq(contentItems.id, contentId))
+          .returning();
+        
+        // Record the workflow history
+        await tx.insert(contentWorkflowHistory).values({
+          contentId,
+          fromStatus: currentContent.status,
+          toStatus: updateData.status,
+          actorId: userId,
+          actionAt: new Date(),
+          comments: options?.reviewNotes
+        });
+        
+        return updatedContent;
+      });
+    } catch (error) {
+      console.error("Error updating content status:", error);
       throw error;
     }
   }
