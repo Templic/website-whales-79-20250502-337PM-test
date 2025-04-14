@@ -153,7 +153,7 @@ const WorkflowManagement: React.FC = () => {
     defaultValues: {
       contentId: 0,
       status: "",
-      reviewNotes: "",
+      comments: "",
       scheduledPublishAt: null,
       expirationDate: null,
     },
@@ -185,7 +185,7 @@ const WorkflowManagement: React.FC = () => {
         `/api/admin/content/${data.contentId}/status`,
         {
           status: data.status,
-          reviewNotes: data.reviewNotes,
+          comments: data.comments,
           scheduledPublishAt: data.scheduledPublishAt ? new Date(data.scheduledPublishAt).toISOString() : null,
           expirationDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : null,
         }
@@ -220,7 +220,7 @@ const WorkflowManagement: React.FC = () => {
     form.reset({
       contentId: contentItem.id,
       status: contentItem.status,
-      reviewNotes: "",
+      comments: "",
       scheduledPublishAt: contentItem.scheduledPublishAt ? new Date(contentItem.scheduledPublishAt) : null,
       expirationDate: contentItem.expirationDate ? new Date(contentItem.expirationDate) : null,
     });
