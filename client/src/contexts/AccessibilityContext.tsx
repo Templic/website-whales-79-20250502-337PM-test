@@ -1,148 +1,203 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
 interface AccessibilityContextType {
-  // Text size
-  textSize: number;
-  setTextSize: (size: number) => void;
+  // High contrast mode
+  highContrast: boolean;
+  setHighContrast: (highContrast: boolean) => void;
+  toggleHighContrast: () => void;
   
-  // Contrast
-  contrast: 'default' | 'high' | 'dark';
-  setContrast: (mode: 'default' | 'high' | 'dark') => void;
-  
-  // Motion
+  // Reduced motion
   reducedMotion: boolean;
-  setReducedMotion: (reduced: boolean) => void;
+  setReducedMotion: (reducedMotion: boolean) => void;
+  toggleReducedMotion: () => void;
   
-  // Voice control
-  voiceEnabled: boolean;
-  setVoiceEnabled: (enabled: boolean) => void;
+  // Text size adjustments
+  textSizeScale: number;
+  setTextSizeScale: (scale: number) => void;
+  increaseTextSize: () => void;
+  decreaseTextSize: () => void;
+  resetTextSize: () => void;
   
-  // Navigation auto-hide
-  autoHideNav: boolean;
-  setAutoHideNav: (autoHide: boolean) => void;
+  // Screen reader support
+  screenReaderMode: boolean;
+  setScreenReaderMode: (screenReaderMode: boolean) => void;
+  toggleScreenReaderMode: () => void;
   
-  // Panel controls
-  isAccessibilityOpen: boolean;
-  openAccessibilityPanel: () => void;
-  closeAccessibilityPanel: () => void;
-  toggleAccessibilityPanel: () => void;
+  // Update the entire settings object at once
+  updateAccessibilitySettings: (settings: Partial<AccessibilitySettings>) => void;
 }
 
-const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
+// Separate interface for the settings structure
+interface AccessibilitySettings {
+  highContrast: boolean;
+  reducedMotion: boolean;
+  textSizeScale: number;
+  screenReaderMode: boolean;
+}
 
-export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
-  // Core accessibility settings
-  const [textSize, setTextSize] = useState(() => {
-    const saved = localStorage.getItem('accessibility-text-size');
-    return saved ? parseInt(saved, 10) : 100;
-  });
+// Default values for accessibility settings
+const defaultSettings: AccessibilitySettings = {
+  highContrast: false,
+  reducedMotion: false,
+  textSizeScale: 1,
+  screenReaderMode: false,
+};
+
+// Storage key for persisting settings
+const STORAGE_KEY = 'accessibility_settings';
+
+// Create context with default values
+const AccessibilityContext = createContext<AccessibilityContextType>({
+  highContrast: defaultSettings.highContrast,
+  setHighContrast: () => {},
+  toggleHighContrast: () => {},
   
-  const [contrast, setContrast] = useState<'default' | 'high' | 'dark'>(() => {
-    const saved = localStorage.getItem('accessibility-contrast');
-    return (saved as 'default' | 'high' | 'dark') || 'default';
-  });
+  reducedMotion: defaultSettings.reducedMotion,
+  setReducedMotion: () => {},
+  toggleReducedMotion: () => {},
   
-  const [reducedMotion, setReducedMotion] = useState(() => {
-    const saved = localStorage.getItem('accessibility-reduced-motion');
-    return saved === 'true';
-  });
+  textSizeScale: defaultSettings.textSizeScale,
+  setTextSizeScale: () => {},
+  increaseTextSize: () => {},
+  decreaseTextSize: () => {},
+  resetTextSize: () => {},
   
-  const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    const saved = localStorage.getItem('accessibility-voice-enabled');
-    return saved === 'true';
-  });
+  screenReaderMode: defaultSettings.screenReaderMode,
+  setScreenReaderMode: () => {},
+  toggleScreenReaderMode: () => {},
   
-  // Navigation settings
-  const [autoHideNav, setAutoHideNav] = useState(() => {
-    const saved = localStorage.getItem('accessibility-auto-hide-nav');
-    // Default to true for auto-hiding navigation
-    return saved ? saved === 'true' : true;
-  });
-  
-  // Panel state
-  const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
-  
-  // Text size effect
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${textSize}%`;
-    localStorage.setItem('accessibility-text-size', textSize.toString());
+  updateAccessibilitySettings: () => {},
+});
+
+// Provider component
+export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Try to load saved settings from localStorage, or use defaults
+  const [settings, setSettings] = useState<AccessibilitySettings>(() => {
+    if (typeof window === 'undefined') return defaultSettings;
     
-    return () => {
-      document.documentElement.style.fontSize = "100%";
-    };
-  }, [textSize]);
+    try {
+      const savedSettings = localStorage.getItem(STORAGE_KEY);
+      return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
+    } catch (error) {
+      console.error('Failed to parse accessibility settings from localStorage', error);
+      return defaultSettings;
+    }
+  });
   
-  // Contrast effect
+  // Check for user's system preferences for reduced motion and high contrast
   useEffect(() => {
-    if (contrast === "high") {
-      document.documentElement.classList.add("high-contrast");
-      document.documentElement.classList.remove("dark-mode");
-    } else if (contrast === "dark") {
-      document.documentElement.classList.add("dark-mode");
-      document.documentElement.classList.remove("high-contrast");
-    } else {
-      document.documentElement.classList.remove("high-contrast", "dark-mode");
+    if (typeof window === 'undefined') return;
+    
+    // Check for prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReducedMotion.matches) {
+      setSettings(prev => ({ ...prev, reducedMotion: true }));
     }
     
-    localStorage.setItem('accessibility-contrast', contrast);
-    
-    return () => {
-      document.documentElement.classList.remove("high-contrast", "dark-mode");
-    };
-  }, [contrast]);
-  
-  // Reduced motion effect
-  useEffect(() => {
-    if (reducedMotion) {
-      document.documentElement.classList.add("reduced-motion");
-    } else {
-      document.documentElement.classList.remove("reduced-motion");
+    // Check for prefers-contrast: more (high contrast)
+    const prefersHighContrast = window.matchMedia('(prefers-contrast: more)');
+    if (prefersHighContrast.matches) {
+      setSettings(prev => ({ ...prev, highContrast: true }));
     }
     
-    localStorage.setItem('accessibility-reduced-motion', reducedMotion.toString());
-    
-    return () => {
-      document.documentElement.classList.remove("reduced-motion");
-    };
-  }, [reducedMotion]);
+    // Apply initial CSS variables
+    updateCssVariables(settings.textSizeScale);
+  }, []);
   
-  // Save voice preference
+  // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('accessibility-voice-enabled', voiceEnabled.toString());
-  }, [voiceEnabled]);
-  
-  // Save nav auto-hide preference
-  useEffect(() => {
-    localStorage.setItem('accessibility-auto-hide-nav', autoHideNav.toString());
+    if (typeof window === 'undefined') return;
     
-    // Add or remove auto-hide class on the navigation
-    if (autoHideNav) {
-      document.documentElement.classList.add("nav-auto-hide");
-    } else {
-      document.documentElement.classList.remove("nav-auto-hide");
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      updateCssVariables(settings.textSizeScale);
+    } catch (error) {
+      console.error('Failed to save accessibility settings to localStorage', error);
     }
-  }, [autoHideNav]);
+  }, [settings]);
   
-  // Panel control functions
-  const openAccessibilityPanel = () => setIsAccessibilityOpen(true);
-  const closeAccessibilityPanel = () => setIsAccessibilityOpen(false);
-  const toggleAccessibilityPanel = () => setIsAccessibilityOpen(prev => !prev);
+  // Function to update CSS variables for text size
+  const updateCssVariables = (scale: number) => {
+    document.documentElement.style.setProperty('--text-size-scale', scale.toString());
+  };
   
+  // High contrast methods
+  const setHighContrast = useCallback((highContrast: boolean) => {
+    setSettings(prev => ({ ...prev, highContrast }));
+  }, []);
+  
+  const toggleHighContrast = useCallback(() => {
+    setSettings(prev => ({ ...prev, highContrast: !prev.highContrast }));
+  }, []);
+  
+  // Reduced motion methods
+  const setReducedMotion = useCallback((reducedMotion: boolean) => {
+    setSettings(prev => ({ ...prev, reducedMotion }));
+  }, []);
+  
+  const toggleReducedMotion = useCallback(() => {
+    setSettings(prev => ({ ...prev, reducedMotion: !prev.reducedMotion }));
+  }, []);
+  
+  // Text size methods
+  const setTextSizeScale = useCallback((textSizeScale: number) => {
+    const clamped = Math.min(Math.max(textSizeScale, 0.8), 1.5);
+    setSettings(prev => ({ ...prev, textSizeScale: clamped }));
+  }, []);
+  
+  const increaseTextSize = useCallback(() => {
+    setSettings(prev => {
+      const newScale = Math.min(prev.textSizeScale + 0.1, 1.5);
+      return { ...prev, textSizeScale: newScale };
+    });
+  }, []);
+  
+  const decreaseTextSize = useCallback(() => {
+    setSettings(prev => {
+      const newScale = Math.max(prev.textSizeScale - 0.1, 0.8);
+      return { ...prev, textSizeScale: newScale };
+    });
+  }, []);
+  
+  const resetTextSize = useCallback(() => {
+    setSettings(prev => ({ ...prev, textSizeScale: 1 }));
+  }, []);
+  
+  // Screen reader support methods
+  const setScreenReaderMode = useCallback((screenReaderMode: boolean) => {
+    setSettings(prev => ({ ...prev, screenReaderMode }));
+  }, []);
+  
+  const toggleScreenReaderMode = useCallback(() => {
+    setSettings(prev => ({ ...prev, screenReaderMode: !prev.screenReaderMode }));
+  }, []);
+  
+  // Update all settings at once
+  const updateAccessibilitySettings = useCallback((newSettings: Partial<AccessibilitySettings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  }, []);
+  
+  // Combine all methods and settings
   const value = {
-    textSize,
-    setTextSize,
-    contrast,
-    setContrast,
-    reducedMotion,
+    highContrast: settings.highContrast,
+    setHighContrast,
+    toggleHighContrast,
+    
+    reducedMotion: settings.reducedMotion,
     setReducedMotion,
-    voiceEnabled, 
-    setVoiceEnabled,
-    autoHideNav,
-    setAutoHideNav,
-    isAccessibilityOpen,
-    openAccessibilityPanel,
-    closeAccessibilityPanel,
-    toggleAccessibilityPanel,
+    toggleReducedMotion,
+    
+    textSizeScale: settings.textSizeScale,
+    setTextSizeScale,
+    increaseTextSize,
+    decreaseTextSize,
+    resetTextSize,
+    
+    screenReaderMode: settings.screenReaderMode,
+    setScreenReaderMode,
+    toggleScreenReaderMode,
+    
+    updateAccessibilitySettings,
   };
   
   return (
@@ -150,12 +205,9 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       {children}
     </AccessibilityContext.Provider>
   );
-}
+};
 
-export function useAccessibility() {
-  const context = useContext(AccessibilityContext);
-  if (context === undefined) {
-    throw new Error('useAccessibility must be used within an AccessibilityProvider');
-  }
-  return context;
-}
+// Custom hook for using the accessibility context
+export const useAccessibility = () => useContext(AccessibilityContext);
+
+export default AccessibilityContext;

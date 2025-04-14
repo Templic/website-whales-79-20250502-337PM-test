@@ -1,111 +1,73 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
+import { Loader2 } from 'lucide-react';
 
 interface TaskadeEmbedProps {
   chatOnly?: boolean;
-  widgetMode?: boolean;
+  className?: string;
 }
 
-const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({ chatOnly = false, widgetMode = false }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
+const TaskadeEmbed: React.FC<TaskadeEmbedProps> = ({ chatOnly = false, className = '' }) => {
+  const { reducedMotion } = useAccessibility();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // You would replace this with your actual Taskade AI Agent URL
+  const taskadeUrl = 'https://app.taskade.com/embed/agent/YOUR_AGENT_ID';
+  
+  // Handle iframe load event
+  const handleIframeLoad = () => {
+    setLoading(false);
+  };
 
+  // Handle resize to ensure iframe takes full space
   useEffect(() => {
-    // Skip if already initialized or if container doesn't exist
-    if (initializedRef.current || !containerRef.current) return;
-    
-    // Mark as initialized
-    initializedRef.current = true;
-    
-    try {
-      // This is a placeholder for the actual Taskade Agent embed code
-      // In a real implementation, this would be the official Taskade embed code
-      // that would be provided by Taskade's documentation
-      
-      // Simulated embedding logic
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.async = true;
-      script.src = 'https://taskade.com/embed/agent.js'; // Placeholder URL
-      script.onload = () => {
-        // Placeholder for Taskade's initialization function
-        if (window.taskadeAgent) {
-          window.taskadeAgent.init({
-            containerId: containerRef.current?.id,
-            agentId: 'YOUR_TASKADE_AGENT_ID',
-            mode: widgetMode ? 'widget' : 'embed',
-            chatOnly: chatOnly
-          });
-        }
-      };
-      
-      document.head.appendChild(script);
-      
-      // Add a placeholder element for Taskade to inject content into
-      if (containerRef.current) {
-        const placeholderDiv = document.createElement('div');
-        placeholderDiv.className = 'taskade-agent-content w-full h-full';
-        placeholderDiv.textContent = 'Loading Taskade AI Agent...';
-        containerRef.current.appendChild(placeholderDiv);
+    const handleResize = () => {
+      if (iframeRef.current && iframeRef.current.parentElement) {
+        const parent = iframeRef.current.parentElement;
+        iframeRef.current.style.height = `${parent.clientHeight}px`;
+        iframeRef.current.style.width = `${parent.clientWidth}px`;
       }
-    } catch (error) {
-      console.error('Error initializing Taskade Agent:', error);
-    }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
     
     return () => {
-      // Cleanup logic if needed
+      window.removeEventListener('resize', handleResize);
     };
-  }, [chatOnly, widgetMode]);
-  
+  }, []);
+
   return (
-    <div 
-      id="taskade-agent-container" 
-      ref={containerRef} 
-      className={`taskade-agent-embed ${widgetMode ? 'taskade-widget' : ''}`}
-      style={{ 
-        width: '100%', 
-        height: '100%', 
-        minHeight: widgetMode ? '500px' : '600px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}
-    >
-      {/* Taskade Agent will be embedded here */}
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center p-6 bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border border-cyan-500/20">
-          <p className="text-lg text-cyan-400 mb-2">Taskade AI Agent</p>
-          <p className="text-sm mb-4 text-gray-300">
-            {/* Display a message explaining that this is a placeholder */}
-            Note: This is a simulation of the Taskade AI Agent. In a real implementation, 
-            you would need to replace the placeholder code with the official Taskade 
-            embed code.
-          </p>
-          <p className="text-xs text-gray-400">
-            To integrate with the actual Taskade API, you would need to:
-          </p>
-          <ol className="text-xs text-left text-gray-400 list-decimal pl-5 mt-2">
-            <li>Register for a Taskade account</li>
-            <li>Create an AI Agent in the Taskade platform</li>
-            <li>Get your API credentials</li>
-            <li>Replace the placeholder code with the official embed code</li>
-          </ol>
+    <div className={`relative h-full w-full overflow-hidden ${className}`}>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+            <p className="text-sm text-muted-foreground">Loading Taskade AI...</p>
+          </div>
         </div>
-      </div>
+      )}
+      
+      <iframe
+        ref={iframeRef}
+        src={taskadeUrl}
+        title="Taskade AI Embed"
+        className="w-full h-full border-0"
+        onLoad={handleIframeLoad}
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        allow="accelerometer; camera; encrypted-media; geolocation; microphone; midi"
+        style={{
+          opacity: loading ? 0 : 1,
+          transition: reducedMotion ? 'none' : 'opacity 0.3s ease'
+        }}
+      />
+      
+      {!loading && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/70 to-transparent h-8 pointer-events-none" />
+      )}
     </div>
   );
 };
-
-// Add this type declaration to avoid TypeScript errors
-declare global {
-  interface Window {
-    taskadeAgent?: {
-      init: (config: {
-        containerId: string | undefined;
-        agentId: string;
-        mode: 'widget' | 'embed';
-        chatOnly: boolean;
-      }) => void;
-    };
-  }
-}
 
 export default TaskadeEmbed;
