@@ -1,69 +1,85 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { useAgents } from '@/contexts/AgentContext';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 import { 
+  X, 
+  ChevronUp, 
+  ChevronDown, 
   Send, 
   RefreshCw, 
-  X, 
-  ChevronDown, 
-  ChevronUp, 
-  Volume2,
-  VolumeX,
   Copy, 
   Info, 
-  HelpCircle 
+  HelpCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
-import { useAgents } from '@/contexts/AgentContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from './ScrollArea';
 
+// Message interface
 interface Message {
   id: string;
-  sender: 'user' | 'agent';
   content: string;
+  sender: 'user' | 'agent';
   timestamp: Date;
 }
 
-export function AIChatInterface() {
-  const { activeAgent, deactivateAgent, isLoading } = useAgents();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isMuted, setIsMuted] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+// AIChatInterface component
+function AIChatInterface() {
+  const { activeAgent, deactivateAgent } = useAgents();
+  const { reducedMotion, voiceEnabled } = useAccessibility();
   const { toast } = useToast();
   
-  // Add greeting message when agent changes
-  useEffect(() => {
-    if (activeAgent && messages.length === 0) {
-      const greetingMessage: Message = {
-        id: `agent-greeting-${Date.now()}`,
-        sender: 'agent',
-        content: activeAgent.greeting,
-        timestamp: new Date()
-      };
-      setMessages([greetingMessage]);
+  // State for the chat
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'welcome',
+      content: activeAgent ? `Hello! I'm ${activeAgent.name}. ${activeAgent.description}. How can I help you today?` : '',
+      sender: 'agent',
+      timestamp: new Date()
     }
-  }, [activeAgent, messages.length]);
+  ]);
+  
+  const [inputValue, setInputValue] = useState('');
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMuted, setIsMuted] = useState(!voiceEnabled);
+  
+  // Ref for auto-scrolling to bottom of messages
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
+  }, [messages, reducedMotion]);
+  
+  // Initialize text-to-speech
+  useEffect(() => {
+    setIsMuted(!voiceEnabled);
+  }, [voiceEnabled]);
+  
+  // Format timestamp
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
   
   // Handle sending a message
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !activeAgent) return;
+    if (!inputValue.trim() || isSending) return;
     
-    // Create and add user message
+    // Add user message
     const userMessage: Message = {
-      id: `user-${Date.now()}`,
+      id: Date.now().toString(),
+      content: inputValue.trim(),
       sender: 'user',
-      content: inputValue,
       timestamp: new Date()
     };
     
@@ -71,145 +87,148 @@ export function AIChatInterface() {
     setInputValue('');
     setIsSending(true);
     
-    // Simulate agent response (in a real app, this would call an AI service)
-    setTimeout(() => {
-      generateResponse(userMessage.content);
-      setIsSending(false);
-    }, 1500);
-  };
-  
-  // Generate agent response (simulated)
-  const generateResponse = (userQuery: string) => {
-    if (!activeAgent) return;
-    
-    // Simple response simulation based on query content
-    let responseText = '';
-    
-    // Basic pattern matching for demo purposes
-    if (/help|assist|support/i.test(userQuery)) {
-      responseText = `I'd be happy to help you! As ${activeAgent.name}, I can ${activeAgent.capabilities.join(', ')}. What specific assistance do you need?`;
-    } 
-    else if (/who are you|what can you do|capabilities/i.test(userQuery)) {
-      responseText = `I am ${activeAgent.name}, your cosmic assistant. My capabilities include ${activeAgent.capabilities.join(', ')}. I communicate in a ${activeAgent.personality.tone} tone, with a ${activeAgent.personality.style} style.`;
-    }
-    else if (/thank|thanks/i.test(userQuery)) {
-      responseText = "You're welcome! I'm glad I could assist you on your cosmic journey. Is there anything else you'd like to explore?";
-    }
-    else {
-      // Default responses based on agent category
-      const responses = {
-        shopping: "I can help you find the perfect cosmic products for your journey. Would you like me to suggest some popular items or help you find something specific?",
-        music: "Music is a gateway to cosmic consciousness. I can guide you through our frequency-attuned tracks or explain the healing properties of specific sounds. What are you interested in exploring?",
-        education: "The cosmos contains infinite wisdom. I'd be happy to explain cosmic concepts, guide you through meditation techniques, or help you understand sacred geometry. Where would you like to begin?",
-        general: "I'm here to guide you through Dale's cosmic universe. I can help with navigation, answer questions about the website, or direct you to specific resources. How can I assist your journey today?"
+    // Simulate API delay for demo
+    try {
+      setIsLoading(true);
+      
+      // In a real implementation, this would be a call to an API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Generate agent response based on personality
+      let response = '';
+      
+      if (activeAgent) {
+        // Simulate different responses based on agent personality
+        if (activeAgent.category === 'shopping') {
+          response = `I'd be happy to help you find some cosmic products! Based on your interests, I recommend exploring our celestial collection.`;
+        } else if (activeAgent.category === 'music') {
+          response = `The cosmic frequencies you're looking for can be found in our latest album releases. Would you like me to suggest some tracks that align with your energy?`;
+        } else if (activeAgent.category === 'education') {
+          response = `That's a fascinating question about cosmic consciousness. The concept relates to our interconnectedness with the universe and higher states of awareness.`;
+        } else {
+          response = `I'm here to assist with your cosmic journey. Could you tell me more about what you're looking for today?`;
+        }
+      } else {
+        response = 'I apologize, but I cannot provide assistance at the moment. Please try again later.';
+      }
+      
+      // Add agent response
+      const agentMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        sender: 'agent',
+        timestamp: new Date()
       };
       
-      responseText = responses[activeAgent.category as keyof typeof responses] || 
-        "I understand your question. Let me guide you through our cosmic offerings to find what resonates with your journey.";
-    }
-    
-    const agentResponse: Message = {
-      id: `agent-${Date.now()}`,
-      sender: 'agent',
-      content: responseText,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, agentResponse]);
-    
-    // Text-to-speech if not muted
-    if (!isMuted && 'speechSynthesis' in window) {
-      const speech = new SpeechSynthesisUtterance(responseText);
-      speech.rate = 0.9;
-      speech.pitch = 1;
-      window.speechSynthesis.speak(speech);
+      setMessages(prev => [...prev, agentMessage]);
+      
+      // Text-to-speech for agent response
+      if (!isMuted && window.speechSynthesis) {
+        const speech = new SpeechSynthesisUtterance(response);
+        speech.rate = 1;
+        speech.pitch = 1;
+        window.speechSynthesis.speak(speech);
+      }
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send message. Please try again.',
+        variant: 'error'
+      });
+    } finally {
+      setIsSending(false);
+      setIsLoading(false);
     }
   };
   
-  // Reset conversation
+  // Reset the conversation
   const handleReset = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel(); // Stop any ongoing speech
-    }
-    
-    setMessages([]);
-    
-    // Add greeting message after reset
-    if (activeAgent) {
-      setTimeout(() => {
-        const greetingMessage: Message = {
-          id: `agent-greeting-${Date.now()}`,
-          sender: 'agent',
-          content: activeAgent.greeting,
-          timestamp: new Date()
-        };
-        setMessages([greetingMessage]);
-      }, 300);
-    }
-    
+    setMessages([
+      {
+        id: 'welcome',
+        content: activeAgent ? `Hello! I'm ${activeAgent.name}. ${activeAgent.description}. How can I help you today?` : '',
+        sender: 'agent',
+        timestamp: new Date()
+      }
+    ]);
     toast({
-      title: "Conversation Reset",
-      description: "Starting a new conversation with your cosmic guide.",
-    });
-  };
-  
-  // Toggle mute state
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    
-    if (!isMuted && window.speechSynthesis) {
-      window.speechSynthesis.cancel(); // Stop speech if muting
-    }
-    
-    toast({
-      title: isMuted ? "Voice Enabled" : "Voice Disabled",
-      description: isMuted ? "Agent responses will now be spoken" : "Agent responses will be text only",
+      title: 'Conversation Reset',
+      description: 'Started a new conversation',
     });
   };
   
   // Copy conversation to clipboard
   const copyConversation = () => {
-    const conversationText = messages
-      .map(msg => `${msg.sender === 'user' ? 'You' : activeAgent?.name}: ${msg.content}`)
-      .join('\n\n');
-      
-    navigator.clipboard.writeText(conversationText);
+    const text = messages.map(msg => 
+      `${msg.sender === 'user' ? 'You' : activeAgent?.name}: ${msg.content}`
+    ).join('\n\n');
     
-    toast({
-      title: "Copied to Clipboard",
-      description: "The entire conversation has been copied to your clipboard.",
-    });
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast({
+          title: 'Copied to Clipboard',
+          description: 'Conversation copied successfully',
+        });
+      })
+      .catch(err => {
+        console.error('Failed to copy:', err);
+        toast({
+          title: 'Copy Failed',
+          description: 'Could not copy conversation to clipboard',
+          variant: 'error'
+        });
+      });
   };
   
-  // Format timestamp
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Toggle mute status
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    
+    if (isMuted) {
+      toast({
+        title: 'Voice Enabled',
+        description: 'Agent responses will be spoken aloud',
+      });
+    } else {
+      // Stop any current speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      
+      toast({
+        title: 'Voice Disabled',
+        description: 'Agent responses will not be spoken',
+      });
+    }
   };
   
+  // If no active agent, don't render
   if (!activeAgent) return null;
   
   return (
-    <Card className="h-full relative overflow-hidden cosmic-glass-card shadow-glow">
+    <Card className="border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/80 backdrop-blur overflow-hidden shadow-xl">
       {/* Header */}
-      <div className="border-b border-white/10 p-4 bg-gradient-to-r from-purple-900/40 to-indigo-900/40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 cosmic-avatar">
+      <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border-b border-white/10">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={activeAgent.avatar} alt={activeAgent.name} />
-              <AvatarFallback className="bg-cosmic-primary text-white">
+              <AvatarFallback className="bg-purple-900 text-white">
                 {activeAgent.name.charAt(0)}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-medium">{activeAgent.name}</h3>
-              <p className="text-sm text-white/70">{activeAgent.personality.tone}</p>
+              <h3 className="font-medium text-white">{activeAgent.name}</h3>
+              <p className="text-xs text-white/60">{activeAgent.category}</p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
-              size="icon" 
+              size="icon"
               onClick={toggleMute}
               title={isMuted ? "Enable voice" : "Disable voice"}
             >

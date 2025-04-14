@@ -1,25 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Contrast = 'default' | 'high' | 'dark';
+// Define types for contrast modes
+type ContrastMode = 'default' | 'high' | 'dark';
 
-type AccessibilityContextType = {
-  // Text Size
+// Define the context interface
+interface AccessibilityContextType {
+  // Text size
   textSize: number;
   setTextSize: (size: number) => void;
   
-  // Contrast
-  contrast: Contrast;
-  setContrast: (contrast: Contrast) => void;
+  // Contrast mode
+  contrast: ContrastMode;
+  setContrast: (mode: ContrastMode) => void;
   
-  // Reduced Motion
+  // Reduced motion
   reducedMotion: boolean;
-  setReducedMotion: (reducedMotion: boolean) => void;
+  setReducedMotion: (reduced: boolean) => void;
   
-  // Voice Navigation
+  // Voice features
   voiceEnabled: boolean;
   setVoiceEnabled: (enabled: boolean) => void;
   
-  // Auto Hide Navigation 
+  // Navigation autoHide
   autoHideNav: boolean;
   setAutoHideNav: (autoHide: boolean) => void;
   
@@ -28,115 +30,116 @@ type AccessibilityContextType = {
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
-};
+}
 
+// Create the context with default values
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Load settings from localStorage or use defaults
-  const [textSize, setTextSize] = useState<number>(() => {
-    const saved = localStorage.getItem('accessibilityTextSize');
-    return saved ? parseInt(saved, 10) : 100;
-  });
+// Custom hook to access the context
+export function useAccessibility() {
+  const context = useContext(AccessibilityContext);
+  if (!context) {
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+  }
+  return context;
+}
+
+// Storage key for saved preferences
+const STORAGE_KEY = 'cosmic-accessibility-preferences';
+
+// Provider component
+export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
+  // Load saved preferences or use defaults
+  const loadSavedPreferences = () => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (err) {
+      console.error('Error loading accessibility preferences:', err);
+    }
+    
+    return null;
+  };
   
-  const [contrast, setContrast] = useState<Contrast>(() => {
-    const saved = localStorage.getItem('accessibilityContrast');
-    return (saved as Contrast) || 'default';
-  });
+  // Initialize state with saved preferences or defaults
+  const savedPrefs = loadSavedPreferences();
   
-  const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
-    const saved = localStorage.getItem('accessibilityReducedMotion');
-    return saved ? saved === 'true' : false;
-  });
-  
-  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem('accessibilityVoiceEnabled');
-    return saved ? saved === 'true' : false;
-  });
-  
-  const [autoHideNav, setAutoHideNav] = useState<boolean>(() => {
-    const saved = localStorage.getItem('accessibilityAutoHideNav');
-    return saved ? saved === 'true' : true; // Default to true
-  });
-  
+  const [textSize, setTextSizeState] = useState<number>(savedPrefs?.textSize || 100);
+  const [contrast, setContrastState] = useState<ContrastMode>(savedPrefs?.contrast || 'default');
+  const [reducedMotion, setReducedMotionState] = useState<boolean>(savedPrefs?.reducedMotion || false);
+  const [voiceEnabled, setVoiceEnabledState] = useState<boolean>(savedPrefs?.voiceEnabled || false);
+  const [autoHideNav, setAutoHideNavState] = useState<boolean>(savedPrefs?.autoHideNav || true);
   const [isPanelOpen, setIsPanelOpen] = useState<boolean>(false);
   
-  // Save settings to localStorage whenever they change
+  // Save preferences when they change
   useEffect(() => {
-    localStorage.setItem('accessibilityTextSize', textSize.toString());
-    document.documentElement.style.setProperty('--accessibility-text-scale', `${textSize / 100}`);
+    const preferences = {
+      textSize,
+      contrast,
+      reducedMotion,
+      voiceEnabled,
+      autoHideNav,
+    };
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+    } catch (err) {
+      console.error('Error saving accessibility preferences:', err);
+    }
+  }, [textSize, contrast, reducedMotion, voiceEnabled, autoHideNav]);
+  
+  // Apply text size to root element
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${textSize / 100}rem`;
+    
+    return () => {
+      document.documentElement.style.fontSize = '';
+    };
   }, [textSize]);
   
+  // Apply contrast mode classes
   useEffect(() => {
-    localStorage.setItem('accessibilityContrast', contrast);
-    // Apply contrast classes to root element
-    const root = document.documentElement;
-    root.classList.remove('contrast-default', 'contrast-high', 'contrast-dark');
-    root.classList.add(`contrast-${contrast}`);
+    const classList = document.documentElement.classList;
+    
+    // Remove all contrast classes
+    classList.remove('contrast-high', 'contrast-dark');
+    
+    // Add the current contrast class
+    if (contrast === 'high') {
+      classList.add('contrast-high');
+    } else if (contrast === 'dark') {
+      classList.add('contrast-dark');
+    }
   }, [contrast]);
   
+  // Apply reduced motion preference
   useEffect(() => {
-    localStorage.setItem('accessibilityReducedMotion', reducedMotion.toString());
-    const root = document.documentElement;
+    const classList = document.documentElement.classList;
+    
     if (reducedMotion) {
-      root.classList.add('reduced-motion');
+      classList.add('reduce-motion');
     } else {
-      root.classList.remove('reduced-motion');
+      classList.remove('reduce-motion');
     }
   }, [reducedMotion]);
   
-  useEffect(() => {
-    localStorage.setItem('accessibilityVoiceEnabled', voiceEnabled.toString());
-    // Initialize voice recognition if enabled
-    if (voiceEnabled) {
-      // Voice recognition logic would go here
-      console.log('Voice navigation enabled');
-    }
-  }, [voiceEnabled]);
+  // Wrapper functions to update state
+  const setTextSize = (size: number) => setTextSizeState(size);
+  const setContrast = (mode: ContrastMode) => setContrastState(mode);
+  const setReducedMotion = (reduced: boolean) => setReducedMotionState(reduced);
+  const setVoiceEnabled = (enabled: boolean) => setVoiceEnabledState(enabled);
+  const setAutoHideNav = (autoHide: boolean) => setAutoHideNavState(autoHide);
   
-  useEffect(() => {
-    localStorage.setItem('accessibilityAutoHideNav', autoHideNav.toString());
-  }, [autoHideNav]);
-  
-  // Panel toggle functions
+  // Panel control functions
   const openPanel = () => setIsPanelOpen(true);
   const closePanel = () => setIsPanelOpen(false);
   const togglePanel = () => setIsPanelOpen(prev => !prev);
   
-  // Set reduced motion based on user's OS preference on initial load
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (mediaQuery.matches && localStorage.getItem('accessibilityReducedMotion') === null) {
-      setReducedMotion(true);
-    }
-    
-    // Check for OS contrast preference
-    const highContrastQuery = window.matchMedia('(prefers-contrast: more)');
-    if (highContrastQuery.matches && localStorage.getItem('accessibilityContrast') === null) {
-      setContrast('high');
-    }
-    
-    // Check for dark mode preference
-    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    if (darkModeQuery.matches && localStorage.getItem('accessibilityContrast') === null) {
-      setContrast('dark');
-    }
-  }, []);
-  
-  // Listen for OS changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handleChange = () => {
-      if (localStorage.getItem('accessibilityReducedMotion') === null) {
-        setReducedMotion(mediaQuery.matches);
-      }
-    };
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-  
-  // Create context value
+  // Create context value object
   const contextValue: AccessibilityContextType = {
     textSize,
     setTextSize,
@@ -151,24 +154,12 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     isPanelOpen,
     openPanel,
     closePanel,
-    togglePanel
+    togglePanel,
   };
-
+  
   return (
     <AccessibilityContext.Provider value={contextValue}>
       {children}
     </AccessibilityContext.Provider>
   );
-};
-
-export const useAccessibility = (): AccessibilityContextType => {
-  const context = useContext(AccessibilityContext);
-  
-  if (context === undefined) {
-    throw new Error('useAccessibility must be used within an AccessibilityProvider');
-  }
-  
-  return context;
-};
-
-export default AccessibilityContext;
+}

@@ -1,47 +1,138 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAgents, Agent } from '@/contexts/AgentContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageCircle } from 'lucide-react';
-import { useAgents } from '@/contexts/AgentContext';
-import { motion } from 'framer-motion';
+import { Bot, MessageCircle, User, ChevronUp, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAccessibility } from '@/contexts/AccessibilityContext';
+import { useToast } from '@/hooks/use-toast';
 
 export function AIAgentButton() {
-  const { activeAgent, activateAgent } = useAgents();
+  const { agents, activeAgent, availableAgents, activateAgent } = useAgents();
+  const { reducedMotion } = useAccessibility();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
   
-  // Activate the general assistant by default when button is clicked
-  const handleClick = () => {
-    // If there's no active agent, activate the general assistant
-    if (!activeAgent) {
-      activateAgent('general-assistant');
-    }
+  // Toggle the agent dropdown
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+  
+  // Select an agent
+  const handleSelectAgent = (agent: Agent) => {
+    activateAgent(agent.id);
+    setIsOpen(false);
+    toast({
+      title: `${agent.name} activated`,
+      description: `You are now chatting with ${agent.name}`,
+    });
   };
   
   return (
-    <motion.div
-      className="fixed bottom-6 right-6 z-50"
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-    >
+    <div className="relative z-30">
+      {/* Main Button */}
       <Button
-        onClick={handleClick}
-        className={`
-          rounded-full h-14 w-14 p-0 bg-gradient-to-r
-          from-purple-600 to-indigo-600
-          hover:from-purple-700 hover:to-indigo-700
-          shadow-lg shadow-purple-500/20
-          flex items-center justify-center
-        `}
-        aria-label="Open AI Assistant"
+        onClick={toggleDropdown}
+        variant="outline"
+        className="flex items-center gap-2 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 border-purple-500/30 hover:border-purple-500/60 rounded-full px-4"
       >
-        <div className="relative">
-          <MessageCircle className="h-6 w-6 text-white" />
-          {/* Cosmic pulsing effect */}
-          <div className="absolute inset-0 rounded-full bg-white opacity-20 blur-md animate-ping" />
-        </div>
+        {activeAgent ? (
+          <>
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={activeAgent.avatar} alt={activeAgent.name} />
+              <AvatarFallback className="bg-purple-900 text-white text-xs">
+                {activeAgent.name.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm">{activeAgent.name}</span>
+          </>
+        ) : (
+          <>
+            <Bot className="h-5 w-5" />
+            <span className="text-sm">AI Assist</span>
+          </>
+        )}
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4 opacity-70" />
+        ) : (
+          <ChevronDown className="h-4 w-4 opacity-70" />
+        )}
       </Button>
-    </motion.div>
+      
+      {/* Dropdown */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop for closing when clicking outside */}
+            <motion.div
+              className="fixed inset-0 z-30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+            />
+            
+            {/* Dropdown menu */}
+            <motion.div
+              className="absolute right-0 top-full mt-1 z-40 w-64 bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur rounded-lg border border-white/10 shadow-xl overflow-hidden"
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: reducedMotion ? 0 : 0.15 }}
+            >
+              <div className="p-3 border-b border-white/10">
+                <h3 className="font-medium text-sm">Choose your AI Assistant</h3>
+                <p className="text-xs text-white/60 mt-1">
+                  Select the guide that best fits your needs
+                </p>
+              </div>
+              
+              <div className="max-h-[300px] overflow-y-auto p-2 space-y-1">
+                {availableAgents.map((agent) => (
+                  <button
+                    key={agent.id}
+                    className={`w-full flex items-center gap-3 p-2 rounded-md text-left transition-colors ${
+                      activeAgent?.id === agent.id
+                        ? 'bg-purple-600/30 border border-purple-500/50'
+                        : 'hover:bg-white/5'
+                    }`}
+                    onClick={() => handleSelectAgent(agent)}
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={agent.avatar} alt={agent.name} />
+                      <AvatarFallback className="bg-purple-900 text-white">
+                        {agent.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{agent.name}</p>
+                      <p className="text-xs text-white/60 truncate">
+                        {agent.description}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              <div className="p-2 bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border-t border-white/10 flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <MessageCircle className="h-4 w-4 text-white/70" />
+                  <span className="text-xs text-white/70">24/7 AI Support</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs h-7 px-2"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 

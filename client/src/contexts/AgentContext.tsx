@@ -1,175 +1,227 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Define the Agent type
+// Agent personality type
+export interface AgentPersonality {
+  tone: string;
+  style: string;
+  traits: string[];
+}
+
+// Define the Agent interface
 export interface Agent {
   id: string;
   name: string;
   description: string;
   avatar: string;
-  category: string;
-  instructions: string;
   capabilities: string[];
-  greeting: string;
-  availablePages: string[];
-  isGlobal: boolean;
-  personality: {
-    tone: string;
-    style: string;
-    traits: string[];
-  };
+  category: string;
+  personality: AgentPersonality;
+  contexts: string[]; // Which pages/contexts this agent is available for
+  instructions: string; // System instructions for the agent
 }
 
-// Define the context type
-interface AgentContextType {
+// Define the context interface
+export interface AgentContextType {
   agents: Agent[];
   activeAgent: Agent | null;
+  availableAgents: Agent[]; // For current page/context
+  currentContext: string;
   activateAgent: (agentId: string) => void;
   deactivateAgent: () => void;
-  getPageAgents: (pagePath: string) => Agent[];
-  isLoading: boolean;
+  setContext: (context: string) => void;
+  getAgentsForPage: (pageContext: string) => Agent[];
 }
 
-// Create the context
+// Create the context with default values
 const AgentContext = createContext<AgentContextType | undefined>(undefined);
 
-// Define the hardcoded initial agents
-const initialAgents: Agent[] = [
+// Storage key for saved agent state
+const STORAGE_KEY = 'cosmic-agent-state';
+
+// Custom hook to access the context
+export function useAgents() {
+  const context = useContext(AgentContext);
+  if (!context) {
+    throw new Error('useAgents must be used within an AgentProvider');
+  }
+  return context;
+}
+
+// Predefined agents
+const predefinedAgents: Agent[] = [
+  // Shopping Assistant
   {
-    id: "shop-assistant",
-    name: "Shop Assistant",
-    description: "I can help you find products and complete your purchase.",
-    avatar: "/assets/agents/shop-assistant.svg",
-    category: "shopping",
-    instructions: "Help users find products, answer questions about product details, and guide them through checkout process.",
-    capabilities: ["Product recommendations", "Order assistance", "Price inquiries"],
-    greeting: "Hello! I'm your cosmic shopping assistant. What kind of products are you looking for today?",
-    availablePages: ["/shop", "/cart", "/checkout", "/shop/product", "/product-detail"],
-    isGlobal: false,
+    id: 'shopping-assistant',
+    name: 'Cosmic Shopper',
+    description: 'Guide for cosmic products and merchandise',
+    avatar: '/assets/agents/shop-assistant.svg',
+    capabilities: [
+      'Product recommendations',
+      'Gift suggestions',
+      'Size and fit guidance',
+      'Merchandise information',
+      'Shipping and returns help'
+    ],
+    category: 'shopping',
     personality: {
-      tone: "Helpful and enthusiastic",
-      style: "Cosmic and service-oriented",
-      traits: ["Knowledgeable about products", "Patient", "Detail-oriented"]
-    }
+      tone: 'Enthusiastic and helpful',
+      style: 'Friendly and knowledgeable',
+      traits: ['Detailed', 'Positive', 'Product-focused']
+    },
+    contexts: ['shop', 'products', 'merchandise', 'home'],
+    instructions: 'You are a shopping assistant helping users find cosmic merchandise and products they might enjoy.'
   },
+  
+  // Music Guide
   {
-    id: "music-guide",
-    name: "Music Guide",
-    description: "I can explain sound healing techniques and cosmic frequencies.",
-    avatar: "/assets/agents/music-guide.svg",
-    category: "music",
-    instructions: "Explain musical concepts, sound healing, frequency benefits, and guide users through the music library.",
-    capabilities: ["Explain frequencies", "Recommend tracks", "Teach sound healing"],
-    greeting: "Greetings, cosmic traveler! I'm your guide to the healing sounds of the universe. How can I assist your sonic journey today?",
-    availablePages: ["/archived-music", "/music-release", "/cosmic-connectivity"],
-    isGlobal: false,
+    id: 'music-guide',
+    name: 'Harmonic Navigator',
+    description: 'Expert on cosmic sounds and music experiences',
+    avatar: '/assets/agents/music-guide.svg',
+    capabilities: [
+      'Music recommendations',
+      'Album information',
+      'Sound healing insights',
+      'Audio technology help',
+      'Musical journey guidance'
+    ],
+    category: 'music',
     personality: {
-      tone: "Mystical and calming",
-      style: "Deeply knowledgeable about frequencies",
-      traits: ["Spiritual", "Wise", "Calming presence"]
-    }
+      tone: 'Serene and insightful',
+      style: 'Flowing and rhythmic communication',
+      traits: ['Artistic', 'Intuitive', 'Musically knowledgeable']
+    },
+    contexts: ['music', 'sounds', 'audio', 'home'],
+    instructions: 'You are a music guide helping users explore cosmic sounds, albums, and music-related experiences.'
   },
+  
+  // Cosmic Teacher
   {
-    id: "cosmic-teacher",
-    name: "Cosmic Teacher",
-    description: "I can explain cosmic concepts and meditation techniques.",
-    avatar: "/assets/agents/cosmic-teacher.svg",
-    category: "education",
-    instructions: "Explain spiritual concepts, meditation techniques, and guide users on their cosmic journey of self-discovery.",
-    capabilities: ["Teach meditation", "Explain cosmic phenomena", "Guide spiritual journeys"],
-    greeting: "Welcome, seeker of knowledge. I am here to guide you through the mysteries of the cosmos and your inner universe. What wisdom do you seek?",
-    availablePages: ["/resources", "/cosmic-experience", "/resources/sacred-geometry", "/resources/meditation"],
-    isGlobal: false,
+    id: 'cosmic-teacher',
+    name: 'Celestial Scholar',
+    description: 'Educator on cosmic consciousness and spiritual growth',
+    avatar: '/assets/agents/cosmic-teacher.svg',
+    capabilities: [
+      'Explain cosmic concepts',
+      'Provide learning resources',
+      'Answer philosophical questions',
+      'Guide meditation practices',
+      'Recommend books and courses'
+    ],
+    category: 'education',
     personality: {
-      tone: "Wise and profound",
-      style: "Speaks in metaphors and cosmic references",
-      traits: ["Ancient wisdom", "Patient teacher", "Spiritually attuned"]
-    }
+      tone: 'Wise and patient',
+      style: 'Clear and thought-provoking',
+      traits: ['Knowledgeable', 'Supportive', 'Philosophical']
+    },
+    contexts: ['learn', 'education', 'consciousness', 'home'],
+    instructions: 'You are a cosmic teacher helping users understand concepts related to consciousness, spirituality, and personal growth.'
   },
+  
+  // General Assistant
   {
-    id: "general-assistant",
-    name: "Cosmic Guide",
-    description: "I can help with any questions about this website and Dale's cosmic journey.",
-    avatar: "/assets/agents/general-assistant.svg",
-    category: "general",
-    instructions: "Answer general questions about the website, Dale's journey, and help users navigate to the right resources.",
-    capabilities: ["Website navigation", "FAQs", "General assistance"],
-    greeting: "Hello there! I'm your cosmic companion for this journey through Dale's universe. How may I assist you today?",
-    availablePages: ["*"], // Available on all pages
-    isGlobal: true,
+    id: 'general-assistant',
+    name: 'Cosmic Guide',
+    description: 'Your all-purpose helper for any cosmic journey questions',
+    avatar: '/assets/agents/general-assistant.svg',
+    capabilities: [
+      'Website navigation help',
+      'General information',
+      'Technical support',
+      'Content discovery',
+      'Account assistance'
+    ],
+    category: 'general',
     personality: {
-      tone: "Friendly and accessible",
-      style: "Cosmic but straightforward",
-      traits: ["Helpful", "Knowledgeable about the site", "Friendly"]
-    }
+      tone: 'Friendly and versatile',
+      style: 'Clear and approachable',
+      traits: ['Helpful', 'Knowledgeable', 'Responsive']
+    },
+    contexts: ['global'],
+    instructions: 'You are a general assistant helping users with any questions about the cosmic consciousness platform and website.'
   }
 ];
 
-// Create the provider component
-export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [agents, setAgents] = useState<Agent[]>(initialAgents);
-  const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+// Provider component
+export function AgentProvider({ children }: { children: React.ReactNode }) {
+  // Load saved agent state or use defaults
+  const loadSavedState = () => {
+    if (typeof window === 'undefined') return null;
+    
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (err) {
+      console.error('Error loading agent state:', err);
+    }
+    
+    return null;
+  };
   
-  // Initialize with stored preference if available
+  // State management
+  const [agents] = useState<Agent[]>(predefinedAgents);
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
+  const [currentContext, setCurrentContext] = useState<string>('home');
+  
+  // Calculate available agents based on current context
+  const getAgentsForPage = (pageContext: string): Agent[] => {
+    return agents.filter(agent => 
+      agent.contexts.includes(pageContext) || agent.contexts.includes('global')
+    );
+  };
+  
+  // Get currently available agents
+  const availableAgents = getAgentsForPage(currentContext);
+  
+  // Find active agent by ID
+  const activeAgent = activeAgentId 
+    ? agents.find(agent => agent.id === activeAgentId) || null
+    : null;
+  
+  // Save state when it changes
   useEffect(() => {
-    const storedAgentId = localStorage.getItem('activeAgentId');
-    if (storedAgentId) {
-      const agent = agents.find(a => a.id === storedAgentId);
-      if (agent) setActiveAgent(agent);
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        activeAgentId,
+        currentContext
+      }));
+    } catch (err) {
+      console.error('Error saving agent state:', err);
     }
-  }, [agents]);
+  }, [activeAgentId, currentContext]);
   
-  // Activate an agent by ID
+  // Activate an agent
   const activateAgent = (agentId: string) => {
-    setIsLoading(true);
-    
-    // Find the agent in our list
     const agent = agents.find(a => a.id === agentId);
-    
     if (agent) {
-      setActiveAgent(agent);
-      localStorage.setItem('activeAgentId', agentId);
+      setActiveAgentId(agentId);
     }
-    
-    // Simulate loading time for agent activation
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
   };
   
   // Deactivate the current agent
   const deactivateAgent = () => {
-    setActiveAgent(null);
-    localStorage.removeItem('activeAgentId');
+    setActiveAgentId(null);
   };
   
-  // Get agents available for a specific page
-  const getPageAgents = (pagePath: string): Agent[] => {
-    return agents.filter(agent => 
-      agent.isGlobal || 
-      agent.availablePages.includes('*') || 
-      agent.availablePages.some(page => {
-        // Match exact paths
-        if (page === pagePath) return true;
-        
-        // Match path patterns (if page ends with a wildcard)
-        if (page.endsWith('*')) {
-          const basePattern = page.slice(0, -1);
-          return pagePath.startsWith(basePattern);
-        }
-        
-        return false;
-      })
-    );
+  // Set the current page context
+  const setContext = (context: string) => {
+    setCurrentContext(context);
   };
   
+  // Create context value
   const contextValue: AgentContextType = {
     agents,
     activeAgent,
+    availableAgents,
+    currentContext,
     activateAgent,
     deactivateAgent,
-    getPageAgents,
-    isLoading
+    setContext,
+    getAgentsForPage
   };
   
   return (
@@ -177,17 +229,4 @@ export const AgentProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
     </AgentContext.Provider>
   );
-};
-
-// Create the hook for using the context
-export const useAgents = (): AgentContextType => {
-  const context = useContext(AgentContext);
-  
-  if (context === undefined) {
-    throw new Error('useAgents must be used within an AgentProvider');
-  }
-  
-  return context;
-};
-
-export default AgentContext;
+}

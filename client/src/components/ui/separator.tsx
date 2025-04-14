@@ -1,35 +1,22 @@
-/**
- * separator.tsx
- * 
- * Component Type: common
- * Migrated as part of the repository reorganization.
- */
-import * as React from "react"
-import * as SeparatorPrimitive from "@radix-ui/react-separator"
+import React from "react";
 
-import { cn } from "@/lib/utils"
+interface SeparatorProps {
+  orientation?: "horizontal" | "vertical";
+  className?: string;
+}
 
-const Separator = React.forwardRef<
-  React.ElementRef<typeof SeparatorPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root>
->(
-  (
-    { className, orientation = "horizontal", decorative = true, ...props },
-    ref
-  ) => (
-    <SeparatorPrimitive.Root
-      ref={ref}
-      decorative={decorative}
-      orientation={orientation}
-      className={cn(
-        "shrink-0 bg-border",
-        orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
-        className
-      )}
-      {...props}
+export function Separator({
+  orientation = "horizontal",
+  className = "",
+}: SeparatorProps) {
+  return (
+    <div
+      role="separator"
+      className={`${
+        orientation === "horizontal"
+          ? "h-px w-full"
+          : "h-full w-px"
+      } bg-white/10 ${className}`}
     />
-  )
-)
-Separator.displayName = SeparatorPrimitive.Root.displayName
-
-export { Separator }
+  );
+}
