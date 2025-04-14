@@ -1,41 +1,30 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Define the accessibility preferences interface
-interface AccessibilityPreferences {
-  textSize: number;      // 1 = normal, 0.85 = small, 1.15 = large, 1.3 = x-large
-  highContrast: boolean; // Higher contrast mode
-  reducedMotion: boolean; // Reduced animations
-  voiceEnabled: boolean; // Text-to-speech for compatible content
-  soundEnabled: boolean; // Background sounds and effects
-  customColors: boolean; // Allow custom color schemes
+interface AccessibilityContextType {
+  // Text size settings
+  textSize: number;
+  setTextSize: (size: number) => void;
   
-  // Visual preferences
-  darkMode: boolean;     // Dark mode preference 
+  // Display settings
+  darkMode: boolean;
+  setDarkMode: (enabled: boolean) => void;
+  highContrast: boolean;
+  setHighContrast: (enabled: boolean) => void;
+  customColors: boolean;
+  setCustomColors: (enabled: boolean) => void;
+  
+  // Motion settings
+  reducedMotion: boolean;
+  setReducedMotion: (enabled: boolean) => void;
+  
+  // Sound settings
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
+  voiceEnabled: boolean;
+  setVoiceEnabled: (enabled: boolean) => void;
   
   // Panel state
-  isAccessibilityPanelOpen: boolean; // Whether the accessibility panel is open
-}
-
-// Define context interface with state and updater functions
-interface AccessibilityContextType {
-  // State
-  textSize: number;
-  highContrast: boolean;
-  reducedMotion: boolean;
-  voiceEnabled: boolean;
-  soundEnabled: boolean;
-  customColors: boolean;
-  darkMode: boolean;
-  isAccessibilityPanelOpen: boolean;
-  
-  // Actions
-  setTextSize: (size: number) => void;
-  setHighContrast: (enabled: boolean) => void;
-  setReducedMotion: (enabled: boolean) => void;
-  setVoiceEnabled: (enabled: boolean) => void;
-  setSoundEnabled: (enabled: boolean) => void;
-  setCustomColors: (enabled: boolean) => void;
-  setDarkMode: (enabled: boolean) => void;
+  isPanelOpen: boolean;
   toggleAccessibilityPanel: () => void;
   
   // Presets
@@ -45,168 +34,208 @@ interface AccessibilityContextType {
   applyReducedMotionSettings: () => void;
 }
 
-// Create the context with a default undefined value
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-// Hook for consuming the context
-export function useAccessibility() {
-  const context = useContext(AccessibilityContext);
-  
-  if (context === undefined) {
-    throw new Error('useAccessibility must be used within an AccessibilityProvider');
-  }
-  
-  return context;
-}
-
-// Default accessibility preferences
-const defaultPreferences: AccessibilityPreferences = {
-  textSize: 1,
-  highContrast: false,
-  reducedMotion: false,
-  voiceEnabled: false,
-  soundEnabled: true,
-  customColors: false,
-  darkMode: true,
-  isAccessibilityPanelOpen: false,
-};
-
-// Provider component that wraps the app
 export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
-  // Try to load preferences from localStorage, otherwise use defaults
-  const [preferences, setPreferences] = useState<AccessibilityPreferences>(() => {
-    if (typeof window !== 'undefined') {
-      const savedPreferences = localStorage.getItem('accessibility-preferences');
-      return savedPreferences 
-        ? { ...defaultPreferences, ...JSON.parse(savedPreferences) }
-        : defaultPreferences;
-    }
-    return defaultPreferences;
-  });
+  // Text size settings
+  const [textSize, setTextSizeState] = useState<number>(1);
   
-  // Save preferences to localStorage when they change
+  // Display settings
+  const [darkMode, setDarkModeState] = useState<boolean>(true);
+  const [highContrast, setHighContrastState] = useState<boolean>(false);
+  const [customColors, setCustomColorsState] = useState<boolean>(false);
+  
+  // Motion settings
+  const [reducedMotion, setReducedMotionState] = useState<boolean>(false);
+  
+  // Sound settings
+  const [soundEnabled, setSoundEnabledState] = useState<boolean>(true);
+  const [voiceEnabled, setVoiceEnabledState] = useState<boolean>(false);
+  
+  // Panel state
+  const [isPanelOpen, setIsPanelOpen] = useState<boolean>(false);
+
+  // Load settings from localStorage on initial render
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('accessibility-preferences', JSON.stringify(preferences));
-    }
-  }, [preferences]);
+    const loadSettings = () => {
+      try {
+        const savedSettings = localStorage.getItem('accessibility-settings');
+        if (savedSettings) {
+          const parsedSettings = JSON.parse(savedSettings);
+          
+          // Apply saved settings
+          if (parsedSettings.textSize !== undefined) setTextSizeState(parsedSettings.textSize);
+          if (parsedSettings.darkMode !== undefined) setDarkModeState(parsedSettings.darkMode);
+          if (parsedSettings.highContrast !== undefined) setHighContrastState(parsedSettings.highContrast);
+          if (parsedSettings.customColors !== undefined) setCustomColorsState(parsedSettings.customColors);
+          if (parsedSettings.reducedMotion !== undefined) setReducedMotionState(parsedSettings.reducedMotion);
+          if (parsedSettings.soundEnabled !== undefined) setSoundEnabledState(parsedSettings.soundEnabled);
+          if (parsedSettings.voiceEnabled !== undefined) setVoiceEnabledState(parsedSettings.voiceEnabled);
+        }
+      } catch (error) {
+        console.error('Error loading accessibility settings:', error);
+      }
+    };
+    
+    loadSettings();
+  }, []);
   
-  // Apply CSS variables for text size
+  // Save settings to localStorage whenever they change
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.style.setProperty('--text-size-factor', preferences.textSize.toString());
-      
-      // Apply classes for other preferences
-      if (preferences.highContrast) {
-        document.documentElement.classList.add('high-contrast');
-      } else {
-        document.documentElement.classList.remove('high-contrast');
+    // Skip saving on initial render
+    const saveSettings = () => {
+      try {
+        const settings = {
+          textSize,
+          darkMode,
+          highContrast,
+          customColors,
+          reducedMotion,
+          soundEnabled,
+          voiceEnabled
+        };
+        localStorage.setItem('accessibility-settings', JSON.stringify(settings));
+      } catch (error) {
+        console.error('Error saving accessibility settings:', error);
       }
-      
-      if (preferences.reducedMotion) {
-        document.documentElement.classList.add('reduced-motion');
-      } else {
-        document.documentElement.classList.remove('reduced-motion');
-      }
-      
-      if (preferences.darkMode) {
-        document.documentElement.classList.add('dark-mode');
-      } else {
-        document.documentElement.classList.remove('dark-mode');
-      }
-    }
-  }, [preferences.textSize, preferences.highContrast, preferences.reducedMotion, preferences.darkMode]);
+    };
+    
+    saveSettings();
+  }, [textSize, darkMode, highContrast, customColors, reducedMotion, soundEnabled, voiceEnabled]);
   
-  // Setting updater functions
+  // Apply settings to the document
+  useEffect(() => {
+    // Apply text size
+    document.documentElement.style.setProperty('--text-size-factor', textSize.toString());
+    
+    // Apply dark mode
+    if (darkMode) {
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+    }
+    
+    // Apply high contrast
+    if (highContrast) {
+      document.documentElement.classList.add('high-contrast');
+    } else {
+      document.documentElement.classList.remove('high-contrast');
+    }
+    
+    // Apply reduced motion
+    if (reducedMotion) {
+      document.documentElement.classList.add('reduced-motion');
+    } else {
+      document.documentElement.classList.remove('reduced-motion');
+    }
+    
+    // Apply custom colors
+    if (customColors) {
+      document.documentElement.classList.add('theme-cosmic');
+    } else {
+      document.documentElement.classList.remove('theme-cosmic');
+    }
+  }, [textSize, darkMode, highContrast, customColors, reducedMotion]);
+  
+  // Setter functions with localStorage persistence
   const setTextSize = (size: number) => {
-    setPreferences(prev => ({ ...prev, textSize: size }));
-  };
-  
-  const setHighContrast = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, highContrast: enabled }));
-  };
-  
-  const setReducedMotion = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, reducedMotion: enabled }));
-  };
-  
-  const setVoiceEnabled = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, voiceEnabled: enabled }));
-  };
-  
-  const setSoundEnabled = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, soundEnabled: enabled }));
-  };
-  
-  const setCustomColors = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, customColors: enabled }));
+    setTextSizeState(size);
   };
   
   const setDarkMode = (enabled: boolean) => {
-    setPreferences(prev => ({ ...prev, darkMode: enabled }));
+    setDarkModeState(enabled);
+  };
+  
+  const setHighContrast = (enabled: boolean) => {
+    setHighContrastState(enabled);
+  };
+  
+  const setCustomColors = (enabled: boolean) => {
+    setCustomColorsState(enabled);
+  };
+  
+  const setReducedMotion = (enabled: boolean) => {
+    setReducedMotionState(enabled);
+  };
+  
+  const setSoundEnabled = (enabled: boolean) => {
+    setSoundEnabledState(enabled);
+  };
+  
+  const setVoiceEnabled = (enabled: boolean) => {
+    setVoiceEnabledState(enabled);
   };
   
   const toggleAccessibilityPanel = () => {
-    setPreferences(prev => ({
-      ...prev,
-      isAccessibilityPanelOpen: !prev.isAccessibilityPanelOpen
-    }));
+    setIsPanelOpen(prev => !prev);
   };
   
-  // Preset setting functions
+  // Preset configurations
   const applyDefaultSettings = () => {
-    setPreferences({
-      ...defaultPreferences,
-      isAccessibilityPanelOpen: preferences.isAccessibilityPanelOpen
-    });
+    setTextSize(1);
+    setDarkMode(true);
+    setHighContrast(false);
+    setCustomColors(false);
+    setReducedMotion(false);
+    setSoundEnabled(true);
+    setVoiceEnabled(false);
   };
   
   const applyHighContrastSettings = () => {
-    setPreferences(prev => ({
-      ...prev,
-      highContrast: true,
-      textSize: 1.15,
-      customColors: true
-    }));
+    setTextSize(1);
+    setDarkMode(true);
+    setHighContrast(true);
+    setCustomColors(false);
+    setReducedMotion(false);
   };
   
   const applyEasierReadingSettings = () => {
-    setPreferences(prev => ({
-      ...prev,
-      textSize: 1.15,
-      highContrast: true,
-      reducedMotion: true
-    }));
+    setTextSize(1.15);
+    setDarkMode(true);
+    setHighContrast(true);
+    setCustomColors(false);
+    setReducedMotion(false);
   };
   
   const applyReducedMotionSettings = () => {
-    setPreferences(prev => ({
-      ...prev,
-      reducedMotion: true,
-      soundEnabled: false
-    }));
-  };
-  
-  // Construct the value object
-  const value: AccessibilityContextType = {
-    ...preferences,
-    setTextSize,
-    setHighContrast,
-    setReducedMotion,
-    setVoiceEnabled,
-    setSoundEnabled,
-    setCustomColors,
-    setDarkMode,
-    toggleAccessibilityPanel,
-    applyDefaultSettings,
-    applyHighContrastSettings,
-    applyEasierReadingSettings,
-    applyReducedMotionSettings
+    setReducedMotion(true);
+    setSoundEnabled(false);
   };
   
   return (
-    <AccessibilityContext.Provider value={value}>
+    <AccessibilityContext.Provider
+      value={{
+        textSize,
+        setTextSize,
+        darkMode,
+        setDarkMode,
+        highContrast,
+        setHighContrast,
+        customColors,
+        setCustomColors,
+        reducedMotion,
+        setReducedMotion,
+        soundEnabled,
+        setSoundEnabled,
+        voiceEnabled,
+        setVoiceEnabled,
+        isPanelOpen,
+        toggleAccessibilityPanel,
+        applyDefaultSettings,
+        applyHighContrastSettings,
+        applyEasierReadingSettings,
+        applyReducedMotionSettings
+      }}
+    >
       {children}
     </AccessibilityContext.Provider>
   );
+}
+
+export function useAccessibility(): AccessibilityContextType {
+  const context = useContext(AccessibilityContext);
+  if (context === undefined) {
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+  }
+  return context;
 }
