@@ -1,96 +1,105 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import { useChat } from '@/contexts/ChatContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import { MessageCircle, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MessageSquare, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import OceanicPortal from './OceanicPortal';
 
-interface ChatWidgetProps {}
-
-const ChatWidget: React.FC<ChatWidgetProps> = () => {
+const ChatWidget: React.FC = () => {
   const { 
-    isWidgetVisible, 
-    isWidgetOpen, 
-    openWidget, 
-    closeWidget,
-    widgetPosition,
-    autoOpenOnNewPage
+    isOpen, 
+    openChat, 
+    closeChat, 
+    toggleChat, 
+    isWidgetVisible,
+    widgetPosition 
   } = useChat();
-
+  
   const { reducedMotion } = useAccessibility();
-  const [hasRendered, setHasRendered] = useState(false);
-  const mountedRef = useRef(false);
-
-  // Handle auto opening on page load
+  const [firstLoad, setFirstLoad] = useState(true);
+  
+  // Remove first load state after initial animation
   useEffect(() => {
-    if (!mountedRef.current && autoOpenOnNewPage) {
-      mountedRef.current = true;
-      // Small delay to ensure smooth animation after page load
-      const timer = setTimeout(() => {
-        openWidget();
-      }, 1000);
-      
+    if (firstLoad) {
+      const timer = setTimeout(() => setFirstLoad(false), 1000);
       return () => clearTimeout(timer);
     }
-  }, [autoOpenOnNewPage, openWidget]);
-
-  // Handle initial render
-  useEffect(() => {
-    setHasRendered(true);
-  }, []);
-
-  // Don't render anything if widget not visible
-  if (!isWidgetVisible || !hasRendered) {
-    return null;
-  }
-
-  // Position classes based on widgetPosition
-  const positionClasses = {
-    'bottom-right': 'bottom-6 right-6',
-    'bottom-left': 'bottom-6 left-6',
-    'top-right': 'top-6 right-6',
-    'top-left': 'top-6 left-6',
-  }[widgetPosition];
-
+  }, [firstLoad]);
+  
+  // Don't render anything if widget isn't visible
+  if (!isWidgetVisible) return null;
+  
+  // Determine position classes based on widget position setting
+  const getPositionClasses = () => {
+    switch(widgetPosition) {
+      case 'bottom-right': 
+        return 'bottom-4 right-4';
+      case 'bottom-left': 
+        return 'bottom-4 left-4';
+      case 'top-right': 
+        return 'top-4 right-4';
+      case 'top-left': 
+        return 'top-4 left-4';
+      default: 
+        return 'bottom-4 right-4';
+    }
+  };
+  
   return (
-    <div className={`fixed ${positionClasses} z-40`}>
-      {/* Floating chat button */}
-      <AnimatePresence>
-        {!isWidgetOpen && (
+    <>
+      {/* Floating button */}
+      <AnimatePresence mode="wait">
+        {!isOpen && (
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
+            key="chat-widget-button"
+            initial={firstLoad ? { scale: 0, opacity: 0 } : { scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.2 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: 'spring', duration: reducedMotion ? 0.1 : 0.5 }}
+            className={`fixed z-50 ${getPositionClasses()}`}
           >
             <Button
-              onClick={openWidget}
-              className="w-14 h-14 rounded-full shadow-lg bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500"
-              aria-label="Open chat widget"
+              onClick={openChat}
+              size="lg"
+              className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all group"
             >
-              <MessageCircle size={24} className="text-white" />
+              <MessageSquare className="h-6 w-6 text-white group-hover:scale-110 transition-transform" />
+              <span className="sr-only">Open Chat</span>
             </Button>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Chat widget */}
+      
+      {/* Chat panel */}
       <AnimatePresence>
-        {isWidgetOpen && (
+        {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: reducedMotion ? 0 : 0.3 }}
-            className="fixed bottom-0 right-0 sm:bottom-6 sm:right-6 shadow-xl sm:rounded-xl overflow-hidden"
-            style={{ width: 'min(100%, 400px)', height: 'min(90vh, 600px)' }}
+            key="chat-widget-panel"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: reducedMotion ? 0.1 : 0.3 }}
+            className={`fixed z-50 ${widgetPosition.includes('top') ? 'top-4' : 'bottom-4'} ${widgetPosition.includes('right') ? 'right-4' : 'left-4'}`}
           >
-            <OceanicPortal isWidget={true} onClose={closeWidget} />
+            <div className="relative w-[380px] h-[600px] rounded-xl overflow-hidden shadow-2xl border border-blue-500/30 bg-background/80 backdrop-blur-sm">
+              <OceanicPortal isWidget={true} onClose={closeChat} />
+              
+              {/* Close button outside of OceanicPortal */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeChat}
+                className="absolute top-3 right-3 z-[51] h-8 w-8 rounded-full bg-background/50 backdrop-blur-sm text-muted-foreground hover:bg-background/70 hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 };
 

@@ -1,29 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import TaskadeEmbed from './TaskadeEmbed';
-import { 
-  MessageSquare, 
-  X, 
-  ChevronUp, 
-  ChevronDown, 
-  Maximize2, 
-  Minimize2,
-  Upload,
-  Image,
-  FileText,
-  Mic,
-  UploadCloud
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogTitle,
-  DialogHeader
-} from '@/components/ui/dialog';
-import SacredGeometry from '@/components/ui/sacred-geometry';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
+import { 
+  ChevronDown, 
+  ChevronUp, 
+  FileText,
+  Image,
+  Maximize2, 
+  Mic,
+  Minimize2, 
+  Upload,
+  UploadCloud,
+  X 
+} from 'lucide-react';
+import SacredGeometry from '@/components/cosmic/SacredGeometry';
+import TaskadeEmbed from './TaskadeEmbed';
 
 interface OceanicPortalProps {
   isWidget?: boolean;
@@ -32,149 +31,110 @@ interface OceanicPortalProps {
 
 const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose }) => {
   const { reducedMotion } = useAccessibility();
-  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Visual state
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [expandedMediaTools, setExpandedMediaTools] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  
+  // Interactive elements
   const [hoverStar, setHoverStar] = useState(false);
-  const [whalePosition, setWhalePosition] = useState({ x: 0, y: 0 });
-  const [bubbles, setBubbles] = useState<{id: number, x: number, y: number, size: number}[]>([]);
+  const [activeSymbol, setActiveSymbol] = useState<string | null>(null);
   
-  // Generate random bubbles
-  useEffect(() => {
-    if (!reducedMotion) {
-      // Initial bubbles
-      const initialBubbles = Array.from({ length: 10 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 15 + 5
-      }));
-      setBubbles(initialBubbles);
-      
-      // Add new bubbles occasionally
-      const interval = setInterval(() => {
-        const newBubble = {
-          id: Date.now(),
-          x: Math.random() * 100,
-          y: 100, // Start at bottom
-          size: Math.random() * 15 + 5
-        };
-        setBubbles(prev => [...prev.slice(-15), newBubble]); // Keep last 15 bubbles
-      }, 3000);
-      
-      return () => clearInterval(interval);
-    }
-  }, [reducedMotion]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Animate whale movement
-  useEffect(() => {
-    if (!reducedMotion) {
-      const interval = setInterval(() => {
-        setWhalePosition({
-          x: Math.sin(Date.now() / 5000) * 20,
-          y: Math.cos(Date.now() / 8000) * 10
-        });
-      }, 100);
-      
-      return () => clearInterval(interval);
-    }
-  }, [reducedMotion]);
-  
-  // Handle expand/collapse animations
-  const containerVariants = {
-    collapsed: { 
-      height: '500px',
-      width: isWidget ? '350px' : '100%',
-      transition: { duration: reducedMotion ? 0 : 0.5 }
-    },
-    expanded: { 
-      height: '700px', 
-      width: isWidget ? '500px' : '100%',
-      transition: { duration: reducedMotion ? 0 : 0.5 }
-    },
-    fullscreen: {
-      height: '100vh',
-      width: '100vw',
-      transition: { duration: reducedMotion ? 0 : 0.5 }
-    }
-  };
-  
-  // Handle media upload button click
+  // Handle upload button click
   const handleUploadClick = () => {
+    setExpandedMediaTools(false);
     setUploadDialogOpen(true);
   };
   
-  // Get container state based on expanded/fullscreen status
-  const getContainerState = () => {
-    if (isFullscreen) return 'fullscreen';
-    return isExpanded ? 'expanded' : 'collapsed';
-  };
-  
   return (
-    <div className="relative">
-      {/* Main container */}
-      <motion.div 
-        ref={containerRef}
-        className={`relative overflow-hidden rounded-lg shadow-2xl ${
-          isFullscreen ? 'fixed top-0 left-0 z-50' : ''
-        }`}
-        variants={containerVariants}
-        initial="collapsed"
-        animate={getContainerState()}
-      >
-        {/* Background ocean gradient with cosmic elements */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-blue-700 to-blue-500 overflow-hidden">
-          {/* Cosmic elements */}
-          <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('/stars-background.png')] bg-repeat"></div>
-          
-          {/* Animated galaxy spiral */}
-          <div className="absolute top-10 right-10">
+    <div className="h-full w-full overflow-hidden relative">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-950 via-purple-900 to-blue-900 overflow-hidden">
+        {/* Animated bubbles */}
+        <div className="absolute inset-0 opacity-20">
+          {[...Array(15)].map((_, i) => (
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: reducedMotion ? 0 : 60, repeat: Infinity, ease: "linear" }}
-              className="opacity-30"
-            >
-              <SacredGeometry variant="star" size={150} className="text-cyan-300" animated={true} />
-            </motion.div>
-          </div>
-          
-          {/* Animated bubbles */}
-          {!reducedMotion && bubbles.map(bubble => (
-            <motion.div
-              key={bubble.id}
-              className="absolute rounded-full bg-cyan-200 opacity-40"
-              initial={{ x: `${bubble.x}%`, y: '100%', width: bubble.size, height: bubble.size }}
-              animate={{ y: '-20%' }}
-              transition={{ duration: 15, ease: "linear" }}
-              style={{ left: `${bubble.x}%` }}
-            />
-          ))}
-          
-          {/* Animated sea whale */}
-          <motion.div
-            className="absolute pointer-events-none"
-            animate={{ 
-              x: whalePosition.x, 
-              y: whalePosition.y,
-              rotate: whalePosition.x > 0 ? 5 : -5
-            }}
-            transition={{ duration: 2 }}
-            style={{ bottom: '50px', right: '80px' }}
-          >
-            <img 
-              src="/cosmic-whale.png" 
-              alt="Cosmic Whale"
-              className="w-32 h-auto opacity-50"
-              onError={(e) => {
-                // Fallback if image doesn't exist
-                e.currentTarget.style.display = 'none';
+              key={`bubble-${i}`}
+              className="absolute rounded-full bg-cyan-300"
+              initial={{ 
+                x: `${Math.random() * 100}%`, 
+                y: '100%', 
+                opacity: 0.3 + Math.random() * 0.4,
+                scale: 0.2 + Math.random() * 0.8 
+              }}
+              animate={{ 
+                y: '-10%', 
+                x: `${Math.random() * 100}%`,
+                opacity: 0 
+              }}
+              transition={{ 
+                duration: 10 + Math.random() * 20, 
+                repeat: Infinity, 
+                ease: 'linear',
+                delay: Math.random() * 10 
+              }}
+              style={{
+                width: `${10 + Math.random() * 20}px`,
+                height: `${10 + Math.random() * 20}px`,
               }}
             />
-          </motion.div>
+          ))}
         </div>
 
+        {/* Animated glowing whale silhouette */}
+        <motion.div 
+          className="absolute bottom-0 left-0 right-0 h-48 opacity-10"
+          initial={{ y: 20 }}
+          animate={{ y: 0 }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity, 
+            repeatType: 'reverse',
+            ease: 'easeInOut' 
+          }}
+        >
+          <div className="relative w-full h-full">
+            <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-64 h-24">
+              <div className="relative w-full h-full">
+                <div className="absolute inset-0 bg-cyan-400 rounded-full filter blur-xl opacity-50" />
+                <div className="absolute inset-0 opacity-80" style={{ 
+                  clipPath: "path('M10,20 C15,10 25,15 30,5 C40,15 60,5 70,15 C80,5 85,15 90,10 C95,20 90,25 85,30 C80,25 70,30 60,25 C50,30 40,25 30,30 C25,25 15,30 10,20 Z')" 
+                }} />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+        
+        {/* Geometric patterns */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-10">
+          <div className="relative w-96 h-96">
+            <SacredGeometry 
+              variant="hexagram" 
+              size={300}
+              className="absolute inset-0 text-cyan-300 animate-spin-slow" 
+            />
+            <SacredGeometry 
+              variant="flower-of-life"
+              size={250} 
+              className="absolute inset-0 top-6 left-6 text-indigo-300 animate-pulse-slow" 
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Main chat interface */}
+      <motion.div
+        className={`relative z-10 flex flex-col h-full bg-transparent ${
+          isFullscreen ? 'fixed inset-0 z-50' : ''
+        }`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reducedMotion ? 0.1 : 0.5 }}
+      >
         {/* Header */}
         <div className="relative z-10 flex justify-between items-center p-3 border-b border-cyan-500/30 bg-gradient-to-r from-blue-900/80 to-purple-900/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
@@ -182,6 +142,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
               <div onClick={() => setHoverStar(!hoverStar)}>
                 <SacredGeometry 
                   variant="star" 
+                  size={24}
                   strokeWidth={2}
                   className={`cursor-pointer transition-colors duration-300 ${hoverStar ? "text-cyan-300" : "text-cyan-600"}`}
                 />

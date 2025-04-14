@@ -1,261 +1,231 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useChat } from '@/contexts/ChatContext';
+import React, { useState, useRef, useEffect } from 'react';
+import { useChat, ChatMessage } from '@/contexts/ChatContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import { Send, RefreshCw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import SacredGeometry from '@/components/ui/sacred-geometry';
+import { Send, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
 
-// Sample initial messages
-const INITIAL_MESSAGES = [
-  {
-    role: 'assistant' as const,
-    content: 'Hello! I\'m your cosmic guide. How can I assist you on your journey today?'
-  }
-];
-
-interface ChatInterfaceProps {
-  isEmbedded?: boolean;
-}
-
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ isEmbedded = false }) => {
-  const {
-    chatHistory,
-    addMessage,
-    clearChat,
+const ChatInterface: React.FC = () => {
+  const { 
+    messages, 
+    isTyping, 
+    sendMessage,
     highContrastChat,
     chatFontSize
   } = useChat();
   
   const { reducedMotion } = useAccessibility();
   const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [autoScroll, setAutoScroll] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   
-  // If chat history is empty, initialize with sample messages
+  // Scroll to bottom when messages change if autoScroll is enabled
   useEffect(() => {
-    if (chatHistory.length === 0) {
-      INITIAL_MESSAGES.forEach(msg => addMessage(msg));
-    }
-  }, [chatHistory.length, addMessage]);
-  
-  // Auto scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (autoScrollEnabled && messagesEndRef.current) {
+    if (autoScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
     }
-  }, [chatHistory, autoScrollEnabled, reducedMotion]);
+  }, [messages, isTyping, autoScroll, reducedMotion]);
   
-  // Handler for sending messages
-  const handleSendMessage = async () => {
-    if (!input.trim()) return;
+  // Check if user has scrolled up and disable auto-scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
     
-    // Add user message to chat
-    addMessage({
-      role: 'user',
-      content: input
-    });
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      const isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setAutoScroll(isScrolledToBottom);
+    };
     
-    setInput('');
-    setIsTyping(true);
-    
-    // Simulate a response after a delay
-    setTimeout(() => {
-      addMessage({
-        role: 'assistant',
-        content: 'I understand your interest in our cosmic offerings. I\'m here to provide guidance about our music, events, and spiritual journeys. Is there something specific you\'d like to know about?'
-      });
-      setIsTyping(false);
-    }, 1500);
-  };
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
   
-  // Handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-  };
-  
-  // Handle form submission
+  // Handle message submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSendMessage();
-  };
-  
-  // Handle enter key (submit on Enter, new line on Shift+Enter)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-  
-  // Detect scroll position to show/hide scroll button
-  const handleScroll = () => {
-    if (!scrollAreaRef.current) return;
     
-    const { scrollHeight, scrollTop, clientHeight } = scrollAreaRef.current;
-    const isAtBottom = Math.abs(scrollHeight - scrollTop - clientHeight) < 50;
-    setAutoScrollEnabled(isAtBottom);
+    if (input.trim()) {
+      sendMessage(input);
+      setInput('');
+      setAutoScroll(true);
+    }
+  };
+
+  // Handler for the scroll-to-bottom button
+  const scrollToBottom = () => {
+    setAutoScroll(true);
+    messagesEndRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
   };
   
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
-      setAutoScrollEnabled(true);
-    }
+  // Determine if the scroll-to-bottom button should be visible
+  const showScrollButton = !autoScroll && messages.length > 3;
+
+  // Message Bubble Component
+  const MessageBubble = ({ message }: { message: ChatMessage }) => {
+    const isUser = message.sender === 'user';
+    
+    const bubbleClasses = isUser
+      ? `bg-primary text-primary-foreground ${highContrastChat ? 'border-2 border-white' : ''}`
+      : `bg-muted ${highContrastChat ? 'border-2 border-primary text-foreground' : 'text-muted-foreground'}`;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reducedMotion ? 0 : 0.3 }}
+        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}
+      >
+        <div className={`flex ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start max-w-[80%] gap-2`}>
+          <Avatar className={`h-8 w-8 mt-1 ${isUser ? 'order-last' : 'order-first'}`}>
+            {isUser ? (
+              <>
+                <AvatarImage src="/assets/user-avatar.png" alt="User" />
+                <AvatarFallback>U</AvatarFallback>
+              </>
+            ) : (
+              <>
+                <AvatarImage src="/assets/ai-avatar.png" alt="AI" />
+                <AvatarFallback>AI</AvatarFallback>
+              </>
+            )}
+          </Avatar>
+          
+          <div>
+            <div 
+              className={`rounded-lg px-4 py-2 ${bubbleClasses}`}
+              style={{ fontSize: `${chatFontSize}%` }}
+            >
+              {message.content}
+              
+              {message.status === 'sending' && (
+                <span className="inline-block ml-2 opacity-70 animate-pulse">...</span>
+              )}
+            </div>
+            
+            <div className={`text-xs mt-1 text-muted-foreground ${isUser ? 'text-right' : 'text-left'}`}>
+              {formatDistanceToNow(message.timestamp, { addSuffix: true })}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
   };
   
   return (
-    <div className={`flex flex-col h-full ${isEmbedded ? 'border rounded-md shadow-md' : ''}`}>
-      {/* Message list */}
-      <div className="relative flex-1 overflow-hidden">
-        <ScrollArea 
-          className="h-full pr-4" 
-          onScroll={handleScroll}
-          ref={scrollAreaRef as any}
-        >
-          <div 
-            className="space-y-4 p-4"
-            style={{ fontSize: `${chatFontSize}%` }}
-          >
-            {chatHistory.map((message, index) => (
-              <div 
-                key={index} 
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`
-                    flex items-start max-w-[85%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'} 
-                    ${message.role === 'user' ? 'pr-1' : 'pl-1'}
-                  `}
-                >
-                  {/* Avatar for assistant messages */}
-                  {message.role === 'assistant' && (
-                    <Avatar className="mt-1 mr-2 h-8 w-8 border border-cyan-500/30">
-                      <AvatarImage src="/cosmic-whale-avatar.png" alt="AI" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-900 to-purple-900 text-cyan-300">
-                        <SacredGeometry variant="star" size={16} className="text-cyan-300" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  
-                  {/* Message bubble */}
-                  <div
-                    className={`
-                      py-2 px-3 rounded-lg 
-                      ${message.role === 'user' 
-                        ? highContrastChat 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                        : highContrastChat 
-                          ? 'bg-muted' 
-                          : 'bg-gradient-to-r from-blue-900 to-purple-900 text-cyan-50 border border-cyan-500/30'
-                      }
-                    `}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                  
-                  {/* Avatar for user messages */}
-                  {message.role === 'user' && (
-                    <Avatar className="mt-1 ml-2 h-8 w-8 bg-primary/10">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        You
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Messages area */}
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-2"
+        style={{ scrollBehavior: reducedMotion ? 'auto' : 'smooth' }}
+      >
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-4">
+            <div className="mb-4 opacity-50">
+              <div className="h-16 w-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <Send className="h-8 w-8 text-primary" />
               </div>
+              <h3 className="text-lg font-medium mb-1">Welcome to the Chat</h3>
+              <p className="text-sm text-muted-foreground">
+                Ask a question or start a conversation to get help.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mt-4 max-w-md">
+              {['Tell me about your music', 'When is your next tour?', 'What is cosmic consciousness?', 'How do I purchase tickets?'].map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  variant="outline"
+                  className="text-sm h-auto py-2 px-3 whitespace-normal text-left justify-start"
+                  onClick={() => {
+                    setInput(suggestion);
+                    sendMessage(suggestion);
+                  }}
+                >
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} />
             ))}
             
             {/* Typing indicator */}
             {isTyping && (
-              <div className="flex justify-start">
-                <div className="flex items-start max-w-[85%] pl-1">
-                  <Avatar className="mt-1 mr-2 h-8 w-8 border border-cyan-500/30">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-900 to-purple-900 text-cyan-300">
-                      <SacredGeometry variant="star" size={16} className="text-cyan-300" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`
-                    py-2 px-3 rounded-lg 
-                    ${highContrastChat 
-                      ? 'bg-muted' 
-                      : 'bg-gradient-to-r from-blue-900 to-purple-900 text-cyan-50 border border-cyan-500/30'
-                    }
-                  `}>
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 rounded-full bg-current animate-pulse"></div>
-                      <div className="w-2 h-2 rounded-full bg-current animate-pulse delay-75"></div>
-                      <div className="w-2 h-2 rounded-full bg-current animate-pulse delay-150"></div>
-                    </div>
+              <div className="flex items-start gap-2 mb-4">
+                <Avatar className="h-8 w-8 mt-1">
+                  <AvatarImage src="/assets/ai-avatar.png" alt="AI" />
+                  <AvatarFallback>AI</AvatarFallback>
+                </Avatar>
+                
+                <div className={`rounded-lg px-4 py-2 bg-muted ${highContrastChat ? 'border-2 border-primary' : ''}`}>
+                  <div className="flex space-x-1">
+                    <div className="h-2 w-2 rounded-full bg-current animate-bounce" />
+                    <div className="h-2 w-2 rounded-full bg-current animate-bounce delay-100" />
+                    <div className="h-2 w-2 rounded-full bg-current animate-bounce delay-200" />
                   </div>
                 </div>
               </div>
             )}
-            
-            {/* End of messages marker */}
-            <div ref={messagesEndRef} />
-          </div>
-        </ScrollArea>
-        
-        {/* Scroll to bottom button */}
-        {!autoScrollEnabled && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="absolute bottom-4 right-4 rounded-full shadow-md opacity-80 hover:opacity-100"
-            onClick={scrollToBottom}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
+          </>
         )}
+        
+        {/* Invisible element for scroll targeting */}
+        <div ref={messagesEndRef} />
       </div>
       
-      {/* Input area */}
-      <div className="p-3 border-t">
-        <form onSubmit={handleSubmit} className="flex items-end space-x-2">
-          <div className="relative flex-1">
-            <Textarea
-              placeholder="Ask about our music, events, or spiritual practices..."
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              className="min-h-[60px] resize-none pr-10"
-              rows={1}
-            />
+      {/* Scroll to bottom button */}
+      <AnimatePresence>
+        {showScrollButton && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-20 right-4"
+          >
             <Button
-              type="submit"
               size="sm"
-              variant="ghost"
-              className="absolute bottom-1 right-1 text-muted-foreground"
-              disabled={!input.trim() || isTyping}
+              variant="secondary"
+              className="rounded-full h-10 w-10 p-0 shadow-md"
+              onClick={scrollToBottom}
             >
-              <Send className="h-4 w-4" />
+              <ChevronDown className="h-5 w-5" />
             </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Input area */}
+      <div className="border-t p-4 bg-background/60 backdrop-blur-sm">
+        <form onSubmit={handleSubmit} className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ fontSize: `${chatFontSize}%` }}
+            />
           </div>
           
-          {/* Clear chat button */}
-          <Button
-            type="button"
-            variant="outline"
+          <Button 
+            type="submit" 
             size="icon"
-            onClick={clearChat}
-            title="Clear chat history"
-            className="flex-shrink-0"
+            disabled={!input.trim()}
+            className={`rounded-full h-10 w-10 p-0 ${!input.trim() ? 'opacity-50' : ''}`}
           >
-            <RefreshCw className="h-4 w-4" />
+            <Send className="h-4 w-4" />
           </Button>
         </form>
-        
-        {/* Chat privacy notice */}
-        <p className="text-[10px] text-muted-foreground mt-2 text-center">
-          Messages are stored locally in your browser and not shared with third parties.
-        </p>
       </div>
     </div>
   );

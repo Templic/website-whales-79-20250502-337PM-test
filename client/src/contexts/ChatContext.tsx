@@ -1,188 +1,280 @@
-import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
-// Type for widget position
-type WidgetPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+// Chat message type definitions
+export interface ChatMessage {
+  id: string;
+  content: string;
+  sender: 'user' | 'assistant';
+  timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
+}
 
-// Define the shape of our context
+interface ChatSettings {
+  widgetVisible: boolean;
+  widgetPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  autoOpenOnNewPage: boolean;
+  highContrastChat: boolean;
+  chatFontSize: number;
+}
+
 interface ChatContextType {
+  // Chat state
+  messages: ChatMessage[];
+  isTyping: boolean;
+  isOpen: boolean;
+  
+  // Chat actions
+  sendMessage: (content: string) => Promise<void>;
+  clearChat: () => void;
+  openChat: () => void;
+  closeChat: () => void;
+  toggleChat: () => void;
+  
   // Widget visibility
   isWidgetVisible: boolean;
   showWidget: () => void;
   hideWidget: () => void;
   
-  // Widget open state
-  isWidgetOpen: boolean;
-  openWidget: () => void;
-  closeWidget: () => void;
-  
   // Widget position
-  widgetPosition: WidgetPosition;
-  setWidgetPosition: (position: WidgetPosition) => void;
+  widgetPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  setWidgetPosition: (position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left') => void;
   
-  // Auto open settings
+  // Auto-open settings
   autoOpenOnNewPage: boolean;
   setAutoOpenOnNewPage: (autoOpen: boolean) => void;
   
-  // Chat history
-  chatHistory: Array<{ role: 'user' | 'assistant', content: string }>;
-  addMessage: (message: { role: 'user' | 'assistant', content: string }) => void;
-  clearChat: () => void;
-  
-  // Accessibility settings for chat
+  // Accessibility settings
   highContrastChat: boolean;
   setHighContrastChat: (highContrast: boolean) => void;
   chatFontSize: number;
   setChatFontSize: (fontSize: number) => void;
 }
 
+// Default settings
+const defaultSettings: ChatSettings = {
+  widgetVisible: true,
+  widgetPosition: 'bottom-right',
+  autoOpenOnNewPage: false,
+  highContrastChat: false,
+  chatFontSize: 100
+};
+
+// Storage keys
+const MESSAGES_STORAGE_KEY = 'chat_messages';
+const SETTINGS_STORAGE_KEY = 'chat_settings';
+
 // Create context with default values
 const ChatContext = createContext<ChatContextType>({
-  isWidgetVisible: true,
+  messages: [],
+  isTyping: false,
+  isOpen: false,
+  
+  sendMessage: async () => {},
+  clearChat: () => {},
+  openChat: () => {},
+  closeChat: () => {},
+  toggleChat: () => {},
+  
+  isWidgetVisible: defaultSettings.widgetVisible,
   showWidget: () => {},
   hideWidget: () => {},
   
-  isWidgetOpen: false,
-  openWidget: () => {},
-  closeWidget: () => {},
-  
-  widgetPosition: 'bottom-right',
+  widgetPosition: defaultSettings.widgetPosition,
   setWidgetPosition: () => {},
   
-  autoOpenOnNewPage: false,
+  autoOpenOnNewPage: defaultSettings.autoOpenOnNewPage,
   setAutoOpenOnNewPage: () => {},
   
-  chatHistory: [],
-  addMessage: () => {},
-  clearChat: () => {},
-  
-  highContrastChat: false,
+  highContrastChat: defaultSettings.highContrastChat,
   setHighContrastChat: () => {},
-  chatFontSize: 100,
+  chatFontSize: defaultSettings.chatFontSize,
   setChatFontSize: () => {},
 });
 
-// Storage keys
-const STORAGE_KEY_PREFIX = 'cosmicChat_';
-const WIDGET_VISIBLE_KEY = `${STORAGE_KEY_PREFIX}widgetVisible`;
-const WIDGET_POSITION_KEY = `${STORAGE_KEY_PREFIX}widgetPosition`;
-const AUTO_OPEN_KEY = `${STORAGE_KEY_PREFIX}autoOpen`;
-const CHAT_HISTORY_KEY = `${STORAGE_KEY_PREFIX}chatHistory`;
-const HIGH_CONTRAST_KEY = `${STORAGE_KEY_PREFIX}highContrast`;
-const FONT_SIZE_KEY = `${STORAGE_KEY_PREFIX}fontSize`;
-
 // Provider component
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Widget visibility state
-  const [isWidgetVisible, setIsWidgetVisible] = useState<boolean>(() => {
-    const saved = localStorage.getItem(WIDGET_VISIBLE_KEY);
-    return saved !== null ? JSON.parse(saved) : true;
+  // Load messages from localStorage
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === 'undefined') return [];
+    
+    try {
+      const savedMessages = localStorage.getItem(MESSAGES_STORAGE_KEY);
+      const parsedMessages = savedMessages ? JSON.parse(savedMessages) : [];
+      
+      // Convert string timestamps back to Date objects
+      return parsedMessages.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+    } catch (error) {
+      console.error('Failed to parse chat messages from localStorage', error);
+      return [];
+    }
   });
   
-  // Widget open state
-  const [isWidgetOpen, setIsWidgetOpen] = useState<boolean>(false);
-  
-  // Widget position
-  const [widgetPosition, setWidgetPositionState] = useState<WidgetPosition>(() => {
-    const saved = localStorage.getItem(WIDGET_POSITION_KEY);
-    return saved !== null ? JSON.parse(saved) : 'bottom-right';
+  // Load settings from localStorage
+  const [settings, setSettings] = useState<ChatSettings>(() => {
+    if (typeof window === 'undefined') return defaultSettings;
+    
+    try {
+      const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      return savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings;
+    } catch (error) {
+      console.error('Failed to parse chat settings from localStorage', error);
+      return defaultSettings;
+    }
   });
   
-  // Auto open on page load
-  const [autoOpenOnNewPage, setAutoOpenOnNewPageState] = useState<boolean>(() => {
-    const saved = localStorage.getItem(AUTO_OPEN_KEY);
-    return saved !== null ? JSON.parse(saved) : false;
-  });
+  // Chat UI state
+  const [isTyping, setIsTyping] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   
-  // Chat history
-  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string }>>(() => {
-    const saved = localStorage.getItem(CHAT_HISTORY_KEY);
-    return saved !== null ? JSON.parse(saved) : [];
-  });
+  // Destructure settings for easier access
+  const { 
+    widgetVisible, 
+    widgetPosition, 
+    autoOpenOnNewPage, 
+    highContrastChat, 
+    chatFontSize 
+  } = settings;
   
-  // Accessibility settings
-  const [highContrastChat, setHighContrastChatState] = useState<boolean>(() => {
-    const saved = localStorage.getItem(HIGH_CONTRAST_KEY);
-    return saved !== null ? JSON.parse(saved) : false;
-  });
-  
-  const [chatFontSize, setChatFontSizeState] = useState<number>(() => {
-    const saved = localStorage.getItem(FONT_SIZE_KEY);
-    return saved !== null ? JSON.parse(saved) : 100;
-  });
-  
-  // Save to localStorage when values change
+  // Save messages to localStorage when they change
   useEffect(() => {
-    localStorage.setItem(WIDGET_VISIBLE_KEY, JSON.stringify(isWidgetVisible));
-  }, [isWidgetVisible]);
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+    } catch (error) {
+      console.error('Failed to save chat messages to localStorage', error);
+    }
+  }, [messages]);
   
+  // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem(WIDGET_POSITION_KEY, JSON.stringify(widgetPosition));
-  }, [widgetPosition]);
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save chat settings to localStorage', error);
+    }
+  }, [settings]);
   
+  // Auto-open the chat on page navigation if enabled
   useEffect(() => {
-    localStorage.setItem(AUTO_OPEN_KEY, JSON.stringify(autoOpenOnNewPage));
+    if (autoOpenOnNewPage) {
+      openChat();
+    }
   }, [autoOpenOnNewPage]);
   
-  useEffect(() => {
-    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
-  }, [chatHistory]);
+  // Helper to generate a unique ID
+  const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  };
   
-  useEffect(() => {
-    localStorage.setItem(HIGH_CONTRAST_KEY, JSON.stringify(highContrastChat));
-  }, [highContrastChat]);
-  
-  useEffect(() => {
-    localStorage.setItem(FONT_SIZE_KEY, JSON.stringify(chatFontSize));
-  }, [chatFontSize]);
-  
-  // Widget visibility methods
-  const showWidget = useCallback(() => setIsWidgetVisible(true), []);
-  const hideWidget = useCallback(() => {
-    setIsWidgetVisible(false);
-    setIsWidgetOpen(false);
+  // Send a message
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return;
+    
+    // Create a new user message
+    const userMessage: ChatMessage = {
+      id: generateId(),
+      content,
+      sender: 'user',
+      timestamp: new Date(),
+      status: 'sending'
+    };
+    
+    // Add user message to state
+    setMessages((prev) => [...prev, userMessage]);
+    
+    // Update user message status to sent
+    setTimeout(() => {
+      setMessages((prev) => 
+        prev.map((msg) => 
+          msg.id === userMessage.id ? { ...msg, status: 'sent' } : msg
+        )
+      );
+      
+      // Simulate assistant typing
+      setIsTyping(true);
+      
+      // Simulate assistant response after a delay
+      setTimeout(() => {
+        const assistantMessage: ChatMessage = {
+          id: generateId(),
+          content: "This is a placeholder response. The real responses will come from the Taskade AI Agent.",
+          sender: 'assistant',
+          timestamp: new Date()
+        };
+        
+        setMessages((prev) => [...prev, assistantMessage]);
+        setIsTyping(false);
+      }, 2000);
+    }, 500);
   }, []);
   
-  // Widget open/close methods
-  const openWidget = useCallback(() => setIsWidgetOpen(true), []);
-  const closeWidget = useCallback(() => setIsWidgetOpen(false), []);
-  
-  // Widget position setter
-  const setWidgetPosition = useCallback((position: WidgetPosition) => {
-    setWidgetPositionState(position);
-  }, []);
-  
-  // Auto open setter
-  const setAutoOpenOnNewPage = useCallback((autoOpen: boolean) => {
-    setAutoOpenOnNewPageState(autoOpen);
-  }, []);
-  
-  // Chat history methods
-  const addMessage = useCallback((message: { role: 'user' | 'assistant', content: string }) => {
-    setChatHistory(prev => [...prev, message]);
-  }, []);
-  
+  // Clear all chat messages
   const clearChat = useCallback(() => {
-    setChatHistory([]);
+    setMessages([]);
   }, []);
   
-  // Accessibility setters
+  // Chat visibility controls
+  const openChat = useCallback(() => {
+    setIsOpen(true);
+  }, []);
+  
+  const closeChat = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+  
+  const toggleChat = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
+  
+  // Widget visibility controls
+  const showWidget = useCallback(() => {
+    setSettings((prev) => ({ ...prev, widgetVisible: true }));
+  }, []);
+  
+  const hideWidget = useCallback(() => {
+    setSettings((prev) => ({ ...prev, widgetVisible: false }));
+  }, []);
+  
+  // Widget position control
+  const setWidgetPosition = useCallback((position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left') => {
+    setSettings((prev) => ({ ...prev, widgetPosition: position }));
+  }, []);
+  
+  // Auto-open setting
+  const setAutoOpenOnNewPage = useCallback((autoOpen: boolean) => {
+    setSettings((prev) => ({ ...prev, autoOpenOnNewPage: autoOpen }));
+  }, []);
+  
+  // Accessibility settings
   const setHighContrastChat = useCallback((highContrast: boolean) => {
-    setHighContrastChatState(highContrast);
+    setSettings((prev) => ({ ...prev, highContrastChat: highContrast }));
   }, []);
   
   const setChatFontSize = useCallback((fontSize: number) => {
-    setChatFontSizeState(fontSize);
+    setSettings((prev) => ({ ...prev, chatFontSize: fontSize }));
   }, []);
   
   // Combine all values and methods
   const value = {
-    isWidgetVisible,
+    messages,
+    isTyping,
+    isOpen,
+    
+    sendMessage,
+    clearChat,
+    openChat,
+    closeChat,
+    toggleChat,
+    
+    isWidgetVisible: widgetVisible,
     showWidget,
     hideWidget,
-    
-    isWidgetOpen,
-    openWidget,
-    closeWidget,
     
     widgetPosition,
     setWidgetPosition,
@@ -190,17 +282,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     autoOpenOnNewPage,
     setAutoOpenOnNewPage,
     
-    chatHistory,
-    addMessage,
-    clearChat,
-    
     highContrastChat,
     setHighContrastChat,
     chatFontSize,
     setChatFontSize,
   };
   
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+  return (
+    <ChatContext.Provider value={value}>
+      {children}
+    </ChatContext.Provider>
+  );
 };
 
 // Custom hook for using the chat context
