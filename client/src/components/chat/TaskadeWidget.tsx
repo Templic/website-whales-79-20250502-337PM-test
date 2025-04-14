@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 
 interface TaskadeWidgetProps {
@@ -17,34 +17,56 @@ declare global {
 
 const TaskadeWidget: React.FC<TaskadeWidgetProps> = ({ enabled = true }) => {
   const { reducedMotion } = useAccessibility();
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const initScriptRef = useRef<HTMLScriptElement | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
 
-    // Add Taskade script to the page
+    // First, add the Taskade embed script
     const script = document.createElement('script');
     script.src = 'https://assets.taskade.com/embeds/latest/taskade-embed.min.js';
     script.async = true;
-    script.onload = () => {
-      // Initialize the widget after script loads
-      if (window.TaskadeEmbed?.AgentPublicChatPopup) {
+    
+    // Then, create the initialization script
+    const initScript = document.createElement('script');
+    initScript.type = 'module';
+    initScript.text = `
+      if (window.TaskadeEmbed && window.TaskadeEmbed.AgentPublicChatPopup) {
         window.TaskadeEmbed.AgentPublicChatPopup.init({
-          publicAgentId: '01JRV02MYWJW6VJS9XGR1VB5J4'
+          publicAgentId: '01JRV02MYWJW6VJS9XGR1VB5J4',
         });
       }
+    `;
+    
+    // Script is loaded asynchronously so we need to ensure proper order
+    script.onload = () => {
+      // Only add the init script after the main script has loaded
+      document.body.appendChild(initScript);
+      initScriptRef.current = initScript;
     };
     
     document.body.appendChild(script);
+    scriptRef.current = script;
 
     // Cleanup function
     return () => {
-      document.body.removeChild(script);
-      
-      // Remove the widget if it was added
-      const widgetElement = document.querySelector('.taskade-agent-widget-container');
-      if (widgetElement && widgetElement.parentNode) {
-        widgetElement.parentNode.removeChild(widgetElement);
+      // Remove both scripts
+      if (scriptRef.current && document.body.contains(scriptRef.current)) {
+        document.body.removeChild(scriptRef.current);
       }
+      
+      if (initScriptRef.current && document.body.contains(initScriptRef.current)) {
+        document.body.removeChild(initScriptRef.current);
+      }
+      
+      // Remove any Taskade widget elements that might have been created
+      const widgetElements = document.querySelectorAll('[id^="taskade-agent-widget"]');
+      widgetElements.forEach(element => {
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        }
+      });
     };
   }, [enabled]);
 
