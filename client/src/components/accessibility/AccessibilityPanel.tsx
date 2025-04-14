@@ -1,309 +1,299 @@
 import React from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Eye,
-  ZoomIn,
-  ZoomOut,
-  PanelTop,
-  CircleOff,
-  Volume2,
-  VolumeX,
-  X
+import { 
+  ChevronRight, 
+  X, 
+  Type, 
+  PanelTop, 
+  Eye, 
+  Volume2, 
+  Sparkles, 
+  Moon,
+  Sun,
+  Minimize,
+  Maximize
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 export default function AccessibilityPanel() {
   const {
-    isPanelOpen,
     textSize,
-    contrast,
+    highContrast,
     reducedMotion,
     voiceEnabled,
+    soundEnabled,
+    customColors,
+    darkMode,
+    isAccessibilityPanelOpen,
     setTextSize,
-    setContrast,
+    setHighContrast,
     setReducedMotion,
     setVoiceEnabled,
-    togglePanel
+    setSoundEnabled,
+    setCustomColors,
+    setDarkMode,
+    toggleAccessibilityPanel,
+    applyDefaultSettings,
+    applyHighContrastSettings,
+    applyEasierReadingSettings,
+    applyReducedMotionSettings
   } = useAccessibility();
-  
-  const { toast } = useToast();
-  
-  const handleContrastChange = (value: 'default' | 'high' | 'inverted') => {
-    setContrast(value);
-    toast({
-      title: "Contrast Updated",
-      description: `Display contrast set to ${value}`,
-    });
+
+  // Handle text size changes
+  const handleTextSizeChange = (size: number) => {
+    setTextSize(size);
   };
-  
-  const handleTextSizeChange = (value: 'normal' | 'large' | 'larger') => {
-    setTextSize(value);
-    toast({
-      title: "Text Size Updated",
-      description: `Text size set to ${value}`,
-    });
-  };
-  
-  const handleReducedMotionChange = (checked: boolean) => {
-    setReducedMotion(checked);
-    toast({
-      title: checked ? "Reduced Motion Enabled" : "Reduced Motion Disabled",
-      description: checked
-        ? "Animations will be minimized for a better experience"
-        : "Standard animations have been restored",
-    });
-  };
-  
-  const handleVoiceEnabledChange = (checked: boolean) => {
-    setVoiceEnabled(checked);
-    toast({
-      title: checked ? "Voice Feedback Enabled" : "Voice Feedback Disabled",
-      description: checked
-        ? "AI responses will be spoken aloud when available"
-        : "AI responses will be text-only",
-    });
-  };
-  
-  // Size mapping for the text size slider
-  const textSizeValue = {
-    normal: 1,
-    large: 2,
-    larger: 3,
-  }[textSize];
-  
-  // Text size labels for display
-  const textSizeLabels = {
-    normal: 'Normal',
-    large: 'Large',
-    larger: 'Larger',
-  };
-  
-  // Contrast labels for display
-  const contrastLabels = {
-    default: 'Default',
-    high: 'High Contrast',
-    inverted: 'Inverted Colors',
-  };
-  
+
+  if (!isAccessibilityPanelOpen) {
+    return null;
+  }
+
   return (
-    <AnimatePresence>
-      {isPanelOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={togglePanel}
-          />
-          
-          {/* Panel */}
-          <motion.div
-            className="fixed right-4 top-24 z-50 w-80 rounded-xl bg-gradient-to-b from-slate-900/95 to-slate-800/95 backdrop-blur shadow-xl border border-white/10 overflow-hidden"
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: reducedMotion ? 0 : 0.2 }}
-          >
-            {/* Header */}
-            <div className="px-4 py-3 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                <h3 className="font-medium">Accessibility Controls</h3>
+    <motion.div
+      initial={{ opacity: 0, x: 300 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 300 }}
+      transition={{ duration: reducedMotion ? 0 : 0.3 }}
+      className="fixed right-0 top-0 h-full w-[320px] bg-slate-900 text-white shadow-xl border-l border-white/10 z-50 overflow-auto"
+    >
+      <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-900/40 to-indigo-900/40">
+        <h2 className="text-xl font-semibold">Accessibility Settings</h2>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={toggleAccessibilityPanel}
+          aria-label="Close accessibility panel"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      <div className="p-4 space-y-6">
+        {/* Text Size */}
+        <section>
+          <div className="flex items-center mb-2">
+            <Type className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-medium">Text Size</h3>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <button
+              onClick={() => handleTextSizeChange(0.85)}
+              className={`p-2 rounded ${
+                textSize === 0.85
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-slate-800 text-white/70 hover:bg-slate-700'
+              } text-sm`}
+            >
+              Small
+            </button>
+            <button
+              onClick={() => handleTextSizeChange(1)}
+              className={`p-2 rounded ${
+                textSize === 1
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-slate-800 text-white/70 hover:bg-slate-700'
+              }`}
+            >
+              Normal
+            </button>
+            <button
+              onClick={() => handleTextSizeChange(1.15)}
+              className={`p-2 rounded ${
+                textSize === 1.15
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-slate-800 text-white/70 hover:bg-slate-700'
+              } text-lg`}
+            >
+              Large
+            </button>
+            <button
+              onClick={() => handleTextSizeChange(1.3)}
+              className={`p-2 rounded ${
+                textSize === 1.3
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-slate-800 text-white/70 hover:bg-slate-700'
+              } text-xl`}
+            >
+              X-Large
+            </button>
+          </div>
+        </section>
+
+        {/* Display */}
+        <section>
+          <div className="flex items-center mb-2">
+            <Eye className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-medium">Display</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer">
+                <span>Dark Mode</span>
+              </label>
+              <div 
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                  darkMode ? 'bg-purple-700' : 'bg-slate-700'
+                }`}
+                onClick={() => setDarkMode(!darkMode)}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    darkMode ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+                <span className="ml-2 text-xs">
+                  {darkMode ? <Moon className="h-3 w-3 text-white" /> : <Sun className="h-3 w-3 text-white" />}
+                </span>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePanel}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
-            
-            {/* Content */}
-            <Tabs defaultValue="display" className="p-4">
-              <TabsList className="grid grid-cols-3 mb-4">
-                <TabsTrigger value="display">Display</TabsTrigger>
-                <TabsTrigger value="motion">Motion</TabsTrigger>
-                <TabsTrigger value="sound">Sound</TabsTrigger>
-              </TabsList>
-              
-              {/* Display Tab */}
-              <TabsContent value="display" className="space-y-6">
-                {/* Text Size */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Text Size</label>
-                    <span className="text-xs text-white/70">
-                      {textSizeLabels[textSize]}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ZoomOut className="h-4 w-4 text-white/70" />
-                    <Slider
-                      min={1}
-                      max={3}
-                      step={1}
-                      value={[textSizeValue]}
-                      onValueChange={(value) => {
-                        const sizeMap = {
-                          1: 'normal',
-                          2: 'large',
-                          3: 'larger',
-                        } as const;
-                        handleTextSizeChange(sizeMap[value[0] as 1 | 2 | 3]);
-                      }}
-                      className="flex-1"
-                    />
-                    <ZoomIn className="h-4 w-4 text-white/70" />
-                  </div>
-                </div>
-                
-                {/* Contrast */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Color Contrast</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      variant={contrast === 'default' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleContrastChange('default')}
-                      className="w-full"
-                    >
-                      Default
-                    </Button>
-                    <Button
-                      variant={contrast === 'high' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleContrastChange('high')}
-                      className="w-full"
-                    >
-                      High
-                    </Button>
-                    <Button
-                      variant={contrast === 'inverted' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleContrastChange('inverted')}
-                      className="w-full"
-                    >
-                      Inverted
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Text Preview */}
-                <div className={`p-3 rounded-md bg-white/5 space-y-2 ${textSize === 'normal' ? 'text-base' : textSize === 'large' ? 'text-lg' : 'text-xl'}`}>
-                  <h4 className="font-medium">Text Preview</h4>
-                  <p className="text-white/80">
-                    This is how your text will appear with the current settings.
-                  </p>
-                </div>
-              </TabsContent>
-              
-              {/* Motion Tab */}
-              <TabsContent value="motion" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium">Reduce Motion</h4>
-                    <p className="text-xs text-white/70 mt-1">
-                      Minimize animations and transitions
-                    </p>
-                  </div>
-                  <Switch
-                    checked={reducedMotion}
-                    onCheckedChange={handleReducedMotionChange}
-                  />
-                </div>
-                
-                <div className="p-3 rounded-md bg-white/5">
-                  {reducedMotion ? (
-                    <div className="flex items-center gap-2">
-                      <CircleOff className="h-5 w-5 text-white/70" />
-                      <span>Animations and transitions reduced</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <PanelTop className="h-5 w-5 text-white/70" />
-                        <span>Standard animations enabled</span>
-                      </div>
-                      <motion.div
-                        className="h-2 w-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mt-2"
-                        animate={{ x: [0, 10, 0], opacity: [0.5, 1, 0.5] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                      />
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              {/* Sound Tab */}
-              <TabsContent value="sound" className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-medium">Voice Feedback</h4>
-                    <p className="text-xs text-white/70 mt-1">
-                      Enable AI spoken responses
-                    </p>
-                  </div>
-                  <Switch
-                    checked={voiceEnabled}
-                    onCheckedChange={handleVoiceEnabledChange}
-                  />
-                </div>
-                
-                <div className="p-3 rounded-md bg-white/5 flex items-center gap-3">
-                  {voiceEnabled ? (
-                    <>
-                      <Volume2 className="h-5 w-5 text-white/70" />
-                      <div className="flex-1">
-                        <span className="text-sm">Voice feedback enabled</span>
-                        <div className="h-1.5 w-full bg-white/10 rounded-full mt-2 overflow-hidden">
-                          <motion.div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
-                            animate={{ width: ['15%', '100%', '65%', '85%', '35%', '75%'] }}
-                            transition={{ repeat: Infinity, duration: 3, repeatType: 'reverse' }}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <VolumeX className="h-5 w-5 text-white/70" />
-                      <span className="text-sm">Voice feedback disabled</span>
-                    </>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            {/* Footer */}
-            <div className="p-3 border-t border-white/10 flex justify-between bg-gradient-to-r from-purple-900/20 to-indigo-900/20">
-              <a
-                href="/accessibility"
-                onClick={togglePanel}
-                className="text-xs text-indigo-300 hover:text-indigo-200"
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer">
+                <span>High Contrast</span>
+              </label>
+              <div 
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                  highContrast ? 'bg-purple-700' : 'bg-slate-700'
+                }`}
+                onClick={() => setHighContrast(!highContrast)}
               >
-                More options
-              </a>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={togglePanel}
-                className="text-xs h-7 px-2"
-              >
-                Close Panel
-              </Button>
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    highContrast ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer">
+                <span>Custom Colors</span>
+              </label>
+              <div 
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                  customColors ? 'bg-purple-700' : 'bg-slate-700'
+                }`}
+                onClick={() => setCustomColors(!customColors)}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    customColors ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Motion */}
+        <section>
+          <div className="flex items-center mb-2">
+            <Minimize className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-medium">Motion</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center cursor-pointer">
+              <span>Reduced Motion</span>
+            </label>
+            <div 
+              className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                reducedMotion ? 'bg-purple-700' : 'bg-slate-700'
+              }`}
+              onClick={() => setReducedMotion(!reducedMotion)}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                  reducedMotion ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Sound */}
+        <section>
+          <div className="flex items-center mb-2">
+            <Volume2 className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-medium">Sound & Voice</h3>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer">
+                <span>Enable Sound Effects</span>
+              </label>
+              <div 
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                  soundEnabled ? 'bg-purple-700' : 'bg-slate-700'
+                }`}
+                onClick={() => setSoundEnabled(!soundEnabled)}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center cursor-pointer">
+                <span>Text-to-Speech</span>
+              </label>
+              <div 
+                className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer ${
+                  voiceEnabled ? 'bg-purple-700' : 'bg-slate-700'
+                }`}
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+              >
+                <div
+                  className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out ${
+                    voiceEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Presets */}
+        <section>
+          <div className="flex items-center mb-2">
+            <Sparkles className="h-5 w-5 mr-2" />
+            <h3 className="text-lg font-medium">Presets</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              onClick={applyDefaultSettings}
+              className="border-white/10 bg-slate-800 hover:bg-slate-700"
+            >
+              Default
+            </Button>
+            <Button
+              variant="outline"
+              onClick={applyHighContrastSettings}
+              className="border-white/10 bg-slate-800 hover:bg-slate-700"
+            >
+              High Contrast
+            </Button>
+            <Button
+              variant="outline"
+              onClick={applyEasierReadingSettings}
+              className="border-white/10 bg-slate-800 hover:bg-slate-700"
+            >
+              Easy Reading
+            </Button>
+            <Button
+              variant="outline"
+              onClick={applyReducedMotionSettings}
+              className="border-white/10 bg-slate-800 hover:bg-slate-700"
+            >
+              Reduced Motion
+            </Button>
+          </div>
+        </section>
+      </div>
+    </motion.div>
   );
 }

@@ -1,268 +1,45 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Almendra:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Exo+2:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Gruppo&family=Michroma&family=Poiret+One&family=Syncopate:wght@400;700&display=swap');
-@import url('./cosmic-styles.css');
-@import url('./components/cosmic/cosmic-animations.css');
-@import './styles/cosmic-theme.css';
-@import './styles/mobile-styles.css';
-@import './styles/cosmic-containers.css';
-
-@keyframes cosmic {
-  0%, 100% {
-    text-shadow: 0 0 10px #00ebd6,
-                 0 0 20px #00ebd6,
-                 0 0 30px #fe0064,
-                 0 0 40px #fe0064;
-  }
-  50% {
-    text-shadow: 0 0 20px #fe0064,
-                 0 0 30px #fe0064,
-                 0 0 40px #00ebd6,
-                 0 0 50px #00ebd6;
-  }
-}
-
-/* 3D card flip effect classes */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-.rotate-y-180 {
-  transform: rotateY(180deg);
-}
-
-.animate-cosmic {
-  animation: cosmic 3s ease-in-out infinite;
-  letter-spacing: 2px;
-}
-
-@keyframes soundwave {
-  0%, 100% {
-    height: 40%;
-    opacity: 0.6;
-  }
-  50% {
-    height: 100%;
-    opacity: 1;
-  }
-}
-
-.animate-soundwave {
-  animation: soundwave 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.8);
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-.drop-shadow-glow {
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.7),
-               0 0 20px rgba(139, 92, 246, 0.5),
-               0 0 30px rgba(139, 92, 246, 0.3);
-}
-
-.cosmic-text-glow {
-  text-shadow: 0 0 10px rgba(139, 92, 246, 0.8),
-               0 0 15px rgba(59, 130, 246, 0.6),
-               0 0 20px rgba(139, 92, 246, 0.4);
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Cosmic Theme imported at the top */
+:root {
+  --text-size-factor: 1;
+}
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  
-  :root {
-    --font-almendra: 'Almendra', serif;
-    --font-cormorant-garamond: 'Cormorant Garamond', serif;
-    --font-nebula: sans-serif;
-  }
+.high-contrast {
+  --contrast-factor: 1.5;
+}
 
-  body {
-    @apply font-serif antialiased bg-background text-foreground;
-    font-family: var(--font-cormorant-garamond);
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-almendra);
-  }
-  
-  /* Apply Almendra to elements with these specific classes */
-  .cosmic-title, .section-title, .fancy-title, .display-text {
-    font-family: var(--font-almendra);
-  }
-  
-  /* Cosmic fonts imported at the top */
-  
-  .font-orbitron {
-    font-family: 'Orbitron', sans-serif;
-  }
-  
-  .font-rajdhani {
-    font-family: 'Rajdhani', sans-serif;
-  }
-  
-  .font-space {
-    font-family: 'Space Grotesk', sans-serif;
-  }
-  
-  .font-cinzel {
-    font-family: 'Cinzel', serif;
-  }
-  
-  .font-exo2 {
-    font-family: 'Exo 2', sans-serif;
-  }
-  
-  .font-gruppo {
-    font-family: 'Gruppo', cursive;
-  }
-  
-  .font-michroma {
-    font-family: 'Michroma', sans-serif;
-  }
-  
-  .font-poiret {
-    font-family: 'Poiret One', cursive;
-  }
-  
-  .font-syncopate {
-    font-family: 'Syncopate', sans-serif;
-  }
-  
-  .font-almendra {
-    font-family: 'Almendra', serif;
-  }
-  
-  .font-cormorant {
-    font-family: 'Cormorant Garamond', serif;
-  }
-  
-  /* Accessibility styles */
-  
-  /* Auto-hide navigation */
-  .nav-auto-hide header {
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .nav-auto-hide header.scrolled-down {
-    transform: translateY(-100%);
-  }
-  
-  /* High contrast mode */
-  .high-contrast {
-    --text-color: white;
-    --background-color: black;
-    --accent-color: yellow;
-  }
-  
-  /* Dark mode */
-  .dark-mode {
-    --text-color: #e0e0e0;
-    --background-color: #121212;
-    --accent-color: #7c3aed;
-  }
-  
-  /* Reduced motion */
-  .reduced-motion * {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-  }
-  
-  /* Geometric shape clip paths for containers */
-  .clip-path-hexagon {
-    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-  }
-  
-  .clip-path-pentagon {
-    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
-  }
-  
-  .clip-path-octagon {
-    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
-  }
-  
-  .clip-path-heptagon {
-    clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
-  }
-  
-  .clip-path-triangle {
-    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
-  }
-  
-  .clip-path-diamond {
-    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  }
-  
-  .clip-path-merkaba {
-    clip-path: polygon(
-      50% 0%,
-      61% 35%,
-      98% 35%,
-      68% 57%,
-      79% 91%,
-      50% 70%,
-      21% 91%,
-      32% 57%,
-      2% 35%,
-      39% 35%
-    );
-  }
-  
-  /* Add a subtle glow effect to all geometric containers */
-  .clip-path-hexagon, .clip-path-pentagon, .clip-path-octagon, 
-  .clip-path-heptagon, .clip-path-triangle, .clip-path-diamond, .clip-path-merkaba {
-    box-shadow: 0 0 15px rgba(0, 235, 214, 0.3), 
-                inset 0 0 15px rgba(0, 235, 214, 0.2);
-  }
-  
-  /* Cosmic hover glow effect for buttons and interactive elements */
-  .cosmic-hover-glow {
-    position: relative;
-    transition: all 0.3s ease;
-  }
-  
-  .cosmic-hover-glow:hover {
-    box-shadow: 0 0 15px rgba(138, 75, 255, 0.7),
-                0 0 25px rgba(138, 75, 255, 0.4);
-    transform: translateY(-2px);
-  }
-  
-  .cosmic-hover-glow:active {
-    transform: translateY(1px);
-    box-shadow: 0 0 8px rgba(138, 75, 255, 0.6);
-  }
-  
-  /* Improvement for product cards to have consistent heights */
-  .product-card-container {
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    height: 100%;
-  }
+.reduced-motion * {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.reduced-motion html {
+  scroll-behavior: auto;
+}
+
+body {
+  font-size: calc(1rem * var(--text-size-factor));
+}
+
+/* Dark mode */
+.dark-mode {
+  color-scheme: dark;
+}
+
+/* Custom themes */
+.theme-cosmic {
+  --primary-color: theme('colors.purple.600');
+  --secondary-color: theme('colors.indigo.600');
+}
+
+/* Accessibility focus styles */
+*:focus-visible {
+  outline: 2px solid var(--primary-color, theme('colors.purple.600'));
+  outline-offset: 2px;
 }

@@ -1,147 +1,207 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Define accessibility preferences interface
+// Define the accessibility preferences interface
 interface AccessibilityPreferences {
-  textSize: 'normal' | 'large' | 'larger';
-  contrast: 'default' | 'high' | 'inverted';
-  reducedMotion: boolean;
-  voiceEnabled: boolean;
-}
-
-// Define the context value interface
-interface AccessibilityContextValue {
-  // Preferences
-  textSize: 'normal' | 'large' | 'larger';
-  contrast: 'default' | 'high' | 'inverted';
-  reducedMotion: boolean;
-  voiceEnabled: boolean;
+  textSize: number;      // 1 = normal, 0.85 = small, 1.15 = large, 1.3 = x-large
+  highContrast: boolean; // Higher contrast mode
+  reducedMotion: boolean; // Reduced animations
+  voiceEnabled: boolean; // Text-to-speech for compatible content
+  soundEnabled: boolean; // Background sounds and effects
+  customColors: boolean; // Allow custom color schemes
+  
+  // Visual preferences
+  darkMode: boolean;     // Dark mode preference 
   
   // Panel state
-  isPanelOpen: boolean;
+  isAccessibilityPanelOpen: boolean; // Whether the accessibility panel is open
+}
+
+// Define context interface with state and updater functions
+interface AccessibilityContextType {
+  // State
+  textSize: number;
+  highContrast: boolean;
+  reducedMotion: boolean;
+  voiceEnabled: boolean;
+  soundEnabled: boolean;
+  customColors: boolean;
+  darkMode: boolean;
+  isAccessibilityPanelOpen: boolean;
   
-  // Methods
-  setTextSize: (size: 'normal' | 'large' | 'larger') => void;
-  setContrast: (contrast: 'default' | 'high' | 'inverted') => void;
-  setReducedMotion: (reducedMotion: boolean) => void;
+  // Actions
+  setTextSize: (size: number) => void;
+  setHighContrast: (enabled: boolean) => void;
+  setReducedMotion: (enabled: boolean) => void;
   setVoiceEnabled: (enabled: boolean) => void;
-  togglePanel: () => void;
+  setSoundEnabled: (enabled: boolean) => void;
+  setCustomColors: (enabled: boolean) => void;
+  setDarkMode: (enabled: boolean) => void;
+  toggleAccessibilityPanel: () => void;
   
-  // CSS classes based on current settings
-  textSizeClass: string;
-  contrastClass: string;
+  // Presets
+  applyDefaultSettings: () => void;
+  applyHighContrastSettings: () => void;
+  applyEasierReadingSettings: () => void;
+  applyReducedMotionSettings: () => void;
 }
 
-// Create the context
-const AccessibilityContext = createContext<AccessibilityContextValue | undefined>(undefined);
+// Create the context with a default undefined value
+const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-// Define props for provider component
-interface AccessibilityProviderProps {
-  children: ReactNode;
+// Hook for consuming the context
+export function useAccessibility() {
+  const context = useContext(AccessibilityContext);
+  
+  if (context === undefined) {
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
+  }
+  
+  return context;
 }
 
-// Local storage key
-const STORAGE_KEY = 'cosmic-accessibility-preferences';
-
-// Default preferences
-const DEFAULT_PREFERENCES: AccessibilityPreferences = {
-  textSize: 'normal',
-  contrast: 'default',
+// Default accessibility preferences
+const defaultPreferences: AccessibilityPreferences = {
+  textSize: 1,
+  highContrast: false,
   reducedMotion: false,
-  voiceEnabled: false
+  voiceEnabled: false,
+  soundEnabled: true,
+  customColors: false,
+  darkMode: true,
+  isAccessibilityPanelOpen: false,
 };
 
-// Provider component
-export function AccessibilityProvider({ children }: AccessibilityProviderProps) {
-  // Initialize state with defaults or saved preferences
+// Provider component that wraps the app
+export function AccessibilityProvider({ children }: { children: React.ReactNode }) {
+  // Try to load preferences from localStorage, otherwise use defaults
   const [preferences, setPreferences] = useState<AccessibilityPreferences>(() => {
-    // Try to load from localStorage
     if (typeof window !== 'undefined') {
-      const savedPrefs = localStorage.getItem(STORAGE_KEY);
-      if (savedPrefs) {
-        try {
-          return JSON.parse(savedPrefs) as AccessibilityPreferences;
-        } catch (e) {
-          console.error('Failed to parse saved accessibility preferences:', e);
-        }
-      }
+      const savedPreferences = localStorage.getItem('accessibility-preferences');
+      return savedPreferences 
+        ? { ...defaultPreferences, ...JSON.parse(savedPreferences) }
+        : defaultPreferences;
     }
-    return DEFAULT_PREFERENCES;
+    return defaultPreferences;
   });
-  
-  // Panel state
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-  
-  // Extract individual preferences
-  const { textSize, contrast, reducedMotion, voiceEnabled } = preferences;
   
   // Save preferences to localStorage when they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+      localStorage.setItem('accessibility-preferences', JSON.stringify(preferences));
     }
   }, [preferences]);
   
-  // Apply reduced motion preference to body
+  // Apply CSS variables for text size
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (reducedMotion) {
-        document.body.classList.add('reduce-motion');
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--text-size-factor', preferences.textSize.toString());
+      
+      // Apply classes for other preferences
+      if (preferences.highContrast) {
+        document.documentElement.classList.add('high-contrast');
       } else {
-        document.body.classList.remove('reduce-motion');
+        document.documentElement.classList.remove('high-contrast');
+      }
+      
+      if (preferences.reducedMotion) {
+        document.documentElement.classList.add('reduced-motion');
+      } else {
+        document.documentElement.classList.remove('reduced-motion');
+      }
+      
+      if (preferences.darkMode) {
+        document.documentElement.classList.add('dark-mode');
+      } else {
+        document.documentElement.classList.remove('dark-mode');
       }
     }
-  }, [reducedMotion]);
+  }, [preferences.textSize, preferences.highContrast, preferences.reducedMotion, preferences.darkMode]);
   
-  // Apply contrast preference to body
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Remove all contrast classes first
-      document.body.classList.remove('contrast-default', 'contrast-high', 'contrast-inverted');
-      // Add the current contrast class
-      document.body.classList.add(`contrast-${contrast}`);
-    }
-  }, [contrast]);
-  
-  // Methods to update preferences
-  const setTextSize = useCallback((size: 'normal' | 'large' | 'larger') => {
+  // Setting updater functions
+  const setTextSize = (size: number) => {
     setPreferences(prev => ({ ...prev, textSize: size }));
-  }, []);
+  };
   
-  const setContrast = useCallback((newContrast: 'default' | 'high' | 'inverted') => {
-    setPreferences(prev => ({ ...prev, contrast: newContrast }));
-  }, []);
+  const setHighContrast = (enabled: boolean) => {
+    setPreferences(prev => ({ ...prev, highContrast: enabled }));
+  };
   
-  const setReducedMotion = useCallback((value: boolean) => {
-    setPreferences(prev => ({ ...prev, reducedMotion: value }));
-  }, []);
+  const setReducedMotion = (enabled: boolean) => {
+    setPreferences(prev => ({ ...prev, reducedMotion: enabled }));
+  };
   
-  const setVoiceEnabled = useCallback((enabled: boolean) => {
+  const setVoiceEnabled = (enabled: boolean) => {
     setPreferences(prev => ({ ...prev, voiceEnabled: enabled }));
-  }, []);
+  };
   
-  // Toggle accessibility panel
-  const togglePanel = useCallback(() => {
-    setIsPanelOpen(prev => !prev);
-  }, []);
+  const setSoundEnabled = (enabled: boolean) => {
+    setPreferences(prev => ({ ...prev, soundEnabled: enabled }));
+  };
   
-  // Compute CSS classes based on settings
-  const textSizeClass = `text-size-${textSize}`;
-  const contrastClass = `contrast-${contrast}`;
+  const setCustomColors = (enabled: boolean) => {
+    setPreferences(prev => ({ ...prev, customColors: enabled }));
+  };
   
-  // Context value
-  const value: AccessibilityContextValue = {
-    textSize,
-    contrast,
-    reducedMotion,
-    voiceEnabled,
-    isPanelOpen,
+  const setDarkMode = (enabled: boolean) => {
+    setPreferences(prev => ({ ...prev, darkMode: enabled }));
+  };
+  
+  const toggleAccessibilityPanel = () => {
+    setPreferences(prev => ({
+      ...prev,
+      isAccessibilityPanelOpen: !prev.isAccessibilityPanelOpen
+    }));
+  };
+  
+  // Preset setting functions
+  const applyDefaultSettings = () => {
+    setPreferences({
+      ...defaultPreferences,
+      isAccessibilityPanelOpen: preferences.isAccessibilityPanelOpen
+    });
+  };
+  
+  const applyHighContrastSettings = () => {
+    setPreferences(prev => ({
+      ...prev,
+      highContrast: true,
+      textSize: 1.15,
+      customColors: true
+    }));
+  };
+  
+  const applyEasierReadingSettings = () => {
+    setPreferences(prev => ({
+      ...prev,
+      textSize: 1.15,
+      highContrast: true,
+      reducedMotion: true
+    }));
+  };
+  
+  const applyReducedMotionSettings = () => {
+    setPreferences(prev => ({
+      ...prev,
+      reducedMotion: true,
+      soundEnabled: false
+    }));
+  };
+  
+  // Construct the value object
+  const value: AccessibilityContextType = {
+    ...preferences,
     setTextSize,
-    setContrast,
+    setHighContrast,
     setReducedMotion,
     setVoiceEnabled,
-    togglePanel,
-    textSizeClass,
-    contrastClass
+    setSoundEnabled,
+    setCustomColors,
+    setDarkMode,
+    toggleAccessibilityPanel,
+    applyDefaultSettings,
+    applyHighContrastSettings,
+    applyEasierReadingSettings,
+    applyReducedMotionSettings
   };
   
   return (
@@ -149,13 +209,4 @@ export function AccessibilityProvider({ children }: AccessibilityProviderProps) 
       {children}
     </AccessibilityContext.Provider>
   );
-}
-
-// Custom hook for using the context
-export function useAccessibility(): AccessibilityContextValue {
-  const context = useContext(AccessibilityContext);
-  if (context === undefined) {
-    throw new Error('useAccessibility must be used within an AccessibilityProvider');
-  }
-  return context;
 }
