@@ -58,6 +58,7 @@ export interface IStorage {
   // Post methods
   createPost(post: InsertPost): Promise<Post>;
   getPosts(): Promise<Post[]>;
+  getAllPosts(): Promise<Post[]>; // Method for getting all posts including unpublished ones
   getPostById(id: number): Promise<Post | null>;
   updatePost(id: number, post: Partial<InsertPost>): Promise<Post>;
 
@@ -83,9 +84,13 @@ export interface IStorage {
 
   // Music methods
   getTracks(): Promise<Track[]>;
+  getAllTracks(): Promise<Track[]>; // Get all tracks including non-published ones
   getAlbums(): Promise<Album[]>;
   uploadMusic(params: { file: any; targetPage: string; uploadedBy: number; userRole: 'admin' | 'super_admin' }): Promise<Track>;
   deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void>;
+  
+  // Product methods
+  getAllProducts(): Promise<Product[]>;
 
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
@@ -238,6 +243,19 @@ export class PostgresStorage implements IStorage {
   }
 
   async getPosts(): Promise<Post[]> {
+    // Return only published and approved posts for public consumption
+    return await db.select().from(posts)
+      .where(
+        and(
+          eq(posts.published, true),
+          eq(posts.approved, true)
+        )
+      )
+      .orderBy(sql`created_at DESC`);
+  }
+  
+  async getAllPosts(): Promise<Post[]> {
+    // Return all posts regardless of status (for admin use)
     return await db.select().from(posts).orderBy(sql`created_at DESC`);
   }
 
