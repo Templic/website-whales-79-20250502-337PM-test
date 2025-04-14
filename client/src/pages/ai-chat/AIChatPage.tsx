@@ -1,204 +1,189 @@
 import React, { useState } from 'react';
+import { useAgents, Agent } from '@/contexts/AgentContext';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Search, MessageCircle, Info, Bot, Star, Filter, Settings } from 'lucide-react';
-import { useAgents, Agent } from '@/contexts/AgentContext';
-import { AIChatInterface } from '@/components/ai/AIChatInterface';
-import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, MessageSquare, Check, MessagesSquare, Bot, Users, Brain, HelpCircle } from 'lucide-react';
+import { Link } from 'wouter';
+import AIChatInterface from '@/components/ai/AIChatInterface';
+import { SectionHeading } from '@/components/ui/section-heading';
+import { PageTransition } from '@/components/ui/page-transition';
+import { useToast } from '@/hooks/use-toast';
 
 export function AIChatPage() {
-  const { agents, activateAgent, activeAgent, deactivateAgent } = useAgents();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const { agents, activeAgent, activateAgent, deactivateAgent } = useAgents();
+  const { toast } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
-  // Get unique categories
-  const categories = ['all', ...new Set(agents.map(agent => agent.category))];
+  // Agent categories
+  const categories = [
+    { id: 'all', name: 'All Agents', icon: <Users className="h-4 w-4" /> },
+    { id: 'general', name: 'General', icon: <Bot className="h-4 w-4" /> },
+    { id: 'shopping', name: 'Shopping', icon: <MessageSquare className="h-4 w-4" /> },
+    { id: 'music', name: 'Music', icon: <MessagesSquare className="h-4 w-4" /> },
+    { id: 'education', name: 'Education', icon: <Brain className="h-4 w-4" /> }
+  ];
   
-  // Filter agents based on search and category
-  const filteredAgents = agents.filter(agent => {
-    const matchesSearch = searchTerm === '' || 
-      agent.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      agent.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = selectedCategory === 'all' || agent.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Filter agents by category
+  const filteredAgents = selectedCategory === 'all' 
+    ? agents 
+    : agents.filter(agent => agent.category === selectedCategory);
   
-  // Group agents by category for the "All" tab
-  const agentsByCategory = filteredAgents.reduce<Record<string, Agent[]>>((acc, agent) => {
-    if (!acc[agent.category]) {
-      acc[agent.category] = [];
-    }
-    acc[agent.category].push(agent);
-    return acc;
-  }, {});
+  // Select an agent
+  const handleSelectAgent = (agent: Agent) => {
+    activateAgent(agent.id);
+    toast({
+      title: `${agent.name} activated`,
+      description: `You are now chatting with ${agent.name}`,
+    });
+  };
   
   return (
-    <div className="container mx-auto py-10 px-4">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Sidebar */}
-        <div className="lg:col-span-4">
-          <Card className="h-full cosmic-glass-card">
-            <CardHeader>
-              <CardTitle className="text-2xl cosmic-gradient-text flex items-center gap-2">
-                <Bot className="h-6 w-6" />
-                AI Assistants
-              </CardTitle>
-              <CardDescription>
-                Select an AI assistant to help with your cosmic journey
-              </CardDescription>
-              <div className="relative mt-4">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search agents..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 bg-white/5 border-white/10"
-                />
-              </div>
-            </CardHeader>
-            <div className="px-6 pb-2">
-              <Tabs defaultValue="all" value={selectedCategory} onValueChange={setSelectedCategory}>
-                <TabsList className="w-full grid" style={{ 
-                  gridTemplateColumns: `repeat(${Math.min(categories.length, 4)}, 1fr)` 
-                }}>
-                  {categories.map(category => (
-                    <TabsTrigger 
-                      key={category} 
-                      value={category}
-                      className="capitalize"
-                    >
-                      {category === 'all' ? 'All' : category}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-            </div>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[calc(100vh-320px)] px-6 pb-6">
-                {selectedCategory === 'all' ? (
-                  Object.entries(agentsByCategory).map(([category, agents]) => (
-                    <div key={category} className="mb-6">
-                      <h3 className="text-sm font-medium text-white/70 mb-3 capitalize">{category}</h3>
-                      <div className="space-y-3">
-                        {agents.map(agent => (
-                          <AgentCard 
-                            key={agent.id}
-                            agent={agent}
-                            isActive={activeAgent?.id === agent.id}
-                            onSelect={() => activateAgent(agent.id)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="mt-6 space-y-3">
-                    {filteredAgents
-                      .filter(agent => agent.category === selectedCategory)
-                      .map(agent => (
-                        <AgentCard 
-                          key={agent.id}
-                          agent={agent}
-                          isActive={activeAgent?.id === agent.id}
-                          onSelect={() => activateAgent(agent.id)}
-                        />
-                      ))
-                    }
-                  </div>
-                )}
-                
-                {filteredAgents.length === 0 && (
-                  <div className="py-8 text-center">
-                    <p className="text-white/60">No agents found for your search</p>
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+    <PageTransition>
+      <div className="container max-w-6xl py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/" className="inline-flex items-center text-sm text-white/60 hover:text-white mb-4">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to Home
+          </Link>
+          
+          <SectionHeading
+            title="Cosmic AI Assistants"
+            description="Chat with our specialized AI guides to enhance your cosmic journey."
+            align="left"
+            titleClassName="text-4xl"
+          />
         </div>
         
-        {/* Chat Area */}
-        <div className="lg:col-span-8">
-          {activeAgent ? (
-            <div className="h-full">
-              <AIChatInterface />
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center">
-              <Card className="w-full max-w-md cosmic-glass-card text-center p-8">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-indigo-900/50 flex items-center justify-center">
-                    <MessageCircle className="h-8 w-8 text-indigo-400" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Agent Selection */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-purple-400" />
+                  AI Agents
+                </CardTitle>
+                <CardDescription>
+                  Select an AI guide to assist your journey
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="all" value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <TabsList className="grid grid-cols-5 mb-4">
+                    {categories.map(category => (
+                      <TabsTrigger 
+                        key={category.id} 
+                        value={category.id} 
+                        className="flex items-center gap-1"
+                      >
+                        {category.icon}
+                        <span className="hidden sm:inline-block">{category.name}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  
+                  <div className="space-y-2">
+                    {filteredAgents.map(agent => (
+                      <div 
+                        key={agent.id}
+                        className={`p-3 rounded flex items-center gap-3 transition-colors cursor-pointer
+                          ${activeAgent?.id === agent.id 
+                            ? 'bg-purple-600/30 border border-purple-500'
+                            : 'hover:bg-white/5 border border-white/10'
+                          }`}
+                        onClick={() => handleSelectAgent(agent)}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={agent.avatar} alt={agent.name} />
+                          <AvatarFallback className="bg-purple-900 text-white">
+                            {agent.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium">{agent.name}</h3>
+                            {activeAgent?.id === agent.id && (
+                              <Check className="h-4 w-4 text-green-400" />
+                            )}
+                          </div>
+                          <p className="text-sm text-white/60 truncate">{agent.description}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <CardTitle>Select an Agent</CardTitle>
-                  <CardDescription>
-                    Choose an AI assistant from the list to begin a conversation
-                  </CardDescription>
-                </div>
+                </Tabs>
+              </CardContent>
+            </Card>
+            
+            {/* Agent Information */}
+            {activeAgent && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5 text-purple-400" />
+                    About {activeAgent.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">Capabilities</h4>
+                      <ul className="list-disc list-inside text-sm text-white/70 space-y-1">
+                        {activeAgent.capabilities.map((capability, index) => (
+                          <li key={index}>{capability}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-1">Personality</h4>
+                      <div className="text-sm text-white/70 space-y-2">
+                        <div>
+                          <span className="text-white/90">Tone:</span> {activeAgent.personality.tone}
+                        </div>
+                        <div>
+                          <span className="text-white/90">Style:</span> {activeAgent.personality.style}
+                        </div>
+                        <div>
+                          <span className="text-white/90">Traits:</span> {activeAgent.personality.traits.join(', ')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface AgentCardProps {
-  agent: Agent;
-  isActive: boolean;
-  onSelect: () => void;
-}
-
-function AgentCard({ agent, isActive, onSelect }: AgentCardProps) {
-  return (
-    <div 
-      className={cn(
-        "rounded-lg p-3 transition-all cursor-pointer",
-        isActive 
-          ? "bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-500/50" 
-          : "bg-white/5 hover:bg-white/10 border border-white/10"
-      )}
-      onClick={onSelect}
-    >
-      <div className="flex items-start gap-3">
-        <Avatar className="h-10 w-10 cosmic-avatar mt-0.5">
-          <AvatarImage src={agent.avatar} alt={agent.name} />
-          <AvatarFallback className="bg-cosmic-primary text-white">
-            {agent.name.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium">{agent.name}</h3>
-            <Badge variant="outline" className="capitalize">
-              {agent.category}
-            </Badge>
+            )}
           </div>
-          <p className="text-sm text-white/70 mt-1">{agent.description}</p>
-          <div className="mt-2">
-            <Button 
-              variant={isActive ? "secondary" : "outline"}
-              size="sm" 
-              className={cn(
-                "w-full gap-2",
-                isActive && "bg-purple-600 hover:bg-purple-700 text-white"
-              )}
-            >
-              <MessageCircle className="h-3.5 w-3.5" />
-              {isActive ? "Continue Chat" : "Start Chat"}
-            </Button>
+          
+          {/* Chat Interface */}
+          <div className="lg:col-span-2 flex flex-col h-[80vh] lg:h-auto">
+            {activeAgent ? (
+              <div className="flex-1 h-full">
+                <AIChatInterface />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full border border-dashed border-white/20 rounded-lg p-8 text-center">
+                <div className="max-w-md space-y-4">
+                  <div className="w-20 h-20 bg-purple-900/30 rounded-full flex items-center justify-center mx-auto">
+                    <MessageSquare className="h-10 w-10 text-purple-400" />
+                  </div>
+                  <h3 className="text-xl font-medium">Select an AI Guide</h3>
+                  <p className="text-white/60">
+                    Choose one of our cosmic AI guides from the left panel to begin a conversation. Each guide has unique knowledge and capabilities.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
 
