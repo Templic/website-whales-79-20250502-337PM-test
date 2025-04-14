@@ -88,12 +88,13 @@ interface ContentItem {
 interface WorkflowHistoryItem {
   id: number;
   contentId: number;
-  userId: number;
-  userName: string;
+  actorId: number;
+  actorName?: string; // Using the property name from the backend
   fromStatus: string;
   toStatus: string;
   actionAt: string;
-  reviewNotes?: string;
+  comments?: string; // Using the property name from the schema instead of reviewNotes
+  version: number;
 }
 
 // Status options
