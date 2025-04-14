@@ -13,6 +13,8 @@ import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
 import StarBackground from "@/components/cosmic/StarBackground";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { AgentProvider } from "@/contexts/AgentContext";
+import { AIAgentProvider } from "@/components/ai/AIAgentProvider";
 import CookieConsent from "@/components/common/CookieConsent";
 
 // Pages
@@ -82,7 +84,7 @@ import ContentManagementPage from "@/pages/admin/ContentManagementPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
-const EditButtonPage = () => <EditButtonPageFC />;
+const EditButtonPage = (props: any) => <EditButtonPageFC {...props} />;
 
 // Search Pages
 import SearchPage from "@/pages/SearchPage";
@@ -91,6 +93,10 @@ import ShopSearchPage from "@/pages/shop/ShopSearchPage";
 
 // Demo Pages
 import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
+
+// Accessibility and AI Chat Pages
+import AccessibilityPage from "@/pages/accessibility/AccessibilityPage";
+import AIChatPage from "@/pages/ai-chat/AIChatPage";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -203,6 +209,10 @@ function AppRouter() {
           {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
 
+          {/* Accessibility & AI Chat Routes */}
+          <Route path="/accessibility" component={AccessibilityPage} />
+          <Route path="/ai-chat" component={AIChatPage} />
+
           {/* 404 Route */}
           <Route component={NotFound} />
         </Switch>
@@ -238,12 +248,15 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <AccessibilityProvider>
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
-              <StarBackground starCount={150} />
-              <AppRouter />
-              <CookieConsent />
-              <Toaster />
-            </ErrorBoundary>
+            <AgentProvider>
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <StarBackground starCount={150} />
+                <AppRouter />
+                <AIAgentProvider />
+                <CookieConsent />
+                <Toaster />
+              </ErrorBoundary>
+            </AgentProvider>
           </AccessibilityProvider>
         </CartProvider>
       </AuthProvider>
