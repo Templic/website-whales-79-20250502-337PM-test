@@ -136,7 +136,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
               transition={{ duration: reducedMotion ? 0 : 60, repeat: Infinity, ease: "linear" }}
               className="opacity-30"
             >
-              <SacredGeometry variant="spiral" size={150} color="#00ebd6" />
+              <SacredGeometry variant="star" size={150} className="text-cyan-300" animated={true} />
             </motion.div>
           </div>
           
@@ -179,13 +179,13 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
         <div className="relative z-10 flex justify-between items-center p-3 border-b border-cyan-500/30 bg-gradient-to-r from-blue-900/80 to-purple-900/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <div className="relative">
-              <SacredGeometry 
-                variant="star" 
-                size={24} 
-                color={hoverStar ? "#00ebd6" : "#0088a3"}
-                onClick={() => setHoverStar(!hoverStar)}
-                className="cursor-pointer transition-colors duration-300"
-              />
+              <div onClick={() => setHoverStar(!hoverStar)}>
+                <SacredGeometry 
+                  variant="star" 
+                  strokeWidth={2}
+                  className={`cursor-pointer transition-colors duration-300 ${hoverStar ? "text-cyan-300" : "text-cyan-600"}`}
+                />
+              </div>
             </div>
             <h3 className="text-lg font-semibold text-cyan-300">Oceanic Wisdom Portal</h3>
           </div>
@@ -287,7 +287,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
             </div>
             
             <div className="flex items-center text-xs text-cyan-300/70">
-              <SacredGeometry variant="triangle" size={16} color="#00ebd6" className="mr-2" />
+              <SacredGeometry variant="triangle" className="text-cyan-300 mr-2" size={16} />
               <span>Cosmic Consciousness Portal</span>
             </div>
           </div>

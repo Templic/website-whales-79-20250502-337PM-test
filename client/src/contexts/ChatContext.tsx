@@ -1,192 +1,209 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
 
-// Define types for chat messages
-export interface ChatMessage {
-  id: string;
-  content: string;
-  sender: 'user' | 'ai';
-  timestamp: number;
-}
+// Type for widget position
+type WidgetPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
-// Define the context type
+// Define the shape of our context
 interface ChatContextType {
-  // Chat State
-  messages: ChatMessage[];
-  addMessage: (content: string, sender: 'user' | 'ai') => void;
-  clearChat: () => void;
-  
-  // Chat Widget State
-  isChatOpen: boolean;
-  openChat: () => void;
-  closeChat: () => void;
-  
-  // Widget Configuration
-  widgetPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  setWidgetPosition: (position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left') => void;
+  // Widget visibility
   isWidgetVisible: boolean;
   showWidget: () => void;
   hideWidget: () => void;
   
-  // Auto-open settings
+  // Widget open state
+  isWidgetOpen: boolean;
+  openWidget: () => void;
+  closeWidget: () => void;
+  
+  // Widget position
+  widgetPosition: WidgetPosition;
+  setWidgetPosition: (position: WidgetPosition) => void;
+  
+  // Auto open settings
   autoOpenOnNewPage: boolean;
   setAutoOpenOnNewPage: (autoOpen: boolean) => void;
   
-  // Accessibility Settings
+  // Chat history
+  chatHistory: Array<{ role: 'user' | 'assistant', content: string }>;
+  addMessage: (message: { role: 'user' | 'assistant', content: string }) => void;
+  clearChat: () => void;
+  
+  // Accessibility settings for chat
   highContrastChat: boolean;
   setHighContrastChat: (highContrast: boolean) => void;
   chatFontSize: number;
-  setChatFontSize: (size: number) => void;
+  setChatFontSize: (fontSize: number) => void;
 }
 
-// Create context with a default undefined value
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
+// Create context with default values
+const ChatContext = createContext<ChatContextType>({
+  isWidgetVisible: true,
+  showWidget: () => {},
+  hideWidget: () => {},
+  
+  isWidgetOpen: false,
+  openWidget: () => {},
+  closeWidget: () => {},
+  
+  widgetPosition: 'bottom-right',
+  setWidgetPosition: () => {},
+  
+  autoOpenOnNewPage: false,
+  setAutoOpenOnNewPage: () => {},
+  
+  chatHistory: [],
+  addMessage: () => {},
+  clearChat: () => {},
+  
+  highContrastChat: false,
+  setHighContrastChat: () => {},
+  chatFontSize: 100,
+  setChatFontSize: () => {},
+});
 
-// Provider props
-interface ChatProviderProps {
-  children: ReactNode;
-}
+// Storage keys
+const STORAGE_KEY_PREFIX = 'cosmicChat_';
+const WIDGET_VISIBLE_KEY = `${STORAGE_KEY_PREFIX}widgetVisible`;
+const WIDGET_POSITION_KEY = `${STORAGE_KEY_PREFIX}widgetPosition`;
+const AUTO_OPEN_KEY = `${STORAGE_KEY_PREFIX}autoOpen`;
+const CHAT_HISTORY_KEY = `${STORAGE_KEY_PREFIX}chatHistory`;
+const HIGH_CONTRAST_KEY = `${STORAGE_KEY_PREFIX}highContrast`;
+const FONT_SIZE_KEY = `${STORAGE_KEY_PREFIX}fontSize`;
 
 // Provider component
-export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
-  // Message state
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    // Try to load messages from local storage
-    const storedMessages = localStorage.getItem('chatMessages');
-    return storedMessages ? JSON.parse(storedMessages) : [];
+export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Widget visibility state
+  const [isWidgetVisible, setIsWidgetVisible] = useState<boolean>(() => {
+    const saved = localStorage.getItem(WIDGET_VISIBLE_KEY);
+    return saved !== null ? JSON.parse(saved) : true;
   });
   
-  // Chat widget state
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  // Widget open state
+  const [isWidgetOpen, setIsWidgetOpen] = useState<boolean>(false);
   
-  // Configuration settings
-  const [widgetPosition, setWidgetPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'>(() => {
-    const storedPosition = localStorage.getItem('chatWidgetPosition');
-    return (storedPosition as any) || 'bottom-right';
+  // Widget position
+  const [widgetPosition, setWidgetPositionState] = useState<WidgetPosition>(() => {
+    const saved = localStorage.getItem(WIDGET_POSITION_KEY);
+    return saved !== null ? JSON.parse(saved) : 'bottom-right';
   });
   
-  const [isWidgetVisible, setIsWidgetVisible] = useState(() => {
-    const storedVisibility = localStorage.getItem('chatWidgetVisible');
-    return storedVisibility ? storedVisibility === 'true' : true;
+  // Auto open on page load
+  const [autoOpenOnNewPage, setAutoOpenOnNewPageState] = useState<boolean>(() => {
+    const saved = localStorage.getItem(AUTO_OPEN_KEY);
+    return saved !== null ? JSON.parse(saved) : false;
   });
   
-  const [autoOpenOnNewPage, setAutoOpenOnNewPage] = useState(() => {
-    const storedAutoOpen = localStorage.getItem('chatAutoOpenOnNewPage');
-    return storedAutoOpen ? storedAutoOpen === 'true' : false;
+  // Chat history
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string }>>(() => {
+    const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+    return saved !== null ? JSON.parse(saved) : [];
   });
   
   // Accessibility settings
-  const [highContrastChat, setHighContrastChat] = useState(() => {
-    const storedHighContrast = localStorage.getItem('chatHighContrast');
-    return storedHighContrast ? storedHighContrast === 'true' : false;
+  const [highContrastChat, setHighContrastChatState] = useState<boolean>(() => {
+    const saved = localStorage.getItem(HIGH_CONTRAST_KEY);
+    return saved !== null ? JSON.parse(saved) : false;
   });
   
-  const [chatFontSize, setChatFontSize] = useState(() => {
-    const storedFontSize = localStorage.getItem('chatFontSize');
-    return storedFontSize ? parseInt(storedFontSize, 10) : 100;
+  const [chatFontSize, setChatFontSizeState] = useState<number>(() => {
+    const saved = localStorage.getItem(FONT_SIZE_KEY);
+    return saved !== null ? JSON.parse(saved) : 100;
   });
   
-  // Persist messages to localStorage
+  // Save to localStorage when values change
   useEffect(() => {
-    localStorage.setItem('chatMessages', JSON.stringify(messages));
-  }, [messages]);
+    localStorage.setItem(WIDGET_VISIBLE_KEY, JSON.stringify(isWidgetVisible));
+  }, [isWidgetVisible]);
   
-  // Persist settings to localStorage
   useEffect(() => {
-    localStorage.setItem('chatWidgetPosition', widgetPosition);
-    localStorage.setItem('chatWidgetVisible', String(isWidgetVisible));
-    localStorage.setItem('chatAutoOpenOnNewPage', String(autoOpenOnNewPage));
-    localStorage.setItem('chatHighContrast', String(highContrastChat));
-    localStorage.setItem('chatFontSize', String(chatFontSize));
-  }, [widgetPosition, isWidgetVisible, autoOpenOnNewPage, highContrastChat, chatFontSize]);
+    localStorage.setItem(WIDGET_POSITION_KEY, JSON.stringify(widgetPosition));
+  }, [widgetPosition]);
   
-  // Handle auto-open on page navigation
   useEffect(() => {
-    if (autoOpenOnNewPage) {
-      // We use a slight delay to ensure the page has fully loaded
-      const timeoutId = setTimeout(() => {
-        setIsChatOpen(true);
-      }, 1500);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    localStorage.setItem(AUTO_OPEN_KEY, JSON.stringify(autoOpenOnNewPage));
   }, [autoOpenOnNewPage]);
   
-  // Function to add a new message
-  const addMessage = (content: string, sender: 'user' | 'ai') => {
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content,
-      sender,
-      timestamp: Date.now()
-    };
-    
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    
-    // If this is a user message, simulate an AI response
-    if (sender === 'user') {
-      // This is just a placeholder - in a real implementation,
-      // you'd send the message to your AI service and get a real response
-      setTimeout(() => {
-        const aiResponse: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          content: "This is a simulated AI response. In a real implementation, this would come from the Taskade AI Agent.",
-          sender: 'ai',
-          timestamp: Date.now() + 1
-        };
-        
-        setMessages(prevMessages => [...prevMessages, aiResponse]);
-      }, 1000);
-    }
-  };
+  useEffect(() => {
+    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(chatHistory));
+  }, [chatHistory]);
   
-  // Function to clear all messages
-  const clearChat = () => {
-    setMessages([]);
-  };
+  useEffect(() => {
+    localStorage.setItem(HIGH_CONTRAST_KEY, JSON.stringify(highContrastChat));
+  }, [highContrastChat]);
   
-  // Chat widget control functions
-  const openChat = () => setIsChatOpen(true);
-  const closeChat = () => setIsChatOpen(false);
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_KEY, JSON.stringify(chatFontSize));
+  }, [chatFontSize]);
   
-  // Widget visibility functions
-  const showWidget = () => setIsWidgetVisible(true);
-  const hideWidget = () => setIsWidgetVisible(false);
+  // Widget visibility methods
+  const showWidget = useCallback(() => setIsWidgetVisible(true), []);
+  const hideWidget = useCallback(() => {
+    setIsWidgetVisible(false);
+    setIsWidgetOpen(false);
+  }, []);
   
-  // Provide all values
-  const contextValue: ChatContextType = {
-    messages,
-    addMessage,
-    clearChat,
-    isChatOpen,
-    openChat,
-    closeChat,
-    widgetPosition,
-    setWidgetPosition,
+  // Widget open/close methods
+  const openWidget = useCallback(() => setIsWidgetOpen(true), []);
+  const closeWidget = useCallback(() => setIsWidgetOpen(false), []);
+  
+  // Widget position setter
+  const setWidgetPosition = useCallback((position: WidgetPosition) => {
+    setWidgetPositionState(position);
+  }, []);
+  
+  // Auto open setter
+  const setAutoOpenOnNewPage = useCallback((autoOpen: boolean) => {
+    setAutoOpenOnNewPageState(autoOpen);
+  }, []);
+  
+  // Chat history methods
+  const addMessage = useCallback((message: { role: 'user' | 'assistant', content: string }) => {
+    setChatHistory(prev => [...prev, message]);
+  }, []);
+  
+  const clearChat = useCallback(() => {
+    setChatHistory([]);
+  }, []);
+  
+  // Accessibility setters
+  const setHighContrastChat = useCallback((highContrast: boolean) => {
+    setHighContrastChatState(highContrast);
+  }, []);
+  
+  const setChatFontSize = useCallback((fontSize: number) => {
+    setChatFontSizeState(fontSize);
+  }, []);
+  
+  // Combine all values and methods
+  const value = {
     isWidgetVisible,
     showWidget,
     hideWidget,
+    
+    isWidgetOpen,
+    openWidget,
+    closeWidget,
+    
+    widgetPosition,
+    setWidgetPosition,
+    
     autoOpenOnNewPage,
     setAutoOpenOnNewPage,
+    
+    chatHistory,
+    addMessage,
+    clearChat,
+    
     highContrastChat,
     setHighContrastChat,
     chatFontSize,
-    setChatFontSize
+    setChatFontSize,
   };
   
-  return (
-    <ChatContext.Provider value={contextValue}>
-      {children}
-    </ChatContext.Provider>
-  );
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
 
-// Custom hook to use the chat context
-export const useChat = (): ChatContextType => {
-  const context = useContext(ChatContext);
-  
-  if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
-  }
-  
-  return context;
-};
+// Custom hook for using the chat context
+export const useChat = () => useContext(ChatContext);
+
+export default ChatContext;
