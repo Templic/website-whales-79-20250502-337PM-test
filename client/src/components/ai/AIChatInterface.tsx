@@ -19,7 +19,7 @@ import {
   VolumeX
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ScrollArea } from './ScrollArea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 // Define common toast variant types
 type ToastVariant = 'default' | 'success' | 'error' | 'warning';
 

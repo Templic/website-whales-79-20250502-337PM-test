@@ -1,40 +1,63 @@
-import React from "react";
+import React from 'react';
 
-interface AvatarProps {
-  className?: string;
-  children: React.ReactNode;
-}
+interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export function Avatar({ className = "", children }: AvatarProps) {
-  return (
-    <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  className?: string;
-}
-
-export function AvatarImage({ className = "", ...props }: AvatarImageProps) {
-  return (
-    <img
-      className={`aspect-square h-full w-full object-cover ${className}`}
+const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
+  ({ className = '', ...props }, ref) => (
+    <div
+      ref={ref}
+      className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`}
       {...props}
     />
-  );
+  )
+);
+Avatar.displayName = 'Avatar';
+
+interface AvatarImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  onLoadingStatusChange?: (status: 'loading' | 'loaded' | 'error') => void;
 }
 
-interface AvatarFallbackProps {
-  className?: string;
-  children: React.ReactNode;
-}
+const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
+  ({ className = '', alt = '', ...props }, ref) => {
+    const [status, setStatus] = React.useState<'loading' | 'loaded' | 'error'>(
+      'loading'
+    );
 
-export function AvatarFallback({ className = "", children }: AvatarFallbackProps) {
-  return (
-    <div className={`flex h-full w-full items-center justify-center rounded-full bg-black/20 text-white ${className}`}>
-      {children}
-    </div>
-  );
-}
+    function handleLoadingStatusChange(status: 'loading' | 'loaded' | 'error') {
+      setStatus(status);
+      props.onLoadingStatusChange?.(status);
+    }
+
+    return (
+      <img
+        ref={ref}
+        className={`aspect-square h-full w-full ${className}`}
+        alt={alt}
+        {...props}
+        onLoad={() => handleLoadingStatusChange('loaded')}
+        onError={() => handleLoadingStatusChange('error')}
+        style={{
+          objectFit: 'cover',
+          display: status === 'loading' ? 'none' : undefined,
+          ...props.style,
+        }}
+      />
+    );
+  }
+);
+AvatarImage.displayName = 'AvatarImage';
+
+interface AvatarFallbackProps extends React.HTMLAttributes<HTMLSpanElement> {}
+
+const AvatarFallback = React.forwardRef<HTMLSpanElement, AvatarFallbackProps>(
+  ({ className = '', ...props }, ref) => (
+    <span
+      ref={ref}
+      className={`flex h-full w-full items-center justify-center rounded-full bg-muted ${className}`}
+      {...props}
+    />
+  )
+);
+AvatarFallback.displayName = 'AvatarFallback';
+
+export { Avatar, AvatarImage, AvatarFallback };
