@@ -1985,6 +1985,112 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   });
 
   // Get security logs (admin only)
+  // Enhanced Admin Content Management API
+  app.get("/api/admin/content", async (req, res) => {
+    try {
+      // Check if user is authenticated and has admin privileges
+      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Get status filter from query parameter
+      const statusFilter = req.query.status as string;
+      
+      // Fetch content items based on status filter
+      let contentItems = await storage.getAllContentItems();
+      
+      // Apply status filter if provided
+      if (statusFilter && statusFilter !== 'all') {
+        contentItems = contentItems.filter(item => item.status === statusFilter);
+      }
+      
+      // Enhance content items with user information
+      const users = await storage.getAllUsers();
+      const enhancedItems = contentItems.map(item => {
+        const createdByUser = item.createdBy ? users.find(u => u.id === item.createdBy) : null;
+        const reviewerUser = item.reviewerId ? users.find(u => u.id === item.reviewerId) : null;
+        
+        return {
+          ...item,
+          createdByName: createdByUser ? createdByUser.username : undefined,
+          reviewerName: reviewerUser ? reviewerUser.username : undefined
+        };
+      });
+      
+      res.json(enhancedItems);
+    } catch (error) {
+      console.error("Error fetching admin content items:", error);
+      res.status(500).json({ message: "Error fetching content items" });
+    }
+  });
+
+  // Get workflow history for a content item
+  app.get("/api/admin/content/:id/history", async (req, res) => {
+    try {
+      // Check if user is authenticated and has admin privileges
+      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const contentId = parseInt(req.params.id);
+      
+      // Fetch workflow history
+      const history = await storage.getContentWorkflowHistory(contentId);
+      
+      // Enhance history with user information
+      const users = await storage.getAllUsers();
+      const enhancedHistory = history.map(entry => {
+        const actor = entry.actorId ? users.find(u => u.id === entry.actorId) : null;
+        
+        return {
+          ...entry,
+          actorName: actor ? actor.username : undefined
+        };
+      });
+      
+      res.json(enhancedHistory);
+    } catch (error) {
+      console.error("Error fetching content workflow history:", error);
+      res.status(500).json({ message: "Error fetching workflow history" });
+    }
+  });
+
+  // Update content workflow status
+  app.patch("/api/admin/content/:id/status", async (req, res) => {
+    try {
+      // Check if user is authenticated and has admin privileges
+      if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const contentId = parseInt(req.params.id);
+      const { status, reviewNotes, scheduledPublishAt, expirationDate } = req.body;
+      
+      // Get current content status
+      const currentContent = await storage.getContentItemById(contentId);
+      if (!currentContent) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      
+      // Update content item status
+      const updatedContent = await storage.updateContentStatus(
+        contentId, 
+        status, 
+        req.user.id, 
+        { 
+          reviewNotes,
+          scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : undefined,
+          expirationDate: expirationDate ? new Date(expirationDate) : undefined
+        }
+      );
+      
+      res.json(updatedContent);
+    } catch (error) {
+      console.error("Error updating content status:", error);
+      res.status(500).json({ message: "Error updating content status" });
+    }
+  });
+
   app.get('/api/security/logs', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });

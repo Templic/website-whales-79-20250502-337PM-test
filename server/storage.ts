@@ -124,6 +124,19 @@ export interface IStorage {
   recordContentUsage(contentId: number, location: string, path: string): Promise<ContentUsage>;
   incrementContentViews(contentId: number): Promise<void>;
   getContentUsageReport(contentId?: number): Promise<any[]>;
+  
+  // New content workflow methods
+  getContentWorkflowHistory(contentId: number): Promise<ContentWorkflowHistory[]>;
+  updateContentStatus(
+    contentId: number, 
+    status: string, 
+    userId: number, 
+    options?: { 
+      reviewNotes?: string;
+      scheduledPublishAt?: Date;
+      expirationDate?: Date;
+    }
+  ): Promise<ContentItem>;
 }
 
 export class PostgresStorage implements IStorage {
