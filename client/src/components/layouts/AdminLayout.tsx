@@ -46,6 +46,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { title: "Dashboard", href: "/admin", icon: <LayoutDashboard size={20} /> },
     { title: "Users", href: "/admin/users", icon: <Users size={20} /> },
     { title: "Content", href: "/admin/content", icon: <FileEdit size={20} /> },
+    { title: "Content Workflow", href: "/admin/content-workflow", icon: <FileText size={20} /> },
     { title: "Blog Posts", href: "/admin/posts", icon: <FileText size={20} /> },
     { title: "Music", href: "/admin/music", icon: <Music size={20} /> },
     { title: "Media", href: "/admin/media", icon: <Image size={20} /> },

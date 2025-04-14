@@ -11,6 +11,7 @@ import AdminEditorDemo from './AdminEditorDemo';
 import NewEditMenu from './NewEditMenu';
 import EditMenuDemo from './EditMenuDemo';
 import { FormatAction } from '@/types/admin';
+import WorkflowManagement from './WorkflowManagement';
 
 export interface EditorSaveData {
   text?: string;
@@ -26,5 +27,6 @@ export {
   AdminEditor,
   AdminEditorDemo,
   NewEditMenu as EditMenu,
-  EditMenuDemo
+  EditMenuDemo,
+  WorkflowManagement
 };
