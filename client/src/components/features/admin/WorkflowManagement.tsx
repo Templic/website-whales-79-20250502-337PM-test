@@ -1,20 +1,30 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Card,
+/**
+ * WorkflowManagement.tsx
+ * 
+ * Component for managing content approval workflows
+ * Allows admins to review, approve, or request changes to content
+ */
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { 
+  Card, 
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+  CardTitle 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,7 +33,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -32,592 +42,535 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Clock, CheckCircle, XCircle, AlertCircle, Edit, Eye, History, ArrowUpDown } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { 
+  Form, 
+  FormControl, 
+  FormDescription, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
+import { CalendarIcon, CheckCircle2, XCircle, Clock, AlertCircle, PenSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-// Type for content item with workflow info
+// Define interfaces
 interface ContentItem {
   id: number;
-  type: 'text' | 'image' | 'html';
   key: string;
   title: string;
   content: string;
-  page: string;
-  section: string;
-  imageUrl?: string;
-  status: 'draft' | 'review' | 'changes_requested' | 'approved' | 'published' | 'archived';
-  reviewerId?: number;
-  reviewStatus?: 'pending' | 'in_progress' | 'completed';
-  reviewStartedAt?: string;
-  reviewCompletedAt?: string;
-  scheduledPublishAt?: string;
-  expirationDate?: string;
-  reviewNotes?: string;
+  status: string;
   createdAt: string;
-  updatedAt?: string;
-  version: number;
-  createdBy?: number;
-  lastModifiedBy?: number;
-  createdByName?: string;
-  reviewerName?: string;
+  updatedAt: string;
+  createdBy: number;
+  location: string;
+  scheduledPublishAt?: string | null;
+  expirationDate?: string | null;
 }
 
-// Type for content workflow history
-interface ContentWorkflowHistory {
+interface WorkflowHistoryItem {
   id: number;
   contentId: number;
-  fromStatus?: string;
+  userId: number;
+  userName: string;
+  fromStatus: string;
   toStatus: string;
-  actorId?: number;
-  actorName?: string;
   actionAt: string;
-  comments?: string;
+  reviewNotes?: string;
 }
 
-// Mapping for status badges
-const statusBadgeMap = {
-  draft: { variant: 'outline', label: 'Draft' },
-  review: { variant: 'secondary', label: 'In Review' },
-  changes_requested: { variant: 'destructive', label: 'Changes Requested' },
-  approved: { variant: 'secondary', label: 'Approved' },
-  published: { variant: 'default', label: 'Published' },
-  archived: { variant: 'outline', label: 'Archived' }
+// Status options
+const contentStatusOptions = [
+  { value: "draft", label: "Draft" },
+  { value: "review", label: "In Review" },
+  { value: "changes_requested", label: "Changes Requested" },
+  { value: "approved", label: "Approved" },
+  { value: "published", label: "Published" },
+  { value: "archived", label: "Archived" },
+  { value: "rejected", label: "Rejected" }
+];
+
+// Status badge color mapping
+const statusColor: Record<string, string> = {
+  draft: "bg-gray-200 text-gray-800",
+  review: "bg-blue-200 text-blue-800",
+  changes_requested: "bg-amber-200 text-amber-800",
+  approved: "bg-green-200 text-green-800",
+  published: "bg-emerald-200 text-emerald-800",
+  archived: "bg-purple-200 text-purple-800",
+  rejected: "bg-red-200 text-red-800"
 };
 
-const WorkflowManagement = () => {
+// Status icons
+const statusIcon: Record<string, React.ReactNode> = {
+  draft: <PenSquare className="h-4 w-4" />,
+  review: <Clock className="h-4 w-4" />,
+  changes_requested: <AlertCircle className="h-4 w-4" />,
+  approved: <CheckCircle2 className="h-4 w-4" />,
+  published: <CheckCircle2 className="h-4 w-4" />,
+  archived: <Clock className="h-4 w-4" />,
+  rejected: <XCircle className="h-4 w-4" />
+};
+
+// Form schema for updating content status
+const updateStatusSchema = z.object({
+  contentId: z.number(),
+  status: z.string(),
+  reviewNotes: z.string().optional(),
+  scheduledPublishAt: z.date().optional().nullable(),
+  expirationDate: z.date().optional().nullable(),
+});
+
+type UpdateStatusFormValues = z.infer<typeof updateStatusSchema>;
+
+const WorkflowManagement: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
-  const [workflowTab, setWorkflowTab] = useState('pending');
-  const [reviewNotes, setReviewNotes] = useState('');
-  const [publishDate, setPublishDate] = useState<Date | undefined>(undefined);
-  const [expirationDate, setExpirationDate] = useState<Date | undefined>(undefined);
-  const [showWorkflowHistory, setShowWorkflowHistory] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: 'updatedAt', direction: 'desc' });
+  const [selectedContentId, setSelectedContentId] = useState<number | null>(null);
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+
+  const form = useForm<UpdateStatusFormValues>({
+    resolver: zodResolver(updateStatusSchema),
+    defaultValues: {
+      contentId: 0,
+      status: "",
+      reviewNotes: "",
+      scheduledPublishAt: null,
+      expirationDate: null,
+    },
+  });
 
   // Fetch content items
-  const { data: contentItems, isLoading } = useQuery<ContentItem[]>({
-    queryKey: ['contentItems', workflowTab],
-    queryFn: async () => {
-      const response = await fetch(`/api/admin/content?status=${workflowTab}`);
-      if (!response.ok) throw new Error('Failed to fetch content');
-      return response.json();
-    },
+  const { data: contentItems, isLoading: isLoadingContent } = useQuery<ContentItem[]>({
+    queryKey: ['/api/admin/content'],
+    select: (data) => {
+      if (activeTab === "all") return data;
+      return data.filter((item: ContentItem) => item.status === activeTab);
+    }
   });
 
-  // Fetch workflow history for a content item
-  const { data: workflowHistory, isLoading: historyLoading } = useQuery<ContentWorkflowHistory[]>({
-    queryKey: ['contentWorkflowHistory', selectedContent?.id],
-    queryFn: async () => {
-      if (!selectedContent?.id) return [];
-      const response = await fetch(`/api/admin/content/${selectedContent.id}/history`);
-      if (!response.ok) throw new Error('Failed to fetch workflow history');
-      return response.json();
-    },
-    enabled: !!selectedContent?.id && showWorkflowHistory,
-  });
-
-  // Update content status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ 
-      contentId, 
-      status, 
-      notes, 
-      scheduledPublish, 
-      expiration 
-    }: { 
-      contentId: number; 
-      status: string; 
-      notes?: string;
-      scheduledPublish?: string;
-      expiration?: string;
-    }) => {
-      const response = await fetch(`/api/admin/content/${contentId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          status, 
-          reviewNotes: notes, 
-          scheduledPublishAt: scheduledPublish,
-          expirationDate: expiration
-        }),
+  // Fetch workflow history for a specific content item
+  const { data: workflowHistory, isLoading: isLoadingHistory } = useQuery<WorkflowHistoryItem[]>({
+    queryKey: ['/api/admin/content', selectedContentId, 'history'],
+    queryFn: () => {
+      return apiRequest(`/api/admin/content/${selectedContentId}/history`, {
+        method: 'GET'
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update content status');
-      }
-      return response.json();
+    },
+    enabled: !!selectedContentId,
+  });
+
+  // Mutation to update content status
+  const updateStatusMutation = useMutation({
+    mutationFn: (data: UpdateStatusFormValues) => {
+      return apiRequest(`/api/admin/content/${data.contentId}/status`, {
+        method: 'PATCH',
+        data: {
+          status: data.status,
+          reviewNotes: data.reviewNotes,
+          scheduledPublishAt: data.scheduledPublishAt ? new Date(data.scheduledPublishAt).toISOString() : null,
+          expirationDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : null,
+        },
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contentItems'] });
-      toast({
-        title: 'Status Updated',
-        description: 'Content workflow status has been updated successfully',
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/content'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/admin/content', selectedContentId, 'history'] 
       });
-      setSelectedContent(null);
-      setReviewNotes('');
-      setPublishDate(undefined);
-      setExpirationDate(undefined);
+      setIsUpdateDialogOpen(false);
+      toast({
+        title: "Status updated",
+        description: "Content status has been successfully updated.",
+      });
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       toast({
-        title: 'Update Failed',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update content status. Please try again.",
+        variant: "destructive",
       });
+      console.error("Update status error:", error);
     },
   });
 
-  // Function to handle workflow action
-  const handleWorkflowAction = (action: 'approve' | 'reject' | 'publish' | 'archive') => {
-    if (!selectedContent) return;
-    
-    const statusMap = {
-      approve: 'approved',
-      reject: 'changes_requested',
-      publish: 'published',
-      archive: 'archived'
-    };
-    
-    updateStatusMutation.mutate({
-      contentId: selectedContent.id,
-      status: statusMap[action],
-      notes: reviewNotes,
-      scheduledPublish: publishDate ? publishDate.toISOString() : undefined,
-      expiration: expirationDate ? expirationDate.toISOString() : undefined
+  const handleViewHistory = (contentId: number) => {
+    setSelectedContentId(contentId);
+  };
+
+  const handleUpdateStatus = (contentItem: ContentItem) => {
+    form.reset({
+      contentId: contentItem.id,
+      status: contentItem.status,
+      reviewNotes: "",
+      scheduledPublishAt: contentItem.scheduledPublishAt ? new Date(contentItem.scheduledPublishAt) : null,
+      expirationDate: contentItem.expirationDate ? new Date(contentItem.expirationDate) : null,
     });
+    setIsUpdateDialogOpen(true);
   };
 
-  // Function to handle sorting
-  const requestSort = (key: string) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+  const onUpdateSubmit = (data: UpdateStatusFormValues) => {
+    updateStatusMutation.mutate(data);
   };
 
-  // Sort content items
-  const sortedItems = contentItems ? [...contentItems].sort((a, b) => {
-    if (!a[sortConfig.key as keyof ContentItem] || !b[sortConfig.key as keyof ContentItem]) return 0;
-    
-    const aValue = a[sortConfig.key as keyof ContentItem];
-    const bValue = b[sortConfig.key as keyof ContentItem];
-    
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortConfig.direction === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    }
-    
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortConfig.direction === 'asc' 
-        ? aValue - bValue
-        : bValue - aValue;
-    }
-    
-    return 0;
-  }) : [];
+  // Function to render status badge
+  const renderStatusBadge = (status: string) => (
+    <Badge className={statusColor[status] || "bg-gray-200"}>
+      <span className="flex items-center">
+        {statusIcon[status]}
+        <span className="ml-1">{status.replace(/_/g, ' ')}</span>
+      </span>
+    </Badge>
+  );
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Content Workflow Management</CardTitle>
-          <CardDescription>
-            Manage your content approval workflow and publication scheduling
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={workflowTab} onValueChange={setWorkflowTab}>
-            <TabsList className="grid grid-cols-6 w-full">
-              <TabsTrigger value="pending">Pending Review</TabsTrigger>
-              <TabsTrigger value="review">In Review</TabsTrigger>
-              <TabsTrigger value="changes_requested">Changes Requested</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="published">Published</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value={workflowTab} className="mt-4">
-              {isLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : sortedItems && sortedItems.length > 0 ? (
-                <Table>
-                  <TableCaption>
-                    {workflowTab === 'pending' && 'Content waiting for review'}
-                    {workflowTab === 'review' && 'Content currently in review'}
-                    {workflowTab === 'changes_requested' && 'Content that needs changes'}
-                    {workflowTab === 'approved' && 'Content approved but not yet published'}
-                    {workflowTab === 'published' && 'Currently published content'}
-                    {workflowTab === 'archived' && 'Archived content'}
-                  </TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px] cursor-pointer" onClick={() => requestSort('title')}>
-                        Title <ArrowUpDown className="inline h-4 w-4" />
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('page')}>
-                        Page <ArrowUpDown className="inline h-4 w-4" />
-                      </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => requestSort('updatedAt')}>
-                        Last Updated <ArrowUpDown className="inline h-4 w-4" />
-                      </TableHead>
-                      <TableHead>Created By</TableHead>
-                      <TableHead>
-                        {workflowTab === 'published' ? 'Publish Date' : 'Status'}
-                      </TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sortedItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.title}</TableCell>
-                        <TableCell>{item.page}</TableCell>
-                        <TableCell>
-                          {item.updatedAt 
-                            ? format(new Date(item.updatedAt), 'PPp') 
-                            : format(new Date(item.createdAt), 'PPp')}
-                        </TableCell>
-                        <TableCell>{item.createdByName || 'System'}</TableCell>
-                        <TableCell>
-                          {workflowTab === 'published' && item.scheduledPublishAt ? (
-                            format(new Date(item.scheduledPublishAt), 'PPp')
-                          ) : (
-                            <Badge 
-                              variant={
-                                statusBadgeMap[item.status]?.variant as 
-                                "default" | "secondary" | "destructive" | "outline" | undefined
-                              }
-                            >
-                              {statusBadgeMap[item.status]?.label}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => {
-                                setSelectedContent(item);
-                                setShowWorkflowHistory(false);
-                              }}
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Review
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setSelectedContent(item);
-                                setShowWorkflowHistory(true);
-                              }}
-                            >
-                              <History className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No content items in this status</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All Content</TabsTrigger>
+          <TabsTrigger value="draft">Drafts</TabsTrigger>
+          <TabsTrigger value="review">In Review</TabsTrigger>
+          <TabsTrigger value="changes_requested">Changes Requested</TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="published">Published</TabsTrigger>
+          <TabsTrigger value="archived">Archived</TabsTrigger>
+        </TabsList>
 
-      {/* Content Review Dialog */}
-      {selectedContent && !showWorkflowHistory && (
-        <Dialog open={!!selectedContent} onOpenChange={(open) => !open && setSelectedContent(null)}>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Review Content: {selectedContent.title}</DialogTitle>
-              <DialogDescription>
-                Review and update the workflow status for this content
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div>
-                <h3 className="text-lg font-medium">Content Details</h3>
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                  <div>
-                    <p className="text-sm font-medium">Type:</p>
-                    <p className="text-sm">{selectedContent.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Key:</p>
-                    <p className="text-sm">{selectedContent.key}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Page:</p>
-                    <p className="text-sm">{selectedContent.page}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Section:</p>
-                    <p className="text-sm">{selectedContent.section}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Created:</p>
-                    <p className="text-sm">{format(new Date(selectedContent.createdAt), 'PPp')}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Version:</p>
-                    <p className="text-sm">{selectedContent.version}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Content Preview</h3>
-                <div className="border rounded-md p-4 mt-2 max-h-64 overflow-auto">
-                  {selectedContent.type === 'html' ? (
-                    <div dangerouslySetInnerHTML={{ __html: selectedContent.content }} />
-                  ) : selectedContent.type === 'image' ? (
-                    <div className="text-center">
-                      <img 
-                        src={selectedContent.imageUrl || ''} 
-                        alt={selectedContent.title} 
-                        className="max-h-60 inline-block" 
-                      />
-                    </div>
-                  ) : (
-                    <p>{selectedContent.content}</p>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium">Workflow Actions</h3>
-                <div className="space-y-4 mt-2">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Review Notes</label>
-                    <Textarea
-                      placeholder="Add comments or feedback about this content"
-                      value={reviewNotes}
-                      onChange={(e) => setReviewNotes(e.target.value)}
-                    />
-                  </div>
-                  
-                  {(workflowTab === 'pending' || workflowTab === 'review' || workflowTab === 'approved') && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Schedule Publication</label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {publishDate ? format(publishDate, 'PPP') : <span>Pick a date</span>}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={publishDate}
-                              onSelect={setPublishDate}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Set Expiration Date</label>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start text-left font-normal"
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {expirationDate ? format(expirationDate, 'PPP') : <span>Pick a date</span>}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
-                            <Calendar
-                              mode="single"
-                              selected={expirationDate}
-                              onSelect={setExpirationDate}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="flex justify-between">
-              <div>
-                {workflowTab === 'published' && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleWorkflowAction('archive')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    Archive
-                  </Button>
-                )}
-              </div>
-              <div className="space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedContent(null)}
-                >
-                  Cancel
-                </Button>
-                
-                {(workflowTab === 'pending' || workflowTab === 'review') && (
-                  <>
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => handleWorkflowAction('reject')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <XCircle className="h-4 w-4 mr-2" />
-                      Request Changes
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      onClick={() => handleWorkflowAction('approve')}
-                      disabled={updateStatusMutation.isPending}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Approve
-                    </Button>
-                  </>
-                )}
-                
-                {workflowTab === 'approved' && (
-                  <Button 
-                    variant="default" 
-                    onClick={() => handleWorkflowAction('publish')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <Clock className="h-4 w-4 mr-2" />
-                    {publishDate ? 'Schedule Publish' : 'Publish Now'}
-                  </Button>
-                )}
-                
-                {workflowTab === 'changes_requested' && (
-                  <Button 
-                    variant="default" 
-                    onClick={() => handleWorkflowAction('approve')}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Changes Completed
-                  </Button>
-                )}
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {/* Workflow History Dialog */}
-      {selectedContent && showWorkflowHistory && (
-        <Dialog open={showWorkflowHistory} onOpenChange={(open) => !open && setShowWorkflowHistory(false)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Workflow History: {selectedContent.title}</DialogTitle>
-              <DialogDescription>
-                View the complete approval workflow history for this content
-              </DialogDescription>
-            </DialogHeader>
-            
-            {historyLoading ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Workflow Management</CardTitle>
+            <CardDescription>
+              Manage the approval flow of content across the platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingContent ? (
               <div className="space-y-2">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
-              </div>
-            ) : workflowHistory && workflowHistory.length > 0 ? (
-              <div className="py-4">
-                <div className="relative">
-                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-border"></div>
-                  <div className="space-y-6">
-                    {workflowHistory.map((history) => (
-                      <div key={history.id} className="relative pl-8">
-                        <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-background"></div>
-                        </div>
-                        <div className="p-4 border rounded-md shadow-sm">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <span className="text-sm font-medium">
-                                {history.fromStatus ? `${statusBadgeMap[history.fromStatus as keyof typeof statusBadgeMap]?.label} → ` : ''}
-                                {statusBadgeMap[history.toStatus as keyof typeof statusBadgeMap]?.label}
-                              </span>
-                              <Badge className="ml-2" variant="outline">
-                                {history.actorName || 'System'}
-                              </Badge>
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(history.actionAt), 'PPp')}
-                            </span>
-                          </div>
-                          {history.comments && (
-                            <p className="text-sm mt-1">{history.comments}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <Skeleton className="h-10 w-full" />
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No workflow history available</p>
-              </div>
+              <Table>
+                <TableCaption>Content items currently in the workflow</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Schedule</TableHead>
+                    <TableHead>Expires</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contentItems?.length ? (
+                    contentItems.map((item: ContentItem) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium max-w-xs truncate">
+                          {item.title}
+                        </TableCell>
+                        <TableCell>{renderStatusBadge(item.status)}</TableCell>
+                        <TableCell>
+                          {format(new Date(item.createdAt), 'MMM d, yyyy')}
+                        </TableCell>
+                        <TableCell>
+                          {item.scheduledPublishAt 
+                            ? format(new Date(item.scheduledPublishAt), 'MMM d, yyyy') 
+                            : '—'}
+                        </TableCell>
+                        <TableCell>
+                          {item.expirationDate 
+                            ? format(new Date(item.expirationDate), 'MMM d, yyyy') 
+                            : '—'}
+                        </TableCell>
+                        <TableCell className="text-right space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleViewHistory(item.id)}
+                          >
+                            History
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleUpdateStatus(item)}
+                          >
+                            Update Status
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-6">
+                        No content items found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             )}
-            
-            <DialogFooter>
+          </CardContent>
+        </Card>
+
+        {selectedContentId && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Workflow History</CardTitle>
+              <CardDescription>
+                Track the approval journey of this content
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingHistory ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>From Status</TableHead>
+                      <TableHead>To Status</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {workflowHistory?.length ? (
+                      workflowHistory.map((item: WorkflowHistoryItem) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {format(new Date(item.actionAt), 'MMM d, yyyy h:mm a')}
+                          </TableCell>
+                          <TableCell>{item.userName}</TableCell>
+                          <TableCell>{renderStatusBadge(item.fromStatus)}</TableCell>
+                          <TableCell>{renderStatusBadge(item.toStatus)}</TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {item.reviewNotes || '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-6">
+                          No workflow history available
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+            <CardFooter>
               <Button 
                 variant="outline" 
-                onClick={() => setShowWorkflowHistory(false)}
+                onClick={() => setSelectedContentId(null)}
               >
-                Close
+                Close History
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            </CardFooter>
+          </Card>
+        )}
+      </Tabs>
+
+      {/* Update Status Dialog */}
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Update Content Status</DialogTitle>
+            <DialogDescription>
+              Change the workflow status and set publishing schedule
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onUpdateSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select 
+                      value={field.value} 
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Content Status</SelectLabel>
+                          {contentStatusOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The new workflow status for this content
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="reviewNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Review Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Add review notes or feedback..." 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Optional notes explaining the status change
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="scheduledPublishAt"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Schedule Publish</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value && "text-muted-foreground"
+                              }`}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value || undefined}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        When to publish this content
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="expirationDate"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Expiration Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value && "text-muted-foreground"
+                              }`}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value || undefined}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date < new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        When to archive this content
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsUpdateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateStatusMutation.isPending}
+                >
+                  {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
