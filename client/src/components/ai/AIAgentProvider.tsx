@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAgents } from '@/contexts/AgentContext';
-import AIChatInterface from './AIChatInterface';
+import { useAgents } from '../../contexts/AgentContext';
+import { useAccessibility } from '../../contexts/AccessibilityContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAccessibility } from '@/contexts/AccessibilityContext';
+import AIChatInterface from './AIChatInterface';
 
 export default function AIAgentProvider() {
   const { activeAgent } = useAgents();
@@ -11,12 +11,12 @@ export default function AIAgentProvider() {
   return (
     <AnimatePresence>
       {activeAgent && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: reducedMotion ? 0 : 0.3 }}
-          className="fixed bottom-4 right-4 z-40 w-[400px] max-w-[calc(100vw-32px)]"
+        <motion.div
+          className="fixed bottom-4 right-4 z-40 w-full max-w-md"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 20, opacity: 0 }}
+          transition={{ duration: reducedMotion ? 0 : 0.2 }}
         >
           <AIChatInterface />
         </motion.div>
