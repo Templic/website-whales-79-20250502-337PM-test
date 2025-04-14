@@ -134,7 +134,7 @@ const statusIcon: Record<string, React.ReactNode> = {
 const updateStatusSchema = z.object({
   contentId: z.number(),
   status: z.string(),
-  reviewNotes: z.string().optional(),
+  comments: z.string().optional(),
   scheduledPublishAt: z.date().optional().nullable(),
   expirationDate: z.date().optional().nullable(),
 });
@@ -365,11 +365,11 @@ const WorkflowManagement: React.FC = () => {
                           <TableCell>
                             {format(new Date(item.actionAt), 'MMM d, yyyy h:mm a')}
                           </TableCell>
-                          <TableCell>{item.userName}</TableCell>
+                          <TableCell>{item.actorName || `User ID: ${item.actorId}`}</TableCell>
                           <TableCell>{renderStatusBadge(item.fromStatus)}</TableCell>
                           <TableCell>{renderStatusBadge(item.toStatus)}</TableCell>
                           <TableCell className="max-w-xs truncate">
-                            {item.reviewNotes || '—'}
+                            {item.comments || '—'}
                           </TableCell>
                         </TableRow>
                       ))
@@ -444,7 +444,7 @@ const WorkflowManagement: React.FC = () => {
 
               <FormField
                 control={form.control}
-                name="reviewNotes"
+                name="comments"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Review Notes</FormLabel>
