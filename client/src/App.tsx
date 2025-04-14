@@ -13,6 +13,8 @@ import { initializeGA, trackPageView } from "@/lib/analytics";
 import { ErrorBoundary } from "react-error-boundary";
 import StarBackground from "@/components/cosmic/StarBackground";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
+import { ChatProvider } from "@/contexts/ChatContext";
+import ChatWidget from "@/components/chat/ChatWidget";
 import CookieConsent from "@/components/common/CookieConsent";
 
 // Pages
@@ -244,12 +246,15 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <AccessibilityProvider>
-            <ErrorBoundary FallbackComponent={ErrorFallback}>
-              <StarBackground starCount={150} />
-              <AppRouter />
-              <CookieConsent />
-              <Toaster />
-            </ErrorBoundary>
+            <ChatProvider>
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <StarBackground starCount={150} />
+                <AppRouter />
+                <ChatWidget />
+                <CookieConsent />
+                <Toaster />
+              </ErrorBoundary>
+            </ChatProvider>
           </AccessibilityProvider>
         </CartProvider>
       </AuthProvider>
