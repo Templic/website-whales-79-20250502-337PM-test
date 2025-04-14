@@ -1,11 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-// Agent personality type
-export interface AgentPersonality {
-  tone: string;
-  style: string;
-  traits: string[];
-}
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 // Define the Agent interface
 export interface Agent {
@@ -13,220 +6,137 @@ export interface Agent {
   name: string;
   description: string;
   avatar: string;
-  capabilities: string[];
-  category: string;
-  personality: AgentPersonality;
-  contexts: string[]; // Which pages/contexts this agent is available for
-  instructions: string; // System instructions for the agent
+  category: 'general' | 'shopping' | 'music' | 'education';
+  instructions: string;
+  contextSpecific: boolean;
 }
 
-// Define the context interface
-export interface AgentContextType {
+// Define the context value interface
+interface AgentContextValue {
   agents: Agent[];
   activeAgent: Agent | null;
-  availableAgents: Agent[]; // For current page/context
-  currentContext: string;
-  activateAgent: (agentId: string) => void;
+  availableAgents: Agent[];
+  activateAgent: (id: string) => void;
   deactivateAgent: () => void;
   setContext: (context: string) => void;
-  getAgentsForPage: (pageContext: string) => Agent[];
 }
 
-// Create the context with default values
-const AgentContext = createContext<AgentContextType | undefined>(undefined);
+// Create the context
+const AgentContext = createContext<AgentContextValue | undefined>(undefined);
 
-// Storage key for saved agent state
-const STORAGE_KEY = 'cosmic-agent-state';
-
-// Custom hook to access the context
-export function useAgents() {
-  const context = useContext(AgentContext);
-  if (!context) {
-    throw new Error('useAgents must be used within an AgentProvider');
-  }
-  return context;
+// Define props for the provider component
+interface AgentProviderProps {
+  children: ReactNode;
 }
 
-// Predefined agents
-const predefinedAgents: Agent[] = [
-  // Shopping Assistant
-  {
-    id: 'shopping-assistant',
-    name: 'Cosmic Shopper',
-    description: 'Guide for cosmic products and merchandise',
-    avatar: '/assets/agents/shop-assistant.svg',
-    capabilities: [
-      'Product recommendations',
-      'Gift suggestions',
-      'Size and fit guidance',
-      'Merchandise information',
-      'Shipping and returns help'
-    ],
-    category: 'shopping',
-    personality: {
-      tone: 'Enthusiastic and helpful',
-      style: 'Friendly and knowledgeable',
-      traits: ['Detailed', 'Positive', 'Product-focused']
-    },
-    contexts: ['shop', 'products', 'merchandise', 'home'],
-    instructions: 'You are a shopping assistant helping users find cosmic merchandise and products they might enjoy.'
-  },
-  
-  // Music Guide
-  {
-    id: 'music-guide',
-    name: 'Harmonic Navigator',
-    description: 'Expert on cosmic sounds and music experiences',
-    avatar: '/assets/agents/music-guide.svg',
-    capabilities: [
-      'Music recommendations',
-      'Album information',
-      'Sound healing insights',
-      'Audio technology help',
-      'Musical journey guidance'
-    ],
-    category: 'music',
-    personality: {
-      tone: 'Serene and insightful',
-      style: 'Flowing and rhythmic communication',
-      traits: ['Artistic', 'Intuitive', 'Musically knowledgeable']
-    },
-    contexts: ['music', 'sounds', 'audio', 'home'],
-    instructions: 'You are a music guide helping users explore cosmic sounds, albums, and music-related experiences.'
-  },
-  
-  // Cosmic Teacher
-  {
-    id: 'cosmic-teacher',
-    name: 'Celestial Scholar',
-    description: 'Educator on cosmic consciousness and spiritual growth',
-    avatar: '/assets/agents/cosmic-teacher.svg',
-    capabilities: [
-      'Explain cosmic concepts',
-      'Provide learning resources',
-      'Answer philosophical questions',
-      'Guide meditation practices',
-      'Recommend books and courses'
-    ],
-    category: 'education',
-    personality: {
-      tone: 'Wise and patient',
-      style: 'Clear and thought-provoking',
-      traits: ['Knowledgeable', 'Supportive', 'Philosophical']
-    },
-    contexts: ['learn', 'education', 'consciousness', 'home'],
-    instructions: 'You are a cosmic teacher helping users understand concepts related to consciousness, spirituality, and personal growth.'
-  },
-  
-  // General Assistant
+// Define available agents
+const AGENTS: Agent[] = [
   {
     id: 'general-assistant',
     name: 'Cosmic Guide',
-    description: 'Your all-purpose helper for any cosmic journey questions',
-    avatar: '/assets/agents/general-assistant.svg',
-    capabilities: [
-      'Website navigation help',
-      'General information',
-      'Technical support',
-      'Content discovery',
-      'Account assistance'
-    ],
+    description: 'Your general assistant for all cosmic awareness needs',
+    avatar: '/agents/cosmic-guide.svg',
     category: 'general',
-    personality: {
-      tone: 'Friendly and versatile',
-      style: 'Clear and approachable',
-      traits: ['Helpful', 'Knowledgeable', 'Responsive']
-    },
-    contexts: ['global'],
-    instructions: 'You are a general assistant helping users with any questions about the cosmic consciousness platform and website.'
+    instructions: 'You are a helpful and friendly guide for the Cosmic Consciousness platform. Assist users with general questions about the platform, navigation, and accessing features.',
+    contextSpecific: false
+  },
+  {
+    id: 'shopping-assistant',
+    name: 'Shop Oracle',
+    description: 'Expert in cosmic products, merchandise, and shopping assistance',
+    avatar: '/agents/shop-oracle.svg',
+    category: 'shopping',
+    instructions: 'You are a shopping assistant specializing in cosmic products. Help users find items, explain product benefits, and provide pricing information.',
+    contextSpecific: true
+  },
+  {
+    id: 'music-guide',
+    name: 'Harmonic Helper',
+    description: 'Music curator specializing in binaural beats and cosmic frequencies',
+    avatar: '/agents/harmonic-helper.svg',
+    category: 'music',
+    instructions: 'You are a music specialist who understands binaural beats, frequency healing, and cosmic harmonies. Help users discover music that aligns with their energy and intentions.',
+    contextSpecific: true
+  },
+  {
+    id: 'education-mentor',
+    name: 'Wisdom Keeper',
+    description: 'Educational guide for cosmic consciousness and spiritual growth',
+    avatar: '/agents/wisdom-keeper.svg',
+    category: 'education',
+    instructions: 'You are an educational mentor specializing in cosmic consciousness, spiritual growth, and metaphysical concepts. Provide thoughtful responses that expand understanding without imposing specific beliefs.',
+    contextSpecific: true
   }
 ];
 
+// Context mapping between routes and available agents
+const CONTEXT_AGENT_MAPPING: Record<string, string[]> = {
+  home: ['general-assistant'],
+  music: ['general-assistant', 'music-guide'],
+  shop: ['general-assistant', 'shopping-assistant'],
+  learn: ['general-assistant', 'education-mentor'],
+  community: ['general-assistant'],
+  about: ['general-assistant'],
+  blog: ['general-assistant'],
+  'ai-chat': ['general-assistant', 'shopping-assistant', 'music-guide', 'education-mentor']
+};
+
 // Provider component
-export function AgentProvider({ children }: { children: React.ReactNode }) {
-  // Load saved agent state or use defaults
-  const loadSavedState = () => {
-    if (typeof window === 'undefined') return null;
-    
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (err) {
-      console.error('Error loading agent state:', err);
-    }
-    
-    return null;
-  };
-  
-  // State management
-  const [agents] = useState<Agent[]>(predefinedAgents);
-  const [activeAgentId, setActiveAgentId] = useState<string | null>(null);
+export function AgentProvider({ children }: AgentProviderProps) {
+  const [agents] = useState<Agent[]>(AGENTS);
+  const [activeAgent, setActiveAgent] = useState<Agent | null>(null);
   const [currentContext, setCurrentContext] = useState<string>('home');
+  const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   
-  // Calculate available agents based on current context
-  const getAgentsForPage = (pageContext: string): Agent[] => {
-    return agents.filter(agent => 
-      agent.contexts.includes(pageContext) || agent.contexts.includes('global')
-    );
-  };
-  
-  // Get currently available agents
-  const availableAgents = getAgentsForPage(currentContext);
-  
-  // Find active agent by ID
-  const activeAgent = activeAgentId 
-    ? agents.find(agent => agent.id === activeAgentId) || null
-    : null;
-  
-  // Save state when it changes
+  // Update available agents based on context
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        activeAgentId,
-        currentContext
-      }));
-    } catch (err) {
-      console.error('Error saving agent state:', err);
-    }
-  }, [activeAgentId, currentContext]);
+    const contextAgentIds = CONTEXT_AGENT_MAPPING[currentContext] || ['general-assistant'];
+    const filteredAgents = agents.filter(agent => 
+      !agent.contextSpecific || contextAgentIds.includes(agent.id)
+    );
+    setAvailableAgents(filteredAgents);
+  }, [currentContext, agents]);
   
-  // Activate an agent
-  const activateAgent = (agentId: string) => {
-    const agent = agents.find(a => a.id === agentId);
+  // Activate an agent by ID
+  const activateAgent = useCallback((id: string) => {
+    const agent = agents.find(a => a.id === id);
     if (agent) {
-      setActiveAgentId(agentId);
+      setActiveAgent(agent);
     }
-  };
+  }, [agents]);
   
   // Deactivate the current agent
-  const deactivateAgent = () => {
-    setActiveAgentId(null);
-  };
+  const deactivateAgent = useCallback(() => {
+    setActiveAgent(null);
+  }, []);
   
-  // Set the current page context
-  const setContext = (context: string) => {
+  // Set the current context (usually based on route/page)
+  const setContext = useCallback((context: string) => {
     setCurrentContext(context);
-  };
+  }, []);
   
-  // Create context value
-  const contextValue: AgentContextType = {
+  // Context value
+  const value: AgentContextValue = {
     agents,
     activeAgent,
     availableAgents,
-    currentContext,
     activateAgent,
     deactivateAgent,
-    setContext,
-    getAgentsForPage
+    setContext
   };
   
   return (
-    <AgentContext.Provider value={contextValue}>
+    <AgentContext.Provider value={value}>
       {children}
     </AgentContext.Provider>
   );
+}
+
+// Custom hook for using the context
+export function useAgents(): AgentContextValue {
+  const context = useContext(AgentContext);
+  if (context === undefined) {
+    throw new Error('useAgents must be used within an AgentProvider');
+  }
+  return context;
 }

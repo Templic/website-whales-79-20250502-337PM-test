@@ -20,6 +20,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from './ScrollArea';
+// Define common toast variant types
+type ToastVariant = 'default' | 'success' | 'error' | 'warning';
 
 // Message interface
 interface Message {
@@ -135,7 +137,7 @@ function AIChatInterface() {
       toast({
         title: 'Error',
         description: 'Failed to send message. Please try again.',
-        variant: 'error'
+        variant: 'destructive'
       });
     } finally {
       setIsSending(false);
@@ -177,7 +179,7 @@ function AIChatInterface() {
         toast({
           title: 'Copy Failed',
           description: 'Could not copy conversation to clipboard',
-          variant: 'error'
+          variant: 'destructive'
         });
       });
   };
