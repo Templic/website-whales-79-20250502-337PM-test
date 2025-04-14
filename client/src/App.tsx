@@ -43,6 +43,7 @@ import TypeSystemDemo from "@/pages/TypeSystemDemo";
 import ButtonDemo from "@/pages/test/ButtonDemo";
 import CommunityPage from "@/pages/community/CommunityPage";
 import EnhancedCommunityPage from "@/pages/community/EnhancedCommunityPage";
+import AIChatMenuPage from "@/pages/AIChatMenuPage";
 
 // Resource Pages
 import ResourcesPage from "@/pages/resources/ResourcesPage";
@@ -189,6 +190,11 @@ function AppRouter() {
           <Route path="/privacy" component={PrivacyPolicy} />
           <Route path="/faq" component={FAQPage} />
           <Route path="/data-request" component={DataRequestPage} />
+          
+          {/* AI Chat */}
+          <Route path="/chat" component={AIChatMenuPage} />
+          <Route path="/ai-assistant" component={AIChatMenuPage} />
+          <Route path="/taskade" component={AIChatMenuPage} />
 
           {/* Demo Pages */}
           <Route path="/components" component={ComponentsCatalog} />
