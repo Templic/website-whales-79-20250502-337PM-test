@@ -1,37 +1,38 @@
 /**
- * AI Chat Interface Script
- * Handles all AI chat functionality
+ * AI Chat Features JavaScript
+ * 
+ * This script handles all the AI chat functionality including:
+ * - Loading available agents from API
+ * - Displaying agent cards
+ * - Chat interface for communicating with selected agents
+ * - Floating chat popup for site-wide access
  */
 
-// State management for AI chat
-const chatState = {
-  activeAgent: null,
-  messages: [],
-  agents: [],
-  isThinking: false,
-  chatVisible: false
-};
+// Store active agents and chat state
+let agents = [];
+let activeAgent = null;
+let chatMessages = [];
+let isThinking = false;
 
 // DOM Elements
-let chatToggle, chatPopup, chatMessages, chatInput, sendButton;
-
-// Initialize once DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  initializeAIChat();
-});
+let agentCards;
+let chatInterface;
+let chatMessages_el;
+let chatInput;
+let sendMessageBtn;
+let thinkingIndicator;
+let chatToggle;
+let chatPopup;
 
 /**
  * Initialize AI chat functionality
  */
 function initializeAIChat() {
-  // Load agents from API
-  fetchAgents();
-  
-  // Initialize chat interface elements
-  initializeChatInterface();
-  
-  // Initialize agent selection cards on dedicated page
-  initializeAgentCards();
+  // Fetch agents from the API
+  fetchAgents().then(() => {
+    // Initialize UI elements
+    initializeChatInterface();
+  });
 }
 
 /**
@@ -43,11 +44,13 @@ async function fetchAgents() {
     if (!response.ok) {
       throw new Error('Failed to fetch agents');
     }
+    agents = await response.json();
+    console.log('AI Agents loaded:', agents);
     
-    chatState.agents = await response.json();
-    
-    // Initialize agent cards once we have the data
-    renderAgentCards();
+    // Render agent cards if container exists
+    if (document.getElementById('agent-cards')) {
+      renderAgentCards();
+    }
   } catch (error) {
     console.error('Error fetching agents:', error);
   }
@@ -57,55 +60,26 @@ async function fetchAgents() {
  * Initialize the chat interface elements
  */
 function initializeChatInterface() {
-  // Initialize chat toggle if it exists
-  chatToggle = document.getElementById('chat-toggle');
-  chatPopup = document.getElementById('chat-popup');
+  // Check if we're on the AI chat page
+  if (document.getElementById('ai-chat')) {
+    agentCards = document.getElementById('agent-cards');
+    // Initialize dedicated page elements
+    initializeAgentCards();
+  }
+}
+
+/**
+ * Initialize floating AI chat panel
+ */
+function initAIChatPanel() {
+  // Create chat toggle and popup if they don't exist
+  if (!document.querySelector('.ai-chat-toggle')) {
+    createChatControls();
+  }
   
-  if (chatToggle && chatPopup) {
-    chatToggle.addEventListener('click', toggleChatPopup);
-    
-    // Close chat when clicking outside
-    document.addEventListener('click', (event) => {
-      if (chatPopup && 
-          chatPopup.classList.contains('visible') && 
-          !chatPopup.contains(event.target) && 
-          event.target !== chatToggle) {
-        chatPopup.classList.remove('visible');
-        chatState.chatVisible = false;
-      }
-    });
-    
-    // Initialize chat elements
-    chatMessages = document.getElementById('chat-messages');
-    chatInput = document.getElementById('chat-input');
-    sendButton = document.getElementById('send-message');
-    
-    if (chatInput && sendButton) {
-      // Send message on button click
-      sendButton.addEventListener('click', sendMessage);
-      
-      // Send message on Enter key
-      chatInput.addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          sendMessage();
-        }
-      });
-      
-      // Enable/disable send button based on input
-      chatInput.addEventListener('input', () => {
-        sendButton.disabled = !chatInput.value.trim() || chatState.isThinking;
-      });
-    }
-    
-    // Initialize chat close button
-    const closeButton = document.getElementById('close-chat');
-    if (closeButton) {
-      closeButton.addEventListener('click', () => {
-        chatPopup.classList.remove('visible');
-        chatState.chatVisible = false;
-      });
-    }
+  // Fetch agents if not already loaded
+  if (agents.length === 0) {
+    fetchAgents();
   }
 }
 
@@ -113,14 +87,15 @@ function initializeChatInterface() {
  * Toggle chat popup visibility
  */
 function toggleChatPopup() {
-  if (chatPopup) {
-    chatPopup.classList.toggle('visible');
-    chatState.chatVisible = chatPopup.classList.contains('visible');
-    
-    // Focus input when visible
-    if (chatState.chatVisible && chatInput) {
-      setTimeout(() => chatInput.focus(), 300);
-    }
+  chatPopup.classList.toggle('open');
+  
+  // Update button icon based on state
+  if (chatPopup.classList.contains('open')) {
+    chatToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    chatToggle.setAttribute('aria-label', 'Close chat');
+  } else {
+    chatToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+    chatToggle.setAttribute('aria-label', 'Open chat');
   }
 }
 
@@ -128,24 +103,33 @@ function toggleChatPopup() {
  * Initialize agent selection cards
  */
 function initializeAgentCards() {
-  const agentCardsContainer = document.getElementById('agent-cards');
-  if (agentCardsContainer) {
-    renderAgentCards();
+  // If agent cards don't exist in the floating panel, create them
+  if (chatPopup && !chatPopup.querySelector('.agent-cards')) {
+    const agentCardsContainer = document.createElement('div');
+    agentCardsContainer.className = 'agent-cards';
+    agentCardsContainer.style.padding = '1rem';
+    agentCardsContainer.style.overflowY = 'auto';
+    
+    chatPopup.appendChild(agentCardsContainer);
+    agentCards = agentCardsContainer;
   }
+  
+  // Render agent cards
+  renderAgentCards();
 }
 
 /**
  * Render agent cards in the container
  */
 function renderAgentCards() {
-  const agentCardsContainer = document.getElementById('agent-cards');
-  if (!agentCardsContainer || chatState.agents.length === 0) return;
+  // Skip if agents haven't been loaded yet or no container exists
+  if (!agents.length || !agentCards) return;
   
   // Clear existing cards
-  agentCardsContainer.innerHTML = '';
+  agentCards.innerHTML = '';
   
-  // Add each agent card
-  chatState.agents.forEach(agent => {
+  // Add agent cards
+  agents.forEach(agent => {
     const card = document.createElement('div');
     card.className = 'agent-card';
     card.innerHTML = `
@@ -155,7 +139,7 @@ function renderAgentCards() {
         </div>
         <div class="agent-info">
           <h3>${agent.name}</h3>
-          <span class="agent-status ${agent.status}">${agent.status === 'available' ? 'Available' : 'Unavailable'}</span>
+          <span class="agent-status ${agent.status}">${agent.status}</span>
         </div>
       </div>
       <div class="agent-card-body">
@@ -165,27 +149,17 @@ function renderAgentCards() {
         </div>
       </div>
       <div class="agent-card-footer">
-        <button class="chat-with-btn" data-agent-id="${agent.id}" ${agent.status !== 'available' ? 'disabled' : ''}>
+        <button class="chat-with-btn" data-agent-id="${agent.id}">
           Chat with ${agent.name}
         </button>
       </div>
     `;
     
-    agentCardsContainer.appendChild(card);
+    agentCards.appendChild(card);
     
-    // Add event listener to button
+    // Add click handler to the button
     const chatButton = card.querySelector('.chat-with-btn');
-    if (chatButton) {
-      chatButton.addEventListener('click', () => {
-        activateAgent(agent.id);
-        
-        // If on a dedicated page, scroll to chat interface
-        const chatInterface = document.getElementById('chat-interface');
-        if (chatInterface) {
-          chatInterface.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    }
+    chatButton.addEventListener('click', () => activateAgent(agent.id));
   });
 }
 
@@ -193,53 +167,141 @@ function renderAgentCards() {
  * Activate an agent for chatting
  */
 function activateAgent(agentId) {
-  const agent = chatState.agents.find(a => a.id === agentId);
-  if (!agent) return;
+  // Find the selected agent
+  activeAgent = agents.find(agent => agent.id === agentId);
   
-  chatState.activeAgent = agent;
-  chatState.messages = [];
-  
-  // Update chat interface
-  updateChatHeader();
-  clearChatMessages();
-  
-  // Add welcome message
-  const welcomeMessage = getWelcomeMessage(agent);
-  addAgentMessage(welcomeMessage);
-  
-  // Show chat popup if it exists
-  if (chatPopup) {
-    chatPopup.classList.add('visible');
-    chatState.chatVisible = true;
-    
-    // Focus input
-    if (chatInput) {
-      setTimeout(() => chatInput.focus(), 300);
-    }
+  if (!activeAgent) {
+    console.error('Agent not found:', agentId);
+    return;
   }
   
-  // Update chat interface on dedicated page if it exists
-  updateDedicatedChatInterface();
+  console.log('Activating agent:', activeAgent);
+  
+  // Reset chat messages
+  chatMessages = [];
+  
+  // Get or create the chat interface container
+  let chatInterfaceContainer;
+  
+  if (document.getElementById('chat-interface-container')) {
+    // We're on the dedicated chat page
+    chatInterfaceContainer = document.getElementById('chat-interface-container');
+    chatInterfaceContainer.innerHTML = '';
+  } else if (chatPopup) {
+    // We're using the floating chat
+    chatPopup.innerHTML = '';
+    chatInterfaceContainer = chatPopup;
+  } else {
+    console.error('No chat interface container found');
+    return;
+  }
+  
+  // Create chat interface
+  chatInterface = document.createElement('div');
+  chatInterface.className = 'chat-interface';
+  
+  // Create header
+  const chatHeader = document.createElement('div');
+  chatHeader.className = 'chat-header';
+  chatHeader.innerHTML = `
+    <div class="agent-avatar">
+      <img src="${activeAgent.avatar}" alt="${activeAgent.name}">
+    </div>
+    <div class="agent-info">
+      <h3>${activeAgent.name}</h3>
+      <span class="agent-status ${activeAgent.status}">${activeAgent.status}</span>
+    </div>
+    <button class="close-chat" aria-label="Close chat">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  `;
+  
+  // Create messages container
+  chatMessages_el = document.createElement('div');
+  chatMessages_el.className = 'chat-messages';
+  
+  // Create thinking indicator
+  thinkingIndicator = document.createElement('div');
+  thinkingIndicator.className = 'thinking-indicator';
+  thinkingIndicator.style.display = 'none';
+  thinkingIndicator.innerHTML = `
+    <div class="thinking-dot"></div>
+    <div class="thinking-dot"></div>
+    <div class="thinking-dot"></div>
+  `;
+  chatMessages_el.appendChild(thinkingIndicator);
+  
+  // Create input container
+  const chatInputContainer = document.createElement('div');
+  chatInputContainer.className = 'chat-input-container';
+  
+  chatInput = document.createElement('input');
+  chatInput.type = 'text';
+  chatInput.className = 'chat-input';
+  chatInput.placeholder = 'Type your message...';
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !isThinking) {
+      sendMessage();
+    }
+  });
+  
+  sendMessageBtn = document.createElement('button');
+  sendMessageBtn.className = 'send-message-btn';
+  sendMessageBtn.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+  `;
+  sendMessageBtn.addEventListener('click', sendMessage);
+  
+  chatInputContainer.appendChild(chatInput);
+  chatInputContainer.appendChild(sendMessageBtn);
+  
+  // Assemble the chat interface
+  chatInterface.appendChild(chatHeader);
+  chatInterface.appendChild(chatMessages_el);
+  chatInterface.appendChild(chatInputContainer);
+  
+  // Add the chat interface to the container
+  chatInterfaceContainer.appendChild(chatInterface);
+  
+  // Add event listener to close button
+  chatInterface.querySelector('.close-chat').addEventListener('click', () => {
+    if (chatPopup) {
+      // If it's the floating chat, go back to agent selection
+      chatPopup.innerHTML = '';
+      initializeAgentCards();
+    } else {
+      // If it's the dedicated page, show "no agent selected" message
+      chatInterfaceContainer.innerHTML = `
+        <div class="no-agent-selected">
+          <h2>Choose an AI Agent to Chat With</h2>
+          <p>Select one of the AI agents to start a conversation.</p>
+        </div>
+      `;
+    }
+    
+    // Reset active agent
+    activeAgent = null;
+  });
+  
+  // Add welcome message
+  addAgentMessage(getWelcomeMessage(activeAgent));
+  
+  // Focus the input
+  chatInput.focus();
 }
 
 /**
  * Update the chat header with active agent info
  */
 function updateChatHeader() {
-  const headerInfo = document.getElementById('chat-header-info');
-  const headerAvatar = document.getElementById('chat-header-avatar');
+  if (!activeAgent || !chatInterface) return;
   
-  if (headerInfo && chatState.activeAgent) {
-    headerInfo.innerHTML = `
-      <h3>${chatState.activeAgent.name}</h3>
-      <p>${chatState.activeAgent.status === 'available' ? 'Available' : 'Unavailable'}</p>
-    `;
-  }
-  
-  if (headerAvatar && chatState.activeAgent) {
-    headerAvatar.innerHTML = `
-      <img src="${chatState.activeAgent.avatar}" alt="${chatState.activeAgent.name}">
-    `;
+  const header = chatInterface.querySelector('.chat-header');
+  if (header) {
+    header.querySelector('.agent-info h3').textContent = activeAgent.name;
+    header.querySelector('.agent-status').textContent = activeAgent.status;
+    header.querySelector('.agent-status').className = `agent-status ${activeAgent.status}`;
+    header.querySelector('.agent-avatar img').src = activeAgent.avatar;
   }
 }
 
@@ -247,8 +309,11 @@ function updateChatHeader() {
  * Clear the chat messages container
  */
 function clearChatMessages() {
-  if (chatMessages) {
-    chatMessages.innerHTML = '';
+  if (chatMessages_el) {
+    chatMessages_el.innerHTML = '';
+    
+    // Re-add thinking indicator
+    chatMessages_el.appendChild(thinkingIndicator);
   }
 }
 
@@ -256,125 +321,95 @@ function clearChatMessages() {
  * Get agent welcome message
  */
 function getWelcomeMessage(agent) {
-  switch (agent.id) {
-    case 'cosmic-guide':
-      return "Greetings, cosmic traveler. I am your Cosmic Guide, ready to assist you on your spiritual journey. How may I guide you today?";
-    case 'harmonic-helper':
-      return "Welcome to the world of sound healing. I'm your Harmonic Helper, and I'm here to help you discover the perfect frequencies for your journey. What can I assist you with?";
-    case 'wisdom-keeper':
-      return "I am the Wisdom Keeper, guardian of ancient knowledge and philosophical insights. Ask me about life's deepest questions, and I shall share what the ancients knew.";
-    case 'shop-oracle':
-      return "Welcome to the cosmic marketplace! I'm your Shop Oracle, here to guide you to the perfect products for your spiritual practice. What are you looking for today?";
-    default:
-      return `Hello, I'm ${agent.name}. How can I assist you today?`;
-  }
+  const welcomeMessages = {
+    'cosmic-guide': "Greetings, cosmic traveler. I am your Cosmic Guide, here to illuminate your path through the universe of Dale's music and spiritual teachings. How may I assist your journey today?",
+    'harmonic-helper': "Welcome to a space of healing frequencies. I'm your Harmonic Helper, ready to assist with sound healing, frequency attunement, and musical therapy questions. How can I harmonize your experience today?",
+    'wisdom-keeper': "I am the Wisdom Keeper, guardian of ancient knowledge and cosmic insights. The universal consciousness flows through our conversation. What wisdom do you seek today?",
+    'shop-oracle': "Welcome! I'm the Shop Oracle, your personal guide to discovering the perfect items for your spiritual journey. Whether you seek instruments, sound tools, or cosmic artifacts, I can help you find what resonates. What are you looking for?"
+  };
+  
+  return welcomeMessages[agent.id] || `Hello, I'm ${agent.name}. How can I help you today?`;
 }
 
 /**
  * Add a message from the agent to the chat
  */
 function addAgentMessage(message) {
-  if (!chatMessages) return;
+  if (!chatMessages_el) return;
   
   const messageEl = document.createElement('div');
   messageEl.className = 'message agent';
-  messageEl.innerText = message;
+  messageEl.innerHTML = `
+    ${message}
+    <div class="message-time">${getFormattedTime()}</div>
+  `;
   
-  // Add timestamp
-  const timeEl = document.createElement('div');
-  timeEl.className = 'message-time';
-  timeEl.innerText = getFormattedTime();
-  messageEl.appendChild(timeEl);
+  // Add to DOM
+  chatMessages_el.insertBefore(messageEl, thinkingIndicator);
   
-  chatMessages.appendChild(messageEl);
+  // Add to messages array
+  chatMessages.push({
+    sender: 'agent',
+    message: message,
+    timestamp: new Date()
+  });
   
   // Scroll to bottom
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-  // Store message
-  chatState.messages.push({
-    role: 'agent',
-    content: message,
-    timestamp: new Date().toISOString()
-  });
+  chatMessages_el.scrollTop = chatMessages_el.scrollHeight;
 }
 
 /**
  * Add a message from the user to the chat
  */
 function addUserMessage(message) {
-  if (!chatMessages) return;
+  if (!chatMessages_el) return;
   
   const messageEl = document.createElement('div');
   messageEl.className = 'message user';
-  messageEl.innerText = message;
+  messageEl.innerHTML = `
+    ${message}
+    <div class="message-time">${getFormattedTime()}</div>
+  `;
   
-  // Add timestamp
-  const timeEl = document.createElement('div');
-  timeEl.className = 'message-time';
-  timeEl.innerText = getFormattedTime();
-  messageEl.appendChild(timeEl);
+  // Add to DOM
+  chatMessages_el.insertBefore(messageEl, thinkingIndicator);
   
-  chatMessages.appendChild(messageEl);
+  // Add to messages array
+  chatMessages.push({
+    sender: 'user',
+    message: message,
+    timestamp: new Date()
+  });
   
   // Scroll to bottom
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-  // Store message
-  chatState.messages.push({
-    role: 'user',
-    content: message,
-    timestamp: new Date().toISOString()
-  });
+  chatMessages_el.scrollTop = chatMessages_el.scrollHeight;
 }
 
 /**
  * Show thinking indicator
  */
 function showThinking() {
-  if (!chatMessages) return;
+  if (!thinkingIndicator) return;
   
-  const thinkingEl = document.createElement('div');
-  thinkingEl.className = 'message agent thinking';
-  thinkingEl.id = 'thinking-indicator';
-  thinkingEl.innerHTML = `
-    <div class="thinking-dots">
-      <div class="thinking-dot"></div>
-      <div class="thinking-dot"></div>
-      <div class="thinking-dot"></div>
-    </div>
-  `;
-  
-  chatMessages.appendChild(thinkingEl);
+  isThinking = true;
+  thinkingIndicator.style.display = 'flex';
+  if (sendMessageBtn) sendMessageBtn.disabled = true;
+  if (chatInput) chatInput.disabled = true;
   
   // Scroll to bottom
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  
-  // Update state
-  chatState.isThinking = true;
-  
-  // Disable input while thinking
-  if (sendButton) {
-    sendButton.disabled = true;
-  }
+  chatMessages_el.scrollTop = chatMessages_el.scrollHeight;
 }
 
 /**
  * Hide thinking indicator
  */
 function hideThinking() {
-  const thinkingEl = document.getElementById('thinking-indicator');
-  if (thinkingEl) {
-    thinkingEl.remove();
-  }
+  if (!thinkingIndicator) return;
   
-  // Update state
-  chatState.isThinking = false;
-  
-  // Re-enable send button if there's text
-  if (sendButton && chatInput) {
-    sendButton.disabled = !chatInput.value.trim();
-  }
+  isThinking = false;
+  thinkingIndicator.style.display = 'none';
+  if (sendMessageBtn) sendMessageBtn.disabled = false;
+  if (chatInput) chatInput.disabled = false;
 }
 
 /**
@@ -382,21 +417,14 @@ function hideThinking() {
  */
 function getFormattedTime() {
   const now = new Date();
-  let hours = now.getHours();
-  const minutes = now.getMinutes().toString().padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  
-  hours = hours % 12;
-  hours = hours ? hours : 12; // Convert 0 to 12
-  
-  return `${hours}:${minutes} ${ampm}`;
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 /**
  * Send a message to the active agent
  */
 async function sendMessage() {
-  if (!chatInput || !chatState.activeAgent || chatState.isThinking) return;
+  if (!activeAgent || !chatInput || isThinking) return;
   
   const message = chatInput.value.trim();
   if (!message) return;
@@ -411,16 +439,16 @@ async function sendMessage() {
   showThinking();
   
   try {
-    // Send message to server
+    // Send message to API
     const response = await fetch('/api/ai-chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        agentId: chatState.activeAgent.id,
+        agentId: activeAgent.id,
         message: message,
-        timestamp: new Date().toISOString()
+        timestamp: getFormattedTime()
       })
     });
     
@@ -430,23 +458,15 @@ async function sendMessage() {
     
     const data = await response.json();
     
-    // Short delay for more natural conversation
+    // Add agent response to chat
     setTimeout(() => {
-      // Hide thinking indicator
       hideThinking();
-      
-      // Add agent response to chat
       addAgentMessage(data.message);
-    }, 1500);
-    
+    }, 1000); // Simulated delay for natural feeling
   } catch (error) {
     console.error('Error sending message:', error);
-    
-    // Hide thinking indicator
     hideThinking();
-    
-    // Add error message
-    addAgentMessage("I'm sorry, I'm having trouble connecting. Please try again later.");
+    addAgentMessage("I'm sorry, there was an error processing your request. Please try again.");
   }
 }
 
@@ -454,148 +474,40 @@ async function sendMessage() {
  * Update dedicated chat interface if exists
  */
 function updateDedicatedChatInterface() {
-  const chatInterfaceContainer = document.getElementById('chat-interface-container');
-  if (!chatInterfaceContainer) return;
-  
-  // If no active agent, show agent selection
-  if (!chatState.activeAgent) {
-    chatInterfaceContainer.innerHTML = `
-      <div class="no-agent-selected">
-        <h2>Choose an AI Agent to Chat With</h2>
-        <p>Select one of the AI agents above to start a conversation.</p>
-      </div>
-    `;
-    return;
-  }
-  
-  // If active agent, show chat interface
-  chatInterfaceContainer.innerHTML = `
-    <div class="chat-interface" id="chat-interface">
-      <div class="chat-header">
-        <div class="chat-header-left">
-          <div class="chat-header-avatar" id="chat-header-avatar">
-            <img src="${chatState.activeAgent.avatar}" alt="${chatState.activeAgent.name}">
-          </div>
-          <div class="chat-header-info" id="chat-header-info">
-            <h3>${chatState.activeAgent.name}</h3>
-            <p>${chatState.activeAgent.status === 'available' ? 'Available' : 'Unavailable'}</p>
-          </div>
-        </div>
-        <button class="chat-close-btn" id="close-chat-interface">&times;</button>
-      </div>
-      <div class="chat-messages" id="chat-messages"></div>
-      <div class="chat-input-area">
-        <input type="text" class="chat-input" id="chat-input" 
-          placeholder="Type your message..." 
-          aria-label="Type your message">
-        <button class="send-btn" id="send-message" disabled>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  `;
-  
-  // Reinitialize chat elements
-  chatMessages = document.getElementById('chat-messages');
-  chatInput = document.getElementById('chat-input');
-  sendButton = document.getElementById('send-message');
-  
-  // Add event listeners
-  sendButton.addEventListener('click', sendMessage);
-  
-  chatInput.addEventListener('keypress', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      sendMessage();
-    }
-  });
-  
-  chatInput.addEventListener('input', () => {
-    sendButton.disabled = !chatInput.value.trim() || chatState.isThinking;
-  });
-  
-  const closeButton = document.getElementById('close-chat-interface');
-  if (closeButton) {
-    closeButton.addEventListener('click', () => {
-      chatState.activeAgent = null;
-      updateDedicatedChatInterface();
-    });
-  }
-  
-  // Add welcome message
-  const welcomeMessage = getWelcomeMessage(chatState.activeAgent);
-  addAgentMessage(welcomeMessage);
-  
-  // Focus input
-  if (chatInput) {
-    setTimeout(() => chatInput.focus(), 300);
-  }
+  // For future implementation if needed
 }
 
 /**
  * Create chat toggle and popup if they don't exist
  */
 function createChatControls() {
-  if (!document.getElementById('chat-toggle')) {
-    // Create toggle button
-    const toggle = document.createElement('button');
-    toggle.id = 'chat-toggle';
-    toggle.className = 'chat-toggle';
-    toggle.setAttribute('aria-label', 'Open AI chat');
-    toggle.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"></path>
-        <path d="M7 9h10M7 12h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-      </svg>
-    `;
-    document.body.appendChild(toggle);
-    
-    // Create popup
-    const popup = document.createElement('div');
-    popup.id = 'chat-popup';
-    popup.className = 'chat-popup';
-    popup.innerHTML = `
-      <div class="chat-interface">
-        <div class="chat-header">
-          <div class="chat-header-left">
-            <div class="chat-header-avatar" id="chat-header-avatar">
-              <img src="/static/images/agents/cosmic-guide.svg" alt="AI Assistant">
-            </div>
-            <div class="chat-header-info" id="chat-header-info">
-              <h3>AI Assistant</h3>
-              <p>Available</p>
-            </div>
-          </div>
-          <button class="chat-close-btn" id="close-chat">&times;</button>
-        </div>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-area">
-          <input type="text" class="chat-input" id="chat-input" 
-            placeholder="Type your message..." 
-            aria-label="Type your message">
-          <button class="send-btn" id="send-message" disabled>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(popup);
-    
-    // Initialize the chat
-    initializeAIChat();
-    
-    // Activate default agent
-    setTimeout(() => {
-      if (chatState.agents.length > 0) {
-        activateAgent('cosmic-guide');
-      }
-    }, 1000);
-  }
+  // Create toggle button
+  chatToggle = document.createElement('button');
+  chatToggle.className = 'ai-chat-toggle';
+  chatToggle.setAttribute('aria-label', 'Open chat');
+  chatToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+  
+  // Create popup container
+  chatPopup = document.createElement('div');
+  chatPopup.className = 'ai-chat-popup ai-chat-container';
+  
+  // Add to body
+  document.body.appendChild(chatToggle);
+  document.body.appendChild(chatPopup);
+  
+  // Add event listener
+  chatToggle.addEventListener('click', toggleChatPopup);
+  
+  // Initialize agent cards for selection
+  initializeAgentCards();
 }
 
-// Add function to initialize the floating chat panel
-window.initAIChatPanel = createChatControls;
+// Initialize chat on page load if on the chat page
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('ai-chat')) {
+    initializeAIChat();
+  }
+});
+
+// Export init function for the floating panel
+window.initAIChatPanel = initAIChatPanel;

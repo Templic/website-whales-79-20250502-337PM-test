@@ -1,50 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <title>Wisdom Keeper</title>
-    <defs>
-        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="greenGradient">
-            <stop stop-color="#10B981" offset="0%"></stop>
-            <stop stop-color="#047857" offset="100%"></stop>
-        </linearGradient>
-        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="50%" id="glowGradient">
-            <stop stop-color="#10B981" stop-opacity="0.8" offset="0%"></stop>
-            <stop stop-color="#10B981" stop-opacity="0" offset="100%"></stop>
-        </radialGradient>
-    </defs>
-    <g fill="none" stroke="none">
-        <circle fill="url(#glowGradient)" cx="100" cy="100" r="95" opacity="0.3"></circle>
-        <circle fill="url(#greenGradient)" cx="100" cy="100" r="80"></circle>
-        
-        <!-- Ancient symbols and wisdom elements -->
-        <g transform="translate(50, 50)" fill="#FFFFFF">
-            <!-- Tree of Life symbol -->
-            <circle cx="50" cy="15" r="5" opacity="0.9"></circle>
-            <circle cx="35" cy="30" r="5" opacity="0.8"></circle>
-            <circle cx="65" cy="30" r="5" opacity="0.8"></circle>
-            <circle cx="20" cy="45" r="5" opacity="0.7"></circle>
-            <circle cx="50" cy="45" r="5" opacity="0.7"></circle>
-            <circle cx="80" cy="45" r="5" opacity="0.7"></circle>
-            <circle cx="35" cy="60" r="5" opacity="0.8"></circle>
-            <circle cx="65" cy="60" r="5" opacity="0.8"></circle>
-            <circle cx="50" cy="75" r="5" opacity="0.9"></circle>
-            
-            <!-- Connecting lines -->
-            <line x1="50" y1="15" x2="35" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="50" y1="15" x2="65" y2="30" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="35" y1="30" x2="20" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="35" y1="30" x2="50" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="65" y1="30" x2="50" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="65" y1="30" x2="80" y2="45" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="20" y1="45" x2="35" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="50" y1="45" x2="35" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="50" y1="45" x2="65" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="80" y1="45" x2="65" y2="60" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="35" y1="60" x2="50" y2="75" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-            <line x1="65" y1="60" x2="50" y2="75" stroke="#FFFFFF" stroke-width="1" opacity="0.5"></line>
-        </g>
-        
-        <!-- Outer decorative rings -->
-        <circle stroke="#FFFFFF" stroke-width="1" cx="100" cy="100" r="85" opacity="0.2"></circle>
-        <circle stroke="#FFFFFF" stroke-width="0.5" cx="100" cy="100" r="90" opacity="0.1"></circle>
-    </g>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="95" fill="#0a325c" stroke="#fc9e65" stroke-width="3"/>
+  <g transform="translate(30, 30) scale(0.7)">
+    <!-- Ancient Book -->
+    <rect x="70" y="80" width="60" height="80" rx="5" fill="#fc9e65" fill-opacity="0.7"/>
+    <rect x="70" y="80" width="60" height="10" rx="3" fill="#303436"/>
+    
+    <!-- Book Pages -->
+    <path d="M130 90V150C130 153.314 127.314 156 124 156H76C72.6863 156 70 153.314 70 150V90" stroke="#e8e6e3" stroke-width="2"/>
+    <line x1="100" y1="90" x2="100" y2="155" stroke="#e8e6e3" stroke-width="1" stroke-dasharray="3 3"/>
+    
+    <!-- Page Content (Ancient Symbols) -->
+    <text x="78" y="110" fill="#303436" font-size="6">∞ ○ ◎ △ ☉</text>
+    <text x="78" y="120" fill="#303436" font-size="6">𓂀 𓇽 𓅓 ☥ 𓆣</text>
+    <text x="78" y="130" fill="#303436" font-size="6">⚕ ⚚ ⚛ ♱ ☸</text>
+    <text x="78" y="140" fill="#303436" font-size="6">☯ ⚜ ✴ 🜂 ☼</text>
+    
+    <text x="108" y="110" fill="#303436" font-size="6">☽ ⍟ ⌖ ⚝ ⚹</text>
+    <text x="108" y="120" fill="#303436" font-size="6">♄ ♃ ♂ ♀ ☿</text>
+    <text x="108" y="130" fill="#303436" font-size="6">𓊖 𓁙 𓋹 𓀬 𓈒</text>
+    <text x="108" y="140" fill="#303436" font-size="6">⏧ ⌘ ✶ ⏣ ⌞</text>
+    
+    <!-- Ancient Tree of Knowledge -->
+    <path d="M100 20V70" stroke="#00ebd6" stroke-width="2"/>
+    <circle cx="100" cy="20" r="10" fill="#00ebd6" fill-opacity="0.7"/>
+    <path d="M70 30C70 30 85 50 100 50C115 50 130 30 130 30" stroke="#00ebd6" stroke-width="2"/>
+    <path d="M60 50C60 50 80 70 100 70C120 70 140 50 140 50" stroke="#00ebd6" stroke-width="2"/>
+    
+    <!-- Wisdom Aura -->
+    <circle cx="100" cy="40" r="40" stroke="#fe0064" stroke-width="1" stroke-dasharray="5 5"/>
+    
+    <!-- Stars & Celestial Elements -->
+    <circle cx="70" cy="25" r="2" fill="white"/>
+    <circle cx="130" cy="25" r="2" fill="white"/>
+    <circle cx="85" cy="15" r="1" fill="white"/>
+    <circle cx="115" cy="15" r="1" fill="white"/>
+    <circle cx="50" cy="40" r="2" fill="white"/>
+    <circle cx="150" cy="40" r="2" fill="white"/>
+    <circle cx="45" cy="60" r="1" fill="white"/>
+    <circle cx="155" cy="60" r="1" fill="white"/>
+  </g>
 </svg>

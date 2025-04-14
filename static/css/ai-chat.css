@@ -1,42 +1,97 @@
-/* AI Chat Interface Styling */
+/* AI Chat Styles */
 
-/* Agent Selection Cards */
+/* Common styles for both floating chat and page */
+.ai-chat-container {
+  background-color: var(--midground-color);
+  color: var(--font-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* AI Chat Toggle Button */
+.ai-chat-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background-color: var(--fill-color);
+  color: var(--background-color);
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10001;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-chat-toggle:hover {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+/* AI Chat Popup */
+.ai-chat-popup {
+  position: fixed;
+  right: 20px;
+  bottom: 90px;
+  width: 350px;
+  height: 500px;
+  max-height: 70vh;
+  z-index: 10000;
+  display: none;
+  flex-direction: column;
+}
+
+.ai-chat-popup.open {
+  display: flex;
+}
+
+/* Agent Cards */
 .agent-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
-  margin: 30px 0;
+  gap: 1.5rem;
+  padding: 1rem 0;
 }
 
 .agent-card {
-  background: rgba(10, 50, 92, 0.8);
-  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
   overflow: hidden;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .agent-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-  border-color: var(--accent-color);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 .agent-card-header {
-  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .agent-avatar {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   overflow: hidden;
-  flex-shrink: 0;
+  margin-right: 1rem;
+  background-color: var(--background-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .agent-avatar img {
@@ -46,351 +101,322 @@
 }
 
 .agent-info {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .agent-info h3 {
-  margin: 0 0 5px 0;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
   color: var(--fill-color);
-  font-size: 1.4rem;
 }
 
 .agent-status {
-  font-size: 0.85rem;
-  padding: 3px 8px;
-  border-radius: 12px;
-  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
 }
 
 .agent-status.available {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  background-color: rgba(0, 200, 0, 0.2);
+  color: #4caf50;
 }
 
-.agent-status.unavailable {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #ef4444;
+.agent-status.busy {
+  background-color: rgba(255, 200, 0, 0.2);
+  color: #ffc107;
+}
+
+.agent-status.offline {
+  background-color: rgba(200, 0, 0, 0.2);
+  color: #f44336;
 }
 
 .agent-card-body {
-  padding: 20px;
+  padding: 1rem;
+  flex: 1;
 }
 
 .agent-card-body p {
-  margin: 0 0 15px 0;
-  color: var(--font-color);
-  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .agent-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 15px;
+  gap: 0.5rem;
 }
 
 .agent-tag {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--font-color);
-  padding: 4px 10px;
-  border-radius: 15px;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+  background-color: rgba(0, 235, 214, 0.1);
+  color: var(--fill-color);
 }
 
 .agent-card-footer {
-  padding: 15px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  text-align: right;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .chat-with-btn {
+  width: 100%;
   background-color: var(--fill-color);
   color: var(--background-color);
   border: none;
-  padding: 8px 20px;
   border-radius: 5px;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 
 .chat-with-btn:hover {
   background-color: var(--accent-color);
-  color: #fff;
-}
-
-.chat-with-btn:disabled {
-  background-color: #4a5568;
-  color: #a0aec0;
-  cursor: not-allowed;
+  color: white;
 }
 
 /* Chat Interface */
 .chat-interface {
-  background: rgba(10, 50, 92, 0.9);
-  border-radius: 12px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 500px;
-  max-height: 80vh;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-  margin: 20px 0;
+  height: 100%;
+  width: 100%;
 }
 
 .chat-header {
-  padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.chat-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.chat-header .agent-avatar {
+  width: 36px;
+  height: 36px;
+  margin-right: 0.8rem;
 }
 
-.chat-header-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-.chat-header-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.chat-header-info h3 {
+.chat-header .agent-info h3 {
+  font-size: 1rem;
   margin: 0;
-  font-size: 1.2rem;
-  color: var(--fill-color);
 }
 
-.chat-header-info p {
-  margin: 0;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
+.chat-header .agent-status {
+  font-size: 0.7rem;
 }
 
-.chat-close-btn {
-  background: transparent;
+.chat-header .close-chat {
+  margin-left: auto;
+  background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--font-color);
   cursor: pointer;
-  font-size: 1.5rem;
-  line-height: 1;
-  transition: color 0.3s ease;
+  padding: 0.3rem;
 }
 
-.chat-close-btn:hover {
+.chat-header .close-chat:hover {
   color: var(--accent-color);
 }
 
 .chat-messages {
-  flex-grow: 1;
-  padding: 20px;
+  flex: 1;
+  padding: 1rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 1rem;
 }
 
 .message {
   max-width: 80%;
-  padding: 12px 15px;
-  border-radius: 12px;
+  padding: 0.8rem;
+  border-radius: 10px;
   position: relative;
-  line-height: 1.5;
-}
-
-.message.user {
-  align-self: flex-end;
-  background-color: var(--accent-color);
-  color: #fff;
-  border-bottom-right-radius: 2px;
-}
-
-.message.agent {
-  align-self: flex-start;
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--font-color);
-  border-bottom-left-radius: 2px;
 }
 
 .message-time {
   font-size: 0.7rem;
   opacity: 0.7;
-  margin-top: 5px;
-  text-align: right;
+  margin-top: 0.3rem;
 }
 
-.message.thinking {
+.message.agent {
   align-self: flex-start;
-  background-color: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
-.thinking-dots {
+.message.user {
+  align-self: flex-end;
+  background-color: rgba(0, 235, 214, 0.2);
+}
+
+.thinking-indicator {
   display: flex;
-  gap: 4px;
-  height: 10px;
   align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  align-self: flex-start;
 }
 
 .thinking-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--fill-color);
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.7);
-  animation: thinking 1.4s infinite ease-in-out both;
+  animation: thinking 1.4s infinite ease-in-out;
 }
 
 .thinking-dot:nth-child(1) {
-  animation-delay: -0.32s;
+  animation-delay: 0s;
 }
 
 .thinking-dot:nth-child(2) {
-  animation-delay: -0.16s;
+  animation-delay: 0.2s;
+}
+
+.thinking-dot:nth-child(3) {
+  animation-delay: 0.4s;
 }
 
 @keyframes thinking {
-  0%, 80%, 100% { 
-    transform: scale(0);
-  } 
-  40% { 
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
     transform: scale(1);
+    opacity: 1;
   }
 }
 
-.chat-input-area {
-  padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.3);
+.chat-input-container {
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
-  gap: 10px;
 }
 
 .chat-input {
-  flex-grow: 1;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  flex: 1;
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--font-color);
-  padding: 10px 15px;
   border-radius: 20px;
-  outline: none;
-  transition: border-color 0.3s ease;
+  padding: 0.7rem 1rem;
+  margin-right: 0.5rem;
+  resize: none;
+  height: 40px;
+  max-height: 100px;
+  line-height: 1.5;
 }
 
 .chat-input:focus {
+  outline: none;
   border-color: var(--fill-color);
 }
 
-.chat-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.send-btn {
+.send-message-btn {
   background-color: var(--fill-color);
   color: var(--background-color);
   border: none;
+  border-radius: 20px;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.send-btn:hover {
+.send-message-btn:hover {
   background-color: var(--accent-color);
-  color: #fff;
+  color: white;
 }
 
-.send-btn:disabled {
-  background-color: #4a5568;
-  color: #a0aec0;
+.send-message-btn:disabled {
+  background-color: rgba(255, 255, 255, 0.2);
   cursor: not-allowed;
 }
 
-.send-btn svg {
-  width: 18px;
-  height: 18px;
-  fill: currentColor;
-}
-
-/* Chat Popup */
-.chat-popup {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  width: 370px;
-  max-width: calc(100% - 40px);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
-  overflow: hidden;
-  transform: scale(0.95) translateY(20px);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.chat-popup.visible {
-  transform: scale(1) translateY(0);
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Chat Bubble Toggle Button */
-.chat-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 999;
-  background-color: var(--fill-color);
-  color: var(--background-color);
-  border: none;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+/* No agent selected state */
+.no-agent-selected {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  padding: 2rem;
+  text-align: center;
 }
 
-.chat-toggle:hover {
-  background-color: var(--accent-color);
-  transform: scale(1.1);
+.no-agent-selected h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--fill-color);
 }
 
-.chat-toggle svg {
-  width: 28px;
-  height: 28px;
-  fill: currentColor;
+.no-agent-selected p {
+  margin: 0;
+  opacity: 0.8;
 }
 
-/* Responsive Adjustments */
+/* Chat Page Specific Styles */
+#ai-chat {
+  margin-bottom: 4rem;
+}
+
+#chat-interface-container {
+  margin-top: 2rem;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  background-color: var(--midground-color);
+  min-height: 500px;
+  display: flex;
+}
+
+#ai-chat .chat-interface {
+  width: 100%;
+}
+
+/* Responsive styles */
 @media (max-width: 768px) {
   .agent-cards {
     grid-template-columns: 1fr;
   }
   
-  .chat-interface {
-    height: 400px;
+  .ai-chat-popup {
+    width: calc(100% - 40px);
+    right: 20px;
+    left: 20px;
+    max-height: 60vh;
   }
   
-  .message {
-    max-width: 90%;
+  #chat-interface-container {
+    min-height: 400px;
   }
+}
+
+/* Agent's distinct colors */
+.agent-cosmic-guide {
+  --agent-color: #00ebd6;
+}
+
+.agent-harmonic-helper {
+  --agent-color: #9e65fc;
+}
+
+.agent-wisdom-keeper {
+  --agent-color: #fc9e65;
+}
+
+.agent-shop-oracle {
+  --agent-color: #65fc9e;
 }

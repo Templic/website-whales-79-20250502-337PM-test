@@ -1,40 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <title>Harmonic Helper</title>
-    <defs>
-        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="blueGradient">
-            <stop stop-color="#3B82F6" offset="0%"></stop>
-            <stop stop-color="#06B6D4" offset="100%"></stop>
-        </linearGradient>
-        <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" r="50%" id="glowGradient">
-            <stop stop-color="#3B82F6" stop-opacity="0.8" offset="0%"></stop>
-            <stop stop-color="#3B82F6" stop-opacity="0" offset="100%"></stop>
-        </radialGradient>
-    </defs>
-    <g fill="none" stroke="none">
-        <circle fill="url(#glowGradient)" cx="100" cy="100" r="95" opacity="0.3"></circle>
-        <circle fill="url(#blueGradient)" cx="100" cy="100" r="80"></circle>
-        
-        <!-- Sound wave elements -->
-        <g transform="translate(50, 50)" fill="#FFFFFF">
-            <!-- Sound waves -->
-            <path d="M50,10 C70,10 70,20 90,20 M50,10 C30,10 30,20 10,20" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9" fill="none"></path>
-            <path d="M50,30 C75,30 75,40 100,40 M50,30 C25,30 25,40 0,40" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7" fill="none"></path>
-            <path d="M50,50 C80,50 80,60 110,60 M50,50 C20,50 20,60 -10,60" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5" fill="none"></path>
-            <path d="M50,70 C75,70 75,80 100,80 M50,70 C25,70 25,80 0,80" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.7" fill="none"></path>
-            <path d="M50,90 C70,90 70,100 90,100 M50,90 C30,90 30,100 10,100" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.9" fill="none"></path>
-            
-            <!-- Central resonance point -->
-            <circle cx="50" cy="50" r="5" opacity="1"></circle>
-            
-            <!-- Resonance circles -->
-            <circle cx="50" cy="50" r="15" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.3"></circle>
-            <circle cx="50" cy="50" r="25" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.2"></circle>
-            <circle cx="50" cy="50" r="35" stroke="#FFFFFF" stroke-width="1" fill="none" opacity="0.1"></circle>
-        </g>
-        
-        <!-- Outer decorative rings -->
-        <circle stroke="#FFFFFF" stroke-width="1" cx="100" cy="100" r="85" opacity="0.2"></circle>
-        <circle stroke="#FFFFFF" stroke-width="0.5" cx="100" cy="100" r="90" opacity="0.1"></circle>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="95" fill="#0a325c" stroke="#9e65fc" stroke-width="3"/>
+  <g transform="translate(30, 30) scale(0.7)">
+    <!-- Sound waves -->
+    <circle cx="100" cy="100" r="20" fill="#9e65fc" fill-opacity="0.7"/>
+    <circle cx="100" cy="100" r="40" stroke="#9e65fc" stroke-width="3" stroke-opacity="0.5"/>
+    <circle cx="100" cy="100" r="60" stroke="#9e65fc" stroke-width="2" stroke-opacity="0.4"/>
+    <circle cx="100" cy="100" r="80" stroke="#9e65fc" stroke-width="2" stroke-opacity="0.3"/>
+    <circle cx="100" cy="100" r="100" stroke="#9e65fc" stroke-width="1" stroke-opacity="0.2"/>
+    
+    <!-- Musical notes -->
+    <g transform="translate(60, 70) scale(0.7)">
+      <path d="M30 50V10C30 7.79086 31.7909 6 34 6H36C38.2091 6 40 7.79086 40 10V50" stroke="#00ebd6" stroke-width="3"/>
+      <ellipse cx="35" cy="50" rx="10" ry="7" fill="#00ebd6"/>
     </g>
+    
+    <g transform="translate(90, 40) scale(0.7)">
+      <path d="M30 50V10C30 7.79086 31.7909 6 34 6H36C38.2091 6 40 7.79086 40 10V50" stroke="#fe0064" stroke-width="3"/>
+      <ellipse cx="35" cy="50" rx="10" ry="7" fill="#fe0064"/>
+    </g>
+    
+    <g transform="translate(140, 80) scale(0.7)">
+      <path d="M30 50V10C30 7.79086 31.7909 6 34 6H36C38.2091 6 40 7.79086 40 10V50" stroke="#00ebd6" stroke-width="3"/>
+      <ellipse cx="35" cy="50" rx="10" ry="7" fill="#00ebd6"/>
+    </g>
+    
+    <!-- Frequency bars -->
+    <rect x="60" y="130" width="8" height="20" fill="#00ebd6"/>
+    <rect x="75" y="130" width="8" height="30" fill="#00ebd6"/>
+    <rect x="90" y="130" width="8" height="15" fill="#00ebd6"/>
+    <rect x="105" y="130" width="8" height="35" fill="#00ebd6"/>
+    <rect x="120" y="130" width="8" height="25" fill="#00ebd6"/>
+    <rect x="135" y="130" width="8" height="10" fill="#00ebd6"/>
+  </g>
 </svg>
