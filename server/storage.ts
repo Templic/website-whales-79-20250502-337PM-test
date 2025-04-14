@@ -14,9 +14,10 @@ import {
   type ContentItem, type InsertContentItem,
   type ContentHistory, type InsertContentHistory,
   type ContentUsage, type InsertContentUsage,
+  type Product,
   subscribers, posts, categories, comments, users, 
   tracks, albums, newsletters, contentItems,
-  contentHistory, contentUsage
+  contentHistory, contentUsage, products
 } from "@shared/schema";
 import { sql, eq, and, desc } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
@@ -461,6 +462,11 @@ export class PostgresStorage implements IStorage {
   async getTracks(): Promise<Track[]> {
     return await db.select().from(tracks).orderBy(sql`created_at DESC`);
   }
+  
+  async getAllTracks(): Promise<Track[]> {
+    // This returns all tracks including non-published ones (for admin use)
+    return await db.select().from(tracks).orderBy(sql`created_at DESC`);
+  }
 
   async getAlbums(): Promise<Album[]> {
     return await db.select().from(albums).orderBy(sql`release_date DESC`);
@@ -489,6 +495,11 @@ export class PostgresStorage implements IStorage {
 
     // Delete from database
     await db.delete(tracks).where(eq(tracks.id, trackId));
+  }
+  
+  // Product methods
+  async getAllProducts(): Promise<Product[]> {
+    return await db.select().from(products).orderBy(sql`created_at DESC`);
   }
 
   async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
