@@ -58,14 +58,77 @@ async function initializeServer() {
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.googleapis.com", "https://*.gstatic.com", "https://*.google.com", "https://*.youtube.com", "https://*.ytimg.com"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://*.gstatic.com"],
-            imgSrc: ["'self'", "data:", "blob:", "https://*.googleapis.com", "https://*.gstatic.com", "https://*.google.com", "https://*.ytimg.com", "https://onlyinhawaii.org", "https://yt3.ggpht.com", "*"],
-            connectSrc: ["'self'", "ws:", "wss:", "https://*.googleapis.com", "https://*.google.com", "https://*.youtube.com"],
-            fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+            scriptSrc: [
+              "'self'", 
+              "'unsafe-inline'", 
+              "'unsafe-eval'", 
+              "https://*.googleapis.com", 
+              "https://*.gstatic.com", 
+              "https://*.google.com", 
+              "https://*.youtube.com", 
+              "https://*.ytimg.com", 
+              "https://*.taskade.com",
+              "https://assets.taskade.com"
+            ],
+            styleSrc: [
+              "'self'", 
+              "'unsafe-inline'", 
+              "https://fonts.googleapis.com", 
+              "https://*.gstatic.com",
+              "https://*.taskade.com"
+            ],
+            imgSrc: [
+              "'self'", 
+              "data:", 
+              "blob:", 
+              "https://*.googleapis.com", 
+              "https://*.gstatic.com", 
+              "https://*.google.com", 
+              "https://*.ytimg.com", 
+              "https://onlyinhawaii.org", 
+              "https://yt3.ggpht.com", 
+              "https://*.taskade.com",
+              "*"
+            ],
+            connectSrc: [
+              "'self'", 
+              "ws:", 
+              "wss:", 
+              "https://*.googleapis.com", 
+              "https://*.google.com", 
+              "https://*.youtube.com",
+              "https://*.taskade.com", 
+              "https://assets.taskade.com"
+            ],
+            fontSrc: [
+              "'self'", 
+              "data:", 
+              "https://fonts.gstatic.com",
+              "https://*.taskade.com"
+            ],
             objectSrc: ["'none'"],
-            mediaSrc: ["'self'", "https://*.youtube.com", "https://*"],
-            frameSrc: ["'self'", "https://*.youtube.com", "https://youtube.com", "https://*.youtube-nocookie.com", "https://www.google.com", "https://maps.google.com", "https://www.google.com/maps/", "https://maps.googleapis.com"],
+            mediaSrc: [
+              "'self'", 
+              "https://*.youtube.com", 
+              "https://*"
+            ],
+            frameSrc: [
+              "'self'", 
+              "https://*.youtube.com", 
+              "https://youtube.com", 
+              "https://*.youtube-nocookie.com", 
+              "https://www.google.com", 
+              "https://maps.google.com", 
+              "https://www.google.com/maps/", 
+              "https://maps.googleapis.com",
+              "https://*.taskade.com",
+              "https://www.taskade.com"
+            ],
+            workerSrc: [
+              "'self'",
+              "blob:",
+              "https://*.taskade.com"
+            ]
           },
         },
       })
