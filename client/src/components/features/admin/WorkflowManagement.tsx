@@ -161,7 +161,7 @@ const WorkflowManagement: React.FC = () => {
   // Fetch content items
   const { data: contentItems, isLoading: isLoadingContent } = useQuery<ContentItem[]>({
     queryKey: ['/api/admin/content'],
-    select: (data) => {
+    select: (data: ContentItem[]) => {
       if (activeTab === "all") return data;
       return data.filter((item: ContentItem) => item.status === activeTab);
     }
@@ -171,9 +171,7 @@ const WorkflowManagement: React.FC = () => {
   const { data: workflowHistory, isLoading: isLoadingHistory } = useQuery<WorkflowHistoryItem[]>({
     queryKey: ['/api/admin/content', selectedContentId, 'history'],
     queryFn: () => {
-      return apiRequest(`/api/admin/content/${selectedContentId}/history`, {
-        method: 'GET'
-      });
+      return apiRequest('GET', `/api/admin/content/${selectedContentId}/history`);
     },
     enabled: !!selectedContentId,
   });
@@ -181,15 +179,16 @@ const WorkflowManagement: React.FC = () => {
   // Mutation to update content status
   const updateStatusMutation = useMutation({
     mutationFn: (data: UpdateStatusFormValues) => {
-      return apiRequest(`/api/admin/content/${data.contentId}/status`, {
-        method: 'PATCH',
-        data: {
+      return apiRequest(
+        'PATCH',
+        `/api/admin/content/${data.contentId}/status`,
+        {
           status: data.status,
           reviewNotes: data.reviewNotes,
           scheduledPublishAt: data.scheduledPublishAt ? new Date(data.scheduledPublishAt).toISOString() : null,
           expirationDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : null,
-        },
-      });
+        }
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/content'] });
