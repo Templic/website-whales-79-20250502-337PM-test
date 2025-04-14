@@ -15,6 +15,7 @@ import StarBackground from "@/components/cosmic/StarBackground";
 import { AccessibilityProvider } from "@/contexts/AccessibilityContext";
 import { ChatProvider } from "@/contexts/ChatContext";
 import ChatWidget from "@/components/chat/ChatWidget";
+import TaskadeWidget from "@/components/chat/TaskadeWidget";
 import CookieConsent from "@/components/common/CookieConsent";
 
 // Pages
@@ -251,6 +252,7 @@ function App() {
                 <StarBackground starCount={150} />
                 <AppRouter />
                 <ChatWidget />
+                <TaskadeWidget />
                 <CookieConsent />
                 <Toaster />
               </ErrorBoundary>
