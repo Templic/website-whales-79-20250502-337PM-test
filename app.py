@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, jsonify
 from flask_wtf import CSRFProtect
 from flask_talisman import Talisman
 from dotenv import load_dotenv
 import os
 import logging
+import json
 from forms import ContactForm, NewsletterForm
 
 # Load environment variables
