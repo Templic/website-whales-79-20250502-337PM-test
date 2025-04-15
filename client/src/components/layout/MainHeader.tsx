@@ -133,7 +133,7 @@ export function MainHeader() {
     e.preventDefault();
     if (searchQuery.trim()) {
       // Navigate to search page with query parameter for site-wide search
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&scope=all`);
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}&type=all`);
       // Reset search input after submission
       setSearchQuery("");
       
