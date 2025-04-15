@@ -83,8 +83,8 @@ export default function BlogPage() {
         ) : posts && posts.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-8">
             {posts.map((post) => (
-              <article key={post.id} className="relative group">
-                {/* Octagon shape container with clip-path */}
+              <article key={post.id} className="relative group min-h-[420px] flex flex-col">
+                {/* Improved octagon shape container with clip-path */}
                 <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
                     clip-path-octagon border-2 border-[#00ebd6]/30 z-0 group-hover:border-[#00ebd6]/60"></div>
                 
@@ -93,17 +93,21 @@ export default function BlogPage() {
                   <SacredGeometry variant="octagon" size={80} animated={false} />
                 </div>
                 
-                <div className="relative z-10 p-8">
+                {/* Content container with improved spacing */}
+                <div className="relative z-10 p-5 sm:p-6 md:p-8 flex flex-col flex-grow">
                   {post.featuredImage && (
-                    <img 
-                      src={post.featuredImage} 
-                      alt={post.title}
-                      className="w-full h-48 object-cover rounded-lg mb-4 transition-transform duration-500 group-hover:scale-[1.02]"
-                    />
+                    <div className="mb-4 max-h-48 overflow-hidden rounded-lg">
+                      <img 
+                        src={post.featuredImage} 
+                        alt={post.title}
+                        className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                      />
+                    </div>
                   )}
-                  <h2 className="text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
                   
-                  <div className="text-gray-300 mb-4 line-clamp-4 text-sm">
+                  <h2 className="text-xl sm:text-2xl font-bold text-[#00ebd6] mb-2">{post.title}</h2>
+                  
+                  <div className="text-gray-300 mb-4 line-clamp-3 sm:line-clamp-4 text-sm flex-grow">
                     {typeof post.content === 'string' 
                      ? post.content
                         .replace(/<p>/g, '')
@@ -118,12 +122,12 @@ export default function BlogPage() {
                      : ''}
                   </div>
                   
-                  <div className="flex justify-between items-center mt-6">
-                    <p className="text-sm text-[#fe0064]">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mt-3 sm:mt-6">
+                    <p className="text-xs sm:text-sm text-[#fe0064]">
                       Published: {formatDisplayDate(post.createdAt)}
                     </p>
                     <Button 
-                      className="text-sm bg-transparent border border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6]/10 hover:shadow-[0_0_10px_rgba(0,235,214,0.4)]"
+                      className="text-xs sm:text-sm bg-transparent border border-[#00ebd6] text-[#00ebd6] hover:bg-[#00ebd6]/10 hover:shadow-[0_0_10px_rgba(0,235,214,0.4)]"
                       onClick={() => navigate(`/blog/${post.id}`)}
                     >
                       Read More

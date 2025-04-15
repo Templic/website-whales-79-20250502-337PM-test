@@ -163,7 +163,7 @@ export function OctagonContainer({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center p-6 text-white",
+        "relative flex items-center justify-center p-8 text-white",
         className
       )}
       style={{
@@ -196,7 +196,8 @@ export function OctagonContainer({
           />
         </svg>
       </div>
-      <div className="z-10 max-w-[80%] overflow-y-auto hide-scrollbar text-center">{children}</div>
+      {/* Increased max width to 90% and added responsive padding adjustments */}
+      <div className="z-10 max-w-[90%] sm:max-w-[85%] md:max-w-[90%] px-1 sm:px-3 md:px-4 py-2 sm:py-3 md:py-4 overflow-y-auto hide-scrollbar">{children}</div>
     </div>
   )
 }
