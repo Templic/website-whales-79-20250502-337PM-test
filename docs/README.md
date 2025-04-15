@@ -20,6 +20,11 @@ Welcome to the project documentation. This repository contains comprehensive doc
 - [Documentation Audit Report](DOCUMENTATION_AUDIT_REPORT.md) - Latest documentation audit
 - [Component Documentation Guide](COMPONENT_DOCUMENTATION_GUIDE.md) - Component documentation standards
 
+### Component Development
+- [Component Audit and Optimization Plan](COMPONENT_AUDIT_AND_OPTIMIZATION_PLAN.md) - Plan for component improvements
+- [Component Optimization Guide](COMPONENT_OPTIMIZATION_GUIDE.md) - Techniques for optimizing components
+- [Well-Documented Component Example](examples/well-documented-component-example.tsx) - Example of properly documented component
+
 ### Development Guidelines
 - [Updating Documentation](UPDATING_DOCUMENTATION.md) - Documentation maintenance guide
 - [Dependency Management](DEPENDENCY_MANAGEMENT.md) - Package management guidelines
