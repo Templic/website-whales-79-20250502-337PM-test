@@ -271,7 +271,8 @@ function App() {
                 <StarBackground starCount={150} />
                 <AppRouter />
                 <ChatWidget />
-                <TaskadeWidget />
+                {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
+                {/* <TaskadeWidget /> */}
                 <CookieConsent />
                 <Toaster />
               </ErrorBoundary>
