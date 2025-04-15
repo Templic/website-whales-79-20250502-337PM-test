@@ -1215,11 +1215,15 @@ export default function MediaPage() {
               {bulkActionType === 'delete' && 'Delete Multiple Files'}
               {bulkActionType === 'move' && 'Move Multiple Files'}
               {bulkActionType === 'categorize' && 'Categorize Multiple Files'}
+              {bulkActionType === 'tag' && 'Tag Multiple Files'}
+              {bulkActionType === 'analyze' && 'AI Analyze Files'}
             </DialogTitle>
             <DialogDescription>
               {bulkActionType === 'delete' && `You are about to delete ${selectedMediaIds.size} files. This action cannot be undone.`}
               {bulkActionType === 'move' && `Update the page location for ${selectedMediaIds.size} files.`}
               {bulkActionType === 'categorize' && `Update the section for ${selectedMediaIds.size} files within their current pages.`}
+              {bulkActionType === 'tag' && `Add tags to ${selectedMediaIds.size} files to make them easier to find.`}
+              {bulkActionType === 'analyze' && `Analyze ${selectedMediaIds.size} files with AI to automatically generate descriptive tags.`}
             </DialogDescription>
           </DialogHeader>
           
@@ -1319,6 +1323,45 @@ export default function MediaPage() {
                 )}
               </div>
             )}
+            
+            {bulkActionType === 'tag' && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bulkTags">Tags *</Label>
+                  <Input 
+                    id="bulkTags"
+                    placeholder="Enter tags separated by commas (e.g., landscape, ocean, nature)"
+                    value={bulkTags}
+                    onChange={(e) => setBulkTags(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tags help organize and find media more easily. Separate multiple tags with commas.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {bulkActionType === 'analyze' && (
+              <div className="space-y-4">
+                {isAutoTaggingInProgress ? (
+                  <div className="bg-blue-50 p-4 rounded-md border border-blue-200 text-blue-800 text-sm flex flex-col items-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+                    <p className="font-medium">Analyzing media files...</p>
+                    <p>Our AI system is analyzing your files to generate descriptive tags.</p>
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 p-4 rounded-md border border-blue-200 text-blue-800 text-sm">
+                    <p className="font-medium">AI-Powered Media Analysis</p>
+                    <p>Our system will examine your selected files and automatically generate descriptive tags based on their content.</p>
+                    <ul className="list-disc list-inside mt-2">
+                      <li>Images will be analyzed for objects, scenes, colors, and composition</li>
+                      <li>Audio files will be analyzed for mood, tempo, and key characteristics</li>
+                      <li>Documents will be analyzed for key topics and content themes</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <DialogFooter>
@@ -1333,13 +1376,17 @@ export default function MediaPage() {
               variant={bulkActionType === 'delete' ? 'destructive' : 'default'}
               onClick={executeBulkAction}
               disabled={
+                isAutoTaggingInProgress ||
                 (bulkActionType === 'move' && !bulkTargetPage) ||
-                (bulkActionType === 'categorize' && !bulkTargetSection && !bulkCustomSection)
+                (bulkActionType === 'categorize' && !bulkTargetSection && !bulkCustomSection) ||
+                (bulkActionType === 'tag' && !bulkTags.trim())
               }
             >
               {bulkActionType === 'delete' && 'Delete Files'}
               {bulkActionType === 'move' && 'Move Files'}
               {bulkActionType === 'categorize' && 'Categorize Files'}
+              {bulkActionType === 'tag' && 'Apply Tags'}
+              {bulkActionType === 'analyze' && 'Start Analysis'}
             </Button>
           </DialogFooter>
         </DialogContent>
