@@ -1,545 +1,504 @@
 /**
- * AnalyticsDisplay.tsx
+ * AnalyticsDisplay Component
  * 
- * A comprehensive component for displaying content analytics data
- * with interactive charts and metrics visualization.
+ * A versatile analytics dashboard component that can display various types of analytics data
+ * with support for different time ranges and visualization options.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, subDays } from 'date-fns';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, 
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
-  Legend, ResponsiveContainer, Cell 
-} from 'recharts';
-import {
-  Calendar,
-  BarChart as BarChartIcon,
-  TrendingUp,
-  Clock,
-  AlertTriangle,
-  RefreshCw,
-  Zap,
-  Users,
+  AlertCircle,
   FileText,
-  ArrowUpRight,
-  ArrowDownRight
+  Calendar,
+  Clock 
 } from 'lucide-react';
+import { format } from 'date-fns';
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+// Types
+export type TimeRange = 'today' | 'yesterday' | 'last-7-days' | 'last-30-days' | 'this-month' | 'last-month' | 'custom';
 
-// Define colors for consistent styling
-const COLORS = {
-  primary: '#3b82f6',
-  secondary: '#10b981',
-  accent: '#a855f7',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#06b6d4',
-  success: '#22c55e',
-  background: '#020817',
-  foreground: '#ffffff',
-  muted: '#64748b'
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: '#9ca3af',
-  review: '#f59e0b', 
-  changes_requested: '#ef4444',
-  approved: '#10b981',
-  published: '#3b82f6',
-  archived: '#6b7280'
-};
-
-// Type definitions for component props
 export interface AnalyticsDisplayProps {
-  /**
-   * Time range for displaying analytics data
-   * @default "last-30-days"
-   */
-  timeRange?: 'today' | 'last-7-days' | 'last-30-days' | 'last-90-days' | 'year-to-date' | 'custom';
-  
-  /**
-   * Custom date range start (only used when timeRange is 'custom')
-   */
+  // Time range configuration
+  timeRange: TimeRange;
   customRangeStart?: Date;
-  
-  /**
-   * Custom date range end (only used when timeRange is 'custom')
-   */
   customRangeEnd?: Date;
   
-  /**
-   * Whether to show visitor statistics
-   * @default true
-   */
+  // Display options
   showVisitors?: boolean;
-  
-  /**
-   * Whether to show conversion statistics
-   * @default true
-   */
   showConversions?: boolean;
-  
-  /**
-   * Whether to show revenue statistics
-   * @default true
-   */
   showRevenue?: boolean;
   
-  /**
-   * Refresh interval in seconds (0 for no auto-refresh)
-   * @default 0
-   */
-  refreshInterval?: number;
-  
-  /**
-   * Custom CSS classes
-   */
-  className?: string;
+  // Optional callback when time range changes
+  onTimeRangeChange?: (range: TimeRange) => void;
 }
 
-export function AnalyticsDisplay({
-  timeRange = 'last-30-days',
+export function AnalyticsDisplay({ 
+  timeRange = 'last-7-days',
   customRangeStart,
   customRangeEnd,
   showVisitors = true,
   showConversions = true,
   showRevenue = true,
-  refreshInterval = 0,
-  className = ''
+  onTimeRangeChange 
 }: AnalyticsDisplayProps) {
-  // Calculate date range based on timeRange prop
-  const getDateRange = () => {
-    const today = new Date();
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Format dates for API calls
+  const formatDateForApi = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+  
+  // Calculate date range for API based on timeRange
+  const getDateRangeForApi = (): { start: string, end: string } => {
+    const now = new Date();
+    let end = timeRange === 'custom' && customRangeEnd 
+      ? formatDateForApi(customRangeEnd)
+      : formatDateForApi(now);
+      
+    let start: string;
     
-    switch(timeRange) {
+    switch (timeRange) {
       case 'today':
-        return { from: today, to: today };
+        start = formatDateForApi(now);
+        break;
+      case 'yesterday':
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        start = formatDateForApi(yesterday);
+        break;
       case 'last-7-days':
-        return { from: subDays(today, 7), to: today };
+        const sevenDaysAgo = new Date(now);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        start = formatDateForApi(sevenDaysAgo);
+        break;
       case 'last-30-days':
-        return { from: subDays(today, 30), to: today };
-      case 'last-90-days':
-        return { from: subDays(today, 90), to: today };
-      case 'year-to-date':
-        return { from: new Date(today.getFullYear(), 0, 1), to: today };
+        const thirtyDaysAgo = new Date(now);
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        start = formatDateForApi(thirtyDaysAgo);
+        break;
+      case 'this-month':
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        start = formatDateForApi(thisMonthStart);
+        break;
+      case 'last-month':
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        start = formatDateForApi(lastMonthStart);
+        end = formatDateForApi(lastMonthEnd);
+        break;
       case 'custom':
-        return { 
-          from: customRangeStart || subDays(today, 30), 
-          to: customRangeEnd || today 
-        };
+        const defaultStart = new Date(now);
+        defaultStart.setDate(defaultStart.getDate() - 7);
+        start = customRangeStart ? formatDateForApi(customRangeStart) : formatDateForApi(defaultStart);
+        break;
       default:
-        return { from: subDays(today, 30), to: today };
+        const defaultDate = new Date(now);
+        defaultDate.setDate(defaultDate.getDate() - 7);
+        start = formatDateForApi(defaultDate);
     }
+    
+    return { start, end };
   };
-
-  // State for date range
-  const [dateRange, setDateRange] = useState(getDateRange());
   
-  // Update date range when props change
-  useEffect(() => {
-    setDateRange(getDateRange());
-  }, [timeRange, customRangeStart, customRangeEnd]);
+  // Get date range for API calls
+  const dateRange = getDateRangeForApi();
   
-  // Handle date range changes from the picker
-  const handleDateRangeChange = (range: { from: Date; to: Date } | undefined) => {
-    if (range) {
-      setDateRange(range);
-    }
-  };
-
   // Fetch content analytics data
   const { 
-    data: analyticsData, 
-    isLoading: isLoadingAnalytics, 
-    error: analyticsError,
-    refetch: refetchAnalytics
+    data: contentAnalytics, 
+    isLoading: isLoadingContentAnalytics,
+    error: contentAnalyticsError
   } = useQuery({
-    queryKey: [
-      '/api/content-workflow/analytics', 
-      format(dateRange.from, 'yyyy-MM-dd'),
-      format(dateRange.to, 'yyyy-MM-dd')
-    ],
+    queryKey: ['/api/content-workflow/analytics', dateRange.start, dateRange.end],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/content-workflow/analytics?start=${format(dateRange.from, 'yyyy-MM-dd')}&end=${format(dateRange.to, 'yyyy-MM-dd')}`
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch content analytics');
+      try {
+        const response = await fetch(`/api/content-workflow/analytics?start=${dateRange.start}&end=${dateRange.end}`);
+        if (!response.ok) throw new Error('Failed to fetch content analytics');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching content analytics:', error);
+        return null;
       }
-      return response.json();
     }
   });
-
-  // Auto-refresh based on interval
-  useEffect(() => {
-    if (refreshInterval > 0) {
-      const intervalId = setInterval(() => {
-        refetchAnalytics();
-      }, refreshInterval * 1000);
-      
-      return () => clearInterval(intervalId);
-    }
-  }, [refreshInterval, refetchAnalytics]);
-
-  // Prepare data for throughput chart
-  const getThroughputData = () => {
-    if (!analyticsData?.throughput) return [];
-    
-    return [
-      {
-        name: 'Last 24 Hours',
-        Created: analyticsData.throughput.last24Hours.totalCreated,
-        Published: analyticsData.throughput.last24Hours.totalPublished,
-        Updated: analyticsData.throughput.last24Hours.totalUpdated,
-        Archived: analyticsData.throughput.last24Hours.totalArchived,
-      },
-      {
-        name: 'Last 7 Days',
-        Created: analyticsData.throughput.last7Days.totalCreated,
-        Published: analyticsData.throughput.last7Days.totalPublished,
-        Updated: analyticsData.throughput.last7Days.totalUpdated,
-        Archived: analyticsData.throughput.last7Days.totalArchived,
-      },
-      {
-        name: 'Last 30 Days',
-        Created: analyticsData.throughput.last30Days.totalCreated,
-        Published: analyticsData.throughput.last30Days.totalPublished,
-        Updated: analyticsData.throughput.last30Days.totalUpdated,
-        Archived: analyticsData.throughput.last30Days.totalArchived,
-      }
-    ];
-  };
-
-  // Prepare data for workflow status distribution chart
-  const getWorkflowStatusData = () => {
-    if (!analyticsData?.workflow) return [];
-    
-    return [
-      { name: 'Draft', value: analyticsData.workflow.totalInDraft, color: STATUS_COLORS.draft },
-      { name: 'In Review', value: analyticsData.workflow.totalInReview, color: STATUS_COLORS.review },
-      { name: 'Approved', value: analyticsData.workflow.totalApproved, color: STATUS_COLORS.approved },
-      { name: 'Published', value: analyticsData.workflow.totalPublished, color: STATUS_COLORS.published },
-      { name: 'Archived', value: analyticsData.workflow.totalArchived, color: STATUS_COLORS.archived }
-    ];
-  };
-
-  // Display error if analytics fetch failed
-  if (analyticsError) {
-    return (
-      <Alert variant="destructive" className="mb-6">
-        <AlertTitle>Error Loading Analytics</AlertTitle>
-        <AlertDescription>
-          Failed to load content analytics data. Please try again later.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
+  
+  // Loading state
+  const isLoading = isLoadingContentAnalytics;
+  
+  // Error state
+  const hasError = !!contentAnalyticsError;
+  
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Analytics header with date range picker */}
-      <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Content Analytics</h2>
-          <p className="text-muted-foreground">
-            Monitor and analyze your content performance
-          </p>
-        </div>
-        
-        <div className="flex space-x-2 items-center">
-          <DateRangePicker 
-            from={dateRange.from}
-            to={dateRange.to}
-            onSelect={handleDateRangeChange}
-          />
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => refetchAnalytics()}
-            disabled={isLoadingAnalytics}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoadingAnalytics ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Main analytics content */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+    <div className="space-y-6">
+      {/* Time Range Tabs */}
+      <Tabs defaultValue={timeRange} className="w-full" onValueChange={(value) => onTimeRangeChange?.(value as TimeRange)}>
+        <TabsList className="w-full justify-start overflow-auto">
+          <TabsTrigger value="today">Today</TabsTrigger>
+          <TabsTrigger value="yesterday">Yesterday</TabsTrigger>
+          <TabsTrigger value="last-7-days">Last 7 Days</TabsTrigger>
+          <TabsTrigger value="last-30-days">Last 30 Days</TabsTrigger>
+          <TabsTrigger value="this-month">This Month</TabsTrigger>
+          <TabsTrigger value="last-month">Last Month</TabsTrigger>
+          <TabsTrigger value="custom" disabled={!customRangeStart || !customRangeEnd}>Custom</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {/* Error Alert */}
+      {hasError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            An error occurred while fetching analytics data. Please try again later.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Main Content Tabs */}
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="content">Content</TabsTrigger>
           <TabsTrigger value="workflow">Workflow</TabsTrigger>
-          <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          {isLoadingAnalytics ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i}>
-                  <CardHeader className="pb-2">
-                    <Skeleton className="h-4 w-[150px]" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-8 w-[100px] mb-4" />
-                    <Skeleton className="h-4 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-              {/* Content Creation */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Content Creation</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analyticsData?.throughput?.last30Days.totalCreated || 0}
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      {analyticsData?.throughput?.last24Hours.totalCreated || 0} today
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Total items created in last 30 days
-                  </p>
-                </CardContent>
-              </Card>
-              
-              {/* Content Published */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Published Content</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analyticsData?.throughput?.last30Days.totalPublished || 0}
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <Badge variant="outline" className="text-xs">
-                      {analyticsData?.throughput?.last24Hours.totalPublished || 0} today
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Total items published in last 30 days
-                  </p>
-                </CardContent>
-              </Card>
-              
-              {/* Approval Rate */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Approval Rate</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analyticsData?.workflow?.approvalRate.toFixed(1) || 0}%
-                  </div>
-                  <Progress 
-                    value={analyticsData?.workflow?.approvalRate || 0} 
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Percentage of content approved in the workflow
-                  </p>
-                </CardContent>
-              </Card>
-              
-              {/* Upcoming Publications */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Upcoming Publications</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {analyticsData?.scheduling?.upcomingPublications || 0}
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <Badge variant={analyticsData?.scheduling?.soonExpiring ? "destructive" : "outline"} className="text-xs">
-                      {analyticsData?.scheduling?.soonExpiring || 0} expiring soon
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Content scheduled for future publication
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-          
-          {/* Throughput Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Content Throughput</CardTitle>
-              <CardDescription>Content creation and publishing activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingAnalytics ? (
-                <Skeleton className="h-[300px] w-full" />
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={getThroughputData()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Legend />
-                    <Bar dataKey="Created" fill={COLORS.primary} />
-                    <Bar dataKey="Published" fill={COLORS.success} />
-                    <Bar dataKey="Updated" fill={COLORS.info} />
-                    <Bar dataKey="Archived" fill={COLORS.muted} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-          
-          {/* Workflow Distribution */}
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Content Stats */}
             <Card>
-              <CardHeader>
-                <CardTitle>Workflow Status</CardTitle>
-                <CardDescription>Distribution of content by workflow status</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <FileText className="h-4 w-4 mr-2 text-primary" />
+                  Content Summary
+                </CardTitle>
+                <CardDescription>
+                  Content management overview
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoadingAnalytics ? (
-                  <Skeleton className="h-[300px] w-full" />
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={getWorkflowStatusData()}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                      >
-                        {getWorkflowStatusData().map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Published:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.totalPublished || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">In Review:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.totalInReview || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Drafts:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.totalInDraft || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Approval Rate:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.approvalRate?.toFixed(1) || 0}%</span>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
             
+            {/* Scheduling Stats */}
             <Card>
-              <CardHeader>
-                <CardTitle>Workflow Performance</CardTitle>
-                <CardDescription>Average time through workflow stages</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Calendar className="h-4 w-4 mr-2 text-primary" />
+                  Scheduling Summary
+                </CardTitle>
+                <CardDescription>
+                  Content scheduling metrics
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                {isLoadingAnalytics ? (
-                  <Skeleton className="h-[300px] w-full" />
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
                 ) : (
-                  <div className="space-y-8">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-2 text-primary" />
-                          <span className="text-sm font-medium">Avg. Time to Approval</span>
-                        </div>
-                        <span className="text-lg font-bold">
-                          {analyticsData?.workflow?.avgTimeToApproval.toFixed(1) || 0} hours
-                        </span>
-                      </div>
-                      <Progress value={Math.min(100, (analyticsData?.workflow?.avgTimeToApproval || 0) / 24 * 100)} />
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Upcoming:</span>
+                      <span className="font-medium">{contentAnalytics?.scheduling?.upcomingPublications || 0}</span>
                     </div>
-                    
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-primary" />
-                          <span className="text-sm font-medium">Avg. Time to Publish</span>
-                        </div>
-                        <span className="text-lg font-bold">
-                          {analyticsData?.workflow?.avgTimeToPublish.toFixed(1) || 0} hours
-                        </span>
-                      </div>
-                      <Progress value={Math.min(100, (analyticsData?.workflow?.avgTimeToPublish || 0) / 48 * 100)} />
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Expiring Soon:</span>
+                      <span className="font-medium">{contentAnalytics?.scheduling?.soonExpiring || 0}</span>
                     </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-muted/20 rounded-lg">
-                        <span className="text-lg font-bold text-green-500">
-                          {analyticsData?.workflow?.approvalRate.toFixed(1) || 0}%
-                        </span>
-                        <p className="text-xs mt-1">Approval Rate</p>
-                      </div>
-                      <div className="text-center p-4 bg-muted/20 rounded-lg">
-                        <span className="text-lg font-bold text-red-500">
-                          {analyticsData?.workflow?.rejectionRate.toFixed(1) || 0}%
-                        </span>
-                        <p className="text-xs mt-1">Rejection Rate</p>
-                      </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Recent Publishes:</span>
+                      <span className="font-medium">{contentAnalytics?.throughput?.last24Hours?.totalPublished || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Recent Archives:</span>
+                      <span className="font-medium">{contentAnalytics?.throughput?.last24Hours?.totalArchived || 0}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Performance Stats */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center">
+                  <Clock className="h-4 w-4 mr-2 text-primary" />
+                  Processing Times
+                </CardTitle>
+                <CardDescription>
+                  Average processing metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Time to Approval:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.avgTimeToApproval?.toFixed(1) || 0} hours</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Time to Publish:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.avgTimeToPublish?.toFixed(1) || 0} hours</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Rejection Rate:</span>
+                      <span className="font-medium">{contentAnalytics?.workflow?.rejectionRate?.toFixed(1) || 0}%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">System Health:</span>
+                      <span className="font-medium text-green-500">Good</span>
                     </div>
                   </div>
                 )}
               </CardContent>
             </Card>
           </div>
+          
+          {/* Charts will be implemented later */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Content Analytics</CardTitle>
+              <CardDescription>
+                Content creation and publication metrics by time period
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-80 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-lg text-muted-foreground mb-2">Enhanced Chart Visualization</p>
+                <p className="text-sm text-muted-foreground">
+                  Charts for content analytics will appear here once data is loaded
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
         
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-6">
-          {/* Content metrics would go here */}
-          <div className="text-center p-12 border border-dashed rounded-lg">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Content Analysis</h3>
-            <p className="text-muted-foreground">
-              Detailed content performance metrics will be available soon.
-            </p>
-          </div>
+          {/* Expiring Content List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Expiring Content</CardTitle>
+              <CardDescription>
+                Content scheduled to expire soon
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : contentAnalytics?.expiringContent && contentAnalytics.expiringContent.length > 0 ? (
+                <div className="space-y-2">
+                  {contentAnalytics.expiringContent.map((item: any, index: number) => (
+                    <div 
+                      key={index} 
+                      className="flex justify-between items-center border-b pb-2"
+                    >
+                      <div>
+                        <p className="font-medium">{item.title}</p>
+                        <p className="text-sm text-muted-foreground">{item.section} | {item.type}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-amber-500">Expires: {new Date(item.expirationDate).toLocaleDateString()}</p>
+                        <p className="text-sm text-muted-foreground">Created by: {item.createdBy}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <p className="text-muted-foreground">No content expiring soon</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         
         {/* Workflow Tab */}
         <TabsContent value="workflow" className="space-y-6">
-          {/* Workflow metrics would go here */}
-          <div className="text-center p-12 border border-dashed rounded-lg">
-            <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Workflow Analysis</h3>
-            <p className="text-muted-foreground">
-              Detailed workflow performance metrics will be available soon.
-            </p>
-          </div>
-        </TabsContent>
-        
-        {/* Scheduling Tab */}
-        <TabsContent value="scheduling" className="space-y-6">
-          {/* Scheduling metrics would go here */}
-          <div className="text-center p-12 border border-dashed rounded-lg">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Scheduling Analysis</h3>
-            <p className="text-muted-foreground">
-              Detailed content scheduling metrics will be available soon.
-            </p>
-          </div>
+          {/* Workflow Performance */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Workflow Performance</CardTitle>
+              <CardDescription>
+                Key metrics about content approval workflow
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Efficiency Metrics</h3>
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Avg. Time to Approval:</span>
+                          <span className="font-medium">{contentAnalytics?.workflow?.avgTimeToApproval?.toFixed(1) || 0} hours</span>
+                        </div>
+                        <div className="w-full bg-secondary/20 rounded-full h-2">
+                          <div 
+                            className="bg-secondary h-2 rounded-full" 
+                            style={{ 
+                              width: `${Math.min(100, ((contentAnalytics?.workflow?.avgTimeToApproval || 0) / 48) * 100)}%` 
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Target: 48 hours</p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Avg. Time to Publish:</span>
+                          <span className="font-medium">{contentAnalytics?.workflow?.avgTimeToPublish?.toFixed(1) || 0} hours</span>
+                        </div>
+                        <div className="w-full bg-primary/20 rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full" 
+                            style={{ 
+                              width: `${Math.min(100, ((contentAnalytics?.workflow?.avgTimeToPublish || 0) / 72) * 100)}%` 
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Target: 72 hours</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Approval Metrics</h3>
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Approval Rate:</span>
+                          <span className="font-medium">{contentAnalytics?.workflow?.approvalRate?.toFixed(1) || 0}%</span>
+                        </div>
+                        <div className="w-full bg-green-500/20 rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full" 
+                            style={{ 
+                              width: `${contentAnalytics?.workflow?.approvalRate || 0}%` 
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Target: &gt;85%</p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Rejection Rate:</span>
+                          <span className="font-medium">{contentAnalytics?.workflow?.rejectionRate?.toFixed(1) || 0}%</span>
+                        </div>
+                        <div className="w-full bg-red-500/20 rounded-full h-2">
+                          <div 
+                            className="bg-red-500 h-2 rounded-full" 
+                            style={{ 
+                              width: `${contentAnalytics?.workflow?.rejectionRate || 0}%` 
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">Target: &lt;15%</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Workflow Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Workflow Status</CardTitle>
+              <CardDescription>
+                Content items at each stage of the workflow
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-secondary/10 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Draft</h4>
+                  <p className="text-3xl font-bold">{contentAnalytics?.workflow?.totalInDraft || 0}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Items pending creation</p>
+                </div>
+                
+                <div className="bg-primary/10 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">In Review</h4>
+                  <p className="text-3xl font-bold">{contentAnalytics?.workflow?.totalInReview || 0}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Items awaiting approval</p>
+                </div>
+                
+                <div className="bg-green-500/10 rounded-lg p-4">
+                  <h4 className="font-medium mb-1">Ready to Publish</h4>
+                  <p className="text-3xl font-bold">{contentAnalytics?.workflow?.totalApproved || 0}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Approved items</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Last updated timestamp */}
-      <div className="text-xs text-muted-foreground text-right">
-        Last updated: {analyticsData?.lastUpdated ? new Date(analyticsData.lastUpdated).toLocaleString() : 'Loading...'}
-      </div>
     </div>
   );
 }
-
-export default AnalyticsDisplay;
