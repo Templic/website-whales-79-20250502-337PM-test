@@ -1,224 +1,196 @@
 /**
  * EditMenuDemo.tsx
  * 
- * Component Type: feature/admin
- * A demo component to showcase the EditMenu functionality.
+ * Component for demonstrating the EditMenu functionality
  */
+import React, { useState } from 'react';
+import { Edit, MoreHorizontal, Copy, Trash, Share } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
-import React, { useState, useRef } from "react";
-import { EditButton } from "./EditButton";
-import { FormatAction } from "@/types/admin";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+interface EditMenuProps {
+  id: string | number;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
+  onShare?: () => void;
+  disabled?: boolean;
+  align?: 'start' | 'end';
+  side?: 'top' | 'right' | 'bottom' | 'left';
+}
 
+// Edit Menu Component
+const EditMenu: React.FC<EditMenuProps> = ({
+  id,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  onShare,
+  disabled = false,
+  align = 'end',
+  side = 'bottom'
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" disabled={disabled}>
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Open menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={align} side={side}>
+        {onEdit && (
+          <DropdownMenuItem onClick={onEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+        )}
+        {onDuplicate && (
+          <DropdownMenuItem onClick={onDuplicate}>
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+        )}
+        {onShare && (
+          <DropdownMenuItem onClick={onShare}>
+            <Share className="mr-2 h-4 w-4" />
+            Share
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+// Demo component for EditMenu
 const EditMenuDemo: React.FC = () => {
   const { toast } = useToast();
-  const { user, setRole } = useAuth();
-  const [demoContent, setDemoContent] = useState<string>(
-    "This is editable content. Use the formatting menu to apply different styles to this text."
-  );
-  const [position, setPosition] = useState<"top" | "bottom" | "left" | "right">("top");
-  const contentRef = useRef<HTMLDivElement>(null);
-  
-  // Apply format to the content
-  const handleFormatApply = (format: FormatAction) => {
-    console.log("Applying format:", format);
-    
-    let newContent = demoContent;
-    
-    // Apply formatting based on type
-    switch (format.type) {
-      case "bold":
-        newContent = `<strong>${demoContent}</strong>`;
-        break;
-      case "italic":
-        newContent = `<em>${demoContent}</em>`;
-        break;
-      case "underline":
-        newContent = `<u>${demoContent}</u>`;
-        break;
-      case "align":
-        newContent = `<div style="text-align: ${format.value};">${demoContent}</div>`;
-        break;
-      case "list":
-        if (format.value === "unordered") {
-          newContent = `<ul><li>${demoContent}</li></ul>`;
-        } else if (format.value === "ordered") {
-          newContent = `<ol><li>${demoContent}</li></ol>`;
-        }
-        break;
-      case "heading":
-        newContent = `<h${format.value}>${demoContent}</h${format.value}>`;
-        break;
-      case "link":
-        newContent = `<a href="#" class="text-blue-500 underline">${demoContent}</a>`;
-        break;
-      case "fontSize":
-        newContent = `<span class="text-${format.value}">${demoContent}</span>`;
-        break;
-      case "color":
-        newContent = `<span class="text-${format.value}-500">${demoContent}</span>`;
-        break;
-      case "undo":
-      case "redo":
-        // In a real implementation, these would use a history stack
-        toast({
-          title: `${format.type.charAt(0).toUpperCase() + format.type.slice(1)} operation`,
-          description: "This would undo/redo changes in a real implementation.",
-          variant: "default",
-        });
-        break;
-      default:
-        break;
+  const [items, setItems] = useState([
+    { id: 1, title: 'Meditation Guide', description: 'Beginner\'s guide to meditation practices' },
+    { id: 2, title: 'Sound Healing Techniques', description: 'Explore the healing power of sound frequencies' },
+    { id: 3, title: 'Cosmic Connection Ritual', description: 'A ritual to connect with cosmic energies' },
+  ]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  const handleEdit = (id: number) => {
+    setEditingId(id);
+    toast({
+      title: 'Edit Initiated',
+      description: `Editing item #${id}`,
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    setItems(items.filter(item => item.id !== id));
+    toast({
+      title: 'Item Deleted',
+      description: `Item #${id} has been removed`,
+      variant: 'destructive',
+    });
+  };
+
+  const handleDuplicate = (id: number) => {
+    const itemToDuplicate = items.find(item => item.id === id);
+    if (itemToDuplicate) {
+      const newId = Math.max(...items.map(item => item.id)) + 1;
+      const newItem = {
+        ...itemToDuplicate,
+        id: newId,
+        title: `${itemToDuplicate.title} (Copy)`,
+      };
+      setItems([...items, newItem]);
+      toast({
+        title: 'Item Duplicated',
+        description: `Created a copy of item #${id}`,
+      });
     }
-    
-    setDemoContent(newContent);
-    
+  };
+
+  const handleShare = (id: number) => {
     toast({
-      title: "Format applied",
-      description: `Applied ${format.type} formatting to the content`,
-      variant: "default",
+      title: 'Share Options',
+      description: `Share dialog for item #${id} would appear here`,
     });
   };
-  
-  // Change user role for testing
-  const handleRoleChange = (role: string) => {
-    setRole(role as "user" | "admin" | "super_admin");
-    
+
+  const finishEditing = () => {
+    setEditingId(null);
     toast({
-      title: "Role changed",
-      description: `User role changed to ${role}`,
-      variant: "default",
+      title: 'Changes Saved',
+      description: 'Your edits have been saved',
     });
   };
-  
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Edit Menu Demo</CardTitle>
           <CardDescription>
-            This demonstrates the floating formatting menu for text editing
+            A demonstration of the EditMenu component which provides a consistent interface for item actions
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-              <div className="space-y-2">
-                <Label htmlFor="position">Menu Position</Label>
-                <Select 
-                  value={position} 
-                  onValueChange={(value) => setPosition(value as any)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="top">Top</SelectItem>
-                    <SelectItem value="bottom">Bottom</SelectItem>
-                    <SelectItem value="left">Left</SelectItem>
-                    <SelectItem value="right">Right</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="role">User Role (for testing)</Label>
-                <Select 
-                  value={user?.role || "user"} 
-                  onValueChange={handleRoleChange}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          
-          <div className="relative border p-6 rounded-md">
-            <div className="absolute top-3 right-3">
-              <EditButton
-                contentId="demo-edit-menu"
-                showFormatMenu={true}
-                menuPosition={position}
-                onFormatApply={handleFormatApply}
-              />
-            </div>
-            
-            <div 
-              ref={contentRef}
-              className="prose dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: demoContent }}
-            />
+          <div className="space-y-4">
+            {items.map(item => (
+              <Card key={item.id}>
+                <CardHeader className="p-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">{item.title}</CardTitle>
+                    <EditMenu
+                      id={item.id}
+                      onEdit={() => handleEdit(item.id)}
+                      onDelete={() => handleDelete(item.id)}
+                      onDuplicate={() => handleDuplicate(item.id)}
+                      onShare={() => handleShare(item.id)}
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  {editingId === item.id ? (
+                    <div className="space-y-4">
+                      <textarea
+                        className="w-full p-2 border rounded-md"
+                        defaultValue={item.description}
+                        rows={3}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setEditingId(null)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={finishEditing}>
+                          Save Changes
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p>{item.description}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
-        <CardFooter className="text-sm text-muted-foreground">
-          Note: In a real implementation, content formatting would be applied to selected text only, 
-          and would be persisted to a database.
+        <CardFooter className="border-t p-4 text-sm text-muted-foreground">
+          <p>
+            The EditMenu component provides a consistent user interface for common actions like 
+            editing, deleting, duplicating, and sharing. It uses the Dropdown component from shadcn/ui.
+          </p>
         </CardFooter>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Advanced Formatting Options</CardTitle>
-          <CardDescription>
-            Additional edit menu configurations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="border p-4 rounded-md">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-medium">Inline Formatting</h3>
-                <EditButton
-                  contentId="demo-inline"
-                  showFormatMenu={true}
-                  menuPosition="bottom"
-                  onFormatApply={handleFormatApply}
-                  text="Format"
-                  iconOnly={false}
-                  variant="outline"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                This example shows the edit menu with a text label button.
-              </p>
-            </div>
-            
-            <div className="border p-4 rounded-md">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="font-medium">Side Formatting</h3>
-                <EditButton
-                  contentId="demo-side"
-                  showFormatMenu={true}
-                  menuPosition="left"
-                  onFormatApply={handleFormatApply}
-                  variant="cosmic"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                This example shows the edit menu positioned to the side with a custom style.
-              </p>
-            </div>
-          </div>
-        </CardContent>
       </Card>
     </div>
   );

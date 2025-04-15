@@ -1,576 +1,828 @@
 /**
  * WorkflowManagement.tsx
  * 
- * Component for managing content approval workflows
- * Allows admins to review, approve, or request changes to content
+ * Component for managing content workflows and approval processes
  */
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  Card, 
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+  LayoutList, CheckCircle2, XCircle, Clock, RefreshCw, 
+  ChevronDown, Plus, Search, Settings2, ArrowUpDown
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { 
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { 
-  Form, 
-  FormControl, 
-  FormDescription, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
-} from "@/components/ui/form";
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { format } from "date-fns";
-import { CalendarIcon, CheckCircle2, XCircle, Clock, AlertCircle, PenSquare } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-// Define interfaces
+// Workflow stage/status types
+type WorkflowStatus = 'draft' | 'review' | 'approved' | 'rejected' | 'published' | 'archived';
+
+// Content item interface
 interface ContentItem {
   id: number;
-  key: string;
   title: string;
-  content: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: number;
-  location: string;
-  scheduledPublishAt?: string | null;
-  expirationDate?: string | null;
-}
-
-interface WorkflowHistoryItem {
-  id: number;
-  contentId: number;
-  actorId: number;
-  actorName?: string; // Using the property name from the backend
-  fromStatus: string;
-  toStatus: string;
-  actionAt: string;
-  comments?: string; // Using the property name from the schema instead of reviewNotes
+  type: string;
+  status: WorkflowStatus;
+  author: {
+    id: number;
+    name: string;
+    avatar?: string;
+  };
+  lastUpdated: string;
+  created: string;
+  nextReviewDate?: string;
   version: number;
+  reviewers?: {
+    id: number;
+    name: string;
+    avatar?: string;
+    status: 'pending' | 'approved' | 'rejected';
+  }[];
 }
 
-// Status options
-const contentStatusOptions = [
-  { value: "draft", label: "Draft" },
-  { value: "review", label: "In Review" },
-  { value: "changes_requested", label: "Changes Requested" },
-  { value: "approved", label: "Approved" },
-  { value: "published", label: "Published" },
-  { value: "archived", label: "Archived" },
-  { value: "rejected", label: "Rejected" }
+// Content types for filtering
+const contentTypes = [
+  { value: 'all', label: 'All Types' },
+  { value: 'blog', label: 'Blog Posts' },
+  { value: 'product', label: 'Product Descriptions' },
+  { value: 'page', label: 'Web Pages' },
+  { value: 'newsletter', label: 'Newsletters' },
+  { value: 'social', label: 'Social Media' },
 ];
 
-// Status badge color mapping
-const statusColor: Record<string, string> = {
-  draft: "bg-gray-200 text-gray-800",
-  review: "bg-blue-200 text-blue-800",
-  changes_requested: "bg-amber-200 text-amber-800",
-  approved: "bg-green-200 text-green-800",
-  published: "bg-emerald-200 text-emerald-800",
-  archived: "bg-purple-200 text-purple-800",
-  rejected: "bg-red-200 text-red-800"
-};
+// Workflow statuses for filtering
+const workflowStatuses = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'review', label: 'In Review' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'published', label: 'Published' },
+  { value: 'archived', label: 'Archived' },
+];
 
-// Status icons
-const statusIcon: Record<string, React.ReactNode> = {
-  draft: <PenSquare className="h-4 w-4" />,
-  review: <Clock className="h-4 w-4" />,
-  changes_requested: <AlertCircle className="h-4 w-4" />,
-  approved: <CheckCircle2 className="h-4 w-4" />,
-  published: <CheckCircle2 className="h-4 w-4" />,
-  archived: <Clock className="h-4 w-4" />,
-  rejected: <XCircle className="h-4 w-4" />
-};
-
-// Form schema for updating content status
-const updateStatusSchema = z.object({
-  contentId: z.number(),
-  status: z.string(),
-  comments: z.string().optional(),
-  scheduledPublishAt: z.date().optional().nullable(),
-  expirationDate: z.date().optional().nullable(),
-});
-
-type UpdateStatusFormValues = z.infer<typeof updateStatusSchema>;
+// Mock content data (this would come from the API in a real implementation)
+const mockContent: ContentItem[] = [
+  {
+    id: 1,
+    title: 'Introduction to Cosmic Consciousness',
+    type: 'blog',
+    status: 'review',
+    author: {
+      id: 1,
+      name: 'Alex Thompson',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=alex',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
+    version: 2,
+    reviewers: [
+      {
+        id: 2,
+        name: 'Sarah Miller',
+        avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=sarah',
+        status: 'approved',
+      },
+      {
+        id: 3,
+        name: 'James Wilson',
+        avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=james',
+        status: 'pending',
+      },
+    ],
+  },
+  {
+    id: 2,
+    title: 'Sound Healing Products (Spring 2025)',
+    type: 'product',
+    status: 'approved',
+    author: {
+      id: 3,
+      name: 'James Wilson',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=james',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1).toISOString(), // 1 day ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7).toISOString(), // 7 days ago
+    nextReviewDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(), // 14 days from now
+    version: 4,
+  },
+  {
+    id: 3,
+    title: 'April Newsletter: Cosmic Vibrations',
+    type: 'newsletter',
+    status: 'published',
+    author: {
+      id: 4,
+      name: 'Elena Rodriguez',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=elena',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
+    version: 2,
+  },
+  {
+    id: 4,
+    title: 'Upcoming Summer Events',
+    type: 'page',
+    status: 'draft',
+    author: {
+      id: 2,
+      name: 'Sarah Miller',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=sarah',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+    version: 1,
+  },
+  {
+    id: 5,
+    title: 'Frequency Meditation Technique Guide',
+    type: 'blog',
+    status: 'rejected',
+    author: {
+      id: 5,
+      name: 'Michael Chang',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=michael',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 36).toISOString(), // 36 hours ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
+    version: 1,
+    reviewers: [
+      {
+        id: 1,
+        name: 'Alex Thompson',
+        avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=alex',
+        status: 'rejected',
+      },
+    ],
+  },
+  {
+    id: 6,
+    title: 'Instagram Campaign: Cosmic Sounds',
+    type: 'social',
+    status: 'archived',
+    author: {
+      id: 6,
+      name: 'Jasmine Lee',
+      avatar: 'https://api.dicebear.com/7.x/personas/svg?seed=jasmine',
+    },
+    lastUpdated: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days ago
+    created: new Date(Date.now() - 1000 * 60 * 60 * 24 * 45).toISOString(), // 45 days ago
+    version: 3,
+  },
+];
 
 const WorkflowManagement: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedContentId, setSelectedContentId] = useState<number | null>(null);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<'all' | 'mine' | 'pending'>('all');
+  const [contentType, setContentType] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<'title' | 'type' | 'status' | 'lastUpdated'>('lastUpdated');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  const form = useForm<UpdateStatusFormValues>({
-    resolver: zodResolver(updateStatusSchema),
-    defaultValues: {
-      contentId: 0,
-      status: "",
-      comments: "",
-      scheduledPublishAt: null,
-      expirationDate: null,
+  // Fetch content items from the API
+  const { 
+    data: contentItems,
+    isLoading,
+    error,
+    refetch
+  } = useQuery<ContentItem[]>({
+    queryKey: ['/api/admin/content-workflow'],
+    // In a real implementation, this would call an API endpoint
+    queryFn: async () => {
+      // For the demo, we'll just return mock data
+      return new Promise(resolve => {
+        setTimeout(() => resolve(mockContent), 500);
+      });
     },
   });
 
-  // Fetch content items
-  const { data: contentItems, isLoading: isLoadingContent } = useQuery<ContentItem[]>({
-    queryKey: ['/api/admin/content'],
-    select: (data: ContentItem[]) => {
-      if (activeTab === "all") return data;
-      return data.filter((item: ContentItem) => item.status === activeTab);
-    }
-  });
-
-  // Fetch workflow history for a specific content item
-  const { data: workflowHistory, isLoading: isLoadingHistory } = useQuery<WorkflowHistoryItem[]>({
-    queryKey: ['/api/admin/content', selectedContentId, 'history'],
-    queryFn: () => {
-      return apiRequest('GET', `/api/admin/content/${selectedContentId}/history`);
-    },
-    enabled: !!selectedContentId,
-  });
-
-  // Mutation to update content status
-  const updateStatusMutation = useMutation({
-    mutationFn: (data: UpdateStatusFormValues) => {
-      return apiRequest(
-        'PATCH',
-        `/api/admin/content/${data.contentId}/status`,
-        {
-          status: data.status,
-          comments: data.comments,
-          scheduledPublishAt: data.scheduledPublishAt ? new Date(data.scheduledPublishAt).toISOString() : null,
-          expirationDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : null,
-        }
-      );
+  // Update content status mutation
+  const updateContentStatusMutation = useMutation({
+    mutationFn: async ({ 
+      contentId, 
+      status 
+    }: { 
+      contentId: number; 
+      status: WorkflowStatus 
+    }) => {
+      // Simulate API call
+      return new Promise<void>(resolve => {
+        setTimeout(() => resolve(), 500);
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/content'] });
-      queryClient.invalidateQueries({ 
-        queryKey: ['/api/admin/content', selectedContentId, 'history'] 
-      });
-      setIsUpdateDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/content-workflow'] });
       toast({
-        title: "Status updated",
-        description: "Content status has been successfully updated.",
+        title: 'Status Updated',
+        description: 'The content status has been successfully updated.',
       });
     },
     onError: (error) => {
       toast({
-        title: "Error",
-        description: "Failed to update content status. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: `Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
       });
-      console.error("Update status error:", error);
     },
   });
 
-  const handleViewHistory = (contentId: number) => {
-    setSelectedContentId(contentId);
+  // Filter content based on active tab, content type, status, and search term
+  const filteredContent = contentItems?.filter(item => {
+    // First filter by tab
+    if (activeTab === 'mine' && item.author.id !== 1) return false; // Assuming current user id is 1
+    if (activeTab === 'pending' && item.status !== 'review') return false;
+    
+    // Then filter by content type
+    if (contentType !== 'all' && item.type !== contentType) return false;
+    
+    // Then filter by status
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+    
+    // Finally filter by search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(searchLower) ||
+        item.author.name.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return true;
+  }) || [];
+
+  // Sort filtered content
+  const sortedContent = [...filteredContent].sort((a, b) => {
+    if (sortField === 'title') {
+      return sortDirection === 'asc' 
+        ? a.title.localeCompare(b.title) 
+        : b.title.localeCompare(a.title);
+    } else if (sortField === 'type') {
+      return sortDirection === 'asc' 
+        ? a.type.localeCompare(b.type) 
+        : b.type.localeCompare(a.type);
+    } else if (sortField === 'status') {
+      return sortDirection === 'asc' 
+        ? a.status.localeCompare(b.status) 
+        : b.status.localeCompare(a.status);
+    } else {
+      return sortDirection === 'asc' 
+        ? new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime() 
+        : new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+    }
+  });
+
+  // Update sort
+  const updateSort = (field: 'title' | 'type' | 'status' | 'lastUpdated') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
   };
 
-  const handleUpdateStatus = (contentItem: ContentItem) => {
-    form.reset({
-      contentId: contentItem.id,
-      status: contentItem.status,
-      comments: "",
-      scheduledPublishAt: contentItem.scheduledPublishAt ? new Date(contentItem.scheduledPublishAt) : null,
-      expirationDate: contentItem.expirationDate ? new Date(contentItem.expirationDate) : null,
+  // Function to get status badge
+  const getStatusBadge = (status: WorkflowStatus) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Draft</Badge>;
+      case 'review':
+        return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">In Review</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+      case 'published':
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Published</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">Archived</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
-    setIsUpdateDialogOpen(true);
   };
 
-  const onUpdateSubmit = (data: UpdateStatusFormValues) => {
-    updateStatusMutation.mutate(data);
+  // Get available status transitions for a content item
+  const getAvailableStatusTransitions = (item: ContentItem): WorkflowStatus[] => {
+    switch (item.status) {
+      case 'draft':
+        return ['review'];
+      case 'review':
+        return ['approved', 'rejected'];
+      case 'approved':
+        return ['published', 'rejected'];
+      case 'rejected':
+        return ['draft'];
+      case 'published':
+        return ['archived'];
+      case 'archived':
+        return ['draft'];
+      default:
+        return [];
+    }
   };
 
-  // Function to render status badge
-  const renderStatusBadge = (status: string) => (
-    <Badge className={statusColor[status] || "bg-gray-200"}>
-      <span className="flex items-center">
-        {statusIcon[status]}
-        <span className="ml-1">{status.replace(/_/g, ' ')}</span>
-      </span>
-    </Badge>
-  );
+  // Content type display
+  const getContentTypeDisplay = (type: string) => {
+    const found = contentTypes.find(t => t.value === type);
+    return found ? found.label : type;
+  };
+
+  // Handle status change
+  const handleStatusChange = (contentId: number, newStatus: WorkflowStatus) => {
+    updateContentStatusMutation.mutate({ contentId, status: newStatus });
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <Skeleton className="h-10 w-[200px]" />
+          <Skeleton className="h-10 w-[120px]" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-7 w-[200px]" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-4 border rounded-md bg-destructive/10 text-destructive">
+        <h3 className="font-bold">Error Loading Workflow Data</h3>
+        <p>{error instanceof Error ? error.message : 'Failed to load workflow data'}</p>
+        <Button 
+          onClick={() => refetch()} 
+          variant="outline" 
+          size="sm" 
+          className="mt-2"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Content</TabsTrigger>
-          <TabsTrigger value="draft">Drafts</TabsTrigger>
-          <TabsTrigger value="review">In Review</TabsTrigger>
-          <TabsTrigger value="changes_requested">Changes Requested</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="published">Published</TabsTrigger>
-          <TabsTrigger value="archived">Archived</TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold flex items-center">
+          <LayoutList className="mr-2 h-6 w-6" />
+          Content Workflow
+        </h1>
+        <Button>
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Content
+        </Button>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Content Workflow Management</CardTitle>
-            <CardDescription>
-              Manage the approval flow of content across the platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingContent ? (
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ) : (
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'mine' | 'pending')}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <TabsList className="w-full md:w-auto">
+            <TabsTrigger value="all">All Content</TabsTrigger>
+            <TabsTrigger value="mine">My Content</TabsTrigger>
+            <TabsTrigger value="pending">Pending Review</TabsTrigger>
+          </TabsList>
+          
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search content..."
+                className="w-full md:w-[200px] pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <Select value={contentType} onValueChange={setContentType}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Content Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {contentTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                {workflowStatuses.map((status) => (
+                  <SelectItem key={status.value} value={status.value}>
+                    {status.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" size="icon" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <TabsContent value="all" className="mt-6 p-0">
+          <Card>
+            <CardContent className="p-0">
               <Table>
-                <TableCaption>Content items currently in the workflow</TableCaption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Schedule</TableHead>
-                    <TableHead>Expires</TableHead>
+                    <TableHead className="w-[300px] cursor-pointer" onClick={() => updateSort('title')}>
+                      <div className="flex items-center">
+                        Title
+                        {sortField === 'title' && (
+                          <ArrowUpDown className={`ml-1 h-4 w-4 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => updateSort('type')}>
+                      <div className="flex items-center">
+                        Type
+                        {sortField === 'type' && (
+                          <ArrowUpDown className={`ml-1 h-4 w-4 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => updateSort('status')}>
+                      <div className="flex items-center">
+                        Status
+                        {sortField === 'status' && (
+                          <ArrowUpDown className={`ml-1 h-4 w-4 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                        )}
+                      </div>
+                    </TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => updateSort('lastUpdated')}>
+                      <div className="flex items-center">
+                        Last Updated
+                        {sortField === 'lastUpdated' && (
+                          <ArrowUpDown className={`ml-1 h-4 w-4 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {contentItems?.length ? (
-                    contentItems.map((item: ContentItem) => (
+                  {sortedContent.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                        No content found. {searchTerm && "Try adjusting your search or filters."}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    sortedContent.map((item) => (
                       <TableRow key={item.id}>
-                        <TableCell className="font-medium max-w-xs truncate">
-                          {item.title}
-                        </TableCell>
-                        <TableCell>{renderStatusBadge(item.status)}</TableCell>
+                        <TableCell className="font-medium">{item.title}</TableCell>
+                        <TableCell>{getContentTypeDisplay(item.type)}</TableCell>
+                        <TableCell>{getStatusBadge(item.status)}</TableCell>
                         <TableCell>
-                          {format(new Date(item.createdAt), 'MMM d, yyyy')}
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={item.author.avatar} alt={item.author.name} />
+                              <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span>{item.author.name}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {item.scheduledPublishAt 
-                            ? format(new Date(item.scheduledPublishAt), 'MMM d, yyyy') 
-                            : '—'}
+                          <div className="flex items-center">
+                            <Clock className="mr-1 h-3 w-3 text-muted-foreground" />
+                            <span>{formatDate(item.lastUpdated)}</span>
+                          </div>
                         </TableCell>
-                        <TableCell>
-                          {item.expirationDate 
-                            ? format(new Date(item.expirationDate), 'MMM d, yyyy') 
-                            : '—'}
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleViewHistory(item.id)}
-                          >
-                            History
-                          </Button>
-                          <Button 
-                            size="sm"
-                            onClick={() => handleUpdateStatus(item)}
-                          >
-                            Update Status
-                          </Button>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => console.log('Edit content', item.id)}
+                            >
+                              Edit
+                            </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  Actions <ChevronDown className="ml-1 h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => console.log('View content', item.id)}
+                                >
+                                  View
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => console.log('View history', item.id)}
+                                >
+                                  History
+                                </DropdownMenuItem>
+                                
+                                {/* Status transitions */}
+                                {getAvailableStatusTransitions(item).length > 0 && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    {getAvailableStatusTransitions(item).map((status) => (
+                                      <DropdownMenuItem
+                                        key={status}
+                                        onClick={() => handleStatusChange(item.id, status)}
+                                      >
+                                        {status === 'review' && 'Submit for Review'}
+                                        {status === 'approved' && 'Approve'}
+                                        {status === 'rejected' && 'Reject'}
+                                        {status === 'published' && 'Publish'}
+                                        {status === 'archived' && 'Archive'}
+                                        {status === 'draft' && 'Return to Draft'}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6">
-                        No content items found
-                      </TableCell>
-                    </TableRow>
                   )}
                 </TableBody>
               </Table>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        {selectedContentId && (
-          <Card className="mt-6">
+        <TabsContent value="mine" className="mt-6 p-0">
+          <Card>
+            <CardContent className="p-6">
+              {filteredContent.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>You haven't created any content yet.</p>
+                  <Button className="mt-4" onClick={() => console.log('Create content')}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create New Content
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedContent.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-md p-4 hover:bg-accent transition-colors"
+                    >
+                      <div className="flex flex-col md:flex-row justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold">{item.title}</h3>
+                            {getStatusBadge(item.status)}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {getContentTypeDisplay(item.type)} • Last updated on {formatDate(item.lastUpdated)}
+                          </p>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <span>Version {item.version}</span>
+                            {item.reviewers && (
+                              <>
+                                <Separator orientation="vertical" className="h-3 mx-1" />
+                                <span>
+                                  {item.reviewers.filter(r => r.status === 'approved').length}/{item.reviewers.length} approved
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 md:mt-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => console.log('Edit content', item.id)}
+                          >
+                            Edit
+                          </Button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                Actions <ChevronDown className="ml-1 h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => console.log('View content', item.id)}
+                              >
+                                View
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => console.log('View history', item.id)}
+                              >
+                                History
+                              </DropdownMenuItem>
+                              
+                              {/* Status transitions */}
+                              {getAvailableStatusTransitions(item).length > 0 && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  {getAvailableStatusTransitions(item).map((status) => (
+                                    <DropdownMenuItem
+                                      key={status}
+                                      onClick={() => handleStatusChange(item.id, status)}
+                                    >
+                                      {status === 'review' && 'Submit for Review'}
+                                      {status === 'approved' && 'Approve'}
+                                      {status === 'rejected' && 'Reject'}
+                                      {status === 'published' && 'Publish'}
+                                      {status === 'archived' && 'Archive'}
+                                      {status === 'draft' && 'Return to Draft'}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending" className="mt-6 p-0">
+          <Card>
             <CardHeader>
-              <CardTitle>Workflow History</CardTitle>
+              <CardTitle>Pending Review</CardTitle>
               <CardDescription>
-                Track the approval journey of this content
+                Content that requires your review or is waiting for others to review.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoadingHistory ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
+              {filteredContent.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <p>There are no items pending review at this time.</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>From Status</TableHead>
-                      <TableHead>To Status</TableHead>
-                      <TableHead>Notes</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {workflowHistory?.length ? (
-                      workflowHistory.map((item: WorkflowHistoryItem) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            {format(new Date(item.actionAt), 'MMM d, yyyy h:mm a')}
-                          </TableCell>
-                          <TableCell>{item.actorName || `User ID: ${item.actorId}`}</TableCell>
-                          <TableCell>{renderStatusBadge(item.fromStatus)}</TableCell>
-                          <TableCell>{renderStatusBadge(item.toStatus)}</TableCell>
-                          <TableCell className="max-w-xs truncate">
-                            {item.comments || '—'}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-6">
-                          No workflow history available
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                <div className="space-y-6">
+                  {sortedContent.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-md p-4"
+                    >
+                      <div className="flex flex-col md:flex-row justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold">{item.title}</h3>
+                            {getStatusBadge(item.status)}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {getContentTypeDisplay(item.type)} • Submitted on {formatDate(item.lastUpdated)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-sm">By:</span>
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={item.author.avatar} alt={item.author.name} />
+                              <AvatarFallback>{item.author.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{item.author.name}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => console.log('View content', item.id)}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleStatusChange(item.id, 'approved')}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <CheckCircle2 className="mr-1 h-4 w-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange(item.id, 'rejected')}
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            <XCircle className="mr-1 h-4 w-4" />
+                            Reject
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {item.reviewers && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="text-sm font-medium mb-2">Review Status</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {item.reviewers.map((reviewer) => (
+                              <div 
+                                key={reviewer.id}
+                                className="flex items-center gap-2 bg-accent/50 rounded-full px-3 py-1"
+                              >
+                                <Avatar className="h-5 w-5">
+                                  <AvatarImage src={reviewer.avatar} alt={reviewer.name} />
+                                  <AvatarFallback>{reviewer.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs">{reviewer.name}</span>
+                                {reviewer.status === 'approved' && (
+                                  <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                )}
+                                {reviewer.status === 'rejected' && (
+                                  <XCircle className="h-3 w-3 text-red-500" />
+                                )}
+                                {reviewer.status === 'pending' && (
+                                  <Clock className="h-3 w-3 text-amber-500" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
-            <CardFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setSelectedContentId(null)}
-              >
-                Close History
-              </Button>
-            </CardFooter>
           </Card>
-        )}
+        </TabsContent>
       </Tabs>
-
-      {/* Update Status Dialog */}
-      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Update Content Status</DialogTitle>
-            <DialogDescription>
-              Change the workflow status and set publishing schedule
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onUpdateSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select 
-                      value={field.value} 
-                      onValueChange={field.onChange}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Content Status</SelectLabel>
-                          {contentStatusOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      The new workflow status for this content
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="comments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Review Notes</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Add review notes or feedback..." 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Optional notes explaining the status change
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="scheduledPublishAt"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Schedule Publish</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={`w-full pl-3 text-left font-normal ${
-                                !field.value && "text-muted-foreground"
-                              }`}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value || undefined}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        When to publish this content
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="expirationDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Expiration Date</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={`w-full pl-3 text-left font-normal ${
-                                !field.value && "text-muted-foreground"
-                              }`}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value || undefined}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        When to archive this content
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <DialogFooter>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsUpdateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  disabled={updateStatusMutation.isPending}
-                >
-                  {updateStatusMutation.isPending ? "Updating..." : "Update Status"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredContent.length} of {contentItems?.length || 0} content items
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => console.log('Workflow settings')}>
+          <Settings2 className="mr-2 h-4 w-4" />
+          Workflow Settings
+        </Button>
+      </div>
     </div>
   );
 };
