@@ -7,19 +7,268 @@
  * Revamped with cosmic-ocean aesthetic and sacred geometry elements.
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 import SocialMediaLinks from "@/components/common/SocialMediaLinks";
 import FanReactions from "@/components/common/FanReactions";
 import FeaturedMerchandise from "@/components/common/FeaturedMerchandise";
+import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
 import SacredGeometry from "@/components/ui/sacred-geometry";
 import { FaYoutube, FaInstagram, FaSpotify, FaPodcast, FaMusic, FaEnvelope, FaPhone, FaCalendarAlt, FaUsers } from 'react-icons/fa';
+
+// Define TypeScript types for feedback and comments
+type FeedbackComment = {
+  id: string;
+  feedbackId: string;
+  user: {
+    name: string;
+    avatar: string;
+    isAdmin?: boolean;
+  };
+  content: string;
+  date: string;
+  likes: number;
+  userLiked?: boolean;
+};
+
+type FeedbackItem = {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+    isAdmin?: boolean;
+  };
+  content: string;
+  date: string;
+  category: string;
+  status: "pending" | "implemented" | "considering" | "declined";
+  votes: number;
+  userVoted?: boolean;
+  comments: number;
+  commentsList?: FeedbackComment[];
+};
+
+type FeedbackType = {
+  content: string;
+  category: string;
+};
 
 export default function EngagePage() {
   useEffect(() => {
     document.title = "Engage - Dale Loves Whales";
   }, []);
+
+  // Sample feedback data with admin and user comments
+  const [feedbackItems, setFeedbackItems] = useState<FeedbackItem[]>([
+    {
+      id: "feedback-1",
+      user: {
+        name: "Crystal Dreamer",
+        avatar: "/assets/avatars/avatar-1.jpg",
+        isAdmin: false
+      },
+      content: "I would love to see more cosmic meditation music with whale sounds incorporated! The frequencies really resonate with my higher consciousness.",
+      date: "April 8, 2025",
+      category: "suggestion",
+      status: "considering",
+      votes: 48,
+      userVoted: true,
+      comments: 3,
+      commentsList: [
+        {
+          id: "comment-1-1",
+          feedbackId: "feedback-1",
+          user: {
+            name: "Dale The Whale",
+            avatar: "/assets/avatars/dale-avatar.jpg",
+            isAdmin: true
+          },
+          content: "Thank you for this beautiful suggestion! I'm actually working on a new cosmic meditation album featuring the songs of humpback whales blended with 432Hz frequencies. Stay tuned!",
+          date: "April 10, 2025",
+          likes: 12,
+          userLiked: true
+        },
+        {
+          id: "comment-1-2",
+          feedbackId: "feedback-1",
+          user: {
+            name: "OceanHarmony",
+            avatar: "/assets/avatars/avatar-4.jpg",
+            isAdmin: false
+          },
+          content: "I second this! The whale sounds really help me connect to the oceanic consciousness during my meditations.",
+          date: "April 11, 2025",
+          likes: 5,
+          userLiked: false
+        },
+        {
+          id: "comment-1-3",
+          feedbackId: "feedback-1",
+          user: {
+            name: "CosmicDreamer",
+            avatar: "/assets/avatars/avatar-2.jpg",
+            isAdmin: false
+          },
+          content: "Have you tried the 'Whale Songs' track from the latest album? It's already got some amazing whale vocalizations!",
+          date: "April 12, 2025",
+          likes: 3,
+          userLiked: false
+        }
+      ]
+    },
+    {
+      id: "feedback-2",
+      user: {
+        name: "StarSurfer",
+        avatar: "/assets/avatars/avatar-3.jpg",
+        isAdmin: false
+      },
+      content: "The frequency attunement chamber could use a better visual guide for beginners. It took me a while to understand how to properly use it for cosmic alignment.",
+      date: "April 5, 2025",
+      category: "bug",
+      status: "implemented",
+      votes: 32,
+      userVoted: false,
+      comments: 2,
+      commentsList: [
+        {
+          id: "comment-2-1",
+          feedbackId: "feedback-2",
+          user: {
+            name: "CosmicDeveloper",
+            avatar: "/assets/avatars/avatar-5.jpg",
+            isAdmin: true
+          },
+          content: "Thanks for bringing this up! We've just released an update with a new interactive guide and visual tooltips to make the experience more intuitive for first-time cosmic travelers.",
+          date: "April 6, 2025",
+          likes: 8,
+          userLiked: true
+        },
+        {
+          id: "comment-2-2",
+          feedbackId: "feedback-2",
+          user: {
+            name: "StarSurfer",
+            avatar: "/assets/avatars/avatar-3.jpg",
+            isAdmin: false
+          },
+          content: "Just checked the update - love the new visual guide! Makes the whole experience much clearer. Thank you!",
+          date: "April 7, 2025",
+          likes: 4,
+          userLiked: false
+        }
+      ]
+    },
+    {
+      id: "feedback-3",
+      user: {
+        name: "OceanWhisperer",
+        avatar: "/assets/avatars/avatar-6.jpg",
+        isAdmin: false
+      },
+      content: "I absolutely love the cosmic whale animations on the home page! The way they swim through the starry background is mesmerizing and puts me in the perfect state of mind for the music.",
+      date: "April 2, 2025",
+      category: "appreciation",
+      status: "pending",
+      votes: 75,
+      userVoted: false,
+      comments: 1,
+      commentsList: [
+        {
+          id: "comment-3-1",
+          feedbackId: "feedback-3",
+          user: {
+            name: "Dale The Whale",
+            avatar: "/assets/avatars/dale-avatar.jpg",
+            isAdmin: true
+          },
+          content: "So glad you're enjoying the cosmic whale animations! Our digital artists put their hearts into creating those sacred beings. We'll be adding more interactive elements to them in our next update!",
+          date: "April 3, 2025",
+          likes: 15,
+          userLiked: false
+        }
+      ]
+    }
+  ]);
+
+  // Current user data
+  const currentUser = {
+    name: "Cosmic Explorer",
+    avatar: "/assets/avatars/user-avatar.jpg",
+    isAdmin: false
+  };
+
+
+
+  // Handle interactions
+  const handleVote = (id: string): void => {
+    setFeedbackItems(feedbackItems.map(item => 
+      item.id === id 
+        ? { ...item, votes: item.userVoted ? item.votes - 1 : item.votes + 1, userVoted: !item.userVoted } 
+        : item
+    ));
+  };
+
+  const handleSubmitFeedback = (feedback: FeedbackType): void => {
+    const newFeedback = {
+      id: `feedback-${feedbackItems.length + 1}`,
+      user: currentUser,
+      content: feedback.content,
+      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+      category: feedback.category,
+      status: "pending" as const,
+      votes: 1,
+      userVoted: true,
+      comments: 0,
+      commentsList: []
+    };
+    
+    setFeedbackItems([newFeedback, ...feedbackItems]);
+  };
+
+  const handleComment = (id: string, comment: string): void => {
+    setFeedbackItems(feedbackItems.map(item => {
+      if (item.id === id) {
+        const newComment = {
+          id: `comment-${item.id}-${(item.commentsList || []).length + 1}`,
+          feedbackId: item.id,
+          user: currentUser,
+          content: comment,
+          date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+          likes: 0,
+          userLiked: false
+        };
+        
+        return {
+          ...item,
+          comments: item.comments + 1,
+          commentsList: [...(item.commentsList || []), newComment]
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleLikeComment = (feedbackId: string, commentId: string): void => {
+    setFeedbackItems(feedbackItems.map(item => {
+      if (item.id === feedbackId) {
+        return {
+          ...item,
+          commentsList: item.commentsList?.map(comment => 
+            comment.id === commentId 
+              ? { 
+                  ...comment, 
+                  likes: comment.userLiked ? comment.likes - 1 : comment.likes + 1,
+                  userLiked: !comment.userLiked 
+                }
+              : comment
+          )
+        };
+      }
+      return item;
+    }));
+  };
 
   return (
     <>
@@ -292,6 +541,35 @@ export default function EngagePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Community Feedback Loop */}
+          <section className="community-feedback p-6 md:p-8 shadow-lg backdrop-blur-sm relative overflow-hidden mb-12">
+            <div className="absolute inset-0 bg-[rgba(10,50,92,0.4)]">
+              <div className="absolute top-0 left-0 opacity-10">
+                <SacredGeometry variant="octagon" size={160} animated={false} />
+              </div>
+              <div className="absolute bottom-0 right-0 opacity-10">
+                <SacredGeometry variant="octagon" size={160} animated={false} />
+              </div>
+            </div>
+            
+            <div className="relative z-10">
+              <h2 className="text-3xl font-bold text-[#00ebd6] mb-6 text-center">Community Feedback Loop</h2>
+              <p className="text-center mb-8 max-w-2xl mx-auto">
+                Join our cosmic community in shaping the future of our experiences. Share your suggestions, 
+                report issues, or express appreciation. Every voice resonates in our collective consciousness.
+              </p>
+              
+              <CommunityFeedbackLoop 
+                feedbackItems={feedbackItems}
+                onVote={handleVote}
+                onSubmit={handleSubmitFeedback}
+                onComment={handleComment}
+                onLikeComment={handleLikeComment}
+                currentUser={currentUser}
+              />
             </div>
           </section>
 
