@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { ZoomIn, ZoomOut, RefreshCw, Search, Map } from 'lucide-react';
 
 // Define tour events data
 const tourEvents = [
@@ -41,6 +42,15 @@ const tourEvents = [
   }
 ];
 
+// Define the viewBox configurations for different zoom levels
+const zoomLevels = {
+  all: { x: 0, y: 0, width: 100, height: 60 }, // Show all islands
+  kauai: { x: 5, y: 10, width: 20, height: 15 },
+  oahu: { x: 25, y: 22, width: 20, height: 15 },
+  maui: { x: 45, y: 20, width: 25, height: 20 },
+  hawaii: { x: 65, y: 30, width: 25, height: 25 }
+};
+
 interface HawaiianIslandsMapProps {
   className?: string;
 }
@@ -48,24 +58,120 @@ interface HawaiianIslandsMapProps {
 const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [isInfoVisible, setIsInfoVisible] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<keyof typeof zoomLevels>('all');
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const svgRef = useRef<SVGSVGElement>(null);
   
+  // Handle location click
   const handleLocationClick = (locationId: string) => {
+    if (isDragging) return; // Don't select if currently dragging
+    
     setSelectedLocation(locationId);
     setIsInfoVisible(true);
+    
+    // Also zoom to the clicked island
+    setZoomLevel(locationId as keyof typeof zoomLevels);
   };
   
+  // Handle closing info popup
   const handleCloseInfo = () => {
     setIsInfoVisible(false);
   };
   
+  // Handle zooming in/out
+  const handleZoomIn = () => {
+    if (selectedLocation) {
+      // Already zoomed on an island, no further zoom in
+      return;
+    }
+    // If not zoomed on an island, zoom to Oahu (center)
+    setZoomLevel('oahu');
+  };
+  
+  const handleZoomOut = () => {
+    // Always zoom out to show all islands
+    setZoomLevel('all');
+    setDragOffset({ x: 0, y: 0 }); // Reset any panning offset
+  };
+  
+  // Reset to default view
+  const handleReset = () => {
+    setZoomLevel('all');
+    setSelectedLocation(null);
+    setIsInfoVisible(false);
+    setDragOffset({ x: 0, y: 0 });
+  };
+  
+  // Calculate the current viewBox
+  const currentViewBox = () => {
+    const base = zoomLevels[zoomLevel];
+    // Apply any drag/pan offset when zoomed in
+    if (zoomLevel !== 'all') {
+      return `${base.x - dragOffset.x} ${base.y - dragOffset.y} ${base.width} ${base.height}`;
+    }
+    return `${base.x} ${base.y} ${base.width} ${base.height}`;
+  };
+  
+  // Handle dragging for panning the map when zoomed
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only enable dragging when zoomed in
+    if (zoomLevel !== 'all') {
+      setIsDragging(true);
+    }
+  };
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && svgRef.current) {
+      const rect = svgRef.current.getBoundingClientRect();
+      const scale = zoomLevels[zoomLevel].width / rect.width;
+      
+      // Calculate the drag distance in SVG coordinates
+      const dx = e.movementX * scale;
+      const dy = e.movementY * scale;
+      
+      // Update drag offset
+      setDragOffset(prev => ({
+        x: prev.x + dx,
+        y: prev.y + dy
+      }));
+      
+      // Limit the drag so we don't go too far off the map
+      if (Math.abs(dragOffset.x) > zoomLevels[zoomLevel].width / 2) {
+        setDragOffset(prev => ({ ...prev, x: Math.sign(prev.x) * zoomLevels[zoomLevel].width / 2 }));
+      }
+      
+      if (Math.abs(dragOffset.y) > zoomLevels[zoomLevel].height / 2) {
+        setDragOffset(prev => ({ ...prev, y: Math.sign(prev.y) * zoomLevels[zoomLevel].height / 2 }));
+      }
+    }
+  };
+  
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  
+  // Get the selected event
   const selectedEvent = tourEvents.find(event => event.id === selectedLocation);
   
   return (
     <div className={`w-full h-full relative ${className}`}>
       {/* Map container */}
-      <div className="w-full h-full bg-[#173d56] rounded-lg overflow-hidden relative">
+      <div 
+        className="w-full h-full bg-[#173d56] rounded-lg overflow-hidden relative"
+        onMouseLeave={handleMouseUp}
+      >
         {/* Hawaiian Islands SVG Map */}
-        <svg viewBox="0 0 100 60" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <svg 
+          ref={svgRef}
+          viewBox={currentViewBox()} 
+          className={`w-full h-full ${zoomLevel !== 'all' && isDragging ? 'cursor-grabbing' : zoomLevel !== 'all' ? 'cursor-grab' : ''}`}
+          xmlns="http://www.w3.org/2000/svg"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{ transition: isDragging ? 'none' : 'viewBox 0.7s ease' }}
+        >
           {/* Map outline */}
           <g fill="#2A5F7B" stroke="#3A7091" strokeWidth="0.5">
             {/* Niihau */}
@@ -89,6 +195,18 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
             {/* Hawaii (Big Island) */}
             <path d="M68,35 C68,35 74,33 80,35 C86,37 88,42 86,48 C84,54 78,56 72,54 C66,52 64,46 66,41 C67,38 68,35 68,35 Z" />
           </g>
+          
+          {/* Island name labels (visible only in all view) */}
+          {zoomLevel === 'all' && (
+            <>
+              <text x="12" y="18" fontSize="2.5" fill="#fff" textAnchor="middle">Kauai</text>
+              <text x="35" y="33" fontSize="2.5" fill="#fff" textAnchor="middle">Oahu</text>
+              <text x="48" y="25" fontSize="2.5" fill="#fff" textAnchor="middle">Molokai</text>
+              <text x="48" y="33" fontSize="2.5" fill="#fff" textAnchor="middle">Lanai</text>
+              <text x="60" y="30" fontSize="2.5" fill="#fff" textAnchor="middle">Maui</text>
+              <text x="76" y="42" fontSize="2.5" fill="#fff" textAnchor="middle">Hawaii</text>
+            </>
+          )}
           
           {/* Tour event location markers */}
           {tourEvents.map((event) => (
@@ -123,6 +241,38 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
         
         {/* Map overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-transparent to-[rgba(10,30,50,0.3)]"></div>
+      </div>
+      
+      {/* Map controls */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <button 
+          onClick={handleZoomIn}
+          className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          title="Zoom In"
+          disabled={zoomLevel !== 'all'}
+        >
+          <ZoomIn size={20} className={zoomLevel !== 'all' ? 'opacity-50' : ''} />
+        </button>
+        <button 
+          onClick={handleZoomOut}
+          className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          title="Zoom Out"
+        >
+          <ZoomOut size={20} />
+        </button>
+        <button 
+          onClick={handleReset}
+          className="p-2 rounded-full bg-black/50 backdrop-blur-sm text-white hover:bg-black/70 transition-colors"
+          title="Reset View"
+        >
+          <RefreshCw size={20} />
+        </button>
+      </div>
+      
+      {/* Map type indicator */}
+      <div className="absolute top-4 left-4 px-3 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white text-sm flex items-center gap-2">
+        <Map size={16} />
+        <span>{zoomLevel === 'all' ? 'Hawaiian Islands' : `${selectedLocation?.charAt(0).toUpperCase()}${selectedLocation?.slice(1)} View`}</span>
       </div>
       
       {/* Island information popup */}
@@ -166,7 +316,10 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
       
       {/* Instructions overlay */}
       <div className="absolute bottom-3 right-3 text-xs text-white/60 pointer-events-none">
-        Click on island markers for details
+        {zoomLevel === 'all' 
+          ? "Click on island markers for details"
+          : "Drag to pan map, use controls to zoom out"
+        }
       </div>
     </div>
   );
