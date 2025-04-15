@@ -86,6 +86,9 @@ import UsersPage from "@/pages/admin/UsersPage";
 import PostsPage from "@/pages/admin/PostsPage";
 import MusicPage from "@/pages/admin/MusicPage";
 import MediaPage from "@/pages/admin/MediaPage";
+import GalleryPage from "@/pages/admin/GalleryPage";
+import VideoPage from "@/pages/admin/VideoPage";
+import AudioPage from "@/pages/admin/AudioPage";
 import ContentManagementPage from "@/pages/admin/ContentManagementPage";
 import ContentWorkflowPage from "@/pages/admin/ContentWorkflowPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
@@ -188,6 +191,9 @@ function AppRouter() {
           <ProtectedRoute path="/admin/database" component={AdminPortalPage} requiredRole="super_admin" />
           <ProtectedRoute path="/admin/settings" component={AdminPortalPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media" component={MediaPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/media/gallery" component={GalleryPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/media/video" component={VideoPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/media/audio" component={AudioPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/edit-button" component={EditButtonPage} requiredRole="admin" />
 
           {/* Resource Pages */}
