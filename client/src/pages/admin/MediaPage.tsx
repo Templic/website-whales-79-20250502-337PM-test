@@ -687,8 +687,8 @@ export default function MediaPage() {
     } else if (bulkActionType === 'analyze') {
       setIsAutoTaggingInProgress(true);
       
-      // Implement AI analysis mutation
-      bulkAnalyzeMutation.mutate(selectedIds, {
+      // Get the selected media
+      autoAnalyzeMutation.mutate(selectedIds, {
         onSettled: () => {
           setIsAutoTaggingInProgress(false);
         }
@@ -816,32 +816,7 @@ export default function MediaPage() {
               </Button>
             )}
             
-            {selectedMediaIds.size > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setBulkActionType('tag');
-                  setIsBulkActionDialogOpen(true);
-                }}
-              >
-                <Tag className="h-4 w-4 mr-2" />
-                Tag ({selectedMediaIds.size})
-              </Button>
-            )}
-            
-            {selectedMediaIds.size > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setBulkActionType('analyze');
-                  setIsBulkActionDialogOpen(true);
-                }}
-                className="text-blue-600 border-blue-200 hover:text-blue-700 hover:bg-blue-50"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                AI Analyze ({selectedMediaIds.size})
-              </Button>
-            )}
+
             
             <Button 
               variant="default" 
