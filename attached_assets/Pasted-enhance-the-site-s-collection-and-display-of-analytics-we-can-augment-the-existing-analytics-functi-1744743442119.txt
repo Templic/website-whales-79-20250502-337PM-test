@@ -1,0 +1,94 @@
+enhance the site's collection and display of analytics, we can augment the existing analytics functionalities by retrieving more detailed metrics and structuring a user-friendly presentation of the data. Here's how you can do that:
+
+    Extend Analytics Data Collection: Use the existing functions to gather additional metrics such as content performance, user engagement, and timeline data.
+
+    Display Aggregated Analytics: Implement a new component that leverages the collected analytics data and displays it in an engaging format, such as tables or charts.
+
+Here is a sample code snippet that demonstrates how to implement these changes:
+1. Update Analytics Data Retrieval
+
+In the
+
+file, ensure that you are fetching the necessary analytics from the database. For instance, you could ensure that the getAllContentAnalytics function retrieves detailed content engagement metrics:
+
+export async function getAllContentAnalytics(): Promise<ContentAnalytics> {
+  const throughput = await getContentThroughputMetrics();
+  const workflow = await getWorkflowMetrics();
+  const scheduling = await getSchedulingMetrics();
+  const expiringContent = await getExpiringContent(); // Fetch expiring content as an additional metric
+
+  return {
+    throughput,
+    workflow,
+    scheduling,
+    expiringContent, // Add this line to include expiring content in the analytics
+    lastUpdated: new Date()
+  };
+}
+
+2. Create the Analytics Component
+
+In a new React component (
+
+), structure the retrieved analytics data for display:
+
+import React, { useEffect, useState } from 'react';
+import { getAllContentAnalytics } from '@/services/contentAnalytics';
+
+const AnalyticsDisplay: React.FC = () => {
+  const [analyticsData, setAnalyticsData] = useState(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      const data = await getAllContentAnalytics();
+      setAnalyticsData(data);
+    };
+    fetchAnalytics();
+  }, []);
+
+  if (!analyticsData) return <div>Loading analytics...</div>;
+
+  return (
+    <div>
+      <h2>Analytics Overview</h2>
+      <h3>Content Throughput</h3>
+      <pre>{JSON.stringify(analyticsData.throughput, null, 2)}</pre>
+      <h3>Workflow Metrics</h3>
+      <pre>{JSON.stringify(analyticsData.workflow, null, 2)}</pre>
+      <h3>Scheduling Metrics</h3>
+      <pre>{JSON.stringify(analyticsData.scheduling, null, 2)}</pre>
+      <h3>Expiring Content</h3>
+      <ul>
+        {analyticsData.expiringContent.map((item) => (
+          <li key={item.id}>
+            <strong>{item.title}</strong> (Expires on: {item.expirationDate})
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default AnalyticsDisplay;
+
+3. Integrate AnalyticsDisplay Component
+
+Finally, integrate the AnalyticsDisplay component into your site's main layout or a specific analytics page:
+
+import AnalyticsDisplay from '@/components/AnalyticsDisplay';
+
+const Dashboard: React.FC = () => {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <AnalyticsDisplay />
+    </div>
+  );
+};
+
+export default Dashboard;
+
+This setup will allow you to collect and display enhanced analytics, providing users with valuable insights into content performance and user engagement. Make sure to adjust paths based on your project's structure and to handle the response data as needed for your application's requirements.
+
+Content Management: Error loading content. Error loading report. Error loading analytics
+Failed to load content analytics . User Management does not load. admin sub pages need return to admin-dashboard buttons. admin portal not loading shop items (merchandise and collectables). ensure the pages mirror the portal
