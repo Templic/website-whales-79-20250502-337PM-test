@@ -54,6 +54,7 @@ import {
   File,
   Video,
   Music,
+  Edit,
   Search,
   Filter,
   Trash2,
@@ -783,6 +784,34 @@ export default function MediaPage() {
               >
                 <Folder className="h-4 w-4 mr-2" />
                 Categorize ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('tag');
+                  setIsBulkActionDialogOpen(true);
+                }}
+                className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+              >
+                <Tag className="h-4 w-4 mr-2" />
+                Add Tags ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('analyze');
+                  setIsBulkActionDialogOpen(true);
+                }}
+                className="border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                AI Analyze ({selectedMediaIds.size})
               </Button>
             )}
             
@@ -1791,6 +1820,60 @@ export default function MediaPage() {
                     <p className="text-sm">{selectedMedia.metadata.alt}</p>
                   </div>
                 )}
+                
+                {/* Tags */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-sm font-medium text-muted-foreground">Tags</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 px-2 text-xs"
+                      onClick={() => {
+                        setBulkActionType('tag');
+                        setSelectedMediaIds(new Set([selectedMedia.id]));
+                        setBulkTags(selectedMedia.tags?.join(', ') || '');
+                        setIsFileDetailOpen(false);
+                        setIsBulkActionDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit Tags
+                    </Button>
+                  </div>
+                  
+                  {selectedMedia.tags && selectedMedia.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedMedia.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground italic">
+                      No tags. Click 'Edit Tags' to add some or use AI analysis.
+                    </div>
+                  )}
+                </div>
+                
+                {/* AI Analysis Button */}
+                <div className="flex justify-end">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-blue-600 border-blue-200 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => {
+                      setBulkActionType('analyze');
+                      setSelectedMediaIds(new Set([selectedMedia.id]));
+                      setIsFileDetailOpen(false);
+                      setIsBulkActionDialogOpen(true);
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    AI Analyze
+                  </Button>
+                </div>
                 
                 {/* Positioning Information */}
                 {selectedMedia.position && (
