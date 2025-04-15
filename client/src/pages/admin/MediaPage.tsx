@@ -747,7 +747,12 @@ export default function MediaPage() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Media Library</h1>
+            <p className="text-muted-foreground max-w-2xl mt-1">
+              Manage all your media assets including images, videos, and audio files.
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             {selectedMediaIds.size > 0 && (
               <Button 
@@ -837,6 +842,40 @@ export default function MediaPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="flex flex-col sm:flex-row gap-6 mb-6">
+              <a href="/admin/media" className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors">
+                <div className="p-3 bg-slate-100 rounded-full mb-2">
+                  <Folder className="h-6 w-6 text-primary" />
+                </div>
+                <span className="text-sm font-medium">All Media</span>
+                <span className="text-xs text-muted-foreground mt-1">Complete library</span>
+              </a>
+              
+              <a href="/admin/media/gallery" className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors">
+                <div className="p-3 bg-slate-100 rounded-full mb-2">
+                  <Images className="h-6 w-6 text-blue-500" />
+                </div>
+                <span className="text-sm font-medium">Image Gallery</span>
+                <span className="text-xs text-muted-foreground mt-1">Specialized view</span>
+              </a>
+              
+              <a href="/admin/media/video" className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors">
+                <div className="p-3 bg-slate-100 rounded-full mb-2">
+                  <Video className="h-6 w-6 text-purple-500" />
+                </div>
+                <span className="text-sm font-medium">Video Manager</span>
+                <span className="text-xs text-muted-foreground mt-1">Enhanced controls</span>
+              </a>
+              
+              <a href="/admin/media/audio" className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors">
+                <div className="p-3 bg-slate-100 rounded-full mb-2">
+                  <Music className="h-6 w-6 text-green-500" />
+                </div>
+                <span className="text-sm font-medium">Audio Manager</span>
+                <span className="text-xs text-muted-foreground mt-1">Playback & waveforms</span>
+              </a>
+            </div>
+            
             <Tabs defaultValue="all" className="w-full">
               <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
                 <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
