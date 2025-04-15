@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import MediaGalleryView, { GalleryViewMode } from "@/components/features/admin/MediaGalleryView";
-import AdminLayout from "@/components/layout/AdminLayout";
+import AdminLayout from "@/components/layouts/AdminLayout";
 
 interface MediaFile {
   id: number;

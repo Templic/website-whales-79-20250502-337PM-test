@@ -853,7 +853,7 @@ export default function MediaPage() {
               
               <a href="/admin/media/gallery" className="flex flex-col items-center p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors">
                 <div className="p-3 bg-slate-100 rounded-full mb-2">
-                  <Images className="h-6 w-6 text-blue-500" />
+                  <ImageIcon className="h-6 w-6 text-blue-500" />
                 </div>
                 <span className="text-sm font-medium">Image Gallery</span>
                 <span className="text-xs text-muted-foreground mt-1">Specialized view</span>

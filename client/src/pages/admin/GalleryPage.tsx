@@ -25,7 +25,7 @@ import {
   Download,
   Share2
 } from "lucide-react";
-import AdminLayout from "@/components/layout/AdminLayout";
+import AdminLayout from "@/components/layouts/AdminLayout";
 
 interface MediaFile {
   id: number;
