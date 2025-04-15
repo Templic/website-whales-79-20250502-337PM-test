@@ -90,6 +90,7 @@ interface MediaFile {
   uploadedBy: number;
   page: string;
   section?: string;
+  tags?: string[];
   position?: {
     x: number;
     y: number;
@@ -144,11 +145,13 @@ export default function MediaPage() {
   // Bulk operations states
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());
   const [isBulkActionDialogOpen, setIsBulkActionDialogOpen] = useState(false);
-  const [bulkActionType, setBulkActionType] = useState<'delete' | 'move' | 'categorize'>('delete');
+  const [bulkActionType, setBulkActionType] = useState<'delete' | 'move' | 'categorize' | 'tag' | 'analyze'>('delete');
   const [bulkTargetPage, setBulkTargetPage] = useState<string>("");
   const [bulkTargetSection, setBulkTargetSection] = useState<string>("");
   const [bulkCustomSection, setBulkCustomSection] = useState<string>("");
   const [bulkAvailableSections, setBulkAvailableSections] = useState<string[]>([]);
+  const [bulkTags, setBulkTags] = useState<string>("");
+  const [isAutoTaggingInProgress, setIsAutoTaggingInProgress] = useState(false);
   
   // Upload configuration
   const [selectedPage, setSelectedPage] = useState<string>("");
@@ -543,6 +546,78 @@ export default function MediaPage() {
       });
     }
   });
+  
+  // Perform bulk tag operation
+  const bulkTagMutation = useMutation({
+    mutationFn: async ({ ids, tags }: { ids: number[], tags: string[] }) => {
+      const res = await fetch('/api/media/bulk-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          ids, 
+          updates: { 
+            tags 
+          } 
+        }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to tag files');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+      setIsBulkActionDialogOpen(false);
+      setSelectedMediaIds(new Set());
+      toast({
+        title: "Files Tagged",
+        description: "The selected files have been tagged successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Tagging Failed",
+        description: error instanceof Error ? error.message : 'Failed to tag files',
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Perform AI analysis and auto-tagging operation
+  const autoAnalyzeMutation = useMutation({
+    mutationFn: async (mediaIds: number[]) => {
+      setIsAutoTaggingInProgress(true);
+      const res = await fetch('/api/media/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ids: mediaIds }),
+      });
+      
+      if (!res.ok) throw new Error('Failed to analyze files');
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['media-files'] });
+      setIsBulkActionDialogOpen(false);
+      setSelectedMediaIds(new Set());
+      setIsAutoTaggingInProgress(false);
+      toast({
+        title: "AI Analysis Complete",
+        description: `Successfully analyzed ${data.count} files and applied smart tags`,
+      });
+    },
+    onError: (error) => {
+      setIsAutoTaggingInProgress(false);
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : 'Failed to analyze files',
+        variant: "destructive"
+      });
+    }
+  });
 
   // Execute the appropriate bulk action
   const executeBulkAction = () => {
@@ -588,6 +663,34 @@ export default function MediaPage() {
         ids: selectedIds, 
         section: bulkTargetSection || bulkCustomSection 
       });
+    } else if (bulkActionType === 'tag') {
+      if (!bulkTags.trim()) {
+        toast({
+          title: "Tags Required",
+          description: "Please enter at least one tag",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Convert comma-separated tags to array and trim whitespace
+      const tagsArray = bulkTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      
+      if (tagsArray.length === 0) {
+        toast({
+          title: "Tags Required",
+          description: "Please enter valid tags separated by commas",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      bulkTagMutation.mutate({ 
+        ids: selectedIds, 
+        tags: tagsArray 
+      });
+    } else if (bulkActionType === 'analyze') {
+      autoAnalyzeMutation.mutate(selectedIds);
     }
   };
 
@@ -678,8 +781,35 @@ export default function MediaPage() {
                   setIsBulkActionDialogOpen(true);
                 }}
               >
-                <Tag className="h-4 w-4 mr-2" />
+                <Folder className="h-4 w-4 mr-2" />
                 Categorize ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('tag');
+                  setIsBulkActionDialogOpen(true);
+                }}
+              >
+                <Tag className="h-4 w-4 mr-2" />
+                Tag ({selectedMediaIds.size})
+              </Button>
+            )}
+            
+            {selectedMediaIds.size > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setBulkActionType('analyze');
+                  setIsBulkActionDialogOpen(true);
+                }}
+                className="text-blue-600 border-blue-200 hover:text-blue-700 hover:bg-blue-50"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                AI Analyze ({selectedMediaIds.size})
               </Button>
             )}
             
