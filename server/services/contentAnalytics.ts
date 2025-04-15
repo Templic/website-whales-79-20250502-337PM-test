@@ -2,7 +2,7 @@ import { db } from '../db';
 import { contentItems } from '@shared/schema';
 import { eq, and, lte, gte, ne, desc, count, sql, sum } from 'drizzle-orm';
 import { logger } from '../logger';
-import { getSchedulingMetrics, ContentSchedulingMetrics } from './contentScheduler';
+import { ContentSchedulingMetrics } from './contentScheduler';
 
 /**
  * Interface for content throughput statistics
@@ -52,12 +52,26 @@ export interface SchedulingMetrics extends ContentSchedulingMetrics {
 }
 
 /**
+ * Interface for content that is expiring soon
+ */
+export interface ExpiringContentItem {
+  id: string | number;
+  title: string;
+  section: string;
+  type: string;
+  expirationDate: string | Date;
+  publishedAt: string | Date;
+  createdBy: string;
+}
+
+/**
  * Interface for combined analytics
  */
 export interface ContentAnalytics {
   throughput: ContentThroughputMetrics;
   workflow: WorkflowMetrics;
   scheduling: SchedulingMetrics;
+  expiringContent: ExpiringContentItem[];
   lastUpdated: Date;
 }
 
@@ -308,7 +322,8 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
 export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
   try {
     const now = new Date();
-    const baseMetrics = getSchedulingMetrics();
+    // Get base metrics from scheduler
+    const baseMetrics = require('./contentScheduler').getSchedulingMetrics();
     
     // Count upcoming publications (scheduled in future)
     const upcomingPublications = await db.execute(sql`
@@ -336,9 +351,14 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
     };
   } catch (error) {
     logger.error('Error getting scheduling metrics:', error);
-    // Return base metrics with zeros in case of error
+    // Return empty metrics in case of error
     return {
-      ...getSchedulingMetrics(),
+      totalScheduled: 0,
+      successfullyPublished: 0,
+      failedPublications: 0,
+      upcomingExpiring: 0,
+      successRate: 0,
+      lastRunAt: new Date(),
       upcomingPublications: 0,
       soonExpiring: 0
     };
@@ -430,11 +450,13 @@ export async function getAllContentAnalytics(): Promise<ContentAnalytics> {
   const throughput = await getContentThroughputMetrics();
   const workflow = await getWorkflowMetrics();
   const scheduling = await getSchedulingMetrics();
+  const expiringContent = await getExpiringContent(); // Fetch expiring content
   
   return {
     throughput,
     workflow,
     scheduling,
+    expiringContent, // Include expiring content in the response
     lastUpdated: new Date()
   };
 }
