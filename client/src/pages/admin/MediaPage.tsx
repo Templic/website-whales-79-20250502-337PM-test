@@ -141,7 +141,7 @@ export default function MediaPage() {
   const [fileTypeFilter, setFileTypeFilter] = useState<FileCategory>("all");
   const [pageFilter, setPageFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "slider">("grid");
   
   // Bulk operations states
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<number>>(new Set());

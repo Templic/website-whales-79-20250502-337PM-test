@@ -1,0 +1,87 @@
+To add image and video support along with galleries featuring grids and scrollers in your media management system, you can update the MediaPage component to manage both media types effectively. Here’s how you can implement this:
+Step 1: Update State and Logic for Media Types
+
+First, ensure that your component can handle both images and videos by updating state and adding logic to filter and display them accordingly.
+Step 2: Implement the Gallery Layout with Grids and Scroll
+
+Next, create a grid layout component to showcase the media files. You can use CSS flexbox or grid for this purpose. Consider using a map function to render images and videos dynamically.
+Example Code
+
+Here's how you could implement these features in the MediaPage component:
+
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// AddMedia component
+const AddMedia: React.FC<{ onMediaAdded: () => void }> = ({ onMediaAdded }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (selectedFile) {
+      // Upload logic here (mutation to your backend or storage)
+      onMediaAdded();
+      setSelectedFile(null);
+    }
+  };
+
+  return (
+    <div>
+      <Input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*,video/*" />
+      <Button onClick={handleUpload}>Upload</Button>
+    </div>
+  );
+};
+
+// MediaPage component
+export default function MediaPage() {
+  // ...existing state variables
+  const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]); // Assuming MediaFile has necessary properties
+
+  const handleMediaAdded = () => {
+    // Logic to refresh media list after addition
+    // e.g., refetch data from the query or update state
+  };
+
+  return (
+    <div className="media-page">
+      <AddMedia onMediaAdded={handleMediaAdded} />
+      <div className="grid grid-cols-3 gap-4">
+        {mediaFiles.map((file) => (
+          <Card key={file.id}>
+            <CardContent>
+              {file.type.startsWith("image/") ? (
+                <img src={file.url} alt={file.name} className="w-full h-auto" />
+              ) : (
+                <video controls className="w-full h-auto">
+                  <source src={file.url} type={file.type} />
+                  Your browser does not support the video tag.
+                </video>
+              )}
+              <CardHeader>
+                <CardTitle>{file.name}</CardTitle>
+              </CardHeader>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Step 3: Styles and Responsive Design
+
+Make sure to add appropriate CSS styles for the gallery view. You can use Tailwind CSS classes (like grid, grid-cols-3, etc.) to manage the layout responsively.
+Conclusion
+
+By implementing the above code changes in MediaPage, you can now support both images and videos and display them in a gallery format. Feel free to adjust the layout and styles based on your UI requirements.
