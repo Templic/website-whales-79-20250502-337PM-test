@@ -93,9 +93,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   // Toggle between view modes
   const handleViewModeChange = (mode: GalleryViewMode) => {
-    if (onViewModeChange) {
-      onViewModeChange(mode);
-    }
+    onViewModeChange(mode);
   };
 
   // Render slider view

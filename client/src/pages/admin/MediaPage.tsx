@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import MediaGallery, { GalleryViewMode } from "@/components/features/admin/MediaGallery";
 import {
   Dialog,
   DialogContent,
