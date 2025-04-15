@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import NotificationSystem from "@/components/features/admin/NotificationSystem";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -162,6 +163,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="border-b p-4 bg-background flex items-center justify-end">
+          <div className="ml-auto flex items-center gap-2">
+            <NotificationSystem />
+          </div>
+        </header>
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>

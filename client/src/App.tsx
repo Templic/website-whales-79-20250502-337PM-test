@@ -91,6 +91,9 @@ import VideoPage from "@/pages/admin/VideoPage";
 import AudioPage from "@/pages/admin/AudioPage";
 import ContentManagementPage from "@/pages/admin/ContentManagementPage";
 import ContentWorkflowPage from "@/pages/admin/ContentWorkflowPage";
+import ShopManagementPage from "@/pages/admin/ShopManagementPage";
+import CommentsManagementPage from "@/pages/admin/CommentsManagementPage";
+import NewsletterManagementPage from "@/pages/admin/NewsletterManagementPage";
 import { LoginPage } from '@/pages/Login'; //Import added here
 // Convert FC component to match ProtectedRoute's expected type
 import EditButtonPageFC from '@/pages/admin/EditButtonPage';
@@ -185,9 +188,9 @@ function AppRouter() {
           <ProtectedRoute path="/admin/content" component={ContentManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/content-workflow" component={ContentWorkflowPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/content-scheduler" component={ContentSchedulerPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/shop" component={AdminPortalPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/comments" component={AdminPortalPage} requiredRole="admin" />
-          <ProtectedRoute path="/admin/newsletter" component={AdminPortalPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/shop" component={ShopManagementPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/comments" component={CommentsManagementPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/newsletter" component={NewsletterManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/database" component={AdminPortalPage} requiredRole="super_admin" />
           <ProtectedRoute path="/admin/settings" component={AdminPortalPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/media" component={MediaPage} requiredRole="admin" />
