@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import MediaGallery, { GalleryViewMode } from "@/components/features/admin/MediaGallery";
+import MediaGalleryView, { GalleryViewMode } from "@/components/features/admin/MediaGalleryView";
 import {
   Dialog,
   DialogContent,
@@ -960,201 +960,18 @@ export default function MediaPage() {
                     </div>
                   )
                 ) : paginatedMedia.length > 0 ? (
-                  viewMode === "grid" ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {paginatedMedia.map((media) => (
-                        <Card key={media.id} className="overflow-hidden hover:shadow-md transition-shadow relative">
-                          <div className="absolute top-3 left-3 z-10">
-                            <div className="bg-white rounded-md shadow">
-                              <Checkbox 
-                                checked={selectedMediaIds.has(media.id)}
-                                onCheckedChange={() => handleToggleSelectMedia(media.id)}
-                                aria-label={`Select ${media.originalFilename}`}
-                                className="border-gray-300"
-                              />
-                            </div>
-                          </div>
-                          <div 
-                            className="aspect-square bg-muted flex items-center justify-center cursor-pointer"
-                            onClick={() => handleViewDetails(media)}
-                          >
-                            {media.mimeType.startsWith('image/') ? (
-                              <img 
-                                src={media.fileUrl} 
-                                alt={media.metadata?.alt || media.filename} 
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center p-4">
-                                {getFileIcon(media.mimeType)}
-                                <p className="mt-2 text-sm text-muted-foreground truncate max-w-full">
-                                  {media.originalFilename}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <h4 className="font-medium truncate">
-                                  {media.metadata?.title || media.originalFilename}
-                                </h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatFileSize(media.fileSize)}
-                                </p>
-                              </div>
-                              <Badge 
-                                variant="outline" 
-                                className={`
-                                  ${media.mimeType.startsWith('image/') ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                                  ${media.mimeType.startsWith('audio/') ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                                  ${media.mimeType.startsWith('video/') ? 'bg-purple-50 text-purple-700 border-purple-200' : ''}
-                                  ${media.mimeType.startsWith('text/') || media.mimeType.includes('pdf') ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                                `}
-                              >
-                                {media.mimeType.split('/')[0]}
-                              </Badge>
-                            </div>
-                            <div className="flex mt-2 gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full"
-                                onClick={() => handleViewDetails(media)}
-                              >
-                                <Info className="h-3.5 w-3.5 mr-1" />
-                                Details
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="w-full text-red-600 hover:text-red-700"
-                                onClick={() => {
-                                  setSelectedMedia(media);
-                                  setIsDeleteConfirmOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                Delete
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[50px]">
-                              <Checkbox 
-                                checked={filteredMedia.length > 0 && selectedMediaIds.size === filteredMedia.length} 
-                                onCheckedChange={handleSelectAll}
-                                aria-label="Select all"
-                              />
-                            </TableHead>
-                            <TableHead>File</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Size</TableHead>
-                            <TableHead>Uploaded</TableHead>
-                            <TableHead>Page / Section</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedMedia.map((media) => (
-                            <TableRow key={media.id}>
-                              <TableCell>
-                                <Checkbox 
-                                  checked={selectedMediaIds.has(media.id)}
-                                  onCheckedChange={(checked) => {
-                                    handleToggleSelectMedia(media.id);
-                                  }}
-                                  aria-label={`Select ${media.originalFilename}`}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-2">
-                                  {media.mimeType.startsWith('image/') ? (
-                                    <div className="h-12 w-12 rounded-md bg-muted overflow-hidden">
-                                      <img 
-                                        src={media.fileUrl} 
-                                        alt={media.metadata?.alt || media.filename} 
-                                        className="h-full w-full object-cover" 
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center">
-                                      {getFileIcon(media.mimeType)}
-                                    </div>
-                                  )}
-                                  <div className="truncate max-w-[200px]">
-                                    <div className="font-medium">{media.metadata?.title || media.originalFilename}</div>
-                                    <div className="text-xs text-muted-foreground truncate">
-                                      {media.originalFilename}
-                                    </div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge 
-                                  variant="outline" 
-                                  className={`
-                                    ${media.mimeType.startsWith('image/') ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                                    ${media.mimeType.startsWith('audio/') ? 'bg-green-50 text-green-700 border-green-200' : ''}
-                                    ${media.mimeType.startsWith('video/') ? 'bg-purple-50 text-purple-700 border-purple-200' : ''}
-                                    ${media.mimeType.startsWith('text/') || media.mimeType.includes('pdf') ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                                  `}
-                                >
-                                  {media.mimeType.split('/')[0]}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{formatFileSize(media.fileSize)}</TableCell>
-                              <TableCell>{formatDate(media.uploadedAt)}</TableCell>
-                              <TableCell>
-                                <div className="flex flex-col">
-                                  <span className="capitalize">{media.page.replace('_', ' ')}</span>
-                                  {media.section && (
-                                    <span className="text-xs text-muted-foreground">{media.section}</span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => handleViewDetails(media)}
-                                  >
-                                    <Info className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => window.open(media.fileUrl, '_blank')}
-                                  >
-                                    <Download className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    className="text-red-600 hover:text-red-700"
-                                    onClick={() => {
-                                      setSelectedMedia(media);
-                                      setIsDeleteConfirmOpen(true);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )
+                  <MediaGalleryView
+                    mediaFiles={paginatedMedia}
+                    selectedMediaIds={selectedMediaIds}
+                    onToggleSelectMedia={handleToggleSelectMedia}
+                    onViewDetails={handleViewDetails}
+                    onDelete={(media) => {
+                      setSelectedMedia(media);
+                      setIsDeleteConfirmOpen(true);
+                    }}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <UploadCloud className="h-16 w-16 text-muted-foreground mb-4" />
