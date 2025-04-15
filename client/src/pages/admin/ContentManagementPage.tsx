@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminEditor from '@/components/admin/AdminEditor';
+import AdminEditor from '@/components/features/admin/AdminEditor';
 import ContentHistoryView from '@/components/admin/ContentHistoryView';
 import ContentUsageReport from '@/components/admin/ContentUsageReport';
 import { EnhancedContentReview } from '@/components/admin/EnhancedContentReview';
