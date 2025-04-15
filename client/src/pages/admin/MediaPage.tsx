@@ -675,23 +675,24 @@ export default function MediaPage() {
       }
       
       // Convert comma-separated tags to array and trim whitespace
-      const tagsArray = bulkTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-      
-      if (tagsArray.length === 0) {
-        toast({
-          title: "Tags Required",
-          description: "Please enter valid tags separated by commas",
-          variant: "destructive"
-        });
-        return;
-      }
+      const tagArray = bulkTags
+        .split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
       
       bulkTagMutation.mutate({ 
         ids: selectedIds, 
-        tags: tagsArray 
+        tags: tagArray 
       });
     } else if (bulkActionType === 'analyze') {
-      autoAnalyzeMutation.mutate(selectedIds);
+      setIsAutoTaggingInProgress(true);
+      
+      // Implement AI analysis mutation
+      bulkAnalyzeMutation.mutate(selectedIds, {
+        onSettled: () => {
+          setIsAutoTaggingInProgress(false);
+        }
+      });
     }
   };
 
