@@ -32,6 +32,7 @@ import ContactPage from "@/pages/ContactPage";
 import AuthPage from "@/pages/AuthPage";
 import AdminPortalPage from "@/pages/admin/AdminPortalPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
+import EnhancedAnalyticsPage from "@/pages/admin/EnhancedAnalyticsPage";
 import SecuritySettingsPage from "@/pages/admin/SecuritySettingsPage";
 import SecurityAlertsPage from "@/pages/admin/SecurityAlertsPage"; 
 import RoleManagementPage from "@/pages/admin/RoleManagementPage";
@@ -178,6 +179,7 @@ function AppRouter() {
           {/* Admin Routes - require admin or super_admin role */}
           <ProtectedRoute path="/admin" component={AdminPortalPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/analytics" component={AnalyticsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/enhanced-analytics" component={EnhancedAnalyticsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security/alerts" component={SecurityAlertsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />

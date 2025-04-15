@@ -380,10 +380,18 @@ export default function AdminPortalPage() {
                     <Skeleton className="h-full w-full" />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center justify-center h-full gap-4">
                     <p className="text-lg text-muted-foreground">
-                      Connect to analytics service to view detailed charts and metrics
+                      Access detailed analytics dashboards and reports
                     </p>
+                    <div className="flex gap-3">
+                      <Link href="/admin/analytics">
+                        <Button variant="outline">Standard Analytics</Button>
+                      </Link>
+                      <Link href="/admin/enhanced-analytics">
+                        <Button>Enhanced Analytics Dashboard</Button>
+                      </Link>
+                    </div>
                   </div>
                 )}
               </CardContent>

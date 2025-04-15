@@ -17,6 +17,9 @@ import { cn } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
 import { toast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/analytics";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import AdminLayout from "@/components/layouts/AdminLayout";
+import { AnalyticsDisplay } from '@/components/features/admin/AnalyticsDisplay';
 import { 
   Chart as ChartJS, 
   CategoryScale, 
