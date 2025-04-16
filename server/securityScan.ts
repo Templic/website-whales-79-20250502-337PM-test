@@ -179,6 +179,45 @@ export async function forceSecurityScan(): Promise<ScanResult[]> {
 }
 
 /**
+ * Scan for payment security issues
+ */
+async function scanPaymentSecurity(): Promise<void> {
+  // Run payment security scan
+  log('Scanning for payment security issues...', 'security');
+  
+  try {
+    // Run the dedicated payment security scan
+    const paymentResults = await runPaymentSecurityScan();
+    
+    // Convert and add results to main scan results
+    for (const result of paymentResults) {
+      scanResults.push({
+        scanner: result.scanner,
+        status: result.status, 
+        message: result.message,
+        details: {
+          id: result.id,
+          details: result.details,
+          recommendation: result.recommendation
+        },
+        timestamp: Date.now()
+      });
+    }
+  } catch (error) {
+    // Add error result if scan fails
+    log(`Error in payment security scan: ${error}`, 'security');
+    
+    scanResults.push({
+      scanner: 'PaymentSecurityScanner',
+      status: 'error',
+      message: 'Error scanning payment security',
+      details: { error: String(error) },
+      timestamp: Date.now()
+    });
+  }
+}
+
+/**
  * Get the results of the last security scan
  */
 export function getLastScanResults(): { results: ScanResult[], lastScanTime: number | null } {
