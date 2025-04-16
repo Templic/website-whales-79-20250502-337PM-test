@@ -1,99 +1,233 @@
 /**
  * Payment Transaction Logger
  * 
- * This module handles secure logging of payment transactions for PCI DSS compliance.
- * It implements requirement 10.2 for complete audit trails of payment transactions.
+ * This module provides secure, PCI DSS-compliant transaction logging
+ * functionality with proper sanitization of sensitive data.
  * 
- * Important:
- * - Never logs sensitive authentication data (e.g., CVV, PIN)
- * - Never logs full PAN (card number) - only first 6 and last 4 digits max if needed
- * - Logs are stored securely and cannot be altered
+ * Key features:
+ * - Secure logging with sensitive data redaction
+ * - Comprehensive transaction tracking
+ * - Support for multiple payment gateways
+ * - Audit-friendly format
  */
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { log } from '../vite';
 
-// Define transaction types
-export type PaymentTransactionType = 
-  | 'intent_created'       // Payment intent/order created
-  | 'authorized'           // Payment authorized
-  | 'captured'             // Payment captured
-  | 'failed'               // Payment failed
-  | 'refunded'             // Payment refunded
-  | 'disputed'             // Payment disputed
-  | 'canceled'             // Payment canceled
-  | 'gateway_response'     // Gateway response received (webhook)
-  | 'order_updated'        // Order updated
-  | 'method_added'         // Payment method added
-  | 'method_removed';      // Payment method removed
+/**
+ * Transaction type enumeration
+ */
+type TransactionType = 'intent_created' | 'authorized' | 'captured' | 'refunded' | 'failed' | 'voided';
 
-// Define transaction log structure
-export interface PaymentTransactionLog {
+/**
+ * Transaction status enumeration
+ */
+type TransactionStatus = 'pending' | 'succeeded' | 'failed' | 'refunded';
+
+/**
+ * Transaction log entry interface
+ */
+interface TransactionLogEntry {
   timestamp: string;
   transaction_id: string;
-  order_id?: string;
-  user_id?: string;
   payment_gateway: string;
-  transaction_type: PaymentTransactionType;
+  transaction_type: TransactionType;
+  status: TransactionStatus;
   amount?: number;
   currency?: string;
-  status: string;
   message?: string;
-  masked_card_info?: string; // Last 4 digits only
   ip_address?: string;
-  meta?: Record<string, any>;
-}
-
-// Define parameters for successful payments
-export interface SuccessfulPaymentParams {
-  transactionId: string;
-  orderId?: string;
-  userId?: string;
-  gateway: string;
-  amount: number;
-  currency: string;
-  last4?: string;
-  ipAddress?: string;
-  meta?: Record<string, any>;
-}
-
-// Define parameters for failed payments
-export interface FailedPaymentParams {
-  transactionId: string;
-  orderId?: string;
-  userId?: string;
-  gateway: string;
-  amount?: number;
-  currency?: string;
-  errorMessage: string;
-  ipAddress?: string;
   meta?: Record<string, any>;
 }
 
 /**
  * Payment Transaction Logger
- * 
- * Handles secure transaction logging for audit trails
  */
 class PaymentTransactionLogger {
   private logsDir: string;
   private transactionLogFile: string;
+  private readonly sensitivePaths = [
+    'card.number',
+    'cardNumber',
+    'card.cvc',
+    'cvv',
+    'cvc',
+    'securityCode',
+    'card.expMonth',
+    'card.expYear',
+    'expiryMonth',
+    'expiryYear',
+    'password',
+    'token.id',
+    'token',
+    'authorization'
+  ];
   
   constructor() {
-    this.logsDir = path.join(process.cwd(), 'logs', 'payment');
-    this.transactionLogFile = path.join(this.logsDir, 'transactions.log');
+    this.logsDir = path.join(process.cwd(), 'logs', 'transactions');
+    this.transactionLogFile = path.join(this.logsDir, 'payment-transactions.log');
     this.ensureLogDirectoryExists();
   }
   
   /**
-   * Create logs directory if it doesn't exist
+   * Create log directory if it doesn't exist
    */
   private ensureLogDirectoryExists(): void {
     if (!fs.existsSync(this.logsDir)) {
       fs.mkdirSync(this.logsDir, { recursive: true });
-      log('Created payment logs directory', 'security');
+      log('Created payment transaction logs directory', 'security');
     }
+  }
+  
+  /**
+   * Sanitize transaction data to remove sensitive information
+   * 
+   * @param data The data to sanitize
+   * @returns Sanitized data without sensitive information
+   */
+  private sanitizeData(data: any): any {
+    // Handle null or undefined
+    if (data == null) {
+      return data;
+    }
+    
+    // Handle primitive values
+    if (typeof data !== 'object') {
+      return data;
+    }
+    
+    // Handle arrays
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeData(item));
+    }
+    
+    // Handle objects
+    const sanitized: Record<string, any> = {};
+    
+    for (const [key, value] of Object.entries(data)) {
+      // Skip sensitive fields
+      if (this.sensitivePaths.includes(key)) {
+        sanitized[key] = '[REDACTED]';
+        continue;
+      }
+      
+      // Handle nested objects
+      if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this.sanitizeData(value);
+      } else {
+        // Check if this might be a credit card number
+        if (
+          typeof value === 'string' && 
+          this.isPossibleCardData(key, value)
+        ) {
+          sanitized[key] = this.maskSensitiveValue(value, key);
+        } else {
+          sanitized[key] = value;
+        }
+      }
+    }
+    
+    return sanitized;
+  }
+  
+  /**
+   * Check if a field might contain sensitive payment data
+   * 
+   * @param key The field name
+   * @param value The field value
+   * @returns True if this might be sensitive data
+   */
+  private isPossibleCardData(key: string, value: string): boolean {
+    // Check for possible card number
+    if (
+      key.toLowerCase().includes('card') ||
+      key.toLowerCase().includes('number') ||
+      key.toLowerCase().includes('pan')
+    ) {
+      // Credit card numbers are typically 13-19 digits
+      if (/^\d{13,19}$/.test(value.replace(/[\s-]/g, ''))) {
+        return true;
+      }
+    }
+    
+    // Check for possible CVV/CVC
+    if (
+      key.toLowerCase().includes('cvv') ||
+      key.toLowerCase().includes('cvc') ||
+      key.toLowerCase().includes('securitycode') ||
+      key.toLowerCase().includes('security')
+    ) {
+      // CVVs are typically 3-4 digits
+      if (/^\d{3,4}$/.test(value.replace(/\s/g, ''))) {
+        return true;
+      }
+    }
+    
+    // Check for possible expiry date
+    if (
+      key.toLowerCase().includes('expiry') ||
+      key.toLowerCase().includes('expiration') ||
+      key.toLowerCase().includes('exp')
+    ) {
+      // Expiry dates are often in formats like MM/YY or MM/YYYY
+      if (/^\d{1,2}\/\d{2,4}$/.test(value)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Mask sensitive data for logging
+   * 
+   * @param value The value to mask
+   * @param key The field name (used to determine masking strategy)
+   * @returns Masked value
+   */
+  private maskSensitiveValue(value: string, key: string): string {
+    // Remove spaces and dashes for consistent formatting
+    const cleaned = value.replace(/[\s-]/g, '');
+    
+    // Handle card numbers (show only last 4 digits)
+    if (
+      key.toLowerCase().includes('card') ||
+      key.toLowerCase().includes('number') ||
+      key.toLowerCase().includes('pan')
+    ) {
+      if (cleaned.length > 4) {
+        return '*'.repeat(cleaned.length - 4) + cleaned.slice(-4);
+      }
+    }
+    
+    // Handle CVV/CVC (complete redaction)
+    if (
+      key.toLowerCase().includes('cvv') ||
+      key.toLowerCase().includes('cvc') ||
+      key.toLowerCase().includes('securitycode') ||
+      key.toLowerCase().includes('security')
+    ) {
+      return '[REDACTED]';
+    }
+    
+    // Handle expiry dates (show only the month, mask the year)
+    if (
+      key.toLowerCase().includes('expiry') ||
+      key.toLowerCase().includes('expiration') ||
+      key.toLowerCase().includes('exp')
+    ) {
+      if (value.includes('/')) {
+        const parts = value.split('/');
+        if (parts.length === 2) {
+          return parts[0] + '/XX';
+        }
+      }
+    }
+    
+    // Default: full redaction for anything we're not sure about
+    return '[REDACTED]';
   }
   
   /**
@@ -101,192 +235,130 @@ class PaymentTransactionLogger {
    * 
    * @param transaction The transaction to log
    */
-  public logTransaction(transaction: PaymentTransactionLog): void {
+  public logTransaction(transaction: TransactionLogEntry): void {
     try {
-      // Sanitize transaction data to prevent PCI DSS violations
-      const sanitizedTransaction = this.sanitizeTransactionData(transaction);
-      
-      // Add timestamp if not present
-      if (!sanitizedTransaction.timestamp) {
-        sanitizedTransaction.timestamp = new Date().toISOString();
+      // Validate required fields
+      if (!transaction.transaction_id) {
+        transaction.transaction_id = `txn_${crypto.randomBytes(8).toString('hex')}`;
       }
       
-      // Convert to JSON string
-      const logEntry = JSON.stringify(sanitizedTransaction) + '\n';
+      if (!transaction.timestamp) {
+        transaction.timestamp = new Date().toISOString();
+      }
       
-      // Append to log file
-      fs.appendFileSync(this.transactionLogFile, logEntry);
+      // Sanitize any sensitive data
+      const sanitizedTransaction = this.sanitizeData(transaction);
       
-      // Log transaction (for demonstration purposes)
-      log(`Payment transaction logged: ${sanitizedTransaction.transaction_type} - ${sanitizedTransaction.transaction_id}`, 'security');
+      // Format as JSON log entry
+      const logEntry = JSON.stringify({
+        ...sanitizedTransaction,
+        log_type: 'payment_transaction'
+      });
+      
+      // Write to transaction log file
+      fs.appendFileSync(this.transactionLogFile, logEntry + '\n');
+      
+      // Also log to console for development
+      log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
     } catch (error) {
+      // Log error to console, but don't throw (to avoid disrupting payment flow)
       log(`Error logging payment transaction: ${error}`, 'error');
     }
   }
   
   /**
-   * Log a successful payment
-   */
-  public logSuccessfulPayment({
-    transactionId,
-    orderId,
-    userId,
-    gateway,
-    amount,
-    currency,
-    last4,
-    ipAddress,
-    meta
-  }: SuccessfulPaymentParams): void {
-    this.logTransaction({
-      timestamp: new Date().toISOString(),
-      transaction_id: transactionId,
-      order_id: orderId,
-      user_id: userId,
-      payment_gateway: gateway,
-      transaction_type: 'captured',
-      amount,
-      currency,
-      status: 'succeeded',
-      message: 'Payment successfully processed',
-      masked_card_info: last4 ? `xxxx-xxxx-xxxx-${last4}` : undefined,
-      ip_address: ipAddress,
-      meta
-    });
-  }
-  
-  /**
-   * Log a failed payment
-   */
-  public logFailedPayment({
-    transactionId,
-    orderId,
-    userId,
-    gateway,
-    amount,
-    currency,
-    errorMessage,
-    ipAddress,
-    meta
-  }: FailedPaymentParams): void {
-    this.logTransaction({
-      timestamp: new Date().toISOString(),
-      transaction_id: transactionId,
-      order_id: orderId,
-      user_id: userId,
-      payment_gateway: gateway,
-      transaction_type: 'failed',
-      amount,
-      currency,
-      status: 'failed',
-      message: errorMessage || 'Payment processing failed',
-      ip_address: ipAddress,
-      meta
-    });
-  }
-  
-  /**
-   * Sanitize transaction data to prevent PCI DSS violations
+   * Get transaction logs within a specified date range
    * 
-   * @param transaction Transaction data to sanitize
-   * @returns Sanitized transaction data
+   * @param startDate Start date for transaction query
+   * @param endDate End date for transaction query
+   * @returns Array of transactions
    */
-  private sanitizeTransactionData(
-    transaction: PaymentTransactionLog
-  ): PaymentTransactionLog {
-    // Create a deep copy of the transaction
-    const sanitized = JSON.parse(JSON.stringify(transaction)) as PaymentTransactionLog;
-    
-    // If meta data exists, recursively check for and redact PANs
-    if (sanitized.meta) {
-      this.redactPANRecursively(sanitized.meta);
-    }
-    
-    // Ensure proper masking of card info (if present)
-    if (sanitized.masked_card_info && !sanitized.masked_card_info.startsWith('xxxx')) {
-      // Only keep last 4 digits and mask the rest
-      const last4 = sanitized.masked_card_info.slice(-4);
-      sanitized.masked_card_info = `xxxx-xxxx-xxxx-${last4}`;
-    }
-    
-    return sanitized;
-  }
-  
-  /**
-   * Recursively check and redact PANs in an object
-   * 
-   * @param obj The object to check and modify
-   */
-  private redactPANRecursively(obj: any): void {
-    if (!obj || typeof obj !== 'object') return;
-    
-    const cardNumberRegex = /\b(?:\d{4}[ -]?){3}(?:\d{4})\b|\b\d{16}\b/g;
-    
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        const value = obj[key];
-        
-        // Check if the key might be related to card information
-        const sensitiveKeys = ['cardNumber', 'pan', 'card_number', 'credit_card', 'creditCard', 'cc_number', 'ccnumber'];
-        
-        if (sensitiveKeys.includes(key.toLowerCase())) {
-          // Redact all sensitive card data
-          obj[key] = '[REDACTED]';
-        }
-        // If the value is a string, check for card numbers
-        else if (typeof value === 'string' && cardNumberRegex.test(value)) {
-          // Replace card numbers with a redacted format
-          obj[key] = value.replace(cardNumberRegex, 'xxxx-xxxx-xxxx-****');
-        }
-        // If the value is an object or array, recursively check it
-        else if (typeof value === 'object' && value !== null) {
-          this.redactPANRecursively(value);
-        }
-      }
-    }
-  }
-  
-  /**
-   * Get all transaction logs
-   * 
-   * @returns Array of transaction logs
-   */
-  public getTransactionLogs(): PaymentTransactionLog[] {
+  public getTransactionLogs(
+    startDate?: Date,
+    endDate?: Date
+  ): TransactionLogEntry[] {
     try {
+      // Check if log file exists
       if (!fs.existsSync(this.transactionLogFile)) {
         return [];
       }
       
-      const logContent = fs.readFileSync(this.transactionLogFile, 'utf8');
-      const logLines = logContent.split('\n').filter(line => line.trim() !== '');
+      // Read the entire log file
+      const logContent = fs.readFileSync(this.transactionLogFile, 'utf-8');
       
-      return logLines.map(line => JSON.parse(line) as PaymentTransactionLog);
+      // Split into lines and parse each line as JSON
+      const transactions = logContent
+        .split('\n')
+        .filter(line => line.trim() !== '')
+        .map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            log(`Error parsing transaction log line: ${e}`, 'error');
+            return null;
+          }
+        })
+        .filter(transaction => transaction !== null) as TransactionLogEntry[];
+      
+      // Apply date filtering if specified
+      if (startDate || endDate) {
+        return transactions.filter(transaction => {
+          const transactionDate = new Date(transaction.timestamp);
+          
+          if (startDate && transactionDate < startDate) {
+            return false;
+          }
+          
+          if (endDate && transactionDate > endDate) {
+            return false;
+          }
+          
+          return true;
+        });
+      }
+      
+      return transactions;
     } catch (error) {
-      log(`Error reading transaction logs: ${error}`, 'error');
+      log(`Error getting transaction logs: ${error}`, 'error');
       return [];
     }
   }
   
   /**
-   * Get transaction log for a specific transaction
+   * Rotate transaction logs (useful for maintenance)
    * 
-   * @param transactionId Transaction ID
-   * @returns Transaction log or null if not found
+   * @param maxSizeInMB Maximum log file size before rotation (default: 10)
    */
-  public getTransactionLog(transactionId: string): PaymentTransactionLog | null {
-    const logs = this.getTransactionLogs();
-    return logs.find(log => log.transaction_id === transactionId) || null;
-  }
-  
-  /**
-   * Get recent transaction logs
-   * 
-   * @param limit Number of logs to return (default: 100)
-   * @returns Array of recent transaction logs
-   */
-  public getRecentTransactionLogs(limit = 100): PaymentTransactionLog[] {
-    const logs = this.getTransactionLogs();
-    return logs.slice(-limit);
+  public rotateTransactionLogs(maxSizeInMB = 10): void {
+    try {
+      // Check if log file exists
+      if (!fs.existsSync(this.transactionLogFile)) {
+        return;
+      }
+      
+      // Check file size
+      const stats = fs.statSync(this.transactionLogFile);
+      const fileSizeInMB = stats.size / (1024 * 1024);
+      
+      // Rotate if file size exceeds the limit
+      if (fileSizeInMB > maxSizeInMB) {
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        const rotatedLogFile = path.join(
+          this.logsDir,
+          `payment-transactions-${timestamp}.log`
+        );
+        
+        // Rename current log file to archived log file
+        fs.renameSync(this.transactionLogFile, rotatedLogFile);
+        
+        // Create a new empty log file
+        fs.writeFileSync(this.transactionLogFile, '');
+        
+        log(`Rotated transaction logs to ${rotatedLogFile}`, 'security');
+      }
+    } catch (error) {
+      log(`Error rotating transaction logs: ${error}`, 'error');
+    }
   }
 }
 

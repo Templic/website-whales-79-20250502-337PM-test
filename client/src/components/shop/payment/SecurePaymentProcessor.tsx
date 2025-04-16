@@ -15,9 +15,10 @@
  * - Secure transmission of payment data
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { usePaymentGateway } from './PaymentGatewayProvider';
 import StripeElements from './StripeElements';
+import CryptoPayment from './CryptoPayment';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -37,10 +38,14 @@ interface SecurePaymentProcessorProps {
 export default function SecurePaymentProcessor({
   clientSecret,
   isLoading = false,
-  error = null,
+  error: initialError = null,
   onPaymentSubmit
 }: SecurePaymentProcessorProps) {
   const { gateway } = usePaymentGateway();
+  const [error, setError] = useState<string | null>(initialError);
+  // Default values for optional props needed by certain payment gateways
+  const amount = 0;
+  const currency = 'usd';
   
   // If no client secret is available, show a message
   if (!clientSecret && !isLoading) {
@@ -109,13 +114,15 @@ export default function SecurePaymentProcessor({
     case 'bitpay':
     case 'coinbase':
     case 'opennode':
-      // Crypto payment implementations can be added here
+      // Use the CryptoPayment component for cryptocurrency payments
       return (
-        <div className="p-4 border rounded-md">
-          <p className="text-center text-sm text-muted-foreground">
-            Cryptocurrency payment integration coming soon.
-          </p>
-        </div>
+        <CryptoPayment
+          gateway={gateway}
+          amount={amount || 0}
+          currency={currency || 'usd'}
+          onPaymentSuccess={onPaymentSubmit}
+          onPaymentError={(err) => setError(err?.message || 'An error occurred with the cryptocurrency payment')}
+        />
       );
     
     default:
