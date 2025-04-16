@@ -70,6 +70,7 @@ function createSafeUser(user: User | null | undefined) {
 import { hashPassword } from "./auth";
 import { createTransport } from "nodemailer";
 import dbMonitorRoutes from './routes/db-monitor';
+import databaseSecurityRoutes from './routes/databaseSecurityRoutes';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
 import { logSecurityEvent } from './security';
@@ -86,6 +87,7 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
+import { validateDatabaseQuery, sanitizeDatabaseParams } from './middleware/databaseQueryValidator';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
