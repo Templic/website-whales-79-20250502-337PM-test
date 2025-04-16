@@ -165,7 +165,20 @@ export class DatabaseSecurity implements DatabaseSecurityInterface {
       { pattern: /DROP\s+TABLE/i, description: 'DROP TABLE operation' },
       { pattern: /DROP\s+DATABASE/i, description: 'DROP DATABASE operation' },
       { pattern: /TRUNCATE\s+TABLE/i, description: 'TRUNCATE TABLE operation' },
-      { pattern: /DELETE\s+FROM.*?WHERE/i, description: 'DELETE operation' }
+      { pattern: /DELETE\s+FROM.*?WHERE/i, description: 'DELETE operation' },
+      // UNION-based SQL injection patterns
+      { pattern: /UNION\s+ALL\s+SELECT/i, description: 'UNION ALL injection attempt' },
+      { pattern: /UNION\s+SELECT.*?FROM\s+information_schema/i, description: 'UNION injection with information_schema access' },
+      { pattern: /UNION\s+SELECT.*?0x[0-9a-f]+/i, description: 'UNION injection with hex encoding' },
+      // Detection of information_schema access in various forms
+      { pattern: /FROM\s+information_schema/i, description: 'Information schema access, potential database enumeration attempt' },
+      { pattern: /SELECT.*?FROM\s+pg_catalog/i, description: 'PostgreSQL system catalog access, potential database enumeration' },
+      // SQL Comments that might be used to hide malicious code
+      { pattern: /\/\*.+?\*\//i, description: 'SQL comment block, may indicate SQL injection attempt' },
+      // Blind SQL injection techniques
+      { pattern: /CASE\s+WHEN\s+\(.*?\)\s+THEN.*?ELSE/i, description: 'CASE WHEN statement, potential blind SQL injection' },
+      { pattern: /WAITFOR\s+DELAY/i, description: 'WAITFOR DELAY, potential time-based SQL injection' },
+      { pattern: /pg_sleep\s*\(/i, description: 'pg_sleep function, potential time-based SQL injection' }
       // Add more patterns as needed
     ];
     

@@ -5,33 +5,109 @@ import { databaseSecurity } from '../security/databaseSecurity';
  * Middleware to validate SQL queries for potential security risks before execution
  */
 export function validateDatabaseQuery(req: Request, res: Response, next: NextFunction) {
-  // Only apply to specified routes or API endpoints that contain SQL
-  // For example, if someone tries to pass a custom query parameter
-  if (req.body && req.body.sqlQuery) {
-    const query = req.body.sqlQuery;
-    
-    // Validate the query using our security module
-    const validationResult = databaseSecurity.validateQuery(query);
-    
-    if (!validationResult.valid) {
-      // Log the security event
-      databaseSecurity.logDatabaseActivity(
-        'Blocked potentially unsafe SQL query',
-        req.user?.id,
-        {
-          query,
-          risks: validationResult.risks,
-          ip: req.ip,
-          path: req.path,
-          method: req.method
-        }
-      );
+  // Check for direct SQL queries in the request body
+  if (req.body) {
+    // Check for explicit SQL queries
+    if (req.body.sqlQuery) {
+      const query = req.body.sqlQuery;
       
-      return res.status(403).json({
-        status: 'error',
-        message: 'The requested query contains potentially unsafe operations',
-        details: validationResult.risks
-      });
+      // Validate the query using our security module
+      const validationResult = databaseSecurity.validateQuery(query);
+      
+      if (!validationResult.valid) {
+        // Log the security event
+        databaseSecurity.logDatabaseActivity(
+          'Blocked potentially unsafe SQL query',
+          req.user?.id,
+          {
+            query,
+            risks: validationResult.risks,
+            ip: req.ip,
+            path: req.path,
+            method: req.method
+          }
+        );
+        
+        return res.status(403).json({
+          status: 'error',
+          message: 'The requested query contains potentially unsafe operations',
+          details: validationResult.risks
+        });
+      }
+    }
+    
+    // Check for query parameters that could be used to construct a query
+    const queryParams = ['queryPart', 'orderBy', 'filter', 'where', 'columnList'];
+    
+    for (const param of queryParams) {
+      if (typeof req.body[param] === 'string') {
+        const paramValue = req.body[param];
+        // Check if this parameter contains SQL-like pattern
+        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue)) {
+          // Validate it as if it were a query fragment
+          const validationResult = databaseSecurity.validateQuery(paramValue);
+          
+          if (!validationResult.valid) {
+            databaseSecurity.logDatabaseActivity(
+              'Blocked SQL injection attempt in query parameter',
+              req.user?.id,
+              {
+                parameter: param,
+                value: paramValue,
+                risks: validationResult.risks,
+                ip: req.ip,
+                path: req.path,
+                method: req.method
+              }
+            );
+            
+            return res.status(403).json({
+              status: 'error',
+              message: `Query parameter contains potentially unsafe SQL operations`,
+              parameter: param,
+              details: validationResult.risks
+            });
+          }
+        }
+      }
+    }
+  }
+  
+  // Also check query string parameters for the same issues
+  if (req.query) {
+    const queryParams = ['q', 'query', 'sql', 'filter', 'orderBy', 'where'];
+    
+    for (const param of queryParams) {
+      if (typeof req.query[param] === 'string') {
+        const paramValue = req.query[param] as string;
+        // Check if this parameter contains SQL-like pattern
+        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue)) {
+          // Validate it as if it were a query fragment
+          const validationResult = databaseSecurity.validateQuery(paramValue);
+          
+          if (!validationResult.valid) {
+            databaseSecurity.logDatabaseActivity(
+              'Blocked SQL injection attempt in query string',
+              req.user?.id,
+              {
+                parameter: param,
+                value: paramValue,
+                risks: validationResult.risks,
+                ip: req.ip,
+                path: req.path,
+                method: req.method
+              }
+            );
+            
+            return res.status(403).json({
+              status: 'error',
+              message: `Query string parameter contains potentially unsafe SQL operations`,
+              parameter: param,
+              details: validationResult.risks
+            });
+          }
+        }
+      }
     }
   }
   
