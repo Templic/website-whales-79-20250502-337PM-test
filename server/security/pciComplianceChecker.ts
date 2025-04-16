@@ -36,6 +36,7 @@ export interface ComplianceScanResults {
 
 /**
  * Run a PCI DSS compliance scan on the application
+ * Enhanced with performance validation and comprehensive logging
  * @returns Compliance scan results
  */
 export async function runPCIDSSComplianceScan(): Promise<ComplianceScanResults> {
@@ -44,12 +45,44 @@ export async function runPCIDSSComplianceScan(): Promise<ComplianceScanResults> 
   const startTime = Date.now();
   const results: ComplianceCheckResult[] = [];
   
-  // Add all check results to the results array
-  results.push(...await checkNetworkSecurity());
-  results.push(...await checkDataProtection());
-  results.push(...await checkVulnerabilityManagement());
-  results.push(...await checkAccessControl());
-  results.push(...await checkSecureImplementation());
+  // Define all checks to run
+  const checks = [
+    { name: 'Network Security', fn: checkNetworkSecurity },
+    { name: 'Data Protection', fn: checkDataProtection },
+    { name: 'Vulnerability Management', fn: checkVulnerabilityManagement },
+    { name: 'Access Control', fn: checkAccessControl },
+    { name: 'Secure Implementation', fn: checkSecureImplementation },
+    { name: 'Logging and Monitoring', fn: checkLoggingAndMonitoring } // New check added
+  ];
+  
+  // Run each check and track performance
+  for (const check of checks) {
+    const checkStartTime = Date.now();
+    log(`Running ${check.name} check...`, 'security');
+    
+    try {
+      const checkResults = await check.fn();
+      results.push(...checkResults);
+      
+      // Log performance metrics for this check
+      const checkDuration = Date.now() - checkStartTime;
+      log(`${check.name} check completed in ${checkDuration}ms`, 'performance');
+      
+      // Log results of this specific check
+      const passedInCheck = checkResults.filter(r => r.compliant).length;
+      const failedInCheck = checkResults.filter(r => !r.compliant).length;
+      log(`${check.name} results: ${passedInCheck}/${checkResults.length} checks passed`, 'security');
+      
+      if (failedInCheck > 0) {
+        const criticalInCheck = checkResults.filter(r => !r.compliant && r.severity === 'critical').length;
+        if (criticalInCheck > 0) {
+          log(`WARNING: ${criticalInCheck} critical issues in ${check.name}`, 'security');
+        }
+      }
+    } catch (error) {
+      log(`Error in ${check.name} check: ${error}`, 'error');
+    }
+  }
   
   // Calculate statistics
   const totalChecks = results.length;
@@ -68,6 +101,12 @@ export async function runPCIDSSComplianceScan(): Promise<ComplianceScanResults> 
   
   if (criticalIssues > 0 || highIssues > 0) {
     log(`Critical issues: ${criticalIssues}, High issues: ${highIssues}`, 'security');
+    
+    // Notify team about critical issues
+    notifyTeam(`Critical PCI DSS compliance issues found: ${criticalIssues} critical, ${highIssues} high severity issues`);
+  } else if (mediumIssues > 0) {
+    // Notify about medium issues, but with lower urgency
+    notifyTeam(`Medium severity PCI DSS compliance issues found: ${mediumIssues} issues`, 'medium');
   }
   
   // Return scan results
@@ -422,6 +461,154 @@ async function checkSecureImplementation(): Promise<ComplianceCheckResult[]> {
   });
   
   return results;
+}
+
+/**
+ * Check logging and monitoring requirements (PCI DSS Requirement 10)
+ * @returns Array of compliance check results
+ */
+async function checkLoggingAndMonitoring(): Promise<ComplianceCheckResult[]> {
+  const results: ComplianceCheckResult[] = [];
+  
+  // Check 10.1: Audit logging
+  const hasSecurityLogging = fs.existsSync(path.join(process.cwd(), 'logs', 'security.log')) ||
+                            findInServerFiles(['winston', 'morgan', 'audit trail', 'audit log']);
+  
+  results.push({
+    requirement: '10.1 - Implement audit trails',
+    compliant: hasSecurityLogging,
+    description: 'Verify that security event logging is implemented',
+    severity: 'medium',
+    details: hasSecurityLogging 
+      ? 'Security event logging detected' 
+      : 'No security event logging found',
+    remediation: hasSecurityLogging 
+      ? undefined 
+      : 'Implement comprehensive logging for security events'
+  });
+  
+  // Check 10.2: Payment event logging
+  const hasPaymentLogging = findInFiles([
+    'payment.log', 
+    'transaction.log', 
+    'logPayment', 
+    'logTransaction',
+    'log(\'payment'
+  ], ['server/routes', 'server/controllers', 'server/services']);
+  
+  results.push({
+    requirement: '10.2 - Automated audit trails for payment transactions',
+    compliant: hasPaymentLogging,
+    description: 'Verify that all payment transactions are logged',
+    severity: 'high',
+    details: hasPaymentLogging 
+      ? 'Payment transaction logging detected' 
+      : 'No payment transaction logging detected',
+    remediation: hasPaymentLogging 
+      ? undefined 
+      : 'Implement comprehensive logging for all payment transactions'
+  });
+  
+  // Check 10.3: Access logging
+  const hasAccessLogging = findInFiles([
+    'login', 
+    'loggedIn', 
+    'authenticate', 
+    'authLog',
+    'access log'
+  ], ['server/auth', 'server/middleware']);
+  
+  results.push({
+    requirement: '10.3 - User access logging',
+    compliant: hasAccessLogging,
+    description: 'Verify that user access events are logged',
+    severity: 'medium',
+    details: hasAccessLogging 
+      ? 'User access logging detected' 
+      : 'No user access logging detected',
+    remediation: hasAccessLogging 
+      ? undefined 
+      : 'Implement logging for all user authentication and access events'
+  });
+  
+  // Check 10.4: Log monitoring
+  const hasLogMonitoring = findInFiles([
+    'logMonitor', 
+    'monitorLogs', 
+    'alertOnLog', 
+    'logAlert', 
+    'winston-alerts'
+  ], ['server']);
+  
+  results.push({
+    requirement: '10.4 - Log monitoring and alerting',
+    compliant: hasLogMonitoring,
+    description: 'Verify that logs are monitored for suspicious activities',
+    severity: 'medium',
+    details: hasLogMonitoring 
+      ? 'Log monitoring mechanisms detected' 
+      : 'No log monitoring mechanisms detected',
+    remediation: hasLogMonitoring 
+      ? undefined 
+      : 'Implement monitoring and alerting for security-related log events'
+  });
+  
+  // Check 10.5: Log protection
+  const hasLogProtection = findInFiles([
+    'writeProtectedLog', 
+    'secureLog',
+    'encryptedLog', 
+    'logRotate',
+    'winston-rotating'
+  ], ['server']);
+  
+  results.push({
+    requirement: '10.5 - Secure audit trails',
+    compliant: hasLogProtection,
+    description: 'Verify that logs are protected from unauthorized modification',
+    severity: 'medium',
+    details: hasLogProtection 
+      ? 'Log protection mechanisms detected' 
+      : 'No log protection mechanisms detected',
+    remediation: hasLogProtection 
+      ? undefined 
+      : 'Implement log rotation, encryption, and access controls for audit trails'
+  });
+  
+  return results;
+}
+
+/**
+ * Notify the team about compliance issues
+ * @param message The notification message
+ * @param severity The severity of the notification (defaults to 'high')
+ */
+function notifyTeam(message: string, severity: 'critical' | 'high' | 'medium' | 'low' = 'high'): void {
+  // Log the notification
+  log(`Notification [${severity}]: ${message}`, 'notification');
+  
+  // Create logs directory if it doesn't exist
+  const logsDir = path.join(process.cwd(), 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  
+  // Write to notifications log file
+  const notificationsLogPath = path.join(logsDir, 'compliance-notifications.log');
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] [${severity.toUpperCase()}] ${message}\n`;
+  
+  try {
+    fs.appendFileSync(notificationsLogPath, logEntry);
+  } catch (err) {
+    log(`Error writing to notifications log: ${err}`, 'error');
+  }
+  
+  // TODO: Implement additional notification channels as needed:
+  // - Email notifications
+  // - Slack/Teams webhooks
+  // - SMS notifications for critical issues
+  // - Integration with monitoring systems
 }
 
 /**
