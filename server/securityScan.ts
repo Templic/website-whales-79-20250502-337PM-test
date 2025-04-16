@@ -7,6 +7,7 @@
 
 import { log } from './vite';
 import { config } from './config';
+import { runPaymentSecurityScan } from './security/paymentSecurity';
 
 // Track the last scan time
 let lastScanTime: number | null = null;
@@ -46,7 +47,8 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
       scanDependencies(),
       scanExpiredCertificates(),
       scanOutdatedDependencies(),
-      scanCommonVulnerabilities()
+      scanCommonVulnerabilities(),
+      scanPaymentSecurity() // Add payment security scan
     ]);
     
     // Update last scan time

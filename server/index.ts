@@ -27,6 +27,8 @@ const startTime = Date.now();
 
 // Create Express app
 const app = express();
+// Create HTTP server
+const httpServer = createServer(app);
 app.use(cookieParser());
 const csrfProtection = csurf({ cookie: true });
 app.use(csrfProtection);
