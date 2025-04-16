@@ -1,0 +1,916 @@
+{
+  "timestamp": "2025-04-16T18:59:48.165Z",
+  "scanDuration": 821,
+  "scanType": "payment-security",
+  "totalIssues": 113,
+  "criticalIssues": 0,
+  "highIssues": 95,
+  "mediumIssues": 18,
+  "lowIssues": 0,
+  "vulnerabilities": [
+    {
+      "id": "bdfc6cb8-b1e8-4c16-ab6c-8109b8c84189",
+      "severity": "medium",
+      "description": "Potential lack of client-side validation in payment form",
+      "location": "client/src/components/shop/payment/StripeElements.tsx",
+      "recommendation": "Implement client-side validation for payment forms",
+      "pciRequirement": "6.5.7 - Improper input validation"
+    },
+    {
+      "id": "ac1a6b55-ffc9-4452-b50a-58ed2ae2eb1b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/components/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "13c9b295-e110-4090-a232-8d027a77b99e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/components/imported/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "96ce2e5d-bd78-4b70-a33f-2009cc59d03d",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/components/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "376763e7-4257-4813-a708-904979370e1b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/components/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "a4e38615-cfe7-48d7-a0b2-439e62ab5a05",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/pages/CosmicMerchandisePage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "13695e90-5fba-445d-b01d-ef3305568c30",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/pages/EnhancedCommunityPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "0b96352c-6810-488e-b65c-32b24afeb4bd",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/pages/TourPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "db1f1389-136b-49fd-92b2-7171ce651713",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/pages/backups/CosmicMerchandisePage.backup.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "db24f3ef-59c7-45bc-92d1-9c3f2b17c8b2",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/client/src/pages/old-pages/ShopPage_old.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "39ec1ed7-303e-4a72-a622-6f91e2577305",
+      "severity": "medium",
+      "description": "Credit card data in test/mock files",
+      "location": "backups/20250404-190527/client/src/pages/test/demo/CosmicComponentsDemo.tsx",
+      "recommendation": "Use fake data for tests that doesn't resemble real card formats",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "58e79045-46b9-4287-989e-9cd6ed2c1f85",
+      "severity": "medium",
+      "description": "Credit card fields in schema/type definitions",
+      "location": "backups/20250404-190527/client/src/types/cart.ts",
+      "recommendation": "Use tokenized references instead of raw card data in schemas",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "b725cae1-be61-4e42-9067-2d700f8c5013",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/components/community/FeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "5c153c2a-1e0c-4b47-be75-9aedc8d6b392",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/components/shop/CoDesignStudio.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "489ef2ef-db42-4f85-afc5-ec00593c0105",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/components/shop/CosmicCollectibles.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "943166c7-a0ac-4f64-b2a6-aec0a4128974",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/components/shop/ShopProducts.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "d4a89911-ed6f-44fb-b41c-2a649f98bc0f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/pages/Community.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "4d511d46-4378-45c4-815d-edb67a5ea38f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/pages/Index.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "b0922ff4-53ad-49a4-9d9d-7619ca2ffd6b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/pages/Shop.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "583de789-3a00-4275-a8e7-e00e0cbf3574",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/pages/admin/Products.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "17172092-5e51-4396-9db1-70af2c938b63",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/components/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "971e697a-4df3-4cdf-a32b-0c4dcec0d833",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/components/imported/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "7e3441a6-a05c-40d9-8d20-a222119a3bc9",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/components/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "4356331b-2a29-41c5-8c47-4cdcbe03c4c0",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/components/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "3da6e142-94d7-423e-8deb-e7a3dcb2509d",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/CosmicMerchandisePage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "9877e99c-b4e3-44df-a529-c97139007a2c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/EnhancedCommunityPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "073bb860-661d-499e-b01e-58b5de115cf6",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/TourPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "2486a774-2007-4fa7-831f-bc12db019a6e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/backups/CosmicMerchandisePage.backup.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "e251681d-4708-4aa9-a9de-8a6ce4046407",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/old-pages/ShopPage_old.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "182bc253-d319-4c3a-87ee-6a0971daddae",
+      "severity": "medium",
+      "description": "Credit card data in test/mock files",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/test/demo/CosmicComponentsDemo.tsx",
+      "recommendation": "Use fake data for tests that doesn't resemble real card formats",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "4987aaec-3432-483d-a572-7dd25d3e39e8",
+      "severity": "medium",
+      "description": "Credit card fields in schema/type definitions",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/types/cart.ts",
+      "recommendation": "Use tokenized references instead of raw card data in schemas",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "18f1a98c-a051-4c31-8932-87387324ada6",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/components/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "2c2914ff-7920-479d-a2ad-9b028580493c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/components/imported/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "9be47062-3eda-4bd4-a1db-526a68cf116e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/components/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "5ee2ab0d-4c2d-4cd1-b1f5-7167c8e6bb61",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/components/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8c92a56a-0b58-4b98-a807-64a6c13a645e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/CosmicMerchandisePage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "4595f0f3-930f-464a-94ac-6d98ee8a8c22",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/EnhancedCommunityPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "be05a51b-43b5-42fd-a059-2bd5aadcfdd2",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/TourPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "714927c5-9ac7-4a37-8e58-8172f5d16ee1",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/backups/CosmicMerchandisePage.backup.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "a765cde6-2f8b-4172-b2d3-7e7004a30904",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/old-pages/ShopPage_old.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "82bf3e9d-30fd-41c8-acd3-365e061146f9",
+      "severity": "medium",
+      "description": "Credit card data in test/mock files",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/test/demo/CosmicComponentsDemo.tsx",
+      "recommendation": "Use fake data for tests that doesn't resemble real card formats",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "1016cb90-06c1-4df5-acb4-f3b4aa4c9173",
+      "severity": "medium",
+      "description": "Credit card fields in schema/type definitions",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/types/cart.ts",
+      "recommendation": "Use tokenized references instead of raw card data in schemas",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "9bbe8f05-0a8b-4ef5-9439-f9faea2fb1c6",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8097d5f7-b3b2-44c8-9411-1106ff4b4ac5",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "096dfecb-acaf-4ccc-bcdc-b9d7c62cb46c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/features/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "bdec2400-f028-48d1-b6c5-585877f078dc",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/features/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8aa480ea-5fb6-412d-ad71-a44ac09dea7a",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/features/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "03993f53-d3b4-4e18-aa3c-07dfe2fb8503",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "ef4549e8-4f22-43b0-bc7b-11a1371eabd3",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/backup-backup-2025-04-05T00-44-54-849Z/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "d89a483a-1ecb-4f9e-affc-3cdca13066f7",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/imported-components-1743795416675/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "e0aef12c-7f10-4a0e-a65b-dadaf96dc314",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/imported-components-1743811819978/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "3280152f-48a7-44ba-8a11-7cfee15d6040",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "bac3c6bd-edca-4664-9cec-5ecb14b5344e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "65eeadc7-08eb-46b0-8f31-2e492c09857e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/features/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "882ff1b7-ab3d-4174-ad92-7b3e79cc1a79",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/features/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "a81de242-4713-4ced-84fd-6c6a6f438777",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/features/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "bc22b72c-41d8-419f-8c5f-c5d99e71a46e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "e79ecb2f-f5bc-41f2-aca3-c696155feb60",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "backups/pre-consolidation-1743813916298/shop/ProductComparison.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "85dec9f2-97a3-4313-8f2b-6cf1bef2d422",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/community/EnhancedFeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8a0efe44-af60-4a19-8af1-4f0f8eaef6e3",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "ab310512-274c-4c36-9dd7-050c24ff739b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/features/admin/AdminEditorDemo.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "7af60d60-cdc8-4e51-8fbc-318967c5984b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/features/cosmic/SacredGeometry.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "86de146f-e6e3-4c75-a96e-49b43bca46a0",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/features/cosmic/sacred-geometry-visualizer.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "daa2981a-b254-4ce3-9bbd-ec4eb752af4f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/features/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "2cb53249-c611-4798-bde4-923d41a6d04d",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/components/shop/CheckoutForm.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "a050b261-1d76-4b9f-ab09-629de0dbd63f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/data/playlists.ts",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "5647cb13-36c6-45de-9fee-454d647d7e18",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/CheckoutPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8c012333-10a3-443c-81f3-82986bd49cfd",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/CosmicMerchandisePage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "40ac856a-7a32-4df3-9767-873202d113a3",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/EnhancedCommunityPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "92b8e9ab-0d8c-4d55-8c1c-e0b508d0b458",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/TourPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "0eb12a6a-3ff0-4850-a08a-76a92b704f85",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/backups/CosmicMerchandisePage.backup.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "046037f3-39ad-4bc9-af3c-10efdb4b3e26",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/community/EnhancedCommunityPage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "0176a07b-9fb8-43bb-861d-47597359b330",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/music/ArchivedMusic.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "9220ee25-ae7c-429f-a2d3-3e0fb2675c52",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/old-pages/ShopPage_old.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "87f4d65e-7212-4d89-8453-7daa9839c78d",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "client/src/pages/shop/CosmicMerchandisePage.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "9ab1191e-13a3-49ee-8893-c36dcb96e121",
+      "severity": "medium",
+      "description": "Credit card data in test/mock files",
+      "location": "client/src/pages/test/demo/CosmicComponentsDemo.tsx",
+      "recommendation": "Use fake data for tests that doesn't resemble real card formats",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "3726ee3b-32a2-4ec5-8a73-92830a35cc9e",
+      "severity": "medium",
+      "description": "Credit card fields in schema/type definitions",
+      "location": "client/src/types/cart.ts",
+      "recommendation": "Use tokenized references instead of raw card data in schemas",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "dbaec35b-a9ee-435b-81ad-752be39c6e0d",
+      "severity": "medium",
+      "description": "Credit card fields in schema/type definitions",
+      "location": "client/src/types/schemas.ts",
+      "recommendation": "Use tokenized references instead of raw card data in schemas",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "5fd6069f-d400-425c-b63b-4e7c2b6eb186",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "migrations/meta/0000_snapshot.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "88828d9b-20bf-459a-b4bb-7146741f6fbc",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "migrations/meta/_journal.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "82a6bdc6-b647-46e9-8061-d9dbe8c8358c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "reports/audits/audit-2025-04-16T18-21-38.417Z.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "0617162e-4f7f-429d-95aa-d3e4bbf3685e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "reports/audits/audit-2025-04-16T18-22-02.376Z.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "59153ba7-e1d9-449d-8cf7-8d07c292784f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "reports/audits/audit-2025-04-16T18-22-18.124Z.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "870d8008-cd10-4881-a489-7607f12e878c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "reports/consolidation-plan.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "bd847c03-dbfd-4388-9a87-ad25152ffc91",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "reports/similar-components.json",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "238c5ec6-48e2-4335-b293-a77093507625",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "scripts/component-merge-tools/enhanced-merge-components.js",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "1f2c4b51-323c-4dd3-b95b-f52dc87a1791",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "scripts/enhanced-merge-components.js",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "aebe1b16-b914-4dea-80a8-424e7b0cf1cc",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "scripts/merge-imported-components.js",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "1616ba79-8c52-4f22-a112-3254312f9581",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "scripts/payment-security-scan.js",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "eebec03c-574a-46fa-9c54-d9bfbb36802f",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "server/security/paymentSecurity.ts",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "2209ee3f-b62d-41d9-b978-6144bd1a1e1c",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "server/security/pciComplianceChecker.ts",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "52f1ad20-c7a3-49d1-a1ba-e6447f102efd",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "server/storage.ts",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "d10ac245-0985-4931-a73f-2284b730178b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/components/community/FeaturedContent.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "4a3ef204-a795-4526-8e57-765cebbaa6a5",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/components/shop/CoDesignStudio.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "fe554149-02f4-4a6c-95ba-87545d18841e",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/components/shop/CosmicCollectibles.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "d4eca2ef-e73f-4da7-a132-bffb82d6bb92",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/components/shop/ShopProducts.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "085c0b75-ad42-476e-abd4-9c9b063807c0",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/pages/Community.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "90d794d2-0b09-4200-96ff-5c3743106b1b",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/pages/Index.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "f716c767-289c-4ecb-857e-ec904970fe88",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/pages/Shop.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "418a92cd-506d-46b2-8fd9-7b8cdbfe69b1",
+      "severity": "high",
+      "description": "Potential credit card data handling detected",
+      "location": "uploads/cosmic-community-connect-main/src/pages/admin/Products.tsx",
+      "recommendation": "Use Stripe Elements and never handle raw card data",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "2b8336ce-ed2f-4112-ae64-9ef36cdc870c",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "backups/20250404-190527/client/src/pages/CheckoutPage.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "fa2eadea-17c1-4ca7-8c35-f1b98a01e491",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "backups/20250404-190527/uploads/cosmic-community-connect-main/src/components/shop/SampleOrder.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "a47091ad-6432-4c41-b669-6b6123bc95c4",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "backups/backup-2025-04-04T19-21-20-139Z/client/src/pages/CheckoutPage.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "eb722b79-92ee-4db7-9923-9afa0dba22b5",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "backups/backup-2025-04-04T19-23-55-690Z/client/src/pages/CheckoutPage.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "d7274f25-b541-45f8-9a09-5a853e8ca549",
+      "severity": "high",
+      "description": "Potential storage of payment tokens in localStorage",
+      "location": "client/src/pages/CheckoutPage.tsx",
+      "recommendation": "Never store payment tokens in localStorage, use secure server-side storage",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "8ce74742-9a99-49ad-85c5-09cff5626d4b",
+      "severity": "high",
+      "description": "Potential storage of payment tokens in localStorage",
+      "location": "client/src/pages/shop/CartPage.tsx",
+      "recommendation": "Never store payment tokens in localStorage, use secure server-side storage",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "bbafcc23-354a-4001-8a89-95ed35ac3ac5",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "client/src/pages/shop/CheckoutPage.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "a134418d-d0d3-4e40-9558-eb1f9a1a3fcd",
+      "severity": "high",
+      "description": "Potential exposure of payment tokens in URL",
+      "location": "client/src/pages/shop/OrderConfirmationPage.tsx",
+      "recommendation": "Never include payment tokens in URLs",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "05581a83-a1b0-43d3-8eda-fb11954a0c75",
+      "severity": "high",
+      "description": "Potential storage of payment tokens in localStorage",
+      "location": "scripts/payment-security-scan.js",
+      "recommendation": "Never store payment tokens in localStorage, use secure server-side storage",
+      "pciRequirement": "3.2 - Do not store sensitive authentication data after authorization"
+    },
+    {
+      "id": "6373e0c2-b993-4a16-8c57-5dbd7140b162",
+      "severity": "high",
+      "description": "Potential exposure of payment tokens in URL",
+      "location": "scripts/payment-security-scan.js",
+      "recommendation": "Never include payment tokens in URLs",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "c79c8002-f8b3-4f15-ac73-fd44a3854568",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "scripts/payment-security-scan.js",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "d179bfe7-3ba8-481e-9102-346f43373179",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "server/security/pciComplianceChecker.ts",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    },
+    {
+      "id": "7dea2e61-be1b-414a-bb7a-02fd4dd8407b",
+      "severity": "medium",
+      "description": "Potential logging or insecure handling of payment method",
+      "location": "uploads/cosmic-community-connect-main/src/components/shop/SampleOrder.tsx",
+      "recommendation": "Avoid logging payment tokens or methods",
+      "pciRequirement": "4.2 - Never send unprotected PANs by end-user messaging technologies"
+    }
+  ]
+}
