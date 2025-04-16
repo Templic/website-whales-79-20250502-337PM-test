@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
+import paymentLogger, { PaymentEventType, LogLevel } from './security/paymentTransactionLogger';
 
 const router = express.Router();
 
@@ -58,6 +59,16 @@ router.post('/create-intent', async (req: Request, res: Response) => {
       },
     });
 
+    // Log payment intent creation (PCI DSS Requirement 10.2)
+    paymentLogger.logPaymentIntentCreated(
+      'stripe',
+      amount,
+      currency,
+      metadata?.userId,
+      metadata?.customer_email,
+      metadata
+    );
+
     // Return client secret to frontend
     return res.json({
       success: true,
@@ -65,6 +76,22 @@ router.post('/create-intent', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error creating payment intent:', error);
+    
+    // Log payment error (PCI DSS Requirement 10.2)
+    paymentLogger.logTransaction(
+      PaymentEventType.PAYMENT_FAILED,
+      LogLevel.ERROR,
+      {
+        gatewayType: 'stripe',
+        status: 'failed',
+        errorMessage: error.message || 'Unknown error',
+        errorCode: error.code,
+        amount: req.body?.amount,
+        currency: req.body?.currency || 'usd',
+        metadata: req.body?.metadata,
+      }
+    );
+    
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to create payment intent',
@@ -98,17 +125,47 @@ router.post('/confirm', async (req: Request, res: Response) => {
     // In a real application, you would retrieve the order from the database
     // and validate that it exists and the payment status is appropriate
     
-    // Mock confirmation response for now
+    // For simulation purposes, we'll create a mock order
+    const mockOrder = {
+      id: orderId,
+      amount: 2500, // This would come from the database in a real app
+      currency: 'usd',
+      status: 'paid',
+      paymentId: paymentMethodId,
+    };
+    
+    // Log successful payment (PCI DSS Requirement 10.2)
+    paymentLogger.logPaymentSucceeded(
+      'stripe',
+      paymentMethodId,
+      mockOrder.amount,
+      mockOrder.currency,
+      req.body.userId,
+      req.body.email,
+      orderId
+    );
+    
+    // Return the mock order
     return res.json({
       success: true,
-      order: {
-        id: orderId,
-        status: 'paid',
-        paymentId: paymentMethodId,
-      },
+      order: mockOrder,
     });
   } catch (error: any) {
     console.error('Error confirming payment:', error);
+    
+    // Log payment failure (PCI DSS Requirement 10.2)
+    paymentLogger.logPaymentFailed(
+      'stripe',
+      paymentMethodId || 'unknown',
+      req.body.amount || 0,
+      req.body.currency || 'usd',
+      error.code,
+      error.message || 'Unknown error',
+      req.body.userId,
+      req.body.email,
+      orderId
+    );
+    
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to confirm payment',
