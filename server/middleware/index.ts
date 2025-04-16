@@ -36,14 +36,14 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co https://www.youtube.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co https://www.youtube.com https://js.stripe.com; " +
         "style-src 'self' 'unsafe-inline'; " +
         "img-src 'self' data: blob: https://i.ytimg.com; " +
-        "connect-src 'self' wss: ws:; " +
+        "connect-src 'self' wss: ws: https://api.stripe.com; " +
         "font-src 'self' data:; " +
         "object-src 'none'; " +
         "media-src 'self' https://www.youtube.com; " +
-        "frame-src 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com https://www.google.com https://*.google.com;"
+        "frame-src 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com https://www.google.com https://*.google.com https://js.stripe.com https://hooks.stripe.com;"
       );
     next();
   });
