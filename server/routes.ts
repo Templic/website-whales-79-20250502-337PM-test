@@ -28,6 +28,8 @@ import {
   passwordRecoveryValidation,
   passwordResetValidation
 } from './validation';
+import secureApiRoutes from './routes/secureApiRoutes';
+import { verifyApiSecurity } from './security/apiSecurityVerification';
 import {
   insertSubscriberSchema,
   insertPostSchema,
@@ -113,6 +115,38 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use media routes
   app.use(mediaRoutes);
+  
+  // Use secure API routes with comprehensive security checks
+  app.use('/api/secure', secureApiRoutes);
+  
+  // Register API security verification endpoint (admin only)
+  app.get('/api/security/verify-api', async (req, res) => {
+    // Only allow admins to run the verification
+    if (!req.isAuthenticated || !req.isAuthenticated() || 
+        (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Admin access required' 
+      });
+    }
+    
+    try {
+      // Run the API security verification
+      const results = await verifyApiSecurity();
+      
+      res.json({
+        success: true,
+        results: results,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error running API security verification:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Error running API security verification'
+      });
+    }
+  });
 
   // Get current user endpoint
   app.get('/api/user', (req, res) => {
