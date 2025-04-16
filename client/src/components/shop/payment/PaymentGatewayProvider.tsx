@@ -3,11 +3,10 @@ import { Loader2 } from 'lucide-react';
 
 // Import payment gateway providers
 import StripeProvider from './StripeProvider';
-// Future imports will go here as they're implemented
-// import PayPalProvider from './PayPalProvider';
-// import BitPayProvider from './BitPayProvider';
-// import OpenNodeProvider from './OpenNodeProvider';
-// import CoinbaseProvider from './CoinbaseProvider';
+import PayPalProvider from './PayPalProvider';
+import BitPayProvider from './BitPayProvider';
+import OpenNodeProvider from './OpenNodeProvider';
+import CoinbaseProvider from './CoinbaseProvider';
 
 interface PaymentGatewayProviderProps {
   gateway: string;
@@ -79,27 +78,49 @@ export default function PaymentGatewayProvider({
       return <StripeProvider clientSecret={clientSecret}>{children}</StripeProvider>;
     
     case 'paypal':
-      // PayPal implementation will go here
+      // Use secure PayPal provider
       return (
-        <div className="flex flex-col items-center justify-center p-6 space-y-4 border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 rounded-lg">
-          <div className="text-amber-800 dark:text-amber-300 text-center">
-            <p className="font-medium">PayPal Integration Coming Soon</p>
-            <p className="text-sm mt-2">This payment method is currently in development.</p>
-          </div>
-        </div>
+        <PayPalProvider 
+          orderId={`test-${Date.now()}`} // This would be a real order ID in production
+          amount={amount}
+          currency={currency}
+        >
+          {children}
+        </PayPalProvider>
       );
     
     case 'bitpay':
-    case 'opennode':
-    case 'coinbase':
-      // Crypto payment implementations will go here
+      // Use secure BitPay provider
       return (
-        <div className="flex flex-col items-center justify-center p-6 space-y-4 border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20 rounded-lg">
-          <div className="text-amber-800 dark:text-amber-300 text-center">
-            <p className="font-medium">Crypto Payment Integration Coming Soon</p>
-            <p className="text-sm mt-2">This payment method is currently in development.</p>
-          </div>
-        </div>
+        <BitPayProvider 
+          invoiceId={`test-${Date.now()}`} // This would be a real invoice ID in production
+        >
+          {children}
+        </BitPayProvider>
+      );
+      
+    case 'opennode':
+      // Use secure OpenNode provider
+      return (
+        <OpenNodeProvider
+          chargeId={`test-${Date.now()}`} // This would be a real charge ID in production
+          amount={amount}
+          currency={currency}
+        >
+          {children}
+        </OpenNodeProvider>
+      );
+      
+    case 'coinbase':
+      // Use secure Coinbase provider
+      return (
+        <CoinbaseProvider
+          chargeCode={`test-${Date.now()}`} // This would be a real charge code in production
+          amount={amount}
+          currency={currency}
+        >
+          {children}
+        </CoinbaseProvider>
       );
     
     default:
