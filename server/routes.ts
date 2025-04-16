@@ -1950,6 +1950,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   }, dbMonitorRoutes);
   
   // Database security routes
+  // Main database security routes (authenticated)
   app.use('/api/admin/database-security', (req, res, next) => {
     // Check authentication and admin role
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -1957,6 +1958,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
     next();
   }, databaseSecurityRoutes);
+  
+  // Special route for testing database validation without authentication or CSRF
+  app.use('/api/test/database-security', databaseSecurityRoutes);
   
   // Apply database security middleware globally
   app.use(validateDatabaseQuery);

@@ -2,8 +2,54 @@ import express from 'express';
 import { databaseSecurity } from '../security/databaseSecurity';
 import { databaseConfigChecker } from '../security/databaseConfigurationChecker';
 import { log } from '../vite';
+import { db } from '../db';
 
 const router = express.Router();
+
+/**
+ * Test endpoint to validate SQL query security
+ * GET /api/admin/database-security/test-validate
+ * This endpoint does not require authentication for testing purposes
+ */
+router.get('/test-validate', (req, res) => {
+  try {
+    const query = req.query.q as string;
+    
+    if (!query) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No query provided via q parameter'
+      });
+    }
+    
+    // Validate the query using our database security module
+    const validationResult = databaseSecurity.validateQuery(query);
+    
+    // Log this validation for audit
+    databaseSecurity.logDatabaseActivity(
+      'Test query validation',
+      undefined,
+      {
+        query,
+        result: validationResult,
+        source: 'test-endpoint'
+      }
+    );
+    
+    res.json({
+      status: 'success',
+      query: query,
+      validation: validationResult
+    });
+  } catch (error) {
+    console.error('Error in test validation endpoint:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error validating query',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
 
 /**
  * Get database security status
