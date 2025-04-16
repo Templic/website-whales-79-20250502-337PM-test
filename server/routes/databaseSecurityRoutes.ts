@@ -1,5 +1,4 @@
 import express from 'express';
-import { checkAuth, requireAdmin, requireSuperAdmin } from '../middleware';
 import { databaseSecurity } from '../security/databaseSecurity';
 import { databaseConfigChecker } from '../security/databaseConfigurationChecker';
 import { log } from '../vite';
@@ -10,7 +9,7 @@ const router = express.Router();
  * Get database security status
  * GET /api/admin/database-security/status
  */
-router.get('/status', checkAuth, requireAdmin, async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
     // Check database connection security
     const connectionSecurity = await databaseSecurity.verifyConnectionSecurity();
@@ -40,7 +39,7 @@ router.get('/status', checkAuth, requireAdmin, async (req, res) => {
  * Run database security configuration check
  * POST /api/admin/database-security/check-configuration
  */
-router.post('/check-configuration', checkAuth, requireSuperAdmin, async (req, res) => {
+router.post('/check-configuration', async (req, res) => {
   try {
     log('Running database security configuration check...', 'database-security');
     
@@ -67,7 +66,7 @@ router.post('/check-configuration', checkAuth, requireSuperAdmin, async (req, re
  * Get database security audit logs
  * GET /api/admin/database-security/logs
  */
-router.get('/logs', checkAuth, requireAdmin, async (req, res) => {
+router.get('/logs', async (req, res) => {
   try {
     // Get query parameters
     const days = parseInt(req.query.days as string) || 7;
@@ -112,7 +111,7 @@ router.get('/logs', checkAuth, requireAdmin, async (req, res) => {
  * Validate a SQL query for security risks
  * POST /api/admin/database-security/validate-query
  */
-router.post('/validate-query', checkAuth, requireAdmin, (req, res) => {
+router.post('/validate-query', (req, res) => {
   try {
     const { query } = req.body;
     
@@ -155,7 +154,7 @@ router.post('/validate-query', checkAuth, requireAdmin, (req, res) => {
  * Get the latest database configuration report
  * GET /api/admin/database-security/configuration-report
  */
-router.get('/configuration-report', checkAuth, requireAdmin, (req, res) => {
+router.get('/configuration-report', (req, res) => {
   try {
     const fs = require('fs');
     const path = require('path');

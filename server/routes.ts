@@ -13,6 +13,7 @@ import { eq, sql } from "drizzle-orm";
 import { nanoid } from 'nanoid';
 import { validate } from './middlewares/validationMiddleware';
 import { body } from 'express-validator'; // Add body to imports
+import { validateDatabaseQuery, sanitizeDatabaseParams } from './middleware/databaseQueryValidator';
 import { 
   contactValidation, 
   newsletterValidation, 
@@ -87,7 +88,6 @@ import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
-import { validateDatabaseQuery, sanitizeDatabaseParams } from './middleware/databaseQueryValidator';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -1948,6 +1948,19 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     }
     next();
   }, dbMonitorRoutes);
+  
+  // Database security routes
+  app.use('/api/admin/database-security', (req, res, next) => {
+    // Check authentication and admin role
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      return res.status(403).json({ message: "Unauthorized: Admin access required" });
+    }
+    next();
+  }, databaseSecurityRoutes);
+  
+  // Apply database security middleware globally
+  app.use(validateDatabaseQuery);
+  app.use(sanitizeDatabaseParams);
 
   // Shop routes
   const router = express.Router();
