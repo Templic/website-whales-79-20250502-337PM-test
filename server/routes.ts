@@ -72,14 +72,17 @@ import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
 import { handleSecurityLog, rotateSecurityLogs, logSecurityEvent } from './security/security';
 import { runSecurityScan } from './securityScan';
+import { runAuthSecurityScan } from './security/authSecurityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
 import authRoutes from './routes/authRoutes';
+import jwtAuthRoutes from './routes/jwtAuthRoutes';
 import contentRoutes from './routes/content';
 import contentWorkflowRoutes from './routes/content-workflow';
 import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search';
+import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -100,6 +103,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Use authRoutes for all /api/auth routes
   app.use('/api/auth', authRoutes);
+  
+  // Use JWT auth routes for token-based API authentication
+  app.use('/api/jwt', jwtAuthRoutes);
   
   // Use search routes
   app.use(searchRoutes);
@@ -908,7 +914,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Security scan endpoint
+  // General security scan endpoint
   app.get("/api/security/scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       logSecurityEvent({
@@ -942,6 +948,47 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.error('Error running security scan:', error);
       res.status(500).json({
         message: 'Failed to run security scan',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+  
+  // Authentication security scan endpoint
+  app.get("/api/security/auth-scan", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
+      logSecurityEvent({
+        type: 'UNAUTHORIZED_ATTEMPT',
+        setting: 'AUTH_SECURITY_SCAN',
+        timestamp: new Date().toISOString(),
+        ip: req.ip || '0.0.0.0',
+        userAgent: req.headers['user-agent'] || 'Unknown',
+        path: '/api/security/auth-scan',
+        method: 'GET'
+      });
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const authScanResults = await runAuthSecurityScan();
+
+      res.json({
+        message: 'Authentication security scan completed successfully',
+        timestamp: authScanResults.timestamp,
+        summary: {
+          totalIssues: authScanResults.totalIssues,
+          criticalIssues: authScanResults.criticalIssues,
+          highIssues: authScanResults.highIssues,
+          mediumIssues: authScanResults.mediumIssues,
+          lowIssues: authScanResults.lowIssues
+        },
+        vulnerabilities: authScanResults.vulnerabilities,
+        securityRating: authScanResults.criticalIssues === 0 ? 
+          (authScanResults.highIssues === 0 ? 'A' : 'B') : 'C'
+      });
+    } catch (error) {
+      console.error('Error running authentication security scan:', error);
+      res.status(500).json({
+        message: 'Failed to run authentication security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

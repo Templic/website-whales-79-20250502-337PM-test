@@ -45,8 +45,8 @@ export function generateAccessToken(user: Partial<User>, expiresIn = DEFAULT_ACC
 
   // Sign with secret and configuration options
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn,
-    algorithm: 'HS512', // Use a strong algorithm
+    expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
+    algorithm: 'HS512' as jwt.Algorithm, // Use a strong algorithm
     audience: 'cosmic-app-api',
     issuer: 'cosmic-app',
   });
@@ -62,8 +62,8 @@ export function generateRefreshToken(userId: number, expiresIn = DEFAULT_REFRESH
   };
 
   return jwt.sign(payload, REFRESH_TOKEN_SECRET, {
-    expiresIn,
-    algorithm: 'HS512',
+    expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
+    algorithm: 'HS512' as jwt.Algorithm,
     audience: 'cosmic-app-refresh',
     issuer: 'cosmic-app',
   });

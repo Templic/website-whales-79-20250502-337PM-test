@@ -7,6 +7,8 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { logSecurityEvent } from "./security";
+import { initJwtSecrets } from "./security/jwt";
+import { sessionMonitor, passwordChangeRequired } from "./security/sessionMonitor";
 
 // Extend session type to include our custom properties
 declare module 'express-session' {
@@ -17,6 +19,28 @@ declare module 'express-session' {
       userAgent?: string;
       ip?: string;
       logoutTime?: Date;
+    };
+    // For multi-factor authentication
+    twoFactorAuth?: {
+      userId: number;
+      twoFactorPending: boolean;
+      rememberDevice?: boolean;
+    };
+    // For two-factor setup
+    twoFactorSetup?: {
+      secret: string;
+      backupCodes: string[];
+    };
+    // For security monitoring
+    securityContext?: {
+      loginTime: Date;
+      lastPasswordChange?: Date;
+      passwordExpiry?: Date;
+      securityEvents: Array<{
+        type: string;
+        timestamp: Date;
+        details?: string;
+      }>;
     };
   }
 }
@@ -36,17 +60,32 @@ export async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+// Export comparePasswords to be used by other modules
+export async function comparePasswords(supplied: string, stored: string) {
+  // Handle empty passwords or malformed hash
+  if (!supplied || !stored || !stored.includes('.')) {
+    return false;
+  }
+  
+  try {
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
   
+  // Initialize JWT secrets
+  initJwtSecrets();
+  
+  // Enhanced session settings with additional security options
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
@@ -63,11 +102,21 @@ export function setupAuth(app: Express) {
     name: 'cosmic_session', // Custom session ID name, not revealing our stack
     proxy: true, // Trust the reverse proxy
     rolling: true, // Force cookie to be set on every response
+    unset: 'destroy', // Makes sure session is truly destroyed on req.session = null
   };
   
   // Log the use of a dynamic session secret
   if (!process.env.SESSION_SECRET) {
     console.log('Generated dynamic session secret for this instance');
+    
+    // Log security warning about using a dynamic secret in production
+    if (process.env.NODE_ENV === 'production') {
+      logSecurityEvent({
+        type: 'DYNAMIC_SECRET_WARNING',
+        details: 'Using a dynamically generated session secret in production. Sessions will be invalidated on server restart.',
+        severity: 'high'
+      });
+    }
   }
 
   app.set("trust proxy", 1);
@@ -75,7 +124,10 @@ export function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Session analytics middleware
+  // Apply session monitoring middleware
+  app.use(sessionMonitor);
+  
+  // Enhanced session analytics middleware
   app.use((req, res, next) => {
     if (req.session) {
       // Update last activity timestamp
@@ -83,6 +135,24 @@ export function setupAuth(app: Express) {
 
       // Record analytics if session is authenticated
       if (req.isAuthenticated()) {
+        // Initialize security context if not present
+        if (!req.session.securityContext) {
+          req.session.securityContext = {
+            loginTime: new Date(),
+            securityEvents: []
+          };
+        }
+        
+        // Check if password change is required
+        if (passwordChangeRequired(req.user)) {
+          // Add a security event to notify about required password change
+          req.session.securityContext.securityEvents.push({
+            type: 'PASSWORD_CHANGE_REQUIRED',
+            timestamp: new Date(),
+            details: 'Password change required due to age or policy'
+          });
+        }
+        
         req.session.analytics = {
           ...req.session.analytics,
           lastAccess: new Date(),
