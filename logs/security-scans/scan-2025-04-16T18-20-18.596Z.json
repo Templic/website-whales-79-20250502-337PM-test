@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-04-16T18:20:18.596Z",
+  "scanDuration": 4110,
+  "scanType": "quick",
+  "totalIssues": 2,
+  "criticalIssues": 0,
+  "highIssues": 2,
+  "mediumIssues": 0,
+  "lowIssues": 0,
+  "vulnerabilities": [
+    {
+      "id": "d6ec0d26-f2c8-46b7-bd59-504716357f1e",
+      "severity": "high",
+      "description": "Potential hardcoded secret detected",
+      "location": "client/src/components/admin/AdminEditor.tsx",
+      "recommendation": "Move secrets to environment variables or a secure secret management system"
+    },
+    {
+      "id": "a15b09b2-3659-4506-86d4-664b5770aa42",
+      "severity": "high",
+      "description": "No CSRF protection found",
+      "recommendation": "Implement CSRF protection using csurf middleware for all state-changing endpoints"
+    }
+  ]
+}

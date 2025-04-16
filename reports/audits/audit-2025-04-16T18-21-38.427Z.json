@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-04-16T18:21:38.427Z",
+  "auditType": "owasp",
+  "error": "Command failed: node scripts/security-audit.js --owasp",
+  "owaspFindings": [],
+  "generalFindings": [],
+  "npmAudit": null,
+  "summary": {
+    "criticalIssues": 0,
+    "highIssues": 0,
+    "mediumIssues": 0,
+    "lowIssues": 0
+  }
+}

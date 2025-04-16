@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-04-16T18:21:59.118Z",
+  "scanType": "quick",
+  "error": "Command failed: node scripts/security-scan.js --quick",
+  "totalIssues": 0,
+  "criticalIssues": 0,
+  "highIssues": 0,
+  "mediumIssues": 0,
+  "lowIssues": 0,
+  "vulnerabilities": []
+}
