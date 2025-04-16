@@ -164,15 +164,25 @@ async function checkPathTraversal(dir) {
     const normalizedPath = path.normalize(dir);
     const resolvedPath = path.resolve(normalizedPath);
     
-    // Check if normalization changed the path (could indicate potential issues)
-    if (normalizedPath !== dir) {
+    // Check for suspicious path patterns
+    const suspiciousPatterns = [
+      '..', // Path traversal attempt
+      '~',  // Home directory reference
+      '%',  // URL encoding
+      '\0', // Null byte
+      '\\', // Windows path separator (suspicious in Unix)
+    ];
+    
+    const hasSuspiciousPattern = suspiciousPatterns.some(pattern => dir.includes(pattern));
+    
+    if (hasSuspiciousPattern) {
       results.warnings++;
-      console.log(`${colors.yellow}⚠ WARNING${colors.reset} Directory path ${dir} contains unusual path elements: ${normalizedPath}`);
+      console.log(`${colors.yellow}⚠ WARNING${colors.reset} Directory path ${dir} contains suspicious path elements`);
       console.log(`  ${colors.yellow}Recommendation:${colors.reset} Use plain directory paths without special sequences`);
       return { 
         success: false, 
         warning: true, 
-        message: `Path contains unusual elements: ${dir} -> ${normalizedPath}` 
+        message: `Path contains suspicious elements: ${dir}` 
       };
     } else {
       results.passed++;
@@ -195,10 +205,14 @@ async function checkWorldWritable(dir) {
   results.total++;
   
   try {
-    const { stdout } = await execAsync(`ls -ld "${dir}"`);
+    const stats = await fs.promises.stat(dir);
+    const mode = stats.mode;
     
-    // Check if the "other" permission contains 'w'
-    const worldWritable = stdout.includes('w-') || stdout.includes('wx');
+    // Extract the "other" permissions (last 3 bits)
+    const otherPerms = mode & 0o007;
+    
+    // Check if write permission bit is set for "other" (0o002)
+    const worldWritable = (otherPerms & 0o002) !== 0;
     
     if (worldWritable) {
       results.failed++;

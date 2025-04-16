@@ -1,242 +1,271 @@
-# File Upload Security: Quick Start Guide
+# File Upload Security Quick Start Guide
 
-This guide provides a concise introduction to using the enhanced file upload security module in your application.
+This guide provides a quick introduction to implementing secure file uploads in your application using our enhanced security module.
 
-## Basic Usage
+## Basic Implementation
 
-### Step 1: Import the validation function
+### Step 1: Configure Express-Fileupload Middleware
 
 ```typescript
-import { validateUploadedFile } from '../security/fileUploadSecurity';
+import express from 'express';
+import fileUpload from 'express-fileupload';
+import { cleanupTempFiles } from '../security/fileUploadSecurity';
+
+const app = express();
+
+// Configure the fileUpload middleware with secure defaults
+app.use(fileUpload({
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  useTempFiles: true,
+  tempFileDir: './tmp/uploads/',
+  abortOnLimit: true,
+  safeFileNames: true,
+  preserveExtension: true,
+  debug: process.env.NODE_ENV === 'development'
+}));
+
+// Set up automatic temporary file cleanup (runs every hour)
+cleanupTempFiles('./tmp/uploads', { maxAgeHours: 1 });
 ```
 
-### Step 2: Validate uploaded files
+### Step 2: Create a Secure Upload Endpoint
 
 ```typescript
-app.post('/api/upload', async (req, res) => {
+import { Router } from 'express';
+import { validateUploadedFile } from '../security/fileUploadSecurity';
+import path from 'path';
+import fs from 'fs';
+
+const router = Router();
+
+router.post('/upload', async (req, res) => {
   try {
-    // Check if files were uploaded
-    if (!req.files || !req.files.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    // Check if file was uploaded
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({ error: 'No file was uploaded' });
     }
     
-    const file = req.files.file as fileUpload.UploadedFile;
+    const file = req.files.file;
     
-    // Validate the file with security checks
+    // Use the security module to validate the file
     const { sanitizedFileName, fileMetadata } = await validateUploadedFile(file, {
-      // Specify only image file types for this context
-      allowedCategories: ['image'],
-      // Add user context for better security logs
-      userId: req.user?.id || 'anonymous',
-      context: 'profile-image-upload'
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+      maxSizeBytes: 5 * 1024 * 1024, // 5MB
+      context: 'document-upload'
     });
     
-    // Move the validated file to permanent storage
-    const uploadPath = path.join('./uploads/images', sanitizedFileName);
+    // Create the destination directory if it doesn't exist
+    const uploadDir = './uploads/documents';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    // Move the file to the uploads directory
+    const uploadPath = path.join(uploadDir, sanitizedFileName);
     await file.mv(uploadPath);
     
-    // Store metadata for tracking and auditing
-    await storeFileMetadata({
-      ...fileMetadata,
-      userId: req.user?.id,
-      uploadPath,
-      purpose: 'profile-image'
-    });
-    
-    return res.status(200).json({ 
-      success: true, 
+    // Return success response
+    res.json({
+      success: true,
       fileName: sanitizedFileName,
-      fileHash: fileMetadata.hash
+      filePath: uploadPath,
+      fileType: fileMetadata.mimeType,
+      fileSize: fileMetadata.fileSize,
+      securityChecks: fileMetadata.securityChecks
     });
   } catch (error) {
-    console.error('File upload error:', error);
-    return res.status(400).json({ 
-      error: error instanceof Error ? error.message : 'File upload failed' 
+    // Handle error
+    console.error('Upload error:', error);
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'File upload failed'
     });
   }
 });
+
+export default router;
 ```
 
-## Configuration
+## Validation Options
 
-### Setting custom configuration
-
-You can configure the security module with custom settings:
+The `validateUploadedFile` function accepts the following options to customize validation behavior:
 
 ```typescript
-import { setFileUploadSecurityConfig } from '../security/fileUploadSecurity';
-
-// Set custom configuration
-setFileUploadSecurityConfig({
-  maxFileSize: 10 * 1024 * 1024, // 10MB
-  minFileSize: 100, // 100 bytes minimum
-  validateSvgContent: true,
-  secureRandomFilenames: true,
-  logAllUploads: true,
-  quotaConfig: {
-    maxDailyUploads: 50,
-    maxWeeklyStorageBytes: 500 * 1024 * 1024, // 500MB
-    cooldownPeriodMs: 1000,
-    burstLimit: 5,
-    burstWindowMs: 60000
-  }
-});
-```
-
-## Security Best Practices
-
-1. **Specify upload context**: Always limit allowed file categories to only what's needed
-   ```typescript
-   // For profile images, only allow images
-   allowedCategories: ['image']
-   
-   // For documents, only allow document types
-   allowedCategories: ['document']
-   ```
-
-2. **Store metadata**: Always store security metadata for auditing
-   ```typescript
-   // In your database, store:
-   fileMetadata.hash       // For integrity verification
-   fileMetadata.mimeType   // The validated MIME type
-   fileMetadata.fileSize   // File size in bytes
-   ```
-
-3. **Use secure download headers**: When serving files, set security headers
-   ```typescript
-   res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
-   res.setHeader('X-Content-Type-Options', 'nosniff');
-   ```
-
-4. **Verify file integrity**: When serving files, verify their integrity
-   ```typescript
-   const fileData = await fs.promises.readFile(filePath);
-   const currentHash = crypto.createHash('sha256').update(fileData).digest('hex');
-   
-   if (currentHash !== storedHash) {
-     // File has been modified, potential security issue
-     logSecurityEvent('FILE_INTEGRITY_FAILURE', { filePath, storedHash, currentHash });
-     return res.status(400).send('File integrity check failed');
-   }
-   ```
-
-5. **Implement quota checks**: Prevent abuse with custom quota checks
-   ```typescript
-   // Before validating the file
-   const userUploadsToday = await getUserUploadCount(userId, { period: 'day' });
-   if (userUploadsToday >= config.quotaConfig.maxDailyUploads) {
-     return res.status(429).json({ error: 'Daily upload limit reached' });
-   }
-   ```
-
-## Common File Upload Patterns
-
-### Handling multiple files
-
-```typescript
-app.post('/api/upload/multiple', async (req, res) => {
-  try {
-    if (!req.files) {
-      return res.status(400).json({ error: 'No files uploaded' });
-    }
-    
-    const results = [];
-    const errors = [];
-    
-    // Handle files as an array
-    const files = Array.isArray(req.files.files) 
-      ? req.files.files 
-      : [req.files.files];
-    
-    for (const file of files) {
-      try {
-        const { sanitizedFileName, fileMetadata } = await validateUploadedFile(file, {
-          allowedCategories: ['image', 'document'],
-          userId: req.user?.id
-        });
-        
-        const uploadPath = path.join('./uploads/gallery', sanitizedFileName);
-        await file.mv(uploadPath);
-        
-        results.push({ 
-          originalName: file.name,
-          savedAs: sanitizedFileName,
-          size: fileMetadata.fileSize,
-          type: fileMetadata.mimeType
-        });
-      } catch (fileError) {
-        errors.push({
-          filename: file.name,
-          error: fileError instanceof Error ? fileError.message : 'Validation failed'
-        });
-      }
-    }
-    
-    return res.status(200).json({ results, errors });
-  } catch (error) {
-    return res.status(500).json({ error: 'File upload processing failed' });
-  }
-});
-```
-
-### Custom file type validation
-
-```typescript
-// For specialized validation needs
-const { sanitizedFileName, fileMetadata } = await validateUploadedFile(file, {
-  // Allow only audio files
-  allowedCategories: ['audio'],
+interface FileValidationOptions {
+  // File type restrictions
+  allowedMimeTypes?: string[];          // List of allowed MIME types (e.g., 'image/png')
+  allowedExtensions?: string[];         // List of allowed extensions (e.g., '.png')
+  allowedCategories?: string[];         // List of allowed file categories ('image', 'document', 'audio', etc.)
   
-  // Validation context for metadata
-  context: 'podcast-upload',
-  userId: req.user?.id,
+  // Size restrictions
+  minSizeBytes?: number;                // Minimum file size in bytes
+  maxSizeBytes?: number;                // Maximum file size in bytes
   
-  // Skip malware scan for audio (if needed)
-  skipMalwareScan: true
-});
-
-// Custom secondary validation
-if (fileMetadata.mimeType === 'audio/mpeg' && file.size > 20 * 1024 * 1024) {
-  throw new Error('MP3 files must be under 20MB');
+  // Filename restrictions
+  disallowedPatterns?: RegExp[];        // Patterns to block in filenames
+  preserveOriginalExtension?: boolean;  // Whether to keep the original extension
+  randomizeFileName?: boolean;          // Whether to generate a random filename
+  filenameMaxLength?: number;           // Maximum length of the filename
+  
+  // Advanced security options
+  performDeepInspection?: boolean;      // Perform additional content analysis
+  scanForMalware?: boolean;             // Scan for malicious content (if available)
+  
+  // Metadata fields (for audit and tracking)
+  userId?: string | number;             // ID of the user uploading the file
+  context?: string;                     // Context of the upload (e.g., 'profile-picture')
 }
 ```
 
-## Testing File Upload Security
+## Common Use Cases
 
-Run the security test suite to verify your configuration:
+### Profile Picture Upload
 
-```bash
-node scripts/test-file-upload-security.js
+```typescript
+// For profile pictures, restrict to images with reasonable size limits
+const { sanitizedFileName } = await validateUploadedFile(file, {
+  allowedCategories: ['image'],         // Only allow images
+  maxSizeBytes: 2 * 1024 * 1024,        // 2MB max
+  randomizeFileName: true,              // Generate random filename
+  userId: req.user.id,                  // Track the user
+  context: 'profile-picture'            // Context for logs
+});
 ```
 
-Check upload directory security:
+### Document Upload
+
+```typescript
+// For document uploads (PDF, Word, etc.)
+const { sanitizedFileName } = await validateUploadedFile(file, {
+  allowedMimeTypes: [
+    'application/pdf', 
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ],
+  maxSizeBytes: 10 * 1024 * 1024,       // 10MB max
+  performDeepInspection: true,          // Additional content checks
+  userId: req.user.id,
+  context: 'document-storage'
+});
+```
+
+### Video Upload
+
+```typescript
+// For video uploads with larger size limits
+const { sanitizedFileName } = await validateUploadedFile(file, {
+  allowedCategories: ['video'],         // Only allow videos
+  maxSizeBytes: 100 * 1024 * 1024,      // 100MB max
+  minSizeBytes: 1024,                  // 1KB min (prevent empty files)
+  randomizeFileName: true,
+  userId: req.user.id,
+  context: 'video-upload'
+});
+```
+
+## Best Practices
+
+1. **Always validate on the server side**
+   Even with client-side validation, always perform thorough validation on the server.
+
+2. **Store file metadata in your database**
+   Store important metadata like original filename, MIME type, size, and file hash for future reference.
+
+3. **Implement proper error handling**
+   Provide clear, user-friendly error messages without exposing system details.
+
+4. **Use appropriate file storage**
+   Store uploaded files outside of your web root whenever possible.
+
+5. **Configure appropriate file permissions**
+   Ensure uploaded files have restrictive permissions (e.g., 0644).
+
+6. **Implement user-specific quotas**
+   Limit the amount of storage each user can use to prevent denial of service.
+
+7. **Schedule regular cleanup**
+   Use the `cleanupTempFiles` function to automatically remove temporary files.
+
+8. **Log all file operations**
+   Keep comprehensive logs of all file uploads, downloads, and modifications.
+
+## Troubleshooting
+
+### Common Issues
+
+#### "Invalid file type"
+- Check that the file's content matches its extension
+- Verify the file is not corrupted
+- Ensure the MIME type is on the allowed list
+
+#### "File size exceeds limit"
+- Check the file size against the configured limit
+- Verify that limits are consistent between client and server
+
+#### "Path traversal attempt detected"
+- The filename contains suspicious patterns that could be used for path traversal
+- Use the sanitized filename provided by the validation function
+
+#### "Failed content verification"
+- The file contents don't match the declared type
+- The file might be corrupted or manipulated
+
+### Debugging
+
+Enable debug mode to get more detailed information:
+
+```typescript
+import { setDebugMode } from '../security/fileUploadSecurity';
+
+// Enable debug mode in development environments
+if (process.env.NODE_ENV === 'development') {
+  setDebugMode(true);
+}
+```
+
+## Security Event Handling
+
+```typescript
+import { logSecurityEvent } from '../security/logging';
+
+// Log security events for audit purposes
+try {
+  // File upload logic here
+} catch (error) {
+  // Log security failure
+  logSecurityEvent('FILE_UPLOAD_FAILURE', {
+    userId: req.user?.id || 'anonymous',
+    fileName: file?.name,
+    error: error instanceof Error ? error.message : String(error),
+    severity: 'warning'
+  });
+  
+  res.status(400).json({ error: 'Upload failed' });
+}
+```
+
+## Testing Your Implementation
+
+To test the security of your file uploads, use the provided testing script:
 
 ```bash
+# Run the security testing script
+node scripts/test-file-upload-security.js
+
+# Check the security of your upload directories
 node scripts/check-upload-security.js
 ```
 
-## Troubleshooting Common Issues
+These scripts will attempt to upload various test files including:
+- Valid files of different types
+- Files with mismatched extensions
+- Files with malicious content
+- Files attempting path traversal
 
-### Error: "File contents do not match declared type"
+## Further Reading
 
-This error occurs when the file's actual content doesn't match its claimed MIME type. The solution:
+For more in-depth information about the file upload security implementation, refer to the following resources:
 
-1. Ensure the file isn't corrupted
-2. Verify the client isn't attempting to manipulate the file type
-3. Consider adding the detected MIME type to your allowed types if legitimate
-
-### Error: "File extension is not allowed"
-
-The uploaded file has an extension not in the allowed list. The solution:
-
-1. Check the `allowedExtensions` configuration
-2. Add the extension if it's legitimately needed for your use case
-3. Verify the client isn't using unusual file extensions
-
-### Error: "Filename matches disallowed pattern"
-
-The filename contains potentially dangerous patterns. The solution:
-
-1. Use a simpler filename without special characters
-2. Check for path traversal attempts (`../`, etc.)
-3. Remove any potential command injection characters
+- [Full Security Documentation](./file-upload-security.md)
+- [OWASP File Upload Security Guide](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload)
+- [Content-Type Header Security](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type)
