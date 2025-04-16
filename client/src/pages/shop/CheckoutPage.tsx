@@ -14,8 +14,6 @@ import { CartItem, ShippingInfo } from '@/types/cart';
 import { formatCurrency } from '@/lib/format';
 import { useToast } from '@/hooks/use-toast';
 import { createPaymentIntent, processOrder } from '@/lib/paymentService';
-import StripeProvider from '@/components/shop/payment/StripeProvider';
-
 // UI Components
 import {
   Form,
@@ -36,8 +34,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, ShoppingCart, CreditCard, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 import CosmicButton from '@/components/features/cosmic/cosmic-button';
 
-import StripeElements from '@/components/shop/payment/StripeElements';
+// Payment Components
 import PaymentSelector from '@/components/shop/payment/PaymentSelector';
+import SecurePaymentProcessor from '@/components/shop/payment/SecurePaymentProcessor';
 
 const shippingFormSchema = z.object({
   firstName: z.string().min(2, 'First name is required'),
@@ -110,8 +109,7 @@ export default function CheckoutPage() {
   // Create order mutation
   const createOrderMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest('/api/orders', {
-        method: 'POST',
+      return await apiRequest('POST', '/api/orders', {
         data,
       });
     },
@@ -602,40 +600,16 @@ export default function CheckoutPage() {
                     onValueChange={setPaymentMethod} 
                   />
                   
-                  {/* Only show the Stripe payment form for the stripe payment method */}
-                  {paymentMethod === 'stripe' && (
-                    <>
-                      {isCreatingPaymentIntent ? (
-                        <div className="flex justify-center items-center py-6 cosmic-glass-panel rounded-lg p-4">
-                          <div className="relative">
-                            <div className="absolute inset-0 bg-cosmic-primary rounded-full opacity-10 animate-ping"></div>
-                            <div className="absolute inset-4 bg-cosmic-primary rounded-full opacity-20"></div>
-                            <Loader2 className="h-6 w-6 animate-spin text-cosmic-primary mr-2 relative z-10" />
-                          </div>
-                          <span className="ml-2 cosmic-text">Preparing payment form...</span>
-                        </div>
-                      ) : clientSecret ? (
-                        <StripeProvider clientSecret={clientSecret}>
-                          <StripeElements onSubmit={onPaymentSubmit} />
-                        </StripeProvider>
-                      ) : (
-                        <div className="text-destructive p-3 bg-destructive/10 rounded-md mb-4">
-                          Failed to initialize payment. Please try again.
-                        </div>
-                      )}
-                    </>
-                  )}
-                  
-                  {/* Show disabled forms for other payment methods */}
-                  {paymentMethod !== 'stripe' && (
-                    <div className="cosmic-glass-panel p-4 rounded-lg border border-cosmic-primary/20">
-                      <div className="flex justify-center items-center py-6">
-                        <p className="text-center text-muted-foreground">
-                          This payment method is coming soon. Please use Stripe for now.
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {/* Universal Secure Payment Processor - Handles all payment methods in a PCI compliant way */}
+                  <SecurePaymentProcessor
+                    paymentMethod={paymentMethod}
+                    clientSecret={clientSecret}
+                    isCreatingPaymentIntent={isCreatingPaymentIntent}
+                    paymentError={paymentError}
+                    amount={total}
+                    currency="USD"
+                    onPaymentSubmit={onPaymentSubmit}
+                  />
                   
                   <div className="text-sm text-muted-foreground">
                     <p>Your payment information is secure and encrypted.</p>

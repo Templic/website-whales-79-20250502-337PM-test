@@ -29,24 +29,13 @@ const billingSchema = z.object({
 
 const shippingSchema = billingSchema;
 
+// Using a secure payment schema that doesn't store or handle card details directly for PCI compliance
 const paymentSchema = z.object({
-  cardName: z.string().min(2, 'Name on card must be at least 2 characters'),
-  cardNumber: z
-    .string()
-    .min(15, 'Card number must be at least 15 digits')
-    .max(19, 'Card number cannot exceed 19 digits')
-    .refine((val) => /^[0-9]+$/.test(val), 'Card number must contain only digits'),
-  expiryMonth: z
-    .string()
-    .refine((val) => /^(0[1-9]|1[0-2])$/.test(val), 'Invalid month'),
-  expiryYear: z
-    .string()
-    .refine((val) => /^[0-9]{2}$/.test(val), 'Invalid year'),
-  cvv: z
-    .string()
-    .min(3, 'CVV must be at least 3 digits')
-    .max(4, 'CVV cannot exceed 4 digits')
-    .refine((val) => /^[0-9]+$/.test(val), 'CVV must contain only digits'),
+  // Payment method is handled securely by SecurePaymentProcessor
+  // No direct card data handling for PCI DSS compliance
+  acceptedTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the terms and conditions'
+  }),
   savePaymentInfo: z.boolean().default(false),
 });
 
