@@ -1,225 +1,374 @@
+#!/usr/bin/env node
+
 /**
- * Upload Directory Security Check
+ * Upload Directory Security Checker
  * 
- * This script performs various security checks on the upload directories
- * to ensure they are configured securely, have proper permissions,
- * and follow best practices for file storage security.
+ * This script verifies the security of file upload directories by checking
+ * permissions, ownership, and protections against common security vulnerabilities.
+ * 
+ * Usage:
+ *   node scripts/check-upload-security.js
+ * 
+ * The script will check predefined directories for security issues.
  */
 
 import fs from 'fs';
 import path from 'path';
-import { promisify } from 'util';
 import { fileURLToPath } from 'url';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
-const statAsync = promisify(fs.stat);
-const readdirAsync = promisify(fs.readdir);
-
-// Get current directory
+// Get current file's directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const execAsync = promisify(exec);
 
-// Configuration - paths are relative to project root
-const UPLOAD_DIRS = [
-  { path: path.join(path.dirname(__dirname), 'uploads'), required: true },
-  { path: path.join(path.dirname(__dirname), 'uploads/media'), required: true },
-  { path: path.join(path.dirname(__dirname), 'tmp'), required: true }
-];
-
-// Security checks
-const securityChecks = {
-  async directoryExists(dirPath) {
-    try {
-      const stats = await statAsync(dirPath);
-      return stats.isDirectory();
-    } catch (error) {
-      return false;
-    }
-  },
-
-  async checkPermissions(dirPath) {
-    try {
-      const stats = await statAsync(dirPath);
-      const mode = stats.mode;
-      
-      // Convert mode to octal string for easier permission checks
-      const octalMode = (mode & 0o777).toString(8);
-      
-      // Check if directory has world-writeable permissions (last digit is 6 or 7)
-      const lastDigit = octalMode.charAt(octalMode.length - 1);
-      const isWorldWritable = lastDigit === '6' || lastDigit === '7';
-      
-      return {
-        permissions: octalMode,
-        secure: !isWorldWritable,
-        message: isWorldWritable ? 
-          `Warning: Directory ${dirPath} has world-writeable permissions (${octalMode})` : 
-          `Directory ${dirPath} has secure permissions (${octalMode})`
-      };
-    } catch (error) {
-      return {
-        permissions: 'unknown',
-        secure: false,
-        message: `Error checking permissions for ${dirPath}: ${error.message}`
-      };
-    }
-  },
-
-  async checkSymlinks(dirPath) {
-    try {
-      const files = await readdirAsync(dirPath);
-      const symlinks = [];
-      
-      for (const file of files) {
-        const fullPath = path.join(dirPath, file);
-        try {
-          const stats = await statAsync(fullPath);
-          if (stats.isSymbolicLink()) {
-            symlinks.push(file);
-          }
-        } catch (error) {
-          // Skip files with permission issues
-        }
-      }
-      
-      return {
-        hasSymlinks: symlinks.length > 0,
-        symlinks,
-        secure: symlinks.length === 0,
-        message: symlinks.length > 0 ? 
-          `Warning: Directory ${dirPath} contains symbolic links: ${symlinks.join(', ')}` : 
-          `Directory ${dirPath} does not contain symbolic links`
-      };
-    } catch (error) {
-      return {
-        hasSymlinks: false,
-        symlinks: [],
-        secure: false,
-        message: `Error checking for symlinks in ${dirPath}: ${error.message}`
-      };
-    }
-  },
-
-  async checkParentPermissions(dirPath) {
-    try {
-      const parentDir = path.dirname(dirPath);
-      return await this.checkPermissions(parentDir);
-    } catch (error) {
-      return {
-        permissions: 'unknown',
-        secure: false,
-        message: `Error checking parent permissions for ${dirPath}: ${error.message}`
-      };
-    }
-  },
-
-  async checkDirectoryTraversal(dirPath) {
-    // Check for suspicious directory names that might indicate directory traversal
-    const suspiciousPatterns = ['./', '../', '..\\', '.\\'];
-    const hasSuspiciousPattern = suspiciousPatterns.some(pattern => dirPath.includes(pattern));
-    
-    return {
-      secure: !hasSuspiciousPattern,
-      message: hasSuspiciousPattern ? 
-        `Warning: Directory ${dirPath} contains suspicious path patterns` : 
-        `Directory ${dirPath} has a safe path`
-    };
-  }
+// ANSI color codes for terminal output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m',
+  bgRed: '\x1b[41m',
+  bgGreen: '\x1b[42m',
+  bgYellow: '\x1b[43m',
+  bgBlue: '\x1b[44m'
 };
 
-async function checkDirectory(dirPath, required) {
-  console.log(`\n🔍 Checking directory: ${dirPath}`);
+// Directories to check
+const UPLOAD_DIRS = [
+  './uploads',
+  './uploads/images',
+  './uploads/documents',
+  './uploads/media',
+  './tmp'
+];
+
+// Security check tracking
+const results = {
+  total: 0,
+  passed: 0,
+  warnings: 0,
+  failed: 0
+};
+
+/**
+ * Check if a directory exists
+ * @param {string} dir Directory path
+ * @returns {boolean} Whether the directory exists
+ */
+async function directoryExists(dir) {
+  try {
+    const stats = await fs.promises.stat(dir);
+    return stats.isDirectory();
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Create a directory if it doesn't exist
+ * @param {string} dir Directory path
+ */
+async function ensureDirectoryExists(dir) {
+  if (!(await directoryExists(dir))) {
+    await fs.promises.mkdir(dir, { recursive: true });
+    console.log(`${colors.yellow}Created missing directory: ${dir}${colors.reset}`);
+  }
+}
+
+/**
+ * Check directory permissions
+ * @param {string} dir Directory path
+ * @returns {Object} Check results
+ */
+async function checkDirectoryPermissions(dir) {
+  results.total++;
   
-  // Check if directory exists
-  const exists = await securityChecks.directoryExists(dirPath);
-  if (!exists) {
-    console.log(`  ❌ Directory ${dirPath} does not exist${required ? ' (REQUIRED)' : ''}`);
-    return {
-      directory: dirPath,
-      exists: false,
-      required,
-      checks: {}
+  try {
+    const stats = await fs.promises.stat(dir);
+    const mode = stats.mode;
+    
+    // Convert mode to octal permission string (e.g., 0755)
+    const octalMode = (mode & 0o777).toString(8).padStart(4, '0');
+    
+    // Check if permissions are too permissive
+    // Ideally should be 0755 (rwxr-xr-x) or more restrictive
+    const isPermissive = (mode & 0o022) !== 0; // Check if world-writable
+    
+    if (isPermissive) {
+      results.failed++;
+      console.log(`${colors.red}✗ FAIL${colors.reset} Directory permissions for ${dir} are too permissive: ${octalMode}`);
+      console.log(`  ${colors.yellow}Recommendation:${colors.reset} Change permissions to 0755 (rwxr-xr-x) or more restrictive`);
+      return { success: false, message: `Permissions too permissive: ${octalMode}` };
+    } else {
+      results.passed++;
+      console.log(`${colors.green}✓ PASS${colors.reset} Directory permissions for ${dir} are secure: ${octalMode}`);
+      return { success: true, message: `Secure permissions: ${octalMode}` };
+    }
+  } catch (error) {
+    results.failed++;
+    console.log(`${colors.red}✗ FAIL${colors.reset} Could not check permissions for ${dir}: ${error.message}`);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Check for symbolic links in a directory
+ * @param {string} dir Directory path
+ * @returns {Object} Check results
+ */
+async function checkForSymlinks(dir) {
+  results.total++;
+  
+  try {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    
+    const symlinks = entries.filter(entry => entry.isSymbolicLink());
+    
+    if (symlinks.length > 0) {
+      results.warnings++;
+      console.log(`${colors.yellow}⚠ WARNING${colors.reset} Symbolic links found in ${dir}: ${symlinks.map(s => s.name).join(', ')}`);
+      console.log(`  ${colors.yellow}Recommendation:${colors.reset} Verify these symlinks are secure and expected`);
+      return { 
+        success: false, 
+        warning: true, 
+        message: `Found ${symlinks.length} symbolic link(s)` 
+      };
+    } else {
+      results.passed++;
+      console.log(`${colors.green}✓ PASS${colors.reset} No symbolic links found in ${dir}`);
+      return { success: true, message: 'No symbolic links found' };
+    }
+  } catch (error) {
+    results.failed++;
+    console.log(`${colors.red}✗ FAIL${colors.reset} Could not check for symbolic links in ${dir}: ${error.message}`);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Check if a directory is secure against path traversal
+ * @param {string} dir Directory path
+ * @returns {Object} Check results
+ */
+async function checkPathTraversal(dir) {
+  results.total++;
+  
+  try {
+    // Normalize and resolve the path to check for issues
+    const normalizedPath = path.normalize(dir);
+    const resolvedPath = path.resolve(normalizedPath);
+    
+    // Check if normalization changed the path (could indicate potential issues)
+    if (normalizedPath !== dir) {
+      results.warnings++;
+      console.log(`${colors.yellow}⚠ WARNING${colors.reset} Directory path ${dir} contains unusual path elements: ${normalizedPath}`);
+      console.log(`  ${colors.yellow}Recommendation:${colors.reset} Use plain directory paths without special sequences`);
+      return { 
+        success: false, 
+        warning: true, 
+        message: `Path contains unusual elements: ${dir} -> ${normalizedPath}` 
+      };
+    } else {
+      results.passed++;
+      console.log(`${colors.green}✓ PASS${colors.reset} Directory path ${dir} is well-formed`);
+      return { success: true, message: 'Path is well-formed' };
+    }
+  } catch (error) {
+    results.failed++;
+    console.log(`${colors.red}✗ FAIL${colors.reset} Could not perform path traversal check on ${dir}: ${error.message}`);
+    return { success: false, message: error.message };
+  }
+}
+
+/**
+ * Check if a directory is world-writable
+ * @param {string} dir Directory path
+ * @returns {Object} Check results
+ */
+async function checkWorldWritable(dir) {
+  results.total++;
+  
+  try {
+    const { stdout } = await execAsync(`ls -ld "${dir}"`);
+    
+    // Check if the "other" permission contains 'w'
+    const worldWritable = stdout.includes('w-') || stdout.includes('wx');
+    
+    if (worldWritable) {
+      results.failed++;
+      console.log(`${colors.red}✗ FAIL${colors.reset} Directory ${dir} is world-writable`);
+      console.log(`  ${colors.yellow}Recommendation:${colors.reset} Remove write permissions for 'others': chmod o-w "${dir}"`);
+      return { success: false, message: 'Directory is world-writable' };
+    } else {
+      results.passed++;
+      console.log(`${colors.green}✓ PASS${colors.reset} Directory ${dir} is not world-writable`);
+      return { success: true, message: 'Directory is not world-writable' };
+    }
+  } catch (error) {
+    results.warnings++;
+    console.log(`${colors.yellow}⚠ WARNING${colors.reset} Could not check if ${dir} is world-writable: ${error.message}`);
+    return { 
+      success: false, 
+      warning: true, 
+      message: error.message 
     };
   }
-  
-  console.log(`  ✅ Directory ${dirPath} exists`);
-  
-  // Run all security checks
-  const permissionsCheck = await securityChecks.checkPermissions(dirPath);
-  const symlinkCheck = await securityChecks.checkSymlinks(dirPath);
-  const parentPermissionsCheck = await securityChecks.checkParentPermissions(dirPath);
-  const traversalCheck = await securityChecks.checkDirectoryTraversal(dirPath);
-  
-  // Log results
-  console.log(`  ${permissionsCheck.secure ? '✅' : '❌'} ${permissionsCheck.message}`);
-  console.log(`  ${symlinkCheck.secure ? '✅' : '❌'} ${symlinkCheck.message}`);
-  console.log(`  ${parentPermissionsCheck.secure ? '✅' : '❌'} Parent: ${parentPermissionsCheck.message}`);
-  console.log(`  ${traversalCheck.secure ? '✅' : '❌'} ${traversalCheck.message}`);
-  
-  // Calculate overall security score
-  const allChecks = [permissionsCheck, symlinkCheck, parentPermissionsCheck, traversalCheck];
-  const secureChecks = allChecks.filter(check => check.secure).length;
-  const score = Math.round((secureChecks / allChecks.length) * 100);
-  
-  console.log(`  Security Score: ${score}% (${secureChecks}/${allChecks.length} checks passed)`);
-  
-  return {
-    directory: dirPath,
-    exists,
-    required,
-    score,
-    checks: {
-      permissions: permissionsCheck,
-      symlinks: symlinkCheck,
-      parentPermissions: parentPermissionsCheck,
-      traversal: traversalCheck
-    }
-  };
 }
 
-async function runSecurityChecks() {
-  console.log('🔒 Starting Upload Directory Security Checks 🔒');
+/**
+ * Check parent directory permissions
+ * @param {string} dir Directory path
+ * @returns {Object} Check results
+ */
+async function checkParentDirectories(dir) {
+  results.total++;
   
-  const results = [];
-  for (const dir of UPLOAD_DIRS) {
-    const result = await checkDirectory(dir.path, dir.required);
-    results.push(result);
-  }
-  
-  // Summary
-  console.log('\n📊 Security Check Summary:');
-  
-  let overallScore = 0;
-  let totalChecks = 0;
-  
-  for (const result of results) {
-    if (result.exists) {
-      console.log(`  ${result.directory}: ${result.score}% secure`);
-      overallScore += result.score;
-      totalChecks++;
-    } else {
-      console.log(`  ${result.directory}: Not found${result.required ? ' (REQUIRED)' : ''}`);
-    }
-  }
-  
-  if (totalChecks > 0) {
-    const averageScore = Math.round(overallScore / totalChecks);
-    console.log(`\n  Overall upload directory security: ${averageScore}%`);
+  try {
+    const parentDir = path.dirname(dir);
     
-    if (averageScore >= 90) {
-      console.log('  ✅ Upload directories are well-secured');
-    } else if (averageScore >= 70) {
-      console.log('  ⚠️ Upload directories have some security concerns that should be addressed');
-    } else {
-      console.log('  ❌ Upload directories have significant security issues that must be fixed');
+    // Don't check parent if we're at root or current directory
+    if (parentDir === '.' || parentDir === '/' || parentDir === dir) {
+      return { success: true, message: 'No parent directory to check' };
     }
-  } else {
-    console.log('\n  ❌ No upload directories found or accessible');
+    
+    const stats = await fs.promises.stat(parentDir);
+    const mode = stats.mode;
+    
+    // Check if parent is world-writable
+    const isParentWritable = (mode & 0o002) !== 0;
+    
+    if (isParentWritable) {
+      results.warnings++;
+      console.log(`${colors.yellow}⚠ WARNING${colors.reset} Parent directory of ${dir} is world-writable`);
+      console.log(`  ${colors.yellow}Recommendation:${colors.reset} Secure parent directory permissions: chmod o-w "${parentDir}"`);
+      return { 
+        success: false, 
+        warning: true, 
+        message: 'Parent directory is world-writable' 
+      };
+    } else {
+      results.passed++;
+      console.log(`${colors.green}✓ PASS${colors.reset} Parent directory of ${dir} has secure permissions`);
+      return { success: true, message: 'Parent directory has secure permissions' };
+    }
+  } catch (error) {
+    results.warnings++;
+    console.log(`${colors.yellow}⚠ WARNING${colors.reset} Could not check parent directory of ${dir}: ${error.message}`);
+    return { 
+      success: false, 
+      warning: true, 
+      message: error.message 
+    };
   }
-  
-  console.log('\n🔒 Security Check Complete 🔒');
 }
 
-// Run the checks
-runSecurityChecks().catch(error => {
-  console.error('Error running security checks:', error);
+/**
+ * Calculate security score for a directory
+ * @param {Object} dirResults Results of all checks for a directory
+ * @returns {number} Security score (0-100)
+ */
+function calculateSecurityScore(dirResults) {
+  const totalChecks = Object.keys(dirResults).length;
+  if (totalChecks === 0) return 0;
+  
+  let passedChecks = 0;
+  let partialChecks = 0;
+  
+  for (const check of Object.values(dirResults)) {
+    if (check.success) {
+      passedChecks++;
+    } else if (check.warning) {
+      partialChecks += 0.5;
+    }
+  }
+  
+  return Math.floor((passedChecks + partialChecks) / totalChecks * 100);
+}
+
+/**
+ * Run all security checks on a directory
+ * @param {string} dir Directory path
+ */
+async function checkDirectorySecurity(dir) {
+  console.log(`\n${colors.bgBlue}${colors.white} Checking security for: ${dir} ${colors.reset}`);
+  
+  try {
+    await ensureDirectoryExists(dir);
+    
+    const dirResults = {
+      permissions: await checkDirectoryPermissions(dir),
+      symlinks: await checkForSymlinks(dir),
+      pathTraversal: await checkPathTraversal(dir),
+      worldWritable: await checkWorldWritable(dir),
+      parentDirectory: await checkParentDirectories(dir)
+    };
+    
+    const score = calculateSecurityScore(dirResults);
+    
+    if (score === 100) {
+      console.log(`\n${colors.bgGreen}${colors.white} Security Score: ${score}/100 ${colors.reset}`);
+    } else if (score >= 80) {
+      console.log(`\n${colors.bgYellow}${colors.black} Security Score: ${score}/100 ${colors.reset}`);
+    } else {
+      console.log(`\n${colors.bgRed}${colors.white} Security Score: ${score}/100 ${colors.reset}`);
+    }
+    
+    console.log('');
+  } catch (error) {
+    console.error(`${colors.red}Error checking ${dir}: ${error.message}${colors.reset}`);
+  }
+}
+
+/**
+ * Main function to run all checks
+ */
+async function main() {
+  console.log(`\n${colors.bgBlue}${colors.white} UPLOAD DIRECTORY SECURITY CHECKER ${colors.reset}\n`);
+  console.log(`${colors.cyan}Checking security of upload directories...${colors.reset}\n`);
+  
+  for (const dir of UPLOAD_DIRS) {
+    await checkDirectorySecurity(dir);
+  }
+  
+  // Print summary
+  console.log(`\n${colors.cyan}Summary:${colors.reset}`);
+  console.log(`${colors.green}✓ Passed: ${results.passed}${colors.reset}`);
+  console.log(`${colors.yellow}⚠ Warnings: ${results.warnings}${colors.reset}`);
+  console.log(`${colors.red}✗ Failed: ${results.failed}${colors.reset}`);
+  console.log(`${colors.cyan}Total Checks: ${results.total}${colors.reset}`);
+  
+  const overallScore = Math.floor(((results.passed + (results.warnings * 0.5)) / results.total) * 100);
+  
+  if (overallScore === 100) {
+    console.log(`\n${colors.bgGreen}${colors.white} Overall Security Score: ${overallScore}/100 ${colors.reset}`);
+  } else if (overallScore >= 80) {
+    console.log(`\n${colors.bgYellow}${colors.black} Overall Security Score: ${overallScore}/100 ${colors.reset}`);
+  } else {
+    console.log(`\n${colors.bgRed}${colors.white} Overall Security Score: ${overallScore}/100 ${colors.reset}`);
+  }
+  
+  console.log('\nRecommendations:');
+  if (results.failed > 0 || results.warnings > 0) {
+    console.log(`${colors.yellow}• Address the issues highlighted above to improve security${colors.reset}`);
+    console.log(`${colors.yellow}• Pay special attention to world-writable directories and symlinks${colors.reset}`);
+    console.log(`${colors.yellow}• Ensure upload directories have appropriate permissions (e.g., 0755)${colors.reset}`);
+  } else {
+    console.log(`${colors.green}• All checks passed! Maintain current security practices${colors.reset}`);
+  }
+  
+  // Exit with appropriate code
+  process.exit(results.failed > 0 ? 1 : 0);
+}
+
+// Run the main function
+main().catch(error => {
+  console.error(`\n${colors.bgRed}${colors.white} SCRIPT ERROR ${colors.reset}`);
+  console.error(`${colors.red}${error.stack}${colors.reset}`);
+  process.exit(1);
 });
