@@ -70,7 +70,8 @@ import { createTransport } from "nodemailer";
 import dbMonitorRoutes from './routes/db-monitor';
 import shopRoutes from './shop-routes';
 import paymentRoutes from './payment-routes';
-import { handleSecurityLog, rotateSecurityLogs, logSecurityEvent } from './security/security';
+import { logSecurityEvent } from './security';
+// TODO: Fix missing security functions
 import { runSecurityScan } from './securityScan';
 import { runAuthSecurityScan } from './security/authSecurityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
@@ -2174,8 +2175,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Schedule periodic security log rotation (every 24 hours)
   setInterval(() => {
     try {
-      rotateSecurityLogs();
-      console.log('Security logs rotated successfully');
+      // Temporary implementation until proper security logs module is fixed
+      console.log('Security logs rotation scheduled (temporarily disabled)');
+      // TODO: Re-implement rotateSecurityLogs() from security module
     } catch (error) {
       console.error('Error rotating security logs:', error);
     }

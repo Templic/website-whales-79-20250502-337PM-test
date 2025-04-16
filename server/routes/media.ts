@@ -4,6 +4,13 @@ import { mediaFiles } from '../../shared/schema';
 import path from 'path';
 import fs from 'fs';
 import fileUpload from 'express-fileupload';
+import { 
+  validateUploadedFile, 
+  sanitizeFileName, 
+  initFileUploadSecurity 
+} from '../security/fileUploadSecurity';
+import { log } from '../vite';
+
 // Import middleware for authentication
 // Using isAuthenticated for standard auth check
 const checkAuth = (req, res, next) => {
@@ -21,7 +28,9 @@ const requireAdmin = (req, res, next) => {
   return res.status(403).json({ error: 'Forbidden: Admin access required' });
 };
 import { eq } from 'drizzle-orm';
-import crypto from 'crypto';
+
+// Initialize file upload security module
+initFileUploadSecurity();
 
 const router = express.Router();
 
@@ -58,12 +67,7 @@ const ensureDirectoriesExist = () => {
 // Ensure upload directories exist
 ensureDirectoriesExist();
 
-// Utility function to generate a random filename with the original extension
-const generateFilename = (originalFilename: string): string => {
-  const ext = path.extname(originalFilename);
-  const randomName = crypto.randomBytes(16).toString('hex');
-  return `${randomName}${ext}`;
-};
+// This functionality has been moved to the fileUploadSecurity module for better centralized management
 
 // Get all media files
 router.get('/api/media', checkAuth, requireAdmin, async (req, res) => {
@@ -93,7 +97,7 @@ router.get('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// Upload a media file
+// Upload a media file with enhanced security
 router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
   try {
     // Check if file exists in the request
@@ -128,59 +132,88 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
       }
     }
     
-    // Generate unique filename to prevent collisions
-    const originalFilename = file.name;
-    const filename = generateFilename(originalFilename);
+    // Validate and secure the uploaded file
+    // This performs:
+    // 1. File size validation
+    // 2. File type validation
+    // 3. MIME type verification
+    // 4. Malware scanning (if enabled)
+    // 5. Filename sanitization
+    log(`Validating uploaded file: ${file.name} (${file.size} bytes, ${file.mimetype})`, 'security');
     
-    // Determine file type from mime type
-    const mimeType = file.mimetype || 'application/octet-stream';
-    let fileType = 'other';
+    // Get allowed categories based on the page
+    const allowedCategories = ['image', 'video', 'audio', 'document'] as const;
     
-    if (mimeType.startsWith('image/')) {
-      fileType = 'image';
-    } else if (mimeType.startsWith('video/')) {
-      fileType = 'video';
-    } else if (mimeType.startsWith('audio/')) {
-      fileType = 'audio';
-    } else if (mimeType.startsWith('text/') || mimeType.includes('pdf') || mimeType.includes('document')) {
-      fileType = 'document';
+    try {
+      // Validate the file with our security module
+      const { sanitizedFileName } = await validateUploadedFile(file, {
+        allowedCategories: allowedCategories
+      });
+      
+      // Determine file type from mime type
+      const mimeType = file.mimetype || 'application/octet-stream';
+      let fileType = 'other';
+      
+      if (mimeType.startsWith('image/')) {
+        fileType = 'image';
+      } else if (mimeType.startsWith('video/')) {
+        fileType = 'video';
+      } else if (mimeType.startsWith('audio/')) {
+        fileType = 'audio';
+      } else if (mimeType.startsWith('text/') || mimeType.includes('pdf') || mimeType.includes('document')) {
+        fileType = 'document';
+      }
+      
+      // Create full path with sanitized filename
+      const { mediaDir } = ensureDirectoriesExist();
+      const filePath = path.join(mediaDir, sanitizedFileName);
+      
+      // Move the temporary file to the target directory
+      await file.mv(filePath);
+      
+      log(`File successfully saved to: ${filePath}`, 'security');
+      
+      // Create the file URL (relative to server root)
+      const fileUrl = `/uploads/media/${sanitizedFileName}`;
+      
+      // Create database record
+      const newMediaFile = await db.insert(mediaFiles).values({
+        filename: sanitizedFileName,
+        originalFilename: file.name,
+        fileType,
+        mimeType,
+        fileSize: file.size,
+        fileUrl,
+        // thumbnailUrl will be generated for images later
+        thumbnailUrl: fileType === 'image' ? fileUrl : null,
+        page,
+        section,
+        position,
+        metadata,
+        uploadedBy: (req.user as any).id, // User ID from auth middleware
+      }).returning();
+      
+      log(`File successfully recorded in database with ID ${newMediaFile[0].id}`, 'security');
+      
+      return res.status(201).json({
+        success: true,
+        message: 'File uploaded successfully',
+        media: newMediaFile[0]
+      });
+    } catch (error) {
+      // Handle validation errors specifically
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        log(`File upload validation failed: ${errorMessage}`, 'security');
+        return res.status(400).json({ error: errorMessage });
+      }
+      throw error; // Re-throw unexpected errors
     }
-    
-    // Create full path
-    const { mediaDir } = ensureDirectoriesExist();
-    const filePath = path.join(mediaDir, filename);
-    
-    // Move the temporary file to the target directory
-    await file.mv(filePath);
-    
-    // Create the file URL (relative to server root)
-    const fileUrl = `/uploads/media/${filename}`;
-    
-    // Create database record
-    const newMediaFile = await db.insert(mediaFiles).values({
-      filename,
-      originalFilename,
-      fileType,
-      mimeType,
-      fileSize: file.size,
-      fileUrl,
-      // thumbnailUrl will be generated for images later
-      thumbnailUrl: fileType === 'image' ? fileUrl : null,
-      page,
-      section,
-      position,
-      metadata,
-      uploadedBy: (req.user as any).id, // User ID from auth middleware
-    }).returning();
-    
-    return res.status(201).json({
-      success: true,
-      message: 'File uploaded successfully',
-      media: newMediaFile[0]
-    });
   } catch (error) {
     console.error('Error uploading media file:', error);
-    return res.status(500).json({ error: 'Failed to upload file' });
+    return res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to upload file'
+    });
   }
 });
 
