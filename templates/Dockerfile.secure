@@ -1,0 +1,108 @@
+# Secure Dockerfile Template for Cosmic Music Application
+# Multi-stage build for security and optimization
+
+###################
+# 1. Build Stage
+###################
+FROM node:20-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Create non-root user for application
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Install dependencies needed for building
+RUN apk add --no-cache python3 make g++
+
+# Copy package files first (for better layer caching)
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy application code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Prune development dependencies for production
+RUN npm prune --production
+
+###################
+# 2. Production Stage
+###################
+FROM node:20-alpine AS production
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Create non-root user for running the application
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apk add --no-cache tini
+
+# Copy built application from builder stage
+COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
+COPY --from=builder --chown=appuser:appgroup /app/public ./public
+COPY --from=builder --chown=appuser:appgroup /app/package.json ./package.json
+COPY --from=builder --chown=appuser:appgroup /app/server ./server
+
+# Create directories for application data with proper permissions
+RUN mkdir -p /app/logs /app/uploads /app/tmp \
+    && chown -R appuser:appgroup /app/logs /app/uploads /app/tmp \
+    && chmod 755 /app/logs /app/uploads /app/tmp
+
+# Set proper file permissions
+RUN find /app -type d -exec chmod 755 {} \; \
+    && find /app -type f -exec chmod 644 {} \; \
+    && chmod -R 755 /app/node_modules/.bin
+
+# Expose port
+EXPOSE 5000
+
+# Switch to non-root user
+USER appuser
+
+# Use tini as init system to handle signals properly
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Default command
+CMD ["node", "server/index.js"]
+
+###################
+# Security Considerations in this Dockerfile:
+# 1. Multi-stage build to minimize image size and attack surface
+# 2. Using specific version tags for base images (not 'latest')
+# 3. Running as non-root user (appuser)
+# 4. Proper permission management for files and directories
+# 5. Using tini as init system for proper signal handling
+# 6. Minimal packages installed (only what's needed)
+# 7. Explicit port exposure (single port only)
+# 8. Clean separation of build and runtime environments
+###################
+
+# Usage Instructions:
+# 1. Build the image:
+#    docker build -t cosmic-music-app:latest -f Dockerfile.secure .
+#
+# 2. Run the container:
+#    docker run -d --name cosmic-music-app \
+#      -p 5000:5000 \
+#      -v ./logs:/app/logs \
+#      -v ./uploads:/app/uploads \
+#      --cap-drop=ALL \
+#      --security-opt no-new-privileges \
+#      cosmic-music-app:latest
+#
+# 3. For production, consider adding:
+#    - Resource limits: --memory=1g --cpus=1.0
+#    - Read-only filesystem: --read-only (with specific writeable volumes)
+#    - Network isolation: --network app-network

@@ -1,0 +1,175 @@
+version: '3.8'
+
+# Define named volumes
+volumes:
+  postgres_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_uploads:
+    driver: local
+  app_tmp:
+    driver: local
+
+# Define networks with isolation
+networks:
+  frontend_network:
+    driver: bridge
+  backend_network:
+    driver: bridge
+    internal: true  # No direct external access
+  db_network:
+    driver: bridge
+    internal: true  # No direct external access
+
+services:
+  # Web frontend service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.secure
+    image: cosmic-music-app:latest
+    container_name: cosmic-web
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    networks:
+      - frontend_network
+      - backend_network
+    depends_on:
+      - db
+    volumes:
+      - app_logs:/app/logs:rw
+      - app_uploads:/app/uploads:rw
+      - app_tmp:/app/tmp:rw
+      - ./config:/app/config:ro  # Mount config as read-only
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      # Application secrets should be passed via environment variables
+      # Use secrets in production or external secret management
+    env_file:
+      - ./.env.production
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    cap_drop:
+      - ALL  # Drop all capabilities
+    security_opt:
+      - no-new-privileges=true  # Prevent privilege escalation
+      - seccomp=./security/seccomp-profile.json  # Apply seccomp profile
+    read_only: false  # Can be true with specific writable mounts
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # Database service
+  db:
+    image: postgres:14-alpine
+    container_name: cosmic-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./security/db-init:/docker-entrypoint-initdb.d:ro  # Init scripts (read-only)
+    networks:
+      - db_network
+    environment:
+      # In production, use Docker secrets instead of environment variables
+      # for sensitive information like passwords
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-cosmic_music}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    cap_drop:
+      - ALL  # Drop all capabilities
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETGID
+      - SETUID  # Minimum capabilities required by PostgreSQL
+    security_opt:
+      - no-new-privileges=true  # Prevent privilege escalation
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # Monitoring service (for runtime security)
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: cosmic-monitoring
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/data:/prometheus
+    networks:
+      - frontend_network
+      - backend_network
+      - db_network
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    user: "65534:65534"  # Run as non-root user (nobody)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 256M
+    security_opt:
+      - no-new-privileges=true
+
+  # Security scanner (scheduled vulnerability scanning)
+  security-scanner:
+    image: aquasec/trivy:latest
+    container_name: cosmic-security-scanner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./security/reports:/reports
+    networks:
+      - backend_network
+    command: ["image", "--format", "table", "cosmic-music-app:latest"]
+    restart: "no"  # Run on demand or via scheduled jobs
+    user: "root"  # Needed for Docker socket access
+    depends_on:
+      - web
+    security_opt:
+      - no-new-privileges=true
+
+# Usage Notes:
+# 1. Create a .env.production file for production environment variables
+# 2. For production, ensure sensitive values are provided securely
+# 3. Create a security/seccomp-profile.json file with appropriate restrictions
+# 4. Create monitoring/prometheus.yml configuration for monitoring
+# 5. Create security/db-init directory with PostgreSQL initialization scripts
+# 
+# In production environments:
+# - Use Docker secrets for sensitive information
+# - Add a reverse proxy (like Traefik or Nginx) with TLS termination
+# - Use a proper log aggregation service
+# - Set up centralized security monitoring
+# - Implement regular scanning and updates through CI/CD
