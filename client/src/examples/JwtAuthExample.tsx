@@ -255,7 +255,7 @@ export function JwtAuthExample() {
                 variant="default" 
                 className="w-full"
               >
-                <Pencil1Icon className="mr-2" />
+                <PencilLine className="mr-2 h-4 w-4" />
                 Make Protected POST Action
               </Button>
             </TabsContent>
@@ -297,7 +297,7 @@ export function JwtAuthExample() {
                       onClick={() => setShowTokens(true)} 
                       className="w-full"
                     >
-                      <StackIcon className="mr-2" />
+                      <Layers className="mr-2 h-4 w-4" />
                       Show Token
                     </Button>
                   )}

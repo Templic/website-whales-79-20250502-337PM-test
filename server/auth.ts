@@ -6,8 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
-import { logSecurityEvent } from "./security";
-import { initJwtSecrets } from "./security/jwt";
+import { logSecurityEvent } from "./security/security";
 import { sessionMonitor, passwordChangeRequired } from "./security/sessionMonitor";
 
 // Extend session type to include our custom properties
@@ -82,11 +81,8 @@ export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
   
-  // Initialize JWT secrets
-  initJwtSecrets();
-  
   // Enhanced session settings with additional security options
-  const sessionSettings: session.SessionOptions = {
+  const sessionSettings = {
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false, // Don't create session until something stored

@@ -1,151 +1,228 @@
 /**
- * JWT Token Management Module
+ * JWT Security Module
  * 
- * Provides utilities for generating, verifying, and managing JWT tokens
- * with strong security configurations.
+ * Handles JWT token generation, verification and management
+ * with secure defaults and protection against common JWT attacks.
  */
 
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
-import { User } from '../../shared/schema';
 import { logSecurityEvent } from './security';
 
-// Default token expiration times
-const DEFAULT_ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutes
-const DEFAULT_REFRESH_TOKEN_EXPIRY = '7d'; // 7 days
+// Secret keys for JWT signing
+// In production, these should be stored in environment variables or a secure key vault
+let JWT_SECRET: string = process.env.JWT_SECRET || '';
+let JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || '';
 
-// Secret keys
-let JWT_SECRET: string;
-let REFRESH_TOKEN_SECRET: string;
-
-// Initialize secrets either from environment or generate securely
-export function initJwtSecrets() {
-  JWT_SECRET = process.env.JWT_SECRET || randomBytes(64).toString('hex');
-  REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || randomBytes(64).toString('hex');
-  
-  // Log warning if using dynamically generated secrets (they'll change on restart)
-  if (!process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
-    console.warn('Warning: Using dynamically generated JWT secrets. Tokens will be invalidated on server restart.');
-    console.warn('Set JWT_SECRET and REFRESH_TOKEN_SECRET environment variables for persistent tokens.');
+/**
+ * Initialize JWT secrets if not provided in environment variables
+ * This function should be called during application startup
+ */
+export function initJwtSecrets(): void {
+  if (!JWT_SECRET) {
+    console.warn('JWT_SECRET not found in environment, generating a random one for this session');
+    JWT_SECRET = randomBytes(64).toString('hex');
   }
+
+  if (!JWT_REFRESH_SECRET) {
+    console.warn('JWT_REFRESH_SECRET not found in environment, generating a random one for this session');
+    JWT_REFRESH_SECRET = randomBytes(64).toString('hex');
+  }
+  
+  console.log('JWT secrets initialized');
 }
 
-// Generate a JWT token for a user
-export function generateAccessToken(user: Partial<User>, expiresIn = DEFAULT_ACCESS_TOKEN_EXPIRY): string {
-  // Create payload with only the necessary user information
-  // Avoid including sensitive data like password hash
-  const payload = {
-    sub: user.id,
-    username: user.username,
-    email: user.email,
-    role: user.role,
-    // Add a unique JWT ID for revocation capability
-    jti: randomBytes(16).toString('hex'),
-  };
+// Store of revoked token JTIs (for logout/blacklisting)
+// In a production environment, this would be stored in Redis or another distributed cache
+const revokedTokens = new Set<string>();
 
-  // Sign with secret and configuration options
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
-    algorithm: 'HS512' as jwt.Algorithm, // Use a strong algorithm
-    audience: 'cosmic-app-api',
-    issuer: 'cosmic-app',
-  });
+// Clean up revoked tokens older than the expiry periodically
+setInterval(() => {
+  // This is a placeholder - in production, we'd check expiry times of tokens
+  // For now, since we're using an in-memory structure, we'll clear it every 24 hours
+  revokedTokens.clear();
+}, 24 * 60 * 60 * 1000);
+
+// Token default settings
+const DEFAULT_ACCESS_TOKEN_EXPIRY = '15m'; // Short-lived access tokens
+const DEFAULT_REFRESH_TOKEN_EXPIRY = '7d';  // Longer-lived refresh tokens
+const DEFAULT_ALGORITHM = 'HS256';         // HMAC with SHA-256
+
+/**
+ * Generate a JWT access token for a user
+ */
+export function generateAccessToken(userId: string | number, additionalClaims = {}): string {
+  const jti = randomBytes(16).toString('hex');
+  
+  return jwt.sign(
+    {
+      sub: userId.toString(),
+      jti,
+      ...additionalClaims
+    },
+    JWT_SECRET,
+    {
+      expiresIn: DEFAULT_ACCESS_TOKEN_EXPIRY,
+      algorithm: DEFAULT_ALGORITHM,
+      notBefore: 0 // Token valid immediately
+    }
+  );
 }
 
-// Generate a refresh token for token renewal
-export function generateRefreshToken(userId: number, expiresIn = DEFAULT_REFRESH_TOKEN_EXPIRY): string {
-  const payload = {
-    sub: userId,
-    // Add unique token ID for targeted revocation
-    tokenId: randomBytes(24).toString('hex'),
-    type: 'refresh',
-  };
-
-  return jwt.sign(payload, REFRESH_TOKEN_SECRET, {
-    expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
-    algorithm: 'HS512' as jwt.Algorithm,
-    audience: 'cosmic-app-refresh',
-    issuer: 'cosmic-app',
-  });
+/**
+ * Generate a JWT refresh token for a user
+ */
+export function generateRefreshToken(userId: string | number): string {
+  const jti = randomBytes(16).toString('hex');
+  
+  return jwt.sign(
+    {
+      sub: userId.toString(),
+      jti,
+      type: 'refresh'
+    },
+    JWT_REFRESH_SECRET,
+    {
+      expiresIn: DEFAULT_REFRESH_TOKEN_EXPIRY,
+      algorithm: DEFAULT_ALGORITHM
+    }
+  );
 }
 
-// Verify access token
+/**
+ * Verify an access token and return the decoded payload
+ */
 export function verifyAccessToken(token: string): jwt.JwtPayload | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
-      algorithms: ['HS512'],
-      audience: 'cosmic-app-api',
-      issuer: 'cosmic-app',
+      algorithms: [DEFAULT_ALGORITHM],
+      complete: false
     });
     
-    return typeof decoded === 'object' ? decoded : null;
+    // Ensure we have a proper object with required claims
+    if (typeof decoded === 'object' && decoded !== null) {
+      const payload = decoded as jwt.JwtPayload;
+      
+      // Check if token has been revoked
+      if (payload.jti && revokedTokens.has(payload.jti)) {
+        return null;
+      }
+      
+      return payload;
+    }
+    
+    return null;
   } catch (error) {
-    // Log token verification failures
-    logSecurityEvent({
-      type: 'JWT_VERIFICATION_FAILURE',
-      details: `JWT verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      severity: 'medium',
-    });
+    // Log verification errors
+    console.error('JWT verification error:', error);
     return null;
   }
 }
 
-// Verify refresh token
+/**
+ * Verify a refresh token and return the decoded payload
+ */
 export function verifyRefreshToken(token: string): jwt.JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, REFRESH_TOKEN_SECRET, {
-      algorithms: ['HS512'],
-      audience: 'cosmic-app-refresh',
-      issuer: 'cosmic-app',
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET, {
+      algorithms: [DEFAULT_ALGORITHM],
+      complete: false
     });
     
-    return typeof decoded === 'object' ? decoded : null;
+    // Ensure we have a proper object with required claims
+    if (typeof decoded === 'object' && decoded !== null) {
+      const payload = decoded as jwt.JwtPayload;
+      
+      // Ensure it's a refresh token
+      if (payload.type !== 'refresh') {
+        logSecurityEvent({
+          type: 'INVALID_TOKEN_TYPE',
+          details: 'Attempt to use non-refresh token as refresh token',
+          severity: 'high'
+        });
+        return null;
+      }
+      
+      // Check if token has been revoked
+      if (payload.jti && revokedTokens.has(payload.jti)) {
+        return null;
+      }
+      
+      return payload;
+    }
+    
+    return null;
   } catch (error) {
-    // Log refresh token verification failures
-    logSecurityEvent({
-      type: 'REFRESH_TOKEN_VERIFICATION_FAILURE',
-      details: `Refresh token verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      severity: 'high',
-    });
+    // Log verification errors
+    console.error('Refresh token verification error:', error);
     return null;
   }
 }
 
-// Token blacklist for revoked tokens (in-memory store)
-// In production, this should be moved to a persistent store like Redis
-const tokenBlacklist = new Set<string>();
-
-// Add a token to blacklist (for logout or compromise)
-export function revokeToken(token: string): void {
+/**
+ * Revoke a token by adding its JTI to the revoked tokens list
+ */
+export function revokeToken(token: string): boolean {
   try {
-    // Extract token ID or full token
-    const decoded = jwt.decode(token);
-    const jti = decoded && typeof decoded === 'object' && decoded.jti ? decoded.jti : token;
+    // Try both secrets since we don't know which type of token it is
+    let decoded: any;
     
-    // Add to blacklist
-    tokenBlacklist.add(jti);
+    try {
+      decoded = jwt.decode(token);
+    } catch (e) {
+      return false;
+    }
     
-    // Log the token revocation
-    logSecurityEvent({
-      type: 'TOKEN_REVOKED',
-      details: `JWT token revoked successfully`,
-      severity: 'low',
-    });
+    if (!decoded || typeof decoded !== 'object' || !decoded.jti) {
+      return false;
+    }
+    
+    // Add the JTI to the revoked tokens set
+    revokedTokens.add(decoded.jti);
+    return true;
   } catch (error) {
-    console.error('Failed to revoke token:', error);
+    console.error('Error revoking token:', error);
+    return false;
   }
 }
 
-// Check if a token is blacklisted
+/**
+ * Check if a token has been revoked
+ */
 export function isTokenRevoked(jti: string): boolean {
-  return tokenBlacklist.has(jti);
+  return revokedTokens.has(jti);
 }
 
-// Extract token from authorization header
-export function extractTokenFromHeader(authHeader: string | undefined): string | null {
+/**
+ * Extract JWT token from Authorization header
+ */
+export function extractTokenFromHeader(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
   
-  return authHeader.substring(7); // Remove 'Bearer ' prefix
+  return authHeader.substring(7);
+}
+
+/**
+ * Rotate JWT secrets (useful for handling compromised keys)
+ * In a production app, this would need to be synchronized across all instances
+ */
+export function rotateSecrets(): void {
+  const oldAccessSecret = JWT_SECRET;
+  const oldRefreshSecret = JWT_REFRESH_SECRET;
+  
+  // Generate new secrets
+  JWT_SECRET = randomBytes(64).toString('hex');
+  JWT_REFRESH_SECRET = randomBytes(64).toString('hex');
+  
+  // In a real app, we might keep old secrets for a brief period
+  // to allow for a transition, but for simplicity we'll invalidate
+  // all existing tokens immediately
+  
+  logSecurityEvent({
+    type: 'JWT_SECRETS_ROTATED',
+    details: 'JWT secrets have been rotated, all existing tokens invalidated',
+    severity: 'medium'
+  });
 }

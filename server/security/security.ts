@@ -1,71 +1,38 @@
 /**
- * security.ts
+ * Security Utility Functions
  * 
- * Common security utility functions
+ * This module provides common security-related utility functions for logging and monitoring.
  */
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+type SecurityEventSeverity = 'low' | 'medium' | 'high' | 'critical';
 
-const SECURITY_LOG_FILE = path.join(__dirname, '../../logs/security/security.log');
-
-// Ensure logs directory exists
-const securityLogDir = path.dirname(SECURITY_LOG_FILE);
-if (!fs.existsSync(securityLogDir)) {
-  fs.mkdirSync(securityLogDir, { recursive: true });
+interface SecurityEvent {
+  type: string;
+  details: string;
+  severity: SecurityEventSeverity;
+  ip?: string;
+  userAgent?: string;
+  timestamp?: Date;
+  userId?: string | number;
+  [key: string]: any;
 }
 
 /**
- * Log security events to a dedicated log file
+ * Log a security event for later analysis
  */
-export const logSecurityEvent = (eventData: any) => {
-  try {
-    const timestamp = new Date().toISOString();
-    const logEntry = `[SECURITY] ${timestamp} - ${JSON.stringify(eventData)}\n`;
-    
-    fs.appendFileSync(SECURITY_LOG_FILE, logEntry);
-    console.log(`Security event logged: ${eventData.type}`);
-  } catch (error) {
-    console.error('Failed to log security event:', error);
+export function logSecurityEvent(event: SecurityEvent): void {
+  const enrichedEvent = {
+    ...event,
+    timestamp: event.timestamp || new Date()
+  };
+  
+  // In a production app, we would send this to a secure logging service
+  // For now, just log to console
+  console.log(`[SECURITY] ${enrichedEvent.severity.toUpperCase()} - ${enrichedEvent.type}: ${enrichedEvent.details}`);
+  
+  // For critical events, we might want to trigger alerts
+  if (enrichedEvent.severity === 'critical') {
+    // In production, this would trigger immediate alerts
+    console.error(`❗ CRITICAL SECURITY EVENT: ${enrichedEvent.type}`);
   }
-};
-
-/**
- * Handle security log management (called from scheduled tasks)
- */
-export const handleSecurityLog = () => {
-  try {
-    // Check log file size
-    if (fs.existsSync(SECURITY_LOG_FILE)) {
-      const stats = fs.statSync(SECURITY_LOG_FILE);
-      const fileSizeInMB = stats.size / (1024 * 1024);
-      
-      // If log file is larger than 5MB, rotate it
-      if (fileSizeInMB > 5) {
-        rotateSecurityLogs();
-      }
-    }
-  } catch (error) {
-    console.error('Error handling security logs:', error);
-  }
-};
-
-/**
- * Rotate security logs to prevent excessive disk usage
- */
-export const rotateSecurityLogs = () => {
-  try {
-    if (fs.existsSync(SECURITY_LOG_FILE)) {
-      const timestamp = new Date().toISOString().replace(/:/g, '-');
-      const rotatedLogFile = path.join(securityLogDir, `security-${timestamp}.log`);
-      
-      fs.renameSync(SECURITY_LOG_FILE, rotatedLogFile);
-      console.log(`Security log rotated to ${rotatedLogFile}`);
-    }
-  } catch (error) {
-    console.error('Failed to rotate security logs:', error);
-  }
-};
+}
