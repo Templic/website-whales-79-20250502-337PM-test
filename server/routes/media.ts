@@ -1,3 +1,21 @@
+/**
+ * Media Routes with Enhanced Security
+ * 
+ * This module provides routes for handling media file operations with robust security controls:
+ * 
+ * Security Features:
+ * - Content-based file type validation (not just extensions)
+ * - Secure random filename generation to prevent path traversal attacks
+ * - MIME type verification using file content analysis
+ * - File size validation
+ * - Comprehensive error handling and logging
+ * - Protection against malicious file uploads
+ * - Null safety checks to prevent runtime errors
+ * 
+ * All file uploads are verified using the fileUploadSecurity module, which implements
+ * best practices for secure file handling in web applications.
+ */
+
 import express from 'express';
 import { db } from '../db';
 import { mediaFiles } from '../../shared/schema';
@@ -10,6 +28,7 @@ import {
   initFileUploadSecurity 
 } from '../security/fileUploadSecurity';
 import { log } from '../vite';
+import crypto from 'crypto';
 
 // Import middleware for authentication
 // Using isAuthenticated for standard auth check
@@ -67,7 +86,13 @@ const ensureDirectoriesExist = () => {
 // Ensure upload directories exist
 ensureDirectoriesExist();
 
-// This functionality has been moved to the fileUploadSecurity module for better centralized management
+// Utility function to generate a random filename with the original extension
+// Note: This function is used as a fallback but our new security module provides a more robust sanitizeFileName function
+const generateFilename = (originalFilename: string): string => {
+  const ext = path.extname(originalFilename);
+  const randomName = Buffer.from(crypto.randomUUID()).toString('hex');
+  return `${randomName}${ext}`;
+};
 
 // Get all media files
 router.get('/api/media', checkAuth, requireAdmin, async (req, res) => {
@@ -142,7 +167,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
     log(`Validating uploaded file: ${file.name} (${file.size} bytes, ${file.mimetype})`, 'security');
     
     // Get allowed categories based on the page
-    const allowedCategories = ['image', 'video', 'audio', 'document'] as const;
+    const allowedCategories: ('image' | 'video' | 'audio' | 'document' | 'other')[] = ['image', 'video', 'audio', 'document'];
     
     try {
       // Validate the file with our security module
@@ -193,7 +218,13 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
         uploadedBy: (req.user as any).id, // User ID from auth middleware
       }).returning();
       
-      log(`File successfully recorded in database with ID ${newMediaFile[0].id}`, 'security');
+      log(`File successfully recorded in database with ID ${newMediaFile?.[0]?.id || 'unknown'}`, 'security');
+      
+      if (!newMediaFile || newMediaFile.length === 0) {
+        return res.status(500).json({ 
+          error: 'File was saved but database record could not be created'
+        });
+      }
       
       return res.status(201).json({
         success: true,
@@ -230,7 +261,10 @@ router.delete('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
     }
     
     // Get the file path on disk
-    const filename = mediaFile[0].filename;
+    const filename = mediaFile[0]?.filename;
+    if (!filename) {
+      return res.status(500).json({ error: 'Media file record is missing filename' });
+    }
     const filePath = path.join(process.cwd(), 'uploads', 'media', filename);
     
     // Delete the file if it exists
