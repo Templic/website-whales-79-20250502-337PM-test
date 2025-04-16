@@ -137,15 +137,19 @@ router.post('/confirm', async (req: Request, res: Response) => {
     };
     
     // Log successful payment (PCI DSS Requirement 10.2)
-    paymentLogger.logPaymentSucceeded(
-      'stripe',
-      paymentMethodId,
-      mockOrder.amount,
-      mockOrder.currency,
-      req.body.userId,
-      req.body.email,
-      orderId
-    );
+    paymentTransactionLogger.logSuccessfulPayment({
+      transactionId: paymentMethodId,
+      orderId,
+      userId: req.body.userId,
+      gateway: 'stripe',
+      amount: mockOrder.amount,
+      currency: mockOrder.currency,
+      last4: req.body.last4,
+      ipAddress: req.ip,
+      meta: {
+        email: req.body.email
+      }
+    });
     
     // Return the mock order
     return res.json({
@@ -156,17 +160,20 @@ router.post('/confirm', async (req: Request, res: Response) => {
     console.error('Error confirming payment:', error);
     
     // Log payment failure (PCI DSS Requirement 10.2)
-    paymentLogger.logPaymentFailed(
-      'stripe',
-      req.body.paymentMethodId || 'unknown',
-      req.body.amount || 0,
-      req.body.currency || 'usd',
-      error.code,
-      error.message || 'Unknown error',
-      req.body.userId,
-      req.body.email,
-      req.body.orderId || 'unknown'
-    );
+    paymentTransactionLogger.logFailedPayment({
+      transactionId: req.body.paymentMethodId || `failed_${Date.now()}`,
+      orderId: req.body.orderId || 'unknown',
+      userId: req.body.userId,
+      gateway: 'stripe',
+      amount: req.body.amount || 0,
+      currency: req.body.currency || 'usd',
+      errorMessage: error.message || 'Unknown error',
+      ipAddress: req.ip,
+      meta: {
+        errorCode: error.code,
+        email: req.body.email
+      }
+    });
     
     return res.status(500).json({
       success: false,

@@ -1,119 +1,132 @@
 /**
  * Secure Payment Processor
  * 
- * A universal payment component that handles all payment gateways securely.
+ * This component orchestrates the payment processing flow in a PCI-compliant manner.
  * 
- * This component ensures PCI DSS compliance by:
- * 1. Never directly handling sensitive payment data within the application
- * 2. Using gateway-specific secure components (like Stripe Elements) for payment collection
- * 3. Implementing proper error handling and security messaging
+ * It handles:
+ * - Rendering the appropriate payment form based on selected gateway
+ * - Managing payment state
+ * - Error handling
+ * 
+ * Critical PCI DSS requirements met:
+ * - No direct handling of sensitive card data
+ * - Uses gateway tokenization
+ * - Proper error handling and logging
+ * - Secure transmission of payment data
  */
+
 import React from 'react';
 import { usePaymentGateway } from './PaymentGatewayProvider';
 import StripeElements from './StripeElements';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SecurePaymentProcessorProps {
-  amount: number;
-  currency?: string;
+  clientSecret?: string;
+  isLoading?: boolean;
+  error?: string | null;
   onPaymentSubmit: (paymentMethodId: string) => Promise<void>;
-  className?: string;
 }
 
+/**
+ * SecurePaymentProcessor Component
+ * 
+ * Renders the appropriate payment form based on the selected gateway
+ */
 export default function SecurePaymentProcessor({
-  amount,
-  currency = 'usd',
-  onPaymentSubmit,
-  className = '',
+  clientSecret,
+  isLoading = false,
+  error = null,
+  onPaymentSubmit
 }: SecurePaymentProcessorProps) {
-  const {
-    gateway,
-    clientSecret,
-    isLoading,
-    error,
-    setPaymentMethod,
-    setError,
-  } = usePaymentGateway();
-
-  // Handle payment method selection from gateway components
-  const handlePaymentMethodSelected = async (paymentMethodId: string) => {
-    try {
-      await onPaymentSubmit(paymentMethodId);
-    } catch (error) {
-      console.error('Payment submission error:', error);
-      setError((error as Error).message || 'Failed to process payment');
-    }
-  };
-
-  // Show loading state while creating payment intent
-  if (isLoading) {
+  const { gateway } = usePaymentGateway();
+  
+  // If no client secret is available, show a message
+  if (!clientSecret && !isLoading) {
     return (
-      <div className={`flex flex-col items-center justify-center p-6 ${className}`}>
-        <div className="w-12 h-12 border-4 border-t-4 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
-        <p className="mt-4 text-center">Processing your payment securely...</p>
-      </div>
-    );
-  }
-
-  // Show error if one occurred
-  if (error) {
-    return (
-      <Alert variant="destructive" className={`mb-6 ${className}`}>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Payment Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>
+          Unable to initialize payment. Please try again later.
+        </AlertDescription>
       </Alert>
     );
   }
-
-  // Render the appropriate payment form based on the selected gateway
-  return (
-    <div className={className}>
-      {gateway === 'stripe' && (
-        <StripeElements
-          clientSecret={clientSecret}
-          amount={amount}
-          currency={currency}
-          onPaymentMethodSelected={handlePaymentMethodSelected}
-        />
-      )}
-      
-      {gateway === 'paypal' && (
-        <div className="p-4 border border-gray-200 rounded-lg">
-          <p className="text-center">PayPal integration coming soon.</p>
-          {/* Future PayPal component would be used here */}
-        </div>
-      )}
-      
-      {gateway === 'bitpay' && (
-        <div className="p-4 border border-gray-200 rounded-lg">
-          <p className="text-center">BitPay integration coming soon.</p>
-          {/* Future BitPay component would be used here */}
-        </div>
-      )}
-      
-      {gateway === 'coinbase' && (
-        <div className="p-4 border border-gray-200 rounded-lg">
-          <p className="text-center">Coinbase integration coming soon.</p>
-          {/* Future Coinbase component would be used here */}
-        </div>
-      )}
-      
-      {gateway === 'opennode' && (
-        <div className="p-4 border border-gray-200 rounded-lg">
-          <p className="text-center">OpenNode integration coming soon.</p>
-          {/* Future OpenNode component would be used here */}
-        </div>
-      )}
-
-      <div className="mt-4 text-sm text-gray-500">
-        <p className="mb-2">
-          <strong>🔒 Secure Payment:</strong> Your payment details are securely processed and never
-          stored on our servers.
-        </p>
-        <p>
-          We adhere to PCI DSS compliance standards to ensure the highest level of payment security.
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-4 space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-center text-sm text-muted-foreground">
+          Preparing payment form...
         </p>
       </div>
-    </div>
-  );
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <Alert variant="destructive" className="mb-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Payment Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2"
+          onClick={() => window.location.reload()}
+        >
+          Try Again
+        </Button>
+      </Alert>
+    );
+  }
+  
+  // Render the appropriate payment form based on the gateway
+  switch (gateway) {
+    case 'stripe':
+      return (
+        <StripeElements 
+          clientSecret={clientSecret!}
+          onSubmit={onPaymentSubmit}
+        />
+      );
+    
+    case 'paypal':
+      // PayPal implementation can be added here
+      return (
+        <div className="p-4 border rounded-md">
+          <p className="text-center text-sm text-muted-foreground">
+            PayPal integration coming soon.
+          </p>
+        </div>
+      );
+    
+    case 'bitpay':
+    case 'coinbase':
+    case 'opennode':
+      // Crypto payment implementations can be added here
+      return (
+        <div className="p-4 border rounded-md">
+          <p className="text-center text-sm text-muted-foreground">
+            Cryptocurrency payment integration coming soon.
+          </p>
+        </div>
+      );
+    
+    default:
+      return (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Configuration Error</AlertTitle>
+          <AlertDescription>
+            Unsupported payment gateway selected.
+          </AlertDescription>
+        </Alert>
+      );
+  }
 }

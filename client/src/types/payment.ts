@@ -1,71 +1,123 @@
 /**
  * Payment Types
  * 
- * This file contains type definitions for payment-related data structures.
- * NOTE: This file should NEVER contain actual sensitive payment data,
- * only references and safe identifiers in compliance with PCI DSS requirements.
+ * This file defines types related to payment processing.
+ * These types ensure consistency and type safety for payment operations.
  */
 
 /**
- * Payment method types supported by the application
- */
-export type PaymentMethodType = 
-  | 'card'                // Credit/Debit card (via Stripe, etc.)
-  | 'paypal'              // PayPal
-  | 'crypto_bitcoin'      // Bitcoin
-  | 'crypto_ethereum'     // Ethereum
-  | 'crypto_litecoin'     // Litecoin
-  | 'crypto_other'        // Other cryptocurrencies
-  | 'bank_transfer'       // ACH or wire transfer
-  | 'wallet'              // Digital wallet
-  | 'other';              // Other payment types
-
-/**
- * Payment method information
+ * Payment Method interface
  * 
- * This type only contains non-sensitive identifiers and metadata,
- * never actual card numbers, CVVs, or other sensitive information.
+ * This represents a tokenized payment method (card, bank account, etc.)
+ * that can be used for payment processing.
+ * 
+ * Note: This never contains sensitive card data directly, only tokenized references
+ * that comply with PCI DSS requirements.
  */
 export interface PaymentMethod {
-  id: string;                 // Payment method ID (from payment processor)
-  type: PaymentMethodType;    // Type of payment method
-  gateway: string;            // Payment gateway (stripe, paypal, etc.)
-  
-  // Display info (safe to store and display)
-  label?: string;             // Display name (e.g., "Visa ending in 4242")
-  last4?: string;             // Last 4 digits (for cards only, no PAN)
-  expiryDisplay?: string;     // Display-formatted expiry (MM/YY, for cards only)
-  imageUrl?: string;          // URL to brand/card image
-  
-  // Metadata
-  isDefault?: boolean;
-  isSaved?: boolean;
-  createdAt?: string;
+  id: string;
+  type: PaymentMethodType;
+  last4?: string;
+  brand?: string;
+  expMonth?: number;
+  expYear?: number;
+  name?: string;
+  token?: string;
 }
 
 /**
- * Result of a payment process
+ * Payment Method Type
+ * 
+ * Supported payment method types across different payment gateways
  */
-export interface PaymentResult {
-  success: boolean;
-  transactionId?: string;
-  error?: {
-    code: string;
-    message: string;
+export type PaymentMethodType = 
+  | 'card'             // Credit or debit card
+  | 'bank_account'     // ACH or direct bank account
+  | 'bank_transfer'    // Bank transfer
+  | 'wallet'           // Digital wallet (Apple Pay, Google Pay, etc.)
+  | 'crypto'           // Cryptocurrency
+  | 'pix'              // Brazilian instant payment system
+  | 'sepa_debit'       // SEPA Direct Debit
+  | 'sofort'           // Sofort banking
+  | 'giropay'          // Giropay
+  | 'ideal'            // iDEAL
+  | 'eps'              // EPS
+  | 'bancontact'       // Bancontact
+  | 'p24'              // Przelewy24
+  | 'alipay'           // Alipay
+  | 'wechat'           // WeChat Pay
+  | 'klarna'           // Klarna
+  | 'affirm'           // Affirm
+  | 'afterpay_clearpay'; // Afterpay/Clearpay
+
+/**
+ * Payment Status
+ * 
+ * Possible statuses for a payment at various stages
+ */
+export type PaymentStatus =
+  | 'requires_payment_method' // Initial state - needs payment method
+  | 'requires_confirmation'   // Payment method attached, needs confirmation
+  | 'requires_action'         // Requires customer action (3D Secure, etc.)
+  | 'processing'              // Being processed
+  | 'succeeded'               // Successful payment
+  | 'canceled'                // Canceled payment
+  | 'failed';                 // Failed payment
+
+/**
+ * Payment Intent
+ * 
+ * Represents a payment intent/order with a customer
+ */
+export interface PaymentIntent {
+  id: string;
+  status: PaymentStatus;
+  amount: number;
+  currency: string;
+  clientSecret?: string;
+  paymentMethod?: PaymentMethod;
+  created: number;
+  metadata?: Record<string, string>;
+}
+
+/**
+ * Payment Error
+ * 
+ * Standardized payment error structure
+ */
+export interface PaymentError {
+  code: string;
+  message: string;
+  declineCode?: string;
+  param?: string;
+}
+
+/**
+ * Security compliance level for payment operations
+ */
+export enum PaymentSecurityLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+/**
+ * Payment Gateway Configuration
+ */
+export interface PaymentGatewayConfig {
+  name: string;
+  enabled: boolean;
+  apiKey?: string;
+  publicKey?: string;
+  webhookSecret?: string;
+  testMode: boolean;
+  supportedMethods: PaymentMethodType[];
+  supportedCurrencies: string[];
+  securitySettings: {
+    requires3DS: boolean;
+    requiresAVS: boolean;
+    fraudDetection: boolean;
+    complianceLevel: PaymentSecurityLevel;
   };
-  orderId?: string;
 }
-
-/**
- * Payment status in the system
- */
-export type PaymentStatus = 
-  | 'created'       // Payment intent created
-  | 'processing'    // Payment is being processed
-  | 'authorized'    // Payment authorized but not captured
-  | 'completed'     // Payment completed successfully
-  | 'failed'        // Payment failed
-  | 'refunded'      // Payment refunded
-  | 'disputed'      // Payment disputed
-  | 'canceled'      // Payment canceled
-  | 'expired';      // Payment intent expired

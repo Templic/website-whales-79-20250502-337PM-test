@@ -9,13 +9,12 @@
  * 3. Providing consistent error handling
  * 4. Never handling or storing sensitive card data
  */
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { PaymentMethod } from '../../../types/payment';
 
-// Payment gateway types
-export type PaymentGatewayType = 'stripe' | 'paypal' | 'bitpay' | 'coinbase' | 'opennode';
+import React, { createContext, ReactNode, useContext, useState } from 'react';
+import axios from 'axios';
+import { PaymentGatewayType, PaymentMethod } from '../../../types/payment';
 
-// Context interface
+// Define the context type
 interface PaymentGatewayContextType {
   gateway: PaymentGatewayType;
   clientSecret: string | null;
@@ -31,7 +30,7 @@ interface PaymentGatewayContextType {
   reset: () => void;
 }
 
-// Create context with default values
+// Create the context with default values
 const PaymentGatewayContext = createContext<PaymentGatewayContextType>({
   gateway: 'stripe',
   clientSecret: null,
@@ -46,7 +45,7 @@ const PaymentGatewayContext = createContext<PaymentGatewayContextType>({
   reset: () => {},
 });
 
-// Provider props interface
+// Define props for the provider component
 interface PaymentGatewayProviderProps {
   children: ReactNode;
   defaultGateway?: PaymentGatewayType;
@@ -59,7 +58,7 @@ interface PaymentGatewayProviderProps {
  */
 export function PaymentGatewayProvider({
   children,
-  defaultGateway = 'stripe'
+  defaultGateway = 'stripe',
 }: PaymentGatewayProviderProps) {
   // State
   const [gateway, setGateway] = useState<PaymentGatewayType>(defaultGateway);
@@ -75,91 +74,46 @@ export function PaymentGatewayProvider({
    * No card details are handled directly - only a client secret
    * is created which is used by the secure Elements components.
    */
-  const createPaymentIntent = useCallback(async (
-    amount: number,
-    currency: string
-  ): Promise<string | null> => {
+  const createPaymentIntent = async (amount: number, currency: string): Promise<string | null> => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Different implementation based on selected gateway
-      if (gateway === 'stripe') {
-        // Create Stripe payment intent via our server
-        const response = await fetch('/api/payments/create-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount, currency }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create payment intent');
-        }
-        
-        const data = await response.json();
-        setClientSecret(data.clientSecret);
-        return data.clientSecret;
-      } 
-      else if (gateway === 'paypal') {
-        // PayPal implementation would go here
-        const response = await fetch('/api/payments/paypal/create-order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ amount, currency }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to create PayPal order');
-        }
-        
-        const data = await response.json();
-        setClientSecret(data.orderID);
-        return data.orderID;
+      // Create a payment intent on the server
+      const response = await axios.post('/api/payment/create-intent', {
+        amount,
+        currency,
+        // Add optional metadata
+        metadata: {
+          gateway,
+        },
+      });
+      
+      if (response.data.success && response.data.clientSecret) {
+        setClientSecret(response.data.clientSecret);
+        return response.data.clientSecret;
+      } else {
+        throw new Error(response.data.message || 'Failed to create payment intent');
       }
-      else if (gateway === 'bitpay') {
-        // BitPay implementation would go here
-        setError('BitPay is not yet implemented');
-        return null;
-      }
-      else if (gateway === 'coinbase') {
-        // Coinbase implementation would go here
-        setError('Coinbase is not yet implemented');
-        return null;
-      }
-      else if (gateway === 'opennode') {
-        // OpenNode implementation would go here
-        setError('OpenNode is not yet implemented');
-        return null;
-      }
-      else {
-        throw new Error(`Unsupported payment gateway: ${gateway}`);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      console.error('Payment intent creation failed:', errorMessage);
-      setError(errorMessage);
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.message || err.message || 'An error occurred';
+      setError(errorMsg);
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [gateway]);
+  };
   
   /**
    * Reset the payment state
    */
-  const reset = useCallback(() => {
+  const reset = () => {
     setClientSecret(null);
     setPaymentMethod(null);
     setError(null);
-  }, []);
+  };
   
-  // Create context value
+  // Create the context value object
   const contextValue: PaymentGatewayContextType = {
     gateway,
     clientSecret,
@@ -174,6 +128,7 @@ export function PaymentGatewayProvider({
     reset,
   };
   
+  // Provide the context to children
   return (
     <PaymentGatewayContext.Provider value={contextValue}>
       {children}
@@ -193,5 +148,3 @@ export function usePaymentGateway() {
   
   return context;
 }
-
-export default PaymentGatewayProvider;
