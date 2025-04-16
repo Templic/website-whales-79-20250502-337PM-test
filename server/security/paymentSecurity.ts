@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { log } from '../vite';
-import { runPCIDSSComplianceScan, generateComplianceReport } from './pciComplianceChecker';
+import pciComplianceChecker from './pciComplianceChecker';
 
 // Security scan result type
 export interface PaymentSecurityResult {
@@ -33,11 +33,11 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityResult[]>
   
   try {
     // Run PCI DSS compliance scan
-    const complianceScanResults = await runPCIDSSComplianceScan();
+    const complianceScanResults = await pciComplianceChecker.runComplianceScan();
     
-    // Generate compliance report
+    // Generate compliance report path
     if (complianceScanResults.failedChecks > 0) {
-      const reportPath = generateComplianceReport(complianceScanResults);
+      const reportPath = `reports/compliance/pci-compliance-${complianceScanResults.timestamp.replace(/:/g, '-')}.md`;
       
       if (complianceScanResults.criticalIssues > 0) {
         results.push({

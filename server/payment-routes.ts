@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
-import paymentLogger, { PaymentEventType, LogLevel } from './security/paymentTransactionLogger';
+import paymentTransactionLogger, { PaymentTransactionType } from './security/paymentTransactionLogger';
 
 const router = express.Router();
 
@@ -60,14 +60,18 @@ router.post('/create-intent', async (req: Request, res: Response) => {
     });
 
     // Log payment intent creation (PCI DSS Requirement 10.2)
-    paymentLogger.logPaymentIntentCreated(
-      'stripe',
+    paymentTransactionLogger.logTransaction({
+      timestamp: new Date().toISOString(),
+      transaction_id: paymentIntent.id,
+      user_id: metadata?.userId,
+      payment_gateway: 'stripe',
+      transaction_type: 'intent_created',
       amount,
       currency,
-      metadata?.userId,
-      metadata?.customer_email,
-      metadata
-    );
+      status: 'created',
+      message: 'Payment intent created successfully',
+      meta: metadata
+    });
 
     // Return client secret to frontend
     return res.json({
@@ -78,19 +82,17 @@ router.post('/create-intent', async (req: Request, res: Response) => {
     console.error('Error creating payment intent:', error);
     
     // Log payment error (PCI DSS Requirement 10.2)
-    paymentLogger.logTransaction(
-      PaymentEventType.PAYMENT_FAILED,
-      LogLevel.ERROR,
-      {
-        gatewayType: 'stripe',
-        status: 'failed',
-        errorMessage: error.message || 'Unknown error',
+    paymentTransactionLogger.logFailedPayment({
+      transactionId: `failed_${Date.now()}`,
+      gateway: 'stripe',
+      amount: req.body?.amount || 0,
+      currency: req.body?.currency || 'usd',
+      errorMessage: error.message || 'Unknown error',
+      meta: {
         errorCode: error.code,
-        amount: req.body?.amount,
-        currency: req.body?.currency || 'usd',
-        metadata: req.body?.metadata,
+        metadata: req.body?.metadata
       }
-    );
+    });
     
     return res.status(500).json({
       success: false,
@@ -156,14 +158,14 @@ router.post('/confirm', async (req: Request, res: Response) => {
     // Log payment failure (PCI DSS Requirement 10.2)
     paymentLogger.logPaymentFailed(
       'stripe',
-      paymentMethodId || 'unknown',
+      req.body.paymentMethodId || 'unknown',
       req.body.amount || 0,
       req.body.currency || 'usd',
       error.code,
       error.message || 'Unknown error',
       req.body.userId,
       req.body.email,
-      orderId
+      req.body.orderId || 'unknown'
     );
     
     return res.status(500).json({
