@@ -12,11 +12,21 @@ import { users } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import { logSecurityEvent } from '../security/security';
 
+// Define JWT payload interface for better type safety
+export interface JwtPayload {
+  sub: string; // Subject (usually user ID)
+  iat: number; // Issued at
+  exp: number; // Expiry time
+  jti?: string; // JWT ID (for token revocation)
+  role?: string; // User role
+  [key: string]: any; // Allow additional claims
+}
+
 // Extend Express Request to include decoded JWT payload
 declare global {
   namespace Express {
     interface Request {
-      jwtPayload?: any;
+      jwtPayload?: JwtPayload;
     }
   }
 }
@@ -25,24 +35,26 @@ declare global {
  * Middleware to authenticate requests with JWT
  * This can be used as an alternative to session-based authentication for API routes
  */
-export function authenticateJwt(req: Request, res: Response, next: NextFunction) {
+export function authenticateJwt(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   const token = extractTokenFromHeader(authHeader);
   
   if (!token) {
-    return res.status(401).json({ 
+    res.status(401).json({ 
       success: false,
       message: 'Access token is required' 
     });
+    return;
   }
   
   const decoded = verifyAccessToken(token);
   
   if (!decoded) {
-    return res.status(401).json({ 
+    res.status(401).json({ 
       success: false,
       message: 'Invalid or expired token' 
     });
+    return;
   }
   
   // Check if token has been revoked (blacklisted)
@@ -56,10 +68,11 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
       severity: 'high'
     });
     
-    return res.status(401).json({ 
+    res.status(401).json({ 
       success: false,
       message: 'Token has been revoked' 
     });
+    return;
   }
   
   // Store the decoded payload in request for later use
@@ -73,12 +86,13 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
  * Must be used after authenticateJwt middleware
  */
 export function authorizeJwtRole(roles: string[]) {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (!req.jwtPayload) {
-      return res.status(401).json({ 
+      res.status(401).json({ 
         success: false,
         message: 'Authentication required' 
       });
+      return;
     }
     
     const userId = req.jwtPayload.sub;
@@ -86,7 +100,7 @@ export function authorizeJwtRole(roles: string[]) {
     try {
       // Verify user exists and has required role
       const user = await db.query.users.findFirst({
-        where: eq(users.id, userId)
+        where: eq(users.id, parseInt(userId, 10))
       });
       
       if (!user) {
@@ -99,10 +113,11 @@ export function authorizeJwtRole(roles: string[]) {
           severity: 'high'
         });
         
-        return res.status(401).json({ 
+        res.status(401).json({ 
           success: false,
           message: 'Invalid user' 
         });
+        return;
       }
       
       // Check user banning status
@@ -117,10 +132,11 @@ export function authorizeJwtRole(roles: string[]) {
           severity: 'medium'
         });
         
-        return res.status(403).json({ 
+        res.status(403).json({ 
           success: false,
           message: 'Account has been suspended' 
         });
+        return;
       }
       
       // Check if user has required role
@@ -135,20 +151,22 @@ export function authorizeJwtRole(roles: string[]) {
           severity: 'medium'
         });
         
-        return res.status(403).json({ 
+        res.status(403).json({ 
           success: false,
           message: 'Insufficient permissions' 
         });
+        return;
       }
       
       next();
     } catch (error) {
       console.error('JWT role authorization error:', error);
       
-      return res.status(500).json({ 
+      res.status(500).json({ 
         success: false,
         message: 'An error occurred during authorization' 
       });
+      return;
     }
   };
 }
@@ -157,11 +175,12 @@ export function authorizeJwtRole(roles: string[]) {
  * Middleware to detect and respond to JWT algorithm confusion attacks
  * This middleware checks if 'none' algorithm is being attempted
  */
-export function preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction) {
+export function preventAlgorithmConfusionAttack(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next();
+    next();
+    return;
   }
   
   const token = authHeader.substring(7);
@@ -169,21 +188,28 @@ export function preventAlgorithmConfusionAttack(req: Request, res: Response, nex
   // Check if token is using 'none' algorithm (basic check)
   try {
     const [headerBase64] = token.split('.');
-    const header = JSON.parse(Buffer.from(headerBase64, 'base64').toString());
     
-    if (header.alg === 'none') {
-      logSecurityEvent({
-        type: 'JWT_ALGORITHM_CONFUSION_ATTEMPT',
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        details: 'Attempt to use JWT with "none" algorithm',
-        severity: 'high'
-      });
+    // Ensure headerBase64 is defined before decoding
+    if (headerBase64) {
+      const headerBuffer = Buffer.from(headerBase64, 'base64');
+      const headerStr = headerBuffer.toString('utf-8');
+      const header = JSON.parse(headerStr);
       
-      return res.status(400).json({ 
-        success: false,
-        message: 'Invalid token algorithm' 
-      });
+      if (header.alg === 'none') {
+        logSecurityEvent({
+          type: 'JWT_ALGORITHM_CONFUSION_ATTEMPT',
+          ip: req.ip,
+          userAgent: req.headers['user-agent'],
+          details: 'Attempt to use JWT with "none" algorithm',
+          severity: 'high'
+        });
+        
+        res.status(400).json({ 
+          success: false,
+          message: 'Invalid token algorithm' 
+        });
+        return;
+      }
     }
   } catch (e) {
     // If token cannot be parsed, let the actual JWT verification handle it
