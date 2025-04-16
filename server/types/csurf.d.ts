@@ -28,3 +28,15 @@ declare namespace Express {
     csrfToken(): string;
   }
 }
+declare module 'csurf' {
+  import { RequestHandler } from 'express';
+  
+  function csurf(options?: {
+    cookie?: boolean | Object;
+    ignoreMethods?: string[];
+    sessionKey?: string;
+    value?: (req: any) => string;
+  }): RequestHandler;
+  
+  export = csurf;
+}

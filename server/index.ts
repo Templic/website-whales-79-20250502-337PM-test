@@ -20,13 +20,21 @@ import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
 import crypto from 'crypto';
+import csurf from 'csurf';
 
 // Start time tracking
 const startTime = Date.now();
 
 // Create Express app
 const app = express();
-const httpServer = createServer(app);
+app.use(cookieParser());
+const csrfProtection = csurf({ cookie: true });
+app.use(csrfProtection);
+
+// CSRF token endpoint
+app.get('/api/csrf-token', (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
 
 /**
  * Initialize the server in stages
@@ -37,7 +45,7 @@ const httpServer = createServer(app);
 async function initializeServer() {
   console.log('Starting server initialization...');
   log(`Server startup priority: ${config.startupPriority}`, 'server');
-  
+
   try {
     // === STAGE 1: Essential Services ===
     // Connect to database (critical)
@@ -45,13 +53,13 @@ async function initializeServer() {
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
     log(`Database connected in ${dbConnectTime}ms`, 'server');
-    
+
     // === STAGE 2: Core Server Components ===
     // Basic middleware
     app.use(express.json({ limit: config.security.maxPayloadSize }));
     app.use(express.urlencoded({ extended: true, limit: config.security.maxPayloadSize }));
-    app.use(cookieParser());
-    
+
+
     // Security middleware
     app.use(
       helmet({
@@ -133,22 +141,22 @@ async function initializeServer() {
         },
       })
     );
-    
+
     // Enable CORS
     app.use(cors({
       origin: '*',
       credentials: true
     }));
-    
+
     // Enable compression if configured
     if (config.enableCompression) {
       app.use(compression());
     }
-    
+
     // Session configuration
     const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
     log('Generated dynamic session secret for this instance', 'server');
-    
+
     app.use(session({
       secret: sessionSecret,
       resave: false,
@@ -159,30 +167,30 @@ async function initializeServer() {
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
     } as any));
-    
+
     // Set up routes
     await registerRoutes(app);
-    
+
     // Set up Vite middleware in development
     if (process.env.NODE_ENV !== 'production') {
       log('Setting up Vite in development mode...', 'server');
       await setupVite(app, httpServer);
     }
-    
+
     // Start listening for connections
     const PORT = config.port;
     httpServer.listen(PORT, config.host, () => {
       log(`Server successfully listening on port ${PORT}`, 'server');
       console.log(`${new Date().toLocaleTimeString()} [express] Server listening on port ${PORT}`);
     });
-    
+
     // Calculate and log server initialization time
     const initTime = Date.now() - startTime;
     console.log(`Server initialization complete in ${initTime}ms`);
-    
+
     // Log startup performance metrics
     logStartupPerformance(initTime);
-    
+
     // === STAGE 3: Deferred Non-Critical Services ===
     if (config.deferBackgroundServices) {
       log('Using deferred initialization for non-critical services', 'server');
@@ -192,7 +200,7 @@ async function initializeServer() {
       // Initialize all services immediately
       await initializeAllServices();
     }
-    
+
   } catch (error) {
     console.error('Failed to initialize server:', error);
     process.exit(1);
@@ -210,7 +218,7 @@ function initializeNonCriticalServices() {
       scheduleIntelligentMaintenance();
     }, config.maintenanceDelay);
   }
-  
+
   // Initialize background services (if enabled)
   if (config.features.enableBackgroundTasks) {
     setTimeout(() => {
@@ -218,7 +226,7 @@ function initializeNonCriticalServices() {
       initBackgroundServices();
     }, config.backgroundServicesDelay);
   }
-  
+
   // Initialize security scans (if enabled)
   if (config.features.enableSecurityScans) {
     setTimeout(() => {
@@ -236,13 +244,13 @@ async function initializeAllServices() {
     log('Initializing database optimization...', 'server');
     await scheduleIntelligentMaintenance();
   }
-  
+
   // Initialize background services
   if (config.features.enableBackgroundTasks) {
     log('Initializing background services...', 'server');
     await initBackgroundServices();
   }
-  
+
   // Initialize security scans
   if (config.features.enableSecurityScans) {
     log('Initializing security scans...', 'server');
@@ -270,23 +278,23 @@ function logStartupPerformance(initTime: number) {
 function setupGracefulShutdown() {
   // Handle process termination signals
   const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
-  
+
   signals.forEach((signal) => {
     process.on(signal, async () => {
       console.log(`\nReceived ${signal} signal, shutting down gracefully...`);
-      
+
       // Stop background services first
       if (config.features.enableBackgroundTasks) {
         await stopBackgroundServices();
       }
-      
+
       // Close HTTP server to stop accepting new connections
       if (httpServer) {
         httpServer.close(() => {
           console.log('HTTP server closed');
         });
       }
-      
+
       // Give existing connections some time to complete
       console.log('Allowing existing requests to complete...');
       setTimeout(() => {
@@ -295,12 +303,12 @@ function setupGracefulShutdown() {
       }, 3000);
     });
   });
-  
+
   // Handle unhandled rejections and exceptions
   process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
-  
+
   process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
     process.exit(1);
