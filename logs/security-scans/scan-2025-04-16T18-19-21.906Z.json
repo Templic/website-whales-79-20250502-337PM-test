@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-04-16T18:19:21.906Z",
+  "scanDuration": 3521,
+  "scanType": "quick",
+  "totalIssues": 2,
+  "criticalIssues": 0,
+  "highIssues": 1,
+  "mediumIssues": 1,
+  "lowIssues": 0,
+  "vulnerabilities": [
+    {
+      "id": "2522cf29-c722-4645-899d-6ba6ec03d4e5",
+      "severity": "medium",
+      "description": "Unable to check for hardcoded secrets",
+      "recommendation": "Manually review code for hardcoded secrets and credentials"
+    },
+    {
+      "id": "b508430b-a008-4829-8495-b11eed2aed3b",
+      "severity": "high",
+      "description": "No CSRF protection found",
+      "recommendation": "Implement CSRF protection using csurf middleware for all state-changing endpoints"
+    }
+  ]
+}

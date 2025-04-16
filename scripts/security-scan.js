@@ -302,10 +302,51 @@ async function checkForSecrets(vulnerabilities) {
     // Files to look in
     const fileTypes = '\\.(js|ts|jsx|tsx|json|env|yaml|yml)$';
     
-    // Build grep command
-    const grepCommand = `grep -r -i -E '(${secretPatterns.join('|')})' --include="*${fileTypes}" ${excludeDirs.map(dir => `--exclude-dir="${dir}"`).join(' ')} . || true`;
+    // Use a more reliable approach to find secrets that doesn't rely on complex grep
+    const results = [];
     
-    const { stdout } = await execAsync(grepCommand);
+    // Function to check a file for secrets
+    const checkFileForSecrets = (filePath) => {
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        
+        // Check each pattern
+        for (const pattern of secretPatterns) {
+          const regex = new RegExp(pattern, 'i');
+          if (regex.test(content)) {
+            results.push(`${filePath}:${pattern}`);
+          }
+        }
+      } catch (error) {
+        // Skip files that can't be read
+      }
+    };
+    
+    // Function to recursively search directories
+    const searchDirectory = (dir) => {
+      try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          
+          // Skip excluded directories
+          if (entry.isDirectory() && !excludeDirs.includes(entry.name)) {
+            searchDirectory(fullPath);
+          } else if (entry.isFile() && fullPath.match(new RegExp(fileTypes))) {
+            checkFileForSecrets(fullPath);
+          }
+        }
+      } catch (error) {
+        // Skip directories that can't be read
+      }
+    };
+    
+    // Start the search from the current directory
+    searchDirectory('.');
+    
+    // Format results similar to grep output
+    const stdout = results.join('\n');
     
     if (stdout.trim()) {
       const results = stdout.split('\n').filter(line => line.trim() !== '');
