@@ -15,8 +15,8 @@ router.post('/stripe-config', validateAdmin, async (req, res) => {
     }
 
     // In production, store these in Replit Secrets
-    process.env.STRIPE_PUBLISHABLE_KEY = publishableKey;
-    process.env.STRIPE_SECRET_KEY = secretKey;
+    process.env.STRIPE_PUBLISHABLE_KEY_20250416 = publishableKey;
+    process.env.STRIPE_SECRET_KEY_20250416 = secretKey;
 
     log('Stripe configuration updated', 'info');
     
