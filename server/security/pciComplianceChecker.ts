@@ -344,6 +344,10 @@ class PCIComplianceChecker {
   private checkLoggingAndMonitoring(): ComplianceCheckResult[] {
     const startTime = process.hrtime();
     
+    // Run specialized checks
+    const secureAuditTrailsCheck = this.checkSecureAuditTrails();
+    const logReviewCheck = this.checkLogReview();
+    
     const results: ComplianceCheckResult[] = [
       {
         category: 'Logging and Monitoring',
@@ -357,28 +361,17 @@ class PCIComplianceChecker {
         category: 'Logging and Monitoring',
         requirement: 'Requirement 10.2',
         description: 'Implement automated audit trails for all system components',
-        passed: true, // In a real app, this would be a real check
-        details: 'Application automatically logs all critical events',
+        passed: this.checkTransactionLogging(), // Now using a real check
+        details: this.checkTransactionLogging() 
+          ? 'Transaction logging is properly implemented'
+          : 'Transaction logging is not implemented or not working',
+        recommendation: !this.checkTransactionLogging() 
+          ? 'Implement transaction logging for all payment operations' 
+          : undefined,
         critical: true
       },
-      {
-        category: 'Logging and Monitoring',
-        requirement: 'Requirement 10.5',
-        description: 'Secure audit trails so they cannot be altered',
-        passed: false, // Example of a failed check
-        details: 'Log integrity protection not fully implemented',
-        recommendation: 'Implement cryptographic hash verification for logs',
-        critical: false
-      },
-      {
-        category: 'Logging and Monitoring',
-        requirement: 'Requirement 10.6',
-        description: 'Review logs and security events for all system components',
-        passed: false, // Example of another failed check
-        details: 'Regular log review process not formally established',
-        recommendation: 'Implement automated log analysis and alerting',
-        critical: false
-      },
+      secureAuditTrailsCheck, // Using the new check for 10.5
+      logReviewCheck, // Using the new check for 10.6
       {
         category: 'Logging and Monitoring',
         requirement: 'Requirement 10.7',
@@ -493,6 +486,152 @@ class PCIComplianceChecker {
       log(`Error getting latest compliance report: ${error}`, 'error');
       return null;
     }
+  }
+  
+  /**
+   * Check if transaction logging is implemented
+   * Verifies PCI DSS requirement 10.2 - Implement automated audit trails
+   * 
+   * @returns boolean indicating if transaction logging is properly implemented
+   */
+  private checkTransactionLogging(): boolean {
+    const logFilePath = path.join(process.cwd(), 'logs', 'payment', 'transaction_log.txt');
+    const logsExist = fs.existsSync(logFilePath);
+    
+    if (logsExist) {
+      try {
+        // Check if there are recent transaction logs (within the last 30 days)
+        const stats = fs.statSync(logFilePath);
+        const fileModTime = stats.mtime.getTime();
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        
+        if (fileModTime > thirtyDaysAgo) {
+          // Check for proper log format by reading a sample
+          const logSample = fs.readFileSync(logFilePath, 'utf8').slice(0, 1000);
+          
+          // Check if log contains basic transaction elements
+          if (logSample.includes('transactionId') && 
+              (logSample.includes('amount') || logSample.includes('payment')) && 
+              logSample.includes('timestamp')) {
+            return true;
+          }
+        }
+      } catch (error) {
+        log(`Error checking transaction logs: ${error}`, 'security');
+        return false;
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Check if secure audit trails are implemented
+   * Verifies PCI DSS requirement 10.5 - Secure audit trails so they cannot be altered
+   * 
+   * @returns ComplianceCheckResult for audit trail security
+   */
+  private checkSecureAuditTrails(): ComplianceCheckResult {
+    // Check for log integrity protection
+    const logIntegrityPath = path.join(process.cwd(), 'logs', 'integrity');
+    const logHashFilePath = path.join(logIntegrityPath, 'log_hashes.json');
+    
+    let passed = false;
+    let details = 'Log integrity protection not fully implemented';
+    let recommendation = 'Implement cryptographic hash verification for logs';
+    
+    if (fs.existsSync(logIntegrityPath) && fs.existsSync(logHashFilePath)) {
+      try {
+        // Read the hash file to see if it's properly formatted
+        const logHashes = JSON.parse(fs.readFileSync(logHashFilePath, 'utf8'));
+        
+        if (logHashes && typeof logHashes === 'object' && Object.keys(logHashes).length > 0) {
+          // Check if at least one log file has a hash
+          const hasValidHashes = Object.values(logHashes).some(entry => 
+            typeof entry === 'object' && 
+            entry !== null &&
+            'hash' in entry && 
+            'timestamp' in entry
+          );
+          
+          if (hasValidHashes) {
+            passed = true;
+            details = 'Log integrity protection implemented with cryptographic hashing';
+            recommendation = undefined;
+          }
+        }
+      } catch (error) {
+        passed = false;
+        details = `Log integrity file exists but is not valid: ${error}`;
+        recommendation = 'Fix the log hash file format and verification process';
+      }
+    }
+    
+    return {
+      category: 'Logging and Monitoring',
+      requirement: 'Requirement 10.5',
+      description: 'Secure audit trails so they cannot be altered',
+      passed,
+      details,
+      recommendation,
+      critical: false
+    };
+  }
+  
+  /**
+   * Check if log review is implemented
+   * Verifies PCI DSS requirement 10.6 - Review logs and security events
+   * 
+   * @returns ComplianceCheckResult for log review
+   */
+  private checkLogReview(): ComplianceCheckResult {
+    const logReviewPath = path.join(process.cwd(), 'logs', 'reviews');
+    const logReviewFilePath = path.join(logReviewPath, 'log_review_history.json');
+    
+    let passed = false;
+    let details = 'Regular log review process not formally established';
+    let recommendation = 'Implement automated log analysis and alerting';
+    
+    if (fs.existsSync(logReviewPath) && fs.existsSync(logReviewFilePath)) {
+      try {
+        // Read the log review history
+        const logReviews = JSON.parse(fs.readFileSync(logReviewFilePath, 'utf8'));
+        
+        if (Array.isArray(logReviews) && logReviews.length > 0) {
+          // Get the most recent review
+          const latestReview = logReviews.sort((a, b) => 
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          )[0];
+          
+          // Check if review was performed in the last 7 days
+          const reviewDate = new Date(latestReview.timestamp).getTime();
+          const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+          
+          if (reviewDate > sevenDaysAgo) {
+            passed = true;
+            details = 'Log review performed within the last week';
+            recommendation = undefined;
+          } else {
+            details = 'Log review is outdated (last review was more than 7 days ago)';
+            recommendation = 'Perform log reviews at least weekly, preferably daily';
+          }
+        }
+      } catch (error) {
+        passed = false;
+        details = `Log review file exists but is not valid: ${error}`;
+        recommendation = 'Fix the log review history file format';
+      }
+    }
+    
+    return {
+      category: 'Logging and Monitoring',
+      requirement: 'Requirement 10.6',
+      description: 'Review logs and security events for all system components',
+      passed,
+      details,
+      recommendation,
+      critical: false
+    };
   }
 }
 
