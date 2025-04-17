@@ -78,7 +78,6 @@ export default function AuthPage() {
     user, 
     isLoading, 
     requires2FA,
-    registerMutation,
     verify2FAMutation,
     verifyBackupCodeMutation,
     clearRequires2FA
@@ -256,7 +255,22 @@ export default function AuthPage() {
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Register</h2>
           <Form {...registerForm}>
             <form onSubmit={registerForm.handleSubmit(data => {
-              registerMutation.mutate(data);
+              const mutation = useMutation({
+                mutationFn: async (userData) => {
+                  const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData),
+                  });
+                  if (!response.ok) {
+                    throw new Error('Registration failed');
+                  }
+                  return response.json();
+                }
+              });
+              mutation.mutate(data);
             })} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Username</label>
@@ -399,9 +413,9 @@ export default function AuthPage() {
               <Button
                 type="submit"
                 className="w-full bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-                disabled={registerMutation.isPending}
+                disabled={registerForm.formState.isSubmitting}
               >
-                {registerMutation.isPending ? (
+                {registerForm.formState.isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
                   </>
