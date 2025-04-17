@@ -718,6 +718,16 @@ export function MainHeader() {
                   </div>
                 </div>
 
+                {/* Mobile Theme Toggle */}
+                <div className="border-b border-[#00ebd6]/20 pb-6">
+                  <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
+                    Theme
+                  </h3>
+                  <div className="flex justify-center">
+                    <ThemeToggle />
+                  </div>
+                </div>
+
                 {/* Mobile Search */}
                 <div className="pt-2">
                   <form onSubmit={handleSearchSubmit} className="mt-4">

@@ -93,6 +93,33 @@ export function EnhancedAccessibilityControls() {
       });
     };
   }, [colorFilters]);
+  
+  // Keyboard shortcut to toggle accessibility panel (press 'a')
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Toggle accessibility panel when pressing 'a'
+      if (e.key === 'a' && !e.ctrlKey && !e.altKey && !e.metaKey && 
+          !(document.activeElement instanceof HTMLInputElement) &&
+          !(document.activeElement instanceof HTMLTextAreaElement)) {
+        if (isAccessibilityOpen) {
+          closeAccessibilityPanel();
+        } else {
+          openAccessibilityPanel();
+        }
+      }
+      
+      // Close with Escape key
+      if (e.key === 'Escape' && isAccessibilityOpen) {
+        closeAccessibilityPanel();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isAccessibilityOpen, openAccessibilityPanel, closeAccessibilityPanel]);
 
   return (
     <>
@@ -107,10 +134,15 @@ export function EnhancedAccessibilityControls() {
 
       {/* Accessibility panel */}
       {isAccessibilityOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={(e) => {
+          // Close panel when clicking the backdrop
+          if (e.target === e.currentTarget) {
+            closeAccessibilityPanel();
+          }
+        }}>
           <div
             className={cn(
-              "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all border border-purple-500/30",
+              "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all border border-purple-500/30 my-4 mx-2",
               isExpanded ? "h-[80vh] overflow-y-auto" : "max-h-[80vh] overflow-y-auto"
             )}
           >
