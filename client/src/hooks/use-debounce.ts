@@ -1,65 +1,57 @@
 /**
- * A custom hook for debouncing values or callback functions.
- * Helpful for preventing excessive API calls or expensive operations.
+ * use-debounce.ts
+ * A custom hook for debouncing value changes.
+ * 
+ * Useful for reducing the frequency of expensive operations like API calls
+ * in response to user input, such as search queries.
  */
 
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * Returns a debounced version of the provided value that only updates
- * after the specified delay has passed without the value changing.
+ * A hook that returns a debounced version of the value.
  * 
  * @param value The value to debounce
- * @param delay The delay in milliseconds
+ * @param delay The delay in milliseconds (default: 500ms)
  * @returns The debounced value
  */
-export function useDebounce<T>(value: T, delay: number): T {
+export function useDebounce<T>(value: T, delay: number = 500): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
+  
   useEffect(() => {
-    // Set up a timer to update the debounced value after the delay
+    // Set up timeout to update debounced value after delay
     const timer = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-
-    // Clean up the timer if the value changes before the delay expires
+    
+    // Clean up timeout if value changes (or component unmounts)
     return () => {
       clearTimeout(timer);
     };
-  }, [value, delay]);
-
+  }, [value, delay]); // Only re-call effect if value or delay changes
+  
   return debouncedValue;
 }
 
 /**
- * Returns a debounced callback function that only executes
- * after the specified delay has passed without being called again.
+ * A hook that returns a debounced function.
  * 
  * @param callback The function to debounce
- * @param delay The delay in milliseconds
- * @returns A debounced version of the callback function
+ * @param delay The delay in milliseconds (default: 500ms)
+ * @returns The debounced function
  */
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number = 500
 ): (...args: Parameters<T>) => void {
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Clear the timeout when the component unmounts or when callback/delay changes
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [callback, delay]);
-
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   return (...args: Parameters<T>) => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
-
-    timerRef.current = setTimeout(() => {
+    
+    timeoutRef.current = setTimeout(() => {
       callback(...args);
     }, delay);
   };
