@@ -18,7 +18,7 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
   useEffect(() => {
     // Only load Stripe once
     if (!stripePromise) {
-      // Replace with your actual publishable key
+      // Use the Stripe publishable key from environment variables
       const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416;
 
       if (!key) {
