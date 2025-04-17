@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { Search, ChevronDown, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -65,8 +65,7 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
   const searchBarRef = useRef<HTMLDivElement>(null);
   
   // Navigation hooks
-  const navigate = useNavigate();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   
   // Debounced search query for preview results
   const debouncedQuery = useDebounce(searchQuery, 300);

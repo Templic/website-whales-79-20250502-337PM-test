@@ -2,11 +2,12 @@
  * SearchPage.tsx
  * 
  * A page that displays search results across the entire application
+ * with options for basic and advanced search functionality.
  */
 
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { Search, Music, ShoppingBag, User, FileText } from 'lucide-react';
+import { Search, Music, ShoppingBag, User, FileText, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,46 +16,74 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { UniversalSearchBar } from '@/components/search/UniversalSearchBar';
+import AdvancedSearchPage from '@/components/search/AdvancedSearchPage';
 
 // The result types that can be returned from search
 type ResultType = 'all' | 'music' | 'products' | 'users' | 'posts';
 
 export default function SearchPage() {
+  // Navigation hooks
+  const [location, navigate] = useLocation();
+  
   // Get the search query from URL parameters
-  const [location] = useLocation();
   const queryParams = new URLSearchParams(location.split('?')[1] || '');
   const urlQuery = queryParams.get('q') || '';
   const urlType = (queryParams.get('type') || 'all') as ResultType;
+  const urlMode = queryParams.get('mode') || 'basic';
   
+  // Local state
   const [searchQuery, setSearchQuery] = useState(urlQuery);
   const [resultType, setResultType] = useState<ResultType>(urlType);
+  const [searchMode, setSearchMode] = useState<'basic' | 'advanced'>(
+    urlMode === 'advanced' ? 'advanced' : 'basic'
+  );
 
   // Update URL when search params change
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set('q', searchQuery);
     if (resultType !== 'all') params.set('type', resultType);
+    if (searchMode === 'advanced') params.set('mode', 'advanced');
     
     const newUrl = `/search${params.toString() ? `?${params.toString()}` : ''}`;
     window.history.replaceState(null, '', newUrl);
-  }, [searchQuery, resultType]);
+  }, [searchQuery, resultType, searchMode]);
 
   // Update the document title
   useEffect(() => {
     document.title = searchQuery 
-      ? `Search: ${searchQuery} - Dale Loves Whales` 
-      : 'Search - Dale Loves Whales';
+      ? `Search: ${searchQuery} - Cosmic Music` 
+      : 'Search - Cosmic Music';
   }, [searchQuery]);
+
+  // Toggle between basic and advanced search
+  const toggleSearchMode = () => {
+    const newMode = searchMode === 'basic' ? 'advanced' : 'basic';
+    setSearchMode(newMode);
+    
+    // Update URL with new mode
+    const params = new URLSearchParams(window.location.search);
+    if (newMode === 'advanced') {
+      params.set('mode', 'advanced');
+    } else {
+      params.delete('mode');
+    }
+    
+    const newUrl = `/search${params.toString() ? `?${params.toString()}` : ''}`;
+    window.history.replaceState(null, '', newUrl);
+  };
 
   // Handle search form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchResults();
+    refetch();
   };
 
-  // Fetch the search results
-  const fetchResults = () => {
-    // Refetch when search params change
+  // Handle search from universal search bar
+  const handleSearch = (query: string, category: string) => {
+    setSearchQuery(query);
+    setResultType(category as ResultType);
     refetch();
   };
 
@@ -226,7 +255,44 @@ export default function SearchPage() {
             </section>
           )}
 
-          {/* Other sections (users, posts) would follow the same pattern */}
+          {/* Blog Posts Results */}
+          {results.posts?.length > 0 && (
+            <section>
+              <div className="flex items-center mb-4">
+                <FileText className="mr-2 h-5 w-5" />
+                <h2 className="text-xl font-semibold">Blog Posts</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {results.posts.slice(0, 4).map((post: any) => (
+                  <Card key={post.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary/10 h-12 w-12 rounded-md flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{post.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </p>
+                          {post.tags && post.tags.slice(0, 2).map((tag: string) => (
+                            <Badge key={tag} variant="outline" className="mr-1 mt-1">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {results.posts.length > 4 && (
+                <Button variant="link" className="mt-2" asChild>
+                  <a href={`/blog/search?q=${searchQuery}`}>View all {results.posts.length} blog post results</a>
+                </Button>
+              )}
+            </section>
+          )}
         </TabsContent>
 
         <TabsContent value="music" className="space-y-4">
@@ -304,31 +370,72 @@ export default function SearchPage() {
           ))}
         </TabsContent>
 
-        {/* Other tabs content would follow the same pattern */}
+        {/* Posts tab content */}
+        <TabsContent value="posts" className="space-y-4">
+          {results.posts?.map((post: any) => (
+            <Card key={post.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 h-12 w-12 rounded-md flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">{post.title}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {post.tags && post.tags.map((tag: string) => (
+                        <Badge key={tag} variant="outline">{tag}</Badge>
+                      ))}
+                    </div>
+                    {post.excerpt && (
+                      <p className="text-sm mt-2">{post.excerpt}</p>
+                    )}
+                  </div>
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={`/blog/post/${post.id}`}>Read</a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
       </Tabs>
     );
   };
 
+  // If we're in advanced mode, render the AdvancedSearchPage component
+  if (searchMode === 'advanced') {
+    return <AdvancedSearchPage />;
+  }
+
+  // Otherwise, render the basic search page
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-4">Search</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <h1 className="text-3xl font-bold">Search</h1>
+        
+        <Button 
+          variant="outline" 
+          onClick={toggleSearchMode}
+          className="flex items-center gap-2 self-start sm:self-center"
+        >
+          <Settings className="h-4 w-4" />
+          Switch to Advanced Search
+        </Button>
+      </div>
       
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="flex gap-2">
-          <div className="relative flex-grow">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search for music, products, blog posts and more..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button type="submit">Search</Button>
-        </div>
+      <div className="mb-8">
+        <UniversalSearchBar
+          variant="minimal"
+          defaultCategory={resultType}
+          placeholder="Search for music, products, blog posts and more..."
+          onSearch={handleSearch}
+          className="w-full"
+        />
         {renderResultCounts()}
-      </form>
+      </div>
 
       <Separator className="my-6" />
       
