@@ -3,6 +3,16 @@ import { pool } from '../db';
 import { log } from '../vite';
 import { triggerDatabaseMaintenance } from '../db-optimize';
 
+class MonitoringError extends Error {
+    constructor(message: string, options?: { cause?: any }) {
+        super(message);
+        this.name = 'MonitoringError';
+        if (options && options.cause) {
+            this.cause = options.cause;
+        }
+    }
+}
+
 const router = express.Router();
 
 // Utility function to format bytes as human-readable
@@ -16,42 +26,36 @@ const formatSize = (bytes: number): string => {
 // GET /api/admin/db-monitor/status - Get database status information
 router.get('/status', async (req: any, res) => {
   try {
-    // We'll rely on the middleware auth check in routes.ts instead of checking here
-    // This endpoint should only be accessible to authenticated admin users
-
     const client = await pool.connect();
     try {
-      // Get database size
       const sizeResult = await client.query("SELECT pg_database_size(current_database()) as size");
       const databaseSize = sizeResult.rows[0].size;
 
-      // Get pool statistics using pg_stat_activity
       const activeConnectionsResult = await client.query(`
         SELECT count(*) as active_connections 
         FROM pg_stat_activity 
         WHERE state = 'active' AND pid <> pg_backend_pid()
       `);
-      
+
       const idleConnectionsResult = await client.query(`
         SELECT count(*) as idle_connections 
         FROM pg_stat_activity 
         WHERE state = 'idle' AND pid <> pg_backend_pid()
       `);
-      
+
       const totalConnectionsResult = await client.query(`
         SELECT count(*) as total_connections 
         FROM pg_stat_activity 
         WHERE pid <> pg_backend_pid()
       `);
-      
+
       const poolStats = {
         total: parseInt(totalConnectionsResult.rows[0].total_connections),
         active: parseInt(activeConnectionsResult.rows[0].active_connections),
         idle: parseInt(idleConnectionsResult.rows[0].idle_connections),
-        waiting: 0 // Not directly available from pg_stat_activity
+        waiting: 0 
       };
 
-      // Get table statistics
       const tableStats = await client.query(`
         SELECT 
           relname as table_name,
@@ -66,7 +70,6 @@ router.get('/status', async (req: any, res) => {
         ORDER BY pg_total_relation_size(C.oid) DESC
       `);
 
-      // Get index statistics
       const indexStats = await client.query(`
         SELECT
           schemaname,
@@ -79,8 +82,6 @@ router.get('/status', async (req: any, res) => {
         ORDER BY idx_scan DESC
       `);
 
-      // Using the module-level formatSize function
-      
       res.json({
         status: 'connected',
         time: new Date().toISOString(),
@@ -108,7 +109,6 @@ router.get('/status', async (req: any, res) => {
 // POST /api/admin/db-monitor/maintenance/:task - Trigger maintenance task
 router.post('/maintenance/:task', async (req: any, res) => {
   try {
-    // Super admin check can happen here since this is more restrictive than the middleware check
     if (req.user?.role !== 'super_admin') {
       return res.status(403).json({ status: 'error', message: 'Unauthorized. Super admin access required.' });
     }
@@ -145,15 +145,14 @@ router.post('/maintenance/:task', async (req: any, res) => {
 router.get('/query-stats', async (req, res) => {
   try {
     const client = await pool.connect();
-    
+
     try {
-      // Check if pg_stat_statements extension is available
       const extCheck = await client.query(`
         SELECT count(*) as count FROM pg_extension WHERE extname = 'pg_stat_statements'
       `);
-      
+
       const extensionInstalled = parseInt(extCheck.rows[0].count) > 0;
-      
+
       if (!extensionInstalled) {
         return res.json({
           status: 'extension_not_available',
@@ -161,8 +160,7 @@ router.get('/query-stats', async (req, res) => {
           query_stats: []
         });
       }
-      
-      // Query the pg_stat_statements view for query statistics
+
       const statsResult = await client.query(`
         SELECT 
           query,
@@ -178,15 +176,14 @@ router.get('/query-stats', async (req, res) => {
         ORDER BY total_exec_time DESC
         LIMIT 100
       `);
-      
+
       res.json({
         status: 'success',
         query_stats: statsResult.rows
       });
     } catch (error) {
-      // Handle specific errors related to the extension not being available
       console.error('Query stats error:', error);
-      
+
       if (error instanceof Error && error.message && error.message.includes('pg_stat_statements')) {
         res.json({
           status: 'extension_error',

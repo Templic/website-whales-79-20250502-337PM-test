@@ -1,3 +1,41 @@
+
+import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { monitorPerformance } from '@/lib/monitoring';
+
+interface PerformanceMetrics {
+  responseTime: number;
+  memoryUsage: number;
+  errorRate: number;
+}
+
+export function SecurityDashboard() {
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+
+  const updateMetrics = useCallback(async () => {
+    const data = await monitorPerformance();
+    setMetrics(data);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(updateMetrics, 30000);
+    return () => clearInterval(interval);
+  }, [updateMetrics]);
+
+  return (
+    <div className="security-dashboard">
+      {metrics && (
+        <div className="metrics-display">
+          <h3>Performance Metrics</h3>
+          <p>Response Time: {metrics.responseTime}ms</p>
+          <p>Memory Usage: {metrics.memoryUsage}MB</p>
+          <p>Error Rate: {metrics.errorRate}%</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { 

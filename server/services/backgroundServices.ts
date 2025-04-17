@@ -76,3 +76,19 @@ export function stopAllBackgroundServices() {
   
   console.log('[Background] All background services stopped');
 }
+import { optimizeBackgroundTasks } from '../lib/optimization';
+
+export const backgroundServiceConfig = {
+  maxConcurrentTasks: 3,
+  taskTimeout: 5000,
+  retryAttempts: 2,
+  priorityLevels: {
+    HIGH: 0,
+    MEDIUM: 1,
+    LOW: 2
+  }
+};
+
+export function initializeOptimizedServices() {
+  return optimizeBackgroundTasks(backgroundServiceConfig);
+}
