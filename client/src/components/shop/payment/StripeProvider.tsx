@@ -19,7 +19,7 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
     // Only load Stripe once
     if (!stripePromise) {
       // Replace with your actual publishable key
-      const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416;
       
       if (!key) {
         console.error('Stripe publishable key is missing');
