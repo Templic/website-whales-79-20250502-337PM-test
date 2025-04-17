@@ -165,129 +165,155 @@ export default function BlogPostPage() {
           </time>
         </div>
 
+        {/* Featured image in octagon container with cosmic glow */}
         {post.featuredImage && (
-          <img
-            src={post.featuredImage}
-            alt={`Featured image for ${post.title}`}
-            className="w-full h-[400px] object-cover rounded-xl mb-8"
-            loading="lazy"
-          />
+          <div className="clip-path-octagon overflow-hidden w-full max-w-2xl mx-auto mb-8 aspect-video cosmic-glow-effect">
+            <img
+              src={post.featuredImage}
+              alt={`Featured image for ${post.title}`}
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
         )}
 
-        <div className="prose prose-invert max-w-none mt-8 text-lg">
-          {post.content ? (
-            post.content
-              .replace(/<p>/g, '')
-              .replace(/<\/p>/g, '\n\n')
-              .replace(/<br\s*\/?>/g, '\n')
-              .replace(/<div>/g, '')
-              .replace(/<\/div>/g, '\n\n')
-              .replace(/&nbsp;/g, ' ')
-              .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
-              .split('\n\n')
-              .filter(para => para.trim().length > 0) // Filter out empty paragraphs
-              .map((paragraph, index) => (
-                <p key={index} className="mb-4">{paragraph.trim()}</p>
-              ))
-          ) : (
-            <>
-              <p className="mb-4">
-                As I embarked on my cosmic journey through the universe of sound, I found myself drawn to the ethereal qualities of music that transcends traditional boundaries. Working with artists from across the galaxy has opened my mind to new dimensions of creativity.
-              </p>
-              <p className="mb-4">
-                The latest tracks I've been developing blend elements of astral jazz with quantum electronic pulses, creating a soundscape that hopefully transports listeners to unexplored regions of consciousness.
-              </p>
-              <p className="mb-4">
-                My collaboration with the Neptune Symphony Orchestra has been particularly enlightening. Their ability to capture the harmonic resonance of deep space in acoustic form complements my digital explorations perfectly.
-              </p>
-              <p className="mb-4">
-                Stay tuned for more sonic adventures as we continue to push the boundaries of what's possible in this musical universe. The journey has just begun, and I'm excited to share it with all of you.
-              </p>
-            </>
-          )}
+        {/* Content in octagon container */}
+        <div className="relative mb-12">
+          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30"></div>
+          <div className="relative z-10 p-8 md:p-12">
+            <div className="prose prose-invert max-w-none text-lg">
+              {post.content ? (
+                post.content
+                  .replace(/<p>/g, '')
+                  .replace(/<\/p>/g, '\n\n')
+                  .replace(/<br\s*\/?>/g, '\n')
+                  .replace(/<div>/g, '')
+                  .replace(/<\/div>/g, '\n\n')
+                  .replace(/&nbsp;/g, ' ')
+                  .replace(/<[^>]*>/g, '') // Remove any remaining HTML tags
+                  .split('\n\n')
+                  .filter(para => para.trim().length > 0) // Filter out empty paragraphs
+                  .map((paragraph, index) => (
+                    <p key={index} className="mb-4">{paragraph.trim()}</p>
+                  ))
+              ) : (
+                <>
+                  <p className="mb-4">
+                    As I embarked on my cosmic journey through the universe of sound, I found myself drawn to the ethereal qualities of music that transcends traditional boundaries. Working with artists from across the galaxy has opened my mind to new dimensions of creativity.
+                  </p>
+                  <p className="mb-4">
+                    The latest tracks I've been developing blend elements of astral jazz with quantum electronic pulses, creating a soundscape that hopefully transports listeners to unexplored regions of consciousness.
+                  </p>
+                  <p className="mb-4">
+                    My collaboration with the Neptune Symphony Orchestra has been particularly enlightening. Their ability to capture the harmonic resonance of deep space in acoustic form complements my digital explorations perfectly.
+                  </p>
+                  <p className="mb-4">
+                    Stay tuned for more sonic adventures as we continue to push the boundaries of what's possible in this musical universe. The journey has just begun, and I'm excited to share it with all of you.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </article>
 
       <section className="mt-16">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-8">Comments</h2>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6 mb-12">
-            <div>
-              <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
-              <Input
-                id="authorName"
-                {...form.register("authorName")}
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                placeholder="Your name"
-                aria-label="Your name"
-              />
-            </div>
+        {/* Comment form in an octagon container */}
+        <div className="relative mb-16">
+          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30"></div>
+          <div className="relative z-10 p-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6">
+                <div>
+                  <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
+                  <Input
+                    id="authorName"
+                    {...form.register("authorName")}
+                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                    placeholder="Your name"
+                    aria-label="Your name"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
-              <Input
-                id="authorEmail"
-                {...form.register("authorEmail")}
-                type="email"
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                placeholder="your@email.com"
-                aria-label="Your email address"
-              />
-            </div>
+                <div>
+                  <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
+                  <Input
+                    id="authorEmail"
+                    {...form.register("authorEmail")}
+                    type="email"
+                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                    placeholder="your@email.com"
+                    aria-label="Your email address"
+                  />
+                </div>
 
-            <div>
-              <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
-              <Textarea
-                id="content"
-                {...form.register("content")}
-                className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
-                placeholder="Share your thoughts..."
-                aria-label="Your comment"
-              />
-            </div>
+                <div>
+                  <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
+                  <Textarea
+                    id="content"
+                    {...form.register("content")}
+                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
+                    placeholder="Share your thoughts..."
+                    aria-label="Your comment"
+                  />
+                </div>
 
-            <Button 
-              type="submit"
-              className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white"
-              disabled={commentMutation.isPending}
-              aria-busy={commentMutation.isPending}
-            >
-              {commentMutation.isPending ? "Posting..." : "Post Comment"}
-            </Button>
-          </form>
-        </Form>
+                <Button 
+                  type="submit"
+                  className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white cosmic-hover-glow"
+                  disabled={commentMutation.isPending}
+                  aria-busy={commentMutation.isPending}
+                >
+                  {commentMutation.isPending ? "Posting..." : "Post Comment"}
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </div>
 
         <div className="space-y-8">
           {commentsLoading ? (
             <div role="status" className="animate-pulse">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl mb-4">
-                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-1/4 mb-4"></div>
-                  <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-full"></div>
+                <div key={i} className="relative h-[100px] mb-8">
+                  <div className="absolute inset-0 bg-[rgba(10,50,92,0.6)] clip-path-octagon"></div>
+                  <div className="relative z-10 p-6">
+                    <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-1/4 mb-4"></div>
+                    <div className="h-4 bg-[rgba(48,52,54,0.5)] rounded w-full"></div>
+                  </div>
                 </div>
               ))}
               <span className="sr-only">Loading comments...</span>
             </div>
           ) : comments.length > 0 ? (
             comments.map(comment => (
-              <div key={comment.id} className="bg-[rgba(10,50,92,0.6)] p-6 rounded-xl">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-medium">{comment.authorName}</span>
-                  <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''}>
-                    {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
-                  </time>
+              <div key={comment.id} className="relative mb-8">
+                <div className="absolute inset-0 bg-[rgba(10,50,92,0.6)] clip-path-octagon border-2 border-[#00ebd6]/20"></div>
+                <div className="relative z-10 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-medium">{comment.authorName}</span>
+                    <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''} className="text-sm">
+                      {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
+                    </time>
+                  </div>
+                  <p>{comment.content}</p>
+                  {comment.approved ? (
+                    <span className="text-green-500 text-xs mt-2 inline-block">Approved</span>
+                  ) : (
+                    <span className="text-red-500 text-xs mt-2 inline-block">Pending Approval</span>
+                  )}
                 </div>
-                <p>{comment.content}</p>
-                {comment.approved ? (
-                  <span className="text-green-500 text-xs">Approved</span>
-                ) : (
-                  <span className="text-red-500 text-xs">Pending Approval</span>
-                )}
               </div>
             ))
           ) : (
-            <p className="text-center text-gray-400">No approved comments yet. Be the first to comment!</p>
+            <div className="relative py-12">
+              <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] clip-path-octagon"></div>
+              <div className="relative z-10 p-6 text-center">
+                <p className="text-gray-300">No approved comments yet. Be the first to comment!</p>
+              </div>
+            </div>
           )}
         </div>
       </section>

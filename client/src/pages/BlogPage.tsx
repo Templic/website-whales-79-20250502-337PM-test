@@ -52,12 +52,12 @@ export default function BlogPage() {
         ) : posts && posts.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-8">
             {posts.map((post) => (
-              <article key={post.id} className="relative h-[400px]">
+              <article key={post.id} className="relative h-[450px]">
                 <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                 <div className="relative z-10 p-6 flex flex-col h-full">
-                  <div className="flex flex-col items-center justify-center h-full w-[85%] mx-auto">
+                  <div className="flex flex-col items-center justify-between h-full w-[85%] mx-auto overflow-hidden">
                     {post.featuredImage && (
-                      <div className="clip-path-octagon overflow-hidden mx-auto mb-4 w-9/12 aspect-video">
+                      <div className="clip-path-octagon overflow-hidden mx-auto mb-3 w-9/12 aspect-video cosmic-glow-effect">
                         <img 
                           src={post.featuredImage} 
                           alt={post.title}
@@ -65,22 +65,24 @@ export default function BlogPage() {
                         />
                       </div>
                     )}
-                    <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1 text-center">{post.title.replace(/<[^>]*>/g, '')}</h2>
-                    <div className="mb-4 overflow-hidden max-w-[85%]">
-                      <p className="text-gray-300 line-clamp-3 text-sm text-center">
-                        {post.content
-                          .replace(/<p>/g, '')
-                          .replace(/<\/p>/g, ' ')
-                          .replace(/<br\s*\/?>/g, ' ')
-                          .replace(/<div>/g, '')
-                          .replace(/<\/div>/g, ' ')
-                          .replace(/&nbsp;/g, ' ')
-                          .replace(/\s+/g, ' ')
-                          .trim()
-                        }
-                      </p>
+                    <div className="flex-1 flex flex-col overflow-hidden w-full">
+                      <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1 text-center">{post.title.replace(/<[^>]*>/g, '')}</h2>
+                      <div className="mb-4 overflow-hidden w-full max-h-[100px]">
+                        <p className="text-gray-300 line-clamp-4 text-sm text-center px-2">
+                          {post.content
+                            .replace(/<p>/g, '')
+                            .replace(/<\/p>/g, ' ')
+                            .replace(/<br\s*\/?>/g, ' ')
+                            .replace(/<div>/g, '')
+                            .replace(/<\/div>/g, ' ')
+                            .replace(/&nbsp;/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim()
+                          }
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center mt-auto w-full">
+                    <div className="flex justify-between items-center w-full mt-auto">
                       <p className="text-xs text-[#fe0064]">
                         {formatDisplayDate(post.createdAt)}
                       </p>
