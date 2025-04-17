@@ -350,19 +350,47 @@ const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
 
     switch (currentTab) {
       case 'music':
-        return renderMusicResults(data.results);
+        return renderMusicResults(Array.isArray(data.results) ? data.results : data.music || []);
       case 'products':
-        return renderProductResults(data.results);
+        return renderProductResults(Array.isArray(data.results) ? data.results : data.products || []);
       case 'posts':
-        return renderPostResults(data.results);
+        return renderPostResults(Array.isArray(data.results) ? data.results : data.posts || []);
       case 'users':
-        return renderUserResults(data.results);
+        return renderUserResults(Array.isArray(data.results) ? data.results : data.users || []);
       case 'newsletters':
-        return renderNewsletterResults(data.results);
+        return renderNewsletterResults(Array.isArray(data.results) ? data.results : data.newsletters || []);
       case 'suggestions':
-        return renderSuggestionResults(data.results);
+        return renderSuggestionResults(Array.isArray(data.results) ? data.results : data.suggestions || []);
       default:
-        return renderMixedResults(data.results);
+        // Handle the case where data.results is an object with arrays by type
+        if (!Array.isArray(data.results) && typeof data.results === 'object') {
+          // Create a flattened array with _type property for mixed results
+          const mixedResults = [];
+          
+          // Add type property to each item in the arrays
+          if (data.music && Array.isArray(data.music)) {
+            mixedResults.push(...data.music.map(item => ({ ...item, _type: 'music' })));
+          }
+          if (data.products && Array.isArray(data.products)) {
+            mixedResults.push(...data.products.map(item => ({ ...item, _type: 'products' })));
+          }
+          if (data.posts && Array.isArray(data.posts)) {
+            mixedResults.push(...data.posts.map(item => ({ ...item, _type: 'posts' })));
+          }
+          if (data.users && Array.isArray(data.users)) {
+            mixedResults.push(...data.users.map(item => ({ ...item, _type: 'users' })));
+          }
+          if (data.newsletters && Array.isArray(data.newsletters)) {
+            mixedResults.push(...data.newsletters.map(item => ({ ...item, _type: 'newsletters' })));
+          }
+          if (data.suggestions && Array.isArray(data.suggestions)) {
+            mixedResults.push(...data.suggestions.map(item => ({ ...item, _type: 'suggestions' })));
+          }
+          
+          return renderMixedResults(mixedResults);
+        }
+        
+        return renderMixedResults(Array.isArray(data.results) ? data.results : []);
     }
   };
 
