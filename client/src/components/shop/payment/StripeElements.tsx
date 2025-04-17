@@ -25,7 +25,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Initialize Stripe (outside component to avoid re-initialization)
 // Using empty string as fallback, but the component won't render properly without a valid key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416 || '');
+if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416) {
+  console.error('Stripe publishable key is missing');
+}
 
 // Define component props
 interface StripeElementsProps {

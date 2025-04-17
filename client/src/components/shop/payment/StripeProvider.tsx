@@ -20,17 +20,17 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
     if (!stripePromise) {
       // Replace with your actual publishable key
       const key = import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416;
-      
+
       if (!key) {
         console.error('Stripe publishable key is missing');
         setError('Payment system configuration error');
         setLoading(false);
         return;
       }
-      
+
       stripePromise = loadStripe(key);
     }
-    
+
     // Set loading to false once Stripe is loaded
     stripePromise.then(() => setLoading(false)).catch(err => {
       console.error('Error loading Stripe:', err);
@@ -71,7 +71,7 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
       },
     },
   };
-  
+
   // Add clientSecret if available
   if (clientSecret) {
     options.clientSecret = clientSecret;
