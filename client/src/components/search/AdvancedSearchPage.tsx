@@ -9,26 +9,17 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { 
-  Calendar, 
-  Filter, 
-  Music, 
-  Package, 
-  FileText, 
-  Send, 
-  MessageSquare,
-  ChevronDown,
-  ChevronUp,
-  Tag,
-  ArrowUpDown,
-  Check,
-  X,
-  User
-} from 'lucide-react';
-
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from '@/components/ui/tabs';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   Select,
   SelectContent,
@@ -37,263 +28,125 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationEllipsis, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { DatePicker } from '@/components/ui/date-picker';
 import { useDebounce } from '@/hooks/use-debounce';
-import { searchCategories } from './UniversalSearchBar';
-
-// Define content type icons
-const contentTypeIcons = {
-  music: Music,
-  products: Package,
-  posts: FileText,
-  newsletters: Send,
-  suggestions: MessageSquare,
-  users: User,
-};
+import { 
+  Music,
+  ShoppingBag,
+  FileText,
+  Users,
+  Mail,
+  MessageSquare, 
+  Calendar,
+  Star,
+  Filter,
+  X,
+  ChevronRight,
+  Clock,
+  Flame,
+  ThumbsUp,
+  BarChart,
+  Calendar as CalendarIcon,
+  Tag,
+  Headphones,
+  Sparkles,
+} from 'lucide-react';
 
 interface AdvancedSearchPageProps {
   initialQuery?: string;
   initialType?: string;
 }
 
-// Sort options for each content type
-const sortOptions = {
-  music: [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'a-z', label: 'Title (A-Z)' },
-    { value: 'z-a', label: 'Title (Z-A)' },
-  ],
-  products: [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'price-low', label: 'Price (Low to High)' },
-    { value: 'price-high', label: 'Price (High to Low)' },
-    { value: 'a-z', label: 'Name (A-Z)' },
-    { value: 'z-a', label: 'Name (Z-A)' },
-  ],
-  posts: [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'a-z', label: 'Title (A-Z)' },
-    { value: 'z-a', label: 'Title (Z-A)' },
-  ],
-  newsletters: [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'most-opened', label: 'Most Opened' },
-    { value: 'most-clicked', label: 'Most Clicked' },
-  ],
-  suggestions: [
-    { value: 'newest', label: 'Newest First' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'most-votes', label: 'Most Votes' },
-    { value: 'most-comments', label: 'Most Comments' },
-  ],
-  users: [
-    { value: 'newest', label: 'Newest Members' },
-    { value: 'oldest', label: 'Longest Members' },
-    { value: 'a-z', label: 'Username (A-Z)' },
-    { value: 'z-a', label: 'Username (Z-A)' },
-  ],
-};
-
 const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
   initialQuery = '',
-  initialType = 'all',
+  initialType = 'all'
 }) => {
-  // Parse URL query parameters
-  const [location] = useLocation();
-  const params = new URLSearchParams(location.split('?')[1] || '');
-  
-  // State for search parameters
-  const [searchQuery, setSearchQuery] = useState(params.get('q') || initialQuery);
-  const [selectedTab, setSelectedTab] = useState(params.get('type') || initialType);
-  
-  // Tab-specific filters
-  // Music filters
-  const [musicFilters, setMusicFilters] = useState({
-    artist: params.get('artist') || '',
-    year: params.get('year') || '',
-    frequency: params.get('frequency') || '',
-  });
-  
-  // Product filters
-  const [productFilters, setProductFilters] = useState({
-    category: params.get('category') || 'all',
-    minPrice: params.get('minPrice') || '',
-    maxPrice: params.get('maxPrice') || '',
-    inStock: params.get('inStock') === 'true',
-  });
-  
-  // Blog post filters
-  const [postFilters, setPostFilters] = useState({
-    tags: params.get('tags') || '',
-    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
-    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
-  });
-  
-  // Newsletter filters
-  const [newsletterFilters, setNewsletterFilters] = useState({
-    category: params.get('category') || 'all',
-    sent: params.get('sent') || 'all',
-    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
-    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
-    minOpenRate: params.get('minOpenRate') || '',
-  });
-  
-  // Community suggestion filters
-  const [suggestionFilters, setSuggestionFilters] = useState({
-    category: params.get('category') || 'all',
-    status: params.get('status') || 'all',
-    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
-    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
-    hideImplemented: params.get('hideImplemented') === 'true',
-    hideDeclined: params.get('hideDeclined') === 'true',
-    minVotes: params.get('minVotes') || '',
-  });
-  
-  // Sort options
-  const [sortOrder, setSortOrder] = useState({
-    music: params.get('sort') || 'newest',
-    products: params.get('sort') || 'newest',
-    posts: params.get('sort') || 'newest',
-    newsletters: params.get('sort') || 'newest',
-    suggestions: params.get('sort') || 'most-votes',
-    users: params.get('sort') || 'newest',
-  });
-  
-  // Pagination state
+  // State
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [currentTab, setCurrentTab] = useState(initialType);
+  const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
   const [page, setPage] = useState(1);
-  const resultsPerPage = 20;
+  const [sortBy, setSortBy] = useState<string>('relevance');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  // Navigation
+  const [, navigate] = useLocation();
   
-  // Debounce search query and filters
-  const debouncedQuery = useDebounce(searchQuery, 500);
-  const debouncedMusicFilters = useDebounce(musicFilters, 500);
-  const debouncedProductFilters = useDebounce(productFilters, 500);
-  const debouncedPostFilters = useDebounce(postFilters, 500);
-  const debouncedNewsletterFilters = useDebounce(newsletterFilters, 500);
-  const debouncedSuggestionFilters = useDebounce(suggestionFilters, 500);
-  
-  // Construct search parameters based on selected tab
-  const getSearchParams = () => {
+  // Debounce search query to prevent excessive API calls
+  const debouncedQuery = useDebounce(searchQuery, 300);
+
+  // Handle search parameter changes through the URL
+  useEffect(() => {
+    if (initialQuery) {
+      setSearchQuery(initialQuery);
+    }
+    if (initialType && initialType !== 'all') {
+      setCurrentTab(initialType);
+    }
+  }, [initialQuery, initialType]);
+
+  // Build query parameters for the API call
+  const buildQueryParams = () => {
     const params = new URLSearchParams();
     params.set('q', debouncedQuery);
-    params.set('type', selectedTab);
-    params.set('limit', resultsPerPage.toString());
+    params.set('type', currentTab);
     params.set('page', page.toString());
+    params.set('sort', sortBy);
     
-    if (selectedTab === 'music') {
-      const currentSort = sortOrder.music;
-      if (currentSort) params.set('sort', currentSort);
-      
-      if (debouncedMusicFilters.artist) {
-        params.set('artist', debouncedMusicFilters.artist);
-      }
-      if (debouncedMusicFilters.year) {
-        params.set('year', debouncedMusicFilters.year);
-      }
-      if (debouncedMusicFilters.frequency) {
-        params.set('frequency', debouncedMusicFilters.frequency);
-      }
-    } else if (selectedTab === 'products') {
-      const currentSort = sortOrder.products;
-      if (currentSort) params.set('sort', currentSort);
-      
-      if (debouncedProductFilters.category && debouncedProductFilters.category !== 'all') {
-        params.set('category', debouncedProductFilters.category);
-      }
-      if (debouncedProductFilters.minPrice) {
-        params.set('minPrice', debouncedProductFilters.minPrice);
-      }
-      if (debouncedProductFilters.maxPrice) {
-        params.set('maxPrice', debouncedProductFilters.maxPrice);
-      }
-      if (debouncedProductFilters.inStock) {
-        params.set('inStock', 'true');
-      }
-    } else if (selectedTab === 'posts') {
-      const currentSort = sortOrder.posts;
-      if (currentSort) params.set('sort', currentSort);
-      
-      if (debouncedPostFilters.tags) {
-        params.set('tags', debouncedPostFilters.tags);
-      }
-      if (debouncedPostFilters.dateFrom) {
-        params.set('dateFrom', debouncedPostFilters.dateFrom.toISOString());
-      }
-      if (debouncedPostFilters.dateTo) {
-        params.set('dateTo', debouncedPostFilters.dateTo.toISOString());
-      }
-    } else if (selectedTab === 'newsletters') {
-      const currentSort = sortOrder.newsletters;
-      if (currentSort) params.set('sort', currentSort);
-      
-      if (debouncedNewsletterFilters.category && debouncedNewsletterFilters.category !== 'all') {
-        params.set('category', debouncedNewsletterFilters.category);
-      }
-      if (debouncedNewsletterFilters.sent && debouncedNewsletterFilters.sent !== 'all') {
-        params.set('sent', debouncedNewsletterFilters.sent);
-      }
-      if (debouncedNewsletterFilters.dateFrom) {
-        params.set('dateFrom', debouncedNewsletterFilters.dateFrom.toISOString());
-      }
-      if (debouncedNewsletterFilters.dateTo) {
-        params.set('dateTo', debouncedNewsletterFilters.dateTo.toISOString());
-      }
-      if (debouncedNewsletterFilters.minOpenRate) {
-        params.set('minOpenRate', debouncedNewsletterFilters.minOpenRate);
-      }
-    } else if (selectedTab === 'suggestions') {
-      const currentSort = sortOrder.suggestions;
-      if (currentSort) params.set('sort', currentSort);
-      
-      if (debouncedSuggestionFilters.category && debouncedSuggestionFilters.category !== 'all') {
-        params.set('category', debouncedSuggestionFilters.category);
-      }
-      if (debouncedSuggestionFilters.status && debouncedSuggestionFilters.status !== 'all') {
-        params.set('status', debouncedSuggestionFilters.status);
-      }
-      if (debouncedSuggestionFilters.dateFrom) {
-        params.set('dateFrom', debouncedSuggestionFilters.dateFrom.toISOString());
-      }
-      if (debouncedSuggestionFilters.dateTo) {
-        params.set('dateTo', debouncedSuggestionFilters.dateTo.toISOString());
-      }
-      if (debouncedSuggestionFilters.hideImplemented) {
-        params.set('hideImplemented', 'true');
-      }
-      if (debouncedSuggestionFilters.hideDeclined) {
-        params.set('hideDeclined', 'true');
-      }
-      if (debouncedSuggestionFilters.minVotes) {
-        params.set('minVotes', debouncedSuggestionFilters.minVotes);
-      }
+    if (startDate) {
+      params.set('startDate', startDate.toISOString().split('T')[0]);
     }
+    
+    if (endDate) {
+      params.set('endDate', endDate.toISOString().split('T')[0]);
+    }
+    
+    // Add any active filters
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (Array.isArray(value)) {
+          // Handle arrays (like tags)
+          value.forEach(v => params.append(key, v));
+        } else {
+          params.set(key, value.toString());
+        }
+      }
+    });
     
     return params;
   };
 
-  // Search query
-  const { data: searchResults, isLoading, isError, error } = useQuery({
-    queryKey: ['advancedSearch', debouncedQuery, selectedTab, page, sortOrder, 
-      debouncedMusicFilters, debouncedProductFilters, debouncedPostFilters, 
-      debouncedNewsletterFilters, debouncedSuggestionFilters
-    ],
+  // Query for search results
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['advancedSearch', debouncedQuery, currentTab, page, sortBy, activeFilters, startDate, endDate],
     queryFn: async () => {
-      if (!debouncedQuery || debouncedQuery.length < 2) return null;
+      if (!debouncedQuery) return { results: [], totalCount: 0, totalPages: 0 };
       
-      const params = getSearchParams();
+      const params = buildQueryParams();
       const response = await fetch(`/api/search?${params.toString()}`);
       
       if (!response.ok) {
@@ -302,1260 +155,1543 @@ const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
       
       return await response.json();
     },
-    enabled: debouncedQuery.length >= 2,
+    enabled: debouncedQuery.length > 0,
   });
-  
-  // Update URL with current search parameters
-  useEffect(() => {
-    if (debouncedQuery.length >= 2) {
-      const params = getSearchParams();
-      
-      // Update URL without reloading the page
-      window.history.replaceState(
-        {},
-        '',
-        `${window.location.pathname}?${params.toString()}`
-      );
-    }
-  }, [
-    debouncedQuery, selectedTab, page, sortOrder,
-    debouncedMusicFilters, debouncedProductFilters, debouncedPostFilters,
-    debouncedNewsletterFilters, debouncedSuggestionFilters
-  ]);
-  
-  // Reset pagination when changing tabs or search query
-  useEffect(() => {
-    setPage(1);
-  }, [selectedTab, debouncedQuery]);
-  
-  // Get current tab results
-  const getCurrentResults = () => {
-    if (!searchResults) return [];
-    
-    switch (selectedTab) {
-      case 'music': return searchResults.music || [];
-      case 'products': return searchResults.products || [];
-      case 'posts': return searchResults.posts || [];
-      case 'newsletters': return searchResults.newsletters || [];
-      case 'suggestions': return searchResults.suggestions || [];
-      case 'users': return searchResults.users || [];
-      case 'all':
-        // For 'all' tab, combine and limit results from each category
-        const combinedResults = [
-          ...(searchResults.music || []).slice(0, 5).map(item => ({ ...item, type: 'music' })),
-          ...(searchResults.products || []).slice(0, 5).map(item => ({ ...item, type: 'products' })),
-          ...(searchResults.posts || []).slice(0, 5).map(item => ({ ...item, type: 'posts' })),
-          ...(searchResults.newsletters || []).slice(0, 5).map(item => ({ ...item, type: 'newsletters' })),
-          ...(searchResults.suggestions || []).slice(0, 5).map(item => ({ ...item, type: 'suggestions' })),
-          ...(searchResults.users || []).slice(0, 5).map(item => ({ ...item, type: 'users' })),
-        ];
-        return combinedResults;
-      default: return [];
-    }
-  };
-  
-  // Get total results count
-  const getTotalResults = () => {
-    if (!searchResults) return 0;
-    
-    switch (selectedTab) {
-      case 'music': return searchResults.music?.length || 0;
-      case 'products': return searchResults.products?.length || 0;
-      case 'posts': return searchResults.posts?.length || 0;
-      case 'newsletters': return searchResults.newsletters?.length || 0;
-      case 'suggestions': return searchResults.suggestions?.length || 0;
-      case 'users': return searchResults.users?.length || 0;
-      case 'all':
-        return (
-          (searchResults.music?.length || 0) +
-          (searchResults.products?.length || 0) +
-          (searchResults.posts?.length || 0) +
-          (searchResults.newsletters?.length || 0) +
-          (searchResults.suggestions?.length || 0) +
-          (searchResults.users?.length || 0)
-        );
-      default: return 0;
-    }
-  };
-  
-  // Get icon for a content type
-  const getContentTypeIcon = (type: string) => {
-    const IconComponent = contentTypeIcons[type as keyof typeof contentTypeIcons];
-    return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
-  };
-  
-  // Get categories for current tab
-  const getCategories = () => {
-    switch (selectedTab) {
-      case 'products':
-        return [
-          { id: 'all', label: 'All Categories' },
-          { id: 'clothing', label: 'Clothing' },
-          { id: 'accessories', label: 'Accessories' },
-          { id: 'music', label: 'Music' },
-          { id: 'digital', label: 'Digital Downloads' },
-          { id: 'merch', label: 'Merchandise' },
-        ];
-      case 'posts':
-        return [
-          { id: 'all', label: 'All Topics' },
-          { id: 'music', label: 'Music' },
-          { id: 'tour', label: 'Tour Updates' },
-          { id: 'news', label: 'News' },
-          { id: 'lifestyle', label: 'Lifestyle' },
-          { id: 'tutorials', label: 'Tutorials' },
-        ];
-      case 'newsletters':
-        return [
-          { id: 'all', label: 'All Categories' },
-          { id: 'weekly', label: 'Weekly Updates' },
-          { id: 'monthly', label: 'Monthly Digest' },
-          { id: 'special', label: 'Special Announcements' },
-          { id: 'releases', label: 'New Releases' },
-        ];
-      case 'suggestions':
-        return [
-          { id: 'all', label: 'All Categories' },
-          { id: 'feature', label: 'Feature Requests' },
-          { id: 'bug', label: 'Bug Reports' },
-          { id: 'content', label: 'Content Requests' },
-          { id: 'improvement', label: 'Improvement Ideas' },
-        ];
-      default:
-        return [{ id: 'all', label: 'All Categories' }];
-    }
-  };
-  
-  // Get status options for suggestions
-  const getStatusOptions = () => {
-    return [
-      { id: 'all', label: 'All Status' },
-      { id: 'open', label: 'Open' },
-      { id: 'in-progress', label: 'In Progress' },
-      { id: 'completed', label: 'Completed' },
-      { id: 'declined', label: 'Declined' },
-    ];
-  };
-  
-  // Handle search submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Trigger re-fetch via the useEffect watching debouncedQuery
-    setPage(1);
-  };
-  
+
   // Handle tab change
   const handleTabChange = (value: string) => {
-    setSelectedTab(value);
+    setCurrentTab(value);
+    // Reset pagination when changing tabs
+    setPage(1);
+    
+    // Update the URL without triggering a page reload
+    const params = new URLSearchParams();
+    params.set('q', searchQuery);
+    params.set('type', value);
+    navigate(`/search?${params.toString()}`);
+    
+    // Reset active filters when changing tabs
+    setActiveFilters({});
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (filterType: string, value: any) => {
+    setActiveFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+    // Reset to first page when filters change
     setPage(1);
   };
+
+  // Handle filter removal
+  const removeFilter = (filterType: string) => {
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterType];
+      return newFilters;
+    });
+  };
+
+  // Handle page changes for pagination
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setActiveFilters({});
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setSortBy('relevance');
+    setPage(1);
+  };
+
+  // Get active filter count
+  const getActiveFilterCount = () => {
+    let count = Object.keys(activeFilters).length;
+    if (startDate) count++;
+    if (endDate) count++;
+    if (sortBy !== 'relevance') count++;
+    return count;
+  };
   
-  // Handle date changes for various filters
-  const handleDateChange = (date: Date | undefined, field: string, filterType: string) => {
-    if (filterType === 'posts') {
-      setPostFilters(prev => ({ ...prev, [field]: date }));
-    } else if (filterType === 'newsletters') {
-      setNewsletterFilters(prev => ({ ...prev, [field]: date }));
-    } else if (filterType === 'suggestions') {
-      setSuggestionFilters(prev => ({ ...prev, [field]: date }));
+  // Render filter badges
+  const renderFilterBadges = () => {
+    const badges = [];
+    
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        if (Array.isArray(value)) {
+          // Handle arrays (like tags)
+          value.forEach(v => {
+            badges.push(
+              <Badge key={`${key}-${v}`} variant="secondary" className="mr-2 mb-2">
+                {key.charAt(0).toUpperCase() + key.slice(1)}: {v}
+                <button 
+                  onClick={() => {
+                    const newValue = value.filter(item => item !== v);
+                    handleFilterChange(key, newValue.length ? newValue : undefined);
+                  }}
+                  className="ml-1"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            );
+          });
+        } else {
+          badges.push(
+            <Badge key={key} variant="secondary" className="mr-2 mb-2">
+              {key.charAt(0).toUpperCase() + key.slice(1)}: {value.toString()}
+              <button onClick={() => removeFilter(key)} className="ml-1">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          );
+        }
+      }
+    });
+    
+    if (startDate) {
+      badges.push(
+        <Badge key="startDate" variant="secondary" className="mr-2 mb-2">
+          From: {startDate.toLocaleDateString()}
+          <button onClick={() => setStartDate(undefined)} className="ml-1">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      );
     }
-  };
-  
-  // Update sort order
-  const handleSortChange = (value: string) => {
-    if (selectedTab === 'music') {
-      setSortOrder(prev => ({ ...prev, music: value }));
-    } else if (selectedTab === 'products') {
-      setSortOrder(prev => ({ ...prev, products: value }));
-    } else if (selectedTab === 'posts') {
-      setSortOrder(prev => ({ ...prev, posts: value }));
-    } else if (selectedTab === 'newsletters') {
-      setSortOrder(prev => ({ ...prev, newsletters: value }));
-    } else if (selectedTab === 'suggestions') {
-      setSortOrder(prev => ({ ...prev, suggestions: value }));
-    } else if (selectedTab === 'users') {
-      setSortOrder(prev => ({ ...prev, users: value }));
+    
+    if (endDate) {
+      badges.push(
+        <Badge key="endDate" variant="secondary" className="mr-2 mb-2">
+          To: {endDate.toLocaleDateString()}
+          <button onClick={() => setEndDate(undefined)} className="ml-1">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      );
     }
+    
+    if (sortBy && sortBy !== 'relevance') {
+      badges.push(
+        <Badge key="sortBy" variant="secondary" className="mr-2 mb-2">
+          Sort: {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
+          <button onClick={() => setSortBy('relevance')} className="ml-1">
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      );
+    }
+    
+    return badges;
   };
-  
-  // Calculate result range for pagination display
-  const resultRange = () => {
-    const total = getTotalResults();
-    const start = (page - 1) * resultsPerPage + 1;
-    const end = Math.min(page * resultsPerPage, total);
-    
-    if (total === 0) return '';
-    
-    return `Showing ${start}-${end} of ${total} results`;
-  };
-  
-  // Render result items based on content type
-  const renderResultItem = (item: any) => {
-    const itemType = item.type || selectedTab;
-    
-    switch (itemType) {
+
+  // Render different result formats based on content type
+  const renderResults = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4 mt-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-16 w-full" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-4 w-1/3" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-xl font-semibold text-red-500 mb-2">
+            Error loading search results
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Something went wrong while fetching your search results. Please try again.
+          </p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
+
+    if (!data || !data.results || data.results.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-xl font-semibold mb-2">
+            No results found
+          </div>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or filters
+          </p>
+          {getActiveFilterCount() > 0 && (
+            <Button variant="outline" onClick={clearAllFilters}>
+              Clear all filters
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    switch (currentTab) {
       case 'music':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{item.title}</CardTitle>
-              <CardDescription>{item.artist}</CardDescription>
-            </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-1 h-3 w-3" />
-                {new Date(item.createdAt).toLocaleDateString()}
+        return renderMusicResults(data.results);
+      case 'products':
+        return renderProductResults(data.results);
+      case 'posts':
+        return renderPostResults(data.results);
+      case 'users':
+        return renderUserResults(data.results);
+      case 'newsletters':
+        return renderNewsletterResults(data.results);
+      case 'suggestions':
+        return renderSuggestionResults(data.results);
+      default:
+        return renderMixedResults(data.results);
+    }
+  };
+
+  const renderMusicResults = (results: any[]) => {
+    return (
+      <div className="space-y-4 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="music-result-card hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl flex items-center">
+                    <Headphones className="mr-2 h-5 w-5 text-primary" />
+                    <a href={`/music/${item.id}`} className="hover:text-primary">
+                      {item.title}
+                    </a>
+                  </CardTitle>
+                  <CardDescription>
+                    Artist: {item.artist}
+                    {item.album && ` • Album: ${item.album}`}
+                  </CardDescription>
+                </div>
+                <div className="text-sm text-muted-foreground flex items-center">
+                  <Clock className="mr-1 h-4 w-4" />
+                  {item.duration || 'N/A'}
+                </div>
               </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/music/${item.id}`}>Listen</a>
+            </CardHeader>
+            <CardContent>
+              {item.description && (
+                <p className="text-sm line-clamp-2 mb-2">{item.description}</p>
+              )}
+              
+              <div className="flex flex-wrap gap-1 mt-2">
+                {item.frequency && (
+                  <Badge variant="outline" className="bg-primary/10">
+                    {item.frequency} Hz
+                  </Badge>
+                )}
+                
+                {item.tags && item.tags.map((tag: string) => (
+                  <Badge key={tag} variant="secondary" className="bg-primary/5">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="text-sm text-muted-foreground flex justify-between items-center pt-2">
+              <div>
+                <span>Added: {new Date(item.createdAt).toLocaleDateString()}</span>
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <a href={`/music/${item.id}`}>
+                  Listen <ChevronRight className="ml-1 h-4 w-4" />
+                </a>
               </Button>
             </CardFooter>
           </Card>
-        );
-      
-      case 'products':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            {item.images && item.images[0] && (
-              <div className="h-40 overflow-hidden">
-                <img 
-                  src={item.images[0]} 
-                  alt={item.name} 
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
-                />
-              </div>
-            )}
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{item.name}</CardTitle>
-              <CardDescription>${parseFloat(item.price).toFixed(2)}</CardDescription>
+        ))}
+      </div>
+    );
+  };
+
+  const renderProductResults = (results: any[]) => {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="product-result-card h-full flex flex-col hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <ShoppingBag className="mr-2 h-5 w-5 text-primary" />
+                <a href={`/shop/${item.id}`} className="hover:text-primary line-clamp-1">
+                  {item.name}
+                </a>
+              </CardTitle>
             </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-sm text-muted-foreground">
+            <CardContent className="flex-grow">
+              {item.images && item.images.length > 0 ? (
+                <div className="aspect-square mb-3 bg-muted rounded-md overflow-hidden">
+                  <img 
+                    src={item.images[0]} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-square mb-3 bg-muted rounded-md flex items-center justify-center">
+                  <ShoppingBag className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
+              
+              <p className="text-sm line-clamp-2 mb-2">
+                {item.shortDescription || item.description.substring(0, 120)}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mt-2">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  ${parseFloat(item.price).toFixed(2)}
+                </Badge>
+                
                 {item.category && (
-                  <Badge variant="outline" className="mr-2">
+                  <Badge variant="secondary" className="bg-primary/5">
                     {item.category}
                   </Badge>
                 )}
               </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/shop/${item.id}`}>View</a>
+            </CardContent>
+            <CardFooter className="border-t pt-3">
+              <Button variant="default" size="sm" className="w-full" asChild>
+                <a href={`/shop/${item.id}`}>
+                  View Details
+                </a>
               </Button>
             </CardFooter>
           </Card>
-        );
-      
-      case 'posts':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            {item.featuredImage && (
-              <div className="h-40 overflow-hidden">
-                <img 
-                  src={item.featuredImage} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover transition-transform hover:scale-105"
-                />
-              </div>
-            )}
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{item.title}</CardTitle>
-              {item.excerpt && (
-                <CardDescription className="line-clamp-2">{item.excerpt}</CardDescription>
+        ))}
+      </div>
+    );
+  };
+
+  const renderPostResults = (results: any[]) => {
+    return (
+      <div className="space-y-6 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="post-result-card hover:shadow-md transition-shadow">
+            <div className="md:flex">
+              {item.featuredImage && (
+                <div className="md:w-1/3 shrink-0">
+                  <div className="aspect-video md:aspect-square bg-muted rounded-t-md md:rounded-l-md md:rounded-tr-none overflow-hidden">
+                    <img 
+                      src={item.featuredImage} 
+                      alt={item.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
               )}
-            </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-1 h-3 w-3" />
-                {new Date(item.createdAt).toLocaleDateString()}
+              <div className={item.featuredImage ? 'md:w-2/3' : 'w-full'}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-xl flex items-center">
+                    <FileText className="mr-2 h-5 w-5 text-primary" />
+                    <a href={`/blog/${item.id}`} className="hover:text-primary">
+                      {item.title}
+                    </a>
+                  </CardTitle>
+                  <CardDescription>
+                    Published: {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm line-clamp-3 mb-3">
+                    {item.excerpt || item.content.substring(0, 160) + '...'}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {item.tags && item.tags.map((tag: string) => (
+                      <Badge key={tag} variant="secondary" className="bg-primary/5">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="text-sm text-muted-foreground flex justify-between items-center pt-2">
+                  <div>
+                    {item.author && (
+                      <span>By: {item.author}</span>
+                    )}
+                  </div>
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href={`/blog/${item.id}`}>
+                      Read More <ChevronRight className="ml-1 h-4 w-4" />
+                    </a>
+                  </Button>
+                </CardFooter>
               </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/blog/${item.id}`}>Read</a>
-              </Button>
-            </CardFooter>
+            </div>
           </Card>
-        );
-      
-      case 'newsletters':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{item.title || 'Newsletter'}</CardTitle>
-              <CardDescription>
-                {item.sentAt ? 
-                  `Sent: ${new Date(item.sentAt).toLocaleDateString()}` : 
-                  'Draft'
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-sm text-muted-foreground">
-                {item.status === 'sent' && (
-                  <Badge variant="secondary" className="mr-2">
-                    Sent
-                  </Badge>
-                )}
-                {item.status === 'draft' && (
-                  <Badge variant="outline" className="mr-2">
-                    Draft
-                  </Badge>
-                )}
-              </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/newsletters/${item.id}`}>View</a>
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      
-      case 'suggestions':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{item.title}</CardTitle>
-                {item.status && (
-                  <Badge 
-                    variant={
-                      item.status === 'completed' ? 'default' :
-                      item.status === 'in-progress' ? 'secondary' :
-                      item.status === 'declined' ? 'destructive' :
-                      'outline'
-                    }
-                  >
-                    {item.status}
-                  </Badge>
-                )}
-              </div>
-              <CardDescription className="line-clamp-2">
-                {item.description}
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <MessageSquare className="mr-1 h-3 w-3" />
-                  {item.commentsCount || 0}
-                </div>
-                <div className="flex items-center">
-                  <ArrowUpDown className="mr-1 h-3 w-3" />
-                  {item.votesCount || 0}
-                </div>
-              </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/community/suggestions/${item.id}`}>View</a>
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      
-      case 'users':
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <div className="flex items-center gap-3">
+        ))}
+      </div>
+    );
+  };
+
+  const renderUserResults = (results: any[]) => {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="user-result-card h-full flex flex-col hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2 text-center">
+              <div className="mx-auto mb-2 w-20 h-20 rounded-full overflow-hidden bg-muted">
                 {item.avatar ? (
                   <img 
                     src={item.avatar} 
                     alt={item.username} 
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-5 w-5 text-muted-foreground" />
+                  <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                    <Users className="h-8 w-8 text-primary" />
                   </div>
                 )}
+              </div>
+              <CardTitle className="text-lg">
+                <a href={`/profile/${item.username}`} className="hover:text-primary">
+                  {item.displayName || item.firstName && item.lastName ? 
+                    `${item.firstName} ${item.lastName}` : 
+                    item.username}
+                </a>
+              </CardTitle>
+              <CardDescription>
+                @{item.username}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow text-center">
+              {item.bio && (
+                <p className="text-sm line-clamp-3 mb-3">
+                  {item.bio}
+                </p>
+              )}
+              
+              <div className="flex justify-center flex-wrap gap-1 mt-2">
+                <Badge variant="outline" className="bg-primary/10">
+                  {item.role}
+                </Badge>
+              </div>
+            </CardContent>
+            <CardFooter className="border-t pt-3">
+              <Button variant="outline" size="sm" className="w-full" asChild>
+                <a href={`/profile/${item.username}`}>
+                  View Profile
+                </a>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderNewsletterResults = (results: any[]) => {
+    return (
+      <div className="space-y-4 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="newsletter-result-card hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-lg">{item.displayName || item.username}</CardTitle>
-                  <CardDescription>@{item.username}</CardDescription>
+                  <CardTitle className="text-xl flex items-center">
+                    <Mail className="mr-2 h-5 w-5 text-primary" />
+                    <a href={`/newsletters/${item.id}`} className="hover:text-primary">
+                      {item.subject || item.title}
+                    </a>
+                  </CardTitle>
+                  <CardDescription>
+                    {item.sentAt ? 
+                      `Sent: ${new Date(item.sentAt).toLocaleDateString()}` : 
+                      `Draft: ${new Date(item.createdAt).toLocaleDateString()}`}
+                  </CardDescription>
+                </div>
+                <div>
+                  <Badge variant={item.status === 'sent' ? 'default' : 'outline'}>
+                    {item.status === 'sent' ? 'Sent' : 'Draft'}
+                  </Badge>
                 </div>
               </div>
             </CardHeader>
-            <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="mr-1 h-3 w-3" />
-                Joined {new Date(item.createdAt).toLocaleDateString()}
+            <CardContent>
+              <p className="text-sm line-clamp-2 mb-3">
+                {item.content.substring(0, 200) + '...'}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mt-2">
+                {item.category && (
+                  <Badge variant="secondary" className="bg-primary/5">
+                    {item.category}
+                  </Badge>
+                )}
               </div>
-              <Button size="sm" variant="secondary" asChild>
-                <a href={`/users/${item.username}`}>Profile</a>
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-      
-      default:
-        return (
-          <Card key={item.id} className="overflow-hidden">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">{item.title || item.name}</CardTitle>
-            </CardHeader>
-            <CardFooter className="p-4 pt-0 text-right">
-              <Button size="sm" variant="secondary">
-                View
-              </Button>
-            </CardFooter>
-          </Card>
-        );
-    }
-  };
-  
-  return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Advanced Search</h1>
-        <p className="text-muted-foreground">
-          Search across all content with advanced filtering options
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              type="text"
-              placeholder="Search for anything..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <Button type="submit" className="sm:w-auto">Search</Button>
-        </div>
-      </form>
-      
-      <Tabs 
-        defaultValue={selectedTab} 
-        onValueChange={handleTabChange}
-        className="space-y-6"
-      >
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="music">Music</TabsTrigger>
-          <TabsTrigger value="products">Shop</TabsTrigger>
-          <TabsTrigger value="posts">Blog</TabsTrigger>
-          <TabsTrigger value="newsletters">Newsletters</TabsTrigger>
-          <TabsTrigger value="suggestions">Community</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-        </TabsList>
-        
-        {/* All Content Tab */}
-        <TabsContent value="all" className="space-y-6">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <h2 className="text-xl font-semibold">All Results</h2>
-              <p className="text-sm text-muted-foreground">{resultRange()}</p>
-            </div>
-          </div>
-          
-          {isLoading ? (
-            <div className="text-center py-10">
-              <p>Loading results...</p>
-            </div>
-          ) : isError ? (
-            <div className="text-center py-10 text-red-500">
-              <p>Error loading results. Please try again.</p>
-            </div>
-          ) : getCurrentResults().length > 0 ? (
-            <div className="space-y-6">
-              {/* Group results by type */}
-              {['music', 'products', 'posts', 'newsletters', 'suggestions', 'users'].map((type) => {
-                const typeResults = getCurrentResults().filter(item => item.type === type);
-                if (typeResults.length === 0) return null;
-                
-                return (
-                  <div key={type} className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium flex items-center gap-2">
-                        {getContentTypeIcon(type)}
-                        {searchCategories.find(cat => cat.id === type)?.label || type}
-                      </h3>
-                      <Button variant="link" size="sm" asChild>
-                        <a href={`/search?q=${encodeURIComponent(searchQuery)}&type=${type}`}>
-                          See all
-                        </a>
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {typeResults.map(renderResultItem)}
-                    </div>
+            </CardContent>
+            <CardFooter className="text-sm text-muted-foreground flex justify-between items-center pt-2">
+              <div className="flex items-center">
+                {item.openRate !== undefined && (
+                  <div className="mr-4 flex items-center">
+                    <BarChart className="mr-1 h-4 w-4" />
+                    <span>Open rate: {(item.openRate * 100).toFixed(1)}%</span>
                   </div>
-                );
+                )}
+                
+                {item.clickRate !== undefined && (
+                  <div className="flex items-center">
+                    <ThumbsUp className="mr-1 h-4 w-4" />
+                    <span>Click rate: {(item.clickRate * 100).toFixed(1)}%</span>
+                  </div>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <a href={`/newsletters/${item.id}`}>
+                  View <ChevronRight className="ml-1 h-4 w-4" />
+                </a>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSuggestionResults = (results: any[]) => {
+    return (
+      <div className="space-y-4 mt-4">
+        {results.map((item) => (
+          <Card key={item.id} className="suggestion-result-card hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl flex items-center">
+                    <MessageSquare className="mr-2 h-5 w-5 text-primary" />
+                    <a href={`/suggestions/${item.id}`} className="hover:text-primary">
+                      {item.title}
+                    </a>
+                  </CardTitle>
+                  <CardDescription>
+                    Submitted by: {item.authorName || 'Anonymous'} • {new Date(item.createdAt).toLocaleDateString()}
+                  </CardDescription>
+                </div>
+                <div className="flex">
+                  {item.status && (
+                    <Badge variant={
+                      item.status === 'implemented' ? 'default' : 
+                      item.status === 'planned' ? 'secondary' : 'outline'
+                    }>
+                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    </Badge>
+                  )}
+                  <div className="ml-2 flex items-center">
+                    <ThumbsUp className="mr-1 h-4 w-4" />
+                    <span>{item.votes || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm line-clamp-3 mb-3">
+                {item.description}
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mt-2">
+                {item.category && (
+                  <Badge variant="secondary" className="bg-primary/5">
+                    {item.category}
+                  </Badge>
+                )}
+                {item.tags && item.tags.map((tag: string) => (
+                  <Badge key={tag} variant="outline" className="bg-primary/5">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+            <CardFooter className="text-sm text-muted-foreground flex justify-between items-center pt-2">
+              <div>
+                {item.commentCount > 0 && (
+                  <span>{item.commentCount} comment{item.commentCount !== 1 ? 's' : ''}</span>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <a href={`/suggestions/${item.id}`}>
+                  View Details <ChevronRight className="ml-1 h-4 w-4" />
+                </a>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
+  const renderMixedResults = (results: any[]) => {
+    // Group results by type
+    const groupedResults: Record<string, any[]> = {};
+    
+    results.forEach(item => {
+      const type = item._type || 'unknown';
+      if (!groupedResults[type]) {
+        groupedResults[type] = [];
+      }
+      groupedResults[type].push(item);
+    });
+    
+    return (
+      <div className="space-y-8 mt-4">
+        {Object.entries(groupedResults).map(([type, items]) => (
+          <div key={type}>
+            <h3 className="text-lg font-semibold mb-3 flex items-center">
+              {type === 'music' && <Music className="mr-2 h-5 w-5" />}
+              {type === 'products' && <ShoppingBag className="mr-2 h-5 w-5" />}
+              {type === 'posts' && <FileText className="mr-2 h-5 w-5" />}
+              {type === 'users' && <Users className="mr-2 h-5 w-5" />}
+              {type === 'newsletters' && <Mail className="mr-2 h-5 w-5" />}
+              {type === 'suggestions' && <MessageSquare className="mr-2 h-5 w-5" />}
+              {type.charAt(0).toUpperCase() + type.slice(1)} ({items.length} results)
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.slice(0, 3).map(item => {
+                switch (type) {
+                  case 'music':
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center">
+                            <Headphones className="mr-2 h-4 w-4 text-primary" />
+                            <a href={`/music/${item.id}`} className="hover:text-primary line-clamp-1">
+                              {item.title}
+                            </a>
+                          </CardTitle>
+                          <CardDescription>
+                            {item.artist}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          {item.description && (
+                            <p className="text-sm line-clamp-1">{item.description}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  
+                  case 'products':
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center">
+                            <ShoppingBag className="mr-2 h-4 w-4 text-primary" />
+                            <a href={`/shop/${item.id}`} className="hover:text-primary line-clamp-1">
+                              {item.name}
+                            </a>
+                          </CardTitle>
+                          <CardDescription>
+                            ${parseFloat(item.price).toFixed(2)}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          {(item.shortDescription || item.description) && (
+                            <p className="text-sm line-clamp-1">
+                              {item.shortDescription || item.description.substring(0, 80)}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  
+                  case 'posts':
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg flex items-center">
+                            <FileText className="mr-2 h-4 w-4 text-primary" />
+                            <a href={`/blog/${item.id}`} className="hover:text-primary line-clamp-1">
+                              {item.title}
+                            </a>
+                          </CardTitle>
+                          <CardDescription>
+                            {new Date(item.publishedAt || item.createdAt).toLocaleDateString()}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          {(item.excerpt || item.content) && (
+                            <p className="text-sm line-clamp-1">
+                              {item.excerpt || item.content.substring(0, 80)}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  
+                  case 'users':
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2 text-center">
+                          <div className="mx-auto mb-2 w-12 h-12 rounded-full overflow-hidden bg-muted">
+                            {item.avatar ? (
+                              <img 
+                                src={item.avatar} 
+                                alt={item.username} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-primary/10">
+                                <Users className="h-6 w-6 text-primary" />
+                              </div>
+                            )}
+                          </div>
+                          <CardTitle className="text-lg">
+                            <a href={`/profile/${item.username}`} className="hover:text-primary">
+                              {item.displayName || item.firstName && item.lastName ? 
+                                `${item.firstName} ${item.lastName}` : 
+                                item.username}
+                            </a>
+                          </CardTitle>
+                        </CardHeader>
+                      </Card>
+                    );
+                  
+                  default:
+                    return (
+                      <Card key={item.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">
+                            <a href={`/${type}/${item.id}`} className="hover:text-primary line-clamp-1">
+                              {item.title || item.name || item.subject || 'Unknown'}
+                            </a>
+                          </CardTitle>
+                          <CardDescription>
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    );
+                }
               })}
             </div>
-          ) : (
-            <div className="text-center py-10">
-              <p>No results found for "{searchQuery}"</p>
-            </div>
-          )}
-        </TabsContent>
-        
-        {/* Music Tab */}
-        <TabsContent value="music" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar */}
-            <div className="w-full md:w-64 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Filter Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="music-artist">Artist</Label>
-                    <Input
-                      id="music-artist"
-                      placeholder="Filter by artist"
-                      value={musicFilters.artist}
-                      onChange={(e) => setMusicFilters(prev => ({ ...prev, artist: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="music-year">Year</Label>
-                    <Input
-                      id="music-year"
-                      placeholder="Filter by year"
-                      value={musicFilters.year}
-                      onChange={(e) => setMusicFilters(prev => ({ ...prev, year: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="music-frequency">Frequency (Hz)</Label>
-                    <Input
-                      id="music-frequency"
-                      placeholder="Filter by frequency"
-                      value={musicFilters.frequency}
-                      onChange={(e) => setMusicFilters(prev => ({ ...prev, frequency: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="music-sort">Sort By</Label>
-                    <Select 
-                      value={sortOrder.music} 
-                      onValueChange={handleSortChange}
-                    >
-                      <SelectTrigger id="music-sort">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortOptions.music.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
             
-            {/* Results area */}
-            <div className="flex-1 space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">Music Results</h2>
-                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
-                </div>
+            {items.length > 3 && (
+              <div className="mt-2 text-right">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleTabChange(type)}
+                >
+                  See all {items.length} {type} results
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
               </div>
-              
-              {isLoading ? (
-                <div className="text-center py-10">
-                  <p>Loading results...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-10 text-red-500">
-                  <p>Error loading results. Please try again.</p>
-                </div>
-              ) : getCurrentResults().length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getCurrentResults().map(renderResultItem)}
-                  </div>
-                  
-                  {/* Pagination UI */}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                      disabled={page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {page}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => prev + 1)}
-                      disabled={getCurrentResults().length < resultsPerPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10">
-                  <p>No music results found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        </TabsContent>
-        
-        {/* Products Tab */}
-        <TabsContent value="products" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar */}
-            <div className="w-full md:w-64 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Filter Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="product-category">Category</Label>
-                    <Select 
-                      value={productFilters.category} 
-                      onValueChange={(value) => setProductFilters(prev => ({ ...prev, category: value }))}
-                    >
-                      <SelectTrigger id="product-category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getCategories().map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="product-price-min">Price Range</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="product-price-min"
-                        placeholder="Min"
-                        type="number"
-                        value={productFilters.minPrice}
-                        onChange={(e) => setProductFilters(prev => ({ ...prev, minPrice: e.target.value }))}
-                        className="w-full"
-                      />
-                      <span>-</span>
-                      <Input
-                        id="product-price-max"
-                        placeholder="Max"
-                        type="number"
-                        value={productFilters.maxPrice}
-                        onChange={(e) => setProductFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="product-in-stock"
-                      checked={productFilters.inStock}
-                      onCheckedChange={(checked) => setProductFilters(prev => ({ ...prev, inStock: checked }))}
-                    />
-                    <Label htmlFor="product-in-stock">In stock only</Label>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="product-sort">Sort By</Label>
-                    <Select 
-                      value={sortOrder.products} 
-                      onValueChange={handleSortChange}
-                    >
-                      <SelectTrigger id="product-sort">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortOptions.products.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Results area */}
-            <div className="flex-1 space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">Shop Results</h2>
-                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="text-center py-10">
-                  <p>Loading results...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-10 text-red-500">
-                  <p>Error loading results. Please try again.</p>
-                </div>
-              ) : getCurrentResults().length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getCurrentResults().map(renderResultItem)}
-                  </div>
-                  
-                  {/* Pagination UI */}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                      disabled={page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {page}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => prev + 1)}
-                      disabled={getCurrentResults().length < resultsPerPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10">
-                  <p>No products found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Blog Posts Tab */}
-        <TabsContent value="posts" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar */}
-            <div className="w-full md:w-64 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Filter Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="post-tags">Tags</Label>
-                    <Input
-                      id="post-tags"
-                      placeholder="Filter by tags (comma separated)"
-                      value={postFilters.tags}
-                      onChange={(e) => setPostFilters(prev => ({ ...prev, tags: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Date Range</Label>
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Label htmlFor="post-date-from" className="text-xs">From</Label>
-                        <DatePicker
-                          id="post-date-from"
-                          date={postFilters.dateFrom}
-                          setDate={(date) => handleDateChange(date, 'dateFrom', 'posts')}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="post-date-to" className="text-xs">To</Label>
-                        <DatePicker
-                          id="post-date-to"
-                          date={postFilters.dateTo}
-                          setDate={(date) => handleDateChange(date, 'dateTo', 'posts')}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="post-sort">Sort By</Label>
-                    <Select 
-                      value={sortOrder.posts} 
-                      onValueChange={handleSortChange}
-                    >
-                      <SelectTrigger id="post-sort">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortOptions.posts.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Results area */}
-            <div className="flex-1 space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">Blog Results</h2>
-                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="text-center py-10">
-                  <p>Loading results...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-10 text-red-500">
-                  <p>Error loading results. Please try again.</p>
-                </div>
-              ) : getCurrentResults().length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getCurrentResults().map(renderResultItem)}
-                  </div>
-                  
-                  {/* Pagination UI */}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                      disabled={page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {page}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => prev + 1)}
-                      disabled={getCurrentResults().length < resultsPerPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10">
-                  <p>No blog posts found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Newsletters Tab */}
-        <TabsContent value="newsletters" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar */}
-            <div className="w-full md:w-64 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Filter Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="newsletter-category">Category</Label>
-                    <Select 
-                      value={newsletterFilters.category} 
-                      onValueChange={(value) => setNewsletterFilters(prev => ({ ...prev, category: value }))}
-                    >
-                      <SelectTrigger id="newsletter-category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getCategories().map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="newsletter-status">Status</Label>
-                    <Select 
-                      value={newsletterFilters.sent} 
-                      onValueChange={(value) => setNewsletterFilters(prev => ({ ...prev, sent: value }))}
-                    >
-                      <SelectTrigger id="newsletter-status">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="sent">Sent</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Date Range</Label>
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Label htmlFor="newsletter-date-from" className="text-xs">From</Label>
-                        <DatePicker
-                          id="newsletter-date-from"
-                          date={newsletterFilters.dateFrom}
-                          setDate={(date) => handleDateChange(date, 'dateFrom', 'newsletters')}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="newsletter-date-to" className="text-xs">To</Label>
-                        <DatePicker
-                          id="newsletter-date-to"
-                          date={newsletterFilters.dateTo}
-                          setDate={(date) => handleDateChange(date, 'dateTo', 'newsletters')}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="newsletter-min-open-rate">Min. Open Rate (%)</Label>
-                    <Input
-                      id="newsletter-min-open-rate"
-                      type="number"
-                      min="0"
-                      max="100"
-                      placeholder="0"
-                      value={newsletterFilters.minOpenRate}
-                      onChange={(e) => setNewsletterFilters(prev => ({ ...prev, minOpenRate: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="newsletter-sort">Sort By</Label>
-                    <Select 
-                      value={sortOrder.newsletters} 
-                      onValueChange={handleSortChange}
-                    >
-                      <SelectTrigger id="newsletter-sort">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortOptions.newsletters.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Results area */}
-            <div className="flex-1 space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">Newsletter Results</h2>
-                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="text-center py-10">
-                  <p>Loading results...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-10 text-red-500">
-                  <p>Error loading results. Please try again.</p>
-                </div>
-              ) : getCurrentResults().length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getCurrentResults().map(renderResultItem)}
-                  </div>
-                  
-                  {/* Pagination UI */}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                      disabled={page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {page}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => prev + 1)}
-                      disabled={getCurrentResults().length < resultsPerPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10">
-                  <p>No newsletters found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Community Suggestions Tab */}
-        <TabsContent value="suggestions" className="space-y-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Filters sidebar */}
-            <div className="w-full md:w-64 space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Filter Results</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="suggestion-category">Category</Label>
-                    <Select 
-                      value={suggestionFilters.category} 
-                      onValueChange={(value) => setSuggestionFilters(prev => ({ ...prev, category: value }))}
-                    >
-                      <SelectTrigger id="suggestion-category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getCategories().map(category => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="suggestion-status">Status</Label>
-                    <Select 
-                      value={suggestionFilters.status} 
-                      onValueChange={(value) => setSuggestionFilters(prev => ({ ...prev, status: value }))}
-                    >
-                      <SelectTrigger id="suggestion-status">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getStatusOptions().map(status => (
-                          <SelectItem key={status.id} value={status.id}>
-                            {status.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Date Range</Label>
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <Label htmlFor="suggestion-date-from" className="text-xs">From</Label>
-                        <DatePicker
-                          id="suggestion-date-from"
-                          date={suggestionFilters.dateFrom}
-                          setDate={(date) => handleDateChange(date, 'dateFrom', 'suggestions')}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="suggestion-date-to" className="text-xs">To</Label>
-                        <DatePicker
-                          id="suggestion-date-to"
-                          date={suggestionFilters.dateTo}
-                          setDate={(date) => handleDateChange(date, 'dateTo', 'suggestions')}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="suggestion-min-votes">Min. Votes</Label>
-                    <Input
-                      id="suggestion-min-votes"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={suggestionFilters.minVotes}
-                      onChange={(e) => setSuggestionFilters(prev => ({ ...prev, minVotes: e.target.value }))}
-                    />
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="hide-implemented"
-                      checked={suggestionFilters.hideImplemented}
-                      onCheckedChange={(checked) => setSuggestionFilters(prev => ({ ...prev, hideImplemented: checked }))}
-                    />
-                    <Label htmlFor="hide-implemented">Hide implemented</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="hide-declined"
-                      checked={suggestionFilters.hideDeclined}
-                      onCheckedChange={(checked) => setSuggestionFilters(prev => ({ ...prev, hideDeclined: checked }))}
-                    />
-                    <Label htmlFor="hide-declined">Hide declined</Label>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="suggestion-sort">Sort By</Label>
-                    <Select 
-                      value={sortOrder.suggestions} 
-                      onValueChange={handleSortChange}
-                    >
-                      <SelectTrigger id="suggestion-sort">
-                        <SelectValue placeholder="Sort by..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortOptions.suggestions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Results area */}
-            <div className="flex-1 space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold">Community Suggestions</h2>
-                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
-                </div>
-              </div>
-              
-              {isLoading ? (
-                <div className="text-center py-10">
-                  <p>Loading results...</p>
-                </div>
-              ) : isError ? (
-                <div className="text-center py-10 text-red-500">
-                  <p>Error loading results. Please try again.</p>
-                </div>
-              ) : getCurrentResults().length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getCurrentResults().map(renderResultItem)}
-                  </div>
-                  
-                  {/* Pagination UI */}
-                  <div className="flex justify-between items-center pt-4">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                      disabled={page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-muted-foreground">
-                      Page {page}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setPage(prev => prev + 1)}
-                      disabled={getCurrentResults().length < resultsPerPage}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-10">
-                  <p>No community suggestions found for "{searchQuery}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Users Tab */}
-        <TabsContent value="users" className="space-y-6">
-          <div className="flex justify-between items-center">
+        ))}
+      </div>
+    );
+  };
+
+  // Render filters based on content type
+  const renderFilters = () => {
+    switch (currentTab) {
+      case 'music':
+        return renderMusicFilters();
+      case 'products':
+        return renderProductFilters();
+      case 'posts':
+        return renderPostFilters();
+      case 'users':
+        return renderUserFilters();
+      case 'newsletters':
+        return renderNewsletterFilters();
+      case 'suggestions':
+        return renderSuggestionFilters();
+      default:
+        return null;
+    }
+  };
+
+  const renderMusicFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Duration</h3>
+          <Select
+            value={activeFilters.duration || ''}
+            onValueChange={(value) => handleFilterChange('duration', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select duration" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Any duration</SelectItem>
+              <SelectItem value="short">Short (&lt; 5 min)</SelectItem>
+              <SelectItem value="medium">Medium (5-15 min)</SelectItem>
+              <SelectItem value="long">Long (&gt; 15 min)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Frequency Range (Hz)</h3>
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <h2 className="text-xl font-semibold">Users</h2>
-              <p className="text-sm text-muted-foreground">{resultRange()}</p>
+              <Input
+                type="number"
+                placeholder="Min"
+                value={activeFilters.minFrequency || ''}
+                onChange={(e) => handleFilterChange('minFrequency', e.target.value)}
+              />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <Label htmlFor="user-sort" className="text-sm">Sort:</Label>
-              <Select 
-                value={sortOrder.users} 
-                onValueChange={handleSortChange}
+            <div>
+              <Input
+                type="number"
+                placeholder="Max"
+                value={activeFilters.maxFrequency || ''}
+                onChange={(e) => handleFilterChange('maxFrequency', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Release Date</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="popularity">Popularity</SelectItem>
+              <SelectItem value="frequency">Frequency (Low to High)</SelectItem>
+              <SelectItem value="frequency-desc">Frequency (High to Low)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProductFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Price Range</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Input
+                type="number"
+                placeholder="Min"
+                value={activeFilters.minPrice || ''}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+              />
+            </div>
+            <div>
+              <Input
+                type="number"
+                placeholder="Max"
+                value={activeFilters.maxPrice || ''}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Category</h3>
+          <Select
+            value={activeFilters.category || ''}
+            onValueChange={(value) => handleFilterChange('category', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="meditation">Meditation</SelectItem>
+              <SelectItem value="sound-healing">Sound Healing</SelectItem>
+              <SelectItem value="merchandise">Merchandise</SelectItem>
+              <SelectItem value="courses">Courses</SelectItem>
+              <SelectItem value="accessories">Accessories</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Date Added</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center mb-2">
+            <Checkbox
+              id="inStock"
+              checked={activeFilters.inStock === 'true'}
+              onCheckedChange={(checked) => 
+                handleFilterChange('inStock', checked ? 'true' : undefined)
+              }
+            />
+            <label
+              htmlFor="inStock"
+              className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              In Stock Only
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="price-asc">Price (Low to High)</SelectItem>
+              <SelectItem value="price-desc">Price (High to Low)</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="popularity">Popularity</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderPostFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Publication Date</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Tags</h3>
+          <div className="flex flex-wrap gap-1">
+            {['meditation', 'spirituality', 'healing', 'cosmic', 'personal growth', 'whales'].map((tag) => (
+              <Badge 
+                key={tag}
+                variant={(activeFilters.tags && activeFilters.tags.includes(tag)) ? 'default' : 'outline'}
+                className="cursor-pointer mb-1"
+                onClick={() => {
+                  const currentTags = activeFilters.tags || [];
+                  if (currentTags.includes(tag)) {
+                    handleFilterChange('tags', currentTags.filter(t => t !== tag));
+                  } else {
+                    handleFilterChange('tags', [...currentTags, tag]);
+                  }
+                }}
               >
-                <SelectTrigger id="user-sort" className="w-40">
-                  <SelectValue placeholder="Sort by..." />
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center mb-2">
+            <Checkbox
+              id="featuredOnly"
+              checked={activeFilters.featured === 'true'}
+              onCheckedChange={(checked) => 
+                handleFilterChange('featured', checked ? 'true' : undefined)
+              }
+            />
+            <label
+              htmlFor="featuredOnly"
+              className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Featured Posts Only
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="popularity">Most Popular</SelectItem>
+              <SelectItem value="comments">Most Comments</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderUserFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Role</h3>
+          <Select
+            value={activeFilters.role || ''}
+            onValueChange={(value) => handleFilterChange('role', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Roles</SelectItem>
+              <SelectItem value="user">Regular User</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="artist">Artist</SelectItem>
+              <SelectItem value="contributor">Contributor</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Date Joined</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center mb-2">
+            <Checkbox
+              id="activeOnly"
+              checked={activeFilters.active === 'true'}
+              onCheckedChange={(checked) => 
+                handleFilterChange('active', checked ? 'true' : undefined)
+              }
+            />
+            <label
+              htmlFor="activeOnly"
+              className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Active Users Only
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="newest">Newest Members</SelectItem>
+              <SelectItem value="oldest">Longest Members</SelectItem>
+              <SelectItem value="activity">Most Active</SelectItem>
+              <SelectItem value="contributions">Most Contributions</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderNewsletterFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Status</h3>
+          <Select
+            value={activeFilters.status || ''}
+            onValueChange={(value) => handleFilterChange('status', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Category</h3>
+          <Select
+            value={activeFilters.category || ''}
+            onValueChange={(value) => handleFilterChange('category', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="events">Events</SelectItem>
+              <SelectItem value="promotions">Promotions</SelectItem>
+              <SelectItem value="product">Product Updates</SelectItem>
+              <SelectItem value="educational">Educational</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Date Range</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Engagement Filter</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Min Open Rate:</span>
+              <Select
+                value={activeFilters.minOpenRate || ''}
+                onValueChange={(value) => handleFilterChange('minOpenRate', value)}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Any" />
                 </SelectTrigger>
                 <SelectContent>
-                  {sortOptions.users.map(option => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="0.1">10%</SelectItem>
+                  <SelectItem value="0.2">20%</SelectItem>
+                  <SelectItem value="0.3">30%</SelectItem>
+                  <SelectItem value="0.4">40%</SelectItem>
+                  <SelectItem value="0.5">50%</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Min Click Rate:</span>
+              <Select
+                value={activeFilters.minClickRate || ''}
+                onValueChange={(value) => handleFilterChange('minClickRate', value)}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="0.05">5%</SelectItem>
+                  <SelectItem value="0.10">10%</SelectItem>
+                  <SelectItem value="0.15">15%</SelectItem>
+                  <SelectItem value="0.20">20%</SelectItem>
+                  <SelectItem value="0.25">25%</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
-          {isLoading ? (
-            <div className="text-center py-10">
-              <p>Loading results...</p>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="engagement">Highest Engagement</SelectItem>
+              <SelectItem value="openRate">Best Open Rate</SelectItem>
+              <SelectItem value="clickRate">Best Click Rate</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSuggestionFilters = () => {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Status</h3>
+          <Select
+            value={activeFilters.status || ''}
+            onValueChange={(value) => handleFilterChange('status', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All</SelectItem>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="under-review">Under Review</SelectItem>
+              <SelectItem value="planned">Planned</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="implemented">Implemented</SelectItem>
+              <SelectItem value="declined">Declined</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Category</h3>
+          <Select
+            value={activeFilters.category || ''}
+            onValueChange={(value) => handleFilterChange('category', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="feature">Feature Request</SelectItem>
+              <SelectItem value="improvement">Improvement</SelectItem>
+              <SelectItem value="bug">Bug Report</SelectItem>
+              <SelectItem value="content">Content Request</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Date Submitted</h3>
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">From</p>
+              <DatePicker 
+                date={startDate} 
+                setDate={setStartDate}
+              />
             </div>
-          ) : isError ? (
-            <div className="text-center py-10 text-red-500">
-              <p>Error loading results. Please try again.</p>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">To</p>
+              <DatePicker 
+                date={endDate} 
+                setDate={setEndDate}
+              />
             </div>
-          ) : getCurrentResults().length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {getCurrentResults().map(renderResultItem)}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Votes</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Input
+                type="number"
+                placeholder="Min"
+                value={activeFilters.minVotes || ''}
+                onChange={(e) => handleFilterChange('minVotes', e.target.value)}
+              />
+            </div>
+            <div>
+              <Input
+                type="number"
+                placeholder="Max"
+                value={activeFilters.maxVotes || ''}
+                onChange={(e) => handleFilterChange('maxVotes', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium mb-2">Sort By</h3>
+          <Select
+            value={sortBy}
+            onValueChange={setSortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="relevance">Relevance</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="most-votes">Most Votes</SelectItem>
+              <SelectItem value="most-comments">Most Comments</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="advanced-search-container">
+      <div className="mb-8">
+        <Tabs 
+          defaultValue={currentTab} 
+          value={currentTab}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-3 md:grid-cols-7 mb-8">
+            <TabsTrigger value="all" className="text-xs md:text-sm">
+              <span className="hidden md:inline">All Content</span>
+              <span className="md:hidden">All</span>
+            </TabsTrigger>
+            <TabsTrigger value="music" className="text-xs md:text-sm">
+              <Music className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Music</span>
+            </TabsTrigger>
+            <TabsTrigger value="products" className="text-xs md:text-sm">
+              <ShoppingBag className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Products</span>
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="text-xs md:text-sm">
+              <FileText className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Blog</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs md:text-sm">
+              <Users className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="newsletters" className="text-xs md:text-sm">
+              <Mail className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Newsletters</span>
+            </TabsTrigger>
+            <TabsTrigger value="suggestions" className="text-xs md:text-sm">
+              <MessageSquare className="md:mr-2 h-4 w-4" />
+              <span className="hidden md:inline">Suggestions</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Filters Column */}
+            <div className="md:col-span-1">
+              <div className="space-y-6">
+                <div className="sticky top-4 bg-card rounded-lg p-4 border shadow-sm">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center">
+                    <Filter className="mr-2 h-5 w-5" />
+                    Filters
+                    {getActiveFilterCount() > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {getActiveFilterCount()}
+                      </Badge>
+                    )}
+                  </h2>
+                  
+                  {getActiveFilterCount() > 0 && (
+                    <div className="mb-4">
+                      <div className="flex flex-wrap mb-2">
+                        {renderFilterBadges()}
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-muted-foreground"
+                        onClick={clearAllFilters}
+                      >
+                        <X className="mr-1 h-4 w-4" />
+                        Clear All Filters
+                      </Button>
+                    </div>
+                  )}
+                  
+                  <Accordion
+                    type="single"
+                    collapsible
+                    defaultValue="filters"
+                    className="w-full"
+                  >
+                    <AccordionItem value="filters" className="border-none">
+                      <AccordionTrigger className="py-2 text-base">
+                        Filter Options
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ScrollArea className="h-[calc(100vh-400px)] pr-4">
+                          {renderFilters()}
+                        </ScrollArea>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
               </div>
+            </div>
+            
+            {/* Results Column */}
+            <div className="md:col-span-3">
+              <TabsContent value="all" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="music" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="products" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="posts" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="users" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="newsletters" className="mt-0">
+                {renderResults()}
+              </TabsContent>
+              <TabsContent value="suggestions" className="mt-0">
+                {renderResults()}
+              </TabsContent>
               
-              {/* Pagination UI */}
-              <div className="flex justify-between items-center pt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-                  disabled={page <= 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {page}
-                </span>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setPage(prev => prev + 1)}
-                  disabled={getCurrentResults().length < resultsPerPage}
-                >
-                  Next
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-10">
-              <p>No users found for "{searchQuery}"</p>
+              {/* Pagination */}
+              {data && data.totalPages > 1 && (
+                <Pagination className="mt-8">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => handlePageChange(Math.max(1, page - 1))}
+                        className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: data.totalPages }, (_, i) => i + 1)
+                      .filter(pageNum => {
+                        // Show first page, last page, current page, and pages around current page
+                        return (
+                          pageNum === 1 || 
+                          pageNum === data.totalPages || 
+                          Math.abs(pageNum - page) <= 1
+                        );
+                      })
+                      .map((pageNum, index, array) => {
+                        // Add ellipsis when there are gaps
+                        const prevPage = array[index - 1];
+                        const showEllipsis = prevPage && pageNum - prevPage > 1;
+                        
+                        return (
+                          <React.Fragment key={pageNum}>
+                            {showEllipsis && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <PaginationLink
+                                isActive={pageNum === page}
+                                onClick={() => handlePageChange(pageNum)}
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </React.Fragment>
+                        );
+                      })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => handlePageChange(Math.min(data.totalPages, page + 1))}
+                        className={page === data.totalPages ? 'pointer-events-none opacity-50' : ''}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 };

@@ -1,82 +1,75 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+/**
+ * utils.ts
+ * 
+ * A collection of utility functions used throughout the application.
+ */
+
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 /**
- * Combines class names with tailwind CSS, handling conflicts
+ * Combines multiple class values into a single className string,
+ * handling Tailwind CSS conflicts using twMerge.
+ * 
+ * @param inputs - Class values to combine
+ * @returns Combined className string
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Generates a random string ID
+ * Formats a date to a string representation.
+ * 
+ * @param date - The date to format
+ * @param options - Intl.DateTimeFormatOptions to customize the format
+ * @returns Formatted date string
  */
-export function generateId(length = 6): string {
-  return Math.random().toString(36).substring(2, 2 + length);
-}
-
-/**
- * Safely parses JSON without throwing
- */
-export function safeJsonParse<T>(json: string, fallback: T): T {
-  try {
-    return JSON.parse(json) as T;
-  } catch (e) {
-    return fallback;
+export function formatDate(
+  date: Date | string | null | undefined,
+  options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   }
+): string {
+  if (!date) return '';
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString(undefined, options);
 }
 
 /**
- * Debounces a function
+ * Truncates a string to a maximum length, adding an ellipsis if needed.
+ * 
+ * @param str - The string to truncate
+ * @param maxLength - Maximum length of the string
+ * @returns Truncated string
+ */
+export function truncate(str: string, maxLength: number): string {
+  if (!str || str.length <= maxLength) return str;
+  return `${str.substring(0, maxLength)}...`;
+}
+
+/**
+ * Creates a debounced version of a function.
+ * 
+ * @param func - The function to debounce
+ * @param delay - The delay in milliseconds
+ * @returns Debounced function
  */
 export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
+  func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout;
-  return function(this: any, ...args: Parameters<T>) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn.apply(this, args), delay);
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    
+    timeout = setTimeout(() => {
+      func(...args);
+      timeout = null;
+    }, delay);
   };
-}
-
-/**
- * Returns a random item from an array
- */
-export function getRandomItem<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-/**
- * Creates a deep copy of an object
- */
-export function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-/**
- * Truncates text with ellipsis
- */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + "...";
-}
-
-/**
- * Sleeps for the specified milliseconds
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Formats a number as a currency string
- */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
 }
