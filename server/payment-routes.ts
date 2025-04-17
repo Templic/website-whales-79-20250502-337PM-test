@@ -6,7 +6,10 @@ import paymentTransactionLogger, { PaymentTransactionType } from './security/pay
 const router = express.Router();
 
 // Initialize Stripe
-const stripeApiKey = process.env.STRIPE_SECRET_KEY;
+const stripeApiKey = process.env.STRIPE_SECRET_KEY || '';
+if (!stripeApiKey) {
+  console.error('Missing Stripe secret key');
+}
 
 // Schema for validating payment intent request
 const paymentIntentSchema = z.object({
