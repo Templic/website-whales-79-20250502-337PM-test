@@ -48,8 +48,9 @@ export function AccessibilityControls() {
   const [keyboardMode, setKeyboardMode] = useState(false)
   const [textToSpeechEnabled, setTextToSpeechEnabled] = useState(false)
   const [screenReaderOptimized, setScreenReaderOptimized] = useState(false)
-  const [showSkipLinks, setShowSkipLinks] = useState(false)
+  const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(false)
   const [errorPrevention, setErrorPrevention] = useState(true)
+  const [showSkipLinks, setShowSkipLinks] = useState(false)
   
   // Reference to the TTS engine
   const speechSynthesisRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null)
@@ -236,7 +237,80 @@ export function AccessibilityControls() {
     }
   }
   
-  // Text-to-speech functionality
+  // Text-to-speech settings with customizable options
+  const [speechRate, setSpeechRate] = useState(1.0);
+  const [speechPitch, setSpeechPitch] = useState(1.0);
+  const [speechVolume, setSpeechVolume] = useState(1.0);
+  const [preferredVoice, setPreferredVoice] = useState<string>("");
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  
+  // Load available voices when speech synthesis is ready
+  useEffect(() => {
+    if (!speechSynthesisRef.current) return;
+    
+    // Function to update available voices
+    const updateVoices = () => {
+      const voices = speechSynthesisRef.current?.getVoices() || [];
+      setAvailableVoices(voices);
+      
+      // Set default voice if none selected
+      if (preferredVoice === "" && voices.length > 0) {
+        // Prefer a female voice in the user's language if available
+        const userLanguage = navigator.language || 'en-US';
+        const languageVoices = voices.filter(voice => voice.lang.includes(userLanguage.split('-')[0]));
+        
+        if (languageVoices.length > 0) {
+          setPreferredVoice(languageVoices[0].name);
+        } else {
+          setPreferredVoice(voices[0].name);
+        }
+      }
+    };
+    
+    // Add event listener for when voices change
+    speechSynthesisRef.current.addEventListener('voiceschanged', updateVoices);
+    updateVoices(); // Initial update
+    
+    return () => {
+      speechSynthesisRef.current?.removeEventListener('voiceschanged', updateVoices);
+    };
+  }, [speechSynthesisRef.current, preferredVoice]);
+  
+  // Save speech settings to local storage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      localStorage.setItem('tts_settings', JSON.stringify({
+        rate: speechRate,
+        pitch: speechPitch,
+        volume: speechVolume,
+        voice: preferredVoice
+      }));
+    } catch (error) {
+      console.error('Failed to save TTS settings to localStorage', error);
+    }
+  }, [speechRate, speechPitch, speechVolume, preferredVoice]);
+  
+  // Load speech settings from local storage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const savedSettings = localStorage.getItem('tts_settings');
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        setSpeechRate(settings.rate || 1.0);
+        setSpeechPitch(settings.pitch || 1.0);
+        setSpeechVolume(settings.volume || 1.0);
+        if (settings.voice) setPreferredVoice(settings.voice);
+      }
+    } catch (error) {
+      console.error('Failed to load TTS settings from localStorage', error);
+    }
+  }, []);
+  
+  // Text-to-speech functionality with enhanced options
   const speakText = (text: string) => {
     if (!textToSpeechEnabled || !speechSynthesisRef.current) return;
     
@@ -246,10 +320,29 @@ export function AccessibilityControls() {
     // Create a new utterance
     const utterance = new SpeechSynthesisUtterance(text);
     
-    // Set properties
-    utterance.rate = 1.0; // Speech rate (0.1 to 10)
-    utterance.pitch = 1.0; // Speech pitch (0 to 2)
-    utterance.volume = 1.0; // Volume (0 to 1)
+    // Set properties using saved preferences
+    utterance.rate = speechRate;
+    utterance.pitch = speechPitch;
+    utterance.volume = speechVolume;
+    
+    // Set preferred voice if available
+    if (preferredVoice) {
+      const voice = availableVoices.find(v => v.name === preferredVoice);
+      if (voice) utterance.voice = voice;
+    }
+    
+    // Add event for audio feedback when speech starts and ends
+    utterance.onstart = () => {
+      if (audioFeedbackEnabled) {
+        // Play subtle start sound here if implemented
+      }
+    };
+    
+    utterance.onend = () => {
+      if (audioFeedbackEnabled) {
+        // Play subtle end sound here if implemented
+      }
+    };
     
     // Speak the text
     speechSynthesisRef.current.speak(utterance);
@@ -501,11 +594,87 @@ export function AccessibilityControls() {
                     <p className="text-sm text-white/80 mb-2">
                       Select any text on the page and press <kbd className="rounded bg-black/60 px-2 py-1 text-xs">Alt + S</kbd> to hear it read aloud.
                     </p>
+                    
+                    {/* TTS Voice Options */}
+                    <div className="space-y-3 mt-3">
+                      {/* Speech Rate */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="speech-rate" className="text-xs font-medium text-white/80">
+                            Speech Rate: {speechRate.toFixed(1)}
+                          </label>
+                        </div>
+                        <Slider
+                          id="speech-rate"
+                          value={[speechRate]}
+                          min={0.5}
+                          max={2.0}
+                          step={0.1}
+                          onValueChange={(value) => setSpeechRate(value[0])}
+                          className="cursor-pointer"
+                          aria-label="Adjust speech rate"
+                        />
+                        <div className="flex justify-between text-xs text-white/60">
+                          <span>Slow</span>
+                          <span>Normal</span>
+                          <span>Fast</span>
+                        </div>
+                      </div>
+                      
+                      {/* Speech Pitch */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label htmlFor="speech-pitch" className="text-xs font-medium text-white/80">
+                            Speech Pitch: {speechPitch.toFixed(1)}
+                          </label>
+                        </div>
+                        <Slider
+                          id="speech-pitch"
+                          value={[speechPitch]}
+                          min={0.5}
+                          max={2.0}
+                          step={0.1}
+                          onValueChange={(value) => setSpeechPitch(value[0])}
+                          className="cursor-pointer"
+                          aria-label="Adjust speech pitch"
+                        />
+                        <div className="flex justify-between text-xs text-white/60">
+                          <span>Low</span>
+                          <span>Normal</span>
+                          <span>High</span>
+                        </div>
+                      </div>
+                      
+                      {/* Voice Selection */}
+                      {availableVoices.length > 0 && (
+                        <div className="space-y-2">
+                          <label htmlFor="voice-select" className="text-xs font-medium text-white/80">
+                            Voice:
+                          </label>
+                          <Select value={preferredVoice} onValueChange={setPreferredVoice}>
+                            <SelectTrigger id="voice-select" className="bg-black/30 border-white/20 text-white text-sm">
+                              <SelectValue placeholder="Select voice" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableVoices.map(voice => (
+                                <SelectItem 
+                                  key={voice.name} 
+                                  value={voice.name}
+                                >
+                                  {voice.name} ({voice.lang})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                    
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => speakText("Text-to-speech is now enabled. Select any text and press Alt plus S to hear it read aloud.")}
-                      className="w-full mt-2 border-white/20 text-white hover:bg-white/10"
+                      onClick={() => speakText("Text-to-speech is now enabled with your custom settings. Select any text and press Alt plus S to hear it read aloud.")}
+                      className="w-full mt-4 border-white/20 text-white hover:bg-white/10"
                     >
                       <Volume2 className="mr-2 h-4 w-4" />
                       Test Text-to-Speech
