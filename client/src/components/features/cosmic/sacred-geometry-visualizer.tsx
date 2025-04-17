@@ -768,7 +768,7 @@ export function SacredGeometryVisualizer() {
 
   // Controls panel
   const renderControlsPanel = () => (
-    <div className="absolute z-10 top-4 left-4 right-4 flex flex-col md:flex-row gap-4">
+    <div className="absolute z-20 top-20 left-4 right-4 flex flex-col md:flex-row gap-4">
       <div className="bg-black/50 backdrop-blur-sm rounded-lg p-3 flex gap-2 justify-center items-center">
         <Button
           variant="outline"
@@ -905,8 +905,14 @@ export function SacredGeometryVisualizer() {
 
   return (
     <div className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] font-cinzel">
-      {/* Pattern selection */}
-      <div className="absolute top-0 left-0 w-full z-10 p-4">
+      {/* Visualization container */}
+      <div 
+        ref={containerRef} 
+        className="absolute inset-0 bg-gradient-to-b from-cosmic-background via-purple-950/10 to-cosmic-background"
+      />
+      
+      {/* Pattern selection - increased z-index */}
+      <div className="absolute top-0 left-0 w-full z-30 p-4">
         {renderPatternSelectionMenu()}
       </div>
 
@@ -919,12 +925,6 @@ export function SacredGeometryVisualizer() {
           </div>
         </div>
       )}
-
-      {/* Visualization container */}
-      <div 
-        ref={containerRef} 
-        className="absolute inset-0 bg-gradient-to-b from-cosmic-background via-purple-950/10 to-cosmic-background"
-      />
 
       {/* Controls panel */}
       {renderControlsPanel()}
