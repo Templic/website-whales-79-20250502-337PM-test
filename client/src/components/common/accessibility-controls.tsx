@@ -580,7 +580,15 @@ export function AccessibilityControls() {
                     <p className="text-xs text-white/60">Minimize animations</p>
                   </div>
                 </div>
-                <Switch checked={reducedMotion} onCheckedChange={setReducedMotion} />
+                <Switch 
+                  checked={reducedMotion} 
+                  onCheckedChange={(checked) => {
+                    setReducedMotion(checked);
+                    if (audioFeedbackEnabled) {
+                      playFeedbackSound('toggle');
+                    }
+                  }} 
+                />
               </div>
 
               {/* Voice Navigation */}
@@ -592,7 +600,15 @@ export function AccessibilityControls() {
                     <p className="text-xs text-white/60">Control with voice commands</p>
                   </div>
                 </div>
-                <Switch checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
+                <Switch 
+                  checked={voiceEnabled} 
+                  onCheckedChange={(checked) => {
+                    setVoiceEnabled(checked);
+                    if (audioFeedbackEnabled) {
+                      playFeedbackSound('toggle');
+                    }
+                  }} 
+                />
               </div>
 
               {voiceEnabled && (
@@ -635,7 +651,15 @@ export function AccessibilityControls() {
                       <p className="text-xs text-white/60">Show focus outlines</p>
                     </div>
                   </div>
-                  <Switch checked={focusOutline} onCheckedChange={setFocusOutline} />
+                  <Switch 
+                    checked={focusOutline} 
+                    onCheckedChange={(checked) => {
+                      setFocusOutline(checked);
+                      if (audioFeedbackEnabled) {
+                        playFeedbackSound('toggle');
+                      }
+                    }} 
+                  />
                 </div>
 
                 {/* Color Filter */}
@@ -666,7 +690,15 @@ export function AccessibilityControls() {
                       <p className="text-xs text-white/60">Read selected text aloud</p>
                     </div>
                   </div>
-                  <Switch checked={textToSpeechEnabled} onCheckedChange={setTextToSpeechEnabled} />
+                  <Switch 
+                    checked={textToSpeechEnabled} 
+                    onCheckedChange={(checked) => {
+                      setTextToSpeechEnabled(checked);
+                      if (audioFeedbackEnabled) {
+                        playFeedbackSound('toggle');
+                      }
+                    }} 
+                  />
                 </div>
                 
                 {textToSpeechEnabled && (
@@ -771,7 +803,15 @@ export function AccessibilityControls() {
                       <p className="text-xs text-white/60">Enhanced keyboard control</p>
                     </div>
                   </div>
-                  <Switch checked={keyboardMode} onCheckedChange={setKeyboardMode} />
+                  <Switch 
+                    checked={keyboardMode} 
+                    onCheckedChange={(checked) => {
+                      setKeyboardMode(checked);
+                      if (audioFeedbackEnabled) {
+                        playFeedbackSound('toggle');
+                      }
+                    }} 
+                  />
                 </div>
 
                 <div className="rounded-lg bg-black/40 p-4">
@@ -827,7 +867,15 @@ export function AccessibilityControls() {
                         <p className="text-xs text-white/60">Optimized for screen readers</p>
                       </div>
                     </div>
-                    <Switch checked={screenReaderOptimized} onCheckedChange={setScreenReaderOptimized} />
+                    <Switch 
+                      checked={screenReaderOptimized} 
+                      onCheckedChange={(checked) => {
+                        setScreenReaderOptimized(checked);
+                        if (audioFeedbackEnabled) {
+                          playFeedbackSound('toggle');
+                        }
+                      }} 
+                    />
                   </div>
                   
                   {/* Skip Links */}
@@ -839,7 +887,15 @@ export function AccessibilityControls() {
                         <p className="text-xs text-white/60">Fast keyboard navigation</p>
                       </div>
                     </div>
-                    <Switch checked={showSkipLinks} onCheckedChange={setShowSkipLinks} />
+                    <Switch 
+                      checked={showSkipLinks} 
+                      onCheckedChange={(checked) => {
+                        setShowSkipLinks(checked);
+                        if (audioFeedbackEnabled) {
+                          playFeedbackSound('toggle');
+                        }
+                      }} 
+                    />
                   </div>
                   
                   {showSkipLinks && (
@@ -889,7 +945,14 @@ export function AccessibilityControls() {
                         <p className="text-xs text-white/60">Reduce distractions</p>
                       </div>
                     </div>
-                    <Switch />
+                    <Switch 
+                      onCheckedChange={(checked) => {
+                        if (audioFeedbackEnabled) {
+                          playFeedbackSound('toggle');
+                        }
+                        // We would set a state variable like setFocusMode here if this was fully implemented
+                      }} 
+                    />
                   </div>
 
                   {/* Help Section */}
