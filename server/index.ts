@@ -78,7 +78,8 @@ async function initializeServer() {
               "https://*.youtube.com", 
               "https://*.ytimg.com", 
               "https://*.taskade.com",
-              "https://assets.taskade.com"
+              "https://assets.taskade.com",
+              "https://js.stripe.com"
             ],
             styleSrc: [
               "'self'", 
@@ -108,7 +109,8 @@ async function initializeServer() {
               "https://*.google.com", 
               "https://*.youtube.com",
               "https://*.taskade.com", 
-              "https://assets.taskade.com"
+              "https://assets.taskade.com",
+              "https://api.stripe.com"
             ],
             fontSrc: [
               "'self'", 
@@ -132,7 +134,9 @@ async function initializeServer() {
               "https://www.google.com/maps/", 
               "https://maps.googleapis.com",
               "https://*.taskade.com",
-              "https://www.taskade.com"
+              "https://www.taskade.com",
+              "https://js.stripe.com",
+              "https://*.stripe.com"
             ],
             workerSrc: [
               "'self'",
