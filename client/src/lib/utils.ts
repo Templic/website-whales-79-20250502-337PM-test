@@ -40,6 +40,27 @@ export function formatDate(
 }
 
 /**
+ * Formats a currency value according to the specified locale and currency.
+ * 
+ * @param value - The numeric value to format as currency
+ * @param currency - The currency code (default: 'USD')
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @returns Formatted currency string
+ */
+export function formatCurrency(
+  value: number,
+  currency: string = 'USD',
+  locale: string = 'en-US'
+): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
+}
+
+/**
  * Truncates a string to a maximum length, adding an ellipsis if needed.
  * 
  * @param str - The string to truncate
