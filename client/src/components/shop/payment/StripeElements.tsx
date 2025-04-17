@@ -24,9 +24,10 @@ import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 // Initialize Stripe (outside component to avoid re-initialization)
-// Using empty string as fallback, but the component won't render properly without a valid key
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416 || '');
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416) {
+// Look for the environment variable directly
+const stripePublicKey = window.__ENV?.STRIPE_PUBLIC_KEY_20250416 || import.meta.env.VITE_STRIPE_PUBLIC_KEY_20250416;
+const stripePromise = loadStripe(stripePublicKey);
+if (!stripePublicKey) {
   console.error('Stripe publishable key is missing');
 }
 
