@@ -92,25 +92,36 @@ export default function AuthPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string; rememberMe: boolean }) => {
-      // First get CSRF token
-      const tokenResponse = await fetch('/api/csrf-token');
-      const { token } = await tokenResponse.json();
+      try {
+        // First get CSRF token
+        const tokenResponse = await fetch('/api/csrf-token');
+        const tokenData = await tokenResponse.json();
+        const csrfToken = tokenData.csrfToken; // Fix: server returns { csrfToken } not { token }
+        
+        if (!csrfToken) {
+          throw new Error('Could not retrieve CSRF token');
+        }
 
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': token
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify(data),
+          credentials: 'include' // Important for cookies
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Login failed');
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error('Login process error:', error);
+        throw error;
       }
-      return response.json();
     },
     onSuccess: (data) => {
       // Handle successful login
@@ -118,21 +129,32 @@ export default function AuthPage() {
         setRequires2FA(true);
       } else {
         setUser(data.user);
+        // Store remember me preference if selected
+        if (loginForm.getValues().rememberMe) {
+          localStorage.setItem('rememberLogin', 'true');
+        } else {
+          localStorage.removeItem('rememberLogin');
+        }
         window.location.href = '/';
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       // Handle login error
       console.error('Login failed:', error);
     }
   });
 
 
+  // Check if "Remember me" was previously selected
+  const wasRememberMeSelected = () => {
+    return localStorage.getItem('rememberLogin') === 'true';
+  };
+
   const loginForm = useForm<LoginForm>({
     defaultValues: {
       username: "",
       password: "",
-      rememberMe: false
+      rememberMe: wasRememberMeSelected() // Use the previously saved preference
     }
   });
 

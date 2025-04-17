@@ -29,6 +29,7 @@ const router = express.Router();
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 // Validate 2FA input
@@ -149,6 +150,21 @@ router.post('/login', async (req: Request, res: Response, next) => {
       }
       
       // No 2FA required, proceed with login
+      // Get the validated data including rememberMe flag
+      const validatedData = validation.data;
+      const rememberMe = validatedData.rememberMe || false;
+      
+      // Set session cookie expiration based on "Remember me" option
+      if (req.session) {
+        if (rememberMe) {
+          // Set a longer expiration time (30 days)
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+        } else {
+          // Default expiration time (24 hours)
+          req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
+        }
+      }
+      
       req.login(user, async (err) => {
         if (err) {
           return next(err);
@@ -169,12 +185,14 @@ router.post('/login', async (req: Request, res: Response, next) => {
           username: user.username,
           ip: req.ip,
           userAgent: req.headers['user-agent'],
-          details: 'User logged in successfully',
+          details: `User logged in successfully${rememberMe ? ' with Remember Me option' : ''}`,
           severity: 'low'
         });
         
+        // Pass rememberMe flag in response for client to store
         return res.status(200).json({
           success: true,
+          rememberMe: rememberMe,
           user: {
             id: user.id,
             username: user.username,
