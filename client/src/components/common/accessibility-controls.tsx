@@ -244,6 +244,71 @@ export function AccessibilityControls() {
   const [preferredVoice, setPreferredVoice] = useState<string>("");
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   
+  // Audio feedback utility functions
+  const playFeedbackSound = (type: 'success' | 'error' | 'click' | 'toggle') => {
+    if (!audioFeedbackEnabled) return;
+    
+    // Create oscillator-based audio feedback
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Configure sound based on type
+    switch (type) {
+      case 'success':
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
+        break;
+        
+      case 'error':
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.3);
+        break;
+        
+      case 'click':
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.1);
+        break;
+        
+      case 'toggle':
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(700, audioContext.currentTime + 0.15);
+        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.15);
+        break;
+    }
+    
+    // Clean up 
+    setTimeout(() => {
+      audioContext.close();
+    }, 500);
+  };
+  
   // Load available voices when speech synthesis is ready
   useEffect(() => {
     if (!speechSynthesisRef.current) return;
@@ -334,13 +399,13 @@ export function AccessibilityControls() {
     // Add event for audio feedback when speech starts and ends
     utterance.onstart = () => {
       if (audioFeedbackEnabled) {
-        // Play subtle start sound here if implemented
+        playFeedbackSound('success');
       }
     };
     
     utterance.onend = () => {
       if (audioFeedbackEnabled) {
-        // Play subtle end sound here if implemented
+        playFeedbackSound('click');
       }
     };
     
@@ -380,7 +445,12 @@ export function AccessibilityControls() {
     <>
       {/* Accessibility button - positioned left of the chat widget to avoid overlap */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(true);
+          if (audioFeedbackEnabled) {
+            playFeedbackSound('success');
+          }
+        }}
         className="fixed bottom-4 left-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-white"
         aria-label="Accessibility Options"
       >
@@ -402,7 +472,12 @@ export function AccessibilityControls() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsExpanded(!isExpanded)}
+                  onClick={() => {
+                    setIsExpanded(!isExpanded);
+                    if (audioFeedbackEnabled) {
+                      playFeedbackSound('click');
+                    }
+                  }}
                   className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   {isExpanded ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
@@ -411,7 +486,12 @@ export function AccessibilityControls() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false);
+                    if (audioFeedbackEnabled) {
+                      playFeedbackSound('click');
+                    }
+                  }}
                   className="h-8 w-8 rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   <X className="h-4 w-4" />
@@ -721,6 +801,23 @@ export function AccessibilityControls() {
 
               {isExpanded && (
                 <>
+                  {/* Audio Feedback */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Volume2 className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <h3 className="font-medium text-white">Audio Feedback</h3>
+                        <p className="text-xs text-white/60">Sound cues for interactions</p>
+                      </div>
+                    </div>
+                    <Switch checked={audioFeedbackEnabled} onCheckedChange={(checked) => {
+                    setAudioFeedbackEnabled(checked);
+                    if (checked) {
+                      playFeedbackSound('toggle');
+                    }
+                  }} />
+                  </div>
+
                   {/* Screen Reader */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -754,7 +851,12 @@ export function AccessibilityControls() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => document.getElementById('main-content')?.focus()}
+                          onClick={() => {
+                            document.getElementById('main-content')?.focus();
+                            if (audioFeedbackEnabled) {
+                              playFeedbackSound('click');
+                            }
+                          }}
                           className="border-white/20 text-white hover:bg-white/10"
                         >
                           <SkipForward className="mr-2 h-4 w-4" />
@@ -763,7 +865,12 @@ export function AccessibilityControls() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => document.getElementById('main-navigation')?.focus()}
+                          onClick={() => {
+                            document.getElementById('main-navigation')?.focus();
+                            if (audioFeedbackEnabled) {
+                              playFeedbackSound('click');
+                            }
+                          }}
                           className="border-white/20 text-white hover:bg-white/10"
                         >
                           <SkipForward className="mr-2 h-4 w-4" />
@@ -791,7 +898,15 @@ export function AccessibilityControls() {
                     <p className="text-sm text-white/80 mb-3">
                       Contact us for personalized accessibility assistance or to report any issues.
                     </p>
-                    <Button className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700">
+                    <Button 
+                      className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700"
+                      onClick={() => {
+                        if (audioFeedbackEnabled) {
+                          playFeedbackSound('success');
+                        }
+                        // This would typically open a contact form or redirect to support page
+                      }}
+                    >
                       Contact Support
                     </Button>
                   </div>
@@ -803,7 +918,12 @@ export function AccessibilityControls() {
               <Button
                 variant="ghost"
                 className="mt-4 w-full border-t border-white/10 pt-4 text-white/70 hover:bg-transparent hover:text-white"
-                onClick={() => setIsExpanded(true)}
+                onClick={() => {
+                  setIsExpanded(true);
+                  if (audioFeedbackEnabled) {
+                    playFeedbackSound('toggle');
+                  }
+                }}
               >
                 <ChevronDown className="mr-2 h-4 w-4" />
                 Show More Options
@@ -814,7 +934,12 @@ export function AccessibilityControls() {
               <Button
                 variant="ghost"
                 className="mt-4 w-full border-t border-white/10 pt-4 text-white/70 hover:bg-transparent hover:text-white"
-                onClick={() => setIsExpanded(false)}
+                onClick={() => {
+                  setIsExpanded(false);
+                  if (audioFeedbackEnabled) {
+                    playFeedbackSound('toggle');
+                  }
+                }}
               >
                 <ChevronUp className="mr-2 h-4 w-4" />
                 Show Less
