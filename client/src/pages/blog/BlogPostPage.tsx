@@ -298,21 +298,27 @@ export default function BlogPostPage() {
             </div>
           ) : comments.length > 0 ? (
             comments.map(comment => (
-              <div key={comment.id} className="relative mb-8">
-                <div className="absolute inset-0 bg-[rgba(10,50,92,0.6)] clip-path-octagon border-2 border-[#00ebd6]/20"></div>
+              <div key={comment.id} className="relative mb-8 clip-path-octagon overflow-hidden">
+                <div className="absolute inset-0 bg-[rgba(10,50,92,0.6)] border-2 border-[#00ebd6]/20"></div>
                 <div className="relative z-10 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-medium">{comment.authorName}</span>
-                    <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''} className="text-sm">
-                      {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
-                    </time>
+                  {/* Constrained width wrapper for content */}
+                  <div className="max-w-[90%] mx-auto">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-medium">{comment.authorName}</span>
+                      <time dateTime={comment.createdAt ? comment.createdAt.toString() : ''} className="text-sm">
+                        {formatDisplayDate(comment.createdAt ? comment.createdAt.toString() : null)}
+                      </time>
+                    </div>
+                    {/* Adding text center alignment for better containment */}
+                    <p className="text-center">{comment.content}</p>
+                    <div className="text-center mt-2">
+                      {comment.approved ? (
+                        <span className="text-green-500 text-xs inline-block">Approved</span>
+                      ) : (
+                        <span className="text-red-500 text-xs inline-block">Pending Approval</span>
+                      )}
+                    </div>
                   </div>
-                  <p>{comment.content}</p>
-                  {comment.approved ? (
-                    <span className="text-green-500 text-xs mt-2 inline-block">Approved</span>
-                  ) : (
-                    <span className="text-red-500 text-xs mt-2 inline-block">Pending Approval</span>
-                  )}
                 </div>
               </div>
             ))
