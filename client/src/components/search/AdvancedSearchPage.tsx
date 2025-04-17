@@ -390,7 +390,9 @@ const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
           return renderMixedResults(mixedResults);
         }
         
-        return renderMixedResults(Array.isArray(data.results) ? data.results : []);
+        // Make sure we always pass an array to renderMixedResults
+        const searchResults = data.results || [];
+        return renderMixedResults(Array.isArray(searchResults) ? searchResults : []);
     }
   };
 
