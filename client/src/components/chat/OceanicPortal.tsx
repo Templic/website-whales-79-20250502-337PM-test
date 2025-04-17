@@ -129,7 +129,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
       {/* Main chat interface */}
       <motion.div
         className={`relative z-10 flex flex-col h-full bg-transparent ${
-          isFullscreen ? 'fixed inset-0 z-50' : ''
+          isFullscreen ? 'fixed inset-0 z-[9999] w-screen h-screen bg-black/95' : ''
         }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
