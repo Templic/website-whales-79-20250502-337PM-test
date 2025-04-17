@@ -87,7 +87,7 @@ import contentRoutes from './routes/content';
 import contentWorkflowRoutes from './routes/content-workflow';
 import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
-import searchRoutes from './routes/search';
+import searchRoutes from './routes/search/index';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 
 // Email transporter for nodemailer
@@ -114,7 +114,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/jwt', jwtAuthRoutes);
   
   // Use search routes
-  app.use(searchRoutes);
+  app.use('/api/search', searchRoutes);
   
   // Use media routes
   app.use(mediaRoutes);
