@@ -201,25 +201,27 @@ export default function NewsletterPage() {
                 <SacredGeometry variant="octagon" size={80} animated={false} />
               </div>
               
-              <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">What You'll Get</h2>
-              <ul className="space-y-4 list-none">
-                <li className="flex items-center gap-3">
-                  <span className="text-[#fe0064] flex-shrink-0">★</span>
-                  <span>Exclusive behind-the-scenes content</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-[#fe0064] flex-shrink-0">★</span>
-                  <span>Early access to new releases</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-[#fe0064] flex-shrink-0">★</span>
-                  <span>Special subscriber-only offers</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <span className="text-[#fe0064] flex-shrink-0">★</span>
-                  <span>Updates on upcoming tours and events</span>
-                </li>
-              </ul>
+              <div className="max-w-[80%] mx-auto">
+                <h2 className="text-2xl font-bold text-[#00ebd6] mb-6 text-center">What You'll Get</h2>
+                <ul className="space-y-4 list-none max-w-md mx-auto">
+                  <li className="flex items-center gap-3 justify-center">
+                    <span className="text-[#fe0064] flex-shrink-0">★</span>
+                    <span>Exclusive behind-the-scenes content</span>
+                  </li>
+                  <li className="flex items-center gap-3 justify-center">
+                    <span className="text-[#fe0064] flex-shrink-0">★</span>
+                    <span>Early access to new releases</span>
+                  </li>
+                  <li className="flex items-center gap-3 justify-center">
+                    <span className="text-[#fe0064] flex-shrink-0">★</span>
+                    <span>Special subscriber-only offers</span>
+                  </li>
+                  <li className="flex items-center gap-3 justify-center">
+                    <span className="text-[#fe0064] flex-shrink-0">★</span>
+                    <span>Updates on upcoming tours and events</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

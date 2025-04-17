@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,24 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
   const [activeSymbol, setActiveSymbol] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Toggle fullscreen mode
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+    // Add overflow hidden to body when in fullscreen to prevent scrolling
+    if (!isFullscreen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  };
+  
+  // Cleanup overflow style when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
   
   // Handle upload button click
   const handleUploadClick = () => {
@@ -182,7 +200,7 @@ const OceanicPortal: React.FC<OceanicPortalProps> = ({ isWidget = false, onClose
                   <Button 
                     variant="ghost" 
                     size="icon"
-                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    onClick={toggleFullscreen}
                     className="h-8 w-8 text-cyan-300 hover:text-cyan-100 hover:bg-cyan-800/30"
                   >
                     {isFullscreen ? (
