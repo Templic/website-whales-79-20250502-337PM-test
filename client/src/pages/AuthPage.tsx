@@ -118,13 +118,17 @@ export default function AuthPage() {
         window.sessionStorage.setItem('requires2FA', 'true');
         alert('2FA required - Please enter your code');
       } else {
-        // Store user data directly in sessionStorage for persistence
-        window.sessionStorage.setItem('currentUser', JSON.stringify(userData));
-        window.sessionStorage.removeItem('requires2FA');
+        // Store user data directly in browser storage
+        const userJson = JSON.stringify(userData);
         
-        // Using session storage means the user session will be maintained
-        // between page refreshes but cleared when the browser is closed
-        // The Remember Me feature controls server-side session cookie expiration
+        // Store in both localStorage for persistent logins and sessionStorage for current session
+        localStorage.setItem('cosmic_user_data', userJson);
+        sessionStorage.setItem('currentUser', userJson);
+        
+        console.log('User data saved:', userData);
+        
+        // Clear any 2FA requirements
+        window.sessionStorage.removeItem('requires2FA');
         
         // Store remember me preference if selected
         if (loginForm.getValues().rememberMe) {
@@ -185,13 +189,23 @@ export default function AuthPage() {
   const handle2FASuccess = (userData: any) => {
     // The user is now fully authenticated
     console.log("2FA verification successful", userData);
-    setUser(userData); //Added to set the user after successful 2FA
-    window.location.href = '/'; // Redirect to home after 2FA
+    
+    // Store user data in localStorage for the auth system
+    localStorage.setItem('cosmic_user_data', JSON.stringify(userData));
+    
+    // Also update session storage for immediate use
+    sessionStorage.setItem('currentUser', JSON.stringify(userData));
+    sessionStorage.removeItem('requires2FA');
+    
+    // Redirect to home after 2FA
+    window.location.href = '/';
   };
 
   const handle2FACancel = () => {
     // User canceled the 2FA verification
-    clearRequires2FA();
+    sessionStorage.removeItem('requires2FA');
+    // Redirect user back to login
+    setActiveTab(0);
   };
 
   // Show loading state

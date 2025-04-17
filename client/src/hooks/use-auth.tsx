@@ -39,6 +39,14 @@ interface AuthContextType {
   refreshToken: () => Promise<boolean>;
   getAccessToken: () => string | null;
   getCsrfToken: () => Promise<string>;
+  
+  // Extended AuthContext functionality for 2FA support
+  requires2FA?: boolean;
+  setUser: (user: User) => void;
+  clearRequires2FA: () => void;
+  setRequires2FA: (value: boolean) => void;
+  verify2FAMutation?: any;
+  verifyBackupCodeMutation?: any;
 }
 
 // Create Auth Context with default values
@@ -51,6 +59,12 @@ const AuthContext = createContext<AuthContextType>({
   refreshToken: async () => false,
   getAccessToken: () => null,
   getCsrfToken: async () => '',
+  requires2FA: false,
+  setUser: () => {},
+  clearRequires2FA: () => {},
+  setRequires2FA: () => {},
+  verify2FAMutation: undefined,
+  verifyBackupCodeMutation: undefined
 });
 
 // JWT token storage keys
@@ -266,6 +280,15 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
     }
   };
   
+  // Add 2FA related state
+  const [requires2FA, setRequires2FA] = useState<boolean>(false);
+  
+  // Function to clear 2FA requirement
+  const clearRequires2FA = useCallback(() => {
+    setRequires2FA(false);
+    sessionStorage.removeItem('requires2FA');
+  }, []);
+  
   return (
     <AuthContext.Provider 
       value={{ 
@@ -276,7 +299,16 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         logout,
         refreshToken,
         getAccessToken,
-        getCsrfToken
+        getCsrfToken,
+        
+        // 2FA related properties
+        requires2FA,
+        setRequires2FA,
+        clearRequires2FA,
+        setUser,
+        // These are optional and might be implemented later
+        verify2FAMutation: undefined,
+        verifyBackupCodeMutation: undefined
       }}
     >
       {children}
