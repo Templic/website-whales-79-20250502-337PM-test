@@ -177,11 +177,15 @@ export default function BlogPostPage() {
           </div>
         )}
 
-        {/* Content in octagon container */}
-        <div className="relative mb-12">
-          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30"></div>
+        {/* Content in octagon container with clip and mask to ensure content stays within boundaries */}
+        <div className="relative mb-12 clip-path-octagon overflow-hidden">
+          {/* Background with border */}
+          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm border-2 border-[#00ebd6]/30"></div>
+          
+          {/* Content container with internal padding to keep text away from edges */}
           <div className="relative z-10 p-8 md:p-12">
-            <div className="prose prose-invert max-w-none text-lg">
+            {/* Using a constrained width container inside the octagon */}
+            <div className="prose prose-invert max-w-none text-lg mx-auto" style={{ width: '90%' }}>
               {post.content ? (
                 post.content
                   .replace(/<p>/g, '')
@@ -194,20 +198,20 @@ export default function BlogPostPage() {
                   .split('\n\n')
                   .filter(para => para.trim().length > 0) // Filter out empty paragraphs
                   .map((paragraph, index) => (
-                    <p key={index} className="mb-4">{paragraph.trim()}</p>
+                    <p key={index} className="mb-4 text-center">{paragraph.trim()}</p>
                   ))
               ) : (
                 <>
-                  <p className="mb-4">
+                  <p className="mb-4 text-center">
                     As I embarked on my cosmic journey through the universe of sound, I found myself drawn to the ethereal qualities of music that transcends traditional boundaries. Working with artists from across the galaxy has opened my mind to new dimensions of creativity.
                   </p>
-                  <p className="mb-4">
+                  <p className="mb-4 text-center">
                     The latest tracks I've been developing blend elements of astral jazz with quantum electronic pulses, creating a soundscape that hopefully transports listeners to unexplored regions of consciousness.
                   </p>
-                  <p className="mb-4">
+                  <p className="mb-4 text-center">
                     My collaboration with the Neptune Symphony Orchestra has been particularly enlightening. Their ability to capture the harmonic resonance of deep space in acoustic form complements my digital explorations perfectly.
                   </p>
-                  <p className="mb-4">
+                  <p className="mb-4 text-center">
                     Stay tuned for more sonic adventures as we continue to push the boundaries of what's possible in this musical universe. The journey has just begun, and I'm excited to share it with all of you.
                   </p>
                 </>
@@ -220,56 +224,61 @@ export default function BlogPostPage() {
       <section className="mt-16">
         <h2 className="text-2xl font-bold text-[#00ebd6] mb-8">Comments</h2>
 
-        {/* Comment form in an octagon container */}
-        <div className="relative mb-16">
-          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30"></div>
+        {/* Comment form in an octagon container with proper clipping */}
+        <div className="relative mb-16 clip-path-octagon overflow-hidden">
+          <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm border-2 border-[#00ebd6]/30"></div>
           <div className="relative z-10 p-8">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6">
-                <div>
-                  <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
-                  <Input
-                    id="authorName"
-                    {...form.register("authorName")}
-                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                    placeholder="Your name"
-                    aria-label="Your name"
-                  />
-                </div>
+            {/* Centered content with constrained width */}
+            <div className="max-w-[85%] mx-auto">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(data => commentMutation.mutate(data))} className="space-y-6">
+                  <div>
+                    <label htmlFor="authorName" className="block text-sm font-medium mb-2">Name</label>
+                    <Input
+                      id="authorName"
+                      {...form.register("authorName")}
+                      className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                      placeholder="Your name"
+                      aria-label="Your name"
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
-                  <Input
-                    id="authorEmail"
-                    {...form.register("authorEmail")}
-                    type="email"
-                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
-                    placeholder="your@email.com"
-                    aria-label="Your email address"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="authorEmail" className="block text-sm font-medium mb-2">Email</label>
+                    <Input
+                      id="authorEmail"
+                      {...form.register("authorEmail")}
+                      type="email"
+                      className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6]"
+                      placeholder="your@email.com"
+                      aria-label="Your email address"
+                    />
+                  </div>
 
-                <div>
-                  <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
-                  <Textarea
-                    id="content"
-                    {...form.register("content")}
-                    className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
-                    placeholder="Share your thoughts..."
-                    aria-label="Your comment"
-                  />
-                </div>
+                  <div>
+                    <label htmlFor="content" className="block text-sm font-medium mb-2">Comment</label>
+                    <Textarea
+                      id="content"
+                      {...form.register("content")}
+                      className="bg-[rgba(48,52,54,0.5)] border-[#00ebd6] min-h-[100px]"
+                      placeholder="Share your thoughts..."
+                      aria-label="Your comment"
+                    />
+                  </div>
 
-                <Button 
-                  type="submit"
-                  className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white cosmic-hover-glow"
-                  disabled={commentMutation.isPending}
-                  aria-busy={commentMutation.isPending}
-                >
-                  {commentMutation.isPending ? "Posting..." : "Post Comment"}
-                </Button>
-              </form>
-            </Form>
+                  <div className="text-center">
+                    <Button 
+                      type="submit"
+                      className="bg-[#00ebd6] text-[#303436] hover:bg-[#fe0064] hover:text-white cosmic-hover-glow"
+                      disabled={commentMutation.isPending}
+                      aria-busy={commentMutation.isPending}
+                    >
+                      {commentMutation.isPending ? "Posting..." : "Post Comment"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
           </div>
         </div>
 

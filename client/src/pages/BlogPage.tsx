@@ -55,7 +55,8 @@ export default function BlogPage() {
               <article key={post.id} className="relative h-[450px]">
                 <div className="absolute inset-0 bg-[rgba(10,50,92,0.3)] backdrop-blur-sm transform transition-all clip-path-octagon border-2 border-[#00ebd6]/30 z-0"></div>
                 <div className="relative z-10 p-6 flex flex-col h-full">
-                  <div className="flex flex-col items-center justify-between h-full w-[85%] mx-auto overflow-hidden">
+                  {/* Here we're adding a smaller, contained area inside the octagon shape to prevent content overflow */}
+                  <div className="flex flex-col items-center justify-between h-full w-[80%] mx-auto overflow-hidden">
                     {post.featuredImage && (
                       <div className="clip-path-octagon overflow-hidden mx-auto mb-3 w-9/12 aspect-video cosmic-glow-effect">
                         <img 
@@ -65,10 +66,11 @@ export default function BlogPage() {
                         />
                       </div>
                     )}
-                    <div className="flex-1 flex flex-col overflow-hidden w-full">
+                    <div className="flex-1 flex flex-col overflow-hidden w-full max-h-[200px]">
                       <h2 className="text-xl font-bold text-[#00ebd6] mb-2 line-clamp-1 text-center">{post.title.replace(/<[^>]*>/g, '')}</h2>
-                      <div className="mb-4 overflow-hidden w-full max-h-[100px]">
-                        <p className="text-gray-300 line-clamp-4 text-sm text-center px-2">
+                      {/* Using padding and max-width to keep content within boundaries */}
+                      <div className="mb-4 overflow-hidden w-full max-w-[95%] mx-auto max-h-[100px]">
+                        <p className="text-gray-300 line-clamp-4 text-sm text-center">
                           {post.content
                             .replace(/<p>/g, '')
                             .replace(/<\/p>/g, ' ')
