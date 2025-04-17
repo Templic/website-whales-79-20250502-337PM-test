@@ -89,6 +89,7 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0); // 0 = login, 1 = register
 
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string; rememberMe: boolean }) => {
@@ -114,9 +115,13 @@ export default function AuthPage() {
       
       // Check if 2FA is required
       if (data.requires2FA) {
-        // Store 2FA requirement in state if exists
+        // Store 2FA requirement in session storage and update auth context
         window.sessionStorage.setItem('requires2FA', 'true');
-        alert('2FA required - Please enter your code');
+        
+        // Update the auth context to show 2FA screen
+        if (setRequires2FA) {
+          setRequires2FA(true);
+        }
       } else {
         // Store user data directly in browser storage
         const userJson = JSON.stringify(userData);
@@ -124,6 +129,11 @@ export default function AuthPage() {
         // Store in both localStorage for persistent logins and sessionStorage for current session
         localStorage.setItem('cosmic_user_data', userJson);
         sessionStorage.setItem('currentUser', userJson);
+        
+        // Update the user in auth context if possible
+        if (setUser) {
+          setUser(userData);
+        }
         
         console.log('User data saved:', userData);
         
@@ -197,6 +207,16 @@ export default function AuthPage() {
     sessionStorage.setItem('currentUser', JSON.stringify(userData));
     sessionStorage.removeItem('requires2FA');
     
+    // Update the user in auth context if possible
+    if (setUser) {
+      setUser(userData);
+    }
+    
+    // Clear 2FA requirement from context
+    if (setRequires2FA) {
+      setRequires2FA(false);
+    }
+    
     // Redirect to home after 2FA
     window.location.href = '/';
   };
@@ -204,8 +224,10 @@ export default function AuthPage() {
   const handle2FACancel = () => {
     // User canceled the 2FA verification
     sessionStorage.removeItem('requires2FA');
-    // Redirect user back to login
-    setActiveTab(0);
+    // Remove the requires2FA state to go back to login form
+    if (setRequires2FA) {
+      setRequires2FA(false);
+    }
   };
 
   // Show loading state
