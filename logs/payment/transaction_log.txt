@@ -1,13 +1,18 @@
 # Payment Transaction Log
-# Format: transactionId|timestamp|userId|amount|status|paymentMethod
+# Format: timestamp|transactionId|userId|transactionType|amount|currency|status|paymentMethod|maskedCardData|ipAddress|details
 
-txn_01HZ7X2TGP81K9Q|2025-04-16T23:45:32.123Z|105|49.99|success|stripe
-txn_01HZ7X4RF39VN2A|2025-04-16T23:46:11.543Z|203|29.99|success|stripe
-txn_01HZ7X6KL59QMPB|2025-04-16T23:49:07.887Z|167|19.99|success|stripe
-txn_01HZ7X9WD74KTMC|2025-04-16T23:52:31.222Z|118|99.99|success|stripe
-txn_01HZ7XB3E78DPSD|2025-04-16T23:55:18.765Z|241|14.99|success|paypal
-txn_01HZ7XDR983HFTE|2025-04-16T23:59:44.102Z|132|79.99|success|stripe
-txn_01HZ7XFF101GPUF|2025-04-17T00:02:13.540Z|198|59.99|success|stripe
-txn_01HZ7XH6Q24HRJG|2025-04-17T00:05:27.901Z|172|39.99|success|paypal
-txn_01HZ7XJK342JSLH|2025-04-17T00:08:54.329Z|209|24.99|success|stripe
-txn_01HZ7XLR453LGNI|2025-04-17T00:11:22.678Z|144|34.99|success|stripe
+2025-04-16T23:30:15.123Z|TRX12345|105|purchase|49.99|USD|success|credit_card|XXXXXXXXXXXX4242|192.168.1.25|Premium subscription purchase
+2025-04-16T23:32:45.456Z|TRX12346|203|purchase|29.99|USD|success|credit_card|XXXXXXXXXXXX1234|192.168.1.30|Basic subscription purchase
+2025-04-16T23:35:12.789Z|TRX12347|132|refund|29.99|USD|success|credit_card|XXXXXXXXXXXX5678|192.168.1.55|Refund for canceled subscription
+2025-04-16T23:38:41.321Z|TRX12348|105|update|0.00|USD|success|credit_card|XXXXXXXXXXXX4242|192.168.1.25|Updated payment method
+2025-04-16T23:41:28.654Z|TRX12349|203|purchase|19.99|USD|success|paypal|paypal-id-redacted|192.168.1.30|Digital product purchase
+2025-04-16T23:44:51.987Z|TRX12350|204|purchase|59.99|USD|failed|credit_card|XXXXXXXXXXXX9876|192.168.1.40|Payment declined - insufficient funds
+2025-04-16T23:48:17.321Z|TRX12351|204|purchase|59.99|USD|success|credit_card|XXXXXXXXXXXX9876|192.168.1.40|Retry successful after initial decline
+2025-04-16T23:51:45.654Z|TRX12352|105|purchase|9.99|USD|success|credit_card|XXXXXXXXXXXX4242|192.168.1.25|Digital product purchase
+2025-04-16T23:55:12.987Z|TRX12353|205|purchase|39.99|USD|success|credit_card|XXXXXXXXXXXX1111|192.168.1.60|Premium subscription purchase
+2025-04-16T23:58:41.321Z|TRX12354|132|update|0.00|USD|success|credit_card|XXXXXXXXXXXX5678|192.168.1.55|Updated billing address
+2025-04-17T00:02:08.654Z|TRX12355|206|purchase|49.99|USD|success|paypal|paypal-id-redacted|192.168.1.70|Premium subscription purchase
+2025-04-17T00:05:35.987Z|TRX12356|207|purchase|29.99|USD|pending|bitcoin|btc-address-redacted|192.168.1.80|Waiting for blockchain confirmation
+2025-04-17T00:08:51.321Z|TRX12357|207|purchase|29.99|USD|success|bitcoin|btc-address-redacted|192.168.1.80|Blockchain confirmation received
+2025-04-17T00:12:27.654Z|TRX12358|132|purchase|19.99|USD|success|credit_card|XXXXXXXXXXXX5678|192.168.1.55|Digital product purchase
+2025-04-17T00:15:54.987Z|TRX12359|208|purchase|49.99|USD|success|credit_card|XXXXXXXXXXXX2222|192.168.1.90|Premium subscription purchase

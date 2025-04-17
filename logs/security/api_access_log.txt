@@ -1,21 +1,25 @@
-# API Access Log
-# Format: timestamp|method|endpoint|userId|username|ipAddress|statusCode|responseTime|userAgent|apiKey
+# API Access Security Log
+# Format: timestamp|userId|username|endpoint|method|responseCode|responseTime|ipAddress|userAgent|details
 
-2025-04-16T23:30:05.123Z|GET|/api/products|105|jdoe|192.168.1.25|200|43|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-16T23:31:17.456Z|POST|/api/orders|105|jdoe|192.168.1.25|201|126|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-16T23:33:42.789Z|GET|/api/users|203|asmith|192.168.1.30|403|38|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|null
-2025-04-16T23:36:24.321Z|PUT|/api/users/profile|203|asmith|192.168.1.30|200|87|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|null
-2025-04-16T23:40:51.654Z|GET|/api/admin/stats|null|null|192.168.1.40|401|25|Mozilla/5.0 (Linux; Android 10)|null
-2025-04-16T23:45:33.987Z|GET|/api/products/featured|null|null|192.168.1.85|200|36|Mozilla/5.0 (iPad; CPU OS 14_7_1)|null
-2025-04-16T23:47:19.753Z|POST|/api/webhooks/payment|null|null|54.123.45.67|200|231|Stripe/v1|sk_test_********
-2025-04-16T23:51:48.246Z|GET|/api/user/orders|118|mwilliams|192.168.1.45|200|71|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|null
-2025-04-16T23:54:07.579Z|DELETE|/api/cart|118|mwilliams|192.168.1.45|204|41|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|null
-2025-04-17T00:01:23.135Z|POST|/api/secure/analytics|241|tadams|192.168.1.50|200|159|Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3)|null
-2025-04-17T00:03:56.468Z|GET|/api/products/search|null|null|192.168.1.90|200|68|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-17T00:08:12.801Z|GET|/api/admin/users|132|rjones|192.168.1.55|200|93|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-17T00:11:39.234Z|PUT|/api/admin/users/105|132|rjones|192.168.1.55|200|87|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-17T00:14:45.567Z|POST|/api/payments/refund|132|rjones|192.168.1.55|201|143|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|null
-2025-04-17T00:17:28.901Z|GET|/api/products|172|klee|192.168.1.70|200|39|Mozilla/5.0 (Linux; Android 11)|null
-2025-04-17T00:20:52.345Z|POST|/api/payments/process|172|klee|192.168.1.70|201|121|Mozilla/5.0 (Linux; Android 11)|null
-2025-04-17T00:23:15.678Z|GET|/api/v1/data|198|null|192.168.1.65|200|42|Node.js/v16.14.2|API_KEY_98f36a2c
-2025-04-17T00:25:48.901Z|POST|/api/v1/data|198|null|192.168.1.65|201|87|Node.js/v16.14.2|API_KEY_98f36a2c
+2025-04-16T23:30:22.123Z|105|jdoe|/api/v1/user/profile|GET|200|43|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Retrieved user profile
+2025-04-16T23:31:34.456Z|203|asmith|/api/v1/products|GET|200|128|192.168.1.30|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|Retrieved product list with 25 items
+2025-04-16T23:33:55.789Z|132|rjones|/api/v1/user/orders|GET|200|87|192.168.1.55|Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)|Retrieved user order history
+2025-04-16T23:36:19.321Z|204|mwilson|/api/v1/cart|GET|200|32|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Retrieved cart items
+2025-04-16T23:38:42.654Z|204|mwilson|/api/v1/cart/add|POST|201|76|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Added item to cart
+2025-04-16T23:41:05.987Z|204|mwilson|/api/v1/checkout|POST|201|352|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Initiated checkout process
+2025-04-16T23:43:29.321Z|204|mwilson|/api/v1/payments/process|POST|200|423|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Processed payment
+2025-04-16T23:45:52.654Z|105|jdoe|/api/v1/user/password|PUT|200|165|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Updated password
+2025-04-16T23:48:16.987Z|null|unknown|/api/v1/products/special-offers|GET|200|67|10.20.30.40|Python-urllib/3.9|High-frequency API access detected
+2025-04-16T23:50:38.321Z|null|unknown|/api/v1/products/special-offers|GET|429|12|10.20.30.40|Python-urllib/3.9|Rate limit exceeded - request throttled
+2025-04-16T23:53:04.654Z|null|unknown|/api/v1/auth/login|POST|401|48|10.20.30.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Invalid credentials
+2025-04-16T23:55:28.987Z|null|guest|/api/v1/products/details/15|GET|200|56|192.168.1.110|Mozilla/5.0 (Linux; Android 12; Pixel 6)|Anonymous product view
+2025-04-16T23:57:53.321Z|205|jthomas|/api/v1/user/notifications|GET|200|43|192.168.1.60|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|Retrieved user notifications
+2025-04-17T00:00:16.654Z|205|jthomas|/api/v1/user/preferences|PUT|200|78|192.168.1.60|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|Updated user preferences
+2025-04-17T00:02:40.987Z|206|klee|/api/v1/user/profile|GET|200|38|192.168.1.70|Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X)|Retrieved user profile
+2025-04-17T00:05:03.321Z|206|klee|/api/v1/products/recommendations|GET|200|112|192.168.1.70|Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X)|Retrieved personalized recommendations
+2025-04-17T00:07:28.654Z|null|unknown|/api/v1/auth/login|POST|403|35|192.168.1.200|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Account temporarily locked due to suspicious activity
+2025-04-17T00:09:54.987Z|207|dgarcia|/api/v1/products|GET|200|98|192.168.1.80|Mozilla/5.0 (Linux; Android 12; Pixel 6)|Retrieved product list with filters
+2025-04-17T00:12:18.321Z|207|dgarcia|/api/v1/cart/add|POST|201|67|192.168.1.80|Mozilla/5.0 (Linux; Android 12; Pixel 6)|Added item to cart
+2025-04-17T00:14:43.654Z|132|rjones|/api/v1/auth/logout|POST|200|28|192.168.1.55|Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)|User logout
+2025-04-17T00:17:07.987Z|208|bnguyen|/api/v1/user/profile|GET|200|41|192.168.1.90|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Retrieved user profile
+2025-04-17T00:19:32.321Z|208|bnguyen|/api/v1/products/favorites|POST|201|56|192.168.1.90|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Added product to favorites

@@ -1,63 +1,100 @@
 [
   {
-    "timestamp": "2025-04-16T23:45:23.781Z",
-    "reviewer": "security-admin",
-    "reviewType": "automated",
-    "logFiles": [
-      "payment/transaction_log.txt",
-      "security/auth_log.txt",
-      "security/api_access_log.txt",
-      "application/admin_activity_log.txt",
-      "system/system_event_log.txt"
-    ],
-    "findings": [
-      {
-        "severity": "info",
-        "description": "Regular authentication activity observed",
-        "logFile": "security/auth_log.txt"
-      },
-      {
-        "severity": "info",
-        "description": "Normal payment processing activity",
-        "logFile": "payment/transaction_log.txt"
-      }
-    ],
-    "conclusion": "No security concerns identified during this review cycle"
-  },
-  {
-    "timestamp": "2025-04-17T00:12:45.129Z",
+    "timestamp": "2025-04-10T14:30:25.123Z",
     "reviewer": "security-admin",
     "reviewType": "manual",
     "logFiles": [
-      "payment/transaction_log.txt",
-      "security/auth_log.txt",
-      "security/api_access_log.txt",
-      "application/admin_activity_log.txt",
-      "system/system_event_log.txt",
-      "audit/pci_activity_log.txt"
+      "logs/payment/transaction_log.txt",
+      "logs/security/auth_log.txt",
+      "logs/security/api_access_log.txt"
+    ],
+    "findings": [
+      {
+        "severity": "medium",
+        "description": "Multiple failed login attempts from IP 10.20.30.40",
+        "logFile": "logs/security/auth_log.txt",
+        "action": "IP temporarily blocked",
+        "assignedTo": "security-team",
+        "status": "resolved"
+      },
+      {
+        "severity": "info",
+        "description": "Higher than normal transaction volume",
+        "logFile": "logs/payment/transaction_log.txt",
+        "action": "Normal seasonal pattern",
+        "assignedTo": "business-analytics",
+        "status": "reviewed"
+      }
+    ],
+    "conclusion": "No critical security issues found. Routine security measures working effectively.",
+    "verifiedHashIntegrity": true,
+    "nextScheduledReview": "2025-04-17T14:30:25.123Z"
+  },
+  {
+    "timestamp": "2025-04-13T15:45:30.456Z",
+    "reviewer": "security-bot",
+    "reviewType": "automated",
+    "logFiles": [
+      "logs/payment/transaction_log.txt",
+      "logs/security/auth_log.txt",
+      "logs/security/api_access_log.txt",
+      "logs/application/admin_activity_log.txt",
+      "logs/system/system_event_log.txt"
+    ],
+    "findings": [
+      {
+        "severity": "low",
+        "description": "API rate limiting activated for IP 10.20.30.40",
+        "logFile": "logs/security/api_access_log.txt",
+        "action": "Automated protection engaged",
+        "status": "resolved"
+      }
+    ],
+    "conclusion": "Automated scan completed. Rate limiting working as expected.",
+    "verifiedHashIntegrity": true,
+    "nextScheduledReview": "2025-04-16T15:45:30.456Z"
+  },
+  {
+    "timestamp": "2025-04-16T16:20:15.789Z",
+    "reviewer": "security-admin",
+    "reviewType": "manual",
+    "logFiles": [
+      "logs/payment/transaction_log.txt",
+      "logs/security/auth_log.txt",
+      "logs/security/api_access_log.txt",
+      "logs/application/admin_activity_log.txt",
+      "logs/system/system_event_log.txt",
+      "logs/audit/pci_activity_log.txt"
     ],
     "findings": [
       {
         "severity": "info",
-        "description": "Regular authentication activity observed",
-        "logFile": "security/auth_log.txt"
-      },
-      {
-        "severity": "info",
-        "description": "Normal payment processing activity",
-        "logFile": "payment/transaction_log.txt"
-      },
-      {
-        "severity": "low",
-        "description": "Higher than normal API access rate from specific IP range",
-        "logFile": "security/api_access_log.txt",
-        "action": "Monitoring for potential rate limiting adjustment",
-        "assignedTo": "network-security-team",
-        "status": "under-review"
+        "description": "Payment processor connection latency increased temporarily",
+        "logFile": "logs/payment/transaction_log.txt",
+        "action": "Monitoring situation",
+        "assignedTo": "infrastructure-team",
+        "status": "monitoring"
       }
     ],
-    "conclusion": "No critical security concerns identified. One low-severity finding is under review.",
+    "conclusion": "All systems operating within expected parameters. No security issues identified.",
     "verifiedHashIntegrity": true,
-    "nextScheduledReview": "2025-04-18T00:00:00.000Z"
+    "nextScheduledReview": "2025-04-17T16:20:15.789Z"
+  },
+  {
+    "timestamp": "2025-04-17T00:35:20.123Z",
+    "reviewer": "security-bot",
+    "reviewType": "automated",
+    "logFiles": [
+      "logs/payment/transaction_log.txt",
+      "logs/security/auth_log.txt",
+      "logs/security/api_access_log.txt",
+      "logs/application/admin_activity_log.txt",
+      "logs/system/system_event_log.txt",
+      "logs/audit/pci_activity_log.txt"
+    ],
+    "findings": [],
+    "conclusion": "Hourly automated scan completed. All systems secure and functioning normally.",
+    "verifiedHashIntegrity": true,
+    "nextScheduledReview": "2025-04-17T01:35:20.123Z"
   }
 ]

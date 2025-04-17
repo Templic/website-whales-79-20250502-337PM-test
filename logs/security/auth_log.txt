@@ -1,18 +1,23 @@
-# Authentication Event Log
-# Format: timestamp|eventType|userId|username|ipAddress|userAgent|status|details
+# Authentication Security Log
+# Format: timestamp|userId|username|eventType|status|ipAddress|userAgent|details
 
-2025-04-16T23:32:11.432Z|login|105|jdoe|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Standard login successful
-2025-04-16T23:35:47.891Z|login|203|asmith|192.168.1.30|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|success|Standard login successful
-2025-04-16T23:41:12.223Z|login|null|unknown|192.168.1.40|Mozilla/5.0 (Linux; Android 10)|failure|Invalid password provided
-2025-04-16T23:42:53.764Z|login|null|admin|192.168.1.40|Mozilla/5.0 (Linux; Android 10)|failure|Account locked due to too many attempts
-2025-04-16T23:44:19.352Z|passwordChange|167|bjohnson|192.168.1.35|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Password changed successfully
-2025-04-16T23:51:38.976Z|login|118|mwilliams|192.168.1.45|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|success|2FA verification successful
-2025-04-16T23:54:22.567Z|logout|118|mwilliams|192.168.1.45|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|success|User-initiated logout
-2025-04-16T23:55:49.129Z|accountLock|null|hacker123|10.20.30.40|Mozilla/5.0 (X11; Linux x86_64)|failure|Account locked after 5 failed attempts
-2025-04-17T00:03:15.784Z|login|241|tadams|192.168.1.50|Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3)|success|Standard login successful
-2025-04-17T00:07:41.326Z|2faSetup|241|tadams|192.168.1.50|Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3)|success|2FA enabled for account
-2025-04-17T00:12:52.558Z|passwordReset|132|rjones|192.168.1.55|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Password reset via email completed
-2025-04-17T00:15:27.093Z|roleChange|132|rjones|192.168.1.60|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|User role upgraded to admin by user 105
-2025-04-17T00:18:03.419Z|login|132|rjones|192.168.1.55|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Login with new admin privileges
-2025-04-17T00:23:44.872Z|apiTokenCreate|198|dwilson|192.168.1.65|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|success|New API token generated
-2025-04-17T00:26:18.235Z|login|172|klee|192.168.1.70|Mozilla/5.0 (Linux; Android 11)|success|Standard login successful
+2025-04-16T23:29:30.123Z|105|jdoe|login|success|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Login from recognized device
+2025-04-16T23:31:15.456Z|203|asmith|login|success|192.168.1.30|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|Login from recognized device
+2025-04-16T23:34:22.789Z|132|rjones|login|success|192.168.1.55|Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)|Login from mobile device
+2025-04-16T23:36:48.321Z|204|mwilson|login|failed|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Invalid password (attempt 1)
+2025-04-16T23:37:05.654Z|204|mwilson|login|failed|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Invalid password (attempt 2)
+2025-04-16T23:37:25.987Z|204|mwilson|login|success|192.168.1.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Login successful after failed attempts
+2025-04-16T23:40:11.321Z|null|unknown|login|failed|192.168.1.100|Mozilla/5.0 (Linux; Android 11; SM-G998B)|Account not found (username: nonexistent)
+2025-04-16T23:42:37.654Z|105|jdoe|password_reset|initiated|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Password reset email sent
+2025-04-16T23:45:52.987Z|105|jdoe|password_reset|completed|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Password successfully reset
+2025-04-16T23:48:19.321Z|105|jdoe|login|success|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Login with new password
+2025-04-16T23:51:42.654Z|null|unknown|login|failed|10.20.30.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Multiple rapid login attempts detected - potential brute force
+2025-04-16T23:52:01.987Z|null|unknown|login|blocked|10.20.30.40|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|Temporarily blocked - rate limit exceeded
+2025-04-16T23:55:34.321Z|205|jthomas|login|success|192.168.1.60|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|Login from new location - required 2FA
+2025-04-16T23:58:47.654Z|206|klee|account_created|success|192.168.1.70|Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X)|New user account created
+2025-04-17T00:02:21.987Z|206|klee|login|success|192.168.1.70|Mozilla/5.0 (iPad; CPU OS 15_0 like Mac OS X)|First login after account creation
+2025-04-17T00:05:45.321Z|207|dgarcia|account_created|success|192.168.1.80|Mozilla/5.0 (Linux; Android 12; Pixel 6)|New user account created
+2025-04-17T00:08:23.654Z|207|dgarcia|login|success|192.168.1.80|Mozilla/5.0 (Linux; Android 12; Pixel 6)|First login after account creation
+2025-04-17T00:12:59.987Z|132|rjones|logout|success|192.168.1.55|Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)|User initiated logout
+2025-04-17T00:15:21.321Z|208|bnguyen|account_created|success|192.168.1.90|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|New user account created
+2025-04-17T00:18:47.654Z|208|bnguyen|login|success|192.168.1.90|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|First login after account creation

@@ -1,17 +1,23 @@
 # Admin Activity Log
-# Format: timestamp|adminId|username|actionType|resourceType|resourceId|details|ipAddress
+# Format: timestamp|adminId|username|action|targetResource|ipAddress|details
 
-2025-04-16T23:35:17.345Z|203|asmith|view|user|105|Viewed user profile details|192.168.1.30
-2025-04-16T23:38:42.678Z|203|asmith|update|product|15|Updated product price from $49.99 to $45.99|192.168.1.30
-2025-04-16T23:43:21.901Z|203|asmith|create|category|8|Created new product category 'Summer Collection'|192.168.1.30
-2025-04-16T23:47:55.234Z|203|asmith|delete|product|22|Removed discontinued product|192.168.1.30
-2025-04-16T23:52:19.567Z|203|asmith|update|order|156|Changed order status from 'Processing' to 'Shipped'|192.168.1.30
-2025-04-16T23:56:43.890Z|203|asmith|create|discount|12|Created new discount code 'SUMMER25'|192.168.1.30
-2025-04-17T00:01:08.123Z|105|jdoe|view|orders|all|Viewed today's order summary|192.168.1.25
-2025-04-17T00:04:32.456Z|105|jdoe|export|customers|all|Exported customer list to CSV|192.168.1.25
-2025-04-17T00:08:57.789Z|132|rjones|update|user|172|Changed user role from 'user' to 'editor'|192.168.1.55
-2025-04-17T00:12:21.012Z|132|rjones|create|blogPost|45|Published new blog post 'Summer Product Spotlight'|192.168.1.55
-2025-04-17T00:15:46.345Z|132|rjones|update|settings|payment|Updated payment gateway settings|192.168.1.55
-2025-04-17T00:19:10.678Z|105|jdoe|approve|comment|187|Approved user comment on blog post #45|192.168.1.25
-2025-04-17T00:22:35.901Z|105|jdoe|reject|comment|188|Rejected spam comment on blog post #45|192.168.1.25
-2025-04-17T00:25:59.234Z|132|rjones|create|user|254|Created new staff account|192.168.1.55
+2025-04-16T23:30:45.123Z|501|admin1|view|user/list|192.168.1.5|Viewed user management page
+2025-04-16T23:32:18.456Z|501|admin1|edit|user/105|192.168.1.5|Updated user profile information
+2025-04-16T23:34:52.789Z|501|admin1|create|product/45|192.168.1.5|Created new product listing
+2025-04-16T23:36:34.321Z|502|admin2|view|orders/recent|192.168.1.6|Viewed recent orders
+2025-04-16T23:38:15.654Z|502|admin2|update|order/1234|192.168.1.6|Updated order status to shipped
+2025-04-16T23:41:28.987Z|501|admin1|view|analytics/dashboard|192.168.1.5|Viewed analytics dashboard
+2025-04-16T23:44:53.321Z|501|admin1|export|analytics/sales-report|192.168.1.5|Generated and exported monthly sales report
+2025-04-16T23:47:29.654Z|503|admin3|view|settings/security|192.168.1.7|Viewed security settings
+2025-04-16T23:49:12.987Z|503|admin3|update|settings/security|192.168.1.7|Updated password policies
+2025-04-16T23:52:48.321Z|501|admin1|view|user/105|192.168.1.5|Viewed user details
+2025-04-16T23:55:32.654Z|501|admin1|action|user/105/reset-password|192.168.1.5|Initiated password reset for user
+2025-04-16T23:58:15.987Z|502|admin2|view|products/inventory|192.168.1.6|Viewed inventory status
+2025-04-17T00:01:42.321Z|502|admin2|update|products/inventory|192.168.1.6|Updated inventory quantities
+2025-04-17T00:04:27.654Z|503|admin3|view|security/audit-logs|192.168.1.7|Viewed security audit logs
+2025-04-17T00:07:13.987Z|503|admin3|action|security/run-security-scan|192.168.1.7|Initiated manual security scan
+2025-04-17T00:10:38.321Z|501|admin1|view|settings/payment|192.168.1.5|Viewed payment gateway settings
+2025-04-17T00:13:22.654Z|501|admin1|view|users/roles|192.168.1.5|Viewed user role management
+2025-04-17T00:16:05.987Z|501|admin1|update|users/roles|192.168.1.5|Updated role permissions
+2025-04-17T00:18:48.321Z|502|admin2|view|content/pages|192.168.1.6|Viewed content management
+2025-04-17T00:21:32.654Z|502|admin2|update|content/pages/home|192.168.1.6|Updated homepage content

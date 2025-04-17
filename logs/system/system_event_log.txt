@@ -1,20 +1,23 @@
-# System Event Log 
-# Format: timestamp|eventType|severity|component|message|processId|hostname
+# System Event Log
+# Format: timestamp|eventType|component|severity|details
 
-2025-04-16T23:30:00.123Z|startup|info|server|Server started successfully on port 3000|12345|app-server-01
-2025-04-16T23:30:01.456Z|startup|info|database|Database connection established|12345|app-server-01
-2025-04-16T23:30:02.789Z|startup|info|cache|Redis cache initialized|12345|app-server-01
-2025-04-16T23:35:13.321Z|performance|warning|database|Query execution time exceeded threshold (query: SELECT * FROM products)|12345|app-server-01
-2025-04-16T23:40:24.654Z|security|info|auth|Rate limiting applied to IP 10.20.30.40|12345|app-server-01
-2025-04-16T23:42:35.987Z|error|high|payment|Payment gateway connection timeout|12345|app-server-01
-2025-04-16T23:42:50.321Z|error|high|payment|Payment gateway connection restored after retry|12345|app-server-01
-2025-04-16T23:45:16.654Z|maintenance|info|system|Scheduled database backup started|12346|app-server-01
-2025-04-16T23:50:32.987Z|maintenance|info|system|Scheduled database backup completed successfully|12346|app-server-01
-2025-04-16T23:55:48.321Z|security|warning|auth|Multiple failed login attempts from IP 10.20.30.40|12345|app-server-01
-2025-04-17T00:00:04.654Z|performance|info|cache|Cache hit ratio: 87.5%|12345|app-server-01
-2025-04-17T00:05:21.987Z|resource|warning|memory|Memory usage exceeded 80% threshold|12345|app-server-01
-2025-04-17T00:05:37.321Z|resource|info|memory|Memory usage returned to normal levels after garbage collection|12345|app-server-01
-2025-04-17T00:10:54.654Z|security|info|firewall|Updated IP blocklist with 5 new entries|12347|app-server-01
-2025-04-17T00:15:12.987Z|maintenance|info|system|Log rotation completed|12348|app-server-01
-2025-04-17T00:20:29.321Z|security|critical|intrusion|Potential SQL injection attempt detected and blocked|12345|app-server-01
-2025-04-17T00:25:45.654Z|startup|info|scheduler|Scheduled tasks service initialized|12349|app-server-01
+2025-04-16T23:30:00.123Z|startup|server|info|Server started successfully on port 5000
+2025-04-16T23:30:00.456Z|startup|database|info|Database connection established
+2025-04-16T23:30:00.789Z|startup|cache|info|Redis cache initialized
+2025-04-16T23:30:01.321Z|startup|security|info|Security services initialized
+2025-04-16T23:30:01.654Z|startup|scheduler|info|Task scheduler started
+2025-04-16T23:35:15.987Z|performance|database|info|Database query optimization completed
+2025-04-16T23:40:22.321Z|maintenance|cache|info|Cache flush scheduled for low usage period
+2025-04-16T23:45:38.654Z|security|firewall|warning|Unusual traffic pattern detected from IP range 10.20.30.0/24
+2025-04-16T23:45:39.987Z|security|firewall|info|Traffic throttling applied to IP range 10.20.30.0/24
+2025-04-16T23:50:12.321Z|maintenance|storage|info|Temporary file cleanup completed
+2025-04-16T23:55:28.654Z|monitoring|memory|warning|Memory usage above 80% threshold
+2025-04-16T23:55:30.987Z|monitoring|system|info|Automatic resource optimization initiated
+2025-04-16T23:55:35.321Z|monitoring|memory|info|Memory optimization complete - usage reduced to 65%
+2025-04-17T00:00:00.654Z|maintenance|database|info|Daily database backup initiated
+2025-04-17T00:00:30.987Z|maintenance|database|info|Daily database backup completed successfully
+2025-04-17T00:05:45.321Z|maintenance|logs|info|Log rotation completed
+2025-04-17T00:10:12.654Z|monitoring|api|info|API endpoint performance metrics collected
+2025-04-17T00:15:33.987Z|security|authentication|info|Security token rotation completed
+2025-04-17T00:20:05.321Z|monitoring|system|info|System health check completed - all services operational
+2025-04-17T00:25:18.654Z|maintenance|scheduler|info|Scheduled tasks health check completed
