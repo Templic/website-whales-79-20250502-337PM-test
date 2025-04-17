@@ -1,762 +1,1563 @@
 /**
  * AdvancedSearchPage.tsx
  * 
- * An enhanced search page component that provides advanced filtering and
- * search capabilities across all content types.
+ * A comprehensive search page that provides advanced filtering options
+ * and detailed results presentation for all content types.
  */
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Music, ShoppingBag, FileText, Settings, Tags, Calendar, X } from 'lucide-react';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
-import { UniversalSearchBar, searchCategories } from './UniversalSearchBar';
+import { 
+  Calendar, 
+  Filter, 
+  Music, 
+  Package, 
+  FileText, 
+  Send, 
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  Tag,
+  ArrowUpDown,
+  Check,
+  X,
+  User
+} from 'lucide-react';
 
-// Define filter types
-interface PriceRange {
-  min: number | null;
-  max: number | null;
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
+import { useDebounce } from '@/hooks/use-debounce';
+import { searchCategories } from './UniversalSearchBar';
+
+// Define content type icons
+const contentTypeIcons = {
+  music: Music,
+  products: Package,
+  posts: FileText,
+  newsletters: Send,
+  suggestions: MessageSquare,
+  users: User,
+};
+
+interface AdvancedSearchPageProps {
+  initialQuery?: string;
+  initialType?: string;
 }
 
-interface SearchFilters {
-  music: {
-    frequency: string;
-    artist: string;
-    releaseYear: string;
-  };
-  products: {
-    priceRange: PriceRange;
-    category: string;
-    inStock: boolean | null;
-  };
-  posts: {
-    tags: string[];
-    dateRange: {
-      from: string;
-      to: string;
-    };
-  };
-}
+// Sort options for each content type
+const sortOptions = {
+  music: [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'a-z', label: 'Title (A-Z)' },
+    { value: 'z-a', label: 'Title (Z-A)' },
+  ],
+  products: [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'price-low', label: 'Price (Low to High)' },
+    { value: 'price-high', label: 'Price (High to Low)' },
+    { value: 'a-z', label: 'Name (A-Z)' },
+    { value: 'z-a', label: 'Name (Z-A)' },
+  ],
+  posts: [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'a-z', label: 'Title (A-Z)' },
+    { value: 'z-a', label: 'Title (Z-A)' },
+  ],
+  newsletters: [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'most-opened', label: 'Most Opened' },
+    { value: 'most-clicked', label: 'Most Clicked' },
+  ],
+  suggestions: [
+    { value: 'newest', label: 'Newest First' },
+    { value: 'oldest', label: 'Oldest First' },
+    { value: 'most-votes', label: 'Most Votes' },
+    { value: 'most-comments', label: 'Most Comments' },
+  ],
+  users: [
+    { value: 'newest', label: 'Newest Members' },
+    { value: 'oldest', label: 'Longest Members' },
+    { value: 'a-z', label: 'Username (A-Z)' },
+    { value: 'z-a', label: 'Username (Z-A)' },
+  ],
+};
 
-export default function AdvancedSearchPage() {
-  // Location and URL state
+const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
+  initialQuery = '',
+  initialType = 'all',
+}) => {
+  // Parse URL query parameters
   const [location] = useLocation();
-  const queryParams = new URLSearchParams(location.split('?')[1] || '');
-  const urlQuery = queryParams.get('q') || '';
-  const urlType = (queryParams.get('type') || 'all') as string;
+  const params = new URLSearchParams(location.split('?')[1] || '');
   
-  // State for search query and filters
-  const [searchQuery, setSearchQuery] = useState(urlQuery);
-  const [selectedCategory, setSelectedCategory] = useState(urlType);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  // State for search parameters
+  const [searchQuery, setSearchQuery] = useState(params.get('q') || initialQuery);
+  const [selectedTab, setSelectedTab] = useState(params.get('type') || initialType);
   
-  // Advanced filters state
-  const [filters, setFilters] = useState<SearchFilters>({
-    music: {
-      frequency: '',
-      artist: '',
-      releaseYear: '',
-    },
-    products: {
-      priceRange: { min: null, max: null },
-      category: 'all',
-      inStock: null,
-    },
-    posts: {
-      tags: [],
-      dateRange: {
-        from: '',
-        to: '',
-      },
-    },
+  // Tab-specific filters
+  // Music filters
+  const [musicFilters, setMusicFilters] = useState({
+    artist: params.get('artist') || '',
+    year: params.get('year') || '',
+    frequency: params.get('frequency') || '',
   });
   
-  // Update URL when search params change
-  useEffect(() => {
+  // Product filters
+  const [productFilters, setProductFilters] = useState({
+    category: params.get('category') || 'all',
+    minPrice: params.get('minPrice') || '',
+    maxPrice: params.get('maxPrice') || '',
+    inStock: params.get('inStock') === 'true',
+  });
+  
+  // Blog post filters
+  const [postFilters, setPostFilters] = useState({
+    tags: params.get('tags') || '',
+    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
+    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
+  });
+  
+  // Newsletter filters
+  const [newsletterFilters, setNewsletterFilters] = useState({
+    category: params.get('category') || 'all',
+    sent: params.get('sent') || 'all',
+    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
+    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
+    minOpenRate: params.get('minOpenRate') || '',
+  });
+  
+  // Community suggestion filters
+  const [suggestionFilters, setSuggestionFilters] = useState({
+    category: params.get('category') || 'all',
+    status: params.get('status') || 'all',
+    dateFrom: params.get('dateFrom') ? new Date(params.get('dateFrom')!) : undefined,
+    dateTo: params.get('dateTo') ? new Date(params.get('dateTo')!) : undefined,
+    hideImplemented: params.get('hideImplemented') === 'true',
+    hideDeclined: params.get('hideDeclined') === 'true',
+    minVotes: params.get('minVotes') || '',
+  });
+  
+  // Sort options
+  const [sortOrder, setSortOrder] = useState({
+    music: params.get('sort') || 'newest',
+    products: params.get('sort') || 'newest',
+    posts: params.get('sort') || 'newest',
+    newsletters: params.get('sort') || 'newest',
+    suggestions: params.get('sort') || 'most-votes',
+    users: params.get('sort') || 'newest',
+  });
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const resultsPerPage = 20;
+  
+  // Debounce search query and filters
+  const debouncedQuery = useDebounce(searchQuery, 500);
+  const debouncedMusicFilters = useDebounce(musicFilters, 500);
+  const debouncedProductFilters = useDebounce(productFilters, 500);
+  const debouncedPostFilters = useDebounce(postFilters, 500);
+  const debouncedNewsletterFilters = useDebounce(newsletterFilters, 500);
+  const debouncedSuggestionFilters = useDebounce(suggestionFilters, 500);
+  
+  // Construct search parameters based on selected tab
+  const getSearchParams = () => {
     const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (selectedCategory !== 'all') params.set('type', selectedCategory);
+    params.set('q', debouncedQuery);
+    params.set('type', selectedTab);
+    params.set('limit', resultsPerPage.toString());
+    params.set('page', page.toString());
     
-    const newUrl = `/search${params.toString() ? `?${params.toString()}` : ''}`;
-    window.history.replaceState(null, '', newUrl);
-  }, [searchQuery, selectedCategory]);
-  
-  // Update document title
-  useEffect(() => {
-    document.title = searchQuery 
-      ? `Search: ${searchQuery} - Cosmic Music` 
-      : 'Advanced Search - Cosmic Music';
-  }, [searchQuery]);
-  
-  // Function to update specific filters
-  const updateFilter = (
-    category: keyof SearchFilters,
-    field: string,
-    value: any
-  ) => {
-    setFilters(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [field]: value,
-      },
-    }));
-  };
-  
-  // Build query parameters for API call
-  const buildQueryParams = (): URLSearchParams => {
-    const params = new URLSearchParams();
-    
-    // Basic search parameters
-    if (searchQuery) params.set('q', searchQuery);
-    if (selectedCategory !== 'all') params.set('type', selectedCategory);
-    
-    // Add category-specific filters
-    if (selectedCategory === 'music' || selectedCategory === 'all') {
-      if (filters.music.frequency) params.set('frequency', filters.music.frequency);
-      if (filters.music.artist) params.set('artist', filters.music.artist);
-      if (filters.music.releaseYear) params.set('year', filters.music.releaseYear);
-    }
-    
-    if (selectedCategory === 'products' || selectedCategory === 'all') {
-      if (filters.products.priceRange.min !== null) 
-        params.set('minPrice', filters.products.priceRange.min.toString());
-      if (filters.products.priceRange.max !== null) 
-        params.set('maxPrice', filters.products.priceRange.max.toString());
-      if (filters.products.category !== 'all') 
-        params.set('category', filters.products.category);
-      if (filters.products.inStock !== null) 
-        params.set('inStock', filters.products.inStock.toString());
-    }
-    
-    if (selectedCategory === 'posts' || selectedCategory === 'all') {
-      if (filters.posts.tags.length > 0) 
-        params.set('tags', filters.posts.tags.join(','));
-      if (filters.posts.dateRange.from) 
-        params.set('dateFrom', filters.posts.dateRange.from);
-      if (filters.posts.dateRange.to) 
-        params.set('dateTo', filters.posts.dateRange.to);
+    if (selectedTab === 'music') {
+      const currentSort = sortOrder.music;
+      if (currentSort) params.set('sort', currentSort);
+      
+      if (debouncedMusicFilters.artist) {
+        params.set('artist', debouncedMusicFilters.artist);
+      }
+      if (debouncedMusicFilters.year) {
+        params.set('year', debouncedMusicFilters.year);
+      }
+      if (debouncedMusicFilters.frequency) {
+        params.set('frequency', debouncedMusicFilters.frequency);
+      }
+    } else if (selectedTab === 'products') {
+      const currentSort = sortOrder.products;
+      if (currentSort) params.set('sort', currentSort);
+      
+      if (debouncedProductFilters.category && debouncedProductFilters.category !== 'all') {
+        params.set('category', debouncedProductFilters.category);
+      }
+      if (debouncedProductFilters.minPrice) {
+        params.set('minPrice', debouncedProductFilters.minPrice);
+      }
+      if (debouncedProductFilters.maxPrice) {
+        params.set('maxPrice', debouncedProductFilters.maxPrice);
+      }
+      if (debouncedProductFilters.inStock) {
+        params.set('inStock', 'true');
+      }
+    } else if (selectedTab === 'posts') {
+      const currentSort = sortOrder.posts;
+      if (currentSort) params.set('sort', currentSort);
+      
+      if (debouncedPostFilters.tags) {
+        params.set('tags', debouncedPostFilters.tags);
+      }
+      if (debouncedPostFilters.dateFrom) {
+        params.set('dateFrom', debouncedPostFilters.dateFrom.toISOString());
+      }
+      if (debouncedPostFilters.dateTo) {
+        params.set('dateTo', debouncedPostFilters.dateTo.toISOString());
+      }
+    } else if (selectedTab === 'newsletters') {
+      const currentSort = sortOrder.newsletters;
+      if (currentSort) params.set('sort', currentSort);
+      
+      if (debouncedNewsletterFilters.category && debouncedNewsletterFilters.category !== 'all') {
+        params.set('category', debouncedNewsletterFilters.category);
+      }
+      if (debouncedNewsletterFilters.sent && debouncedNewsletterFilters.sent !== 'all') {
+        params.set('sent', debouncedNewsletterFilters.sent);
+      }
+      if (debouncedNewsletterFilters.dateFrom) {
+        params.set('dateFrom', debouncedNewsletterFilters.dateFrom.toISOString());
+      }
+      if (debouncedNewsletterFilters.dateTo) {
+        params.set('dateTo', debouncedNewsletterFilters.dateTo.toISOString());
+      }
+      if (debouncedNewsletterFilters.minOpenRate) {
+        params.set('minOpenRate', debouncedNewsletterFilters.minOpenRate);
+      }
+    } else if (selectedTab === 'suggestions') {
+      const currentSort = sortOrder.suggestions;
+      if (currentSort) params.set('sort', currentSort);
+      
+      if (debouncedSuggestionFilters.category && debouncedSuggestionFilters.category !== 'all') {
+        params.set('category', debouncedSuggestionFilters.category);
+      }
+      if (debouncedSuggestionFilters.status && debouncedSuggestionFilters.status !== 'all') {
+        params.set('status', debouncedSuggestionFilters.status);
+      }
+      if (debouncedSuggestionFilters.dateFrom) {
+        params.set('dateFrom', debouncedSuggestionFilters.dateFrom.toISOString());
+      }
+      if (debouncedSuggestionFilters.dateTo) {
+        params.set('dateTo', debouncedSuggestionFilters.dateTo.toISOString());
+      }
+      if (debouncedSuggestionFilters.hideImplemented) {
+        params.set('hideImplemented', 'true');
+      }
+      if (debouncedSuggestionFilters.hideDeclined) {
+        params.set('hideDeclined', 'true');
+      }
+      if (debouncedSuggestionFilters.minVotes) {
+        params.set('minVotes', debouncedSuggestionFilters.minVotes);
+      }
     }
     
     return params;
   };
-  
-  // Query for search results
-  const { data: results, isLoading, refetch } = useQuery({
-    queryKey: ['advancedSearch', searchQuery, selectedCategory, filters],
+
+  // Search query
+  const { data: searchResults, isLoading, isError, error } = useQuery({
+    queryKey: ['advancedSearch', debouncedQuery, selectedTab, page, sortOrder, 
+      debouncedMusicFilters, debouncedProductFilters, debouncedPostFilters, 
+      debouncedNewsletterFilters, debouncedSuggestionFilters
+    ],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.trim() === '') {
-        return { music: [], products: [], posts: [], users: [] };
-      }
+      if (!debouncedQuery || debouncedQuery.length < 2) return null;
       
-      const params = buildQueryParams();
+      const params = getSearchParams();
       const response = await fetch(`/api/search?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch search results');
       }
       
-      return response.json();
+      return await response.json();
     },
-    enabled: searchQuery.trim().length > 0,
+    enabled: debouncedQuery.length >= 2,
   });
   
-  // Handle search form submission
-  const handleSearch = (query: string, category: string) => {
-    setSearchQuery(query);
-    setSelectedCategory(category);
-    refetch();
-  };
+  // Update URL with current search parameters
+  useEffect(() => {
+    if (debouncedQuery.length >= 2) {
+      const params = getSearchParams();
+      
+      // Update URL without reloading the page
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}?${params.toString()}`
+      );
+    }
+  }, [
+    debouncedQuery, selectedTab, page, sortOrder,
+    debouncedMusicFilters, debouncedProductFilters, debouncedPostFilters,
+    debouncedNewsletterFilters, debouncedSuggestionFilters
+  ]);
   
-  // Toggle advanced filters visibility
-  const toggleAdvancedFilters = () => {
-    setShowAdvancedFilters(!showAdvancedFilters);
-  };
+  // Reset pagination when changing tabs or search query
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTab, debouncedQuery]);
   
-  // Clear all filters
-  const clearAllFilters = () => {
-    setFilters({
-      music: {
-        frequency: '',
-        artist: '',
-        releaseYear: '',
-      },
-      products: {
-        priceRange: { min: null, max: null },
-        category: 'all',
-        inStock: null,
-      },
-      posts: {
-        tags: [],
-        dateRange: {
-          from: '',
-          to: '',
-        },
-      },
-    });
-  };
-  
-  // Reset search
-  const resetSearch = () => {
-    setSearchQuery('');
-    setSelectedCategory('all');
-    clearAllFilters();
-  };
-  
-  // Total result count
-  const getTotalResultCount = () => {
-    if (!results) return 0;
+  // Get current tab results
+  const getCurrentResults = () => {
+    if (!searchResults) return [];
     
-    return (
-      (results.music?.length || 0) +
-      (results.products?.length || 0) +
-      (results.posts?.length || 0) +
-      (results.users?.length || 0)
-    );
+    switch (selectedTab) {
+      case 'music': return searchResults.music || [];
+      case 'products': return searchResults.products || [];
+      case 'posts': return searchResults.posts || [];
+      case 'newsletters': return searchResults.newsletters || [];
+      case 'suggestions': return searchResults.suggestions || [];
+      case 'users': return searchResults.users || [];
+      case 'all':
+        // For 'all' tab, combine and limit results from each category
+        const combinedResults = [
+          ...(searchResults.music || []).slice(0, 5).map(item => ({ ...item, type: 'music' })),
+          ...(searchResults.products || []).slice(0, 5).map(item => ({ ...item, type: 'products' })),
+          ...(searchResults.posts || []).slice(0, 5).map(item => ({ ...item, type: 'posts' })),
+          ...(searchResults.newsletters || []).slice(0, 5).map(item => ({ ...item, type: 'newsletters' })),
+          ...(searchResults.suggestions || []).slice(0, 5).map(item => ({ ...item, type: 'suggestions' })),
+          ...(searchResults.users || []).slice(0, 5).map(item => ({ ...item, type: 'users' })),
+        ];
+        return combinedResults;
+      default: return [];
+    }
   };
   
-  // Renders category-specific filter UI
-  const renderFilters = () => {
-    switch (selectedCategory) {
+  // Get total results count
+  const getTotalResults = () => {
+    if (!searchResults) return 0;
+    
+    switch (selectedTab) {
+      case 'music': return searchResults.music?.length || 0;
+      case 'products': return searchResults.products?.length || 0;
+      case 'posts': return searchResults.posts?.length || 0;
+      case 'newsletters': return searchResults.newsletters?.length || 0;
+      case 'suggestions': return searchResults.suggestions?.length || 0;
+      case 'users': return searchResults.users?.length || 0;
+      case 'all':
+        return (
+          (searchResults.music?.length || 0) +
+          (searchResults.products?.length || 0) +
+          (searchResults.posts?.length || 0) +
+          (searchResults.newsletters?.length || 0) +
+          (searchResults.suggestions?.length || 0) +
+          (searchResults.users?.length || 0)
+        );
+      default: return 0;
+    }
+  };
+  
+  // Get icon for a content type
+  const getContentTypeIcon = (type: string) => {
+    const IconComponent = contentTypeIcons[type as keyof typeof contentTypeIcons];
+    return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
+  };
+  
+  // Get categories for current tab
+  const getCategories = () => {
+    switch (selectedTab) {
+      case 'products':
+        return [
+          { id: 'all', label: 'All Categories' },
+          { id: 'clothing', label: 'Clothing' },
+          { id: 'accessories', label: 'Accessories' },
+          { id: 'music', label: 'Music' },
+          { id: 'digital', label: 'Digital Downloads' },
+          { id: 'merch', label: 'Merchandise' },
+        ];
+      case 'posts':
+        return [
+          { id: 'all', label: 'All Topics' },
+          { id: 'music', label: 'Music' },
+          { id: 'tour', label: 'Tour Updates' },
+          { id: 'news', label: 'News' },
+          { id: 'lifestyle', label: 'Lifestyle' },
+          { id: 'tutorials', label: 'Tutorials' },
+        ];
+      case 'newsletters':
+        return [
+          { id: 'all', label: 'All Categories' },
+          { id: 'weekly', label: 'Weekly Updates' },
+          { id: 'monthly', label: 'Monthly Digest' },
+          { id: 'special', label: 'Special Announcements' },
+          { id: 'releases', label: 'New Releases' },
+        ];
+      case 'suggestions':
+        return [
+          { id: 'all', label: 'All Categories' },
+          { id: 'feature', label: 'Feature Requests' },
+          { id: 'bug', label: 'Bug Reports' },
+          { id: 'content', label: 'Content Requests' },
+          { id: 'improvement', label: 'Improvement Ideas' },
+        ];
+      default:
+        return [{ id: 'all', label: 'All Categories' }];
+    }
+  };
+  
+  // Get status options for suggestions
+  const getStatusOptions = () => {
+    return [
+      { id: 'all', label: 'All Status' },
+      { id: 'open', label: 'Open' },
+      { id: 'in-progress', label: 'In Progress' },
+      { id: 'completed', label: 'Completed' },
+      { id: 'declined', label: 'Declined' },
+    ];
+  };
+  
+  // Handle search submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Trigger re-fetch via the useEffect watching debouncedQuery
+    setPage(1);
+  };
+  
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+    setPage(1);
+  };
+  
+  // Handle date changes for various filters
+  const handleDateChange = (date: Date | undefined, field: string, filterType: string) => {
+    if (filterType === 'posts') {
+      setPostFilters(prev => ({ ...prev, [field]: date }));
+    } else if (filterType === 'newsletters') {
+      setNewsletterFilters(prev => ({ ...prev, [field]: date }));
+    } else if (filterType === 'suggestions') {
+      setSuggestionFilters(prev => ({ ...prev, [field]: date }));
+    }
+  };
+  
+  // Update sort order
+  const handleSortChange = (value: string) => {
+    if (selectedTab === 'music') {
+      setSortOrder(prev => ({ ...prev, music: value }));
+    } else if (selectedTab === 'products') {
+      setSortOrder(prev => ({ ...prev, products: value }));
+    } else if (selectedTab === 'posts') {
+      setSortOrder(prev => ({ ...prev, posts: value }));
+    } else if (selectedTab === 'newsletters') {
+      setSortOrder(prev => ({ ...prev, newsletters: value }));
+    } else if (selectedTab === 'suggestions') {
+      setSortOrder(prev => ({ ...prev, suggestions: value }));
+    } else if (selectedTab === 'users') {
+      setSortOrder(prev => ({ ...prev, users: value }));
+    }
+  };
+  
+  // Calculate result range for pagination display
+  const resultRange = () => {
+    const total = getTotalResults();
+    const start = (page - 1) * resultsPerPage + 1;
+    const end = Math.min(page * resultsPerPage, total);
+    
+    if (total === 0) return '';
+    
+    return `Showing ${start}-${end} of ${total} results`;
+  };
+  
+  // Render result items based on content type
+  const renderResultItem = (item: any) => {
+    const itemType = item.type || selectedTab;
+    
+    switch (itemType) {
       case 'music':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Frequency (Hz):</label>
-              <input
-                type="text"
-                className="w-full p-2 border rounded-md"
-                placeholder="e.g. 432, 528"
-                value={filters.music.frequency}
-                onChange={(e) => updateFilter('music', 'frequency', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Artist:</label>
-              <input
-                type="text"
-                className="w-full p-2 border rounded-md"
-                placeholder="Artist name"
-                value={filters.music.artist}
-                onChange={(e) => updateFilter('music', 'artist', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Release Year:</label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={filters.music.releaseYear}
-                onChange={(e) => updateFilter('music', 'releaseYear', e.target.value)}
-              >
-                <option value="">Any</option>
-                {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <Card key={item.id} className="overflow-hidden">
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{item.title}</CardTitle>
+              <CardDescription>{item.artist}</CardDescription>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="mr-1 h-3 w-3" />
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/music/${item.id}`}>Listen</a>
+              </Button>
+            </CardFooter>
+          </Card>
         );
-        
+      
       case 'products':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Price Range:</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Min"
-                  value={filters.products.priceRange.min || ''}
-                  onChange={(e) => updateFilter('products', 'priceRange', {
-                    ...filters.products.priceRange,
-                    min: e.target.value ? Number(e.target.value) : null
-                  })}
-                />
-                <span>-</span>
-                <input
-                  type="number"
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Max"
-                  value={filters.products.priceRange.max || ''}
-                  onChange={(e) => updateFilter('products', 'priceRange', {
-                    ...filters.products.priceRange,
-                    max: e.target.value ? Number(e.target.value) : null
-                  })}
+          <Card key={item.id} className="overflow-hidden">
+            {item.images && item.images[0] && (
+              <div className="h-40 overflow-hidden">
+                <img 
+                  src={item.images[0]} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover transition-transform hover:scale-105"
                 />
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Category:</label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={filters.products.category}
-                onChange={(e) => updateFilter('products', 'category', e.target.value)}
-              >
-                <option value="all">All Categories</option>
-                <option value="cosmic-tools">Cosmic Tools</option>
-                <option value="meditation">Meditation</option>
-                <option value="accessories">Accessories</option>
-                <option value="apparel">Apparel</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Availability:</label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={filters.products.inStock === null ? '' : filters.products.inStock.toString()}
-                onChange={(e) => {
-                  const value = e.target.value === '' 
-                    ? null 
-                    : e.target.value === 'true' ? true : false;
-                  updateFilter('products', 'inStock', value);
-                }}
-              >
-                <option value="">Any</option>
-                <option value="true">In Stock</option>
-                <option value="false">Out of Stock</option>
-              </select>
-            </div>
-          </div>
+            )}
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{item.name}</CardTitle>
+              <CardDescription>${parseFloat(item.price).toFixed(2)}</CardDescription>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center text-sm text-muted-foreground">
+                {item.category && (
+                  <Badge variant="outline" className="mr-2">
+                    {item.category}
+                  </Badge>
+                )}
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/shop/${item.id}`}>View</a>
+              </Button>
+            </CardFooter>
+          </Card>
         );
-        
+      
       case 'posts':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium mb-1">Tags:</label>
-              <input
-                type="text"
-                className="w-full p-2 border rounded-md"
-                placeholder="Enter comma-separated tags"
-                value={filters.posts.tags.join(',')}
-                onChange={(e) => updateFilter('posts', 'tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Date Range:</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  className="w-full p-2 border rounded-md"
-                  value={filters.posts.dateRange.from}
-                  onChange={(e) => updateFilter('posts', 'dateRange', {
-                    ...filters.posts.dateRange,
-                    from: e.target.value
-                  })}
-                />
-                <span>to</span>
-                <input
-                  type="date"
-                  className="w-full p-2 border rounded-md"
-                  value={filters.posts.dateRange.to}
-                  onChange={(e) => updateFilter('posts', 'dateRange', {
-                    ...filters.posts.dateRange,
-                    to: e.target.value
-                  })}
+          <Card key={item.id} className="overflow-hidden">
+            {item.featuredImage && (
+              <div className="h-40 overflow-hidden">
+                <img 
+                  src={item.featuredImage} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover transition-transform hover:scale-105"
                 />
               </div>
-            </div>
-          </div>
+            )}
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{item.title}</CardTitle>
+              {item.excerpt && (
+                <CardDescription className="line-clamp-2">{item.excerpt}</CardDescription>
+              )}
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="mr-1 h-3 w-3" />
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/blog/${item.id}`}>Read</a>
+              </Button>
+            </CardFooter>
+          </Card>
         );
-        
+      
+      case 'newsletters':
+        return (
+          <Card key={item.id} className="overflow-hidden">
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{item.title || 'Newsletter'}</CardTitle>
+              <CardDescription>
+                {item.sentAt ? 
+                  `Sent: ${new Date(item.sentAt).toLocaleDateString()}` : 
+                  'Draft'
+                }
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center text-sm text-muted-foreground">
+                {item.status === 'sent' && (
+                  <Badge variant="secondary" className="mr-2">
+                    Sent
+                  </Badge>
+                )}
+                {item.status === 'draft' && (
+                  <Badge variant="outline" className="mr-2">
+                    Draft
+                  </Badge>
+                )}
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/newsletters/${item.id}`}>View</a>
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      
+      case 'suggestions':
+        return (
+          <Card key={item.id} className="overflow-hidden">
+            <CardHeader className="p-4">
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-lg">{item.title}</CardTitle>
+                {item.status && (
+                  <Badge 
+                    variant={
+                      item.status === 'completed' ? 'default' :
+                      item.status === 'in-progress' ? 'secondary' :
+                      item.status === 'declined' ? 'destructive' :
+                      'outline'
+                    }
+                  >
+                    {item.status}
+                  </Badge>
+                )}
+              </div>
+              <CardDescription className="line-clamp-2">
+                {item.description}
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <MessageSquare className="mr-1 h-3 w-3" />
+                  {item.commentsCount || 0}
+                </div>
+                <div className="flex items-center">
+                  <ArrowUpDown className="mr-1 h-3 w-3" />
+                  {item.votesCount || 0}
+                </div>
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/community/suggestions/${item.id}`}>View</a>
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      
+      case 'users':
+        return (
+          <Card key={item.id} className="overflow-hidden">
+            <CardHeader className="p-4">
+              <div className="flex items-center gap-3">
+                {item.avatar ? (
+                  <img 
+                    src={item.avatar} 
+                    alt={item.username} 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div>
+                  <CardTitle className="text-lg">{item.displayName || item.username}</CardTitle>
+                  <CardDescription>@{item.username}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="mr-1 h-3 w-3" />
+                Joined {new Date(item.createdAt).toLocaleDateString()}
+              </div>
+              <Button size="sm" variant="secondary" asChild>
+                <a href={`/users/${item.username}`}>Profile</a>
+              </Button>
+            </CardFooter>
+          </Card>
+        );
+      
       default:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Content Type:</label>
-              <select
-                className="w-full p-2 border rounded-md"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                {searchCategories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button onClick={clearAllFilters} variant="outline" className="mb-1">
-                Clear Filters
+          <Card key={item.id} className="overflow-hidden">
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">{item.title || item.name}</CardTitle>
+            </CardHeader>
+            <CardFooter className="p-4 pt-0 text-right">
+              <Button size="sm" variant="secondary">
+                View
               </Button>
-              <Button onClick={() => refetch()} className="mb-1">
-                Apply Filters
-              </Button>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         );
     }
   };
   
-  // Render search results
-  const renderResults = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      );
-    }
-    
-    if (!results || getTotalResultCount() === 0) {
-      return (
-        <div className="text-center py-12">
-          <div className="mx-auto w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Settings className="h-6 w-6 text-muted-foreground" />
+  return (
+    <div className="container mx-auto py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Advanced Search</h1>
+        <p className="text-muted-foreground">
+          Search across all content with advanced filtering options
+        </p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Search for anything..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full"
+            />
           </div>
-          <h3 className="text-xl font-medium mb-2">No results found</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Try adjusting your search query or filters to find what you're looking for.
-          </p>
-          {(searchQuery || selectedCategory !== 'all' || showAdvancedFilters) && (
-            <Button onClick={resetSearch} variant="outline" className="mt-4">
-              Reset Search
-            </Button>
-          )}
+          <Button type="submit" className="sm:w-auto">Search</Button>
         </div>
-      );
-    }
-    
-    // Define which tab to show by default
-    const defaultTabValue = selectedCategory !== 'all' ? selectedCategory : 
-      results.music?.length ? 'music' : 
-      results.products?.length ? 'products' : 
-      results.posts?.length ? 'posts' : 'all';
-    
-    return (
-      <Tabs defaultValue={defaultTabValue} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All Results ({getTotalResultCount()})</TabsTrigger>
-          {results.music?.length > 0 && (
-            <TabsTrigger value="music">
-              Music ({results.music.length})
-            </TabsTrigger>
-          )}
-          {results.products?.length > 0 && (
-            <TabsTrigger value="products">
-              Products ({results.products.length})
-            </TabsTrigger>
-          )}
-          {results.posts?.length > 0 && (
-            <TabsTrigger value="posts">
-              Blog Posts ({results.posts.length})
-            </TabsTrigger>
-          )}
+      </form>
+      
+      <Tabs 
+        defaultValue={selectedTab} 
+        onValueChange={handleTabChange}
+        className="space-y-6"
+      >
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="music">Music</TabsTrigger>
+          <TabsTrigger value="products">Shop</TabsTrigger>
+          <TabsTrigger value="posts">Blog</TabsTrigger>
+          <TabsTrigger value="newsletters">Newsletters</TabsTrigger>
+          <TabsTrigger value="suggestions">Community</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
         </TabsList>
         
-        {/* All Results Tab */}
-        <TabsContent value="all" className="space-y-8">
-          {/* Music Results */}
-          {results.music?.length > 0 && (
-            <section>
-              <div className="flex items-center mb-4">
-                <Music className="mr-2 h-5 w-5" />
-                <h2 className="text-xl font-semibold">Music</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.music.slice(0, 4).map((track: any) => (
-                  <Card key={track.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-4">
-                        <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                          <Music className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="font-medium">{track.title}</h3>
-                          <p className="text-sm text-muted-foreground">{track.artist}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {track.frequency && (
-                              <Badge variant="outline">
-                                {track.frequency} Hz
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {results.music.length > 4 && (
-                <Button variant="link" className="mt-2" asChild>
-                  <a href="/music/search">View all {results.music.length} music results</a>
-                </Button>
-              )}
-            </section>
-          )}
+        {/* All Content Tab */}
+        <TabsContent value="all" className="space-y-6">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold">All Results</h2>
+              <p className="text-sm text-muted-foreground">{resultRange()}</p>
+            </div>
+          </div>
           
-          {/* Products Results */}
-          {results.products?.length > 0 && (
-            <section>
-              <div className="flex items-center mb-4">
-                <ShoppingBag className="mr-2 h-5 w-5" />
-                <h2 className="text-xl font-semibold">Products</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.products.slice(0, 4).map((product: any) => (
-                  <Card key={product.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-4">
-                        <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                          <ShoppingBag className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {product.category && (
-                              <Badge variant="outline">
-                                {product.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {results.products.length > 4 && (
-                <Button variant="link" className="mt-2" asChild>
-                  <a href="/shop/search">View all {results.products.length} product results</a>
-                </Button>
-              )}
-            </section>
-          )}
-          
-          {/* Blog Posts Results */}
-          {results.posts?.length > 0 && (
-            <section>
-              <div className="flex items-center mb-4">
-                <FileText className="mr-2 h-5 w-5" />
-                <h2 className="text-xl font-semibold">Blog Posts</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.posts.slice(0, 4).map((post: any) => (
-                  <Card key={post.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start space-x-4">
-                        <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                          <FileText className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="space-y-1">
-                          <h3 className="font-medium">{post.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(post.createdAt).toLocaleDateString()}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {post.tags?.slice(0, 2).map((tag: string) => (
-                              <Badge key={tag} variant="outline">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {results.posts.length > 4 && (
-                <Button variant="link" className="mt-2" asChild>
-                  <a href="/blog/search">View all {results.posts.length} blog post results</a>
-                </Button>
-              )}
-            </section>
+          {isLoading ? (
+            <div className="text-center py-10">
+              <p>Loading results...</p>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-10 text-red-500">
+              <p>Error loading results. Please try again.</p>
+            </div>
+          ) : getCurrentResults().length > 0 ? (
+            <div className="space-y-6">
+              {/* Group results by type */}
+              {['music', 'products', 'posts', 'newsletters', 'suggestions', 'users'].map((type) => {
+                const typeResults = getCurrentResults().filter(item => item.type === type);
+                if (typeResults.length === 0) return null;
+                
+                return (
+                  <div key={type} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium flex items-center gap-2">
+                        {getContentTypeIcon(type)}
+                        {searchCategories.find(cat => cat.id === type)?.label || type}
+                      </h3>
+                      <Button variant="link" size="sm" asChild>
+                        <a href={`/search?q=${encodeURIComponent(searchQuery)}&type=${type}`}>
+                          See all
+                        </a>
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {typeResults.map(renderResultItem)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p>No results found for "{searchQuery}"</p>
+            </div>
           )}
         </TabsContent>
         
         {/* Music Tab */}
-        <TabsContent value="music" className="space-y-4">
-          {results.music?.map((track: any) => (
-            <Card key={track.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                      <Music className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{track.title}</h3>
-                      <p className="text-sm text-muted-foreground">{track.artist}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {track.frequency && (
-                          <Badge variant="outline">
-                            {track.frequency} Hz
-                          </Badge>
-                        )}
-                        {track.duration && (
-                          <span className="text-xs text-muted-foreground">
-                            {track.duration}
-                          </span>
-                        )}
-                      </div>
-                      {track.description && (
-                        <p className="text-sm mt-2">{track.description}</p>
-                      )}
-                    </div>
+        <TabsContent value="music" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Filters sidebar */}
+            <div className="w-full md:w-64 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Filter Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="music-artist">Artist</Label>
+                    <Input
+                      id="music-artist"
+                      placeholder="Filter by artist"
+                      value={musicFilters.artist}
+                      onChange={(e) => setMusicFilters(prev => ({ ...prev, artist: e.target.value }))}
+                    />
                   </div>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`/music/track/${track.id}`}>View</a>
-                  </Button>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="music-year">Year</Label>
+                    <Input
+                      id="music-year"
+                      placeholder="Filter by year"
+                      value={musicFilters.year}
+                      onChange={(e) => setMusicFilters(prev => ({ ...prev, year: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="music-frequency">Frequency (Hz)</Label>
+                    <Input
+                      id="music-frequency"
+                      placeholder="Filter by frequency"
+                      value={musicFilters.frequency}
+                      onChange={(e) => setMusicFilters(prev => ({ ...prev, frequency: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="music-sort">Sort By</Label>
+                    <Select 
+                      value={sortOrder.music} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger id="music-sort">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.music.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Results area */}
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold">Music Results</h2>
+                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+              
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p>Loading results...</p>
+                </div>
+              ) : isError ? (
+                <div className="text-center py-10 text-red-500">
+                  <p>Error loading results. Please try again.</p>
+                </div>
+              ) : getCurrentResults().length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getCurrentResults().map(renderResultItem)}
+                  </div>
+                  
+                  {/* Pagination UI */}
+                  <div className="flex justify-between items-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {page}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={getCurrentResults().length < resultsPerPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <p>No music results found for "{searchQuery}"</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
         
         {/* Products Tab */}
-        <TabsContent value="products" className="space-y-4">
-          {results.products?.map((product: any) => (
-            <Card key={product.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                      <ShoppingBag className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {product.category && (
-                          <Badge variant="outline">
-                            {product.category}
-                          </Badge>
-                        )}
-                        {product.inStock === false && (
-                          <Badge variant="secondary">Out of Stock</Badge>
-                        )}
-                      </div>
-                      {product.description && (
-                        <p className="text-sm mt-2">{product.description}</p>
-                      )}
+        <TabsContent value="products" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Filters sidebar */}
+            <div className="w-full md:w-64 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Filter Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="product-category">Category</Label>
+                    <Select 
+                      value={productFilters.category} 
+                      onValueChange={(value) => setProductFilters(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger id="product-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCategories().map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="product-price-min">Price Range</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="product-price-min"
+                        placeholder="Min"
+                        type="number"
+                        value={productFilters.minPrice}
+                        onChange={(e) => setProductFilters(prev => ({ ...prev, minPrice: e.target.value }))}
+                        className="w-full"
+                      />
+                      <span>-</span>
+                      <Input
+                        id="product-price-max"
+                        placeholder="Max"
+                        type="number"
+                        value={productFilters.maxPrice}
+                        onChange={(e) => setProductFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
+                        className="w-full"
+                      />
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button size="sm" variant="outline" asChild>
-                      <a href={`/shop/product/${product.id}`}>View</a>
-                    </Button>
-                    <Button size="sm" disabled={product.inStock === false}>
-                      Add to Cart
-                    </Button>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="product-in-stock"
+                      checked={productFilters.inStock}
+                      onCheckedChange={(checked) => setProductFilters(prev => ({ ...prev, inStock: checked }))}
+                    />
+                    <Label htmlFor="product-in-stock">In stock only</Label>
                   </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="product-sort">Sort By</Label>
+                    <Select 
+                      value={sortOrder.products} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger id="product-sort">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.products.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Results area */}
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold">Shop Results</h2>
+                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+              
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p>Loading results...</p>
+                </div>
+              ) : isError ? (
+                <div className="text-center py-10 text-red-500">
+                  <p>Error loading results. Please try again.</p>
+                </div>
+              ) : getCurrentResults().length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getCurrentResults().map(renderResultItem)}
+                  </div>
+                  
+                  {/* Pagination UI */}
+                  <div className="flex justify-between items-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {page}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={getCurrentResults().length < resultsPerPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <p>No products found for "{searchQuery}"</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
         
         {/* Blog Posts Tab */}
-        <TabsContent value="posts" className="space-y-4">
-          {results.posts?.map((post: any) => (
-            <Card key={post.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{post.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {post.tags?.map((tag: string) => (
-                          <Badge key={tag} variant="outline">{tag}</Badge>
-                        ))}
+        <TabsContent value="posts" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Filters sidebar */}
+            <div className="w-full md:w-64 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Filter Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="post-tags">Tags</Label>
+                    <Input
+                      id="post-tags"
+                      placeholder="Filter by tags (comma separated)"
+                      value={postFilters.tags}
+                      onChange={(e) => setPostFilters(prev => ({ ...prev, tags: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Date Range</Label>
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="post-date-from" className="text-xs">From</Label>
+                        <DatePicker
+                          id="post-date-from"
+                          date={postFilters.dateFrom}
+                          setDate={(date) => handleDateChange(date, 'dateFrom', 'posts')}
+                        />
                       </div>
-                      {post.excerpt && (
-                        <p className="text-sm mt-2">{post.excerpt}</p>
-                      )}
+                      <div className="space-y-1">
+                        <Label htmlFor="post-date-to" className="text-xs">To</Label>
+                        <DatePicker
+                          id="post-date-to"
+                          date={postFilters.dateTo}
+                          setDate={(date) => handleDateChange(date, 'dateTo', 'posts')}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={`/blog/post/${post.id}`}>Read</a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-      </Tabs>
-    );
-  };
-  
-  return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <h1 className="text-3xl font-bold">Advanced Search</h1>
-        
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={toggleAdvancedFilters}
-            className="flex items-center gap-2"
-          >
-            <Settings className="h-4 w-4" />
-            {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={resetSearch}
-            className="flex items-center gap-2"
-          >
-            <X className="h-4 w-4" />
-            Reset
-          </Button>
-        </div>
-      </div>
-      
-      <div className="w-full">
-        <UniversalSearchBar
-          variant="expanded"
-          defaultCategory={selectedCategory}
-          placeholder="Search the entire library..."
-          onSearch={handleSearch}
-          darkMode={false}
-          className="w-full"
-        />
-      </div>
-      
-      {/* Advanced Filters */}
-      {showAdvancedFilters && (
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Advanced Filters</h2>
-              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                Clear All
-              </Button>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="post-sort">Sort By</Label>
+                    <Select 
+                      value={sortOrder.posts} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger id="post-sort">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.posts.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
             
-            {renderFilters()}
-          </CardContent>
-        </Card>
-      )}
-      
-      <Separator className="my-6" />
-      
-      {/* Display result count */}
-      {searchQuery && !isLoading && (
-        <div className="text-sm text-muted-foreground mb-4">
-          Found {getTotalResultCount()} results for "{searchQuery}"
-        </div>
-      )}
-      
-      {/* Search Results */}
-      {renderResults()}
+            {/* Results area */}
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold">Blog Results</h2>
+                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p>Loading results...</p>
+                </div>
+              ) : isError ? (
+                <div className="text-center py-10 text-red-500">
+                  <p>Error loading results. Please try again.</p>
+                </div>
+              ) : getCurrentResults().length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getCurrentResults().map(renderResultItem)}
+                  </div>
+                  
+                  {/* Pagination UI */}
+                  <div className="flex justify-between items-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {page}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={getCurrentResults().length < resultsPerPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <p>No blog posts found for "{searchQuery}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Newsletters Tab */}
+        <TabsContent value="newsletters" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Filters sidebar */}
+            <div className="w-full md:w-64 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Filter Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newsletter-category">Category</Label>
+                    <Select 
+                      value={newsletterFilters.category} 
+                      onValueChange={(value) => setNewsletterFilters(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger id="newsletter-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCategories().map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="newsletter-status">Status</Label>
+                    <Select 
+                      value={newsletterFilters.sent} 
+                      onValueChange={(value) => setNewsletterFilters(prev => ({ ...prev, sent: value }))}
+                    >
+                      <SelectTrigger id="newsletter-status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="sent">Sent</SelectItem>
+                        <SelectItem value="draft">Draft</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Date Range</Label>
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="newsletter-date-from" className="text-xs">From</Label>
+                        <DatePicker
+                          id="newsletter-date-from"
+                          date={newsletterFilters.dateFrom}
+                          setDate={(date) => handleDateChange(date, 'dateFrom', 'newsletters')}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="newsletter-date-to" className="text-xs">To</Label>
+                        <DatePicker
+                          id="newsletter-date-to"
+                          date={newsletterFilters.dateTo}
+                          setDate={(date) => handleDateChange(date, 'dateTo', 'newsletters')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="newsletter-min-open-rate">Min. Open Rate (%)</Label>
+                    <Input
+                      id="newsletter-min-open-rate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="0"
+                      value={newsletterFilters.minOpenRate}
+                      onChange={(e) => setNewsletterFilters(prev => ({ ...prev, minOpenRate: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="newsletter-sort">Sort By</Label>
+                    <Select 
+                      value={sortOrder.newsletters} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger id="newsletter-sort">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.newsletters.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Results area */}
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold">Newsletter Results</h2>
+                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p>Loading results...</p>
+                </div>
+              ) : isError ? (
+                <div className="text-center py-10 text-red-500">
+                  <p>Error loading results. Please try again.</p>
+                </div>
+              ) : getCurrentResults().length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getCurrentResults().map(renderResultItem)}
+                  </div>
+                  
+                  {/* Pagination UI */}
+                  <div className="flex justify-between items-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {page}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={getCurrentResults().length < resultsPerPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <p>No newsletters found for "{searchQuery}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Community Suggestions Tab */}
+        <TabsContent value="suggestions" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Filters sidebar */}
+            <div className="w-full md:w-64 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Filter Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="suggestion-category">Category</Label>
+                    <Select 
+                      value={suggestionFilters.category} 
+                      onValueChange={(value) => setSuggestionFilters(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger id="suggestion-category">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCategories().map(category => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="suggestion-status">Status</Label>
+                    <Select 
+                      value={suggestionFilters.status} 
+                      onValueChange={(value) => setSuggestionFilters(prev => ({ ...prev, status: value }))}
+                    >
+                      <SelectTrigger id="suggestion-status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getStatusOptions().map(status => (
+                          <SelectItem key={status.id} value={status.id}>
+                            {status.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Date Range</Label>
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <Label htmlFor="suggestion-date-from" className="text-xs">From</Label>
+                        <DatePicker
+                          id="suggestion-date-from"
+                          date={suggestionFilters.dateFrom}
+                          setDate={(date) => handleDateChange(date, 'dateFrom', 'suggestions')}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="suggestion-date-to" className="text-xs">To</Label>
+                        <DatePicker
+                          id="suggestion-date-to"
+                          date={suggestionFilters.dateTo}
+                          setDate={(date) => handleDateChange(date, 'dateTo', 'suggestions')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="suggestion-min-votes">Min. Votes</Label>
+                    <Input
+                      id="suggestion-min-votes"
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={suggestionFilters.minVotes}
+                      onChange={(e) => setSuggestionFilters(prev => ({ ...prev, minVotes: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="hide-implemented"
+                      checked={suggestionFilters.hideImplemented}
+                      onCheckedChange={(checked) => setSuggestionFilters(prev => ({ ...prev, hideImplemented: checked }))}
+                    />
+                    <Label htmlFor="hide-implemented">Hide implemented</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="hide-declined"
+                      checked={suggestionFilters.hideDeclined}
+                      onCheckedChange={(checked) => setSuggestionFilters(prev => ({ ...prev, hideDeclined: checked }))}
+                    />
+                    <Label htmlFor="hide-declined">Hide declined</Label>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="suggestion-sort">Sort By</Label>
+                    <Select 
+                      value={sortOrder.suggestions} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger id="suggestion-sort">
+                        <SelectValue placeholder="Sort by..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sortOptions.suggestions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Results area */}
+            <div className="flex-1 space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-semibold">Community Suggestions</h2>
+                  <p className="text-sm text-muted-foreground">{resultRange()}</p>
+                </div>
+              </div>
+              
+              {isLoading ? (
+                <div className="text-center py-10">
+                  <p>Loading results...</p>
+                </div>
+              ) : isError ? (
+                <div className="text-center py-10 text-red-500">
+                  <p>Error loading results. Please try again.</p>
+                </div>
+              ) : getCurrentResults().length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {getCurrentResults().map(renderResultItem)}
+                  </div>
+                  
+                  {/* Pagination UI */}
+                  <div className="flex justify-between items-center pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                      disabled={page <= 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {page}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setPage(prev => prev + 1)}
+                      disabled={getCurrentResults().length < resultsPerPage}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-10">
+                  <p>No community suggestions found for "{searchQuery}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        {/* Users Tab */}
+        <TabsContent value="users" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-semibold">Users</h2>
+              <p className="text-sm text-muted-foreground">{resultRange()}</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Label htmlFor="user-sort" className="text-sm">Sort:</Label>
+              <Select 
+                value={sortOrder.users} 
+                onValueChange={handleSortChange}
+              >
+                <SelectTrigger id="user-sort" className="w-40">
+                  <SelectValue placeholder="Sort by..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.users.map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <div className="text-center py-10">
+              <p>Loading results...</p>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-10 text-red-500">
+              <p>Error loading results. Please try again.</p>
+            </div>
+          ) : getCurrentResults().length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getCurrentResults().map(renderResultItem)}
+              </div>
+              
+              {/* Pagination UI */}
+              <div className="flex justify-between items-center pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+                  disabled={page <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page}
+                </span>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={getCurrentResults().length < resultsPerPage}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-10">
+              <p>No users found for "{searchQuery}"</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
-}
+};
+
+export default AdvancedSearchPage;

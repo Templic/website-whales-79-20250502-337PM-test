@@ -1,44 +1,36 @@
 /**
  * UniversalSearchBar.tsx
  * 
- * A universal search bar component that provides both basic and advanced search functionality
- * with hover dropdown for quick navigation and cosmically-styled UI elements.
+ * A universal search component that can be used across the site
+ * for searching all content types. The component provides both a basic
+ * search mode and an advanced search option.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Search, ChevronDown, X } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useQuery } from '@tanstack/react-query';
 
-// Quick Navigation Links - customize these as needed for your site
-const quickLinks = [
-  { name: "Latest Music", path: "/music/latest" },
-  { name: "Featured Products", path: "/shop/featured" },
-  { name: "Healing Frequencies", path: "/music/frequencies" },
-  { name: "Cosmic Collection", path: "/shop/cosmic-collection" },
-  { name: "Community Forum", path: "/community" },
-  { name: "Recent Blog Posts", path: "/blog/recent" },
-];
-
-// Define the available search categories
+// Search categories that can be searched across the site
 export const searchCategories = [
-  { value: 'all', label: 'All Content' },
-  { value: 'music', label: 'Music' },
-  { value: 'products', label: 'Products' },
-  { value: 'posts', label: 'Blog Posts' },
-  // Admin-only categories would be conditionally rendered
+  { id: 'all', label: 'All Content', icon: Search },
+  { id: 'music', label: 'Music', icon: null },
+  { id: 'products', label: 'Shop', icon: null },
+  { id: 'posts', label: 'Blog', icon: null },
+  { id: 'newsletters', label: 'Newsletters', icon: null },
+  { id: 'suggestions', label: 'Community', icon: null },
 ];
 
-// Props type for the component
 interface UniversalSearchBarProps {
   variant?: 'minimal' | 'expanded';
   defaultCategory?: string;
@@ -46,23 +38,27 @@ interface UniversalSearchBarProps {
   onSearch?: (query: string, category: string) => void;
   darkMode?: boolean;
   className?: string;
+  width?: string;
+  showCategorySelector?: boolean;
+  initialQuery?: string;
 }
 
-export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
+const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
   variant = 'minimal',
   defaultCategory = 'all',
-  placeholder = 'Search...',
+  placeholder = 'Search for anything...',
   onSearch,
   darkMode = false,
   className = '',
+  width = 'w-full',
+  showCategorySelector = true,
+  initialQuery = '',
 }) => {
-  // State for search bar
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(defaultCategory);
-  const [isAdvanced, setIsAdvanced] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const searchBarRef = useRef<HTMLDivElement>(null);
+  // State for search parameters
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [category, setCategory] = useState(defaultCategory);
+  const [showResults, setShowResults] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   
   // Navigation hooks
   const [location, navigate] = useLocation();
@@ -70,30 +66,59 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
   // Debounced search query for preview results
   const debouncedQuery = useDebounce(searchQuery, 300);
   
-  // Get preview search results with React Query
+  // Get preview search results
   const { data: previewResults, isLoading } = useQuery({
-    queryKey: ['searchPreview', debouncedQuery, selectedCategory],
+    queryKey: ['universalSearchPreview', debouncedQuery, category],
     queryFn: async () => {
       if (!debouncedQuery || debouncedQuery.length < 2) return null;
       
       const params = new URLSearchParams();
       params.set('q', debouncedQuery);
-      params.set('type', selectedCategory);
+      params.set('type', category);
       params.set('limit', '3'); // Just get a few preview results
       
       const response = await fetch(`/api/search?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch search preview');
-      return response.json();
+      
+      return await response.json();
     },
-    enabled: debouncedQuery.length >= 2,
+    enabled: debouncedQuery.length >= 2 && showResults,
   });
   
-  // Close dropdown when clicking outside
+  // Handle form submit
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    
+    if (!searchQuery.trim()) return;
+    
+    // If onSearch prop provided, call it
+    if (onSearch) {
+      onSearch(searchQuery, category);
+      return;
+    }
+    
+    // Otherwise navigate to search page
+    const params = new URLSearchParams();
+    params.set('q', searchQuery);
+    if (category !== 'all') {
+      params.set('type', category);
+    }
+    
+    navigate(`/search?${params.toString()}`);
+    setShowResults(false);
+  };
+  
+  // Get category display name
+  const getCategoryName = (categoryId: string) => {
+    const category = searchCategories.find(cat => cat.id === categoryId);
+    return category ? category.label : 'All Content';
+  };
+  
+  // Handle clicks outside the search container to close results
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-        setIsHovered(false);
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowResults(false);
       }
     };
     
@@ -103,81 +128,39 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
     };
   }, []);
   
-  // Handle search form submission
-  const handleSubmit = useCallback((e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    
-    if (!searchQuery.trim()) return;
-    
-    // If onSearch prop provided, call it
-    if (onSearch) {
-      onSearch(searchQuery, selectedCategory);
-      return;
-    }
-    
-    // Otherwise navigate to search page
-    const params = new URLSearchParams();
-    params.set('q', searchQuery);
-    if (selectedCategory !== 'all') {
-      params.set('type', selectedCategory);
-    }
-    
-    navigate(`/search?${params.toString()}`);
-    setIsDropdownOpen(false);
-  }, [searchQuery, selectedCategory, onSearch, navigate]);
-  
-  // Handle Enter key
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSubmit();
-    }
-  };
-  
-  // Clear search
-  const clearSearch = () => {
-    setSearchQuery('');
-  };
-  
-  // Toggle between basic and advanced search
-  const toggleAdvancedSearch = () => {
-    setIsAdvanced(!isAdvanced);
-  };
-  
-  // Determine total result count for preview display
-  const getTotalPreviewCount = () => {
-    if (!previewResults) return 0;
-    
-    return (
-      (previewResults.music?.length || 0) +
-      (previewResults.products?.length || 0) +
-      (previewResults.posts?.length || 0) +
-      (previewResults.users?.length || 0)
-    );
-  };
-  
   // Calculate CSS classes based on props
   const containerClasses = `
-    search-container relative
-    ${darkMode ? 'search-container-dark' : ''}
+    universal-search-container relative
+    ${darkMode ? 'universal-search-container-dark' : ''}
     ${className}
+    ${width}
   `.trim();
   
   const inputClasses = `
-    transition-all duration-200
+    transition-all duration-200 pr-24
     ${darkMode ? 'bg-black/20 border-white/10 text-white placeholder-gray-400' : ''}
-    ${isAdvanced ? 'rounded-t-md rounded-b-none border-b-0' : 'rounded-md'}
   `.trim();
   
-  // Render the component
+  // Generate results counts from preview data
+  const getResultsCount = () => {
+    if (!previewResults) return {};
+    
+    const counts: Record<string, number> = {};
+    Object.keys(previewResults).forEach(key => {
+      if (Array.isArray(previewResults[key])) {
+        counts[key] = previewResults[key].length;
+      }
+    });
+    
+    return counts;
+  };
+  
+  const resultsCounts = getResultsCount();
+  const totalResults = Object.values(resultsCounts).reduce((sum, count) => sum + count, 0);
+  
   return (
-    <div 
-      ref={searchBarRef}
-      className={containerClasses}
-      onMouseEnter={() => setIsHovered(true)} 
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <div className={containerClasses} ref={searchContainerRef}>
       <form onSubmit={handleSubmit} className="relative">
-        {/* Main search input */}
         <div className="relative">
           <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${darkMode ? 'text-gray-400' : 'text-muted-foreground'}`} />
           <Input
@@ -185,48 +168,44 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setIsDropdownOpen(true)}
-            className={`pl-10 pr-10 ${inputClasses}`}
+            onFocus={() => setShowResults(true)}
+            className={`pl-10 ${inputClasses}`}
             data-testid="universal-search-input"
           />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-              aria-label="Clear search"
-            >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+          
+          {/* Category selector dropdown */}
+          {showCategorySelector && (
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`h-7 text-xs font-normal ${darkMode ? 'text-gray-300 hover:bg-white/10' : ''}`}
+                  >
+                    {getCategoryName(category)}
+                    <ChevronDown className="ml-1 h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {searchCategories.map((cat) => (
+                    <DropdownMenuItem 
+                      key={cat.id}
+                      onClick={() => setCategory(cat.id)}
+                      className="cursor-pointer"
+                    >
+                      {cat.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
         
-        {/* Search Controls for expanded variant */}
+        {/* Additional controls for expanded variant */}
         {variant === 'expanded' && (
-          <div className="flex items-center mt-2 gap-2">
-            <select 
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className={`text-sm p-1 rounded border ${darkMode ? 'bg-black/20 border-white/10 text-white' : 'border-input'}`}
-            >
-              {searchCategories.map(category => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-            
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm" 
-              onClick={toggleAdvancedSearch}
-              className={darkMode ? 'border-white/10 hover:bg-white/5' : ''}
-            >
-              {isAdvanced ? 'Basic Search' : 'Advanced Search'}
-            </Button>
-            
+          <div className="flex justify-end mt-2">
             <Button 
               type="submit"
               size="sm"
@@ -236,105 +215,36 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
             </Button>
           </div>
         )}
-        
-        {/* Advanced Search Options - shown when isAdvanced is true */}
-        {isAdvanced && variant === 'expanded' && (
-          <div className={`p-4 border rounded-b-md shadow-md ${darkMode ? 'bg-black/20 border-white/10' : 'bg-card'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Add advanced filter options based on the selected category */}
-              {selectedCategory === 'music' || selectedCategory === 'all' ? (
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>
-                    Frequency (Hz):
-                  </label>
-                  <Input 
-                    type="text" 
-                    placeholder="432, 528, etc."
-                    className={darkMode ? 'bg-black/20 border-white/10 text-white' : ''}
-                  />
-                </div>
-              ) : null}
-              
-              {selectedCategory === 'products' || selectedCategory === 'all' ? (
-                <div>
-                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-muted-foreground'}`}>
-                    Price Range:
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      type="number" 
-                      placeholder="Min" 
-                      className={darkMode ? 'bg-black/20 border-white/10 text-white' : ''}
-                    />
-                    <span>-</span>
-                    <Input 
-                      type="number" 
-                      placeholder="Max" 
-                      className={darkMode ? 'bg-black/20 border-white/10 text-white' : ''}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              
-              {/* Add more category-specific filters here */}
-            </div>
-          </div>
-        )}
       </form>
       
-      {/* Quick Links Dropdown */}
-      {(isHovered || isDropdownOpen) && searchQuery.length === 0 && (
-        <div 
-          className={`absolute z-10 w-full mt-1 rounded-md shadow-lg ${darkMode ? 'bg-gray-900 border border-white/10' : 'bg-white border border-gray-200'}`}
-        >
-          <div className={`py-2 ${darkMode ? 'text-gray-300' : ''}`}>
-            <div className="px-4 py-1 text-xs font-medium uppercase tracking-wider text-gray-500">
-              Quick Links
-            </div>
-            <ul>
-              {quickLinks.map((link) => (
-                <li key={link.path}>
-                  <a
-                    href={link.path}
-                    className={`block px-4 py-2 text-sm hover:${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-      
       {/* Search Preview Results */}
-      {isDropdownOpen && searchQuery.length >= 2 && (
+      {showResults && searchQuery.length >= 2 && (
         <div 
-          className={`absolute z-10 w-full mt-1 rounded-md shadow-lg overflow-hidden ${darkMode ? 'bg-gray-900 border border-white/10' : 'bg-white border border-gray-200'}`}
+          className={`absolute z-50 w-full mt-1 rounded-md shadow-lg overflow-hidden ${darkMode ? 'bg-gray-900 border border-white/10' : 'bg-white border border-gray-200'}`}
         >
           {isLoading ? (
             <div className={`p-4 text-center text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Searching...
             </div>
-          ) : previewResults && getTotalPreviewCount() > 0 ? (
+          ) : previewResults && totalResults > 0 ? (
             <div>
-              {/* Music preview results */}
+              {/* Music results */}
               {previewResults.music?.length > 0 && (
-                <div className="border-b last:border-b-0">
+                <div>
                   <div className={`px-4 py-1 text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'}`}>
-                    Music
+                    Music ({previewResults.music.length})
                   </div>
                   <ul>
-                    {previewResults.music.slice(0, 2).map((track: any) => (
-                      <li key={track.id}>
+                    {previewResults.music.slice(0, 2).map((item: any) => (
+                      <li key={item.id}>
                         <a
-                          href={`/music/track/${track.id}`}
+                          href={`/music/${item.id}`}
                           className={`block px-4 py-2 text-sm hover:${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+                          onClick={() => setShowResults(false)}
                         >
-                          <div className="font-medium">{track.title}</div>
+                          <div className="font-medium">{item.title}</div>
                           <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {track.artist} {track.frequency ? `• ${track.frequency} Hz` : ''}
+                            {item.artist}
                           </div>
                         </a>
                       </li>
@@ -343,22 +253,48 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
                 </div>
               )}
               
-              {/* Products preview results */}
-              {previewResults.products?.length > 0 && (
-                <div className="border-b last:border-b-0">
+              {/* Blog posts results */}
+              {previewResults.posts?.length > 0 && (
+                <div>
                   <div className={`px-4 py-1 text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'}`}>
-                    Products
+                    Blog Posts ({previewResults.posts.length})
                   </div>
                   <ul>
-                    {previewResults.products.slice(0, 2).map((product: any) => (
-                      <li key={product.id}>
+                    {previewResults.posts.slice(0, 2).map((item: any) => (
+                      <li key={item.id}>
                         <a
-                          href={`/shop/product/${product.id}`}
+                          href={`/blog/${item.id}`}
                           className={`block px-4 py-2 text-sm hover:${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+                          onClick={() => setShowResults(false)}
                         >
-                          <div className="font-medium">{product.name}</div>
+                          <div className="font-medium">{item.title}</div>
                           <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            ${product.price.toFixed(2)} • {product.category}
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </div>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Products results */}
+              {previewResults.products?.length > 0 && (
+                <div>
+                  <div className={`px-4 py-1 text-xs font-medium uppercase tracking-wider ${darkMode ? 'text-gray-400 bg-gray-800/50' : 'text-gray-500 bg-gray-50'}`}>
+                    Products ({previewResults.products.length})
+                  </div>
+                  <ul>
+                    {previewResults.products.slice(0, 2).map((item: any) => (
+                      <li key={item.id}>
+                        <a
+                          href={`/shop/${item.id}`}
+                          className={`block px-4 py-2 text-sm hover:${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+                          onClick={() => setShowResults(false)}
+                        >
+                          <div className="font-medium">{item.name}</div>
+                          <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            ${parseFloat(item.price).toFixed(2)}
                           </div>
                         </a>
                       </li>
@@ -375,7 +311,7 @@ export const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
                   onClick={handleSubmit}
                   className={darkMode ? 'text-cyan-400' : 'text-primary'}
                 >
-                  See all results ({getTotalPreviewCount()})
+                  See all {totalResults} results
                 </Button>
               </div>
             </div>
