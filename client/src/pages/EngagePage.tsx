@@ -13,7 +13,7 @@ import { SpotlightEffect } from "@/components/SpotlightEffect";
 import SocialMediaLinks from "@/components/common/SocialMediaLinks";
 import FanReactions from "@/components/common/FanReactions";
 import FeaturedMerchandise from "@/components/common/FeaturedMerchandise";
-import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
+
 import SacredGeometry from "@/components/ui/sacred-geometry";
 import { FaYoutube, FaInstagram, FaSpotify, FaPodcast, FaMusic, FaEnvelope, FaPhone, FaCalendarAlt, FaUsers } from 'react-icons/fa';
 
@@ -544,34 +544,7 @@ export default function EngagePage() {
             </div>
           </section>
 
-          {/* Community Feedback Loop */}
-          <section className="community-feedback p-6 md:p-8 shadow-lg backdrop-blur-sm relative overflow-hidden mb-12">
-            <div className="absolute inset-0 bg-[rgba(10,50,92,0.4)]">
-              <div className="absolute top-0 left-0 opacity-10">
-                <SacredGeometry variant="octagon" size={160} animated={false} />
-              </div>
-              <div className="absolute bottom-0 right-0 opacity-10">
-                <SacredGeometry variant="octagon" size={160} animated={false} />
-              </div>
-            </div>
-            
-            <div className="relative z-10">
-              <h2 className="text-3xl font-bold text-[#00ebd6] mb-6 text-center">Community Feedback Loop</h2>
-              <p className="text-center mb-8 max-w-2xl mx-auto">
-                Join our cosmic community in shaping the future of our experiences. Share your suggestions, 
-                report issues, or express appreciation. Every voice resonates in our collective consciousness.
-              </p>
-              
-              <CommunityFeedbackLoop 
-                feedbackItems={feedbackItems}
-                onVote={handleVote}
-                onSubmit={handleSubmitFeedback}
-                onComment={handleComment}
-                onLikeComment={handleLikeComment}
-                currentUser={currentUser}
-              />
-            </div>
-          </section>
+          {/* Community Feedback Loop section was removed */}
 
           {/* Featured Merchandise - Images made clickable to Etsy */}
           <div className="featured-merchandise-banners grid md:grid-cols-2 gap-6 mb-12">
