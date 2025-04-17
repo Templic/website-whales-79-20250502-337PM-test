@@ -93,33 +93,14 @@ export default function AuthPage() {
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string; rememberMe: boolean }) => {
       try {
-        // First get CSRF token
-        const tokenResponse = await fetch('/api/csrf-token');
-        const tokenData = await tokenResponse.json();
-        const csrfToken = tokenData.csrfToken; // Fix: server returns { csrfToken } not { token }
+        // Import the apiRequest function from queryClient which handles CSRF automatically
+        const { apiRequest } = await import('@/lib/queryClient');
         
-        if (!csrfToken) {
-          throw new Error('Could not retrieve CSRF token');
-        }
-
-        const response = await fetch('/api/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': csrfToken
-          },
-          body: JSON.stringify(data),
-          credentials: 'include' // Important for cookies
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
-        }
-        
-        return response.json();
+        // Use the existing apiRequest utility which already handles CSRF
+        const result = await apiRequest('POST', '/api/login', data);
+        return result;
       } catch (error) {
-        console.error('Login process error:', error);
+        console.error('Login failed:', error);
         throw error;
       }
     },
@@ -294,23 +275,23 @@ export default function AuthPage() {
         <div>
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Register</h2>
           <Form {...registerForm}>
-            <form onSubmit={registerForm.handleSubmit(data => {
-              const mutation = useMutation({
-                mutationFn: async (userData) => {
-                  const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData),
-                  });
-                  if (!response.ok) {
-                    throw new Error('Registration failed');
-                  }
-                  return response.json();
-                }
-              });
-              mutation.mutate(data);
+            <form onSubmit={registerForm.handleSubmit(async (data) => {
+              try {
+                // Import the apiRequest function which handles CSRF automatically
+                const { apiRequest } = await import('@/lib/queryClient');
+                
+                // Register the user
+                const result = await apiRequest('POST', '/api/auth/register', data);
+                
+                // Show success message
+                alert('Registration successful! Please log in.');
+                
+                // Reset the form
+                registerForm.reset();
+              } catch (error) {
+                console.error('Registration failed:', error);
+                alert('Registration failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
+              }
             })} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Username</label>
