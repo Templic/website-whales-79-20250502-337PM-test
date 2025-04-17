@@ -234,7 +234,7 @@ const AIChatMenuPage: React.FC = () => {
                   
                   <CardContent className="space-y-6 pt-6 relative">
                     <div className="absolute -bottom-20 -left-20 opacity-10 -rotate-12 z-0">
-                      <SacredGeometry type="hexagon" size={160} color="#818cf8" animate animationDuration={150} />
+                      <SacredGeometry type="hexagon" size={160} color="#818cf8" animate />
                     </div>
                     
                     {/* Widget Visibility */}
@@ -375,7 +375,11 @@ const AIChatMenuPage: React.FC = () => {
                           max={150}
                           step={5}
                           value={[chatFontSize]}
-                          onValueChange={(values) => setChatFontSize(values[0] || 100)}
+                          onValueChange={(values) => {
+                            if (values.length > 0 && typeof values[0] === 'number') {
+                              setChatFontSize(values[0]);
+                            }
+                          }}
                           className="mt-4"
                         />
                       </div>
@@ -406,7 +410,7 @@ const AIChatMenuPage: React.FC = () => {
                 <Card className="overflow-hidden border-purple-400/20 bg-black/40 backdrop-blur-md">
                   <CardHeader className="relative bg-gradient-to-r from-indigo-900/50 via-purple-800/50 to-blue-900/50 border-b border-white/10">
                     <div className="absolute -top-12 -right-12 opacity-20">
-                      <SacredGeometry type="flower-of-life" size={120} color="#a78bfa" animate animationDuration={120} />
+                      <SacredGeometry type="flower-of-life" size={120} color="#a78bfa" animate />
                     </div>
                     <CosmicHeading level={3} glow className="tracking-wide">
                       Cosmic AI Guide
@@ -417,7 +421,7 @@ const AIChatMenuPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-6 relative pt-6">
                     <div className="absolute -bottom-32 -left-32 opacity-5 rotate-45">
-                      <SacredGeometry type="golden-spiral" size={240} color="#8b5cf6" animate animationDuration={180} />
+                      <SacredGeometry type="golden-spiral" size={240} color="#8b5cf6" animate />
                     </div>
                     
                     <motion.div 
