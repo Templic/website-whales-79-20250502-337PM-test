@@ -91,7 +91,8 @@ export default function AuthPage() {
   const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
 
   const loginMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string }) => {
+    mutationFn: async (data: { username: string; password: string; rememberMe: boolean }) => {
+      // First get CSRF token
       const tokenResponse = await fetch('/api/csrf-token');
       const { token } = await tokenResponse.json();
 
@@ -99,7 +100,7 @@ export default function AuthPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'CSRF-Token': token
+          'X-CSRF-Token': token
         },
         body: JSON.stringify(data),
         credentials: 'include'
@@ -107,7 +108,7 @@ export default function AuthPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message);
+        throw new Error(error.message || 'Login failed');
       }
       return response.json();
     },
@@ -195,7 +196,7 @@ export default function AuthPage() {
         <div>
           <h2 className="text-2xl font-bold text-[#00ebd6] mb-6">Login</h2>
           <Form {...loginForm}>
-            <form onSubmit={loginForm.handleSubmit(data => loginMutation.mutate(data))} className="space-y-4">
+            <form onSubmit={loginForm.handleSubmit(data => loginMutation.mutate({...data, rememberMe: Boolean(data.rememberMe)}))} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Username</label>
                 <Input
