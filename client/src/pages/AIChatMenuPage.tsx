@@ -43,7 +43,7 @@ import SacredGeometry from '@/components/cosmic/SacredGeometry';
 const AIChatMenuPage: React.FC = () => {
   // Chat mode state (custom/embed/portal)
   const [chatMode, setChatMode] = useState<'custom' | 'embed' | 'portal'>('portal');
-  
+
   // Get chat state and settings from context
   const {
     isWidgetVisible,
@@ -59,7 +59,7 @@ const AIChatMenuPage: React.FC = () => {
     setChatFontSize,
     clearChat,
   } = useChat();
-  
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-5xl mx-auto">
@@ -71,7 +71,7 @@ const AIChatMenuPage: React.FC = () => {
           <div className="absolute top-20 -right-40 opacity-20 hidden lg:block">
             <SacredGeometry type="metatron-cube" size={160} color="#8b5cf6" animate />
           </div>
-          
+
           {/* Cosmic animated avatar */}
           <motion.div 
             className="relative inline-block mb-6"
@@ -87,12 +87,12 @@ const AIChatMenuPage: React.FC = () => {
               <HelpCircle className="h-5 w-5 text-white" />
             </div>
           </motion.div>
-          
+
           {/* Cosmic title */}
           <CosmicHeading level={1} align="center" glow withAccent className="mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-400 to-indigo-500">
             Cosmic AI Assistant
           </CosmicHeading>
-          
+
           <motion.p 
             className="text-muted-foreground max-w-xl text-lg"
             initial={{ y: 20, opacity: 0 }}
@@ -103,7 +103,7 @@ const AIChatMenuPage: React.FC = () => {
             and get insights into the universal rhythm of sound.
           </motion.p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Chat area */}
           <div className="md:col-span-2">
@@ -118,7 +118,7 @@ const AIChatMenuPage: React.FC = () => {
                       Choose your connection to the cosmic AI
                     </CardDescription>
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <Button
                       variant="ghost"
@@ -150,7 +150,7 @@ const AIChatMenuPage: React.FC = () => {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="relative h-[600px] p-0 overflow-hidden">
                 {/* Decorative elements */}
                 <div className="absolute -bottom-24 -left-24 opacity-10 z-0 rotate-12">
@@ -159,7 +159,7 @@ const AIChatMenuPage: React.FC = () => {
                 <div className="absolute -top-20 -right-20 opacity-10 z-0 -rotate-12">
                   <SacredGeometry type="hexagon" size={180} color="#93c5fd" animate />
                 </div>
-                
+
                 <div className="w-full h-full relative z-10">
                   {chatMode === 'custom' ? (
                     <div className="p-4 h-full bg-gradient-to-b from-indigo-950/30 to-purple-950/10">
@@ -175,7 +175,7 @@ const AIChatMenuPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Star field */}
                 <div className="absolute inset-0 pointer-events-none z-5">
                   {[...Array(20)].map((_, i) => (
@@ -202,7 +202,7 @@ const AIChatMenuPage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Settings area */}
           <div>
             <Tabs defaultValue="settings">
@@ -216,7 +216,7 @@ const AIChatMenuPage: React.FC = () => {
                   About
                 </TabsTrigger>
               </TabsList>
-              
+
               {/* Settings Tab */}
               <TabsContent value="settings">
                 <Card className="overflow-hidden border-purple-400/20 bg-black/40 backdrop-blur-md">
@@ -231,12 +231,12 @@ const AIChatMenuPage: React.FC = () => {
                       Customize your cosmic AI connection
                     </CardDescription>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-6 pt-6 relative">
                     <div className="absolute -bottom-20 -left-20 opacity-10 -rotate-12 z-0">
                       <SacredGeometry type="hexagon" size={160} color="#818cf8" animate />
                     </div>
-                    
+
                     {/* Widget Visibility */}
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
@@ -264,7 +264,7 @@ const AIChatMenuPage: React.FC = () => {
                         Show or hide the cosmic portal button throughout your journey
                       </p>
                     </motion.div>
-                    
+
                     {/* Widget Position */}
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
@@ -301,7 +301,7 @@ const AIChatMenuPage: React.FC = () => {
                         </div>
                       </RadioGroup>
                     </motion.div>
-                    
+
                     {/* Auto Open */}
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
@@ -329,7 +329,7 @@ const AIChatMenuPage: React.FC = () => {
                         Automatically open the cosmic portal when you enter a new dimension
                       </p>
                     </motion.div>
-                    
+
                     {/* Accessibility Settings */}
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
@@ -343,7 +343,7 @@ const AIChatMenuPage: React.FC = () => {
                         </div>
                         Cosmic Accessibility
                       </h3>
-                      
+
                       {/* High Contrast */}
                       <div className="bg-cyan-500/5 p-4 rounded-lg border border-cyan-500/10 mb-4">
                         <div className="flex items-center justify-between">
@@ -361,7 +361,7 @@ const AIChatMenuPage: React.FC = () => {
                           Enhance cosmic readability with high contrast colors
                         </p>
                       </div>
-                      
+
                       {/* Font Size */}
                       <div className="bg-cyan-500/5 p-4 rounded-lg border border-cyan-500/10">
                         <div className="flex items-center justify-between">
@@ -384,7 +384,7 @@ const AIChatMenuPage: React.FC = () => {
                         />
                       </div>
                     </motion.div>
-                    
+
                     {/* Clear Chat History */}
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
@@ -404,7 +404,7 @@ const AIChatMenuPage: React.FC = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
-              
+
               {/* About Tab */}
               <TabsContent value="about">
                 <Card className="overflow-hidden border-purple-400/20 bg-black/40 backdrop-blur-md">
@@ -423,7 +423,7 @@ const AIChatMenuPage: React.FC = () => {
                     <div className="absolute -bottom-32 -left-32 opacity-5 rotate-45">
                       <SacredGeometry type="golden-spiral" size={240} color="#8b5cf6" animate />
                     </div>
-                    
+
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }}
@@ -435,7 +435,7 @@ const AIChatMenuPage: React.FC = () => {
                         and deeper cosmic connections throughout your musical journey.
                       </p>
                     </motion.div>
-                    
+
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }}
@@ -454,7 +454,7 @@ const AIChatMenuPage: React.FC = () => {
                             <p className="text-xs text-indigo-200/70">Answer questions about our cosmic music collections and sonic journeys</p>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 p-3 rounded-lg border border-indigo-500/10 flex items-start gap-3">
                           <div className="mt-1 p-1.5 rounded-full bg-purple-500/20">
                             <MessageSquare className="h-4 w-4 text-purple-300" />
@@ -464,7 +464,7 @@ const AIChatMenuPage: React.FC = () => {
                             <p className="text-xs text-purple-200/70">Provide details about cosmic gatherings and celestial performances</p>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 p-3 rounded-lg border border-indigo-500/10 flex items-start gap-3">
                           <div className="mt-1 p-1.5 rounded-full bg-blue-500/20">
                             <HelpCircle className="h-4 w-4 text-blue-300" />
@@ -474,7 +474,7 @@ const AIChatMenuPage: React.FC = () => {
                             <p className="text-xs text-blue-200/70">Help navigate the site and find your path through the stars</p>
                           </div>
                         </div>
-                        
+
                         <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/5 p-3 rounded-lg border border-indigo-500/10 flex items-start gap-3">
                           <div className="mt-1 p-1.5 rounded-full bg-cyan-500/20">
                             <Sparkles className="h-4 w-4 text-cyan-300" />
@@ -486,7 +486,7 @@ const AIChatMenuPage: React.FC = () => {
                         </div>
                       </div>
                     </motion.div>
-                    
+
                     <motion.div 
                       initial={{ opacity: 0, y: 10 }} 
                       animate={{ opacity: 1, y: 0 }}
