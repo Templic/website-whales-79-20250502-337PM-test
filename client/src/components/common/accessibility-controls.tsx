@@ -114,7 +114,32 @@ export function AccessibilityControls() {
 
   // Apply color filter
   useEffect(() => {
-    document.documentElement.style.filter = colorFilter === 'none' ? 'none' : `sepia(${colorFilter === 'grayscale' ? 1 : 0})`;
+    // Remove any existing filter classes
+    document.body.classList.remove(
+      'filter-blue', 
+      'filter-yellow', 
+      'filter-green', 
+      'filter-red', 
+      'filter-purple', 
+      'filter-orange'
+    );
+    
+    // Apply the appropriate filter
+    if (colorFilter === 'none') {
+      document.documentElement.style.filter = 'none';
+    } else if (colorFilter === 'grayscale') {
+      document.documentElement.style.filter = 'grayscale(1)';
+    } else if (colorFilter === 'protanopia') {
+      document.documentElement.style.filter = 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="protanopia"><feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0, 0.558, 0.442, 0, 0, 0, 0, 0.242, 0.758, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#protanopia\')';
+    } else if (colorFilter === 'deuteranopia') {
+      document.documentElement.style.filter = 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="deuteranopia"><feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0, 0.7, 0.3, 0, 0, 0, 0, 0.3, 0.7, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#deuteranopia\')';
+    } else if (colorFilter === 'tritanopia') {
+      document.documentElement.style.filter = 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="tritanopia"><feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0, 0, 0.433, 0.567, 0, 0, 0, 0.475, 0.525, 0, 0, 0, 0, 0, 1, 0"/></filter></svg>#tritanopia\')';
+    } else {
+      // For the custom filters (blue, yellow, green, red, purple, orange)
+      document.documentElement.style.filter = 'none';
+      document.body.classList.add(`filter-${colorFilter}`);
+    }
   }, [colorFilter]);
   
   // Apply screen reader optimizations
@@ -676,6 +701,14 @@ export function AccessibilityControls() {
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="grayscale">Grayscale</SelectItem>
                       <SelectItem value="protanopia">Protanopia</SelectItem>
+                      <SelectItem value="deuteranopia">Deuteranopia</SelectItem>
+                      <SelectItem value="tritanopia">Tritanopia</SelectItem>
+                      <SelectItem value="blue">Blue Filter</SelectItem>
+                      <SelectItem value="yellow">Yellow Filter</SelectItem>
+                      <SelectItem value="green">Green Filter</SelectItem>
+                      <SelectItem value="red">Red Filter</SelectItem>
+                      <SelectItem value="purple">Purple Filter</SelectItem>
+                      <SelectItem value="orange">Orange Filter</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
