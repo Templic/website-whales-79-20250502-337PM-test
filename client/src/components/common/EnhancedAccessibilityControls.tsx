@@ -47,13 +47,17 @@ export function EnhancedAccessibilityControls() {
     yellow: boolean;
     green: boolean;
     red: boolean;
+    purple: boolean;
+    orange: boolean;
   };
   
   const [colorFilters, setColorFilters] = useState<ColorFilterType>({
     blue: false,
     yellow: false,
     green: false,
-    red: false
+    red: false,
+    purple: false,
+    orange: false
   });
 
   // Mock voice recognition
@@ -70,7 +74,7 @@ export function EnhancedAccessibilityControls() {
   };
 
   // Toggle a color filter
-  const toggleColorFilter = (color: 'blue' | 'yellow' | 'green' | 'red') => {
+  const toggleColorFilter = (color: 'blue' | 'yellow' | 'green' | 'red' | 'purple' | 'orange') => {
     setColorFilters(prev => ({
       ...prev,
       [color]: !prev[color]
@@ -299,6 +303,30 @@ export function EnhancedAccessibilityControls() {
                   >
                     <div className="h-5 w-5 rounded-full bg-red-500"></div>
                     <span className="text-sm font-medium text-white">Red Filter</span>
+                  </button>
+                  <button
+                    onClick={() => toggleColorFilter('purple')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.purple
+                        ? "border-purple-400 bg-purple-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-purple-500"></div>
+                    <span className="text-sm font-medium text-white">Purple Filter</span>
+                  </button>
+                  <button
+                    onClick={() => toggleColorFilter('orange')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.orange
+                        ? "border-orange-400 bg-orange-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-orange-500"></div>
+                    <span className="text-sm font-medium text-white">Orange Filter</span>
                   </button>
                 </div>
               </div>

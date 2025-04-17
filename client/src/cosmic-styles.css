@@ -10,6 +10,31 @@
   --cosmic-darker: #030110;
 }
 
+/* Accessibility color filters */
+body.filter-blue {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="blue-filter"><feColorMatrix type="matrix" values="0.8 0 0 0 0 0 0.8 0 0 0 0 0 1.2 0 0 0 0 0 1 0"/></filter></svg>#blue-filter');
+}
+
+body.filter-yellow {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="yellow-filter"><feColorMatrix type="matrix" values="1.2 0 0 0 0 0 1.2 0 0 0 0 0 0.8 0 0 0 0 0 1 0"/></filter></svg>#yellow-filter');
+}
+
+body.filter-green {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="green-filter"><feColorMatrix type="matrix" values="0.8 0 0 0 0 0 1.2 0 0 0 0 0 0.8 0 0 0 0 0 1 0"/></filter></svg>#green-filter');
+}
+
+body.filter-red {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="red-filter"><feColorMatrix type="matrix" values="1.2 0 0 0 0 0 0.8 0 0 0 0 0 0.8 0 0 0 0 0 1 0"/></filter></svg>#red-filter');
+}
+
+body.filter-purple {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="purple-filter"><feColorMatrix type="matrix" values="1.0 0 0 0 0.1 0 0.8 0 0 0.1 0 0 1.2 0 0.1 0 0 0 1 0"/></filter></svg>#purple-filter');
+}
+
+body.filter-orange {
+  filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="orange-filter"><feColorMatrix type="matrix" values="1.2 0 0 0 0.1 0 1.0 0 0 0.05 0 0 0.8 0 0 0 0 0 1 0"/></filter></svg>#orange-filter');
+}
+
 /* Cosmic glow effects */
 .cosmic-glow-cyan {
   box-shadow: 0 0 10px 2px rgba(0, 235, 214, 0.3),
