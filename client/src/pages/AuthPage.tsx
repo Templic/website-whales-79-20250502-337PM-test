@@ -24,6 +24,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TwoFactorAuth } from "@/components/auth/TwoFactorAuth";
+import { useMutation } from "@tanstack/react-query";
 
 const passwordStrengthText = {
   0: "Very Weak",
@@ -77,17 +78,40 @@ export default function AuthPage() {
     user, 
     isLoading, 
     requires2FA,
-    loginMutation, 
     registerMutation,
     verify2FAMutation,
     verifyBackupCodeMutation,
     clearRequires2FA
   } = useAuth();
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [isPasswordReqOpen, setIsPasswordReqOpen] = useState(false);
+
+  const loginMutation = useMutation({
+    mutationFn: async (data: { username: string; password: string }) => {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Handle successful login
+      window.location.href = '/';
+    },
+    onError: (error) => {
+      // Handle login error
+      console.error('Login failed:', error);
+    }
+  });
+
 
   const loginForm = useForm<LoginForm>({
     defaultValues: {
@@ -218,7 +242,7 @@ export default function AuthPage() {
                   "Login"
                 )}
               </Button>
-              
+
               <div className="flex items-center justify-center text-sm text-gray-500 mt-4">
                 <ShieldCheck className="h-4 w-4 mr-2 text-[#00ebd6]" />
                 <span>This site supports two-factor authentication for enhanced security</span>
@@ -385,7 +409,7 @@ export default function AuthPage() {
                   "Register"
                 )}
               </Button>
-              
+
               <p className="text-sm text-center text-gray-500 mt-4">
                 After registering, you'll have the option to enable two-factor authentication in your account settings for added security.
               </p>
