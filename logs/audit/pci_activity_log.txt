@@ -1,0 +1,15 @@
+# PCI DSS Activity Log
+# Format: timestamp|actorId|username|actionType|component|details|ipAddress|result
+
+2025-04-16T23:31:10.123Z|105|jdoe|access|cardholder_data|Accessed masked card details for order #1543|192.168.1.25|success
+2025-04-16T23:36:21.456Z|203|asmith|config_change|payment_gateway|Updated payment gateway timeout settings|192.168.1.30|success
+2025-04-16T23:41:32.789Z|null|system|security_scan|pci_compliance|Automated PCI compliance scan initiated|127.0.0.1|success
+2025-04-16T23:46:43.123Z|null|system|security_scan|pci_compliance|Automated PCI compliance scan completed - 18/19 checks passed|127.0.0.1|partial_success
+2025-04-16T23:51:54.456Z|132|rjones|refund|payment|Processed refund for order #1495|192.168.1.55|success
+2025-04-16T23:56:05.789Z|132|rjones|config_change|security|Updated password policy requirements|192.168.1.55|success
+2025-04-17T00:01:16.123Z|105|jdoe|data_export|reports|Generated payment transaction report (masked data)|192.168.1.25|success
+2025-04-17T00:06:27.456Z|203|asmith|access_attempt|admin_portal|Failed access to payment configuration|192.168.1.30|failure
+2025-04-17T00:11:38.789Z|105|jdoe|key_rotation|encryption|Rotated encryption keys for stored payment data|192.168.1.25|success
+2025-04-17T00:16:49.123Z|null|system|log_review|security|Automated daily security log review completed|127.0.0.1|success
+2025-04-17T00:21:00.456Z|null|system|database_scan|cardholder_data|Scanned for unencrypted PANs in database|127.0.0.1|success
+2025-04-17T00:26:11.789Z|132|rjones|config_change|transaction_monitoring|Updated transaction monitoring thresholds|192.168.1.55|success

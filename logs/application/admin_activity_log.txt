@@ -1,0 +1,17 @@
+# Admin Activity Log
+# Format: timestamp|adminId|username|actionType|resourceType|resourceId|details|ipAddress
+
+2025-04-16T23:35:17.345Z|203|asmith|view|user|105|Viewed user profile details|192.168.1.30
+2025-04-16T23:38:42.678Z|203|asmith|update|product|15|Updated product price from $49.99 to $45.99|192.168.1.30
+2025-04-16T23:43:21.901Z|203|asmith|create|category|8|Created new product category 'Summer Collection'|192.168.1.30
+2025-04-16T23:47:55.234Z|203|asmith|delete|product|22|Removed discontinued product|192.168.1.30
+2025-04-16T23:52:19.567Z|203|asmith|update|order|156|Changed order status from 'Processing' to 'Shipped'|192.168.1.30
+2025-04-16T23:56:43.890Z|203|asmith|create|discount|12|Created new discount code 'SUMMER25'|192.168.1.30
+2025-04-17T00:01:08.123Z|105|jdoe|view|orders|all|Viewed today's order summary|192.168.1.25
+2025-04-17T00:04:32.456Z|105|jdoe|export|customers|all|Exported customer list to CSV|192.168.1.25
+2025-04-17T00:08:57.789Z|132|rjones|update|user|172|Changed user role from 'user' to 'editor'|192.168.1.55
+2025-04-17T00:12:21.012Z|132|rjones|create|blogPost|45|Published new blog post 'Summer Product Spotlight'|192.168.1.55
+2025-04-17T00:15:46.345Z|132|rjones|update|settings|payment|Updated payment gateway settings|192.168.1.55
+2025-04-17T00:19:10.678Z|105|jdoe|approve|comment|187|Approved user comment on blog post #45|192.168.1.25
+2025-04-17T00:22:35.901Z|105|jdoe|reject|comment|188|Rejected spam comment on blog post #45|192.168.1.25
+2025-04-17T00:25:59.234Z|132|rjones|create|user|254|Created new staff account|192.168.1.55

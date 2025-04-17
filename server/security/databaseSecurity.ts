@@ -1,6 +1,6 @@
 // Database Security Module
 import { pool, db } from '../db';
-import { log } from '../logger';
+import logger from '../logger';
 import { sql } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs';

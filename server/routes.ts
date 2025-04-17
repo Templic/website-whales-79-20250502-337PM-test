@@ -30,6 +30,7 @@ import {
   passwordResetValidation
 } from './validation';
 import secureApiRoutes from './routes/secureApiRoutes';
+import auditSecurityRoutes from './routes/auditSecurityRoutes';
 import { verifyApiSecurity } from './security/apiSecurityVerification';
 import {
   insertSubscriberSchema,
@@ -1987,6 +1988,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
 
   // Security routes
   app.use('/api/security', securityRouter);
+  app.use('/api/security/audit', auditSecurityRoutes);
   app.use('/api/test', testSecurityRouter);
 
   // Create HTTP server with the Express app

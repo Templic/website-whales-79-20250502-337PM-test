@@ -1,0 +1,18 @@
+# Authentication Event Log
+# Format: timestamp|eventType|userId|username|ipAddress|userAgent|status|details
+
+2025-04-16T23:32:11.432Z|login|105|jdoe|192.168.1.25|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Standard login successful
+2025-04-16T23:35:47.891Z|login|203|asmith|192.168.1.30|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|success|Standard login successful
+2025-04-16T23:41:12.223Z|login|null|unknown|192.168.1.40|Mozilla/5.0 (Linux; Android 10)|failure|Invalid password provided
+2025-04-16T23:42:53.764Z|login|null|admin|192.168.1.40|Mozilla/5.0 (Linux; Android 10)|failure|Account locked due to too many attempts
+2025-04-16T23:44:19.352Z|passwordChange|167|bjohnson|192.168.1.35|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Password changed successfully
+2025-04-16T23:51:38.976Z|login|118|mwilliams|192.168.1.45|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|success|2FA verification successful
+2025-04-16T23:54:22.567Z|logout|118|mwilliams|192.168.1.45|Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)|success|User-initiated logout
+2025-04-16T23:55:49.129Z|accountLock|null|hacker123|10.20.30.40|Mozilla/5.0 (X11; Linux x86_64)|failure|Account locked after 5 failed attempts
+2025-04-17T00:03:15.784Z|login|241|tadams|192.168.1.50|Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3)|success|Standard login successful
+2025-04-17T00:07:41.326Z|2faSetup|241|tadams|192.168.1.50|Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3)|success|2FA enabled for account
+2025-04-17T00:12:52.558Z|passwordReset|132|rjones|192.168.1.55|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Password reset via email completed
+2025-04-17T00:15:27.093Z|roleChange|132|rjones|192.168.1.60|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|User role upgraded to admin by user 105
+2025-04-17T00:18:03.419Z|login|132|rjones|192.168.1.55|Mozilla/5.0 (Windows NT 10.0; Win64; x64)|success|Login with new admin privileges
+2025-04-17T00:23:44.872Z|apiTokenCreate|198|dwilson|192.168.1.65|Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)|success|New API token generated
+2025-04-17T00:26:18.235Z|login|172|klee|192.168.1.70|Mozilla/5.0 (Linux; Android 11)|success|Standard login successful

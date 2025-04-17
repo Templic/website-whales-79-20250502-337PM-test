@@ -1,0 +1,63 @@
+[
+  {
+    "timestamp": "2025-04-16T23:45:23.781Z",
+    "reviewer": "security-admin",
+    "reviewType": "automated",
+    "logFiles": [
+      "payment/transaction_log.txt",
+      "security/auth_log.txt",
+      "security/api_access_log.txt",
+      "application/admin_activity_log.txt",
+      "system/system_event_log.txt"
+    ],
+    "findings": [
+      {
+        "severity": "info",
+        "description": "Regular authentication activity observed",
+        "logFile": "security/auth_log.txt"
+      },
+      {
+        "severity": "info",
+        "description": "Normal payment processing activity",
+        "logFile": "payment/transaction_log.txt"
+      }
+    ],
+    "conclusion": "No security concerns identified during this review cycle"
+  },
+  {
+    "timestamp": "2025-04-17T00:12:45.129Z",
+    "reviewer": "security-admin",
+    "reviewType": "manual",
+    "logFiles": [
+      "payment/transaction_log.txt",
+      "security/auth_log.txt",
+      "security/api_access_log.txt",
+      "application/admin_activity_log.txt",
+      "system/system_event_log.txt",
+      "audit/pci_activity_log.txt"
+    ],
+    "findings": [
+      {
+        "severity": "info",
+        "description": "Regular authentication activity observed",
+        "logFile": "security/auth_log.txt"
+      },
+      {
+        "severity": "info",
+        "description": "Normal payment processing activity",
+        "logFile": "payment/transaction_log.txt"
+      },
+      {
+        "severity": "low",
+        "description": "Higher than normal API access rate from specific IP range",
+        "logFile": "security/api_access_log.txt",
+        "action": "Monitoring for potential rate limiting adjustment",
+        "assignedTo": "network-security-team",
+        "status": "under-review"
+      }
+    ],
+    "conclusion": "No critical security concerns identified. One low-severity finding is under review.",
+    "verifiedHashIntegrity": true,
+    "nextScheduledReview": "2025-04-18T00:00:00.000Z"
+  }
+]

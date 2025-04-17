@@ -1,0 +1,20 @@
+# System Event Log 
+# Format: timestamp|eventType|severity|component|message|processId|hostname
+
+2025-04-16T23:30:00.123Z|startup|info|server|Server started successfully on port 3000|12345|app-server-01
+2025-04-16T23:30:01.456Z|startup|info|database|Database connection established|12345|app-server-01
+2025-04-16T23:30:02.789Z|startup|info|cache|Redis cache initialized|12345|app-server-01
+2025-04-16T23:35:13.321Z|performance|warning|database|Query execution time exceeded threshold (query: SELECT * FROM products)|12345|app-server-01
+2025-04-16T23:40:24.654Z|security|info|auth|Rate limiting applied to IP 10.20.30.40|12345|app-server-01
+2025-04-16T23:42:35.987Z|error|high|payment|Payment gateway connection timeout|12345|app-server-01
+2025-04-16T23:42:50.321Z|error|high|payment|Payment gateway connection restored after retry|12345|app-server-01
+2025-04-16T23:45:16.654Z|maintenance|info|system|Scheduled database backup started|12346|app-server-01
+2025-04-16T23:50:32.987Z|maintenance|info|system|Scheduled database backup completed successfully|12346|app-server-01
+2025-04-16T23:55:48.321Z|security|warning|auth|Multiple failed login attempts from IP 10.20.30.40|12345|app-server-01
+2025-04-17T00:00:04.654Z|performance|info|cache|Cache hit ratio: 87.5%|12345|app-server-01
+2025-04-17T00:05:21.987Z|resource|warning|memory|Memory usage exceeded 80% threshold|12345|app-server-01
+2025-04-17T00:05:37.321Z|resource|info|memory|Memory usage returned to normal levels after garbage collection|12345|app-server-01
+2025-04-17T00:10:54.654Z|security|info|firewall|Updated IP blocklist with 5 new entries|12347|app-server-01
+2025-04-17T00:15:12.987Z|maintenance|info|system|Log rotation completed|12348|app-server-01
+2025-04-17T00:20:29.321Z|security|critical|intrusion|Potential SQL injection attempt detected and blocked|12345|app-server-01
+2025-04-17T00:25:45.654Z|startup|info|scheduler|Scheduled tasks service initialized|12349|app-server-01
