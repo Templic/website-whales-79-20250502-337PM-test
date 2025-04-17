@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { motion } from "framer-motion";
 import SacredGeometry from "../../components/ui/sacred-geometry";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Define the navigation items structure
 interface NavItem {
@@ -386,7 +387,7 @@ export function MainHeader() {
               ))}
             </div>
 
-            {/* Search & User */}
+            {/* Search, Theme & User */}
             <div className="hidden md:flex items-center space-x-4">
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input
@@ -398,6 +399,11 @@ export function MainHeader() {
                 />
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               </form>
+              
+              {/* Theme Toggle */}
+              <div className="flex items-center">
+                <ThemeToggle />
+              </div>
 
               {user ? (
                 <motion.div 
