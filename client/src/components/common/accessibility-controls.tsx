@@ -3,11 +3,13 @@
  * 
  * Component Type: common
  * Migrated from imported components.
+ * Enhanced with additional accessibility features including screen reader support,
+ * text-to-speech, skip links, and improved keyboard navigation.
  */
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
@@ -27,6 +29,9 @@ import {
   Settings,
   Moon,
   Waves,
+  Volume2,
+  SkipForward,
+  AlertTriangle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,9 +43,16 @@ export function AccessibilityControls() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [focusOutline, setFocusOutline] = useState(false); // Added focus indicator state
-  const [colorFilter, setColorFilter] = useState("none"); // Added color filter state
-  const [keyboardMode, setKeyboardMode] = useState(false); // Added keyboard mode state
+  const [focusOutline, setFocusOutline] = useState(false)
+  const [colorFilter, setColorFilter] = useState("none")
+  const [keyboardMode, setKeyboardMode] = useState(false)
+  const [textToSpeechEnabled, setTextToSpeechEnabled] = useState(false)
+  const [screenReaderOptimized, setScreenReaderOptimized] = useState(false)
+  const [showSkipLinks, setShowSkipLinks] = useState(false)
+  const [errorPrevention, setErrorPrevention] = useState(true)
+  
+  // Reference to the TTS engine
+  const speechSynthesisRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null)
 
 
   // Apply text size changes
@@ -103,6 +115,112 @@ export function AccessibilityControls() {
   useEffect(() => {
     document.documentElement.style.filter = colorFilter === 'none' ? 'none' : `sepia(${colorFilter === 'grayscale' ? 1 : 0})`;
   }, [colorFilter]);
+  
+  // Apply screen reader optimizations
+  useEffect(() => {
+    if (screenReaderOptimized) {
+      // Add ARIA landmarks to main elements
+      const main = document.querySelector('main');
+      if (main) {
+        main.setAttribute('role', 'main');
+        main.setAttribute('id', 'main-content');
+        main.setAttribute('tabindex', '-1');
+      }
+      
+      // Add skip links (hidden until focused)
+      const skipLinksContainer = document.getElementById('skip-links-container') || document.createElement('div');
+      skipLinksContainer.id = 'skip-links-container';
+      skipLinksContainer.style.position = 'absolute';
+      skipLinksContainer.style.top = '0';
+      skipLinksContainer.style.left = '0';
+      skipLinksContainer.style.zIndex = '9999';
+      
+      if (!document.getElementById('skip-links-container')) {
+        document.body.prepend(skipLinksContainer);
+      }
+      
+      // Add ARIA attributes to form elements
+      document.querySelectorAll('input, textarea, select').forEach(el => {
+        if (!el.hasAttribute('aria-label') && !el.hasAttribute('aria-labelledby')) {
+          const label = document.querySelector(`label[for="${el.id}"]`);
+          if (label) {
+            el.setAttribute('aria-labelledby', label.id || `${el.id}-label`);
+            if (!label.id) label.id = `${el.id}-label`;
+          } else {
+            el.setAttribute('aria-label', el.placeholder || 'Input field');
+          }
+        }
+      });
+      
+      // Enhance buttons with missing accessible names
+      document.querySelectorAll('button').forEach(button => {
+        if (!button.getAttribute('aria-label') && !button.textContent?.trim()) {
+          const icon = button.querySelector('svg');
+          if (icon) {
+            const iconName = icon.getAttribute('data-icon') || 'button';
+            button.setAttribute('aria-label', `${iconName} button`);
+          } else {
+            button.setAttribute('aria-label', 'Button');
+          }
+        }
+      });
+    }
+  }, [screenReaderOptimized]);
+  
+  // Handle error prevention
+  useEffect(() => {
+    if (errorPrevention) {
+      const handleFormSubmit = (e: Event) => {
+        const form = e.target as HTMLFormElement;
+        const submitBtn = form.querySelector('[type="submit"]');
+        
+        if (submitBtn && submitBtn.getAttribute('data-confirmed') !== 'true') {
+          // Check if this form requires confirmation (has data-require-confirm attribute)
+          if (form.getAttribute('data-require-confirm') === 'true') {
+            e.preventDefault();
+            
+            // Create confirmation dialog
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'confirmation-dialog';
+            confirmDialog.innerHTML = `
+              <div class="confirmation-dialog-content">
+                <h3>Confirm Submission</h3>
+                <p>Are you sure you want to submit this form? This action cannot be undone.</p>
+                <div class="confirmation-dialog-buttons">
+                  <button id="confirm-cancel">Cancel</button>
+                  <button id="confirm-proceed">Proceed</button>
+                </div>
+              </div>
+            `;
+            
+            document.body.appendChild(confirmDialog);
+            
+            // Handle confirmation dialog buttons
+            document.getElementById('confirm-cancel')?.addEventListener('click', () => {
+              document.body.removeChild(confirmDialog);
+            });
+            
+            document.getElementById('confirm-proceed')?.addEventListener('click', () => {
+              submitBtn.setAttribute('data-confirmed', 'true');
+              document.body.removeChild(confirmDialog);
+              submitBtn.click();
+            });
+          }
+        }
+      };
+      
+      // Listen for form submissions
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', handleFormSubmit);
+      });
+      
+      return () => {
+        document.querySelectorAll('form').forEach(form => {
+          form.removeEventListener('submit', handleFormSubmit);
+        });
+      };
+    }
+  }, [errorPrevention]);
 
 
   // Mock voice recognition
@@ -117,6 +235,53 @@ export function AccessibilityControls() {
       }, 5000)
     }
   }
+  
+  // Text-to-speech functionality
+  const speakText = (text: string) => {
+    if (!textToSpeechEnabled || !speechSynthesisRef.current) return;
+    
+    // Stop any ongoing speech
+    speechSynthesisRef.current.cancel();
+    
+    // Create a new utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Set properties
+    utterance.rate = 1.0; // Speech rate (0.1 to 10)
+    utterance.pitch = 1.0; // Speech pitch (0 to 2)
+    utterance.volume = 1.0; // Volume (0 to 1)
+    
+    // Speak the text
+    speechSynthesisRef.current.speak(utterance);
+  }
+  
+  // Helper function to speak selected text
+  const speakSelectedText = () => {
+    if (window.getSelection) {
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim() !== '') {
+        speakText(selection.toString());
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  // Initialize text-to-speech keyboard shortcut
+  useEffect(() => {
+    if (textToSpeechEnabled) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        // Alt + S to speak selected text
+        if (e.altKey && e.key === 's') {
+          e.preventDefault();
+          speakSelectedText();
+        }
+      };
+      
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [textToSpeechEnabled]);
 
   return (
     <>
@@ -319,6 +484,35 @@ export function AccessibilityControls() {
                 </div>
 
 
+                {/* Text-to-Speech Feature */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Volume2 className="h-5 w-5 text-purple-400" />
+                    <div>
+                      <h3 className="font-medium text-white">Text-to-Speech</h3>
+                      <p className="text-xs text-white/60">Read selected text aloud</p>
+                    </div>
+                  </div>
+                  <Switch checked={textToSpeechEnabled} onCheckedChange={setTextToSpeechEnabled} />
+                </div>
+                
+                {textToSpeechEnabled && (
+                  <div className="rounded-lg bg-black/40 p-4 mt-2">
+                    <p className="text-sm text-white/80 mb-2">
+                      Select any text on the page and press <kbd className="rounded bg-black/60 px-2 py-1 text-xs">Alt + S</kbd> to hear it read aloud.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => speakText("Text-to-speech is now enabled. Select any text and press Alt plus S to hear it read aloud.")}
+                      className="w-full mt-2 border-white/20 text-white hover:bg-white/10"
+                    >
+                      <Volume2 className="mr-2 h-4 w-4" />
+                      Test Text-to-Speech
+                    </Button>
+                  </div>
+                )}
+                
                 {/* Keyboard Navigation */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -367,8 +561,48 @@ export function AccessibilityControls() {
                         <p className="text-xs text-white/60">Optimized for screen readers</p>
                       </div>
                     </div>
-                    <span className="text-xs text-green-400">Active</span>
+                    <Switch checked={screenReaderOptimized} onCheckedChange={setScreenReaderOptimized} />
                   </div>
+                  
+                  {/* Skip Links */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <SkipForward className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <h3 className="font-medium text-white">Skip Navigation Links</h3>
+                        <p className="text-xs text-white/60">Fast keyboard navigation</p>
+                      </div>
+                    </div>
+                    <Switch checked={showSkipLinks} onCheckedChange={setShowSkipLinks} />
+                  </div>
+                  
+                  {showSkipLinks && (
+                    <div className="rounded-lg bg-black/40 p-4 mt-2">
+                      <p className="text-sm text-white/80 mb-2">
+                        Skip links help keyboard users navigate quickly to main content areas without tabbing through all navigation elements.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => document.getElementById('main-content')?.focus()}
+                          className="border-white/20 text-white hover:bg-white/10"
+                        >
+                          <SkipForward className="mr-2 h-4 w-4" />
+                          Main Content
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => document.getElementById('main-navigation')?.focus()}
+                          className="border-white/20 text-white hover:bg-white/10"
+                        >
+                          <SkipForward className="mr-2 h-4 w-4" />
+                          Navigation
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Focus Mode */}
                   <div className="flex items-center justify-between">
