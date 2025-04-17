@@ -18,6 +18,7 @@ import {
   Moon,
   Waves,
   ArrowDownUp,
+  Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
@@ -41,6 +42,19 @@ export function EnhancedAccessibilityControls() {
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  type ColorFilterType = {
+    blue: boolean;
+    yellow: boolean;
+    green: boolean;
+    red: boolean;
+  };
+  
+  const [colorFilters, setColorFilters] = useState<ColorFilterType>({
+    blue: false,
+    yellow: false,
+    green: false,
+    red: false
+  });
 
   // Mock voice recognition
   const toggleVoiceRecognition = () => {
@@ -55,27 +69,52 @@ export function EnhancedAccessibilityControls() {
     }
   };
 
+  // Toggle a color filter
+  const toggleColorFilter = (color: 'blue' | 'yellow' | 'green' | 'red') => {
+    setColorFilters(prev => ({
+      ...prev,
+      [color]: !prev[color]
+    }));
+    
+    // Update CSS class on body element for color filters
+    document.body.classList.toggle(`filter-${color}`, !colorFilters[color]);
+  };
+
+  // Apply color filter classes when the component mounts and when filters change
+  useEffect(() => {
+    (Object.entries(colorFilters) as [string, boolean][]).forEach(([color, isActive]) => {
+      document.body.classList.toggle(`filter-${color}`, isActive);
+    });
+    
+    // Cleanup function to remove classes when component unmounts
+    return () => {
+      Object.keys(colorFilters).forEach(color => {
+        document.body.classList.remove(`filter-${color}`);
+      });
+    };
+  }, [colorFilters]);
+
   return (
     <>
       {/* Accessibility button */}
       <button
         onClick={openAccessibilityPanel}
-        className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 transition-all duration-300"
         aria-label="Accessibility Options"
       >
-        <Settings className="h-6 w-6" />
+        <Settings className="h-7 w-7" />
       </button>
 
       {/* Accessibility panel */}
       {isAccessibilityOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div
             className={cn(
-              "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all",
+              "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all border border-purple-500/30",
               isExpanded ? "h-[80vh] overflow-y-auto" : "max-h-[80vh] overflow-y-auto"
             )}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Accessibility Options</h2>
               <div className="flex items-center gap-2">
                 <Button
@@ -114,7 +153,11 @@ export function EnhancedAccessibilityControls() {
                   min={75}
                   max={200}
                   step={5}
-                  onValueChange={(value) => setTextSize(value[0])}
+                  onValueChange={(value) => {
+                    if (value[0] !== undefined) {
+                      setTextSize(value[0]);
+                    }
+                  }}
                   className="cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-white/60">
@@ -128,7 +171,7 @@ export function EnhancedAccessibilityControls() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Contrast className="h-5 w-5 text-purple-400" />
-                  <h3 className="font-medium text-white">Contrast & Color</h3>
+                  <h3 className="font-medium text-white">Contrast & Theme</h3>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <button
@@ -166,6 +209,64 @@ export function EnhancedAccessibilityControls() {
                   >
                     <div className="h-8 w-8 rounded-full bg-gray-900"></div>
                     <span className="text-xs font-medium text-white">Dark Mode</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Color Filters */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-5 w-5 text-purple-400" />
+                  <h3 className="font-medium text-white">Color Filters</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => toggleColorFilter('blue')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.blue
+                        ? "border-blue-400 bg-blue-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-blue-500"></div>
+                    <span className="text-sm font-medium text-white">Blue Filter</span>
+                  </button>
+                  <button
+                    onClick={() => toggleColorFilter('yellow')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.yellow
+                        ? "border-yellow-400 bg-yellow-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-yellow-500"></div>
+                    <span className="text-sm font-medium text-white">Yellow Filter</span>
+                  </button>
+                  <button
+                    onClick={() => toggleColorFilter('green')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.green
+                        ? "border-green-400 bg-green-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-green-500"></div>
+                    <span className="text-sm font-medium text-white">Green Filter</span>
+                  </button>
+                  <button
+                    onClick={() => toggleColorFilter('red')}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-3 transition-colors",
+                      colorFilters.red
+                        ? "border-red-400 bg-red-900/20"
+                        : "border-white/10 bg-black/20 hover:border-white/30"
+                    )}
+                  >
+                    <div className="h-5 w-5 rounded-full bg-red-500"></div>
+                    <span className="text-sm font-medium text-white">Red Filter</span>
                   </button>
                 </div>
               </div>
