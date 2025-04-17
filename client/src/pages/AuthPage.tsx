@@ -97,6 +97,7 @@ export default function AuthPage() {
         const { apiRequest } = await import('@/lib/queryClient');
         
         // Use the existing apiRequest utility which already handles CSRF
+        // Direct login endpoint is at /api/login (not /api/auth/login)
         const result = await apiRequest('POST', '/api/login', data);
         return result;
       } catch (error) {
@@ -106,16 +107,23 @@ export default function AuthPage() {
     },
     onSuccess: (data) => {
       // Handle successful login
+      console.log('Login successful, received data:', data);
+      
       if (data.requires2FA) {
         setRequires2FA(true);
       } else {
-        setUser(data.user);
+        // The response directly contains the user object
+        // Server side is already setting the session cookie
+        setUser(data);
+        
         // Store remember me preference if selected
         if (loginForm.getValues().rememberMe) {
           localStorage.setItem('rememberLogin', 'true');
         } else {
           localStorage.removeItem('rememberLogin');
         }
+        
+        // Redirect to home page
         window.location.href = '/';
       }
     },
