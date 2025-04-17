@@ -63,18 +63,28 @@ export default function NewsletterPage() {
         <h1 className="text-4xl font-bold text-[#00ebd6] mb-6">Newsletter</h1>
         <div className="space-y-8">
           {/* Hero Section with Sacred Geometry */}
-          <div className="relative h-[500px] w-full overflow-hidden rounded-lg">
-            <img
-              src={images[currentImageIndex]}
-              alt="Newsletter"
-              className="absolute w-full h-full object-cover transition-opacity duration-1000"
-            />
-            {/* Sacred geometry overlay */}
-            <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '30s' }}>
-              <SacredGeometry variant="merkaba" size={120} animated={false} intensity="medium" />
-            </div>
-            <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
-              <SacredGeometry variant="octagon" size={100} animated={false} intensity="medium" />
+          <div className="relative mx-auto max-w-4xl">
+            {/* Octagon shape container with clip-path */}
+            <div className="absolute inset-0 bg-[#00ebd6]/10 backdrop-blur-sm transform transition-all 
+                 clip-path-octagon border-2 border-[#00ebd6]/30 z-0 shadow-[0_0_15px_rgba(0,235,214,0.5)]"></div>
+                 
+            <div className="relative h-[500px] w-full overflow-hidden z-10 p-4">
+              <img
+                src={images[currentImageIndex]}
+                alt="Newsletter"
+                className="w-full h-full object-cover transition-opacity duration-1000 clip-path-octagon"
+              />
+              
+              {/* Glow effect overlay */}
+              <div className="absolute inset-0 clip-path-octagon bg-gradient-to-tr from-[rgba(0,235,214,0.2)] to-transparent mix-blend-overlay"></div>
+              
+              {/* Sacred geometry overlay */}
+              <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '30s' }}>
+                <SacredGeometry variant="merkaba" size={120} animated={false} intensity="medium" />
+              </div>
+              <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
+                <SacredGeometry variant="octagon" size={100} animated={false} intensity="medium" />
+              </div>
             </div>
           </div>
           
