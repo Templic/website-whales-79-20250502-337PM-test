@@ -109,12 +109,22 @@ export default function AuthPage() {
       // Handle successful login
       console.log('Login successful, received data:', data);
       
+      // The server may return data.user (from auth route) or data directly (from direct /api/login)
+      const userData = data.user || data;
+      
+      // Check if 2FA is required
       if (data.requires2FA) {
-        setRequires2FA(true);
+        // Store 2FA requirement in state if exists
+        window.sessionStorage.setItem('requires2FA', 'true');
+        alert('2FA required - Please enter your code');
       } else {
-        // The response directly contains the user object
-        // Server side is already setting the session cookie
-        setUser(data);
+        // Store user data directly in sessionStorage for persistence
+        window.sessionStorage.setItem('currentUser', JSON.stringify(userData));
+        window.sessionStorage.removeItem('requires2FA');
+        
+        // Using session storage means the user session will be maintained
+        // between page refreshes but cleared when the browser is closed
+        // The Remember Me feature controls server-side session cookie expiration
         
         // Store remember me preference if selected
         if (loginForm.getValues().rememberMe) {
@@ -130,6 +140,12 @@ export default function AuthPage() {
     onError: (error: any) => {
       // Handle login error
       console.error('Login failed:', error);
+      
+      // Get error message from error object or use a default message
+      const errorMessage = error?.message || 'An error occurred during login. Please try again.';
+      
+      // Display error message to the user
+      alert(`Login failed: ${errorMessage}`);
     }
   });
 
