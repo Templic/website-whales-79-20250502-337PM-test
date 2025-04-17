@@ -1,0 +1,899 @@
+#!/bin/bash
+# Zero-Trust Container Networking Setup
+# This script implements zero-trust network policies for containerized applications
+
+# Default values
+OPERATION="setup"
+NETWORK_PREFIX="cosmic"
+CONFIG_DIR="./security/network"
+POLICY_FILE=""
+SERVICE_NAME=""
+ALLOW_INGRESS_FROM=""
+ALLOW_EGRESS_TO=""
+OUTPUT_FILE=""
+NETWORK_PLUGIN="none"  # none, calico, cilium
+VERBOSE=false
+
+# Colors for terminal output
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to display usage
+show_usage() {
+  echo "Zero-Trust Container Networking Setup"
+  echo "Usage: $0 [options]"
+  echo ""
+  echo "Operations:"
+  echo "  --setup               Set up network policy configuration (default)"
+  echo "  --create-policy       Create a network policy"
+  echo "  --apply-policy        Apply a network policy to a service"
+  echo "  --list-policies       List available network policies"
+  echo "  --generate-mtls       Generate mutual TLS certificates for services"
+  echo "  --test-connectivity   Test connectivity between services"
+  echo ""
+  echo "Options:"
+  echo "  --prefix <name>       Network prefix [default: cosmic]"
+  echo "  --config-dir <dir>    Configuration directory [default: ./security/network]"
+  echo "  --policy <file>       Network policy file"
+  echo "  --service <name>      Service name"
+  echo "  --ingress <list>      Comma-separated list of services allowed for ingress"
+  echo "  --egress <list>       Comma-separated list of services allowed for egress"
+  echo "  --plugin <name>       Network plugin to use: none, calico, cilium [default: none]"
+  echo "  --output <file>       Output file for generated configuration"
+  echo "  --verbose             Enable verbose output"
+  echo "  --help                Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  # Set up basic network isolation"
+  echo "  $0 --setup --prefix myapp"
+  echo ""
+  echo "  # Create a network policy for a web service"
+  echo "  $0 --create-policy --service web-app --ingress frontend --egress api,db"
+  echo ""
+  echo "  # Generate mutual TLS certificates for services"
+  echo "  $0 --generate-mtls --service api"
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --setup)
+      OPERATION="setup"
+      shift
+      ;;
+    --create-policy)
+      OPERATION="create-policy"
+      shift
+      ;;
+    --apply-policy)
+      OPERATION="apply-policy"
+      shift
+      ;;
+    --list-policies)
+      OPERATION="list-policies"
+      shift
+      ;;
+    --generate-mtls)
+      OPERATION="generate-mtls"
+      shift
+      ;;
+    --test-connectivity)
+      OPERATION="test-connectivity"
+      shift
+      ;;
+    --prefix)
+      NETWORK_PREFIX="$2"
+      shift 2
+      ;;
+    --config-dir)
+      CONFIG_DIR="$2"
+      shift 2
+      ;;
+    --policy)
+      POLICY_FILE="$2"
+      shift 2
+      ;;
+    --service)
+      SERVICE_NAME="$2"
+      shift 2
+      ;;
+    --ingress)
+      ALLOW_INGRESS_FROM="$2"
+      shift 2
+      ;;
+    --egress)
+      ALLOW_EGRESS_TO="$2"
+      shift 2
+      ;;
+    --plugin)
+      NETWORK_PLUGIN="$2"
+      shift 2
+      ;;
+    --output)
+      OUTPUT_FILE="$2"
+      shift 2
+      ;;
+    --verbose)
+      VERBOSE=true
+      shift
+      ;;
+    --help)
+      show_usage
+      exit 0
+      ;;
+    *)
+      echo "Error: Unknown option: $1"
+      show_usage
+      exit 1
+      ;;
+  esac
+done
+
+# Create configuration directory if it doesn't exist
+mkdir -p "$CONFIG_DIR/policies"
+mkdir -p "$CONFIG_DIR/mtls"
+
+# Function to check if Docker is installed
+check_docker() {
+  if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed"
+    exit 1
+  fi
+}
+
+# Function to check if Docker Compose is installed
+check_docker_compose() {
+  if ! command -v docker-compose &> /dev/null && ! docker compose version &>/dev/null; then
+    echo "Error: Docker Compose is not installed"
+    exit 1
+  fi
+}
+
+# Function to check if jq is installed
+check_jq() {
+  if ! command -v jq &> /dev/null; then
+    echo "Warning: jq is not installed, some functionality may be limited"
+  fi
+}
+
+# Setup basic network isolation
+setup_network_isolation() {
+  local prefix="$1"
+  local plugin="$2"
+  local output_file="$3"
+  
+  if [[ "$VERBOSE" == true ]]; then
+    echo "Setting up network isolation with prefix: $prefix"
+    echo "Using network plugin: $plugin"
+  fi
+  
+  # Define networks based on application tiers
+  local networks=(
+    "${prefix}_frontend"
+    "${prefix}_api"
+    "${prefix}_backend"
+    "${prefix}_db"
+    "${prefix}_monitoring"
+  )
+  
+  # If output file is not specified, use default
+  if [[ -z "$output_file" ]]; then
+    output_file="$CONFIG_DIR/docker-compose.network.yml"
+  fi
+  
+  # Create docker-compose network configuration
+  cat << EOF > "$output_file"
+# Zero-Trust Network Configuration for Docker Compose
+# Generated by zero-trust-networking.sh
+
+version: '3.8'
+
+networks:
+EOF
+  
+  # Add networks
+  for net in "${networks[@]}"; do
+    cat << EOF >> "$output_file"
+  $net:
+    driver: bridge
+    internal: false
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.${networks[$i]}.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br-${net}
+      encrypted: "true"
+EOF
+    
+    if [[ "$net" == *"db"* || "$net" == *"backend"* ]]; then
+      # Database and backend networks should be internal
+      sed -i "s/internal: false/internal: true/" "$output_file"
+    fi
+  done
+  
+  # Add network policy configuration if using a network plugin
+  if [[ "$plugin" != "none" ]]; then
+    case "$plugin" in
+      calico)
+        # Add Calico network policy configuration
+        mkdir -p "$CONFIG_DIR/calico"
+        
+        # Create a default deny policy
+        cat << EOF > "$CONFIG_DIR/calico/default-deny.yaml"
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  selector: all()
+  types:
+  - Ingress
+  - Egress
+EOF
+        
+        # Create policies for each network
+        for net in "${networks[@]}"; do
+          cat << EOF > "$CONFIG_DIR/calico/$net-policy.yaml"
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: $net-policy
+spec:
+  selector: net == '$net'
+  types:
+  - Ingress
+  - Egress
+  ingress:
+  - action: Allow
+    source:
+      selector: net == '$net'
+  egress:
+  - action: Allow
+    destination:
+      selector: net == '$net'
+EOF
+        done
+        
+        echo "Calico network policies created in $CONFIG_DIR/calico/"
+        ;;
+        
+      cilium)
+        # Add Cilium network policy configuration
+        mkdir -p "$CONFIG_DIR/cilium"
+        
+        # Create a default deny policy
+        cat << EOF > "$CONFIG_DIR/cilium/default-deny.yaml"
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  endpointSelector: {}
+  ingress:
+  - {}
+  egress:
+  - {}
+EOF
+        
+        # Create policies for each network
+        for net in "${networks[@]}"; do
+          cat << EOF > "$CONFIG_DIR/cilium/$net-policy.yaml"
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: $net-policy
+spec:
+  endpointSelector:
+    matchLabels:
+      network: $net
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        network: $net
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        network: $net
+EOF
+        done
+        
+        echo "Cilium network policies created in $CONFIG_DIR/cilium/"
+        ;;
+        
+      *)
+        echo "Error: Unknown network plugin: $plugin"
+        exit 1
+        ;;
+    esac
+  fi
+  
+  echo "Network isolation configuration created: $output_file"
+  
+  # Create a README file with usage instructions
+  cat << EOF > "$CONFIG_DIR/README.md"
+# Zero-Trust Network Configuration
+
+This directory contains network configuration for implementing zero-trust networking
+between containerized services.
+
+## Networks
+
+The following isolated networks have been defined:
+
+* **${prefix}_frontend**: For public-facing services
+* **${prefix}_api**: For API services
+* **${prefix}_backend**: For internal backend services (internal network)
+* **${prefix}_db**: For database services (internal network)
+* **${prefix}_monitoring**: For monitoring services
+
+## Usage with Docker Compose
+
+Include the generated network configuration in your Docker Compose file:
+
+\`\`\`yaml
+include:
+  - $output_file
+\`\`\`
+
+Then assign services to specific networks:
+
+\`\`\`yaml
+services:
+  web:
+    # ... other configuration ...
+    networks:
+      - ${prefix}_frontend
+      
+  api:
+    # ... other configuration ...
+    networks:
+      - ${prefix}_frontend
+      - ${prefix}_api
+      
+  backend:
+    # ... other configuration ...
+    networks:
+      - ${prefix}_api
+      - ${prefix}_backend
+      
+  db:
+    # ... other configuration ...
+    networks:
+      - ${prefix}_db
+\`\`\`
+
+## Network Policies
+
+Network policies enforce which services can communicate with each other.
+By default, services can only communicate with other services in the same network.
+
+To customize network policies, use the \`--create-policy\` option.
+EOF
+  
+  # Also create a sample service configuration
+  cat << EOF > "$CONFIG_DIR/service-example.yml"
+# Example service configuration with zero-trust networking
+version: '3.8'
+
+include:
+  - $output_file
+
+services:
+  web:
+    image: nginx:alpine
+    networks:
+      - ${prefix}_frontend
+    ports:
+      - "8080:80"
+      
+  api:
+    image: node:alpine
+    command: ["node", "server.js"]
+    networks:
+      - ${prefix}_frontend
+      - ${prefix}_api
+      
+  backend:
+    image: python:alpine
+    command: ["python", "worker.py"]
+    networks:
+      - ${prefix}_api
+      - ${prefix}_backend
+      
+  db:
+    image: postgres:alpine
+    networks:
+      - ${prefix}_db
+    environment:
+      POSTGRES_PASSWORD: example_password
+      
+  # Connect backend to database
+  # This service has access to both backend and db networks
+  db-connector:
+    image: alpine
+    command: ["sh", "-c", "while true; do sleep 3600; done"]
+    networks:
+      - ${prefix}_backend
+      - ${prefix}_db
+EOF
+  
+  echo "Example service configuration created: $CONFIG_DIR/service-example.yml"
+}
+
+# Create a network policy
+create_network_policy() {
+  local service="$1"
+  local ingress="$2"
+  local egress="$3"
+  local output_file="$4"
+  
+  if [[ -z "$service" ]]; then
+    echo "Error: Service name is required"
+    exit 1
+  fi
+  
+  if [[ "$VERBOSE" == true ]]; then
+    echo "Creating network policy for service: $service"
+    echo "Allowed ingress from: $ingress"
+    echo "Allowed egress to: $egress"
+  fi
+  
+  # If output file is not specified, use default
+  if [[ -z "$output_file" ]]; then
+    output_file="$CONFIG_DIR/policies/$service-policy.json"
+  fi
+  
+  # Convert comma-separated lists to arrays
+  IFS=',' read -ra INGRESS_ARRAY <<< "$ingress"
+  IFS=',' read -ra EGRESS_ARRAY <<< "$egress"
+  
+  # Create policy file
+  cat << EOF > "$output_file"
+{
+  "service": "$service",
+  "policy": {
+    "description": "Network policy for $service",
+    "ingress": {
+      "allow": [
+EOF
+  
+  # Add ingress rules
+  for ((i=0; i<${#INGRESS_ARRAY[@]}; i++)); do
+    local svc="${INGRESS_ARRAY[$i]}"
+    echo "        \"$svc\"$(if [[ $i -lt $((${#INGRESS_ARRAY[@]}-1)) ]]; then echo ","; fi)" >> "$output_file"
+  done
+  
+  cat << EOF >> "$output_file"
+      ]
+    },
+    "egress": {
+      "allow": [
+EOF
+  
+  # Add egress rules
+  for ((i=0; i<${#EGRESS_ARRAY[@]}; i++)); do
+    local svc="${EGRESS_ARRAY[$i]}"
+    echo "        \"$svc\"$(if [[ $i -lt $((${#EGRESS_ARRAY[@]}-1)) ]]; then echo ","; fi)" >> "$output_file"
+  done
+  
+  cat << EOF >> "$output_file"
+      ]
+    }
+  }
+}
+EOF
+  
+  echo "Network policy created: $output_file"
+  
+  # Create corresponding Docker Compose network config
+  local compose_file="$CONFIG_DIR/policies/$service-networks.yml"
+  
+  cat << EOF > "$compose_file"
+# Network configuration for $service
+# Generated by zero-trust-networking.sh
+
+version: '3.8'
+
+services:
+  $service:
+    # This is a partial configuration to be merged with your service definition
+    networks:
+EOF
+  
+  # Add networks for both ingress and egress
+  local networks=()
+  
+  # Add networks for service itself
+  networks+=("${NETWORK_PREFIX}_$service")
+  
+  # Add networks for ingress
+  for svc in "${INGRESS_ARRAY[@]}"; do
+    # Only add if not already in the list
+    if [[ ! " ${networks[@]} " =~ " ${NETWORK_PREFIX}_$svc " ]]; then
+      networks+=("${NETWORK_PREFIX}_$svc")
+    fi
+  done
+  
+  # Add networks for egress
+  for svc in "${EGRESS_ARRAY[@]}"; do
+    # Only add if not already in the list
+    if [[ ! " ${networks[@]} " =~ " ${NETWORK_PREFIX}_$svc " ]]; then
+      networks+=("${NETWORK_PREFIX}_$svc")
+    fi
+  done
+  
+  # Add networks to compose file
+  for net in "${networks[@]}"; do
+    echo "      - $net" >> "$compose_file"
+  done
+  
+  echo ""
+  echo "Docker Compose network configuration created: $compose_file"
+  echo ""
+  echo "To use this configuration, include it in your Docker Compose file:"
+  echo "include:"
+  echo "  - $compose_file"
+}
+
+# Apply a network policy to a service
+apply_network_policy() {
+  local policy_file="$1"
+  local service="$2"
+  
+  if [[ -z "$policy_file" ]]; then
+    echo "Error: Policy file is required"
+    exit 1
+  fi
+  
+  if [[ -z "$service" ]]; then
+    echo "Error: Service name is required"
+    exit 1
+  fi
+  
+  if [[ ! -f "$policy_file" ]]; then
+    echo "Error: Policy file not found: $policy_file"
+    exit 1
+  fi
+  
+  if [[ "$VERBOSE" == true ]]; then
+    echo "Applying network policy to service: $service"
+    echo "Policy file: $policy_file"
+  fi
+  
+  # Check if jq is installed
+  if ! command -v jq &> /dev/null; then
+    echo "Error: jq is required for parsing policy files"
+    exit 1
+  fi
+  
+  # Check if the service exists
+  if ! docker-compose ps "$service" &>/dev/null && ! docker ps -q --filter "name=$service" &>/dev/null; then
+    echo "Error: Service not found: $service"
+    exit 1
+  fi
+  
+  # Parse policy file
+  local policy_service=$(jq -r '.service' "$policy_file")
+  local ingress=$(jq -r '.policy.ingress.allow | join(",")' "$policy_file")
+  local egress=$(jq -r '.policy.egress.allow | join(",")' "$policy_file")
+  
+  echo "Applying network policy for service: $policy_service"
+  echo "Allowed ingress from: $ingress"
+  echo "Allowed egress to: $egress"
+  
+  echo "This operation would modify running containers and networks."
+  echo "In a production environment, this would require the following steps:"
+  echo "1. Generate updated Docker Compose configuration with network rules"
+  echo "2. Update firewall rules or network policies in the orchestrator"
+  echo "3. Apply the changes with zero/minimal downtime"
+  
+  echo ""
+  echo "Since this is a development environment, you should:"
+  echo "1. Incorporate the generated $CONFIG_DIR/policies/$policy_service-networks.yml in your compose file"
+  echo "2. Restart the affected services using docker-compose up -d"
+}
+
+# List available network policies
+list_network_policies() {
+  echo "Available network policies:"
+  echo ""
+  
+  if [[ ! -d "$CONFIG_DIR/policies" ]]; then
+    echo "No network policies found"
+    return
+  fi
+  
+  # List policy files
+  for policy_file in "$CONFIG_DIR/policies"/*.json; do
+    if [[ -f "$policy_file" ]]; then
+      local service=""
+      local ingress=""
+      local egress=""
+      
+      # Parse policy file if jq is available
+      if command -v jq &> /dev/null; then
+        service=$(jq -r '.service' "$policy_file")
+        ingress=$(jq -r '.policy.ingress.allow | join(", ")' "$policy_file")
+        egress=$(jq -r '.policy.egress.allow | join(", ")' "$policy_file")
+        
+        echo "Service: $service"
+        echo "  Policy file: $policy_file"
+        echo "  Allowed ingress from: $ingress"
+        echo "  Allowed egress to: $egress"
+        echo ""
+      else
+        echo "  $policy_file"
+      fi
+    fi
+  done
+}
+
+# Generate mutual TLS certificates for services
+generate_mtls() {
+  local service="$1"
+  
+  if [[ -z "$service" ]]; then
+    echo "Error: Service name is required"
+    exit 1
+  fi
+  
+  if [[ "$VERBOSE" == true ]]; then
+    echo "Generating mutual TLS certificates for service: $service"
+  fi
+  
+  # Create directory for certificates
+  local cert_dir="$CONFIG_DIR/mtls/$service"
+  mkdir -p "$cert_dir"
+  
+  # Check if OpenSSL is installed
+  if ! command -v openssl &> /dev/null; then
+    echo "Error: OpenSSL is required for generating certificates"
+    exit 1
+  fi
+  
+  # Generate CA key and certificate if they don't exist
+  local ca_dir="$CONFIG_DIR/mtls/ca"
+  mkdir -p "$ca_dir"
+  
+  if [[ ! -f "$ca_dir/ca.key" ]]; then
+    echo "Generating CA key and certificate..."
+    
+    # Generate CA private key
+    openssl genrsa -out "$ca_dir/ca.key" 4096
+    
+    # Generate CA certificate
+    openssl req -x509 -new -nodes -key "$ca_dir/ca.key" -sha256 -days 3650 \
+      -out "$ca_dir/ca.crt" \
+      -subj "/CN=ZeroTrust CA/O=${NETWORK_PREFIX^^}/C=US"
+    
+    echo "CA certificate generated: $ca_dir/ca.crt"
+  fi
+  
+  echo "Generating certificates for service: $service"
+  
+  # Generate private key
+  openssl genrsa -out "$cert_dir/$service.key" 2048
+  
+  # Create config file for certificate
+  cat << EOF > "$cert_dir/$service.cnf"
+[req]
+req_extensions = v3_req
+distinguished_name = req_distinguished_name
+
+[req_distinguished_name]
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = $service
+DNS.2 = ${service}.local
+DNS.3 = ${service}.${NETWORK_PREFIX}
+IP.1 = 127.0.0.1
+EOF
+  
+  # Generate CSR
+  openssl req -new -key "$cert_dir/$service.key" -out "$cert_dir/$service.csr" \
+    -subj "/CN=$service/O=${NETWORK_PREFIX^^}/C=US" \
+    -config "$cert_dir/$service.cnf"
+  
+  # Sign the certificate with the CA
+  openssl x509 -req -in "$cert_dir/$service.csr" -CA "$ca_dir/ca.crt" \
+    -CAkey "$ca_dir/ca.key" -CAcreateserial -out "$cert_dir/$service.crt" \
+    -days 730 -sha256 -extfile "$cert_dir/$service.cnf" -extensions v3_req
+  
+  # Create PEM file (combined certificate and key)
+  cat "$cert_dir/$service.crt" "$cert_dir/$service.key" > "$cert_dir/$service.pem"
+  
+  # Clean up CSR
+  rm "$cert_dir/$service.csr"
+  
+  echo "Certificates generated for service: $service"
+  echo "  Private key: $cert_dir/$service.key"
+  echo "  Certificate: $cert_dir/$service.crt"
+  echo "  Combined PEM: $cert_dir/$service.pem"
+  echo "  CA Certificate: $ca_dir/ca.crt"
+  
+  # Create a README file with usage instructions
+  cat << EOF > "$cert_dir/README.md"
+# Mutual TLS Certificates for $service
+
+These certificates are for implementing mutual TLS authentication between services.
+
+## Files
+
+* **$service.key**: Private key for the service
+* **$service.crt**: Certificate for the service
+* **$service.pem**: Combined certificate and key
+* **../ca/ca.crt**: CA certificate for verifying other services
+
+## Usage with Nginx
+
+Add the following to your Nginx configuration:
+
+\`\`\`nginx
+# Server configuration (as a service)
+server {
+  listen 443 ssl;
+  
+  ssl_certificate /path/to/$service.crt;
+  ssl_certificate_key /path/to/$service.key;
+  
+  # For mTLS
+  ssl_client_certificate /path/to/ca.crt;
+  ssl_verify_client on;
+  
+  # ...
+}
+
+# Client configuration (connecting to other services)
+server {
+  # ...
+  
+  location /api/ {
+    proxy_pass https://api-service;
+    proxy_ssl_certificate /path/to/$service.crt;
+    proxy_ssl_certificate_key /path/to/$service.key;
+    proxy_ssl_trusted_certificate /path/to/ca.crt;
+    proxy_ssl_verify on;
+  }
+}
+\`\`\`
+
+## Usage with Node.js
+
+\`\`\`javascript
+const https = require('https');
+const fs = require('fs');
+
+// Server
+const server = https.createServer({
+  key: fs.readFileSync('/path/to/$service.key'),
+  cert: fs.readFileSync('/path/to/$service.crt'),
+  ca: fs.readFileSync('/path/to/ca.crt'),
+  requestCert: true,
+  rejectUnauthorized: true
+});
+
+// Client
+const options = {
+  host: 'api-service',
+  port: 443,
+  path: '/resource',
+  method: 'GET',
+  key: fs.readFileSync('/path/to/$service.key'),
+  cert: fs.readFileSync('/path/to/$service.crt'),
+  ca: fs.readFileSync('/path/to/ca.crt')
+};
+
+https.request(options, (res) => {
+  // Handle response
+});
+\`\`\`
+EOF
+  
+  echo "Usage instructions created: $cert_dir/README.md"
+}
+
+# Test connectivity between services
+test_connectivity() {
+  local service="$1"
+  
+  if [[ -z "$service" ]]; then
+    echo "Error: Service name is required"
+    exit 1
+  fi
+  
+  if [[ "$VERBOSE" == true ]]; then
+    echo "Testing connectivity for service: $service"
+  fi
+  
+  # Check if the service exists
+  if ! docker ps -q --filter "name=$service" &>/dev/null; then
+    echo "Error: Service container not found: $service"
+    exit 1
+  fi
+  
+  echo "Testing connectivity from $service to other services..."
+  
+  # Get all running containers
+  local containers=$(docker ps --format "{{.Names}}")
+  
+  # Test connectivity to each container
+  for target in $containers; do
+    if [[ "$target" != "$service" ]]; then
+      echo "Testing connection from $service to $target..."
+      
+      # Get target IP address
+      local target_ip=$(docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$target")
+      
+      if [[ -z "$target_ip" ]]; then
+        echo "  Warning: Could not determine IP address for $target"
+        continue
+      fi
+      
+      # Try to ping the target
+      echo "  Pinging $target ($target_ip)..."
+      if docker exec "$service" ping -c 1 -W 1 "$target_ip" &>/dev/null; then
+        echo -e "  ${GREEN}✓ Connectivity allowed to $target${NC}"
+      else
+        echo -e "  ${RED}✗ Connectivity blocked to $target${NC}"
+      fi
+      
+      # Try to connect to common ports
+      local ports=(80 443 8080 5432 3306 6379 27017)
+      
+      for port in "${ports[@]}"; do
+        # Check if the port is exposed
+        if docker exec "$service" timeout 1 bash -c "cat < /dev/null > /dev/tcp/$target_ip/$port" 2>/dev/null; then
+          echo -e "  ${GREEN}✓ Port $port is accessible on $target${NC}"
+        fi
+      done
+      
+      echo ""
+    fi
+  done
+}
+
+# Main function
+main() {
+  check_docker
+  check_docker_compose
+  check_jq
+  
+  case "$OPERATION" in
+    setup)
+      setup_network_isolation "$NETWORK_PREFIX" "$NETWORK_PLUGIN" "$OUTPUT_FILE"
+      ;;
+    create-policy)
+      create_network_policy "$SERVICE_NAME" "$ALLOW_INGRESS_FROM" "$ALLOW_EGRESS_TO" "$OUTPUT_FILE"
+      ;;
+    apply-policy)
+      apply_network_policy "$POLICY_FILE" "$SERVICE_NAME"
+      ;;
+    list-policies)
+      list_network_policies
+      ;;
+    generate-mtls)
+      generate_mtls "$SERVICE_NAME"
+      ;;
+    test-connectivity)
+      test_connectivity "$SERVICE_NAME"
+      ;;
+    *)
+      echo "Error: Unknown operation: $OPERATION"
+      show_usage
+      exit 1
+      ;;
+  esac
+}
+
+# Run the main function
+main
