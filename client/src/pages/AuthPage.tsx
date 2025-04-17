@@ -80,7 +80,9 @@ export default function AuthPage() {
     requires2FA,
     verify2FAMutation,
     verifyBackupCodeMutation,
-    clearRequires2FA
+    clearRequires2FA,
+    setUser,
+    setRequires2FA
   } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -90,11 +92,19 @@ export default function AuthPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password: string }) => {
+      const tokenResponse = await fetch('/api/csrf-token');
+      const { token } = await tokenResponse.json();
+
       const response = await fetch('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'CSRF-Token': token
+        },
         body: JSON.stringify(data),
+        credentials: 'include'
       });
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message);
@@ -103,7 +113,12 @@ export default function AuthPage() {
     },
     onSuccess: (data) => {
       // Handle successful login
-      window.location.href = '/';
+      if (data.requires2FA) {
+        setRequires2FA(true);
+      } else {
+        setUser(data.user);
+        window.location.href = '/';
+      }
     },
     onError: (error) => {
       // Handle login error
@@ -142,6 +157,8 @@ export default function AuthPage() {
   const handle2FASuccess = (userData: any) => {
     // The user is now fully authenticated
     console.log("2FA verification successful", userData);
+    setUser(userData); //Added to set the user after successful 2FA
+    window.location.href = '/'; // Redirect to home after 2FA
   };
 
   const handle2FACancel = () => {
