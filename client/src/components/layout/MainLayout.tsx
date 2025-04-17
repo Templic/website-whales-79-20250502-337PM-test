@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { CosmicFonts } from "@/components/common/cosmic-fonts";
 import ChatWidget from "@/components/chat/ChatWidget";
 import { ChatProvider } from "@/contexts/ChatContext";
+import { AccessibilityControls } from "@/components/common/accessibility-controls";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -46,6 +47,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           
           {/* Chat Widget (floating on all pages) */}
           <ChatWidget />
+          
+          {/* Accessibility Controls (positioned to avoid overlap with chat widget) */}
+          <AccessibilityControls />
         </div>
       </CosmicFonts>
     </ChatProvider>

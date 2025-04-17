@@ -103,10 +103,10 @@ export function AccessibilityControls() {
 
   return (
     <>
-      {/* Accessibility button */}
+      {/* Accessibility button - positioned left of the chat widget to avoid overlap */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-white"
+        className="fixed bottom-4 left-4 z-[9999] flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-white"
         aria-label="Accessibility Options"
       >
         <Settings className="h-8 w-8" />
