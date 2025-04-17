@@ -11,6 +11,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Eye,
   EyeOff,
@@ -37,6 +38,10 @@ export function AccessibilityControls() {
   const [reducedMotion, setReducedMotion] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [isListening, setIsListening] = useState(false)
+  const [focusOutline, setFocusOutline] = useState(false); // Added focus indicator state
+  const [colorFilter, setColorFilter] = useState("none"); // Added color filter state
+  const [keyboardMode, setKeyboardMode] = useState(false); // Added keyboard mode state
+
 
   // Apply text size changes
   useEffect(() => {
@@ -87,6 +92,18 @@ export function AccessibilityControls() {
       document.documentElement.classList.remove("reduced-motion")
     }
   }, [reducedMotion])
+
+  // Apply focus outline
+  useEffect(() => {
+    document.documentElement.style.outline = focusOutline ? '2px solid blue' : 'none';
+  }, [focusOutline]);
+
+
+  // Apply color filter
+  useEffect(() => {
+    document.documentElement.style.filter = colorFilter === 'none' ? 'none' : `sepia(${colorFilter === 'grayscale' ? 1 : 0})`;
+  }, [colorFilter]);
+
 
   // Mock voice recognition
   const toggleVoiceRecognition = () => {
@@ -270,12 +287,50 @@ export function AccessibilityControls() {
                 </div>
               )}
 
-              {/* Keyboard Navigation */}
+              {/* Focus Indicators */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Keyboard className="h-5 w-5 text-purple-400" />
-                  <h3 className="font-medium text-white">Keyboard Navigation</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-purple-400" />
+                    <div>
+                      <h3 className="font-medium text-white">Focus Indicators</h3>
+                      <p className="text-xs text-white/60">Show focus outlines</p>
+                    </div>
+                  </div>
+                  <Switch checked={focusOutline} onCheckedChange={setFocusOutline} />
                 </div>
+
+                {/* Color Filter */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Contrast className="h-5 w-5 text-purple-400" />
+                    <h3 className="font-medium text-white">Color Filter</h3>
+                  </div>
+                  <Select value={colorFilter} onValueChange={setColorFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select color filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="grayscale">Grayscale</SelectItem>
+                      <SelectItem value="protanopia">Protanopia</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+
+                {/* Keyboard Navigation */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Keyboard className="h-5 w-5 text-purple-400" />
+                    <div>
+                      <h3 className="font-medium text-white">Keyboard Navigation</h3>
+                      <p className="text-xs text-white/60">Enhanced keyboard control</p>
+                    </div>
+                  </div>
+                  <Switch checked={keyboardMode} onCheckedChange={setKeyboardMode} />
+                </div>
+
                 <div className="rounded-lg bg-black/40 p-4">
                   <div className="space-y-2 text-sm text-white/80">
                     <p>Keyboard shortcuts:</p>

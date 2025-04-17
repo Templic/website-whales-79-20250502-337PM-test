@@ -1,3 +1,21 @@
+
+/* Accessibility styles */
+.no-focus-outline *:focus {
+  outline: none !important;
+}
+
+.keyboard-mode *:focus {
+  outline: 2px solid #4CAF50 !important;
+  outline-offset: 2px;
+}
+
+/* Color blindness SVG filters */
+svg[aria-hidden="true"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
 .chat-container {
   transition: all 0.3s ease;
 }
