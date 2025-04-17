@@ -22,7 +22,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { MapPin, Music, Calendar, Info, ChevronLeft, ChevronRight, Maximize, Minimize } from "lucide-react"
+import { MapPin, Music, Calendar, Info, Maximize, Minimize, Plus, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Location {

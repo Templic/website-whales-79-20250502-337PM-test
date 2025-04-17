@@ -228,16 +228,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         {shape === 'wave' && (
           <CosmicShapeGroup
             shapes={[
-              {
-                type: 'ellipse',
-                size: 150,
-                color: variantColors[variant].main,
-                glowColor: variantColors[variant].glow,
-                fillOpacity: 0.02,
-                animate: true,
-                animationDuration: 80,
-                position: { top: '30%', left: '10%' }
-              },
+              /* Removed the ellipse to the left as requested */
               {
                 type: 'starburst',
                 points: 5,

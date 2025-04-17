@@ -488,7 +488,7 @@ export function AccessibilityControls() {
           <div
             className={cn(
               "relative w-full max-w-md rounded-xl bg-gradient-to-b from-black/90 to-purple-950/90 p-6 shadow-xl backdrop-blur-md transition-all",
-              isExpanded ? "h-[80vh] overflow-y-auto" : "max-h-[80vh] overflow-y-auto",
+              isExpanded ? "h-[80vh] max-h-[calc(100vh-120px)] overflow-y-auto" : "max-h-[80vh] max-h-[calc(100vh-120px)] overflow-y-auto mt-20",
             )}
           >
             <div className="flex items-center justify-between mb-4">
