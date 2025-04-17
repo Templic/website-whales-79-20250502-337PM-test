@@ -1,4 +1,3 @@
-
 .chat-container {
   transition: all 0.3s ease;
 }
@@ -20,17 +19,17 @@
 @import './styles/cosmic-containers.css';
 
 @keyframes cosmic {
-  0%, 100% {
-    text-shadow: 0 0 10px #00ebd6,
-                 0 0 20px #00ebd6,
-                 0 0 30px #fe0064,
-                 0 0 40px #fe0064;
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
   }
   50% {
-    text-shadow: 0 0 20px #fe0064,
-                 0 0 30px #fe0064,
-                 0 0 40px #00ebd6,
-                 0 0 50px #00ebd6;
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
   }
 }
 
@@ -106,7 +105,7 @@
   * {
     @apply border-border;
   }
-  
+
   :root {
     --font-almendra: 'Almendra', serif;
     --font-cormorant-garamond: 'Cormorant Garamond', serif;
@@ -117,119 +116,119 @@
     @apply font-serif antialiased bg-background text-foreground;
     font-family: var(--font-cormorant-garamond);
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-almendra);
   }
-  
+
   /* Apply Almendra to elements with these specific classes */
   .cosmic-title, .section-title, .fancy-title, .display-text {
     font-family: var(--font-almendra);
   }
-  
+
   /* Cosmic fonts imported at the top */
-  
+
   .font-orbitron {
     font-family: 'Orbitron', sans-serif;
   }
-  
+
   .font-rajdhani {
     font-family: 'Rajdhani', sans-serif;
   }
-  
+
   .font-space {
     font-family: 'Space Grotesk', sans-serif;
   }
-  
+
   .font-cinzel {
     font-family: 'Cinzel', serif;
   }
-  
+
   .font-exo2 {
     font-family: 'Exo 2', sans-serif;
   }
-  
+
   .font-gruppo {
     font-family: 'Gruppo', cursive;
   }
-  
+
   .font-michroma {
     font-family: 'Michroma', sans-serif;
   }
-  
+
   .font-poiret {
     font-family: 'Poiret One', cursive;
   }
-  
+
   .font-syncopate {
     font-family: 'Syncopate', sans-serif;
   }
-  
+
   .font-almendra {
     font-family: 'Almendra', serif;
   }
-  
+
   .font-cormorant {
     font-family: 'Cormorant Garamond', serif;
   }
-  
+
   /* Accessibility styles */
-  
+
   /* Auto-hide navigation */
   .nav-auto-hide header {
     transition: transform 0.3s ease-in-out;
   }
-  
+
   .nav-auto-hide header.scrolled-down {
     transform: translateY(-100%);
   }
-  
+
   /* High contrast mode */
   .high-contrast {
     --text-color: white;
     --background-color: black;
     --accent-color: yellow;
   }
-  
+
   /* Dark mode */
   .dark-mode {
     --text-color: #e0e0e0;
     --background-color: #121212;
     --accent-color: #7c3aed;
   }
-  
+
   /* Reduced motion */
   .reduced-motion * {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  
+
   /* Geometric shape clip paths for containers */
   .clip-path-hexagon {
     clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   }
-  
+
   .clip-path-pentagon {
     clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
   }
-  
+
   .clip-path-octagon {
     clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
   }
-  
+
   .clip-path-heptagon {
     clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
   }
-  
+
   .clip-path-triangle {
     clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
   }
-  
+
   .clip-path-diamond {
     clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
   }
-  
+
   .clip-path-merkaba {
     clip-path: polygon(
       50% 0%,
@@ -244,31 +243,31 @@
       39% 35%
     );
   }
-  
+
   /* Add a subtle glow effect to all geometric containers */
   .clip-path-hexagon, .clip-path-pentagon, .clip-path-octagon, 
   .clip-path-heptagon, .clip-path-triangle, .clip-path-diamond, .clip-path-merkaba {
     box-shadow: 0 0 15px rgba(0, 235, 214, 0.3), 
                 inset 0 0 15px rgba(0, 235, 214, 0.2);
   }
-  
+
   /* Cosmic hover glow effect for buttons and interactive elements */
   .cosmic-hover-glow {
     position: relative;
     transition: all 0.3s ease;
   }
-  
+
   .cosmic-hover-glow:hover {
     box-shadow: 0 0 15px rgba(138, 75, 255, 0.7),
                 0 0 25px rgba(138, 75, 255, 0.4);
     transform: translateY(-2px);
   }
-  
+
   .cosmic-hover-glow:active {
     transform: translateY(1px);
     box-shadow: 0 0 8px rgba(138, 75, 255, 0.6);
   }
-  
+
   /* Improvement for product cards to have consistent heights */
   .product-card-container {
     display: grid;
