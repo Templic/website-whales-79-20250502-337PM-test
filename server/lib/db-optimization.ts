@@ -1,281 +1,369 @@
 /**
- * Database Query Optimization Utilities
+ * Database Optimization Utilities
  * 
- * Provides utilities for optimizing database queries and monitoring performance.
+ * Provides functions for optimizing database operations, queries, and connections.
+ * Includes tools for query optimization, connection pooling, and monitoring.
  */
 
-import { db } from '../db';
-import { sql } from 'drizzle-orm';
-import { logger } from './logger';
+import { Pool, PoolClient, QueryResult } from 'pg';
 
-// Interface for query timing metrics
-interface QueryMetrics {
-  query: string;
-  params: any[];
-  duration: number;
-  timestamp: Date;
-}
+// Default database connection pool settings
+const DEFAULT_POOL_CONFIG = {
+  max: 20,           // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000,  // How long a client is allowed to remain idle before being closed
+  connectionTimeoutMillis: 2000, // How long to wait for a connection
+  maxUses: 7500,     // Close and replace a connection after this many uses
+};
 
-// Store recent slow queries for analysis
-const recentSlowQueries: QueryMetrics[] = [];
-const MAX_SLOW_QUERIES = 100;
-const SLOW_QUERY_THRESHOLD = 500; // ms
+// Singleton database pool
+let pool: Pool | null = null;
 
 /**
- * Execute a query with timing metrics
+ * Initialize or get the database connection pool
+ * Ensures only one pool exists throughout the application
  * 
- * @param queryString SQL query string
- * @param params Query parameters
- * @returns Query result
+ * @param config Optional configuration to override defaults
+ * @returns Database connection pool
  */
-export async function timedQuery<T>(queryString: string, params: any[] = []): Promise<T> {
-  const start = performance.now();
-  let result;
+export function getDbPool(config = DEFAULT_POOL_CONFIG): Pool {
+  if (!pool) {
+    const databaseUrl = process.env.DATABASE_URL;
+    
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL environment variable is required');
+    }
+    
+    try {
+      pool = new Pool({
+        connectionString: databaseUrl,
+        ...config,
+      });
+      
+      // Log connection events
+      pool.on('connect', () => {
+        console.log('[Database] New connection established');
+      });
+      
+      pool.on('error', (error: Error) => {
+        console.error('[Database] Error in connection pool:', error.message);
+      });
+      
+      console.log('[Database] Connection pool initialized');
+    } catch (error) {
+      console.error('[Database] Failed to initialize connection pool:', error);
+      throw error;
+    }
+  }
+  
+  return pool;
+}
+
+/**
+ * Get a client from the connection pool with timeout
+ * 
+ * @param timeout Timeout in milliseconds
+ * @returns Promise resolving to a database client
+ */
+export async function getDbClient(timeout = 5000): Promise<PoolClient> {
+  const dbPool = getDbPool();
   
   try {
-    result = await db.execute(sql.raw(queryString, params));
+    // Create a promise that rejects after the timeout
+    const timeoutPromise = new Promise<PoolClient>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Database connection timed out after ${timeout}ms`));
+      }, timeout);
+    });
+    
+    // Get a client from the pool
+    const clientPromise = dbPool.connect();
+    
+    // Race the client acquisition against the timeout
+    return await Promise.race([clientPromise, timeoutPromise]);
   } catch (error) {
-    logger.error(`Query error: ${error.message}`, { query: queryString, params });
+    console.error('[Database] Failed to acquire client:', error);
+    throw error;
+  }
+}
+
+/**
+ * Execute a query with built-in error handling and performance logging
+ * 
+ * @param query SQL query string
+ * @param params Query parameters
+ * @param options Optional query options
+ * @returns Promise resolving to query result
+ */
+export async function executeQuery<T extends Record<string, unknown>>(
+  query: string,
+  params: any[] = [],
+  options: { timeout?: number; label?: string } = {}
+): Promise<QueryResult<T>> {
+  const { timeout = 5000, label = 'query' } = options;
+  const start = process.hrtime();
+  let client: PoolClient | null = null;
+  
+  try {
+    // Get a client from the pool
+    client = await getDbClient(timeout);
+    
+    // Execute the query
+    const result = await client.query<T>(query, params);
+    
+    // Calculate and log execution time
+    const diff = process.hrtime(start);
+    const duration = diff[0] * 1000 + diff[1] / 1000000;
+    
+    if (duration > 500) {
+      console.warn(`[Database] Slow ${label}: ${duration.toFixed(2)}ms`);
+    }
+    
+    return result;
+  } catch (error) {
+    // Calculate execution time even on error
+    const diff = process.hrtime(start);
+    const duration = diff[0] * 1000 + diff[1] / 1000000;
+    
+    console.error(
+      `[Database] Error in ${label} (${duration.toFixed(2)}ms):`,
+      error instanceof Error ? error.message : 'Unknown error',
+      'Query:',
+      query.slice(0, 200) + (query.length > 200 ? '...' : '')
+    );
+    
     throw error;
   } finally {
-    const duration = performance.now() - start;
-    
-    // Track slow queries for optimization
-    if (duration > SLOW_QUERY_THRESHOLD) {
-      logSlowQuery(queryString, params, duration);
+    // Always release the client back to the pool
+    if (client) {
+      client.release();
     }
   }
-  
-  return result as T;
 }
 
 /**
- * Log a slow query for later analysis
- */
-function logSlowQuery(query: string, params: any[], duration: number) {
-  const metrics: QueryMetrics = {
-    query,
-    params,
-    duration,
-    timestamp: new Date(),
-  };
-  
-  // Add to recent slow queries list, maintaining max size
-  recentSlowQueries.push(metrics);
-  if (recentSlowQueries.length > MAX_SLOW_QUERIES) {
-    recentSlowQueries.shift();
-  }
-  
-  // Log the slow query
-  logger.warn(`Slow query detected (${duration.toFixed(2)}ms): ${query}`, {
-    duration,
-    params,
-  });
-}
-
-/**
- * Get recent slow queries for analysis
- */
-export function getSlowQueries(): QueryMetrics[] {
-  return [...recentSlowQueries];
-}
-
-/**
- * Clear the slow query log
- */
-export function clearSlowQueries(): void {
-  recentSlowQueries.length = 0;
-}
-
-/**
- * Analyze query performance and suggest improvements
+ * Execute a parameterized query with named parameters
  * 
- * @param queryId Identifier for the query
- * @param query SQL query to analyze
+ * @param query SQL query with named parameters (:paramName)
+ * @param params Object with parameter values
+ * @param options Optional query options
+ * @returns Promise resolving to query result
  */
-export async function analyzeQueryPerformance(queryId: string, query: string): Promise<{
-  analysis: string;
-  suggestedIndexes: string[];
-}> {
-  // Fetch query plan
-  const explainQuery = `EXPLAIN ANALYZE ${query}`;
+export async function executeNamedQuery<T extends Record<string, unknown>>(
+  query: string,
+  params: Record<string, any> = {},
+  options: { timeout?: number; label?: string } = {}
+): Promise<QueryResult<T>> {
+  // Convert named parameters to positional parameters
+  const paramNames = Object.keys(params);
+  const positionalParams: any[] = [];
   
-  try {
-    const result = await db.execute(sql.raw(explainQuery));
-    
-    // Analyze execution plan
-    const planLines = result.map((row: any) => row.QUERY_PLAN || row.query_plan || '');
-    const planText = planLines.join('\n');
-    
-    // Check for common performance issues
-    const analysis = analyzeQueryPlan(planText);
-    
-    // Suggest indexes
-    const suggestedIndexes = suggestIndexes(planText, query);
-    
-    return {
-      analysis,
-      suggestedIndexes,
-    };
-  } catch (error) {
-    logger.error(`Query analysis error: ${error.message}`, { queryId, query });
-    return {
-      analysis: `Error analyzing query: ${error.message}`,
-      suggestedIndexes: [],
-    };
-  }
+  let processedQuery = query;
+  let paramIndex = 1;
+  
+  // Replace each named parameter with a positional parameter
+  paramNames.forEach(name => {
+    const regex = new RegExp(`:${name}\\b`, 'g');
+    processedQuery = processedQuery.replace(regex, `$${paramIndex}`);
+    positionalParams.push(params[name]);
+    paramIndex++;
+  });
+  
+  // Execute the query with positional parameters
+  return executeQuery<T>(
+    processedQuery,
+    positionalParams,
+    options
+  );
 }
 
 /**
- * Analyze a query plan for performance issues
+ * Build a dynamic query with optional clauses
+ * Helps prevent SQL injection by properly parameterizing dynamic conditions
  */
-function analyzeQueryPlan(planText: string): string {
-  const issues: string[] = [];
+export function buildDynamicQuery(
+  baseQuery: string,
+  conditions: Record<string, any> = {},
+  options: {
+    orderBy?: string;
+    orderDirection?: 'ASC' | 'DESC';
+    groupBy?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+): { query: string; params: any[] } {
+  const params: any[] = [];
+  const whereClauses: string[] = [];
   
-  // Look for common performance issues in the query plan
-  if (planText.includes('Seq Scan') && !planText.includes('small table')) {
-    issues.push('Sequential scan detected on a potentially large table. Consider adding an index.');
-  }
-  
-  if (planText.includes('Nested Loop')) {
-    issues.push('Nested loop join detected. Consider optimizing join conditions or adding indexes.');
-  }
-  
-  if (planText.includes('Hash Join') && planText.includes('large table')) {
-    issues.push('Hash join on large tables detected. Verify join conditions are optimized.');
-  }
-  
-  if (planText.includes('Sort')) {
-    issues.push('Sorting operation detected. Consider adding an index to avoid sorting.');
-  }
-  
-  if (planText.includes('Bitmap Heap Scan')) {
-    issues.push('Bitmap heap scan detected. This can be slow for large result sets.');
-  }
-  
-  // Check execution time
-  const timeMatch = planText.match(/Execution Time: (\d+\.\d+) ms/);
-  if (timeMatch) {
-    const executionTime = parseFloat(timeMatch[1]);
-    if (executionTime > 100) {
-      issues.push(`High execution time (${executionTime.toFixed(2)}ms). Query optimization recommended.`);
-    }
-  }
-  
-  return issues.length > 0 
-    ? `Performance issues detected:\n- ${issues.join('\n- ')}` 
-    : 'No significant performance issues detected.';
-}
-
-/**
- * Suggest indexes based on query plan and query text
- */
-function suggestIndexes(planText: string, query: string): string[] {
-  const suggestedIndexes: string[] = [];
-  
-  // Extract table and column names from the query
-  const tableMatch = query.match(/FROM\s+([a-zA-Z0-9_]+)/i);
-  if (!tableMatch) return suggestedIndexes;
-  
-  const tableName = tableMatch[1];
-  
-  // Check WHERE clauses
-  const whereMatch = query.match(/WHERE\s+(.+?)(?:ORDER BY|GROUP BY|LIMIT|$)/is);
-  if (whereMatch) {
-    const whereClause = whereMatch[1];
-    const columnMatches = whereClause.match(/([a-zA-Z0-9_]+)\s*(?:=|>|<|>=|<=|LIKE|IN)/g);
-    
-    if (columnMatches) {
-      columnMatches.forEach(match => {
-        const column = match.trim().split(/\s+/)[0];
-        if (planText.includes('Seq Scan') && planText.includes(column)) {
-          suggestedIndexes.push(`CREATE INDEX idx_${tableName}_${column} ON ${tableName} (${column});`);
+  // Build WHERE clauses from conditions
+  Object.entries(conditions).forEach(([key, value], index) => {
+    if (value !== undefined && value !== null) {
+      const paramIndex = params.length + 1;
+      
+      // Handle different types of conditions
+      if (Array.isArray(value)) {
+        // Array values for IN operations
+        whereClauses.push(`${key} IN (${value.map((_, i) => `$${paramIndex + i}`).join(', ')})`);
+        params.push(...value);
+      } else if (typeof value === 'object' && value !== null) {
+        // Object values for complex operations
+        if ('like' in value) {
+          whereClauses.push(`${key} ILIKE $${paramIndex}`);
+          params.push(`%${value.like}%`);
+        } else if ('gt' in value) {
+          whereClauses.push(`${key} > $${paramIndex}`);
+          params.push(value.gt);
+        } else if ('lt' in value) {
+          whereClauses.push(`${key} < $${paramIndex}`);
+          params.push(value.lt);
+        } else if ('gte' in value) {
+          whereClauses.push(`${key} >= $${paramIndex}`);
+          params.push(value.gte);
+        } else if ('lte' in value) {
+          whereClauses.push(`${key} <= $${paramIndex}`);
+          params.push(value.lte);
+        } else if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
+          whereClauses.push(`${key} BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
+          params.push(value.between[0], value.between[1]);
         }
-      });
+      } else {
+        // Simple equality condition
+        whereClauses.push(`${key} = $${paramIndex}`);
+        params.push(value);
+      }
+    }
+  });
+  
+  // Construct WHERE clause
+  let whereClause = '';
+  if (whereClauses.length > 0) {
+    whereClause = ` WHERE ${whereClauses.join(' AND ')}`;
+  }
+  
+  // Add ORDER BY if specified
+  let orderClause = '';
+  if (options.orderBy) {
+    const direction = options.orderDirection || 'ASC';
+    // Validate order column to prevent SQL injection
+    if (/^[a-zA-Z0-9_\.]+$/.test(options.orderBy)) {
+      orderClause = ` ORDER BY ${options.orderBy} ${direction}`;
     }
   }
   
-  // Check ORDER BY clauses
-  const orderMatch = query.match(/ORDER BY\s+(.+?)(?:LIMIT|$)/is);
-  if (orderMatch) {
-    const orderClause = orderMatch[1];
-    const orderColumns = orderClause.split(',').map(col => col.trim().split(/\s+/)[0]);
+  // Add GROUP BY if specified
+  let groupClause = '';
+  if (options.groupBy) {
+    // Validate group column to prevent SQL injection
+    if (/^[a-zA-Z0-9_\.]+$/.test(options.groupBy)) {
+      groupClause = ` GROUP BY ${options.groupBy}`;
+    }
+  }
+  
+  // Add LIMIT and OFFSET if specified
+  let limitOffsetClause = '';
+  if (options.limit !== undefined) {
+    limitOffsetClause = ` LIMIT ${options.limit}`;
     
-    if (orderColumns.length > 0 && planText.includes('Sort')) {
-      suggestedIndexes.push(
-        `CREATE INDEX idx_${tableName}_${orderColumns.join('_')} ON ${tableName} (${orderColumns.join(', ')});`
-      );
+    if (options.offset !== undefined) {
+      limitOffsetClause += ` OFFSET ${options.offset}`;
     }
   }
   
-  // Check GROUP BY clauses
-  const groupMatch = query.match(/GROUP BY\s+(.+?)(?:HAVING|ORDER BY|LIMIT|$)/is);
-  if (groupMatch) {
-    const groupClause = groupMatch[1];
-    const groupColumns = groupClause.split(',').map(col => col.trim().split(/\s+/)[0]);
-    
-    if (groupColumns.length > 0 && planText.includes('HashAggregate')) {
-      suggestedIndexes.push(
-        `CREATE INDEX idx_${tableName}_${groupColumns.join('_')} ON ${tableName} (${groupColumns.join(', ')});`
-      );
-    }
-  }
+  // Construct the final query
+  const query = `${baseQuery}${whereClause}${groupClause}${orderClause}${limitOffsetClause}`;
   
-  return [...new Set(suggestedIndexes)]; // Remove duplicates
+  return { query, params };
 }
 
 /**
- * Get database performance metrics
+ * Perform database maintenance operations
+ * Should be run periodically to optimize performance
  */
-export async function getDatabaseMetrics() {
+export async function performDatabaseMaintenance(): Promise<void> {
+  console.log('[Database] Starting maintenance operations');
+  const start = process.hrtime();
+  
   try {
-    // Get table statistics
-    const tableStats = await db.execute(sql.raw(`
-      SELECT
-        schemaname,
-        relname as table_name,
-        n_live_tup as row_count,
-        n_dead_tup as dead_tuples,
-        last_vacuum,
-        last_analyze
-      FROM
-        pg_stat_user_tables
-      ORDER BY
-        n_live_tup DESC
-    `));
+    // Get list of tables
+    const tablesResult = await executeQuery<{ tablename: string }>(
+      `SELECT tablename FROM pg_tables 
+       WHERE schemaname = 'public' 
+       ORDER BY tablename`,
+      [],
+      { label: 'maintenance-tables' }
+    );
     
-    // Get index statistics
-    const indexStats = await db.execute(sql.raw(`
-      SELECT
-        indexrelname as index_name,
-        relname as table_name,
-        idx_scan as index_scans,
-        idx_tup_read as tuples_read,
-        idx_tup_fetch as tuples_fetched
-      FROM
-        pg_stat_user_indexes
-      ORDER BY
-        idx_scan DESC
-    `));
+    // Skip if no tables found
+    if (!tablesResult.rows || tablesResult.rows.length === 0) {
+      console.log('[Database] No tables found for maintenance');
+      return;
+    }
     
-    // Get active connections
-    const connections = await db.execute(sql.raw(`
-      SELECT 
-        count(*) as connection_count
-      FROM 
-        pg_stat_activity
-      WHERE 
-        state = 'active'
-    `));
+    const tables = tablesResult.rows.map(row => row.tablename);
+    const maintenanceTasks: Promise<void>[] = [];
     
-    return {
-      tableStats,
-      indexStats,
-      connectionCount: connections[0]?.connection_count || 0,
-      slowQueries: getSlowQueries().slice(0, 10), // Only return the 10 most recent slow queries
-    };
+    // Perform maintenance on each table
+    for (const table of tables) {
+      maintenanceTasks.push(
+        (async () => {
+          try {
+            // VACUUM the table (reclaim storage)
+            await executeQuery(
+              `VACUUM ANALYZE ${table}`,
+              [],
+              { label: `vacuum-${table}`, timeout: 30000 }
+            );
+            console.log(`[Database] Vacuumed table: ${table}`);
+            
+            // Analyze the table (update statistics)
+            await executeQuery(
+              `ANALYZE ${table}`,
+              [],
+              { label: `analyze-${table}`, timeout: 15000 }
+            );
+            console.log(`[Database] Analyzed table: ${table}`);
+          } catch (error) {
+            console.error(`[Database] Maintenance error on table ${table}:`, error);
+          }
+        })()
+      );
+    }
+    
+    // Wait for all maintenance tasks to complete
+    await Promise.all(maintenanceTasks);
+    
+    // Calculate time taken
+    const diff = process.hrtime(start);
+    const duration = diff[0] * 1000 + diff[1] / 1000000;
+    
+    console.log(`[Database] Maintenance completed in ${duration.toFixed(2)}ms`);
   } catch (error) {
-    logger.error(`Error fetching database metrics: ${error.message}`);
+    console.error('[Database] Maintenance error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Explain and analyze a query for performance tuning
+ * 
+ * @param query SQL query to analyze
+ * @param params Query parameters
+ * @returns Promise resolving to the query execution plan
+ */
+export async function explainQuery(
+  query: string,
+  params: any[] = []
+): Promise<string> {
+  try {
+    const result = await executeQuery<{ "QUERY PLAN": string }>(
+      `EXPLAIN (ANALYZE, VERBOSE, BUFFERS, FORMAT TEXT) ${query}`,
+      params,
+      { label: 'explain-analyze', timeout: 30000 }
+    );
+    
+    // Format the execution plan
+    return result.rows.map(row => row["QUERY PLAN"]).join('\n');
+  } catch (error) {
+    console.error('[Database] Error explaining query:', error);
     throw error;
   }
 }

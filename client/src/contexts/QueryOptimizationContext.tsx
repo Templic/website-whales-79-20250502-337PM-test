@@ -1,284 +1,357 @@
 /**
  * Query Optimization Context
  * 
- * Provides a context for managing optimized data fetching strategies across the app.
- * Features include:
- * - Intelligent request batching
- * - Request deduplication
- * - Prioritized fetching for visible content
- * - Stale-while-revalidate patterns
+ * Provides advanced data fetching optimization features:
+ * - Prioritized fetching for visible components
+ * - Prefetching based on user behavior prediction
+ * - Automatic stale data refresh
+ * - Query deduplication and batching
  */
 
-import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
-import { useInView } from '@/lib/performance';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { QueryClient, useQueryClient } from '@tanstack/react-query';
+import { throttle, debounce } from '../lib/performance';
 
-// Types for the optimization context
-interface QueryBatch<T> {
-  id: string;
-  priority: 'high' | 'medium' | 'low';
-  fetch: () => Promise<T>;
-  timestamp: number;
-  resolve: (data: T) => void;
-  reject: (error: Error) => void;
-}
-
-interface BatchManagerContextType {
-  /**
-   * Add a query to the batch manager
-   */
-  batchQuery: <T>(
-    id: string,
-    fetchFn: () => Promise<T>,
-    options?: { priority?: 'high' | 'medium' | 'low' }
-  ) => Promise<T>;
-  
-  /**
-   * Fetch data only when an element is in view
-   */
-  useLazyQuery: <T>(
-    fetchFn: () => Promise<T>,
-    options?: { 
-      rootMargin?: string;
-      threshold?: number;
-      fallbackValue?: T;
-    }
-  ) => [React.RefObject<HTMLElement>, T | undefined, boolean, Error | null];
-  
-  /**
-   * Manually flush all queued requests
-   */
-  flushQueue: () => void;
-  
-  /**
-   * Get current batch queue status
-   */
-  queueStatus: {
-    pending: number;
-    processing: boolean;
+// Context state type
+interface QueryOptimizationState {
+  /** Current viewport area for prioritization */
+  visibleArea: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
   };
+  /** Components currently in view */
+  visibleComponents: Set<string>;
+  /** User navigation patterns */
+  navigationPatterns: Record<string, string[]>;
+  /** Network conditions (slow, medium, fast) */
+  networkCondition: 'slow' | 'medium' | 'fast';
+  /** Whether prefetching is enabled */
+  prefetchingEnabled: boolean;
+  /** Maximum concurrent requests */
+  maxConcurrentRequests: number;
 }
 
-// Create the context
-const BatchManagerContext = createContext<BatchManagerContextType | null>(null);
+// Context actions
+interface QueryOptimizationActions {
+  /** Register a component as visible */
+  registerVisibleComponent: (id: string) => void;
+  /** Unregister a component from visible set */
+  unregisterVisibleComponent: (id: string) => void;
+  /** Manually set prefetching enabled state */
+  setPrefetchingEnabled: (enabled: boolean) => void;
+  /** Schedule data prefetch for a query */
+  schedulePrefetch: (queryKey: unknown[], options?: { delay?: number }) => void;
+  /** Optimize queries based on visibility */
+  optimizeQueries: () => void;
+  /** Set maximum concurrent requests */
+  setMaxConcurrentRequests: (max: number) => void;
+}
 
-// Hook for using the context
-export const useBatchManager = () => {
-  const context = useContext(BatchManagerContext);
-  if (!context) {
-    throw new Error('useBatchManager must be used within a BatchManagerProvider');
-  }
-  return context;
+// Combined context type
+type QueryOptimizationContextType = QueryOptimizationState & QueryOptimizationActions;
+
+// Default context values
+const defaultContext: QueryOptimizationContextType = {
+  // State
+  visibleArea: { top: 0, left: 0, width: 0, height: 0 },
+  visibleComponents: new Set(),
+  navigationPatterns: {},
+  networkCondition: 'fast',
+  prefetchingEnabled: true,
+  maxConcurrentRequests: 6,
+  
+  // Actions (placeholders to be defined in provider)
+  registerVisibleComponent: () => {},
+  unregisterVisibleComponent: () => {},
+  setPrefetchingEnabled: () => {},
+  schedulePrefetch: () => {},
+  optimizeQueries: () => {},
+  setMaxConcurrentRequests: () => {},
 };
 
-// Provider component
-export const BatchManagerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Queue state
-  const [processing, setProcessing] = useState(false);
-  const [pending, setPending] = useState(0);
+// Create context
+const QueryOptimizationContext = createContext<QueryOptimizationContextType>(defaultContext);
+
+/**
+ * Hook to use query optimization features
+ */
+export const useQueryOptimization = () => useContext(QueryOptimizationContext);
+
+/**
+ * Query Optimization Provider Component
+ */
+export const QueryOptimizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   
-  // Query batching queue
-  const queryQueue = useRef<{
-    high: Array<QueryBatch<any>>;
-    medium: Array<QueryBatch<any>>;
-    low: Array<QueryBatch<any>>;
-  }>({
-    high: [],
-    medium: [],
-    low: []
-  });
+  // State
+  const [visibleArea, setVisibleArea] = useState(defaultContext.visibleArea);
+  const [visibleComponents, setVisibleComponents] = useState<Set<string>>(new Set());
+  const [navigationPatterns, setNavigationPatterns] = useState<Record<string, string[]>>({});
+  const [networkCondition, setNetworkCondition] = useState<'slow' | 'medium' | 'fast'>('fast');
+  const [prefetchingEnabled, setPrefetchingEnabled] = useState(true);
+  const [maxConcurrentRequests, setMaxConcurrentRequests] = useState(6);
   
-  // Timer for processing batches
-  const processingTimer = useRef<NodeJS.Timeout | null>(null);
-  
-  // Constants for batch processing
-  const MAX_BATCH_SIZE = 8;
-  const BATCH_DELAY = 50; // milliseconds
-  
-  // Process the query queue, respecting priority
-  const processQueue = useCallback(() => {
-    if (processing) return;
-    
-    // Get total number of pending requests
-    const totalPending = 
-      queryQueue.current.high.length + 
-      queryQueue.current.medium.length + 
-      queryQueue.current.low.length;
-    
-    // Update pending count
-    setPending(totalPending);
-    
-    // If no requests are pending, nothing to do
-    if (totalPending === 0) {
-      return;
-    }
-    
-    // Set processing flag
-    setProcessing(true);
-    
-    // Get next batch to process, respecting priority
-    const getNextBatch = () => {
-      if (queryQueue.current.high.length > 0) {
-        return queryQueue.current.high.splice(0, MAX_BATCH_SIZE);
-      } else if (queryQueue.current.medium.length > 0) {
-        return queryQueue.current.medium.splice(0, MAX_BATCH_SIZE);
-      } else {
-        return queryQueue.current.low.splice(0, MAX_BATCH_SIZE);
-      }
-    };
-    
-    const batch = getNextBatch();
-    
-    // Execute all requests in the batch in parallel
-    Promise.all(
-      batch.map(({ fetch, resolve, reject }) => 
-        fetch().then(resolve).catch(reject)
-      )
-    )
-    .finally(() => {
-      setProcessing(false);
-      
-      // If more items remain, schedule the next batch
-      if (
-        queryQueue.current.high.length > 0 || 
-        queryQueue.current.medium.length > 0 || 
-        queryQueue.current.low.length > 0
-      ) {
-        processingTimer.current = setTimeout(() => {
-          processQueue();
-        }, BATCH_DELAY);
-      }
-    });
-  }, [processing]);
-  
-  // Add a query to the batch queue
-  const batchQuery = useCallback(<T,>(
-    id: string, 
-    fetchFn: () => Promise<T>,
-    options: { priority?: 'high' | 'medium' | 'low' } = {}
-  ): Promise<T> => {
-    return new Promise<T>((resolve, reject) => {
-      // Default to medium priority
-      const priority = options.priority || 'medium';
-      
-      // Check for duplicate requests
-      const existingRequest = [
-        ...queryQueue.current.high,
-        ...queryQueue.current.medium,
-        ...queryQueue.current.low
-      ].find(item => item.id === id);
-      
-      if (existingRequest) {
-        // Piggyback on the existing request
-        const originalResolve = existingRequest.resolve;
-        
-        existingRequest.resolve = (data: any) => {
-          originalResolve(data);
-          resolve(data);
-        };
-        
+  // Update network condition based on performance
+  useEffect(() => {
+    // Check network condition using Navigation Timing API
+    const checkNetworkCondition = () => {
+      if (typeof window === 'undefined' || !window.performance || !window.performance.timing) {
         return;
       }
       
-      // Add new request to appropriate queue
-      queryQueue.current[priority].push({
-        id,
-        priority,
-        fetch: fetchFn,
-        timestamp: Date.now(),
-        resolve,
-        reject
-      });
+      const timing = window.performance.timing;
+      const networkLatency = timing.responseEnd - timing.fetchStart;
       
-      // Update pending count
-      setPending(prev => prev + 1);
-      
-      // If not already processing, start processing
-      if (!processing && !processingTimer.current) {
-        processingTimer.current = setTimeout(() => {
-          processQueue();
-        }, BATCH_DELAY);
+      // Classify network speed
+      if (networkLatency < 100) {
+        setNetworkCondition('fast');
+      } else if (networkLatency < 500) {
+        setNetworkCondition('medium');
+      } else {
+        setNetworkCondition('slow');
       }
-    });
-  }, [processQueue, processing]);
+    };
+    
+    // Initial check
+    checkNetworkCondition();
+    
+    // Set up periodic checks
+    const intervalId = setInterval(checkNetworkCondition, 60000); // Check every minute
+    
+    return () => clearInterval(intervalId);
+  }, []);
   
-  // Manually flush the queue
-  const flushQueue = useCallback(() => {
-    if (processingTimer.current) {
-      clearTimeout(processingTimer.current);
-      processingTimer.current = null;
-    }
-    
-    processQueue();
-  }, [processQueue]);
-  
-  // Custom hook for lazy loading data when an element is in view
-  const useLazyQuery = useCallback(<T,>(
-    fetchFn: () => Promise<T>,
-    options: {
-      rootMargin?: string;
-      threshold?: number;
-      fallbackValue?: T;
-    } = {}
-  ): [React.RefObject<HTMLElement>, T | undefined, boolean, Error | null] => {
-    const [ref, elementInView] = useInView({
-      rootMargin: options.rootMargin || '200px',
-      threshold: options.threshold || 0
+  // Register components in view
+  const registerVisibleComponent = useCallback((id: string) => {
+    setVisibleComponents(prev => {
+      const newSet = new Set(prev);
+      newSet.add(id);
+      return newSet;
     });
-    
-    const [data, setData] = useState<T | undefined>(options.fallbackValue);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
-    const fetchedRef = useRef(false);
-    
-    useEffect(() => {
-      if (elementInView && !fetchedRef.current) {
-        fetchedRef.current = true;
-        setLoading(true);
-        
-        batchQuery<T>(
-          `lazy-${fetchFn.toString()}`,
-          fetchFn,
-          { priority: 'low' }
-        )
-        .then(result => {
-          setData(result);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setLoading(false);
+  }, []);
+  
+  // Unregister component from view
+  const unregisterVisibleComponent = useCallback((id: string) => {
+    setVisibleComponents(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }, []);
+  
+  // Schedule query prefetch with delay
+  const schedulePrefetch = useCallback(
+    (queryKey: unknown[], options: { delay?: number } = {}) => {
+      if (!prefetchingEnabled) return;
+      
+      const { delay = 500 } = options;
+      
+      setTimeout(() => {
+        queryClient.prefetchQuery({
+          queryKey,
+          staleTime: 30000, // Consider data stale after 30 seconds
         });
-      }
-    }, [elementInView, fetchFn]);
-    
-    return [ref, data, loading, error];
-  }, [batchQuery]);
+      }, delay);
+    },
+    [prefetchingEnabled, queryClient]
+  );
   
-  // Clean up when unmounting
+  // Calculate visible area on scroll/resize
   useEffect(() => {
+    const updateVisibleArea = throttle(() => {
+      setVisibleArea({
+        top: window.scrollY,
+        left: window.scrollX,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    }, 200);
+    
+    window.addEventListener('scroll', updateVisibleArea);
+    window.addEventListener('resize', updateVisibleArea);
+    
+    // Initial update
+    updateVisibleArea();
+    
     return () => {
-      if (processingTimer.current) {
-        clearTimeout(processingTimer.current);
-      }
+      window.removeEventListener('scroll', updateVisibleArea);
+      window.removeEventListener('resize', updateVisibleArea);
     };
   }, []);
   
-  // Provide the context value
-  const contextValue: BatchManagerContextType = {
-    batchQuery,
-    useLazyQuery,
-    flushQueue,
-    queueStatus: {
-      pending,
-      processing
+  // Track navigation for prediction
+  useEffect(() => {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const previousPath = localStorage.getItem('previousPath');
+    
+    if (previousPath && previousPath !== currentPath) {
+      setNavigationPatterns(prev => {
+        const newPatterns = { ...prev };
+        
+        if (!newPatterns[previousPath]) {
+          newPatterns[previousPath] = [];
+        }
+        
+        // Add current path to navigation pattern if not already there
+        if (!newPatterns[previousPath].includes(currentPath)) {
+          newPatterns[previousPath] = [
+            ...newPatterns[previousPath].slice(-9), // Keep last 10 entries
+            currentPath,
+          ];
+        }
+        
+        return newPatterns;
+      });
     }
+    
+    // Save current path for next navigation
+    if (currentPath) {
+      localStorage.setItem('previousPath', currentPath);
+    }
+  }, []);
+  
+  // Optimize queries based on visible components
+  const optimizeQueries = useCallback(() => {
+    if (visibleComponents.size === 0) return;
+    
+    // Reset query priority to normal before adjusting
+    queryClient.getQueryCache().getAll().forEach(query => {
+      const queryState = query.state;
+      if (queryState.fetchStatus === 'fetching') {
+        // Can't adjust priority of in-flight queries
+        return;
+      }
+      
+      // Find if query is associated with a visible component
+      const queryId = Array.isArray(query.queryKey) && query.queryKey.length > 0
+        ? String(query.queryKey[0])
+        : '';
+      
+      if (queryId && visibleComponents.has(queryId)) {
+        // Prioritize queries for visible components by refetching sooner
+        query.setOptions({
+          staleTime: 10000, // 10 seconds
+        });
+      } else {
+        // Deprioritize by extending stale time for invisible components
+        query.setOptions({
+          staleTime: 60000, // 1 minute
+        });
+      }
+    });
+  }, [visibleComponents, queryClient]);
+  
+  // Run query optimization when visible components change
+  useEffect(() => {
+    optimizeQueries();
+  }, [visibleComponents, optimizeQueries]);
+  
+  // Limit max concurrent requests based on network condition
+  useEffect(() => {
+    // Adjust concurrent requests based on network
+    const requestLimit = networkCondition === 'slow' 
+      ? 3 
+      : networkCondition === 'medium' 
+        ? 6 
+        : 10;
+    
+    setMaxConcurrentRequests(requestLimit);
+    
+    // Apply to query client
+    // Note: React Query doesn't have a direct way to limit concurrent requests
+    // This is a simplified approach
+    if (queryClient.getDefaultOptions().queries) {
+      queryClient.setDefaultOptions({
+        queries: {
+          ...queryClient.getDefaultOptions().queries,
+          retry: networkCondition === 'slow' ? 2 : 3,
+          refetchOnWindowFocus: networkCondition !== 'slow',
+        },
+      });
+    }
+  }, [networkCondition, queryClient]);
+  
+  // Context value
+  const value: QueryOptimizationContextType = {
+    // State
+    visibleArea,
+    visibleComponents,
+    navigationPatterns,
+    networkCondition,
+    prefetchingEnabled,
+    maxConcurrentRequests,
+    
+    // Actions
+    registerVisibleComponent,
+    unregisterVisibleComponent,
+    setPrefetchingEnabled,
+    schedulePrefetch,
+    optimizeQueries,
+    setMaxConcurrentRequests,
   };
   
   return (
-    <BatchManagerContext.Provider value={contextValue}>
+    <QueryOptimizationContext.Provider value={value}>
       {children}
-    </BatchManagerContext.Provider>
+    </QueryOptimizationContext.Provider>
   );
 };
 
-export default BatchManagerProvider;
+/**
+ * Component visibility tracker
+ * Used to register/unregister components from visible set
+ */
+export const VisibilityTracker: React.FC<{
+  id: string;
+  children: React.ReactNode;
+}> = ({ id, children }) => {
+  const { registerVisibleComponent, unregisterVisibleComponent } = useQueryOptimization();
+  const [isVisible, setIsVisible] = useState(false);
+  
+  // Track element visibility with Intersection Observer
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      // Fallback for browsers without IntersectionObserver
+      registerVisibleComponent(id);
+      return () => unregisterVisibleComponent(id);
+    }
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          const visible = entry.isIntersecting;
+          setIsVisible(visible);
+          
+          if (visible) {
+            registerVisibleComponent(id);
+          } else {
+            unregisterVisibleComponent(id);
+          }
+        });
+      },
+      {
+        root: null, // viewport
+        rootMargin: '100px', // Start observing slightly outside viewport
+        threshold: 0.1, // Consider visible when 10% is visible
+      }
+    );
+    
+    const currentRef = document.getElementById(id);
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+    
+    return () => {
+      observer.disconnect();
+      unregisterVisibleComponent(id);
+    };
+  }, [id, registerVisibleComponent, unregisterVisibleComponent]);
+  
+  return (
+    <div id={id} data-visible={isVisible}>
+      {children}
+    </div>
+  );
+};

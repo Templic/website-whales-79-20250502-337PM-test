@@ -1,98 +1,103 @@
 /**
  * OptimizedImage Component
  * 
- * A React component for optimized image loading with:
- * - Progressive loading (blur-up technique)
- * - Lazy loading with Intersection Observer
- * - Responsive image loading with srcSet
- * - WebP format support with fallback
- * - Image error handling
+ * A highly optimized image component with features for improved performance:
+ * - Responsive images with srcSet
+ * - Automatic WebP format conversion
+ * - Lazy loading with blur-up effect
+ * - Error handling with fallbacks
+ * - Aspect ratio preservation
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { checkWebPSupport, convertToWebP } from '../../lib/image-optimizer';
 import LazyLoad from './LazyLoad';
 
 interface OptimizedImageProps {
-  /** Main image source URL */
+  /** Source URL of the image */
   src: string;
   /** Alternative text for accessibility */
   alt: string;
-  /** Optional low-quality placeholder image */
-  placeholderSrc?: string;
-  /** Width of the image in pixels */
-  width?: number;
-  /** Height of the image in pixels */
-  height?: number;
-  /** CSS class for the image */
-  className?: string;
-  /** CSS class for the container */
-  containerClassName?: string;
-  /** Unique identifier */
-  id?: string;
-  /** Whether to lazy load the image */
-  lazy?: boolean;
-  /** Responsive srcSet attribute */
+  /** Optional responsive srcSet */
   srcSet?: string;
-  /** Sizes attribute for responsive images */
+  /** Optional sizes attribute for responsive images */
   sizes?: string;
-  /** Callback for when image is loaded */
-  onLoad?: () => void;
-  /** Callback for when image fails to load */
-  onError?: (error: Error) => void;
-  /** Whether to use WebP format if supported */
-  useWebP?: boolean;
-  /** Style overrides for the image */
+  /** Fixed width in pixels */
+  width?: number;
+  /** Fixed height in pixels */
+  height?: number;
+  /** Custom CSS class */
+  className?: string;
+  /** Custom container CSS class */
+  containerClassName?: string;
+  /** Custom CSS style */
   style?: React.CSSProperties;
+  /** Low-quality placeholder image to show while loading */
+  placeholderSrc?: string;
+  /** Enable lazy loading */
+  lazy?: boolean;
+  /** Function called when image loads */
+  onLoad?: () => void;
+  /** Function called when image fails to load */
+  onError?: (error: Error) => void;
+  /** Use WebP format if supported by the browser */
+  useWebP?: boolean;
+  /** HTML ID attribute */
+  id?: string;
 }
 
 /**
- * OptimizedImage Component
- * 
- * Renders images with optimized loading techniques for performance.
+ * OptimizedImage Component with advanced performance features
  */
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
-  placeholderSrc,
+  srcSet,
+  sizes,
   width,
   height,
   className = '',
   containerClassName = '',
-  id,
+  style = {},
+  placeholderSrc,
   lazy = true,
-  srcSet,
-  sizes,
   onLoad,
   onError,
   useWebP = true,
-  style,
+  id,
 }) => {
   // State
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [webPSupported, setWebPSupported] = useState(false);
+  
+  // Reference to the image element
   const imageRef = useRef<HTMLImageElement>(null);
   
   // Check WebP support on mount
   useEffect(() => {
-    if (useWebP) {
-      const webPImage = new Image();
-      webPImage.onload = () => setWebPSupported(true);
-      webPImage.onerror = () => setWebPSupported(false);
-      webPImage.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
-    }
+    if (!useWebP) return;
+    
+    const checkSupport = async () => {
+      try {
+        const supported = await checkWebPSupport();
+        setWebPSupported(supported);
+      } catch (e) {
+        console.warn('WebP support check failed:', e);
+        setWebPSupported(false);
+      }
+    };
+    
+    checkSupport();
   }, [useWebP]);
   
-  // Prepare image sources
+  // Get optimized image source with WebP if supported
   const getImageSrc = (): string => {
-    if (!useWebP || !webPSupported) return src;
-    
-    // Convert to WebP if supported
-    if (src.match(/\.(jpg|jpeg|png)(\?.*)?$/i)) {
-      return src.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2');
+    if (!useWebP || !webPSupported) {
+      return src;
     }
     
-    return src;
+    return convertToWebP(src, webPSupported);
   };
   
   const getSrcSet = (): string | undefined => {

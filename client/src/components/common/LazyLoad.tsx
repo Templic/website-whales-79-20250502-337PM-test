@@ -1,153 +1,182 @@
 /**
  * LazyLoad Component
  * 
- * A component that defers loading its children until they are 
- * about to enter the viewport.
+ * Renders children only when the component enters the viewport.
+ * Optimizes performance by preventing offscreen components from rendering.
  * 
  * Features:
- * - Uses Intersection Observer for performance
- * - Configurable threshold and root margin
- * - Custom placeholder support
- * - Prevents layout shifts by maintaining dimensions
+ * - Uses Intersection Observer API for efficient detection
+ * - Configurable thresholds, offsets, and placeholders
+ * - Supports fallback for browsers without Intersection Observer
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface LazyLoadProps {
-  /** The content to lazy load */
+  /** Content to lazy load */
   children: React.ReactNode;
-  /** Custom placeholder to show before content is loaded */
-  placeholder?: React.ReactNode;
-  /** Height to maintain (prevents layout shift) */
-  height?: string | number;
-  /** Width to maintain (prevents layout shift) */
-  width?: string | number;
-  /** Intersection observer threshold (0-1) */
+  /** Height of the placeholder (px, %, etc.) */
+  height?: number | string;
+  /** Width of the placeholder (px, %, etc.) */
+  width?: number | string;
+  /** Percentage of element visible before loading (0-1) */
   threshold?: number;
-  /** Intersection observer root margin */
-  margin?: string;
-  /** Load immediately without waiting for intersection */
-  immediate?: boolean;
-  /** CSS class for container */
+  /** Additional margin around element for earlier loading */
+  rootMargin?: string;
+  /** Class name for container */
   className?: string;
-  /** Unique identifier */
-  id?: string;
-  /** Callback function called when content becomes visible */
+  /** Callback when the element becomes visible */
   onVisible?: () => void;
+  /** Custom placeholder component */
+  placeholder?: React.ReactNode;
+  /** Component always renders immediately */
+  disabled?: boolean;
+  /** Custom loading component */
+  loadingComponent?: React.ReactNode;
+  /** Class name for loading state */
+  loadingClassName?: string;
 }
 
 /**
- * LazyLoad Component
- * 
- * Improves initial page load performance by deferring the loading of
- * off-screen components until they're about to be viewed.
+ * LazyLoad Component - Renders content only when it enters the viewport
  */
 const LazyLoad: React.FC<LazyLoadProps> = ({
   children,
-  placeholder,
   height,
   width,
   threshold = 0.1,
-  margin = '100px',
-  immediate = false,
+  rootMargin = '200px 0px',
   className = '',
-  id,
   onVisible,
+  placeholder,
+  disabled = false,
+  loadingComponent,
+  loadingClassName = '',
 }) => {
-  // Track if component is visible and rendered
-  const [isVisible, setIsVisible] = useState(immediate);
-  const [hasRendered, setHasRendered] = useState(immediate);
+  const [isVisible, setIsVisible] = useState(disabled);
+  const [hasLoaded, setHasLoaded] = useState(disabled);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Set up intersection observer to detect when component is visible
+  // Create observer and handle intersection
   useEffect(() => {
-    // Skip if already visible or we've requested immediate loading
-    if (isVisible || immediate) {
-      setHasRendered(true);
+    // Return early if disabled (always visible)
+    if (disabled) return;
+    
+    const currentRef = containerRef.current;
+    
+    // Check if Intersection Observer is supported
+    if (!('IntersectionObserver' in window) || !currentRef) {
+      // Fallback to immediately visible in unsupported browsers
+      setIsVisible(true);
+      setHasLoaded(true);
+      if (onVisible) onVisible();
       return;
     }
     
-    // Get the container element to observe
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    
+    // Create observer with config
     const observer = new IntersectionObserver(
       (entries) => {
-        const [entry] = entries;
-        
-        if (entry && entry.isIntersecting) {
-          setIsVisible(true);
-          if (onVisible) {
-            onVisible();
-          }
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
           
-          // Once content is visible, no need to keep observing
-          observer.disconnect();
-        }
+          // Element is visible in viewport, mark content for loading
+          setIsVisible(true);
+          
+          // Call onVisible callback if provided
+          if (onVisible) onVisible();
+          
+          // Unobserve after becoming visible
+          if (currentRef) observer.unobserve(currentRef);
+        });
       },
       {
-        root: null, // viewport
-        rootMargin: margin,
-        threshold,
+        root: null, // Use viewport as root
+        rootMargin, // Load earlier with margin
+        threshold, // Percentage visible before loading
       }
     );
     
-    observer.observe(container);
+    // Start observing
+    observer.observe(currentRef);
     
+    // Clean up observer
     return () => {
-      observer.disconnect();
+      if (currentRef) observer.unobserve(currentRef);
     };
-  }, [immediate, isVisible, margin, onVisible, threshold]);
+  }, [disabled, rootMargin, threshold, onVisible]);
   
-  // After becoming visible, render the content with a short delay
-  // to prevent jank during scrolling
+  // Mark as fully loaded after content renders
   useEffect(() => {
-    if (isVisible && !hasRendered) {
-      const timer = setTimeout(() => {
-        setHasRendered(true);
-      }, 10);
+    if (isVisible && !hasLoaded) {
+      // Use requestAnimationFrame to give browser time to render children
+      const timeoutId = setTimeout(() => {
+        setHasLoaded(true);
+      }, 100); // Small delay to ensure content has time to load
       
-      return () => clearTimeout(timer);
+      return () => clearTimeout(timeoutId);
     }
-    return undefined; // Explicitly return for the case when no cleanup needed
-  }, [isVisible, hasRendered]);
+  }, [isVisible, hasLoaded]);
   
-  // Style for the placeholder
-  const style: React.CSSProperties = {};
-  if (height !== undefined) {
-    style.height = height;
-  }
-  if (width !== undefined) {
-    style.width = width;
-  }
+  // Determine height/width values with units
+  const heightStyle = typeof height === 'number' ? `${height}px` : height;
+  const widthStyle = typeof width === 'number' ? `${width}px` : width;
+  
+  // Placeholder while loading content
+  const renderPlaceholder = () => {
+    if (placeholder) {
+      return placeholder;
+    }
+    
+    // Show loading component if provided
+    if (loadingComponent) {
+      return (
+        <div className={`lazy-load-loading ${loadingClassName}`}>
+          {loadingComponent}
+        </div>
+      );
+    }
+    
+    // Default empty placeholder with height/width
+    return null;
+  };
+  
+  // Container style with dimensions
+  const containerStyle: React.CSSProperties = {
+    height: heightStyle,
+    width: widthStyle,
+    display: 'block',
+    overflow: 'hidden',
+  };
   
   return (
     <div
       ref={containerRef}
-      className={`lazy-load-container ${className}`}
-      style={hasRendered ? {} : style}
-      id={id}
-      data-loaded={hasRendered}
+      className={`lazy-load-container ${className} ${isVisible ? 'is-visible' : ''} ${hasLoaded ? 'has-loaded' : ''}`}
+      style={containerStyle}
     >
-      {hasRendered ? (
-        children
-      ) : (
-        placeholder || (
-          <div 
-            className="lazy-load-placeholder"
-            style={{ 
-              height: '100%', 
-              width: '100%', 
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+      {isVisible ? (
+        <>
+          {/* Children visible but not fully loaded yet */}
+          {!hasLoaded && loadingComponent && (
+            <div className={`lazy-load-loading ${loadingClassName}`}>
+              {loadingComponent}
+            </div>
+          )}
+          
+          {/* Content with smooth fade-in */}
+          <div
+            className="lazy-load-content"
+            style={{
+              opacity: hasLoaded ? 1 : 0,
+              transition: 'opacity 0.5s ease-in-out',
             }}
           >
-            <div className="lazy-load-spinner" />
+            {children}
           </div>
-        )
+        </>
+      ) : (
+        // Show placeholder until visible
+        renderPlaceholder()
       )}
     </div>
   );
