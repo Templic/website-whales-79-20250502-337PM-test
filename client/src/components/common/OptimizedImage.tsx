@@ -1,227 +1,267 @@
-/**
- * OptimizedImage Component
- * 
- * A highly optimized image component with features for improved performance:
- * - Responsive images with srcSet
- * - Automatic WebP format conversion
- * - Lazy loading with blur-up effect
- * - Error handling with fallbacks
- * - Aspect ratio preservation
- */
+import React, { useState, useEffect, useRef, CSSProperties, memo } from 'react';
+import { useMemoryLeakDetection } from '@/lib/memory-leak-detector';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { checkWebPSupport, convertToWebP } from '../../lib/image-optimizer';
-import LazyLoad from './LazyLoad';
-
-interface OptimizedImageProps {
-  /** Source URL of the image */
+export interface OptimizedImageProps {
   src: string;
-  /** Alternative text for accessibility */
   alt: string;
-  /** Optional responsive srcSet */
-  srcSet?: string;
-  /** Optional sizes attribute for responsive images */
-  sizes?: string;
-  /** Fixed width in pixels */
-  width?: number;
-  /** Fixed height in pixels */
-  height?: number;
-  /** Custom CSS class */
+  width?: number | string;
+  height?: number | string;
   className?: string;
-  /** Custom container CSS class */
-  containerClassName?: string;
-  /** Custom CSS style */
-  style?: React.CSSProperties;
-  /** Low-quality placeholder image to show while loading */
-  placeholderSrc?: string;
-  /** Enable lazy loading */
-  lazy?: boolean;
-  /** Function called when image loads */
+  style?: CSSProperties;
+  placeholderColor?: string;
+  blurHash?: string;
+  priority?: boolean;
+  loading?: 'lazy' | 'eager';
+  fadeIn?: boolean;
+  decode?: boolean;
+  fallbackSrc?: string;
   onLoad?: () => void;
-  /** Function called when image fails to load */
-  onError?: (error: Error) => void;
-  /** Use WebP format if supported by the browser */
-  useWebP?: boolean;
-  /** HTML ID attribute */
-  id?: string;
+  onError?: () => void;
+  fallbackComponent?: React.ReactNode;
+  sizes?: string;
+  srcSet?: string;
+  objectFit?: CSSProperties['objectFit'];
+  objectPosition?: CSSProperties['objectPosition'];
+  draggable?: boolean;
+  crossOrigin?: 'anonymous' | 'use-credentials';
+  referrerPolicy?: React.HTMLAttributeReferrerPolicy;
 }
 
 /**
- * OptimizedImage Component with advanced performance features
+ * Optimized image component with lazy loading, blur hash placeholder, and performance optimizations
  */
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
-  srcSet,
-  sizes,
   width,
   height,
   className = '',
-  containerClassName = '',
   style = {},
-  placeholderSrc,
-  lazy = true,
+  placeholderColor = '#e2e8f0',
+  blurHash,
+  priority = false,
+  loading = 'lazy',
+  fadeIn = true,
+  decode = true,
+  fallbackSrc,
   onLoad,
   onError,
-  useWebP = true,
-  id,
+  fallbackComponent,
+  sizes,
+  srcSet,
+  objectFit,
+  objectPosition,
+  draggable,
+  crossOrigin,
+  referrerPolicy,
 }) => {
-  // State
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [webPSupported, setWebPSupported] = useState(false);
+  // Track this component for memory leak detection
+  useMemoryLeakDetection('OptimizedImage');
   
-  // Reference to the image element
-  const imageRef = useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+  const [blurDataUrl, setBlurDataUrl] = useState<string | null>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const observer = useRef<IntersectionObserver | null>(null);
+  const [isVisible, setIsVisible] = useState(priority);
   
-  // Check WebP support on mount
+  // Generate a blurred placeholder from the blur hash if provided
   useEffect(() => {
-    if (!useWebP) return;
-    
-    const checkSupport = async () => {
-      try {
-        const supported = await checkWebPSupport();
-        setWebPSupported(supported);
-      } catch (e) {
-        console.warn('WebP support check failed:', e);
-        setWebPSupported(false);
-      }
-    };
-    
-    checkSupport();
-  }, [useWebP]);
+    if (blurHash) {
+      // This would normally use a library like blurhash-wasm or blurhash to decode
+      // For this implementation, we'll just simulate it with a placeholder color
+      // in a production application you would use:
+      // import { decode } from 'blurhash';
+      // 
+      // const pixels = decode(blurHash, 32, 32);
+      // const canvas = document.createElement('canvas');
+      // canvas.width = 32;
+      // canvas.height = 32;
+      // const ctx = canvas.getContext('2d');
+      // const imageData = ctx.createImageData(32, 32);
+      // imageData.data.set(pixels);
+      // ctx.putImageData(imageData, 0, 0);
+      // setBlurDataUrl(canvas.toDataURL());
+      
+      setBlurDataUrl(`${placeholderColor}`);
+    }
+  }, [blurHash, placeholderColor]);
   
-  // Get optimized image source with WebP if supported
-  const getImageSrc = (): string => {
-    if (!useWebP || !webPSupported) {
-      return src;
+  // Set up intersection observer for lazy loading
+  useEffect(() => {
+    if (priority) {
+      setIsVisible(true);
+      return;
     }
     
-    return convertToWebP(src, webPSupported);
-  };
-  
-  const getSrcSet = (): string | undefined => {
-    if (!srcSet || !useWebP || !webPSupported) return srcSet;
+    if (loading === 'eager') {
+      setIsVisible(true);
+      return;
+    }
     
-    // Convert all srcSet entries to WebP
-    return srcSet
-      .split(',')
-      .map((srcSetItem) => {
-        const parts = srcSetItem.trim().split(' ');
-        if (parts.length < 2) return srcSetItem;
-        
-        const url = parts[0];
-        const descriptor = parts.slice(1).join(' ');
-        
-        if (url && url.match(/\.(jpg|jpeg|png)(\?.*)?$/i)) {
-          return `${url.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2')} ${descriptor}`;
+    const handleIntersection = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          
+          if (observer.current && imgRef.current) {
+            observer.current.unobserve(imgRef.current);
+            observer.current.disconnect();
+            observer.current = null;
+          }
         }
-        return srcSetItem;
-      })
-      .join(', ');
-  };
+      });
+    };
+    
+    if (imgRef.current && !isVisible) {
+      observer.current = new IntersectionObserver(handleIntersection, {
+        rootMargin: '200px', // Load images 200px before they come into view
+        threshold: 0.01,
+      });
+      
+      observer.current.observe(imgRef.current);
+    }
+    
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+        observer.current = null;
+      }
+    };
+  }, [priority, loading, isVisible]);
   
-  // Handle image loading
+  // Handle image load
   const handleLoad = () => {
-    setIsLoaded(true);
-    if (onLoad) onLoad();
+    setLoaded(true);
+    onLoad?.();
   };
   
   // Handle image error
-  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const imgError = new Error(`Failed to load image: ${src}`);
-    setError(imgError);
-    if (onError) onError(imgError);
-    
-    // If WebP failed, try falling back to original format
-    if (useWebP && webPSupported && imageRef.current) {
-      imageRef.current.src = src;
-    }
+  const handleError = () => {
+    setError(true);
+    onError?.();
   };
   
-  // Style for progressive loading effect
-  const imgStyle: React.CSSProperties = {
-    transition: 'filter 0.3s ease-out, opacity 0.3s ease-out',
-    filter: isLoaded ? 'blur(0)' : 'blur(10px)',
-    opacity: isLoaded ? 1 : 0.6,
-    width: width ? '100%' : undefined,
-    height: height ? '100%' : undefined,
-    objectFit: width && height ? 'cover' : undefined,
+  // When image becomes visible, decode it if supported
+  useEffect(() => {
+    if (isVisible && imgRef.current && !loaded && decode) {
+      const image = imgRef.current;
+      
+      if (image.complete) {
+        handleLoad();
+        return;
+      }
+      
+      // Use the decode API if available to prevent jank when image is displayed
+      if (image.decode) {
+        image.decode()
+          .then(handleLoad)
+          .catch(() => {
+            // If decode fails, still try to load the image normally
+            // We don't call handleError here because the image might still load
+          });
+      }
+    }
+  }, [isVisible, loaded, decode]);
+  
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+        observer.current = null;
+      }
+    };
+  }, []);
+  
+  // If there's an error and we have a fallback, show it
+  if (error) {
+    if (fallbackComponent) {
+      return <>{fallbackComponent}</>;
+    }
+    
+    if (fallbackSrc) {
+      return (
+        <img
+          src={fallbackSrc}
+          alt={alt}
+          width={width}
+          height={height}
+          className={className}
+          style={{
+            objectFit,
+            objectPosition,
+            ...style,
+          }}
+          draggable={draggable}
+          crossOrigin={crossOrigin}
+          referrerPolicy={referrerPolicy}
+        />
+      );
+    }
+  }
+  
+  // Determine final image src
+  const imageSrc = isVisible ? src : '';
+  
+  // Base styles
+  const imageStyles: CSSProperties = {
+    objectFit,
+    objectPosition,
+    backgroundColor: !loaded && placeholderColor ? placeholderColor : undefined,
+    transition: fadeIn ? 'opacity 0.5s ease-in-out' : undefined,
+    opacity: loaded ? 1 : 0,
     ...style,
   };
   
-  // Container style
-  const containerStyle: React.CSSProperties = {
-    position: 'relative',
-    overflow: 'hidden',
-    width: width ? `${width}px` : 'auto',
-    height: height ? `${height}px` : 'auto',
+  // If we have a blur hash and the image isn't loaded, show a placeholder
+  const placeholderStyles: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: placeholderColor,
+    backgroundImage: blurDataUrl ? `url(${blurDataUrl})` : undefined,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: loaded ? 0 : 1,
+    transition: 'opacity 0.5s ease-in-out',
   };
   
-  // Placeholder image if provided
-  const placeholderImage = placeholderSrc ? (
-    <img
-      src={placeholderSrc}
-      alt=""
-      aria-hidden="true"
-      className={`optimized-image-placeholder ${className}`}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        filter: 'blur(10px)',
-        opacity: isLoaded ? 0 : 0.8,
-        transition: 'opacity 0.3s ease-out',
-        objectFit: 'cover',
-      }}
-    />
-  ) : null;
-  
-  // Image component
-  const imageComponent = (
+  return (
     <div
-      className={`optimized-image-container ${containerClassName}`}
-      style={containerStyle}
+      style={{
+        position: 'relative',
+        overflow: 'hidden',
+        width,
+        height,
+        display: 'inline-block',
+      }}
+      className={className}
     >
-      {placeholderImage}
+      {(blurDataUrl || placeholderColor) && (
+        <div style={placeholderStyles} aria-hidden="true" />
+      )}
+      
       <img
-        ref={imageRef}
-        src={getImageSrc()}
-        srcSet={getSrcSet()}
-        sizes={sizes}
+        ref={imgRef}
+        src={imageSrc}
+        srcSet={isVisible ? srcSet : undefined}
+        sizes={isVisible ? sizes : undefined}
         alt={alt}
-        className={`optimized-image ${className}`}
-        style={imgStyle}
         width={width}
         height={height}
         onLoad={handleLoad}
         onError={handleError}
-        id={id}
-        loading="lazy" // Native lazy loading as additional fallback
+        loading={priority ? 'eager' : loading}
+        style={imageStyles}
+        draggable={draggable}
+        crossOrigin={crossOrigin}
+        referrerPolicy={referrerPolicy}
       />
-      
-      {error && (
-        <div className="optimized-image-error">
-          <span>Failed to load image</span>
-        </div>
-      )}
     </div>
-  );
-  
-  // Wrap with LazyLoad if requested
-  return lazy ? (
-    <LazyLoad
-      height={height}
-      width={width}
-      className="optimized-image-lazy-container"
-    >
-      {imageComponent}
-    </LazyLoad>
-  ) : (
-    imageComponent
   );
 };
 
-export default OptimizedImage;
+export default memo(OptimizedImage);

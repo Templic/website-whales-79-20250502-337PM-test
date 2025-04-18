@@ -1,146 +1,213 @@
 /**
- * Performance Middleware
+ * Performance Middleware for Express
  * 
- * This module provides Express middleware for optimizing server performance:
- * - Response compression
- * - Memory usage optimization
- * - Request throttling
- * - Cache control
- * - Connection pooling
+ * This module provides middleware functions for optimizing server performance.
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { ServerConfig } from '../config';
+import { ServerEvents } from '../events';
+import { MemoryStorage } from '../storage';
+import LRUCache from 'lru-cache';
 import compression from 'compression';
 import bytes from 'bytes';
 
+// Configuration
+const DEFAULT_CACHE_DURATION = 60 * 5; // 5 minutes in seconds
+const DEFAULT_MAX_CACHE_SIZE = 100; // Maximum number of entries
+const DEFAULT_COMPRESSION_LEVEL = 6; // zlib compression level (0-9)
+const DEFAULT_PAYLOAD_LIMIT = '10mb'; // Maximum request body size
+
+// Cache for API responses
+const apiCache = new LRUCache<string, any>({
+  max: DEFAULT_MAX_CACHE_SIZE,
+  ttl: DEFAULT_CACHE_DURATION * 1000, // Convert to milliseconds
+});
+
+// Performance metrics storage
+const metrics = {
+  responseTimes: [] as number[],
+  slowest: {
+    url: '',
+    time: 0,
+  },
+  totalRequests: 0,
+  averageResponseTime: 0,
+  startTime: Date.now(),
+};
+
 /**
- * Configures and returns compression middleware
- * Reduces response size for faster client-side loading
+ * Middleware for caching API responses
+ * @param duration Cache duration in seconds
+ * @returns Express middleware
  */
-export function setupResponseCompression() {
-  return compression({
-    // Only compress responses larger than 1KB
-    threshold: 1024,
-    // Skip compression for certain content types
-    filter: (req, res) => {
-      const contentType = res.getHeader('Content-Type') as string;
+export function cache(duration = DEFAULT_CACHE_DURATION) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Skip cache for non-GET requests
+    if (req.method !== 'GET') {
+      return next();
+    }
+    
+    // Generate a cache key based on URL and query parameters
+    const cacheKey = `${req.originalUrl || req.url}`;
+    
+    // Check if we have a cached response
+    const cachedResponse = apiCache.get(cacheKey);
+    if (cachedResponse) {
+      // Add cache header
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cachedResponse);
+    }
+    
+    // Store the original json method
+    const originalJson = res.json;
+    
+    // Override the json method to cache the response
+    res.json = function(body: any) {
+      // Store in cache
+      apiCache.set(cacheKey, body, {
+        ttl: duration * 1000, // Convert to milliseconds
+      });
       
-      // Skip compression for already compressed formats
-      if (
-        contentType &&
-        (contentType.includes('image/') || 
-         contentType.includes('video/') ||
-         contentType.includes('audio/') ||
-         contentType.includes('application/zip') ||
-         contentType.includes('application/gzip') ||
-         contentType.includes('application/x-gzip') ||
-         contentType.includes('application/octet-stream'))
-      ) {
+      // Add cache header
+      res.setHeader('X-Cache', 'MISS');
+      
+      // Call the original method
+      return originalJson.call(this, body);
+    };
+    
+    next();
+  };
+}
+
+/**
+ * Clear the API cache
+ * @param pattern Optional pattern to match cache keys
+ * @returns Number of cleared cache entries
+ */
+export function clearCache(pattern?: string): number {
+  if (!pattern) {
+    const size = apiCache.size;
+    apiCache.clear();
+    return size;
+  }
+  
+  // Clear specific entries that match the pattern
+  let count = 0;
+  const regex = new RegExp(pattern);
+  
+  apiCache.forEach((value, key) => {
+    if (regex.test(key)) {
+      apiCache.delete(key);
+      count++;
+    }
+  });
+  
+  return count;
+}
+
+/**
+ * Optimized compression middleware with smart detection
+ * @returns Express middleware
+ */
+export function optimizedCompression() {
+  return compression({
+    level: DEFAULT_COMPRESSION_LEVEL,
+    threshold: 1024, // Only compress responses larger than 1KB
+    filter: (req, res) => {
+      // Don't compress responses for older browsers without proper support
+      if (req.headers['user-agent'] && 
+          (/MSIE [1-6]\./.test(req.headers['user-agent'] as string))) {
         return false;
       }
       
-      // Use compression for all other responses
-      return true;
+      // Use standard compression filter
+      return compression.filter(req, res);
     },
-    // Use best compression level (0-9, where 9 is best compression but slowest)
-    level: 6
   });
 }
 
 /**
- * Middleware to set appropriate cache headers
- * Improves performance by leveraging browser/CDN caching
+ * Response time tracking middleware
+ * @returns Express middleware
  */
-export function cacheControl(maxAge: number = 86400) { // Default 1 day
+export function responseTime() {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Skip caching for dynamic routes or authenticated requests
-    if (
-      req.method !== 'GET' || 
-      req.path.includes('/api/') || 
-      req.query.token || 
-      req.headers.authorization
-    ) {
-      // Prevent caching for dynamic/authenticated content
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    } else {
-      // Static assets can be cached
-      const path = req.path;
-      
-      if (
-        path.match(/\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$/i)
-      ) {
-        // Long cache for static assets (1 week)
-        res.setHeader('Cache-Control', `public, max-age=${7 * 24 * 60 * 60}`);
-      } else {
-        // Default cache duration
-        res.setHeader('Cache-Control', `public, max-age=${maxAge}`);
-      }
-    }
-    
-    next();
-  };
-}
-
-/**
- * Middleware to track and log slow requests
- * Helps identify performance bottlenecks
- */
-export function requestTimer(threshold: number = 500) { // Default 500ms
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Record request start time
     const start = process.hrtime();
     
-    // Function to be called when response is sent
-    const logResponseTime = () => {
-      // Calculate elapsed time in milliseconds
+    // Function to finish timing when response is complete
+    const finishTiming = () => {
       const diff = process.hrtime(start);
-      const time = diff[0] * 1000 + diff[1] / 1000000;
+      const time = diff[0] * 1e3 + diff[1] * 1e-6; // Convert to milliseconds
       
-      // Log slow requests
-      if (time > threshold) {
-        console.warn(
-          `[Performance] Slow request: ${req.method} ${req.path} took ${time.toFixed(2)}ms`
-        );
+      // Store metrics
+      metrics.responseTimes.push(time);
+      metrics.totalRequests++;
+      
+      // Keep only the last 100 response times
+      if (metrics.responseTimes.length > 100) {
+        metrics.responseTimes.shift();
+      }
+      
+      // Calculate average
+      const sum = metrics.responseTimes.reduce((total, t) => total + t, 0);
+      metrics.averageResponseTime = sum / metrics.responseTimes.length;
+      
+      // Track slowest request
+      if (time > metrics.slowest.time) {
+        metrics.slowest = {
+          url: req.originalUrl || req.url,
+          time,
+        };
+      }
+      
+      // Add response time header
+      res.setHeader('X-Response-Time', `${time.toFixed(2)}ms`);
+      
+      // Emit metrics event
+      ServerEvents.emit('performance.response', {
+        url: req.originalUrl || req.url,
+        method: req.method,
+        time,
+        statusCode: res.statusCode,
+      });
+      
+      // Log slow responses
+      if (time > 1000) {
+        console.warn(`[Performance] Slow response (${time.toFixed(2)}ms): ${req.method} ${req.originalUrl || req.url}`);
       }
     };
     
     // Listen for response finish
-    res.on('finish', logResponseTime);
-    res.on('close', logResponseTime);
+    res.on('finish', finishTiming);
+    res.on('close', finishTiming);
     
     next();
   };
 }
 
 /**
- * Middleware to limit request body size
- * Prevents memory issues from large payloads
+ * Payload size limit middleware with detailed reporting
+ * @param limit Maximum request body size
+ * @returns Express middleware
  */
-export function bodySizeLimit(limit: string | number = '1mb') {
+export function payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT) {
   return (req: Request, res: Response, next: NextFunction) => {
-    let contentLength: number;
+    // We would use body-parser or express's own limit here
+    // This is a simplified implementation
     
-    // Get content length from headers
-    if (req.headers['content-length']) {
-      contentLength = parseInt(req.headers['content-length'] as string, 10);
-    } else {
-      // Skip check if no content length header
-      return next();
-    }
-    
-    // Convert limit to bytes if it's a string
+    // Parse the limit to bytes
     const maxSize = typeof limit === 'string' ? bytes.parse(limit) : limit;
     
-    // Check if request exceeds limit
-    if (contentLength > maxSize) {
-      const err = new Error(`Request body too large. Max size: ${limit}`);
-      res.status(413).json({
-        error: 'Payload Too Large',
-        message: `Request body exceeds the ${limit} limit`
-      });
-      return;
+    // Check content length if available
+    const contentLength = req.headers['content-length'];
+    if (contentLength) {
+      const size = parseInt(contentLength, 10);
+      if (size > maxSize) {
+        const err = new Error(`Request body too large: ${size} bytes (max: ${maxSize} bytes)`);
+        err.name = 'PayloadTooLargeError';
+        return next(err);
+      }
     }
     
     next();
@@ -148,52 +215,88 @@ export function bodySizeLimit(limit: string | number = '1mb') {
 }
 
 /**
- * Middleware to add security and performance headers
+ * Get performance metrics
+ * @returns Copy of current metrics
+ */
+export function getPerformanceMetrics() {
+  return {
+    ...metrics,
+    uptime: Date.now() - metrics.startTime,
+  };
+}
+
+/**
+ * Reset performance metrics
+ */
+export function resetPerformanceMetrics() {
+  metrics.responseTimes = [];
+  metrics.slowest = { url: '', time: 0 };
+  metrics.totalRequests = 0;
+  metrics.averageResponseTime = 0;
+  metrics.startTime = Date.now();
+}
+
+/**
+ * Database query optimization middleware
+ * Monitors and optimizes database queries
+ */
+export function dbQueryOptimization() {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // This is a placeholder for database query optimization
+    // In a real application, this might:
+    // - Track query patterns
+    // - Suggest indexes
+    // - Cache frequent queries
+    // - Highlight N+1 query problems
+    
+    // For now, just add some informative headers
+    res.setHeader('X-DB-Optimization', 'Enabled');
+    
+    next();
+  };
+}
+
+/**
+ * Output performance headers
+ * @returns Express middleware
  */
 export function performanceHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Enable HTTP keepalive
-    res.setHeader('Connection', 'keep-alive');
+    // Add Server-Timing header (supports Chrome, Firefox, Edge)
+    res.setHeader('Server-Timing', 'app;desc="Application Server"');
     
-    // Set frame options for security
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    
-    // Set content type options for security
+    // Add performance-related security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    
-    // Disable content sniffing
-    res.setHeader('X-Download-Options', 'noopen');
-    
-    // Enable XSS protection
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    
-    // Set referrer policy
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     
     next();
   };
 }
 
 /**
- * Set up all performance middleware in recommended order
+ * Initialize performance middleware
+ * @param app Express application
+ * @param config Server configuration
  */
-export function setupPerformanceMiddleware(app: any) {
-  // Apply middleware in optimal order
+export function initializePerformanceMiddleware(app: any, config: ServerConfig) {
+  // Apply optimized compression
+  app.use(optimizedCompression());
   
-  // 1. Request timing (should be first to accurately measure)
-  app.use(requestTimer());
+  // Track response times
+  app.use(responseTime());
   
-  // 2. Body size limiting (early check to avoid processing large requests)
-  app.use(bodySizeLimit('2mb'));
-  
-  // 3. Performance headers
+  // Add performance headers
   app.use(performanceHeaders());
   
-  // 4. Response compression (should be applied early, but after critical middleware)
-  app.use(setupResponseCompression());
+  // Listen for server events
+  ServerEvents.on('server.shutdown', () => {
+    // Log performance stats before shutdown
+    console.log('[Performance] Shutting down with metrics:', getPerformanceMetrics());
+  });
   
-  // 5. Cache control (applied last to ensure all processing has happened)
-  app.use(cacheControl());
-  
-  console.log('[Performance] Performance middleware initialized');
+  // Expose metrics endpoint if configured
+  if (config.exposeMetrics) {
+    app.get('/api/metrics', (req: Request, res: Response) => {
+      res.json(getPerformanceMetrics());
+    });
+  }
 }

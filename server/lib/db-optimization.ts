@@ -1,369 +1,487 @@
 /**
  * Database Optimization Utilities
  * 
- * Provides functions for optimizing database operations, queries, and connections.
- * Includes tools for query optimization, connection pooling, and monitoring.
+ * This module provides utilities for optimizing database performance with Drizzle ORM.
  */
 
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { SQL, sql } from 'drizzle-orm';
+import LRUCache from 'lru-cache';
 
-// Default database connection pool settings
-const DEFAULT_POOL_CONFIG = {
-  max: 20,           // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000,  // How long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 2000, // How long to wait for a connection
-  maxUses: 7500,     // Close and replace a connection after this many uses
+// Configuration
+const QUERY_CACHE_MAX_SIZE = 500; // Maximum number of cached queries
+const QUERY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const BATCH_SIZE = 1000; // Default batch size for large operations
+
+// Cache for query results
+const queryCache = new LRUCache<string, any>({
+  max: QUERY_CACHE_MAX_SIZE,
+  ttl: QUERY_CACHE_TTL,
+});
+
+// Performance metrics
+const dbMetrics = {
+  totalQueries: 0,
+  slowQueries: [] as Array<{
+    query: string;
+    duration: number;
+    timestamp: Date;
+    params?: any[];
+  }>,
+  averageQueryTime: 0,
+  queryTimes: [] as number[],
+  cachedQueryHits: 0,
+  cachedQueryMisses: 0,
+  transactionCount: 0,
+  lastVacuum: null as Date | null,
+  lastAnalyze: null as Date | null,
+  slowQueryThreshold: 500, // ms
 };
 
-// Singleton database pool
-let pool: Pool | null = null;
-
 /**
- * Initialize or get the database connection pool
- * Ensures only one pool exists throughout the application
- * 
- * @param config Optional configuration to override defaults
- * @returns Database connection pool
- */
-export function getDbPool(config = DEFAULT_POOL_CONFIG): Pool {
-  if (!pool) {
-    const databaseUrl = process.env.DATABASE_URL;
-    
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL environment variable is required');
-    }
-    
-    try {
-      pool = new Pool({
-        connectionString: databaseUrl,
-        ...config,
-      });
-      
-      // Log connection events
-      pool.on('connect', () => {
-        console.log('[Database] New connection established');
-      });
-      
-      pool.on('error', (error: Error) => {
-        console.error('[Database] Error in connection pool:', error.message);
-      });
-      
-      console.log('[Database] Connection pool initialized');
-    } catch (error) {
-      console.error('[Database] Failed to initialize connection pool:', error);
-      throw error;
-    }
-  }
-  
-  return pool;
-}
-
-/**
- * Get a client from the connection pool with timeout
- * 
- * @param timeout Timeout in milliseconds
- * @returns Promise resolving to a database client
- */
-export async function getDbClient(timeout = 5000): Promise<PoolClient> {
-  const dbPool = getDbPool();
-  
-  try {
-    // Create a promise that rejects after the timeout
-    const timeoutPromise = new Promise<PoolClient>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error(`Database connection timed out after ${timeout}ms`));
-      }, timeout);
-    });
-    
-    // Get a client from the pool
-    const clientPromise = dbPool.connect();
-    
-    // Race the client acquisition against the timeout
-    return await Promise.race([clientPromise, timeoutPromise]);
-  } catch (error) {
-    console.error('[Database] Failed to acquire client:', error);
-    throw error;
-  }
-}
-
-/**
- * Execute a query with built-in error handling and performance logging
- * 
- * @param query SQL query string
+ * Memoized query executor with caching
+ * @param db Drizzle database instance
+ * @param query The SQL query to execute
  * @param params Query parameters
- * @param options Optional query options
- * @returns Promise resolving to query result
+ * @param options Cache options
+ * @returns Query results
  */
-export async function executeQuery<T extends Record<string, unknown>>(
-  query: string,
-  params: any[] = [],
-  options: { timeout?: number; label?: string } = {}
-): Promise<QueryResult<T>> {
-  const { timeout = 5000, label = 'query' } = options;
-  const start = process.hrtime();
-  let client: PoolClient | null = null;
+export async function memoizedQuery<T = any>(
+  db: NodePgDatabase<any>,
+  query: SQL<unknown>,
+  params?: any[],
+  options?: {
+    ttl?: number;
+    bypassCache?: boolean;
+    tag?: string;
+  }
+): Promise<T> {
+  // Generate cache key
+  const cacheKey = `${query.toString()}:${JSON.stringify(params || {})}`;
+  const ttl = options?.ttl || QUERY_CACHE_TTL;
   
+  // Check cache unless bypassing
+  if (!options?.bypassCache) {
+    const cachedResult = queryCache.get<T>(cacheKey);
+    if (cachedResult) {
+      dbMetrics.cachedQueryHits++;
+      return cachedResult;
+    }
+  }
+  
+  dbMetrics.cachedQueryMisses++;
+  dbMetrics.totalQueries++;
+  
+  // Start timing
+  const startTime = performance.now();
+  
+  // Execute query
+  let result: T;
   try {
-    // Get a client from the pool
-    client = await getDbClient(timeout);
+    if (params) {
+      // This is a simplified version - would need proper parameter binding
+      result = await db.execute(query) as T;
+    } else {
+      result = await db.execute(query) as T;
+    }
     
-    // Execute the query
-    const result = await client.query<T>(query, params);
+    // Calculate duration
+    const duration = performance.now() - startTime;
     
-    // Calculate and log execution time
-    const diff = process.hrtime(start);
-    const duration = diff[0] * 1000 + diff[1] / 1000000;
+    // Track metrics
+    trackQueryPerformance(query.toString(), duration, params);
     
-    if (duration > 500) {
-      console.warn(`[Database] Slow ${label}: ${duration.toFixed(2)}ms`);
+    // Store in cache unless bypassing
+    if (!options?.bypassCache) {
+      queryCache.set(cacheKey, result, { ttl });
     }
     
     return result;
   } catch (error) {
-    // Calculate execution time even on error
-    const diff = process.hrtime(start);
-    const duration = diff[0] * 1000 + diff[1] / 1000000;
-    
-    console.error(
-      `[Database] Error in ${label} (${duration.toFixed(2)}ms):`,
-      error instanceof Error ? error.message : 'Unknown error',
-      'Query:',
-      query.slice(0, 200) + (query.length > 200 ? '...' : '')
-    );
-    
-    throw error;
-  } finally {
-    // Always release the client back to the pool
-    if (client) {
-      client.release();
-    }
-  }
-}
-
-/**
- * Execute a parameterized query with named parameters
- * 
- * @param query SQL query with named parameters (:paramName)
- * @param params Object with parameter values
- * @param options Optional query options
- * @returns Promise resolving to query result
- */
-export async function executeNamedQuery<T extends Record<string, unknown>>(
-  query: string,
-  params: Record<string, any> = {},
-  options: { timeout?: number; label?: string } = {}
-): Promise<QueryResult<T>> {
-  // Convert named parameters to positional parameters
-  const paramNames = Object.keys(params);
-  const positionalParams: any[] = [];
-  
-  let processedQuery = query;
-  let paramIndex = 1;
-  
-  // Replace each named parameter with a positional parameter
-  paramNames.forEach(name => {
-    const regex = new RegExp(`:${name}\\b`, 'g');
-    processedQuery = processedQuery.replace(regex, `$${paramIndex}`);
-    positionalParams.push(params[name]);
-    paramIndex++;
-  });
-  
-  // Execute the query with positional parameters
-  return executeQuery<T>(
-    processedQuery,
-    positionalParams,
-    options
-  );
-}
-
-/**
- * Build a dynamic query with optional clauses
- * Helps prevent SQL injection by properly parameterizing dynamic conditions
- */
-export function buildDynamicQuery(
-  baseQuery: string,
-  conditions: Record<string, any> = {},
-  options: {
-    orderBy?: string;
-    orderDirection?: 'ASC' | 'DESC';
-    groupBy?: string;
-    limit?: number;
-    offset?: number;
-  } = {}
-): { query: string; params: any[] } {
-  const params: any[] = [];
-  const whereClauses: string[] = [];
-  
-  // Build WHERE clauses from conditions
-  Object.entries(conditions).forEach(([key, value], index) => {
-    if (value !== undefined && value !== null) {
-      const paramIndex = params.length + 1;
-      
-      // Handle different types of conditions
-      if (Array.isArray(value)) {
-        // Array values for IN operations
-        whereClauses.push(`${key} IN (${value.map((_, i) => `$${paramIndex + i}`).join(', ')})`);
-        params.push(...value);
-      } else if (typeof value === 'object' && value !== null) {
-        // Object values for complex operations
-        if ('like' in value) {
-          whereClauses.push(`${key} ILIKE $${paramIndex}`);
-          params.push(`%${value.like}%`);
-        } else if ('gt' in value) {
-          whereClauses.push(`${key} > $${paramIndex}`);
-          params.push(value.gt);
-        } else if ('lt' in value) {
-          whereClauses.push(`${key} < $${paramIndex}`);
-          params.push(value.lt);
-        } else if ('gte' in value) {
-          whereClauses.push(`${key} >= $${paramIndex}`);
-          params.push(value.gte);
-        } else if ('lte' in value) {
-          whereClauses.push(`${key} <= $${paramIndex}`);
-          params.push(value.lte);
-        } else if ('between' in value && Array.isArray(value.between) && value.between.length === 2) {
-          whereClauses.push(`${key} BETWEEN $${paramIndex} AND $${paramIndex + 1}`);
-          params.push(value.between[0], value.between[1]);
-        }
-      } else {
-        // Simple equality condition
-        whereClauses.push(`${key} = $${paramIndex}`);
-        params.push(value);
-      }
-    }
-  });
-  
-  // Construct WHERE clause
-  let whereClause = '';
-  if (whereClauses.length > 0) {
-    whereClause = ` WHERE ${whereClauses.join(' AND ')}`;
-  }
-  
-  // Add ORDER BY if specified
-  let orderClause = '';
-  if (options.orderBy) {
-    const direction = options.orderDirection || 'ASC';
-    // Validate order column to prevent SQL injection
-    if (/^[a-zA-Z0-9_\.]+$/.test(options.orderBy)) {
-      orderClause = ` ORDER BY ${options.orderBy} ${direction}`;
-    }
-  }
-  
-  // Add GROUP BY if specified
-  let groupClause = '';
-  if (options.groupBy) {
-    // Validate group column to prevent SQL injection
-    if (/^[a-zA-Z0-9_\.]+$/.test(options.groupBy)) {
-      groupClause = ` GROUP BY ${options.groupBy}`;
-    }
-  }
-  
-  // Add LIMIT and OFFSET if specified
-  let limitOffsetClause = '';
-  if (options.limit !== undefined) {
-    limitOffsetClause = ` LIMIT ${options.limit}`;
-    
-    if (options.offset !== undefined) {
-      limitOffsetClause += ` OFFSET ${options.offset}`;
-    }
-  }
-  
-  // Construct the final query
-  const query = `${baseQuery}${whereClause}${groupClause}${orderClause}${limitOffsetClause}`;
-  
-  return { query, params };
-}
-
-/**
- * Perform database maintenance operations
- * Should be run periodically to optimize performance
- */
-export async function performDatabaseMaintenance(): Promise<void> {
-  console.log('[Database] Starting maintenance operations');
-  const start = process.hrtime();
-  
-  try {
-    // Get list of tables
-    const tablesResult = await executeQuery<{ tablename: string }>(
-      `SELECT tablename FROM pg_tables 
-       WHERE schemaname = 'public' 
-       ORDER BY tablename`,
-      [],
-      { label: 'maintenance-tables' }
-    );
-    
-    // Skip if no tables found
-    if (!tablesResult.rows || tablesResult.rows.length === 0) {
-      console.log('[Database] No tables found for maintenance');
-      return;
-    }
-    
-    const tables = tablesResult.rows.map(row => row.tablename);
-    const maintenanceTasks: Promise<void>[] = [];
-    
-    // Perform maintenance on each table
-    for (const table of tables) {
-      maintenanceTasks.push(
-        (async () => {
-          try {
-            // VACUUM the table (reclaim storage)
-            await executeQuery(
-              `VACUUM ANALYZE ${table}`,
-              [],
-              { label: `vacuum-${table}`, timeout: 30000 }
-            );
-            console.log(`[Database] Vacuumed table: ${table}`);
-            
-            // Analyze the table (update statistics)
-            await executeQuery(
-              `ANALYZE ${table}`,
-              [],
-              { label: `analyze-${table}`, timeout: 15000 }
-            );
-            console.log(`[Database] Analyzed table: ${table}`);
-          } catch (error) {
-            console.error(`[Database] Maintenance error on table ${table}:`, error);
-          }
-        })()
-      );
-    }
-    
-    // Wait for all maintenance tasks to complete
-    await Promise.all(maintenanceTasks);
-    
-    // Calculate time taken
-    const diff = process.hrtime(start);
-    const duration = diff[0] * 1000 + diff[1] / 1000000;
-    
-    console.log(`[Database] Maintenance completed in ${duration.toFixed(2)}ms`);
-  } catch (error) {
-    console.error('[Database] Maintenance error:', error);
+    // Log error and rethrow
+    console.error(`[DB Optimization] Query error:`, error);
     throw error;
   }
 }
 
 /**
- * Explain and analyze a query for performance tuning
- * 
- * @param query SQL query to analyze
- * @param params Query parameters
- * @returns Promise resolving to the query execution plan
+ * Track query performance metrics
+ * @param query The SQL query string
+ * @param duration Query execution time in ms
+ * @param params Optional query parameters
  */
-export async function explainQuery(
-  query: string,
-  params: any[] = []
-): Promise<string> {
-  try {
-    const result = await executeQuery<{ "QUERY PLAN": string }>(
-      `EXPLAIN (ANALYZE, VERBOSE, BUFFERS, FORMAT TEXT) ${query}`,
+function trackQueryPerformance(query: string, duration: number, params?: any[]): void {
+  // Add to query times
+  dbMetrics.queryTimes.push(duration);
+  
+  // Keep only the last 100 query times
+  if (dbMetrics.queryTimes.length > 100) {
+    dbMetrics.queryTimes.shift();
+  }
+  
+  // Calculate average
+  const sum = dbMetrics.queryTimes.reduce((total, time) => total + time, 0);
+  dbMetrics.averageQueryTime = sum / dbMetrics.queryTimes.length;
+  
+  // Track slow queries
+  if (duration > dbMetrics.slowQueryThreshold) {
+    dbMetrics.slowQueries.push({
+      query,
+      duration,
+      timestamp: new Date(),
       params,
-      { label: 'explain-analyze', timeout: 30000 }
-    );
+    });
     
-    // Format the execution plan
-    return result.rows.map(row => row["QUERY PLAN"]).join('\n');
+    // Keep only the last 50 slow queries
+    if (dbMetrics.slowQueries.length > 50) {
+      dbMetrics.slowQueries.shift();
+    }
+    
+    // Log slow query
+    console.warn(`[DB Optimization] Slow query (${duration.toFixed(2)}ms): ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
+  }
+}
+
+/**
+ * Process large datasets in batches to prevent memory issues
+ * @param items Items to process
+ * @param processFn Function to process each batch
+ * @param options Batch processing options
+ * @returns Combined results
+ */
+export async function processBatches<T, R>(
+  items: T[],
+  processFn: (batch: T[]) => Promise<R[]>,
+  options?: {
+    batchSize?: number;
+    onProgress?: (processed: number, total: number) => void;
+  }
+): Promise<R[]> {
+  const batchSize = options?.batchSize || BATCH_SIZE;
+  const total = items.length;
+  let processed = 0;
+  const results: R[] = [];
+  
+  // Process in batches
+  for (let i = 0; i < total; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await processFn(batch);
+    
+    results.push(...batchResults);
+    
+    processed += batch.length;
+    
+    // Report progress
+    if (options?.onProgress) {
+      options.onProgress(processed, total);
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Clear query cache
+ * @param pattern Optional pattern to match cache keys
+ * @returns Number of cleared cache entries
+ */
+export function clearQueryCache(pattern?: string): number {
+  if (!pattern) {
+    const size = queryCache.size;
+    queryCache.clear();
+    return size;
+  }
+  
+  // Clear specific entries that match the pattern
+  let count = 0;
+  const regex = new RegExp(pattern);
+  
+  // Iterate through cache using forEach
+  queryCache.forEach((value, key) => {
+    if (regex.test(key)) {
+      queryCache.delete(key);
+      count++;
+    }
+  });
+  
+  return count;
+}
+
+/**
+ * Get current database metrics
+ * @returns Copy of current metrics
+ */
+export function getDbMetrics() {
+  return { ...dbMetrics };
+}
+
+/**
+ * Reset database metrics
+ */
+export function resetDbMetrics() {
+  dbMetrics.totalQueries = 0;
+  dbMetrics.slowQueries = [];
+  dbMetrics.averageQueryTime = 0;
+  dbMetrics.queryTimes = [];
+  dbMetrics.cachedQueryHits = 0;
+  dbMetrics.cachedQueryMisses = 0;
+  dbMetrics.transactionCount = 0;
+}
+
+/**
+ * Execute ANALYZE on tables to update statistics
+ * @param db Drizzle database instance
+ * @param tables Optional array of table names to analyze
+ * @returns Results of the operation
+ */
+export async function analyzeDb(
+  db: NodePgDatabase<any>,
+  tables?: string[]
+): Promise<{ analyzed: string[]; skipped: string[]; error?: Error }> {
+  const analyzed: string[] = [];
+  const skipped: string[] = [];
+  
+  try {
+    if (tables && tables.length > 0) {
+      // Analyze specific tables
+      for (const table of tables) {
+        await db.execute(sql`ANALYZE ${sql.raw(table)}`);
+        analyzed.push(table);
+      }
+    } else {
+      // Analyze all tables
+      await db.execute(sql`ANALYZE`);
+      analyzed.push('all tables');
+    }
+    
+    dbMetrics.lastAnalyze = new Date();
+    return { analyzed, skipped };
   } catch (error) {
-    console.error('[Database] Error explaining query:', error);
-    throw error;
+    console.error('[DB Optimization] Error during ANALYZE:', error);
+    return { analyzed, skipped, error: error as Error };
+  }
+}
+
+/**
+ * Execute VACUUM on tables to reclaim space
+ * @param db Drizzle database instance
+ * @param tables Optional array of table names to vacuum
+ * @param full Whether to run VACUUM FULL (locks tables)
+ * @returns Results of the operation
+ */
+export async function vacuumDb(
+  db: NodePgDatabase<any>,
+  tables?: string[],
+  full: boolean = false
+): Promise<{ vacuumed: string[]; skipped: string[]; error?: Error }> {
+  const vacuumed: string[] = [];
+  const skipped: string[] = [];
+  
+  try {
+    if (tables && tables.length > 0) {
+      // Vacuum specific tables
+      for (const table of tables) {
+        if (full) {
+          await db.execute(sql`VACUUM FULL ${sql.raw(table)}`);
+        } else {
+          await db.execute(sql`VACUUM ${sql.raw(table)}`);
+        }
+        vacuumed.push(table);
+      }
+    } else {
+      // Vacuum all tables
+      if (full) {
+        await db.execute(sql`VACUUM FULL`);
+      } else {
+        await db.execute(sql`VACUUM`);
+      }
+      vacuumed.push('all tables');
+    }
+    
+    dbMetrics.lastVacuum = new Date();
+    return { vacuumed, skipped };
+  } catch (error) {
+    console.error('[DB Optimization] Error during VACUUM:', error);
+    return { vacuumed, skipped, error: error as Error };
+  }
+}
+
+/**
+ * Check for tables that might benefit from indexing
+ * @param db Drizzle database instance
+ * @returns Analysis results
+ */
+export async function analyzeIndexNeeds(
+  db: NodePgDatabase<any>
+): Promise<{
+  missingIndexes: Array<{ table: string; column: string; benefit: number }>;
+  unusedIndexes: Array<{ table: string; index: string; usage: number }>;
+}> {
+  // Find missing indexes (simplified example)
+  const missingIndexesQuery = sql`
+    SELECT
+      s.relname AS table,
+      a.attname AS column,
+      s.idx_scan AS indexScans,
+      s.seq_scan AS sequentialScans,
+      s.seq_scan - s.idx_scan AS potentialBenefit
+    FROM
+      pg_stat_user_tables s
+      JOIN pg_attribute a ON a.attrelid = s.relid
+    WHERE
+      a.attnum > 0
+      AND NOT a.attisdropped
+      AND s.seq_scan > 10
+      AND s.seq_scan / GREATEST(s.idx_scan, 1) > 3
+    ORDER BY
+      potentialBenefit DESC
+    LIMIT 10
+  `;
+  
+  // Find unused indexes
+  const unusedIndexesQuery = sql`
+    SELECT
+      s.relname AS table,
+      i.relname AS index,
+      s.idx_scan AS usage
+    FROM
+      pg_stat_user_indexes s
+      JOIN pg_index x ON s.indexrelid = x.indexrelid
+      JOIN pg_class i ON i.oid = s.indexrelid
+    WHERE
+      s.idx_scan = 0
+      AND NOT x.indisprimary
+      AND NOT x.indisunique
+    ORDER BY
+      i.relname
+  `;
+  
+  try {
+    const [missingResults, unusedResults] = await Promise.all([
+      db.execute(missingIndexesQuery),
+      db.execute(unusedIndexesQuery),
+    ]);
+    
+    return {
+      missingIndexes: (missingResults as any[]).map(row => ({
+        table: row.table,
+        column: row.column,
+        benefit: parseFloat(row.potentialbenefit),
+      })),
+      unusedIndexes: (unusedResults as any[]).map(row => ({
+        table: row.table,
+        index: row.index,
+        usage: parseInt(row.usage, 10),
+      })),
+    };
+  } catch (error) {
+    console.error('[DB Optimization] Error analyzing index needs:', error);
+    return { missingIndexes: [], unusedIndexes: [] };
+  }
+}
+
+/**
+ * Get database table sizes
+ * @param db Drizzle database instance
+ * @returns Table size information
+ */
+export async function getTableSizes(
+  db: NodePgDatabase<any>
+): Promise<Array<{
+  table: string;
+  size: string;
+  totalSize: string;
+  indexSize: string;
+}>> {
+  const query = sql`
+    SELECT
+      t.tablename AS table,
+      pg_size_pretty(pg_table_size(t.tablename::text)) AS size,
+      pg_size_pretty(pg_total_relation_size(t.tablename::text)) AS total_size,
+      pg_size_pretty(pg_indexes_size(t.tablename::text)) AS index_size
+    FROM
+      pg_catalog.pg_tables t
+    WHERE
+      t.schemaname = 'public'
+    ORDER BY
+      pg_total_relation_size(t.tablename::text) DESC
+  `;
+  
+  try {
+    const results = await db.execute(query);
+    
+    return (results as any[]).map(row => ({
+      table: row.table,
+      size: row.size,
+      totalSize: row.total_size,
+      indexSize: row.index_size,
+    }));
+  } catch (error) {
+    console.error('[DB Optimization] Error getting table sizes:', error);
+    return [];
+  }
+}
+
+/**
+ * Get transaction statistics
+ * @param db Drizzle database instance
+ * @returns Transaction statistics
+ */
+export async function getTransactionStats(
+  db: NodePgDatabase<any>
+): Promise<{
+  activeTransactions: number;
+  totalTransactions: number;
+  idleInTransactions: number;
+  longestTransaction: number;
+}> {
+  const query = sql`
+    SELECT
+      state,
+      count(*) AS count,
+      max(EXTRACT(EPOCH FROM now() - xact_start)) AS longest_transaction_seconds
+    FROM
+      pg_stat_activity
+    WHERE
+      state IS NOT NULL
+    GROUP BY
+      state
+  `;
+  
+  try {
+    const results = await db.execute(query);
+    
+    // Process results
+    let activeTransactions = 0;
+    let idleInTransactions = 0;
+    let longestTransaction = 0;
+    
+    (results as any[]).forEach(row => {
+      if (row.state === 'active') {
+        activeTransactions = parseInt(row.count, 10);
+      } else if (row.state === 'idle in transaction') {
+        idleInTransactions = parseInt(row.count, 10);
+      }
+      
+      const longest = parseFloat(row.longest_transaction_seconds || '0');
+      if (longest > longestTransaction) {
+        longestTransaction = longest;
+      }
+    });
+    
+    return {
+      activeTransactions,
+      totalTransactions: dbMetrics.transactionCount,
+      idleInTransactions,
+      longestTransaction,
+    };
+  } catch (error) {
+    console.error('[DB Optimization] Error getting transaction stats:', error);
+    return {
+      activeTransactions: 0,
+      totalTransactions: dbMetrics.transactionCount,
+      idleInTransactions: 0,
+      longestTransaction: 0,
+    };
   }
 }

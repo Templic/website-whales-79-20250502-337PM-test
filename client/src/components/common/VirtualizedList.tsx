@@ -1,214 +1,231 @@
-/**
- * VirtualizedList Component
- * 
- * Renders only the items currently in view, significantly improving performance
- * for large lists. Supports both fixed-height and variable-height items.
- * 
- * Features:
- * - Virtual scrolling for large datasets
- * - Configurable overscan for smooth scrolling
- * - Support for dynamic height items
- * - Customizable rendering of list items
- */
+import React, { useState, useRef, useEffect, ReactNode, CSSProperties, useMemo } from 'react';
+import { measureExecutionTime } from '@/lib/performance';
+import { useAnimationFrameThrottled } from '@/lib/animation-frame-batch';
 
-import React, { useState, useRef, useCallback, memo } from 'react';
-
-interface VirtualizedListProps<T> {
-  /** Array of items to render */
+export interface VirtualizedListProps<T> {
   items: T[];
-  /** Height of the list container in pixels */
   height: number;
-  /** Width of the list container (px, %, etc.) */
-  width: number | string;
-  /** Height of each item, either fixed or calculated per item */
   itemHeight: number | ((item: T, index: number) => number);
-  /** Function to render each item */
-  renderItem: (item: T, index: number) => React.ReactNode;
-  /** Function to get a unique key for each item */
-  getItemKey: (item: T, index: number) => string | number;
-  /** Number of extra items to render above/below viewport */
+  renderItem: (item: T, index: number, style: CSSProperties) => ReactNode;
   overscan?: number;
-  /** CSS class for the container */
   className?: string;
-  /** Additional style properties */
-  style?: React.CSSProperties;
-  /** Callback when scroll position changes */
-  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
-  /** Callback when visible items change */
-  onVisibleItemsChange?: (startIndex: number, endIndex: number) => void;
+  style?: CSSProperties;
+  onScroll?: (scrollTop: number) => void;
+  onItemsRendered?: (params: { visibleStartIndex: number; visibleEndIndex: number }) => void;
+  itemKey?: (item: T, index: number) => string | number;
+  estimatedItemHeight?: number;
+  scrollToIndex?: number;
+  initialScrollOffset?: number;
+  direction?: 'vertical' | 'horizontal';
+  width?: number;
+  innerElementType?: React.ElementType;
+  outerElementType?: React.ElementType;
 }
 
 /**
- * VirtualizedList Component - Efficiently renders large lists
+ * A virtualized list component that only renders items in view (plus overscan)
+ * to improve performance for large lists
  */
 function VirtualizedList<T>({
   items,
   height,
-  width,
+  width = '100%',
   itemHeight,
   renderItem,
-  getItemKey,
   overscan = 3,
   className = '',
   style = {},
   onScroll,
-  onVisibleItemsChange,
+  onItemsRendered,
+  itemKey = (_, index) => index,
+  estimatedItemHeight = 50,
+  scrollToIndex,
+  initialScrollOffset = 0,
+  direction = 'vertical',
+  innerElementType: InnerElementType = 'div',
+  outerElementType: OuterElementType = 'div',
 }: VirtualizedListProps<T>) {
-  // Track scroll position
-  const [scrollTop, setScrollTop] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollOffset, setScrollOffset] = useState(initialScrollOffset);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const isVertical = direction === 'vertical';
   
-  // Get item height (safely handles both fixed and variable height)
-  const getItemHeightValue = useCallback(
-    (index: number): number => {
-      if (typeof itemHeight === 'function' && index >= 0 && index < items.length) {
-        // Safe access with index check
-        return itemHeight(items[index], index);
-      }
-      return typeof itemHeight === 'number' ? itemHeight : 0;
-    },
-    [itemHeight, items]
-  );
+  // Memoize item measurements for more stable virtualization
+  const itemSizes = useMemo(() => {
+    return measureExecutionTime('calculateItemSizes', () => {
+      return items.map((item, index) => {
+        return typeof itemHeight === 'function'
+          ? itemHeight(item, index)
+          : itemHeight;
+      });
+    });
+  }, [items, itemHeight]);
   
-  // Calculate the total height of all items
-  const totalHeight = useTotalHeight(items, getItemHeightValue);
+  // Calculate total size of all items
+  const totalSize = useMemo(() => {
+    return itemSizes.reduce((total, size) => total + size, 0);
+  }, [itemSizes]);
   
-  // Calculate which items should be visible
-  const { startIndex, endIndex, paddingTop } = useVisibleRange(
-    items.length,
-    getItemHeightValue,
-    scrollTop,
-    height,
-    overscan
-  );
+  // Calculate item positions
+  const itemPositions = useMemo(() => {
+    let offset = 0;
+    return itemSizes.map(size => {
+      const position = offset;
+      offset += size;
+      return position;
+    });
+  }, [itemSizes]);
   
-  // Handle scroll events
-  const handleScroll = useCallback(
-    (event: React.UIEvent<HTMLDivElement>) => {
-      const newScrollTop = event.currentTarget.scrollTop;
-      setScrollTop(newScrollTop);
+  // Determine visible range of items
+  const visibleRange = useMemo(() => {
+    return measureExecutionTime('calculateVisibleRange', () => {
+      const size = isVertical ? height : (typeof width === 'number' ? width : 0);
       
-      if (onScroll) {
-        onScroll(event);
+      if (size === 0 || totalSize === 0) {
+        return { start: 0, end: 10 }; // Default range
       }
-    },
-    [onScroll]
-  );
+      
+      // Binary search to find start index
+      let start = 0;
+      let end = itemPositions.length - 1;
+      let startIndex = 0;
+      
+      while (start <= end) {
+        const mid = Math.floor((start + end) / 2);
+        if (itemPositions[mid] <= scrollOffset) {
+          startIndex = mid;
+          start = mid + 1;
+        } else {
+          end = mid - 1;
+        }
+      }
+      
+      // Find end index by scanning forward
+      let endIndex = startIndex;
+      const viewportEnd = scrollOffset + size;
+      
+      while (
+        endIndex < itemPositions.length &&
+        (itemPositions[endIndex] < viewportEnd || endIndex === startIndex)
+      ) {
+        endIndex++;
+      }
+      
+      // Apply overscan
+      startIndex = Math.max(0, startIndex - overscan);
+      endIndex = Math.min(itemPositions.length - 1, endIndex + overscan);
+      
+      return { start: startIndex, end: endIndex };
+    });
+  }, [scrollOffset, height, width, isVertical, itemPositions, totalSize, overscan]);
   
-  // Notify when visible items change
-  React.useEffect(() => {
-    if (onVisibleItemsChange && startIndex !== undefined && endIndex !== undefined) {
-      onVisibleItemsChange(startIndex, endIndex);
+  // Handle scroll event with animation frame throttling
+  const handleScroll = useAnimationFrameThrottled((e: React.UIEvent<HTMLDivElement>) => {
+    const { current } = outerRef;
+    if (!current) return;
+    
+    const newOffset = isVertical ? current.scrollTop : current.scrollLeft;
+    setScrollOffset(newOffset);
+    
+    if (onScroll) {
+      onScroll(newOffset);
     }
-  }, [startIndex, endIndex, onVisibleItemsChange]);
+  });
   
-  // Slice only the visible items
-  const visibleItems = startIndex !== undefined && endIndex !== undefined 
-    ? items.slice(startIndex, endIndex + 1) 
-    : [];
+  // Report rendered items to parent if requested
+  useEffect(() => {
+    if (onItemsRendered) {
+      onItemsRendered({
+        visibleStartIndex: visibleRange.start,
+        visibleEndIndex: visibleRange.end,
+      });
+    }
+  }, [visibleRange, onItemsRendered]);
+  
+  // Handle scrollToIndex prop change
+  useEffect(() => {
+    if (scrollToIndex !== undefined && outerRef.current) {
+      const index = Math.min(Math.max(0, scrollToIndex), items.length - 1);
+      const offset = itemPositions[index];
+      
+      if (isVertical) {
+        outerRef.current.scrollTop = offset;
+      } else {
+        outerRef.current.scrollLeft = offset;
+      }
+    }
+  }, [scrollToIndex, itemPositions, isVertical, items.length]);
+  
+  // Create the virtualized items
+  const children = useMemo(() => {
+    return measureExecutionTime('renderVirtualItems', () => {
+      const result = [];
+      
+      for (let i = visibleRange.start; i <= visibleRange.end; i++) {
+        if (i >= items.length) break;
+        
+        const item = items[i];
+        const position = itemPositions[i] || 0;
+        const size = itemSizes[i] || estimatedItemHeight;
+        
+        const itemStyle: CSSProperties = isVertical
+          ? { position: 'absolute', top: position, height: size, left: 0, right: 0 }
+          : { position: 'absolute', left: position, width: size, top: 0, bottom: 0 };
+          
+        result.push(
+          <div key={itemKey(item, i)} style={itemStyle} data-index={i}>
+            {renderItem(item, i, itemStyle)}
+          </div>
+        );
+      }
+      
+      return result;
+    });
+  }, [
+    visibleRange,
+    items,
+    itemPositions,
+    itemSizes,
+    isVertical,
+    renderItem,
+    itemKey,
+    estimatedItemHeight,
+  ]);
+  
+  // Outer container style
+  const outerStyle: CSSProperties = {
+    position: 'relative',
+    overflow: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    willChange: 'transform',
+    ...style,
+  };
+  
+  if (isVertical) {
+    outerStyle.height = height;
+    outerStyle.width = width;
+  } else {
+    outerStyle.width = width;
+    outerStyle.height = height;
+  }
+  
+  // Inner container style
+  const innerStyle: CSSProperties = isVertical
+    ? { height: totalSize, position: 'relative' }
+    : { width: totalSize, height: '100%', position: 'relative' };
   
   return (
-    <div
-      ref={containerRef}
-      className={`virtualized-list-container ${className}`}
-      style={{
-        height,
-        width,
-        overflow: 'auto',
-        position: 'relative',
-        ...style,
-      }}
+    <OuterElementType
+      ref={outerRef}
+      className={`virtualized-list ${className}`}
+      style={outerStyle}
       onScroll={handleScroll}
     >
-      <div
-        className="virtualized-list-content"
-        style={{
-          height: totalHeight,
-          position: 'relative',
-        }}
-      >
-        <div
-          className="virtualized-list-items"
-          style={{
-            position: 'absolute',
-            top: paddingTop,
-            left: 0,
-            right: 0,
-          }}
-        >
-          {visibleItems.map((item, localIndex) => {
-            const index = startIndex !== undefined ? startIndex + localIndex : localIndex;
-            return (
-              <div
-                key={getItemKey(item, index)}
-                className="virtualized-list-item"
-                style={{
-                  height: getItemHeightValue(index),
-                }}
-                data-index={index}
-              >
-                {renderItem(item, index)}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+      <InnerElementType ref={innerRef} style={innerStyle}>
+        {children}
+      </InnerElementType>
+    </OuterElementType>
   );
 }
 
-// Calculate the total height of all items
-function useTotalHeight<T>(
-  items: T[],
-  getItemHeight: (index: number) => number
-): number {
-  return items.reduce((height, _, index) => height + getItemHeight(index), 0);
-}
-
-// Calculate which items should be visible based on scroll position
-function useVisibleRange(
-  itemCount: number,
-  getItemHeight: (index: number) => number,
-  scrollTop: number,
-  viewportHeight: number,
-  overscan: number
-): { startIndex: number; endIndex: number; paddingTop: number } {
-  // Find the first visible item
-  let startIndex = 0;
-  let currentOffset = 0;
-  
-  // Find the first item that starts after the current scroll position
-  while (startIndex < itemCount && currentOffset < scrollTop) {
-    currentOffset += getItemHeight(startIndex);
-    startIndex++;
-  }
-  
-  // Adjust for overscan (items above the viewport)
-  startIndex = Math.max(0, startIndex - overscan);
-  
-  // Calculate padding from the top
-  let paddingTop = 0;
-  for (let i = 0; i < startIndex; i++) {
-    paddingTop += getItemHeight(i);
-  }
-  
-  // Find the last visible item
-  let endIndex = startIndex;
-  let visibleHeight = 0;
-  
-  // Add items until we've filled the viewport plus overscan
-  while (
-    endIndex < itemCount &&
-    visibleHeight < viewportHeight + getItemHeight(Math.min(endIndex, itemCount - 1))
-  ) {
-    visibleHeight += getItemHeight(endIndex);
-    endIndex++;
-  }
-  
-  // Adjust for overscan (items below the viewport)
-  endIndex = Math.min(itemCount - 1, endIndex + overscan);
-  
-  return { startIndex, endIndex, paddingTop };
-}
-
-export default memo(VirtualizedList) as typeof VirtualizedList;
+export default React.memo(VirtualizedList) as typeof VirtualizedList;

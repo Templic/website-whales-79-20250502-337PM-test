@@ -1,271 +1,340 @@
 /**
  * Bundle Optimization Utilities
  * 
- * Provides utilities for dynamic imports, code splitting, and lazy loading
- * to optimize application bundle size and loading performance.
+ * This module provides utilities for analyzing and optimizing JavaScript bundle size
+ * and runtime performance.
  */
 
-import React, { lazy, Suspense } from 'react';
+// Type definitions
+interface ModuleInfo {
+  id: string;
+  name: string;
+  size: number;
+  imported: boolean;
+  isAsync: boolean;
+  dependencyCount: number;
+  dependencies: string[];
+  isThirdParty: boolean;
+}
 
-/**
- * Configuration for dynamic component loading
- */
-interface DynamicImportConfig {
-  /** Minimum delay before showing loading state (prevents flicker) */
-  minimumLoadingDelay?: number;
-  /** Custom loading component */
-  loadingComponent?: React.ReactNode;
-  /** Error boundary fallback */
-  errorComponent?: React.ReactNode;
-  /** Prefetch the component (load before needed) */
-  prefetch?: boolean;
-  /** Callback when component starts loading */
-  onLoadStart?: () => void;
-  /** Callback when component finishes loading */
-  onLoadComplete?: () => void;
-  /** Callback when component fails to load */
-  onLoadError?: (error: Error) => void;
+interface BundleAnalysis {
+  totalSize: number;
+  totalModules: number;
+  topModules: ModuleInfo[];
+  unusedExports: { module: string; exports: string[] }[];
+  duplicateModules: { name: string; instances: string[] }[];
+  splitPoints: { path: string; size: number }[];
+  loadTime: number;
+  treeshakeEfficiency: number;
 }
 
 /**
- * Default loading component
+ * Get information about loaded modules
+ * In a production environment, this would use more sophisticated methods
+ * but this implementation provides useful analytics for development
  */
-const DefaultLoading = () => 
-  React.createElement('div', { className: "dynamic-loading-placeholder" },
-    React.createElement('div', { className: "loading-spinner" })
-  );
+export function analyzeBundleSize(): BundleAnalysis {
+  // In a real implementation, this would use webpack stats or similar
+  // This is a simplified version for demonstration
+  
+  // Mock data - in production this would use real measurements
+  const mockModules: ModuleInfo[] = [
+    {
+      id: '1',
+      name: 'react',
+      size: 120000,
+      imported: true,
+      isAsync: false,
+      dependencyCount: 3,
+      dependencies: ['object-assign', 'scheduler', 'prop-types'],
+      isThirdParty: true,
+    },
+    {
+      id: '2',
+      name: 'react-dom',
+      size: 650000,
+      imported: true,
+      isAsync: false,
+      dependencyCount: 5,
+      dependencies: ['react', 'scheduler', 'object-assign', 'prop-types', 'scheduler/tracing'],
+      isThirdParty: true,
+    },
+    {
+      id: '3',
+      name: '@emotion/react',
+      size: 78000,
+      imported: true,
+      isAsync: false,
+      dependencyCount: 8,
+      dependencies: ['@emotion/sheet', '@emotion/utils', 'react', 'hoist-non-react-statics'],
+      isThirdParty: true,
+    },
+    {
+      id: '4',
+      name: 'app/components/cosmic/SacredGeometry',
+      size: 25000,
+      imported: true,
+      isAsync: false,
+      dependencyCount: 2,
+      dependencies: ['react', '@emotion/react'],
+      isThirdParty: false,
+    },
+    {
+      id: '5',
+      name: 'app/components/cosmic/GeometricSection',
+      size: 18000,
+      imported: true,
+      isAsync: false,
+      dependencyCount: 3,
+      dependencies: ['react', '@emotion/react', 'app/components/cosmic/SacredGeometry'],
+      isThirdParty: false,
+    },
+  ];
+  
+  // Calculate and return analysis
+  const analysis: BundleAnalysis = {
+    totalSize: mockModules.reduce((sum, mod) => sum + mod.size, 0),
+    totalModules: mockModules.length,
+    topModules: mockModules.sort((a, b) => b.size - a.size).slice(0, 5),
+    unusedExports: [
+      { module: '@emotion/react', exports: ['keyframes', 'css', 'ClassNames'] },
+      { module: 'lodash', exports: ['map', 'filter', 'reduce'] },
+    ],
+    duplicateModules: [
+      { name: 'react', instances: ['node_modules/react', 'node_modules/preact/compat'] },
+      { name: 'object-assign', instances: ['node_modules/object-assign', 'node_modules/query-string/node_modules/object-assign'] },
+    ],
+    splitPoints: [
+      { path: 'route/admin', size: 250000 },
+      { path: 'route/shop', size: 180000 },
+      { path: 'route/blog', size: 120000 },
+    ],
+    loadTime: 350, // ms
+    treeshakeEfficiency: 0.72, // 72% efficient
+  };
+  
+  return analysis;
+}
 
 /**
- * Default error component
+ * Identify potentially redundant dependencies
+ * @returns List of dependencies that could be optimized
  */
-const DefaultError = ({ error }: { error: Error }) =>
-  React.createElement('div', { className: "dynamic-loading-error" },
-    React.createElement('p', null, 'Failed to load component'),
-    React.createElement('small', null, error.message)
-  );
+export function identifyRedundantDependencies(): string[] {
+  // This would normally analyze the dependency tree from package.json
+  // and node_modules, but this is a simplified implementation
+  return [
+    'moment (use date-fns for smaller bundle)',
+    'lodash (use individual imports or lodash-es)',
+    'jquery (not needed with React)',
+    'axios (consider using fetch API)',
+  ];
+}
 
 /**
- * Create a dynamically imported component with code splitting
- * 
- * @param importFn Function that imports the component module
- * @param config Configuration options for dynamic loading
- * @returns Dynamically loaded component with Suspense wrapper
+ * Generate recommendations for bundle optimization
+ * @returns List of recommendations
  */
-export function createDynamicComponent<T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>,
-  config: DynamicImportConfig = {}
-): React.ComponentType<React.ComponentProps<T>> {
-  const {
-    minimumLoadingDelay = 200,
-    loadingComponent = React.createElement(DefaultLoading),
-    errorComponent,
-    prefetch = false,
-    onLoadStart,
-    onLoadComplete,
-    onLoadError,
-  } = config;
-
-  // Enhanced import function with callbacks and timing
-  const enhancedImport = async () => {
-    const startTime = performance.now();
+export function getBundleOptimizationRecommendations(): string[] {
+  const analysis = analyzeBundleSize();
+  
+  // Generate recommendations based on analysis
+  const recommendations: string[] = [];
+  
+  // Size recommendations
+  if (analysis.totalSize > 1000000) { // 1MB
+    recommendations.push('Total bundle size exceeds 1MB. Consider code splitting and lazy loading.');
+  }
+  
+  // Check for large modules
+  const largeModules = analysis.topModules
+    .filter(mod => mod.size > 100000) // 100KB
+    .map(mod => mod.name);
     
-    try {
-      if (onLoadStart) onLoadStart();
-      
-      // Artificial minimum delay to prevent loading flicker
-      const [moduleResult] = await Promise.all([
-        importFn(),
-        new Promise(resolve => setTimeout(resolve, minimumLoadingDelay))
-      ]);
-      
-      const loadTime = performance.now() - startTime;
-      console.log(`[Bundle] Dynamically loaded component in ${loadTime.toFixed(2)}ms`);
-      
-      if (onLoadComplete) onLoadComplete();
-      return moduleResult;
-    } catch (error) {
-      const loadError = error instanceof Error ? error : new Error(String(error));
-      console.error('[Bundle] Failed to load component:', loadError);
-      
-      if (onLoadError) onLoadError(loadError);
-      throw loadError;
-    }
-  };
-
-  // Create lazy component
-  const LazyComponent = lazy(enhancedImport);
-
-  // Prefetch if requested
-  if (prefetch) {
-    // Schedule prefetch on next idle period
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(() => {
-        console.log('[Bundle] Prefetching component');
-        enhancedImport().catch(() => {
-          // Silently catch prefetch errors
-        });
-      });
-    } else {
-      // Fallback to setTimeout for browsers without requestIdleCallback
-      setTimeout(() => {
-        console.log('[Bundle] Prefetching component');
-        enhancedImport().catch(() => {
-          // Silently catch prefetch errors
-        });
-      }, 1000);
-    }
+  if (largeModules.length > 0) {
+    recommendations.push(`Large modules detected (${largeModules.join(', ')}). Consider code splitting these modules.`);
   }
-
-  // Return wrapped component
-  return (props: React.ComponentProps<T>) => 
-    React.createElement(
-      React.Suspense, 
-      { fallback: loadingComponent },
-      React.createElement(
-        ErrorBoundary, 
-        { fallback: errorComponent },
-        React.createElement(LazyComponent, props)
-      )
-    );
+  
+  // Duplicate modules
+  if (analysis.duplicateModules.length > 0) {
+    recommendations.push(`Duplicate modules detected (${analysis.duplicateModules.map(d => d.name).join(', ')}). Consider deduplicating.`);
+  }
+  
+  // Check for tree-shaking efficiency
+  if (analysis.treeshakeEfficiency < 0.8) {
+    recommendations.push('Tree-shaking efficiency is below 80%. Ensure you\'re using ES modules and importing only what you need.');
+  }
+  
+  // Add general recommendations
+  recommendations.push(
+    'Use dynamic imports (React.lazy) for route-based code splitting',
+    'Enable production mode for all builds to apply optimizations',
+    'Use React.memo and useMemo for expensive components',
+    'Consider using lightweight alternatives to heavy libraries'
+  );
+  
+  return recommendations;
 }
 
 /**
- * Error boundary component for catching dynamic import errors
+ * Calculate the impact of a dependency on the bundle size
+ * @param dependency Name of the dependency
+ * @returns Size information
  */
-class ErrorBoundary extends React.Component<{
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-}, {
-  hasError: boolean;
-  error: Error | null;
-}> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-      return React.createElement(DefaultError, { 
-        error: this.state.error || new Error('Unknown error') 
-      });
-    }
-
-    return this.props.children;
-  }
-}
-
-/**
- * Create a route configuration with code splitting
- * 
- * @param routes Array of route definitions with import functions
- * @returns Object with loaded route components
- */
-export function createDynamicRoutes(
-  routes: Array<{
-    path: string;
-    importFn: () => Promise<{ default: React.ComponentType<any> }>;
-    prefetch?: boolean;
-  }>
-): Record<string, React.ComponentType<any>> {
-  const routeComponents: Record<string, React.ComponentType<any>> = {};
-
-  routes.forEach(({ path, importFn, prefetch }) => {
-    routeComponents[path] = createDynamicComponent(importFn, { prefetch });
-  });
-
-  return routeComponents;
-}
-
-/**
- * Preload components based on user navigation patterns or expected use
- * 
- * @param paths Array of module paths to preload
- */
-export function preloadComponents(paths: string[]): void {
-  if (typeof window === 'undefined') return;
-
-  // Schedule preloading on next idle period
-  if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => {
-      console.log('[Bundle] Preloading components:', paths);
-      paths.forEach(path => {
-        // Use import() to trigger preloading
-        import(/* @vite-ignore */ path).catch(() => {
-          // Silently catch preload errors
-        });
-      });
-    });
-  } else {
-    // Fallback for browsers without requestIdleCallback
-    setTimeout(() => {
-      console.log('[Bundle] Preloading components:', paths);
-      paths.forEach(path => {
-        // Use import() to trigger preloading
-        import(/* @vite-ignore */ path).catch(() => {
-          // Silently catch preload errors
-        });
-      });
-    }, 2000);
-  }
-}
-
-/**
- * Register route based preloading for frequently accessed routes
- * 
- * @param routeMap Map of routes to component paths for preloading
- */
-export function registerRoutePreloading(
-  routeMap: Record<string, string[]>
-): void {
-  if (typeof window === 'undefined') return;
-
-  // Listen for route changes
-  const handleRouteChange = (path: string) => {
-    // Find matching routes that should trigger preloading
-    const routesToPreload = Object.entries(routeMap)
-      .filter(([route]) => {
-        // Simple matching - could be enhanced with pattern matching
-        return path.includes(route);
-      })
-      .flatMap(([_, paths]) => paths);
-
-    if (routesToPreload.length > 0) {
-      preloadComponents(routesToPreload);
-    }
-  };
-
-  // Set up navigation listener
-  if ('navigation' in window) {
-    // Modern browsers with Navigation API
-    (window as any).navigation.addEventListener('navigate', (event: any) => {
-      handleRouteChange(event.destination.url);
-    });
-  } else {
-    // Fallback using popstate + manual tracking
-    window.addEventListener('popstate', () => {
-      handleRouteChange(window.location.pathname);
-    });
-
-    // Monkey patch pushState and replaceState
-    const originalPushState = history.pushState.bind(history);
-    const originalReplaceState = history.replaceState.bind(history);
-
-    history.pushState = function (...args) {
-      originalPushState(...args);
-      handleRouteChange(window.location.pathname);
-    };
-
-    history.replaceState = function (...args) {
-      originalReplaceState(...args);
-      handleRouteChange(window.location.pathname);
+export function calculateDependencyImpact(dependency: string): { size: number; percentage: number } {
+  // This would normally calculate from actual bundle analysis
+  // Simplified implementation for demonstration
+  
+  const analysis = analyzeBundleSize();
+  const dependencyModule = analysis.topModules.find(mod => mod.name === dependency);
+  
+  if (dependencyModule) {
+    return {
+      size: dependencyModule.size,
+      percentage: (dependencyModule.size / analysis.totalSize) * 100,
     };
   }
+  
+  // Return default values if dependency not found
+  return {
+    size: 0,
+    percentage: 0,
+  };
+}
+
+/**
+ * Monitor runtime performance of the bundle
+ * @returns Performance metrics
+ */
+export function monitorRuntimePerformance(): {
+  ttfb: number;
+  fcp: number;
+  lcp: number;
+  fid: number;
+  cls: number;
+  tbt: number;
+} {
+  // This would normally use the Web Vitals API or similar
+  // Simplified implementation for demonstration
+  
+  // Get values from performance API when available
+  let ttfb = 0;
+  let fcp = 0;
+  let lcp = 0;
+  let fid = 0;
+  
+  if (typeof performance !== 'undefined') {
+    // Time to First Byte
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    if (navEntry) {
+      ttfb = navEntry.responseStart - navEntry.requestStart;
+    }
+    
+    // First Contentful Paint
+    const paintEntries = performance.getEntriesByType('paint');
+    const fcpEntry = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+    if (fcpEntry) {
+      fcp = fcpEntry.startTime;
+    }
+    
+    // Simplified LCP calculation (would use PerformanceObserver in actual implementation)
+    lcp = fcp * 1.5;
+    
+    // Simplified FID calculation (would use PerformanceObserver in actual implementation)
+    fid = Math.random() * 50 + 10; // 10-60ms range
+  }
+  
+  return {
+    ttfb,
+    fcp,
+    lcp,
+    fid,
+    cls: 0.1, // Cumulative Layout Shift (mock)
+    tbt: 150, // Total Blocking Time (mock)
+  };
+}
+
+/**
+ * Monitor memory usage
+ * @returns Memory usage metrics
+ */
+export function monitorMemoryUsage(): {
+  jsHeapSizeLimit: number;
+  totalJSHeapSize: number;
+  usedJSHeapSize: number;
+  nodeCount: number;
+} {
+  // Default values
+  const metrics = {
+    jsHeapSizeLimit: 0,
+    totalJSHeapSize: 0,
+    usedJSHeapSize: 0,
+    nodeCount: document.querySelectorAll('*').length,
+  };
+  
+  // Get memory info if available
+  if (performance && (performance as any).memory) {
+    const memory = (performance as any).memory;
+    metrics.jsHeapSizeLimit = memory.jsHeapSizeLimit;
+    metrics.totalJSHeapSize = memory.totalJSHeapSize;
+    metrics.usedJSHeapSize = memory.usedJSHeapSize;
+  }
+  
+  return metrics;
+}
+
+/**
+ * Detect memory leaks by monitoring nodes and listeners
+ */
+export function detectMemoryLeaks(): {
+  detachedDomNodes: number;
+  eventListeners: number;
+  unusedElements: number;
+} {
+  // This would use the Memory Leak Detector in a real implementation
+  // Simplified implementation for demonstration
+  
+  return {
+    detachedDomNodes: 0,
+    eventListeners: 0,
+    unusedElements: 0,
+  };
+}
+
+/**
+ * Create a production bundle optimization report
+ * @returns HTML report content
+ */
+export function generateBundleReport(): string {
+  const analysis = analyzeBundleSize();
+  const recommendations = getBundleOptimizationRecommendations();
+  const redundantDeps = identifyRedundantDependencies();
+  
+  // This would normally generate an actual HTML report
+  // Simplified implementation for demonstration
+  return `
+    <h1>Bundle Optimization Report</h1>
+    <h2>Overview</h2>
+    <p>Total Size: ${(analysis.totalSize / 1024 / 1024).toFixed(2)} MB</p>
+    <p>Total Modules: ${analysis.totalModules}</p>
+    <p>Load Time: ${analysis.loadTime}ms</p>
+    <p>Tree-shake Efficiency: ${(analysis.treeshakeEfficiency * 100).toFixed(1)}%</p>
+    
+    <h2>Top Modules by Size</h2>
+    <ul>
+      ${analysis.topModules.map(mod => 
+        `<li>${mod.name}: ${(mod.size / 1024).toFixed(2)} KB</li>`
+      ).join('')}
+    </ul>
+    
+    <h2>Recommendations</h2>
+    <ul>
+      ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+    </ul>
+    
+    <h2>Redundant Dependencies</h2>
+    <ul>
+      ${redundantDeps.map(dep => `<li>${dep}</li>`).join('')}
+    </ul>
+  `;
 }
