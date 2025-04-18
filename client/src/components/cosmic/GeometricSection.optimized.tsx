@@ -1,339 +1,374 @@
-import React, { ReactNode, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import './cosmic-animations.css';
-import { useIsMobile } from '@/hooks/use-responsive';
-import CosmicShapeGroup, { ShapeProps } from './CosmicShapeGroup';
+/**
+ * Optimized Geometric Section Component
+ * 
+ * This component renders sacred geometry shapes with optimized performance
+ * using device capabilities detection, lazy loading, and efficient rendering techniques.
+ */
 
-interface GeometricSectionProps {
-  children: ReactNode;
-  title?: ReactNode;
-  subtitle?: ReactNode;
-  variant?: 'primary' | 'secondary' | 'accent' | 'cosmic' | 'minimal';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useDeviceCapabilities, useResponsiveRendering, useCPUBudget } from '@/hooks/use-responsive';
+import { useSkipRenderIfInvisible } from '@/components/common/LazyLoad';
+import { useAnimationFrameThrottled } from '@/lib/animation-frame-batch';
+import { measureExecutionTime, debounce } from '@/lib/performance';
+import { useMemoryLeakDetection } from '@/lib/memory-leak-detector';
+
+// SVG Shapes
+import { 
+  FlowerOfLife, 
+  Metatron, 
+  SriYantra, 
+  Torus, 
+  SacredSpiral, 
+  PlatonicsolidsSvg
+} from './SacredGeometryShapes';
+
+// Animation effects
+import './geometricEffects.css';
+
+export interface GeometricSectionProps {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  primaryShape?: 'flower-of-life' | 'metatron' | 'sri-yantra' | 'torus' | 'sacred-spiral' | 'platonic-solids';
+  backgroundColor?: string;
+  textColor?: string;
+  glowColor?: string;
+  glowIntensity?: number;
+  rotationSpeed?: number;
+  pulseSpeed?: number;
+  interactivity?: 'none' | 'hover' | 'click' | 'scroll';
   className?: string;
-  style?: React.CSSProperties;
-  shape?: 
-    'trapezoid' | 
-    'hexagon' | 
-    'octagon' | 
-    'pentagon' | 
-    'diamond' | 
-    'wave' |
-    'symmetric-hexagon' |
-    'rectangular' |
-    'shield' | 
-    'pentagram' | 
-    'rounded-diamond' | 
-    'parallelogram' |
-    'pointed-pentagon';
-  headingColor?: string;
-  backgroundStyle?: 'solid' | 'gradient' | 'glass' | 'dark' | 'light';
-  decorative?: boolean;
-  alignment?: 'left' | 'center' | 'right';
-  contentWidth?: 'auto' | 'narrow' | 'standard' | 'wide' | number;
-  textContained?: boolean;
+  showLabels?: boolean;
+  animate?: boolean;
+  size?: number | string;
+  minimalRendering?: boolean;
+  complexity?: 'low' | 'medium' | 'high' | 'ultra';
+  onShapeClick?: (shape: string) => void;
 }
 
+/**
+ * A section displaying sacred geometry with optimized rendering
+ */
 const GeometricSection: React.FC<GeometricSectionProps> = ({
-  children,
-  title,
-  subtitle,
-  variant = 'primary',
+  title = 'Sacred Geometry',
+  subtitle = 'Ancient Wisdom',
+  description = 'Explore the fundamental patterns of creation and consciousness.',
+  primaryShape = 'flower-of-life',
+  backgroundColor = '#111827',
+  textColor = '#f3f4f6',
+  glowColor = '#8b5cf6',
+  glowIntensity = 5,
+  rotationSpeed = 1,
+  pulseSpeed = 1,
+  interactivity = 'hover',
   className = '',
-  style = {},
-  shape = 'trapezoid',
-  headingColor,
-  backgroundStyle = 'glass',
-  decorative = true,
-  alignment = 'center',
-  contentWidth = 'standard',
-  textContained = true,
+  showLabels = false,
+  animate = true,
+  size = '80%',
+  minimalRendering = false,
+  complexity = 'medium',
+  onShapeClick,
 }) => {
-  const isMobile = useIsMobile();
+  // Track this component for memory leak detection
+  useMemoryLeakDetection('GeometricSection');
   
-  // Using useMemo to cache expensive calculations
-  const variantColors = useMemo(() => ({
-    primary: { main: '#7c3aed', glow: 'rgba(124, 58, 237, 0.4)', border: 'rgba(124, 58, 237, 0.2)' },
-    secondary: { main: '#00ebd6', glow: 'rgba(0, 235, 214, 0.4)', border: 'rgba(0, 235, 214, 0.2)' },
-    accent: { main: '#fb923c', glow: 'rgba(251, 146, 60, 0.4)', border: 'rgba(251, 146, 60, 0.2)' },
-    cosmic: { main: '#e15554', glow: 'rgba(225, 85, 84, 0.4)', border: 'rgba(225, 85, 84, 0.2)' },
-    minimal: { main: '#ffffff', glow: 'rgba(255, 255, 255, 0.3)', border: 'rgba(255, 255, 255, 0.1)' },
-  }), []);
-
-  const mainColor = headingColor || variantColors[variant].main;
-  const borderColor = variantColors[variant].border;
-
-  // Background styles based on variant and style
-  const backgroundClasses = useMemo(() => {
-    const getBgClasses = (style: string) => {
-      switch (style) {
-        case 'solid':
-          return 'bg-[#0a0a14] border';
-        case 'gradient':
-          return 'bg-gradient-to-br from-[#0a0a14] via-[rgba(10,10,20,0.7)] to-[#0a0a14] border';
-        case 'glass':
-          return 'bg-[#0a0a14]/60 backdrop-blur-md border';
-        case 'dark':
-          return 'bg-[#050508]/80 backdrop-blur-sm border border-white/5';
-        case 'light':
-          return 'bg-white/5 backdrop-blur-md border border-white/10';
-        default:
-          return 'bg-[#0a0a14]/60 backdrop-blur-md border';
-      }
+  // Get device capabilities for adaptive rendering
+  const capabilities = useDeviceCapabilities();
+  const renderSettings = useResponsiveRendering();
+  const cpuBudget = useCPUBudget();
+  
+  // Container refs for measurements and interactions
+  const containerRef = useRef<HTMLDivElement>(null);
+  const shapeRef = useRef<HTMLDivElement>(null);
+  
+  // Only calculate visibility if rendering is expensive (e.g., for complex shapes)
+  const { isVisible, ref: visibilityRef } = useSkipRenderIfInvisible(
+    '150px', // Start loading when within 150px of viewport
+    0.1      // 10% visibility threshold
+  );
+  
+  // State for animations and interactions
+  const [rotation, setRotation] = useState(0);
+  const [scale, setScale] = useState(1);
+  const [isHovered, setIsHovered] = useState(false);
+  const [clickEffect, setClickEffect] = useState(false);
+  
+  // Optimize shape complexity based on device capabilities
+  const optimizedComplexity = useMemo(() => {
+    // If minimal rendering is forced, use low complexity
+    if (minimalRendering) return 'low';
+    
+    // Map user-selected complexity to device capability level
+    const complexityMap = {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      ultra: 'ultra'
     };
-
-    const getBorderClass = () => {
-      switch (variant) {
-        case 'primary':
-          return 'border-purple-600/30';
-        case 'secondary':
-          return 'border-cyan-400/30';
-        case 'accent':
-          return 'border-orange-400/30';
-        case 'cosmic':
-          return 'border-red-500/30';
-        case 'minimal':
-        default:
-          return 'border-white/10';
-      }
+    
+    const desiredComplexity = complexityMap[complexity];
+    const deviceLevel = capabilities.overallLevel;
+    
+    // If device capability is lower than desired complexity, reduce it
+    const levelValues = {
+      low: 0,
+      medium: 1,
+      high: 2,
+      ultra: 3
     };
-
-    const borderClass = getBorderClass();
-
+    
+    if (levelValues[deviceLevel] < levelValues[desiredComplexity]) {
+      return deviceLevel;
+    }
+    
+    return desiredComplexity;
+  }, [complexity, capabilities.overallLevel, minimalRendering]);
+  
+  // Determine shape detail level based on optimized complexity
+  const getShapeDetail = () => {
+    switch (optimizedComplexity) {
+      case 'low':
+        return 0.25; // 25% of full detail
+      case 'medium':
+        return 0.5;  // 50% of full detail  
+      case 'high':
+        return 0.75; // 75% of full detail
+      case 'ultra':
+        return 1;    // 100% of full detail
+      default:
+        return 0.5;  // Default to medium
+    }
+  };
+  
+  // Animation settings based on device capabilities and user preferences
+  const getAnimationSettings = () => {
+    const baseSpeed = renderSettings.useAnimations ? 1 : 0;
+    const effectsMultiplier = renderSettings.useComplexEffects ? 1 : 0.5;
+    
     return {
-      solid: `${getBgClasses('solid')} ${borderClass}`,
-      gradient: `${getBgClasses('gradient')} ${borderClass}`,
-      glass: `${getBgClasses('glass')} ${borderClass}`,
-      dark: getBgClasses('dark'),
-      light: getBgClasses('light'),
+      rotationEnabled: animate && baseSpeed > 0,
+      rotationSpeed: rotationSpeed * baseSpeed * (isHovered ? 1.5 : 1),
+      pulseEnabled: animate && baseSpeed > 0 && effectsMultiplier > 0,
+      pulseSpeed: pulseSpeed * baseSpeed * effectsMultiplier,
+      glowEnabled: renderSettings.useComplexEffects,
+      glowIntensity: glowIntensity * effectsMultiplier * (isHovered ? 1.2 : 1),
     };
-  }, [variant]);
-
-  // Memoized clip paths
-  const clipPath = useMemo(() => {
-    const clipPaths: Record<string, string> = {
-      trapezoid: 'polygon(0 0, 100% 0, 85% 100%, 15% 100%)',
-      hexagon: 'polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%)',
-      octagon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
-      pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-      diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      wave: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 50% 75%, 25% 100%, 0% 75%)',
-      'symmetric-hexagon': 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-      'rectangular': 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-      'shield': 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
-      'pentagram': 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-      'rounded-diamond': 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
-      'parallelogram': 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
-      'pointed-pentagon': 'polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%)',
-    };
-    return clipPaths[shape];
-  }, [shape]);
-
-  // Alignment classes
-  const alignmentClass = useMemo(() => {
-    const alignmentClasses = {
-      left: 'text-left',
-      center: 'text-center',
-      right: 'text-right',
-    };
-    return alignmentClasses[alignment];
-  }, [alignment]);
-
-  // Decorative shapes - simplified version
-  const decorativeShapes = useMemo(() => {
-    if (!decorative) return [];
+  };
+  
+  // Optimize animation timing based on CPU budget
+  const animationSettings = getAnimationSettings();
+  const animationFrameSkip = useMemo(() => {
+    if (cpuBudget.isOverBudget) {
+      return Math.floor(3 / cpuBudget.throttleFactor);
+    }
+    return 1;
+  }, [cpuBudget.isOverBudget, cpuBudget.throttleFactor]);
+  
+  // Frame counter to skip frames when necessary
+  const frameCounter = useRef(0);
+  
+  // Update rotation with throttling for performance
+  const updateRotation = useAnimationFrameThrottled(() => {
+    if (!animationSettings.rotationEnabled || !isVisible) return;
     
-    let shapes: ShapeProps[] = [];
+    // Skip frames if needed
+    frameCounter.current += 1;
+    if (frameCounter.current % animationFrameSkip !== 0) return;
     
-    // Common shapes for basic decoration
-    if (['trapezoid', 'wave', 'rectangular'].includes(shape)) {
-      shapes = [
-        {
-          type: 'polygon',
-          sides: 3,
-          size: 60,
-          color: variantColors[variant].main,
-          glowColor: variantColors[variant].glow,
-          fillOpacity: 0.03,
-          strokeWidth: 1,
-          position: { top: '10px', left: '20px' },
-          rotation: 15
-        },
-        {
-          type: 'circle',
-          size: 40,
-          color: variantColors[variant].main,
-          glowColor: variantColors[variant].glow,
-          fillOpacity: 0.02,
-          strokeWidth: 1,
-          position: { bottom: '15px', right: '30px' }
-        },
-      ];
+    setRotation(prev => (prev + animationSettings.rotationSpeed * 0.2) % 360);
+  });
+  
+  // Update scale with throttling for performance
+  const updateScale = useAnimationFrameThrottled(() => {
+    if (!animationSettings.pulseEnabled || !isVisible) return;
+    
+    // Skip frames if needed
+    if (frameCounter.current % animationFrameSkip !== 0) return;
+    
+    const time = performance.now() * 0.001 * animationSettings.pulseSpeed;
+    const newScale = 1 + Math.sin(time) * 0.03;
+    setScale(newScale);
+  });
+  
+  // Handle animation updates
+  useEffect(() => {
+    if (!isVisible) return;
+    
+    const animateFrame = () => {
+      updateRotation();
+      updateScale();
+    };
+    
+    const intervalId = setInterval(animateFrame, 16.667); // Target 60fps
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [
+    updateRotation, 
+    updateScale, 
+    isVisible, 
+    animationSettings.rotationEnabled, 
+    animationSettings.pulseEnabled
+  ]);
+  
+  // Optimized event handlers
+  const handleMouseEnter = () => {
+    if (interactivity === 'none') return;
+    setIsHovered(true);
+  };
+  
+  const handleMouseLeave = () => {
+    if (interactivity === 'none') return;
+    setIsHovered(false);
+  };
+  
+  const handleClick = () => {
+    if (interactivity === 'none') return;
+    
+    setClickEffect(true);
+    setTimeout(() => setClickEffect(false), 500);
+    
+    if (onShapeClick) {
+      onShapeClick(primaryShape);
+    }
+  };
+  
+  // Debounced scroll handler for scroll-based interactivity
+  const handleScroll = debounce(() => {
+    if (interactivity !== 'scroll' || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Calculate how far the element is through the viewport (0 to 1)
+    const progress = 1 - (rect.bottom / (viewportHeight + rect.height));
+    
+    if (progress >= 0 && progress <= 1) {
+      setRotation(progress * 360);
+      setScale(1 + progress * 0.2);
+    }
+  }, 100);
+  
+  // Add scroll listener if needed
+  useEffect(() => {
+    if (interactivity === 'scroll') {
+      window.addEventListener('scroll', handleScroll);
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [interactivity, handleScroll]);
+  
+  // Calculate shape glow effect
+  const glowEffect = useMemo(() => {
+    if (!animationSettings.glowEnabled) return '';
+    
+    const intensity = animationSettings.glowIntensity;
+    return `0 0 ${intensity * 5}px ${intensity}px ${glowColor}`;
+  }, [animationSettings.glowEnabled, animationSettings.glowIntensity, glowColor]);
+  
+  // Render the selected shape based on primaryShape prop
+  const renderShape = () => {
+    // If not visible and we're using visibility-based rendering, render a placeholder
+    if (!isVisible && minimalRendering) {
+      return <div className="geometric-placeholder" style={{ width: size, height: size }} />;
     }
     
-    // Polygon shapes for more geometric sections
-    if (['hexagon', 'pentagon', 'diamond', 'pointed-pentagon'].includes(shape)) {
-      shapes = [
-        {
-          type: 'polygon',
-          sides: shape === 'pentagon' || shape === 'pointed-pentagon' ? 5 : 
-                 shape === 'hexagon' ? 6 : 4,
-          size: 70,
-          color: variantColors[variant].main,
-          glowColor: variantColors[variant].glow,
-          fillOpacity: 0.05,
-          strokeWidth: 1.5,
-          position: { top: '50%', left: '50%' },
-          rotation: 0
+    // Measure shape rendering time
+    return measureExecutionTime('renderGeometricShape', () => {
+      const detail = getShapeDetail();
+      const commonProps = {
+        className: `sacred-geometry-shape ${clickEffect ? 'click-effect' : ''}`,
+        style: {
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          width: '100%',
+          height: '100%',
+          boxShadow: glowEffect,
+          transition: clickEffect ? 'transform 0.3s ease-out' : undefined,
         }
-      ];
-    }
-    
-    return shapes;
-  }, [shape, variant, decorative, variantColors]);
-
-  // Memoize content width calculation
-  const contentWidthStyle = useMemo(() => {
-    if (typeof contentWidth === 'number') {
-      return isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`;
-    }
-
-    if (textContained) {
-      switch(shape) {
-        case 'diamond':
-        case 'rounded-diamond':
-          return isMobile ? '90%' : '70%';
-        case 'hexagon':
-        case 'symmetric-hexagon':
-        case 'octagon':
-          return isMobile ? '92%' : '75%';
-        case 'shield':
-        case 'pentagon':
-        case 'pointed-pentagon':
-        case 'pentagram':
-          return isMobile ? '93%' : '80%';
-        case 'wave':
-        case 'trapezoid':
-        case 'parallelogram':
-          return isMobile ? '94%' : '85%';
-        case 'rectangular':
-          return isMobile ? '95%' : '95%';
+      };
+      
+      switch (primaryShape) {
+        case 'flower-of-life':
+          return <FlowerOfLife {...commonProps} detail={detail} colorScheme={glowColor} />;
+        case 'metatron':
+          return <Metatron {...commonProps} detail={detail} colorScheme={glowColor} />;
+        case 'sri-yantra':
+          return <SriYantra {...commonProps} detail={detail} colorScheme={glowColor} />;
+        case 'torus':
+          return <Torus {...commonProps} detail={detail} colorScheme={glowColor} />;
+        case 'sacred-spiral':
+          return <SacredSpiral {...commonProps} detail={detail} colorScheme={glowColor} />;
+        case 'platonic-solids':
+          return <PlatonicsolidsSvg {...commonProps} detail={detail} colorScheme={glowColor} />;
         default:
-          return isMobile ? '92%' : '80%';
+          return <FlowerOfLife {...commonProps} detail={detail} colorScheme={glowColor} />;
       }
-    }
-
-    switch(contentWidth) {
-      case 'narrow':
-        return isMobile ? '90%' : '60%';
-      case 'standard':
-        return isMobile ? '92%' : '80%';
-      case 'wide':
-        return isMobile ? '95%' : '95%';
-      case 'auto':
-      default:
-        return '100%';
-    }
-  }, [contentWidth, isMobile, shape, textContained]);
-
-  // Memoize padding calculation
-  const paddingStyle = useMemo(() => {
-    if (!textContained) return {};
-
-    if (isMobile) {
-      switch(shape) {
-        case 'diamond':
-        case 'rounded-diamond':
-          return { padding: '6%' };
-        case 'pentagon':
-        case 'pointed-pentagon':
-          return { paddingLeft: '5%', paddingRight: '5%', paddingTop: '15%', paddingBottom: '5%' };
-        case 'pentagram':
-          return { padding: '8%' };
-        case 'shield':
-          return { paddingLeft: '5%', paddingRight: '5%', paddingTop: '5%', paddingBottom: '10%' };
-        default:
-          return { padding: '5%' };
-      }
-    }
-    
-    switch(shape) {
-      case 'diamond':
-      case 'rounded-diamond':
-        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '8%', paddingBottom: '8%' };
-      case 'hexagon':
-      case 'symmetric-hexagon':
-        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '5%', paddingBottom: '5%' };
-      case 'shield':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '15%' };
-      case 'pentagon':
-      case 'pointed-pentagon':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '25%', paddingBottom: '8%' };
-      case 'pentagram':
-        return { paddingLeft: '15%', paddingRight: '15%', paddingTop: '15%', paddingBottom: '15%' };
-      case 'trapezoid':
-        return { paddingLeft: '10%', paddingRight: '10%', paddingTop: '5%', paddingBottom: '5%' };
-      case 'wave':
-        return { paddingLeft: '8%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '12%' };
-      case 'octagon':
-        return { paddingLeft: '12%', paddingRight: '12%', paddingTop: '8%', paddingBottom: '8%' };
-      case 'parallelogram':
-        return { paddingLeft: '15%', paddingRight: '8%', paddingTop: '5%', paddingBottom: '5%' };
-      default:
-        return { padding: '8%' };
-    }
-  }, [isMobile, shape, textContained]);
-
+    });
+  };
+  
+  // Render the component
   return (
-    <section 
-      className={cn(
-        'relative mb-8 shadow-lg overflow-hidden', 
-        backgroundClasses[backgroundStyle],
-        alignmentClass,
-        className,
-        isMobile ? 'geometric-section-mobile' : ''
-      )}
+    <div 
+      ref={(element) => {
+        // Attach to both refs
+        if (element) {
+          containerRef.current = element;
+          visibilityRef.current = element;
+        }
+      }}
+      className={`geometric-section ${className} ${isHovered ? 'hovered' : ''}`}
       style={{ 
-        clipPath: clipPath,
-        ...style,
-        ...paddingStyle
+        backgroundColor,
+        color: textColor,
+        padding: '4rem 2rem',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {decorative && decorativeShapes.length > 0 && (
-        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <CosmicShapeGroup shapes={decorativeShapes} />
-        </div>
-      )}
-
-      <div 
-        className="relative z-10" 
-        style={{ 
-          maxWidth: contentWidthStyle,
-          margin: alignment === 'center' ? '0 auto' : 
-                  alignment === 'right' ? '0 0 0 auto' : '0',
-        }}
-      >
-        {title && (
-          <div className="section-header mb-4 sm:mb-6 md:mb-8">
-            <h2 
-              className="cosmic-heading-responsive text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4"
-              style={{ color: variant === 'cosmic' ? '#e15554' : mainColor }}
-            >
-              {title}
-            </h2>
-            {subtitle && (
-              <p className="cosmic-text-responsive text-base sm:text-lg md:text-xl">
-                {subtitle}
-              </p>
-            )}
+      <div className="container mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          {/* Text content */}
+          <div className="text-content order-2 md:order-1">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>
+            <h3 className="text-xl md:text-2xl mb-4 opacity-80">{subtitle}</h3>
+            <p className="text-base md:text-lg opacity-70 max-w-prose">
+              {description}
+            </p>
           </div>
-        )}
-
-        <div className="section-content sacred-geometry-container">
-          {children}
+          
+          {/* Sacred geometry */}
+          <div 
+            className="geometric-container order-1 md:order-2 flex items-center justify-center p-6"
+          >
+            <div
+              ref={shapeRef}
+              className="shape-wrapper relative"
+              style={{ 
+                width: size, 
+                height: size, 
+                maxWidth: '100%',
+                cursor: interactivity !== 'none' ? 'pointer' : 'default',
+              }}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onClick={handleClick}
+            >
+              {renderShape()}
+              
+              {showLabels && (
+                <div className="shape-label absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 p-2 text-center">
+                  {primaryShape.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
+// Memoize the component to prevent unnecessary renders
 export default React.memo(GeometricSection);

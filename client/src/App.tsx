@@ -107,6 +107,7 @@ import ShopSearchPage from "@/pages/shop/ShopSearchPage";
 
 // Demo Pages
 import DynamicContentDemo from "@/pages/demo/DynamicContentDemo";
+import PerformanceDemoPage from "@/pages/PerformanceDemoPage";
 
 // MainHeader is now included in MainLayout, no longer needed here
 
@@ -229,6 +230,7 @@ function AppRouter() {
           <Route path="/cosmic-test" component={CosmicTest} />
           <Route path="/type-system-demo" component={TypeSystemDemo} />
           <Route path="/dynamic-content-demo" component={DynamicContentDemo} />
+          <Route path="/performance" component={PerformanceDemoPage} />
           <Route path="/test/binaural-beat-performance" component={
             () => import('./pages/tests/binaural-beat-performance-test').then(module => {
               const Page = module.default;

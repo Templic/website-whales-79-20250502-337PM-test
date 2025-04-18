@@ -1,0 +1,156 @@
+/**
+ * Geometric Effects CSS
+ * 
+ * Optimized CSS animations and effects for sacred geometry components
+ * with performance considerations for different device capabilities.
+ */
+
+/* Base styling for geometric section */
+.geometric-section {
+  transition: background-color 0.5s ease;
+}
+
+.geometric-section.hovered {
+  --glow-intensity: 1.2;
+}
+
+/* Shape wrapper */
+.shape-wrapper {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.shape-wrapper:hover {
+  transform: scale(1.05);
+}
+
+/* Sacred geometry shapes */
+.sacred-geometry-shape {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Click effect animation */
+.sacred-geometry-shape.click-effect {
+  animation: pulse-effect 0.5s ease-out;
+}
+
+@keyframes pulse-effect {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Placeholder for low-performance devices */
+.geometric-placeholder {
+  background-color: rgba(139, 92, 246, 0.1);
+  border-radius: 50%;
+  box-shadow: 0 0 15px 3px rgba(139, 92, 246, 0.3);
+}
+
+/* Flower of Life specific animations */
+.flower-of-life circle {
+  transition: opacity 0.3s ease;
+}
+
+.flower-of-life:hover circle {
+  opacity: 0.8;
+}
+
+/* Metatron's Cube specific animations */
+.metatron polygon, .metatron line {
+  transition: stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+.metatron:hover polygon, .metatron:hover line {
+  stroke-width: calc(var(--stroke-width, 1.5) * 1.2);
+}
+
+/* Sri Yantra specific animations */
+.sri-yantra polygon {
+  transition: fill-opacity 0.3s ease;
+}
+
+.sri-yantra:hover polygon {
+  fill-opacity: calc(var(--fill-opacity, 0.1) * 1.5);
+}
+
+/* Torus specific animations */
+.torus ellipse {
+  transition: stroke-width 0.3s ease, opacity 0.3s ease;
+}
+
+.torus:hover ellipse {
+  opacity: 1;
+}
+
+/* Sacred Spiral specific animations */
+.sacred-spiral polyline {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: dash 3s linear forwards;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Platonic Solids specific animations */
+.platonic-solids polygon {
+  transition: fill-opacity 0.3s ease, transform 0.3s ease;
+}
+
+.platonic-solids:hover polygon {
+  fill-opacity: calc(var(--fill-opacity, 0.1) * 1.3);
+}
+
+/* Media query for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .sacred-geometry-shape,
+  .shape-wrapper,
+  .flower-of-life circle,
+  .metatron polygon,
+  .metatron line,
+  .sri-yantra polygon,
+  .torus ellipse,
+  .sacred-spiral polyline,
+  .platonic-solids polygon {
+    transition: none;
+    animation: none;
+  }
+  
+  .sacred-spiral polyline {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  
+  .sacred-geometry-shape.click-effect {
+    animation: none;
+  }
+}
+
+/* Optimizations for mobile devices */
+@media (max-width: 768px) {
+  .sacred-geometry-shape {
+    /* Reduce shadow complexity on mobile */
+    box-shadow: none !important;
+  }
+  
+  /* Simplified animations */
+  @keyframes pulse-effect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+}
