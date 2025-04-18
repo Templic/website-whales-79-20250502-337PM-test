@@ -98,7 +98,7 @@ function VirtualizedList<T>({
   observeResize = true,
   useIncrementalRendering = false,
   usePassiveEvents = true,
-  useWeakReferences = true,
+  useItemCache = true,
   useIntersectionObserver = true,
   skipRenderWhenNotVisible = false,
   deferMeasurements = true,
@@ -129,7 +129,7 @@ function VirtualizedList<T>({
   const outerRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const sizeCache = useRef(new Map<number, number>());
-  const weakItemsMap = useRef(new WeakMap<object, number>());
+  const itemKeysMap = useRef(new Map<string, number>());
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number | null>(null);
   const isVertical = direction === 'vertical';
@@ -192,11 +192,13 @@ function VirtualizedList<T>({
   const getItemKey = useCallback(
     (item: T, index: number) => {
       if (useStableItemKey && typeof item === 'object' && item !== null) {
-        const cachedIndex = weakItemsMap.current.get(item);
+        // Create a stable string key from the item
+        const stringKey = JSON.stringify(item);
+        const cachedIndex = itemKeysMap.current.get(stringKey);
         if (cachedIndex !== undefined) {
           return itemKey(item, cachedIndex);
         }
-        weakItemsMap.current.set(item, index);
+        itemKeysMap.current.set(stringKey, index);
       }
       return itemKey(item, index);
     },
@@ -207,7 +209,7 @@ function VirtualizedList<T>({
   const getItemSize = useCallback(
     (item: T, index: number): number => {
       // Try to get from cache first
-      if (useWeakReferences && typeof item === 'object' && item !== null) {
+      if (useItemCache && typeof item === 'object' && item !== null) {
         const cachedSize = sizeCache.current.get(getItemKey(item, index) as number);
         if (cachedSize !== undefined) {
           return cachedSize;
@@ -220,13 +222,13 @@ function VirtualizedList<T>({
         : itemHeight;
       
       // Cache the result
-      if (useWeakReferences && typeof item === 'object' && item !== null) {
+      if (useItemCache && typeof item === 'object' && item !== null) {
         sizeCache.current.set(getItemKey(item, index) as number, size);
       }
       
       return size;
     },
-    [itemHeight, getItemKey, useWeakReferences]
+    [itemHeight, getItemKey, useItemCache]
   );
   
   // Memoize item measurements for stable virtualization
