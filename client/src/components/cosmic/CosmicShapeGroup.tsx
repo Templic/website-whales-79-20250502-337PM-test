@@ -41,7 +41,7 @@ const createPolygonPoints = (sides: number, size: number): string => {
   return points.trim();
 };
 
-const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, className }) => {
+export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, className }) => {
   return (
     <div className={`absolute inset-0 ${className || ''}`}>
       {shapes.map((shape, index) => {
@@ -136,4 +136,5 @@ const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, className }
   );
 };
 
+// Default export
 export default React.memo(CosmicShapeGroup);

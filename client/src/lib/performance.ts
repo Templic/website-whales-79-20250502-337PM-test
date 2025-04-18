@@ -1,122 +1,66 @@
 /**
- * Performance Utilities
- * 
- * A collection of utilities for optimizing React component performance
- * including memoization helpers, debounce, throttle, and performance monitoring.
+ * Performance Optimization Utilities
+ *
+ * This module provides a set of utilities and hooks for optimizing React components
+ * and improving application performance.
  */
 
-import React, { useRef, useEffect, useState, useCallback, memo } from 'react';
-
-// Time constants
-const SECOND = 1000;
-const MINUTE = 60 * SECOND;
+import { useEffect, useRef, useState, useCallback, Profiler, ProfilerOnRenderCallback } from 'react';
 
 /**
- * Debounce a function to prevent excessive calls
- * 
- * @param fn Function to debounce
- * @param delay Delay in milliseconds
- * @returns Debounced function
+ * Performance metrics for a component.
  */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  
-  return function(this: any, ...args: Parameters<T>) {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    
-    timeoutId = setTimeout(() => {
-      fn.apply(this, args);
-      timeoutId = null;
-    }, delay);
-  };
+export interface PerformanceMetrics {
+  renderCount: number;
+  renderTime: number;
+  lastRenderTime: number;
+  averageRenderTime: number;
+  totalRenderTime: number;
+  maxRenderTime: number;
+  minRenderTime: number;
+}
+
+// Global store for performance metrics by component name
+const metricsStore: Record<string, PerformanceMetrics> = {};
+
+/**
+ * Get performance metrics for a specific component.
+ * @param componentName The name of the component.
+ * @returns Performance metrics for the component.
+ */
+export function getComponentMetrics(componentName: string): PerformanceMetrics | undefined {
+  return metricsStore[componentName];
 }
 
 /**
- * Throttle a function to limit execution rate
- * 
- * @param fn Function to throttle
- * @param limit Time limit in milliseconds
- * @returns Throttled function
+ * Get performance metrics for all components.
+ * @returns Record of component names to performance metrics.
  */
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let lastCall = 0;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  
-  return function(this: any, ...args: Parameters<T>) {
-    const now = Date.now();
-    const elapsed = now - lastCall;
-    
-    const execute = () => {
-      lastCall = now;
-      fn.apply(this, args);
-    };
-    
-    if (elapsed >= limit) {
-      // If enough time has passed, execute immediately
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      execute();
-    } else if (!timeoutId) {
-      // Otherwise schedule to run at the end of the throttle period
-      timeoutId = setTimeout(() => {
-        execute();
-        timeoutId = null;
-      }, limit - elapsed);
-    }
-  };
+export function getAllComponentMetrics(): Record<string, PerformanceMetrics> {
+  return { ...metricsStore };
 }
 
 /**
- * Performance profiler component
- * Tracks and reports rendering performance of wrapped components
+ * Reset performance metrics for a specific component.
+ * @param componentName The name of the component.
  */
-export const PerformanceProfiler: React.FC<{
-  id: string;
-  children: React.ReactNode;
-  onRenderCallback?: (id: string, phase: string, duration: number) => void;
-}> = ({ id, children, onRenderCallback }) => {
-  const handleRender = useCallback(
-    (
-      profilerId: string,
-      phase: string,
-      actualDuration: number,
-      baseDuration: number,
-      startTime: number,
-      commitTime: number,
-      interactions: Set<any>
-    ) => {
-      // Log only if duration is significant (> 16ms, which is ~60fps)
-      if (actualDuration > 16) {
-        console.log(
-          `[Performance] Component "${id}" took ${actualDuration.toFixed(2)}ms to render`
-        );
-      }
-      
-      if (onRenderCallback) {
-        onRenderCallback(id, phase, actualDuration);
-      }
-    },
-    [id, onRenderCallback]
-  );
-  
-  return React.createElement(React.Profiler, { id, onRender: handleRender }, children);
-};
+export function resetComponentMetrics(componentName: string): void {
+  delete metricsStore[componentName];
+}
 
 /**
- * Track component render counts (useful for debugging)
- * 
- * @param componentName Name of the component
- * @returns Component render count
+ * Reset performance metrics for all components.
+ */
+export function resetAllComponentMetrics(): void {
+  Object.keys(metricsStore).forEach((key) => {
+    delete metricsStore[key];
+  });
+}
+
+/**
+ * Hook to track the number of times a component renders.
+ * @param componentName Name of the component for tracking purposes.
+ * @returns Number of renders.
  */
 export function useRenderCount(componentName: string): number {
   const renderCount = useRef(0);
@@ -124,236 +68,345 @@ export function useRenderCount(componentName: string): number {
   useEffect(() => {
     renderCount.current += 1;
     
-    if (renderCount.current > 5) {
-      console.warn(
-        `[Performance] Component "${componentName}" has rendered ${renderCount.current} times. Consider memoization.`
-      );
+    if (!metricsStore[componentName]) {
+      metricsStore[componentName] = {
+        renderCount: 0,
+        renderTime: 0,
+        lastRenderTime: 0,
+        averageRenderTime: 0,
+        totalRenderTime: 0,
+        maxRenderTime: 0,
+        minRenderTime: Infinity,
+      };
     }
+    
+    metricsStore[componentName].renderCount = renderCount.current;
   });
   
   return renderCount.current;
 }
 
 /**
- * Measure time between renders
- * 
- * @returns Object with time measurements
+ * Hook for profiling component render performance.
+ * @param id Component identifier.
+ * @returns ProfilerOnRenderCallback to be used with React Profiler component.
  */
-export function useRenderTime(): {
-  lastRenderTime: number;
-  timeSinceLastRender: number;
-  averageRenderInterval: number;
-} {
-  const lastRender = useRef(Date.now());
-  const renderTimes = useRef<number[]>([]);
-  const [measurements, setMeasurements] = useState({
-    lastRenderTime: 0,
-    timeSinceLastRender: 0,
-    averageRenderInterval: 0,
-  });
-  
-  useEffect(() => {
-    const now = Date.now();
-    const timeSinceLast = now - lastRender.current;
-    
-    // Keep the last 10 render times
-    if (renderTimes.current.length >= 10) {
-      renderTimes.current.shift();
+export function useProfiler(id: string): ProfilerOnRenderCallback {
+  return useCallback((
+    profilerId: string,
+    phase: string,
+    actualDuration: number,
+    baseDuration: number,
+    startTime: number,
+    commitTime: number
+  ) => {
+    if (!metricsStore[id]) {
+      metricsStore[id] = {
+        renderCount: 0,
+        renderTime: actualDuration,
+        lastRenderTime: actualDuration,
+        averageRenderTime: actualDuration,
+        totalRenderTime: actualDuration,
+        maxRenderTime: actualDuration,
+        minRenderTime: actualDuration,
+      };
+    } else {
+      const metrics = metricsStore[id];
+      metrics.renderCount += 1;
+      metrics.lastRenderTime = actualDuration;
+      metrics.totalRenderTime += actualDuration;
+      metrics.averageRenderTime = metrics.totalRenderTime / metrics.renderCount;
+      metrics.maxRenderTime = Math.max(metrics.maxRenderTime, actualDuration);
+      metrics.minRenderTime = Math.min(metrics.minRenderTime, actualDuration);
     }
-    renderTimes.current.push(timeSinceLast);
     
-    // Calculate average render interval
-    const avgInterval =
-      renderTimes.current.reduce((sum, time) => sum + time, 0) /
-      renderTimes.current.length;
-    
-    setMeasurements({
-      lastRenderTime: now,
-      timeSinceLastRender: timeSinceLast,
-      averageRenderInterval: avgInterval,
-    });
-    
-    lastRender.current = now;
+    // Log if the render took longer than a threshold
+    if (actualDuration > 16) { // ~60fps threshold
+      console.warn(`[Performance] Component ${id} took ${actualDuration.toFixed(2)}ms to render.`);
+    }
+  }, [id]);
+}
+
+/**
+ * Utility to measure the execution time of a function.
+ * @param label Label for the measurement.
+ * @param callback Function to measure.
+ * @returns The return value of the callback.
+ */
+export function measureExecutionTime<T>(label: string, callback: () => T): T {
+  const start = performance.now();
+  try {
+    return callback();
+  } finally {
+    const end = performance.now();
+    const duration = end - start;
+    console.debug(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
+  }
+}
+
+/**
+ * Hook for implementing the Intersection Observer API to determine when an element is in view.
+ * @param options IntersectionObserver options.
+ * @returns [ref, isInView] tuple with ref to attach to the element and boolean indicating if element is in view.
+ */
+export function useInView(options: IntersectionObserverInit = {}): [React.RefCallback<Element>, boolean] {
+  const [isInView, setIsInView] = useState(false);
+  const ref = useRef<Element | null>(null);
+  
+  const callback = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    setIsInView(entry.isIntersecting);
   }, []);
   
-  return measurements;
-}
-
-/**
- * Track hooks that run unnecessarily between renders
- * 
- * @param hookName Name of the hook for identification
- * @param dependencies Array of dependencies to check
- * @returns The dependencies unchanged
- */
-export function trackHookChanges<T extends any[]>(
-  hookName: string,
-  dependencies: T
-): T {
-  const previousDeps = useRef<T | null>(null);
-  
-  useEffect(() => {
-    if (previousDeps.current !== null) {
-      const changedDeps = dependencies.reduce((result, dep, index) => {
-        if (previousDeps.current && dep !== previousDeps.current[index]) {
-          result.push({
-            index,
-            oldValue: previousDeps.current[index],
-            newValue: dep,
-          });
-        }
-        return result;
-      }, [] as { index: number; oldValue: any; newValue: any }[]);
-      
-      if (changedDeps.length > 0) {
-        console.log(`[Performance] Hook "${hookName}" dependencies changed:`, changedDeps);
-      }
+  const setRef: React.RefCallback<Element> = useCallback((node) => {
+    if (ref.current) {
+      // Cleanup previous observer
+      const observer = getObserver(options, callback);
+      observer.unobserve(ref.current);
     }
     
-    previousDeps.current = [...dependencies];
-  }, dependencies);
+    if (node) {
+      // Observe new node
+      const observer = getObserver(options, callback);
+      observer.observe(node);
+      ref.current = node;
+    }
+  }, [options.threshold, options.root, options.rootMargin, callback]);
   
-  return dependencies;
+  return [setRef, isInView];
 }
 
+// Cache for IntersectionObserver instances
+const observerCache = new Map<string, IntersectionObserver>();
+
 /**
- * Creates a stable object reference that updates only when deep values change
- * 
- * @param value Object to stabilize
- * @returns Stable object reference
+ * Get or create an IntersectionObserver with the given options and callback.
+ * @param options IntersectionObserver options.
+ * @param callback Callback to invoke when intersection changes.
+ * @returns IntersectionObserver instance.
  */
-export function useDeepMemo<T>(value: T): T {
-  const ref = useRef<T>(value);
+function getObserver(
+  options: IntersectionObserverInit,
+  callback: IntersectionObserverCallback
+): IntersectionObserver {
+  const key = JSON.stringify({
+    threshold: options.threshold || 0,
+    root: options.root ? '#root' : null, // Can't stringify DOM nodes
+    rootMargin: options.rootMargin || '0px',
+  });
   
-  // Only update if deep comparison shows a change
-  if (JSON.stringify(ref.current) !== JSON.stringify(value)) {
-    ref.current = value;
+  if (!observerCache.has(key)) {
+    observerCache.set(key, new IntersectionObserver(callback, options));
   }
   
-  return ref.current;
+  return observerCache.get(key)!;
 }
 
 /**
- * Safely memo a component with warning for missing dependencies
- * 
- * @param Component React component to memoize
- * @param dependencies Optional array of dependencies
- * @returns Memoized component
+ * Hook to prevent unnecessary renders of a component that is not in view.
+ * @param isInView Boolean indicating if the element is in view.
+ * @returns RefCallback to attach to the component.
  */
-export function createMemoizedComponent<P>(
-  Component: React.ComponentType<P>,
-  propsAreEqual?: (prevProps: P, nextProps: P) => boolean
-): React.MemoExoticComponent<React.ComponentType<P>> {
-  const displayName = Component.displayName || Component.name || 'Component';
+export function useSkipRenderIfInvisible(
+  isInView: boolean
+): React.RefCallback<HTMLElement> {
+  const prevInViewRef = useRef(isInView);
   
-  const MemoizedComponent = memo(Component, propsAreEqual);
-  MemoizedComponent.displayName = `Memoized(${displayName})`;
+  // Effect to handle visibility changes
+  useEffect(() => {
+    prevInViewRef.current = isInView;
+  }, [isInView]);
   
-  return MemoizedComponent;
-}
-
-/**
- * Measure execution time of a function
- * 
- * @param fn Function to measure
- * @param label Label for logging
- * @param threshold Time threshold for logging in ms
- * @returns Function with timing measurement
- */
-export function measureExecutionTime<T extends (...args: any[]) => any>(
-  fn: T,
-  label: string,
-  threshold: number = 10
-): (...args: Parameters<T>) => ReturnType<T> {
-  return function(this: any, ...args: Parameters<T>) {
-    const start = performance.now();
-    const result = fn.apply(this, args);
+  return useCallback((node: HTMLElement | null) => {
+    if (!node) return;
     
-    // Handle both normal and promise returns
-    if (result instanceof Promise) {
-      return result.then(value => {
-        const end = performance.now();
-        const duration = end - start;
-        
-        if (duration > threshold) {
-          console.log(`[Performance] ${label} took ${duration.toFixed(2)}ms to execute`);
-        }
-        
-        return value;
-      });
-    } else {
-      const end = performance.now();
-      const duration = end - start;
-      
-      if (duration > threshold) {
-        console.log(`[Performance] ${label} took ${duration.toFixed(2)}ms to execute`);
+    if (!isInView) {
+      // If element is out of view, adjust styling to reduce rendering cost
+      if (node.style.display !== 'none') {
+        node.dataset.prevDisplay = node.style.display;
+        node.style.display = 'none';
       }
-      
-      return result;
+    } else if (prevInViewRef.current !== isInView) {
+      // If element just came into view, restore its styling
+      if (node.dataset.prevDisplay) {
+        node.style.display = node.dataset.prevDisplay;
+        delete node.dataset.prevDisplay;
+      } else {
+        node.style.display = '';
+      }
     }
+  }, [isInView]);
+}
+
+/**
+ * Creates a throttled version of a function.
+ * @param callback Function to throttle.
+ * @param delay Minimum delay between function invocations (in ms).
+ * @returns Throttled function.
+ */
+export function throttle<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  let lastCall = 0;
+  let timeoutId: NodeJS.Timeout | null = null;
+  let lastArgs: Parameters<T> | null = null;
+  
+  function throttled(this: any, ...args: Parameters<T>) {
+    const now = Date.now();
+    const timeSinceLastCall = now - lastCall;
+    
+    // Save the latest args
+    lastArgs = args;
+    
+    if (timeSinceLastCall >= delay) {
+      // If enough time has passed, call immediately
+      lastCall = now;
+      callback.apply(this, args);
+    } else if (!timeoutId) {
+      // Schedule a call for when the delay has passed
+      timeoutId = setTimeout(() => {
+        lastCall = Date.now();
+        timeoutId = null;
+        if (lastArgs) {
+          callback.apply(this, lastArgs);
+        }
+      }, delay - timeSinceLastCall);
+    }
+  }
+  
+  return throttled as T;
+}
+
+/**
+ * Creates a debounced version of a function.
+ * @param callback Function to debounce.
+ * @param delay Delay before the function is called after the last invocation (in ms).
+ * @returns Debounced function.
+ */
+export function debounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): (this: any, ...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | null = null;
+  
+  return function debounced(this: any, ...args: Parameters<T>) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    timeoutId = setTimeout(() => {
+      callback.apply(this, args);
+      timeoutId = null;
+    }, delay);
   };
 }
 
 /**
- * Hook to check if component is in view
- * 
- * @param options IntersectionObserver options
- * @returns [ref, isInView] tuple
+ * Hook to optimize costly animations and effects based on frame rate.
+ * @param options Configuration options.
+ * @returns Object with methods to control the optimized updates.
  */
-export function useInView<T extends HTMLElement = HTMLDivElement>(
-  options: IntersectionObserverInit = {}
-): [React.RefObject<T>, boolean] {
-  const ref = useRef<T>(null);
-  const [isInView, setIsInView] = useState(false);
+export function useAnimationOptimizer(options: {
+  targetFps?: number;
+  measuringPeriod?: number;
+  minQuality?: number;
+  maxQuality?: number;
+} = {}) {
+  const {
+    targetFps = 60,
+    measuringPeriod = 1000,
+    minQuality = 0.2,
+    maxQuality = 1.0,
+  } = options;
   
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof IntersectionObserver !== 'function') {
-      setIsInView(true); // Fallback for older browsers
-      return;
+  const [quality, setQuality] = useState(maxQuality);
+  const frameTimesRef = useRef<number[]>([]);
+  const lastFrameTimeRef = useRef(0);
+  const requestRef = useRef<number>();
+  
+  // Measure current FPS and adjust quality if needed
+  const measurePerformance = useCallback(() => {
+    const now = performance.now();
+    
+    if (lastFrameTimeRef.current) {
+      const frameTime = now - lastFrameTimeRef.current;
+      frameTimesRef.current.push(frameTime);
+      
+      // Keep only frames within the measuring period
+      const frameTimesCopy = [...frameTimesRef.current];
+      let totalTime = 0;
+      
+      for (let i = frameTimesCopy.length - 1; i >= 0; i--) {
+        totalTime += frameTimesCopy[i];
+        if (totalTime > measuringPeriod) {
+          frameTimesRef.current = frameTimesCopy.slice(i + 1);
+          break;
+        }
+      }
+      
+      // Calculate current FPS
+      const avgFrameTime = frameTimesRef.current.reduce((sum, time) => sum + time, 0) 
+                          / frameTimesRef.current.length;
+      const currentFps = 1000 / avgFrameTime;
+      
+      // Adjust quality based on FPS
+      if (currentFps < targetFps * 0.8 && quality > minQuality) {
+        setQuality(q => Math.max(minQuality, q - 0.1));
+      } else if (currentFps > targetFps * 0.95 && quality < maxQuality) {
+        setQuality(q => Math.min(maxQuality, q + 0.05));
+      }
     }
     
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsInView(entry.isIntersecting);
-    }, {
-      threshold: 0.1, // Default to 10% visibility
-      ...options
-    });
-    
-    observer.observe(element);
-    
-    return () => {
-      observer.disconnect();
-    };
-  }, [options]);
+    lastFrameTimeRef.current = now;
+    requestRef.current = requestAnimationFrame(measurePerformance);
+  }, [targetFps, measuringPeriod, minQuality, maxQuality, quality]);
   
-  return [ref, isInView];
+  // Start and stop the measurement loop
+  const start = useCallback(() => {
+    if (requestRef.current) return;
+    
+    frameTimesRef.current = [];
+    lastFrameTimeRef.current = 0;
+    requestRef.current = requestAnimationFrame(measurePerformance);
+  }, [measurePerformance]);
+  
+  const stop = useCallback(() => {
+    if (requestRef.current) {
+      cancelAnimationFrame(requestRef.current);
+      requestRef.current = undefined;
+    }
+  }, []);
+  
+  // Clean up the animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+      }
+    };
+  }, []);
+  
+  return {
+    quality,
+    start,
+    stop,
+    setQuality,
+  };
 }
 
 /**
- * Hook to optimize performance by skipping renders when component is offscreen
- * 
- * @param isVisible Whether the component is currently visible
- * @returns A ref to be attached to the component's root element
+ * Custom profiler component that logs render times.
  */
-export function useSkipRenderIfInvisible(isVisible: boolean): React.RefObject<HTMLDivElement> {
-  const ref = useRef<HTMLDivElement>(null);
+export function PerformanceProfiler({ id, children }: {
+  id: string;
+  children: React.ReactNode;
+}) {
+  const onRender = useProfiler(id);
   
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    
-    // If not visible, apply a CSS class that reduces repaints/reflows
-    if (!isVisible) {
-      element.style.willChange = 'auto';
-      element.style.contain = 'content';
-      element.style.contentVisibility = 'auto';
-    } else {
-      element.style.willChange = '';
-      element.style.contain = '';
-      element.style.contentVisibility = '';
-    }
-  }, [isVisible]);
-  
-  return ref;
+  return React.createElement(
+    Profiler, 
+    { id, onRender }, 
+    children
+  );
 }

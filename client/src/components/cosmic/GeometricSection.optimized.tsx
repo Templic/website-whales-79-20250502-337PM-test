@@ -1,17 +1,8 @@
-/**
- * GeometricSection.optimized.tsx
- * 
- * Performance-optimized version of the GeometricSection component.
- * Implements memoization, skip rendering when not visible, and other optimizations.
- */
-
-import React, { useMemo, ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import './cosmic-animations.css';
-import SacredGeometry from './SacredGeometry';
-import CosmicShape, { CosmicShapeGroup } from './CosmicShapesFixed';
-import useIsMobile from './useIsMobile';
-import { useRenderCount, useSkipRenderIfInvisible, useInView } from '@/lib/performance';
+import { useIsMobile } from '@/hooks/use-responsive';
+import { CosmicShapeGroup, ShapeProps } from './CosmicShapeGroup';
 
 interface GeometricSectionProps {
   children: ReactNode;
@@ -36,9 +27,9 @@ interface GeometricSectionProps {
     'pointed-pentagon';
   headingColor?: string;
   backgroundStyle?: 'solid' | 'gradient' | 'glass' | 'dark' | 'light';
-  alignment?: 'left' | 'center' | 'right';
-  contentWidth?: 'narrow' | 'standard' | 'wide' | 'auto' | number;
   decorative?: boolean;
+  alignment?: 'left' | 'center' | 'right';
+  contentWidth?: 'auto' | 'narrow' | 'standard' | 'wide' | number;
   textContained?: boolean;
 }
 
@@ -46,34 +37,20 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   children,
   title,
   subtitle,
-  variant = 'cosmic',
+  variant = 'primary',
   className = '',
   style = {},
-  shape = 'rectangular',
+  shape = 'trapezoid',
   headingColor,
   backgroundStyle = 'glass',
-  alignment = 'left',
-  contentWidth = 'auto',
   decorative = true,
+  alignment = 'center',
+  contentWidth = 'standard',
   textContained = true,
 }) => {
-  // Tracking render count for debugging
-  useRenderCount('GeometricSection');
-  
-  // Skip rendering when not in viewport for better performance
-  const [inViewRef, isInView] = useInView({
-    threshold: 0.1,
-    rootMargin: '100px',
-  });
-  
-  // The visibility ref helps skip unnecessary renders when component is not visible
-  const skipRenderRef = useSkipRenderIfInvisible(isInView);
-  const combinedRef = React.useRef<HTMLElement>(null);
-  
-  // Check if we're on mobile
   const isMobile = useIsMobile();
-
-  // Memoize color values to prevent recalculation on each render
+  
+  // Using useMemo to cache expensive calculations
   const variantColors = useMemo(() => ({
     primary: { main: '#7c3aed', glow: 'rgba(124, 58, 237, 0.4)', border: 'rgba(124, 58, 237, 0.2)' },
     secondary: { main: '#00ebd6', glow: 'rgba(0, 235, 214, 0.4)', border: 'rgba(0, 235, 214, 0.2)' },
@@ -85,157 +62,140 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   const mainColor = headingColor || variantColors[variant].main;
   const borderColor = variantColors[variant].border;
 
-  // Memoize background classes to prevent recalculation on each render
-  const getBgClasses = useMemo(() => (style: string) => {
-    switch (style) {
-      case 'solid':
-        return 'bg-[#0a0a14] border';
-      case 'gradient':
-        return 'bg-gradient-to-br from-[#0a0a14] via-[rgba(10,10,20,0.7)] to-[#0a0a14] border';
-      case 'glass':
-        return 'bg-[#0a0a14]/60 backdrop-blur-md border';
-      case 'dark':
-        return 'bg-[#050508]/80 backdrop-blur-sm border border-white/5';
-      case 'light':
-        return 'bg-white/5 backdrop-blur-md border border-white/10';
-      default:
-        return 'bg-[#0a0a14]/60 backdrop-blur-md border';
-    }
-  }, []);
+  // Background styles based on variant and style
+  const backgroundClasses = useMemo(() => {
+    const getBgClasses = (style: string) => {
+      switch (style) {
+        case 'solid':
+          return 'bg-[#0a0a14] border';
+        case 'gradient':
+          return 'bg-gradient-to-br from-[#0a0a14] via-[rgba(10,10,20,0.7)] to-[#0a0a14] border';
+        case 'glass':
+          return 'bg-[#0a0a14]/60 backdrop-blur-md border';
+        case 'dark':
+          return 'bg-[#050508]/80 backdrop-blur-sm border border-white/5';
+        case 'light':
+          return 'bg-white/5 backdrop-blur-md border border-white/10';
+        default:
+          return 'bg-[#0a0a14]/60 backdrop-blur-md border';
+      }
+    };
 
-  // Memoize border class to prevent recalculation on each render
-  const getBorderClass = useMemo(() => () => {
-    switch (variant) {
-      case 'primary':
-        return 'border-purple-600/30';
-      case 'secondary':
-        return 'border-cyan-400/30';
-      case 'accent':
-        return 'border-orange-400/30';
-      case 'cosmic':
-        return 'border-red-500/30';
-      case 'minimal':
-      default:
-        return 'border-white/10';
-    }
+    const getBorderClass = () => {
+      switch (variant) {
+        case 'primary':
+          return 'border-purple-600/30';
+        case 'secondary':
+          return 'border-cyan-400/30';
+        case 'accent':
+          return 'border-orange-400/30';
+        case 'cosmic':
+          return 'border-red-500/30';
+        case 'minimal':
+        default:
+          return 'border-white/10';
+      }
+    };
+
+    const borderClass = getBorderClass();
+
+    return {
+      solid: `${getBgClasses('solid')} ${borderClass}`,
+      gradient: `${getBgClasses('gradient')} ${borderClass}`,
+      glass: `${getBgClasses('glass')} ${borderClass}`,
+      dark: getBgClasses('dark'),
+      light: getBgClasses('light'),
+    };
   }, [variant]);
 
-  const borderClass = getBorderClass();
+  // Memoized clip paths
+  const clipPath = useMemo(() => {
+    const clipPaths: Record<string, string> = {
+      trapezoid: 'polygon(0 0, 100% 0, 85% 100%, 15% 100%)',
+      hexagon: 'polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%)',
+      octagon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
+      pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+      diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+      wave: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 50% 75%, 25% 100%, 0% 75%)',
+      'symmetric-hexagon': 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
+      'rectangular': 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+      'shield': 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
+      'pentagram': 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+      'rounded-diamond': 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
+      'parallelogram': 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+      'pointed-pentagon': 'polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%)',
+    };
+    return clipPaths[shape];
+  }, [shape]);
 
-  // Memoize combined background classes
-  const backgroundClasses = useMemo(() => ({
-    solid: `${getBgClasses('solid')} ${borderClass}`,
-    gradient: `${getBgClasses('gradient')} ${borderClass}`,
-    glass: `${getBgClasses('glass')} ${borderClass}`,
-    dark: getBgClasses('dark'),
-    light: getBgClasses('light'),
-  }), [getBgClasses, borderClass]);
+  // Alignment classes
+  const alignmentClass = useMemo(() => {
+    const alignmentClasses = {
+      left: 'text-left',
+      center: 'text-center',
+      right: 'text-right',
+    };
+    return alignmentClasses[alignment];
+  }, [alignment]);
 
-  // Memoize clip paths to prevent recalculation on each render
-  const clipPaths = useMemo<Record<string, string>>(() => ({
-    trapezoid: 'polygon(0 0, 100% 0, 85% 100%, 15% 100%)',
-    hexagon: 'polygon(15% 0%, 85% 0%, 100% 50%, 85% 100%, 15% 100%, 0% 50%)',
-    octagon: 'polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)',
-    pentagon: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-    diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-    wave: 'polygon(0% 0%, 100% 0%, 100% 75%, 75% 100%, 50% 75%, 25% 100%, 0% 75%)',
-    'symmetric-hexagon': 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)',
-    'rectangular': 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
-    'shield': 'polygon(0% 0%, 100% 0%, 100% 70%, 50% 100%, 0% 70%)',
-    'pentagram': 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-    'rounded-diamond': 'polygon(50% 5%, 95% 50%, 50% 95%, 5% 50%)',
-    'parallelogram': 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
-    'pointed-pentagon': 'polygon(50% 0%, 100% 30%, 85% 100%, 15% 100%, 0% 30%)',
-  }), []);
+  // Decorative shapes - simplified version
+  const decorativeShapes = useMemo(() => {
+    if (!decorative) return [];
+    
+    let shapes: ShapeProps[] = [];
+    
+    // Common shapes for basic decoration
+    if (['trapezoid', 'wave', 'rectangular'].includes(shape)) {
+      shapes = [
+        {
+          type: 'polygon',
+          sides: 3,
+          size: 60,
+          color: variantColors[variant].main,
+          glowColor: variantColors[variant].glow,
+          fillOpacity: 0.03,
+          strokeWidth: 1,
+          position: { top: '10px', left: '20px' },
+          rotation: 15
+        },
+        {
+          type: 'circle',
+          size: 40,
+          color: variantColors[variant].main,
+          glowColor: variantColors[variant].glow,
+          fillOpacity: 0.02,
+          strokeWidth: 1,
+          position: { bottom: '15px', right: '30px' }
+        },
+      ];
+    }
+    
+    // Polygon shapes for more geometric sections
+    if (['hexagon', 'pentagon', 'diamond', 'pointed-pentagon'].includes(shape)) {
+      shapes = [
+        {
+          type: 'polygon',
+          sides: shape === 'pentagon' || shape === 'pointed-pentagon' ? 5 : 
+                 shape === 'hexagon' ? 6 : 4,
+          size: 70,
+          color: variantColors[variant].main,
+          glowColor: variantColors[variant].glow,
+          fillOpacity: 0.05,
+          strokeWidth: 1.5,
+          position: { top: '50%', left: '50%' },
+          rotation: 0
+        }
+      ];
+    }
+    
+    return shapes;
+  }, [shape, variant, decorative, variantColors]);
 
-  // Memoize alignment classes
-  const alignmentClasses = useMemo(() => ({
-    left: 'text-left',
-    center: 'text-center',
-    right: 'text-right',
-  }), []);
-
-  // Memoize decorative shapes rendering to prevent recreation on each render
-  const renderDecorativeShapes = useMemo(() => {
-    if (!decorative || !isInView) return null;
-
-    return (
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        {shape === 'trapezoid' && (
-          <CosmicShapeGroup
-            shapes={[
-              {
-                type: 'polygon',
-                sides: 3,
-                size: 60,
-                color: variantColors[variant].main,
-                glowColor: variantColors[variant].glow,
-                fillOpacity: 0.03,
-                strokeWidth: 2,
-                position: { top: '20%', left: '15%' },
-                rotation: 0
-              },
-              {
-                type: 'polygon',
-                sides: 4,
-                size: 80,
-                color: variantColors[variant].main,
-                glowColor: variantColors[variant].glow,
-                fillOpacity: 0.02,
-                strokeWidth: 1.5,
-                position: { bottom: '15%', right: '10%' },
-                rotation: 15
-              }
-            ]}
-          />
-        )}
-
-        {(shape === 'hexagon' || shape === 'symmetric-hexagon' || shape === 'octagon') && (
-          <SacredGeometry
-            type="hexagon"
-            color={variantColors[variant].main}
-            size={250}
-            animate={isInView}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10"
-          />
-        )}
-
-        {(shape === 'shield') && (
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full border-2 border-[#00ebd6]/30"></div>
-            <div className="absolute bottom-20 left-20 w-14 h-14 rounded-full border-2 border-[#7c3aed]/30"></div>
-            <div className="absolute bottom-20 right-20 w-14 h-14 rounded-full border-2 border-[#e15554]/30"></div>
-          </div>
-        )}
-
-        {(shape === 'pentagram' || shape === 'pointed-pentagon') && (
-          <SacredGeometry
-            type="pentagon-star" 
-            color={variantColors[variant].main}
-            size={220}
-            animate={isInView}
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-10"
-          />
-        )}
-      </div>
-    );
-  }, [shape, decorative, isInView, variantColors, variant]);
-
-  // Calculate content width based on shape type and the contentWidth prop
-  const getContentWidthStyle = useMemo(() => {
+  // Memoize content width calculation
+  const contentWidthStyle = useMemo(() => {
     if (typeof contentWidth === 'number') {
       return isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`;
     }
-
-    // Helper to get mobile-adjusted width - using MORE width on mobile, not less
-    const getMobileWidth = (standardWidth: string): string => {
-      const percentage = parseInt(standardWidth);
-      if (!isNaN(percentage) && isMobile) {
-        const mobilePercentage = Math.min(percentage + 15, 95);
-        return `${mobilePercentage}%`;
-      }
-      return standardWidth;
-    };
 
     if (textContained) {
       switch(shape) {
@@ -275,8 +235,8 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
     }
   }, [contentWidth, isMobile, shape, textContained]);
 
-  // Calculate padding based on shape to ensure text doesn't overflow
-  const getPaddingStyle = useMemo(() => {
+  // Memoize padding calculation
+  const paddingStyle = useMemo(() => {
     if (!textContained) return {};
 
     if (isMobile) {
@@ -325,35 +285,33 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
 
   return (
     <section 
-      ref={inViewRef}
       className={cn(
         'relative mb-8 shadow-lg overflow-hidden', 
         backgroundClasses[backgroundStyle],
-        alignmentClasses[alignment],
+        alignmentClass,
         className,
         isMobile ? 'geometric-section-mobile' : ''
       )}
-      style={Object.assign(
-        {
-          clipPath: clipPaths[shape]
-        },
-        style || {},
-        getPaddingStyle
-      )}
+      style={{ 
+        clipPath: clipPath,
+        ...style,
+        ...paddingStyle
+      }}
     >
-      {renderDecorativeShapes}
+      {decorative && decorativeShapes.length > 0 && (
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <CosmicShapeGroup shapes={decorativeShapes} />
+        </div>
+      )}
 
-      <div className="relative z-10" style={Object.assign(
-        {
-          maxWidth: typeof contentWidth === 'number' 
-            ? (isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`) 
-            : getContentWidthStyle
-        },
-        {
+      <div 
+        className="relative z-10" 
+        style={{ 
+          maxWidth: contentWidthStyle,
           margin: alignment === 'center' ? '0 auto' : 
-                  alignment === 'right' ? '0 0 0 auto' : '0'
-        }
-      )}>
+                  alignment === 'right' ? '0 0 0 auto' : '0',
+        }}
+      >
         {title && (
           <div className="section-header mb-4 sm:mb-6 md:mb-8">
             <h2 
@@ -378,5 +336,4 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   );
 };
 
-// Export memoized version to prevent unnecessary re-renders
 export default React.memo(GeometricSection);
