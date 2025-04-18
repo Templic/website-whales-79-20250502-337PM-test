@@ -84,28 +84,36 @@ const FontLoader: React.FC<FontLoaderProps> = ({
     const fontFacePromises: Promise<FontFace>[] = [];
     const fontFaceObservers: Promise<void>[] = [];
     
-    // Load Google Fonts
+    // Load Google Fonts individually to avoid complex URL construction
     const googleFonts = fonts.filter(font => !font.url || font.source === 'google');
     
     if (googleFonts.length > 0) {
-      const googleFontUrl = createGoogleFontUrl(googleFonts, weights, styles, display);
-      
-      // Create a link element for Google Fonts
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = googleFontUrl;
-      
-      // Create a promise to track when the font stylesheet is loaded
-      const linkPromise = new Promise<void>((resolve) => {
-        link.onload = () => resolve();
-        link.onerror = () => {
-          console.error(`Failed to load Google Fonts: ${googleFontUrl}`);
-          resolve(); // Resolve anyway to prevent blocking
-        };
+      // Load each font family separately for better reliability
+      googleFonts.forEach(font => {
+        const fontFamily = font.family.replace(/\s+/g, '+');
+        const fontWeights = (font.weights || weights).join(';');
+        const fontDisplay = font.display || display;
+        
+        // Create a simple Google Font URL for a single font
+        const googleFontUrl = `https://fonts.googleapis.com/css2?family=${fontFamily}:wght@${fontWeights}&display=${fontDisplay}`;
+        
+        // Create a link element for this Google Font
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = googleFontUrl;
+        
+        // Create a promise to track when the font stylesheet is loaded
+        const linkPromise = new Promise<void>((resolve) => {
+          link.onload = () => resolve();
+          link.onerror = () => {
+            console.error(`Failed to load Google Font: ${fontFamily}`);
+            resolve(); // Resolve anyway to prevent blocking
+          };
+        });
+        
+        fontFaceObservers.push(linkPromise);
+        document.head.appendChild(link);
       });
-      
-      fontFaceObservers.push(linkPromise);
-      document.head.appendChild(link);
     }
     
     // Load self-hosted fonts
@@ -247,13 +255,13 @@ function createGoogleFontUrl(
     
     // Special case for variable fonts
     if (font.variable) {
-      return `${family}:wght@${weights.join(';')}`;
+      return `family=${family}:wght@${weights.join(';')}`;
     }
     
     // Return font with variants
     return variants.length > 0 
-      ? `${family}:${variants.join(',')}`
-      : family;
+      ? `family=${family}:${variants.join(',')}`
+      : `family=${family}`;
   });
   
   // Combine all font families into a single URL

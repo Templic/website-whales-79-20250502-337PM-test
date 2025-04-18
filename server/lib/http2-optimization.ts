@@ -1,554 +1,440 @@
 /**
  * HTTP/2 Optimization Utilities
  * 
- * Utilities for optimizing performance with HTTP/2, including server push,
- * resource hints, prioritization, and connection management.
+ * Provides tools for optimizing HTTP/2 connections, including:
+ * - Resource hint management (preload, prefetch, preconnect)
+ * - Server Push optimization
+ * - Connection and stream prioritization
+ * - HPACK header compression optimization
+ * - Dependency tree management for optimal resource loading
  */
 
 import { Request, Response, NextFunction } from 'express';
-import fs from 'fs';
-import path from 'path';
+import { parse as parseUrl } from 'url';
+import * as path from 'path';
+import * as fs from 'fs';
 
-/**
- * Resource types for server push
- */
-export type ResourceType = 
-  | 'script'
-  | 'style'
-  | 'image'
-  | 'font'
-  | 'video'
-  | 'audio'
-  | 'document'
-  | 'manifest'
-  | 'other';
+// Types for resource hints
+export type ResourceHintType = 'preload' | 'prefetch' | 'preconnect' | 'dns-prefetch';
+export type ResourceAsType = 'style' | 'script' | 'font' | 'image' | 'fetch' | 'document' | 'audio' | 'video';
 
-/**
- * Resource definition for HTTP/2 server push
- */
-export interface PushResource {
-  /** Path to the resource */
-  path: string;
-  /** Type of resource */
-  type: ResourceType;
-  /** Whether the resource is critical for rendering */
-  critical?: boolean;
-  /** Custom cache directive */
-  cache?: string;
-  /** Priority level */
-  priority?: 'high' | 'medium' | 'low';
-}
-
-/**
- * HTTP/2 Server Push Configuration
- */
-export interface ServerPushConfig {
-  /** Base path for resolving relative paths */
-  basePath?: string;
-  /** Resources to push for all requests */
-  globalResources?: PushResource[];
-  /** Resource mapping by route pattern */
-  routeResources?: Record<string, PushResource[]>;
-  /** Maximum number of resources to push per request */
-  maxResources?: number;
-  /** Whether to use preload instead of server push */
-  usePreloadHeader?: boolean;
-  /** Whether to add the nopush attribute to preload headers */
-  noPush?: boolean;
-  /** Whether to include a Vary header */
-  includeVaryHeader?: boolean;
-  /** Custom options for push streams */
-  streamOptions?: {
-    /** End stream after pushing resource */
-    endStream?: boolean;
-    /** Custom HTTP headers */
-    headers?: Record<string, string>;
-  };
-}
-
-/**
- * Resource hints definition
- */
-export interface ResourceHints {
-  /** Resources to preload */
-  preload?: string[];
-  /** Resources to prefetch */
-  prefetch?: string[];
-  /** Resources to preconnect */
-  preconnect?: string[];
-  /** Resources to dns-prefetch */
-  dnsPrefetch?: string[];
-  /** Resources to prerender */
-  prerender?: string[];
-  /** Whether to apply the crossorigin attribute to all hints */
+export interface ResourceHint {
+  url: string;
+  type: ResourceHintType;
+  as?: ResourceAsType;
   crossorigin?: boolean;
+  importance?: 'high' | 'low' | 'auto';
 }
 
-/**
- * Default server push configuration
- */
-const defaultPushConfig: ServerPushConfig = {
-  basePath: './public',
-  maxResources: 15,
-  usePreloadHeader: true,
-  noPush: false,
-  includeVaryHeader: true
+export interface PushResource {
+  path: string;
+  as: ResourceAsType;
+  type?: string;
+  weight?: number;
+  dependencies?: string[];
+}
+
+export interface Http2OptimizationOptions {
+  /** Path to static assets, used for server push */
+  staticPath?: string;
+  /** Whether to enable server push */
+  enablePush?: boolean;
+  /** Resources to preload on all requests */
+  globalPreloads?: ResourceHint[];
+  /** Resources to prefetch on all requests */
+  globalPrefetch?: ResourceHint[];
+  /** Resources to preconnect to on all requests */
+  globalPreconnect?: ResourceHint[];
+  /** Critical path CSS to inline */
+  criticalCss?: { [key: string]: string };
+  /** Whether to optimize HPACK compression */
+  optimizeHpack?: boolean;
+  /** Whether to set default priorities */
+  setDefaultPriorities?: boolean;
+  /** Cache time for resource hints in seconds */
+  resourceHintsCacheTime?: number;
+  /** Whether to include resource hints in HTTP headers */
+  includeHintsInHeaders?: boolean;
+  /** Whether to optimize streaming */
+  optimizeStreaming?: boolean;
+}
+
+// Default options
+const defaultOptions: Http2OptimizationOptions = {
+  staticPath: 'public',
+  enablePush: true,
+  globalPreloads: [],
+  globalPrefetch: [],
+  globalPreconnect: [],
+  criticalCss: {},
+  optimizeHpack: true,
+  setDefaultPriorities: true,
+  resourceHintsCacheTime: 86400, // 1 day
+  includeHintsInHeaders: true,
+  optimizeStreaming: true,
 };
 
-/**
- * Cache for resource existence checks
- */
-const resourceCache = new Map<string, boolean>();
+// Cache for resource hints
+const resourceHintsCache = new Map<string, string>();
 
 /**
- * Map of content types by resource type
+ * Middleware for HTTP/2 optimization
+ * @param options Configuration options
+ * @returns Express middleware
  */
-const contentTypeMap: Record<ResourceType, string> = {
-  script: 'application/javascript',
-  style: 'text/css',
-  image: 'image/jpeg', // Default, will be overridden based on extension
-  font: 'font/woff2',  // Default, will be overridden based on extension
-  video: 'video/mp4',
-  audio: 'audio/mpeg',
-  document: 'text/html',
-  manifest: 'application/manifest+json',
-  other: 'application/octet-stream'
-};
-
-/**
- * Map of file extensions to content types
- */
-const extensionMap: Record<string, string> = {
-  '.js': 'application/javascript',
-  '.mjs': 'application/javascript',
-  '.css': 'text/css',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.webp': 'image/webp',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf',
-  '.otf': 'font/otf',
-  '.eot': 'application/vnd.ms-fontobject',
-  '.mp4': 'video/mp4',
-  '.webm': 'video/webm',
-  '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.ogg': 'audio/ogg',
-  '.html': 'text/html',
-  '.json': 'application/json',
-  '.xml': 'application/xml',
-  '.webmanifest': 'application/manifest+json'
-};
-
-/**
- * Check if a resource exists on the filesystem
- * @param filePath Path to the resource
- * @param basePath Base path for resolving relative paths
- * @returns Whether the resource exists
- */
-function resourceExists(filePath: string, basePath: string): boolean {
-  const cacheKey = `${basePath}:${filePath}`;
+export function http2OptimizationMiddleware(options: Http2OptimizationOptions = {}) {
+  // Merge options with defaults
+  const config = { ...defaultOptions, ...options };
   
-  // Check cache first
-  if (resourceCache.has(cacheKey)) {
-    return resourceCache.get(cacheKey) || false;
-  }
-  
-  // Handle URL paths
-  let normalizedPath = filePath;
-  if (normalizedPath.startsWith('/')) {
-    normalizedPath = normalizedPath.substring(1);
-  }
-  
-  const fullPath = path.join(basePath, normalizedPath);
-  
-  try {
-    // Check if file exists
-    const exists = fs.existsSync(fullPath);
-    resourceCache.set(cacheKey, exists);
-    
-    // Limit cache size
-    if (resourceCache.size > 1000) {
-      const keys = Array.from(resourceCache.keys());
-      resourceCache.delete(keys[0]);
+  return function(req: Request, res: Response, next: NextFunction) {
+    // Skip for non-HTML requests
+    const acceptHeader = req.headers.accept || '';
+    if (!acceptHeader.includes('text/html')) {
+      return next();
     }
     
-    return exists;
-  } catch (error) {
-    console.error(`Error checking if resource exists: ${fullPath}`, error);
-    return false;
-  }
-}
-
-/**
- * Get the content type for a resource
- * @param resource Resource definition
- * @returns Content type for the resource
- */
-function getContentType(resource: PushResource): string {
-  const extension = path.extname(resource.path).toLowerCase();
-  
-  // Use extension mapping if available
-  if (extension && extensionMap[extension]) {
-    return extensionMap[extension];
-  }
-  
-  // Fallback to resource type mapping
-  return contentTypeMap[resource.type];
-}
-
-/**
- * Get the as attribute for a resource
- * @param resource Resource definition
- * @returns As attribute for the resource
- */
-function getAsAttribute(resource: PushResource): string {
-  return resource.type;
-}
-
-/**
- * Get resources to push for a request
- * @param req HTTP request
- * @param config Server push configuration
- * @returns Array of resources to push
- */
-function getResourcesToPush(req: Request, config: ServerPushConfig): PushResource[] {
-  const resources: PushResource[] = [...(config.globalResources || [])];
-  
-  // Add route-specific resources
-  if (config.routeResources) {
-    const url = req.originalUrl || req.url;
+    // Add resource hint methods to response object
+    const originalSend = res.send;
     
-    // Find matching route patterns
-    Object.entries(config.routeResources).forEach(([pattern, routeResources]) => {
-      // Simple string match
-      if (pattern === url) {
-        resources.push(...routeResources);
-      }
-      // Regex pattern match
-      else if (pattern.includes('*') || pattern.includes(':')) {
-        const regexPattern = pattern
-          .replace(/\*/g, '.*')
-          .replace(/:\w+/g, '[^/]+');
+    // Extend response to include resource hint capabilities
+    (res as any).preload = (url: string, as?: ResourceAsType, crossorigin?: boolean) => {
+      addResourceHint(res, { url, type: 'preload', as, crossorigin });
+      return res;
+    };
+    
+    (res as any).prefetch = (url: string, as?: ResourceAsType) => {
+      addResourceHint(res, { url, type: 'prefetch', as });
+      return res;
+    };
+    
+    (res as any).preconnect = (url: string, crossorigin?: boolean) => {
+      addResourceHint(res, { url, type: 'preconnect', crossorigin });
+      return res;
+    };
+    
+    (res as any).dnsPrefetch = (url: string) => {
+      addResourceHint(res, { url, type: 'dns-prefetch' });
+      return res;
+    };
+    
+    // Track added hints to avoid duplicates
+    const addedHints = new Set<string>();
+    
+    // Add global hints
+    config.globalPreloads?.forEach(hint => {
+      addResourceHint(res, hint, addedHints);
+    });
+    
+    config.globalPrefetch?.forEach(hint => {
+      addResourceHint(res, hint, addedHints);
+    });
+    
+    config.globalPreconnect?.forEach(hint => {
+      addResourceHint(res, hint, addedHints);
+    });
+    
+    // Override send to add resource hints to HTML responses
+    res.send = function(body) {
+      // Only modify HTML responses
+      if (typeof body === 'string' && isHtmlResponse(res)) {
+        // Add resource hints as <link> tags
+        body = addResourceHintsToHtml(body, res);
         
-        if (new RegExp(`^${regexPattern}$`).test(url)) {
-          resources.push(...routeResources);
+        // Add server push headers if HTTP/2 is available
+        if (config.enablePush && isHttp2(req)) {
+          pushResources(req, res, body);
         }
       }
-    });
-  }
-  
-  // Filter and sort resources
-  return resources
-    // Filter to only existing resources
-    .filter(resource => resourceExists(resource.path, config.basePath || './public'))
-    // Sort by priority and critical flag
-    .sort((a, b) => {
-      const aPriority = a.critical ? 3 : (a.priority === 'high' ? 2 : (a.priority === 'medium' ? 1 : 0));
-      const bPriority = b.critical ? 3 : (b.priority === 'high' ? 2 : (b.priority === 'medium' ? 1 : 0));
-      return bPriority - aPriority;
-    })
-    // Limit to max resources
-    .slice(0, config.maxResources || 15);
-}
-
-/**
- * Create resource hints for HTTP headers
- * @param resources Resources to include in hints
- * @param config Server push configuration
- * @returns Resource hint headers
- */
-function createResourceHints(resources: PushResource[], config: ServerPushConfig): Record<string, string> {
-  if (!resources.length) {
-    return {};
-  }
-  
-  // Create Link header
-  const linkValues = resources.map(resource => {
-    const contentType = getContentType(resource);
-    const asAttribute = getAsAttribute(resource);
+      
+      return originalSend.call(this, body);
+    };
     
-    let link = `<${resource.path}>; rel=preload; as=${asAttribute}; type=${contentType}`;
-    
-    if (resource.priority) {
-      link += `; importance=${resource.priority}`;
-    }
-    
-    if (config.noPush) {
-      link += '; nopush';
-    }
-    
-    if (resource.type === 'font') {
-      link += '; crossorigin=anonymous';
-    }
-    
-    return link;
-  });
-  
-  return {
-    'Link': linkValues.join(', ')
+    next();
   };
 }
 
 /**
- * Perform HTTP/2 server push for resources
- * @param res HTTP response
- * @param resources Resources to push
- * @param config Server push configuration
+ * Check if the response is HTML
+ * @param res Express response
+ * @returns Whether the response is HTML
  */
-function pushResources(res: Response, resources: PushResource[], config: ServerPushConfig): void {
-  // Skip if not HTTP/2 or no push method available
-  // @ts-ignore - http2 property may not be defined in typings
-  if (!res.push) {
+function isHtmlResponse(res: Response): boolean {
+  const contentType = res.get('Content-Type') || '';
+  return contentType.includes('text/html');
+}
+
+/**
+ * Check if the request is using HTTP/2
+ * @param req Express request
+ * @returns Whether the request is using HTTP/2
+ */
+function isHttp2(req: Request): boolean {
+  // Check if HTTP/2 is available (using Express or Node.js HTTP/2 APIs)
+  return !!(req.httpVersion === '2.0' || (req as any).socket?.alpnProtocol === 'h2');
+}
+
+/**
+ * Add a resource hint to the response
+ * @param res Express response
+ * @param hint Resource hint to add
+ * @param addedHints Set of already added hints to avoid duplicates
+ */
+function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<string>) {
+  const hintKey = `${hint.type}:${hint.url}:${hint.as || ''}`;
+  
+  // Skip duplicates
+  if (addedHints?.has(hintKey)) {
     return;
   }
   
-  resources.forEach(resource => {
+  // Track added hints
+  addedHints?.add(hintKey);
+  
+  // Get existing Link header
+  let linkHeader = res.get('Link') || '';
+  
+  // Create link rel value
+  let linkValue = `<${hint.url}>; rel="${hint.type}"`;
+  
+  // Add optional attributes
+  if (hint.as) {
+    linkValue += `; as="${hint.as}"`;
+  }
+  
+  if (hint.crossorigin) {
+    linkValue += '; crossorigin';
+  }
+  
+  if (hint.importance) {
+    linkValue += `; importance=${hint.importance}`;
+  }
+  
+  // Append to existing Link header if present
+  if (linkHeader) {
+    linkHeader += ', ' + linkValue;
+  } else {
+    linkHeader = linkValue;
+  }
+  
+  // Set the Link header
+  res.set('Link', linkHeader);
+  
+  // Store hints in response locals for later use when modifying HTML
+  if (!res.locals.resourceHints) {
+    res.locals.resourceHints = [];
+  }
+  
+  res.locals.resourceHints.push(hint);
+}
+
+/**
+ * Add resource hints to HTML as <link> tags
+ * @param html HTML string
+ * @param res Express response
+ * @returns Modified HTML with resource hints
+ */
+function addResourceHintsToHtml(html: string, res: Response): string {
+  // Skip if no hints or already cache
+  const hints: ResourceHint[] = res.locals.resourceHints || [];
+  if (hints.length === 0) {
+    return html;
+  }
+  
+  // Create unique cache key based on the URL and hints
+  const cacheKey = res.locals.requestUrl + ':' + JSON.stringify(hints);
+  
+  // Try to get from cache
+  const cachedHtml = resourceHintsCache.get(cacheKey);
+  if (cachedHtml) {
+    return cachedHtml;
+  }
+  
+  // Generate hint tags
+  const hintTags = hints.map(hint => {
+    let tag = `<link rel="${hint.type}" href="${hint.url}"`;
+    
+    if (hint.as) {
+      tag += ` as="${hint.as}"`;
+    }
+    
+    if (hint.crossorigin) {
+      tag += ' crossorigin';
+    }
+    
+    if (hint.importance) {
+      tag += ` importance="${hint.importance}"`;
+    }
+    
+    tag += '>';
+    return tag;
+  }).join('\n');
+  
+  // Insert hint tags after <head> tag
+  const modifiedHtml = html.replace(/<head>/i, '<head>\n' + hintTags);
+  
+  // Cache the result
+  resourceHintsCache.set(cacheKey, modifiedHtml);
+  
+  return modifiedHtml;
+}
+
+/**
+ * Push resources using HTTP/2 server push
+ * @param req Express request
+ * @param res Express response
+ * @param html HTML content
+ */
+function pushResources(req: Request, res: Response, html: string) {
+  // Extract resources to push from HTML
+  const resourcesToPush = extractResourcesToPush(html);
+  
+  // Skip if no resources to push
+  if (resourcesToPush.length === 0) {
+    return;
+  }
+  
+  // Check if response has push capability
+  const push = (res as any).push;
+  if (typeof push !== 'function') {
+    return;
+  }
+  
+  // Push resources
+  resourcesToPush.forEach(resource => {
     try {
-      const contentType = getContentType(resource);
-      
-      // Determine cache control header based on resource type and criticality
-      let cacheControl = resource.cache;
-      if (!cacheControl) {
-        if (resource.critical) {
-          cacheControl = 'public, max-age=31536000, immutable';
-        } else {
-          cacheControl = 'public, max-age=86400';
-        }
-      }
-      
-      // @ts-ignore - http2 property may not be defined in typings
-      const pushStream = res.push(resource.path, {
-        status: 200,
-        method: 'GET',
+      const pushStream = push(resource.path, {
         request: {
           accept: '*/*'
         },
         response: {
-          'content-type': contentType,
-          'cache-control': cacheControl,
-          'x-pushed': 'true'
-        },
-        ...(config.streamOptions || {})
+          'content-type': getContentType(resource.path, resource.type)
+        }
       });
       
-      // Handle the pushed stream
+      // Serve the resource
       if (pushStream) {
-        const filePath = path.join(config.basePath || './public', resource.path.startsWith('/') ? resource.path.substring(1) : resource.path);
-        
-        fs.readFile(filePath, (err, data) => {
-          if (err) {
-            console.error(`Error reading file for HTTP/2 push: ${filePath}`, err);
-            pushStream.end();
-          } else {
-            pushStream.end(data);
-          }
-        });
+        serveResource(pushStream, resource.path);
       }
     } catch (error) {
-      console.error(`Error pushing resource: ${resource.path}`, error);
+      console.error(`Error pushing resource ${resource.path}:`, error);
     }
   });
 }
 
 /**
- * Create HTTP/2 server push middleware
- * @param config Server push configuration
- * @returns Express middleware for HTTP/2 server push
+ * Get content type based on file extension
+ * @param path File path
+ * @param defaultType Default content type
+ * @returns Content type string
  */
-export function createServerPushMiddleware(config: ServerPushConfig = {}) {
-  const finalConfig = { ...defaultPushConfig, ...config };
+function getContentType(filePath: string, defaultType?: string): string {
+  if (defaultType) {
+    return defaultType;
+  }
   
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Get resources to push for this request
-    const resources = getResourcesToPush(req, finalConfig);
-    
-    if (resources.length > 0) {
-      // Add Vary header if configured
-      if (finalConfig.includeVaryHeader) {
-        res.setHeader('Vary', 'Accept');
-      }
-      
-      if (finalConfig.usePreloadHeader) {
-        // Use Link header for preloading
-        const headers = createResourceHints(resources, finalConfig);
-        Object.entries(headers).forEach(([name, value]) => {
-          res.setHeader(name, value);
-        });
-      } else {
-        // Use HTTP/2 server push
-        // @ts-ignore - http2 property may not be defined in typings
-        if (res.push) {
-          pushResources(res, resources, finalConfig);
-        }
-      }
-    }
-    
-    next();
-  };
+  const ext = path.extname(filePath).toLowerCase();
+  
+  switch(ext) {
+    case '.js':
+      return 'application/javascript';
+    case '.css':
+      return 'text/css';
+    case '.json':
+      return 'application/json';
+    case '.png':
+      return 'image/png';
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.svg':
+      return 'image/svg+xml';
+    case '.woff':
+      return 'font/woff';
+    case '.woff2':
+      return 'font/woff2';
+    default:
+      return 'application/octet-stream';
+  }
 }
 
 /**
- * Create middleware to add resource hints to responses
- * @param hints Resource hints configuration
- * @returns Express middleware for adding resource hints
+ * Serve a resource from disk
+ * @param stream HTTP/2 push stream
+ * @param path Resource path
  */
-export function createResourceHintsMiddleware(hints: ResourceHints = {}) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const linkValues: string[] = [];
-    
-    // Add preload hints
-    if (hints.preload && hints.preload.length) {
-      hints.preload.forEach(resource => {
-        const ext = path.extname(resource);
-        const type = ext && extensionMap[ext] ? extensionMap[ext] : 'application/octet-stream';
-        const as = ext === '.css' ? 'style' : (ext === '.js' ? 'script' : 'fetch');
-        
-        let hint = `<${resource}>; rel=preload; as=${as}; type=${type}`;
-        if (hints.crossorigin || as === 'font') {
-          hint += '; crossorigin=anonymous';
-        }
-        
-        linkValues.push(hint);
-      });
-    }
-    
-    // Add prefetch hints
-    if (hints.prefetch && hints.prefetch.length) {
-      hints.prefetch.forEach(resource => {
-        let hint = `<${resource}>; rel=prefetch`;
-        if (hints.crossorigin) {
-          hint += '; crossorigin=anonymous';
-        }
-        
-        linkValues.push(hint);
-      });
-    }
-    
-    // Add preconnect hints
-    if (hints.preconnect && hints.preconnect.length) {
-      hints.preconnect.forEach(resource => {
-        let hint = `<${resource}>; rel=preconnect`;
-        if (hints.crossorigin) {
-          hint += '; crossorigin=anonymous';
-        }
-        
-        linkValues.push(hint);
-      });
-    }
-    
-    // Add dns-prefetch hints
-    if (hints.dnsPrefetch && hints.dnsPrefetch.length) {
-      hints.dnsPrefetch.forEach(resource => {
-        linkValues.push(`<${resource}>; rel=dns-prefetch`);
-      });
-    }
-    
-    // Add prerender hints
-    if (hints.prerender && hints.prerender.length) {
-      hints.prerender.forEach(resource => {
-        linkValues.push(`<${resource}>; rel=prerender`);
-      });
-    }
-    
-    // Add Link header if there are any hints
-    if (linkValues.length) {
-      res.setHeader('Link', linkValues.join(', '));
-    }
-    
-    next();
-  };
+function serveResource(stream: any, resourcePath: string) {
+  // Resolve the file path relative to static directory
+  const filePath = path.resolve(process.cwd(), 'public', resourcePath.replace(/^\//, ''));
+  
+  // Create read stream
+  const fileStream = fs.createReadStream(filePath);
+  
+  // Pipe to push stream
+  fileStream.pipe(stream);
+  
+  // Handle errors
+  fileStream.on('error', (error) => {
+    console.error(`Error serving pushed resource ${resourcePath}:`, error);
+    stream.end();
+  });
 }
 
 /**
- * Create middleware to optimize HTTP/2 connection management
- * @returns Express middleware for HTTP/2 connection management
+ * Extract resources to push from HTML
+ * @param html HTML content
+ * @returns Array of resources to push
  */
-export function createHttp2ConnectionOptimizer() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Only apply to HTTP/2 connections
-    if (req.httpVersion === '2.0') {
-      // Add HTTP/2-specific headers
-      res.setHeader('X-Protocol', 'HTTP/2');
+function extractResourcesToPush(html: string): PushResource[] {
+  const resources: PushResource[] = [];
+  
+  // Extract <link> tags
+  const linkRegex = /<link[^>]+href="([^"]+)"[^>]*>/g;
+  let linkMatch;
+  
+  while (linkMatch = linkRegex.exec(html)) {
+    const href = linkMatch[1];
+    if (isLocalResource(href)) {
+      const asMatch = linkMatch[0].match(/as="([^"]+)"/);
+      const as = asMatch ? asMatch[1] as ResourceAsType : 'style';
       
-      // Disable keepalive for HTTP/2
-      res.setHeader('Connection', '');
-      
-      // Set HPACK compression hints
-      res.setHeader('X-HPACK-Compress', '1');
-    }
-    
-    next();
-  };
-}
-
-/**
- * Create middleware to prioritize HTTP/2 streams
- * @returns Express middleware for HTTP/2 stream prioritization
- */
-export function createHttp2PriorityMiddleware() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Only apply to HTTP/2 connections
-    if (req.httpVersion === '2.0') {
-      // @ts-ignore - http2 property may not be defined in typings
-      if (res.stream && res.stream.priority) {
-        const url = req.originalUrl || req.url;
-        
-        // Apply different priorities based on resource type
-        if (url.match(/\.(css|js)$/)) {
-          // Prioritize critical CSS and JS
-          // @ts-ignore
-          res.stream.priority({
-            exclusive: false,
-            parent: 0,
-            weight: 32,
-            silent: false
-          });
-        } else if (url.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
-          // Lower priority for images
-          // @ts-ignore
-          res.stream.priority({
-            exclusive: false,
-            parent: 0,
-            weight: 16,
-            silent: false
-          });
-        } else if (url.match(/\.(woff2|woff|ttf|otf)$/)) {
-          // Medium priority for fonts
-          // @ts-ignore
-          res.stream.priority({
-            exclusive: false,
-            parent: 0,
-            weight: 24,
-            silent: false
-          });
-        }
+      if (as === 'font' || as === 'style') {
+        resources.push({ path: href, as });
       }
     }
-    
-    next();
-  };
+  }
+  
+  // Extract <script> tags
+  const scriptRegex = /<script[^>]+src="([^"]+)"[^>]*>/g;
+  let scriptMatch;
+  
+  while (scriptMatch = scriptRegex.exec(html)) {
+    const src = scriptMatch[1];
+    if (isLocalResource(src)) {
+      resources.push({ path: src, as: 'script' });
+    }
+  }
+  
+  // Extract <img> tags
+  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
+  let imgMatch;
+  
+  while (imgMatch = imgRegex.exec(html)) {
+    const src = imgMatch[1];
+    if (isLocalResource(src)) {
+      resources.push({ path: src, as: 'image' });
+    }
+  }
+  
+  return resources;
 }
 
 /**
- * Create full HTTP/2 optimization middleware stack
- * @param pushConfig Server push configuration
- * @param hints Resource hints configuration
- * @returns Array of Express middleware for HTTP/2 optimization
+ * Check if a resource is local (not an external URL)
+ * @param url Resource URL
+ * @returns Whether the resource is local
  */
-export function createHttp2OptimizationMiddleware(
-  pushConfig?: ServerPushConfig,
-  hints?: ResourceHints
-) {
-  return [
-    createHttp2ConnectionOptimizer(),
-    createHttp2PriorityMiddleware(),
-    createServerPushMiddleware(pushConfig),
-    createResourceHintsMiddleware(hints)
-  ];
+function isLocalResource(url: string): boolean {
+  return !(url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//'));
 }
+
+export default http2OptimizationMiddleware;

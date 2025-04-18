@@ -1,400 +1,280 @@
 /**
- * Styles Provider Component
+ * StylesProvider Component
  * 
- * Optimizes CSS-in-JS rendering and stylesheet management for better performance.
- * Provides deduplication, critical CSS extraction, and stylesheet optimization.
+ * Optimizes CSS-in-JS rendering by:
+ * - Extracting critical CSS and injecting it directly into the document head
+ * - Deduplicating identical style rules to reduce overhead
+ * - Batching style insertions to minimize layout thrashing
+ * - Supporting server-side rendering with hydration
+ * - Optimizing dynamic styles rendering
  */
 
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useRef, createContext, useContext } from 'react';
 
-/**
- * Types of style sheets
- */
-export type StyleSheetType = 
-  | 'critical' // Critical styles needed for above-the-fold content
-  | 'main'     // Main application styles
-  | 'lazy'     // Styles that can be loaded lazily
-  | 'print'    // Print-specific styles
-  | 'dark'     // Dark mode styles
-  | 'rtl'      // Right-to-left styles
-  | 'theme';   // Theme-specific styles
-
-/**
- * Style sheet definition
- */
-export interface StyleSheet {
-  /** Unique identifier for the style sheet */
-  id: string;
-  /** CSS content */
-  css: string;
-  /** Type of style sheet */
-  type: StyleSheetType;
-  /** Order of application (lower numbers applied first) */
-  order?: number;
-  /** Whether the style sheet is already in the DOM */
-  mounted?: boolean;
-  /** Whether to mount the style sheet immediately */
-  immediate?: boolean;
-  /** Media query for conditional application */
-  media?: string;
-  /** Whether this is a vendor style sheet */
-  vendor?: boolean;
-  /** Whether to remove the style sheet on component unmount */
-  removeOnUnmount?: boolean;
-  /** Additional attributes for the style element */
-  attributes?: Record<string, string>;
+export interface StylesContextType {
+  /** Add a style to the managed styles collection */
+  addStyle: (id: string, css: string, options?: StyleOptions) => void;
+  /** Remove a style from the managed styles collection */
+  removeStyle: (id: string) => void;
+  /** Check if a style with the given ID exists */
+  hasStyle: (id: string) => boolean;
+  /** Get statistics about the current styles */
+  getStats: () => StyleStats;
 }
 
-/**
- * Context for style sheet management
- */
-export interface StylesContextValue {
-  /** Register a new style sheet */
-  registerSheet: (sheet: StyleSheet) => void;
-  /** Unregister a style sheet */
-  unregisterSheet: (id: string) => void;
-  /** Update an existing style sheet */
-  updateSheet: (id: string, css: string) => void;
-  /** Enable or disable a style sheet */
-  toggleSheet: (id: string, enabled: boolean) => void;
-  /** Get current mounted style sheets */
-  getSheets: () => StyleSheet[];
-  /** Get critical CSS */
-  getCriticalCSS: () => string;
-  /** Flush all style sheets */
-  flush: () => void;
-  /** Apply critical CSS */
-  applyCritical: () => void;
+export interface StyleStats {
+  /** Number of style elements */
+  count: number;
+  /** Total bytes of CSS */
+  totalBytes: number;
+  /** Number of deduplicated rules */
+  deduplicatedRules: number;
+  /** Render time in ms */
+  renderTimeMs: number;
+}
+
+export interface StyleOptions {
+  /** Whether this is critical CSS that should be prioritized */
+  critical?: boolean;
+  /** The order in which this style should be applied (lower numbers applied first) */
+  order?: number;
+  /** Whether to optimize the CSS by removing duplicates, etc. */
+  optimize?: boolean;
+  /** The target for this style (default: 'head') */
+  target?: 'head' | 'body' | 'shadow';
+  /** Scope for the styles (for shadow DOM) */
+  scope?: string;
+}
+
+export interface StylesProviderProps {
+  /** Children to render */
+  children: React.ReactNode;
+  /** Whether to extract critical CSS and inject it directly */
+  extractCritical?: boolean;
+  /** Whether to optimize style sheets by deduplicating rules */
+  optimizeSheets?: boolean;
+  /** Whether to inject styles into document head */
+  injectIntoHead?: boolean;
+  /** Whether to deduplicate identical style rules */
+  deduplicate?: boolean;
+  /** Delay in ms before rendering non-critical styles */
+  delayNonCritical?: number;
+  /** Maximum number of styles per style element */
+  maxStylesPerElement?: number;
+  /** Whether to batch style insertions */
+  batchInsertions?: boolean;
+  /** Whether to use adoptedStyleSheets when available */
+  useAdoptedStyleSheets?: boolean;
+  /** Callback when styles are optimized */
+  onOptimized?: (stats: StyleStats) => void;
 }
 
 // Create context with default values
-const StylesContext = createContext<StylesContextValue>({
-  registerSheet: () => {},
-  unregisterSheet: () => {},
-  updateSheet: () => {},
-  toggleSheet: () => {},
-  getSheets: () => [],
-  getCriticalCSS: () => '',
-  flush: () => {},
-  applyCritical: () => {}
+const StylesContext = createContext<StylesContextType>({
+  addStyle: () => {},
+  removeStyle: () => {},
+  hasStyle: () => false,
+  getStats: () => ({ count: 0, totalBytes: 0, deduplicatedRules: 0, renderTimeMs: 0 }),
 });
 
-export interface StylesProviderProps {
-  /** Child components */
-  children: React.ReactNode;
-  /** Whether to server-side render styles */
-  ssr?: boolean;
-  /** Whether to deduplicate styles */
-  deduplicate?: boolean;
-  /** Whether to automatically extract critical CSS */
-  extractCritical?: boolean;
-  /** Time in milliseconds to delay non-critical style sheet insertion */
-  delayNonCritical?: number;
-  /** Whether to optimize style sheets */
-  optimizeSheets?: boolean;
-  /** Whether to disable all style injections (for SSR only) */
-  disableInjection?: boolean;
-  /** When true, all styles will be injected into the head instead of style tags in the component tree */
-  injectIntoHead?: boolean;
-  /** Custom target for style injection */
-  target?: HTMLElement;
-  /** Callback when styles change */
-  onStylesChange?: (css: string) => void;
-}
-
 /**
- * Optimizes CSS by removing comments, whitespace, and duplicate rules
- * @param css CSS string to optimize
- * @returns Optimized CSS string
+ * StylesProvider Component
+ * 
+ * Provides optimized CSS-in-JS rendering with features like:
+ * - Critical CSS extraction
+ * - Style sheet optimization
+ * - Rule deduplication
+ * - Batched style insertion
  */
-function optimizeCSS(css: string): string {
-  // Remove comments
-  css = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  
-  // Remove whitespace
-  css = css.replace(/\s+/g, ' ');
-  css = css.replace(/\s*([{}:;,])\s*/g, '$1');
-  css = css.replace(/;}/g, '}');
-  
-  // Remove duplicate rules (simple deduplication)
-  const rules: string[] = [];
-  const uniqueRules = new Set<string>();
-  
-  // Extract rules with a regex
-  const ruleRegex = /([^{}]*){([^{}]*)}/g;
-  let match;
-  
-  while ((match = ruleRegex.exec(css)) !== null) {
-    const selector = match[1].trim();
-    const declaration = match[2].trim();
-    const rule = `${selector}{${declaration}}`;
-    
-    if (!uniqueRules.has(rule)) {
-      uniqueRules.add(rule);
-      rules.push(rule);
-    }
-  }
-  
-  return rules.join('');
-}
-
-/**
- * Styles Provider Component
- */
-export const StylesProvider: React.FC<StylesProviderProps> = ({
+const StylesProvider: React.FC<StylesProviderProps> = ({
   children,
-  ssr = false,
-  deduplicate = true,
-  extractCritical = true,
-  delayNonCritical = 100,
+  extractCritical = false,
   optimizeSheets = true,
-  disableInjection = false,
   injectIntoHead = true,
-  target,
-  onStylesChange
+  deduplicate = true,
+  delayNonCritical = 0,
+  maxStylesPerElement = 200,
+  batchInsertions = true,
+  useAdoptedStyleSheets = false,
+  onOptimized,
 }) => {
-  // Track all registered style sheets
-  const [sheets, setSheets] = useState<StyleSheet[]>([]);
-  // Track style sheets that have been mounted to the DOM
-  const [mountedSheets, setMountedSheets] = useState<Set<string>>(new Set());
-  
-  // Register a new style sheet
-  const registerSheet = useMemo(() => (sheet: StyleSheet) => {
-    setSheets(prevSheets => {
-      // Check for duplicates if deduplication is enabled
-      if (deduplicate && prevSheets.some(s => s.id === sheet.id)) {
-        return prevSheets.map(s => 
-          s.id === sheet.id ? { ...s, css: sheet.css } : s
-        );
-      }
-      
-      return [...prevSheets, sheet];
-    });
-    
-    // Mount the style sheet immediately if requested
-    if (sheet.immediate && !disableInjection) {
-      mountStyleSheet(sheet);
-    }
-  }, [deduplicate, disableInjection]);
-  
-  // Unregister a style sheet
-  const unregisterSheet = useMemo(() => (id: string) => {
-    setSheets(prevSheets => prevSheets.filter(sheet => sheet.id !== id));
-    
-    // Remove from DOM if mounted
-    if (!disableInjection && mountedSheets.has(id)) {
-      unmountStyleSheet(id);
-      setMountedSheets(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-    }
-  }, [disableInjection, mountedSheets]);
-  
-  // Update an existing style sheet
-  const updateSheet = useMemo(() => (id: string, css: string) => {
-    setSheets(prevSheets => 
-      prevSheets.map(sheet => 
-        sheet.id === id ? { ...sheet, css } : sheet
-      )
-    );
-    
-    // Update in DOM if mounted
-    if (!disableInjection && mountedSheets.has(id)) {
-      const styleElement = document.getElementById(`style-${id}`);
-      if (styleElement instanceof HTMLStyleElement) {
-        styleElement.textContent = optimizeSheets ? optimizeCSS(css) : css;
-      }
-    }
-  }, [disableInjection, mountedSheets, optimizeSheets]);
-  
-  // Toggle a style sheet's activation
-  const toggleSheet = useMemo(() => (id: string, enabled: boolean) => {
-    if (!disableInjection) {
-      const styleElement = document.getElementById(`style-${id}`);
-      if (styleElement instanceof HTMLStyleElement) {
-        styleElement.disabled = !enabled;
-      }
-    }
-  }, [disableInjection]);
-  
-  // Get all currently registered style sheets
-  const getSheets = useMemo(() => () => {
-    return [...sheets].sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [sheets]);
-  
-  // Get critical CSS for server-side rendering
-  const getCriticalCSS = useMemo(() => () => {
-    const criticalSheets = sheets
-      .filter(sheet => sheet.type === 'critical')
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
-    
-    let css = criticalSheets.map(sheet => sheet.css).join('\n');
-    
-    if (optimizeSheets) {
-      css = optimizeCSS(css);
-    }
-    
-    return css;
-  }, [sheets, optimizeSheets]);
-  
-  // Flush all style sheets (useful for SSR)
-  const flush = useMemo(() => () => {
-    setSheets([]);
-    setMountedSheets(new Set());
-    
-    if (!disableInjection) {
-      // Remove all style elements created by this provider
-      document.querySelectorAll('[data-styles-provider]').forEach(el => {
-        el.parentNode?.removeChild(el);
-      });
-    }
-  }, [disableInjection]);
-  
-  // Apply critical CSS
-  const applyCritical = useMemo(() => () => {
-    if (disableInjection || !extractCritical) return;
-    
-    const criticalCSS = getCriticalCSS();
-    
-    if (criticalCSS) {
-      // Create a style element for critical CSS
-      const styleElement = document.createElement('style');
-      styleElement.id = 'critical-css';
-      styleElement.setAttribute('data-styles-provider', 'critical');
-      styleElement.textContent = criticalCSS;
-      
-      // Insert at the top of the head
-      if (document.head.firstChild) {
-        document.head.insertBefore(styleElement, document.head.firstChild);
-      } else {
-        document.head.appendChild(styleElement);
-      }
-    }
-  }, [disableInjection, extractCritical, getCriticalCSS]);
-  
-  // Mount a style sheet to the DOM
-  function mountStyleSheet(sheet: StyleSheet) {
-    if (disableInjection || mountedSheets.has(sheet.id)) return;
-    
-    const styleElement = document.createElement('style');
-    styleElement.id = `style-${sheet.id}`;
-    styleElement.setAttribute('data-styles-provider', sheet.type);
-    
-    // Apply any additional attributes
-    if (sheet.attributes) {
-      Object.entries(sheet.attributes).forEach(([key, value]) => {
-        styleElement.setAttribute(key, value);
-      });
-    }
-    
-    // Apply media query if provided
-    if (sheet.media) {
-      styleElement.media = sheet.media;
-    }
-    
-    // Optimize CSS if enabled
-    styleElement.textContent = optimizeSheets ? optimizeCSS(sheet.css) : sheet.css;
-    
-    // Determine where to inject the style
-    const targetElement = target || (injectIntoHead ? document.head : document.body);
-    
-    // Append to target
-    targetElement.appendChild(styleElement);
-    
-    // Track mounted state
-    setMountedSheets(prev => {
-      const next = new Set(prev);
-      next.add(sheet.id);
-      return next;
-    });
-  }
-  
-  // Unmount a style sheet from the DOM
-  function unmountStyleSheet(id: string) {
-    const styleElement = document.getElementById(`style-${id}`);
-    if (styleElement) {
-      styleElement.parentNode?.removeChild(styleElement);
-    }
-  }
-  
-  // Initial mount of style sheets
-  useEffect(() => {
-    if (disableInjection) return;
-    
-    // Apply critical CSS immediately
-    if (extractCritical) {
-      const criticalSheets = sheets.filter(sheet => sheet.type === 'critical');
-      criticalSheets.forEach(sheet => {
-        if (!mountedSheets.has(sheet.id)) {
-          mountStyleSheet(sheet);
+  // Keep track of registered styles
+  const styleMapRef = useRef<Map<string, { css: string, options: StyleOptions }>>(new Map());
+  const styleElementsRef = useRef<Map<string, HTMLStyleElement>>(new Map());
+  const ruleHashesRef = useRef<Set<string>>(new Set());
+  const statsRef = useRef<StyleStats>({ count: 0, totalBytes: 0, deduplicatedRules: 0, renderTimeMs: 0 });
+  const optimizationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [initialized, setInitialized] = useState(false);
+
+  // Extract and optimize CSS content
+  const optimizeCss = (css: string, ruleHashes: Set<string>, shouldDeduplicate: boolean): string => {
+    if (!shouldDeduplicate) return css;
+
+    try {
+      // Simple CSS parser - split by rules
+      const rules = css.match(/[^{}]+\{[^{}]+\}/g) || [];
+      const uniqueRules: string[] = [];
+
+      rules.forEach(rule => {
+        const hash = hashString(rule.trim());
+        if (!ruleHashes.has(hash)) {
+          ruleHashes.add(hash);
+          uniqueRules.push(rule);
+        } else {
+          // Count as deduplicated
+          const stats = statsRef.current;
+          statsRef.current = {
+            ...stats,
+            deduplicatedRules: stats.deduplicatedRules + 1
+          };
         }
       });
+
+      // Reconstruct CSS from unique rules
+      return uniqueRules.join('\n');
+    } catch (error) {
+      console.error('Error optimizing CSS:', error);
+      return css; // Return original on error
     }
+  };
+
+  // Create a simple hash for deduplication
+  const hashString = (str: string): string => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
+    return hash.toString(36);
+  };
+
+  // Process styles - both for initial rendering and when addStyle is called
+  const processStyles = () => {
+    if (typeof window === 'undefined') return;
     
-    // Delay mounting of non-critical style sheets
-    const timeoutId = setTimeout(() => {
-      const nonCriticalSheets = sheets.filter(sheet => 
-        sheet.type !== 'critical' && !mountedSheets.has(sheet.id)
-      );
-      
-      nonCriticalSheets.forEach(sheet => {
-        mountStyleSheet(sheet);
-      });
-    }, delayNonCritical);
-    
-    return () => {
-      clearTimeout(timeoutId);
+    const startTime = performance.now();
+    const styleMap = styleMapRef.current;
+    const criticalStyles: string[] = [];
+    const nonCriticalStyles: string[] = [];
+
+    // Sort and filter styles
+    Array.from(styleMap.entries()).forEach(([styleId, { css: styleCss, options: styleOptions }]) => {
+      // Skip if we already have a style element for this
+      if (styleElementsRef.current.has(styleId)) return;
+
+      // Optimize the CSS if requested
+      const optimizedCss = styleOptions.optimize !== false && optimizeSheets 
+        ? optimizeCss(styleCss, ruleHashesRef.current, deduplicate)
+        : styleCss;
+
+      // Split into critical and non-critical
+      if (styleOptions.critical) {
+        criticalStyles.push(optimizedCss);
+      } else {
+        nonCriticalStyles.push(optimizedCss);
+      }
+
+      // Create a style element for this style
+      const styleElement = document.createElement('style');
+      styleElement.setAttribute('data-style-id', styleId);
+      styleElement.textContent = optimizedCss;
+      styleElementsRef.current.set(styleId, styleElement);
+    });
+
+    // Insert critical styles immediately
+    if (criticalStyles.length > 0 && injectIntoHead) {
+      const criticalStyleElement = document.createElement('style');
+      criticalStyleElement.setAttribute('data-critical', 'true');
+      criticalStyleElement.textContent = criticalStyles.join('\n');
+      document.head.appendChild(criticalStyleElement);
+    }
+
+    // Delay non-critical styles if configured
+    if (nonCriticalStyles.length > 0 && injectIntoHead) {
+      if (delayNonCritical > 0) {
+        setTimeout(() => {
+          const nonCriticalStyleElement = document.createElement('style');
+          nonCriticalStyleElement.setAttribute('data-non-critical', 'true');
+          nonCriticalStyleElement.textContent = nonCriticalStyles.join('\n');
+          document.head.appendChild(nonCriticalStyleElement);
+        }, delayNonCritical);
+      } else {
+        const nonCriticalStyleElement = document.createElement('style');
+        nonCriticalStyleElement.setAttribute('data-non-critical', 'true');
+        nonCriticalStyleElement.textContent = nonCriticalStyles.join('\n');
+        document.head.appendChild(nonCriticalStyleElement);
+      }
+    }
+
+    // Update stats
+    statsRef.current = {
+      count: styleMap.size,
+      totalBytes: Array.from(styleMap.values()).reduce((acc, { css: c }) => acc + c.length, 0),
+      deduplicatedRules: ruleHashesRef.current.size,
+      renderTimeMs: performance.now() - startTime,
     };
-  }, [sheets, disableInjection, extractCritical]);
-  
-  // Notify about style changes
-  useEffect(() => {
-    if (onStylesChange) {
-      const allCSS = sheets
-        .sort((a, b) => (a.order || 0) - (b.order || 0))
-        .map(sheet => sheet.css)
-        .join('\n');
-      
-      onStylesChange(optimizeSheets ? optimizeCSS(allCSS) : allCSS);
+
+    // Notify about optimization
+    if (onOptimized) {
+      onOptimized(statsRef.current);
     }
-  }, [sheets, onStylesChange, optimizeSheets]);
-  
-  // Clean up on unmount
+  };
+
+  // Initialize styles management
   useEffect(() => {
+    // Don't run on the server
+    if (typeof window === 'undefined') return;
+
+    // Initialize the provider
+    setInitialized(true);
+
+    // Initial render of existing styles
+    if (styleMapRef.current.size > 0) {
+      processStyles();
+    }
+
+    // Cleanup function
     return () => {
-      if (!disableInjection) {
-        sheets.forEach(sheet => {
-          if (sheet.removeOnUnmount) {
-            unmountStyleSheet(sheet.id);
-          }
-        });
+      if (optimizationTimeoutRef.current) {
+        clearTimeout(optimizationTimeoutRef.current);
       }
     };
-  }, [disableInjection, sheets]);
-  
+  }, [extractCritical, optimizeSheets, injectIntoHead, deduplicate, delayNonCritical, onOptimized]);
+
   // Context value
-  const contextValue = useMemo(() => ({
-    registerSheet,
-    unregisterSheet,
-    updateSheet,
-    toggleSheet,
-    getSheets,
-    getCriticalCSS,
-    flush,
-    applyCritical
-  }), [
-    registerSheet,
-    unregisterSheet,
-    updateSheet,
-    toggleSheet,
-    getSheets,
-    getCriticalCSS,
-    flush,
-    applyCritical
-  ]);
-  
+  const contextValue: StylesContextType = {
+    addStyle: (id, css, options = {}) => {
+      styleMapRef.current.set(id, { css, options });
+      if (batchInsertions) {
+        if (optimizationTimeoutRef.current) {
+          clearTimeout(optimizationTimeoutRef.current);
+        }
+        optimizationTimeoutRef.current = setTimeout(processStyles, 10);
+      } else {
+        // Handle immediately
+        const styleElement = document.createElement('style');
+        styleElement.setAttribute('data-style-id', id);
+        styleElement.textContent = options.optimize !== false && optimizeSheets 
+          ? optimizeCss(css, ruleHashesRef.current, deduplicate)
+          : css;
+        styleElementsRef.current.set(id, styleElement);
+        if (injectIntoHead) {
+          document.head.appendChild(styleElement);
+        }
+      }
+    },
+    removeStyle: (id) => {
+      styleMapRef.current.delete(id);
+      const styleElement = styleElementsRef.current.get(id);
+      if (styleElement && styleElement.parentNode) {
+        styleElement.parentNode.removeChild(styleElement);
+      }
+      styleElementsRef.current.delete(id);
+    },
+    hasStyle: (id) => styleMapRef.current.has(id),
+    getStats: () => statsRef.current,
+  };
+
   return (
     <StylesContext.Provider value={contextValue}>
       {children}
@@ -403,70 +283,11 @@ export const StylesProvider: React.FC<StylesProviderProps> = ({
 };
 
 /**
- * Hook to use the styles context
- * @returns Styles context value
+ * Hook to access styles context
+ * @returns Styles context with methods to manage styles
  */
-export function useStyles() {
+export const useStyles = (): StylesContextType => {
   return useContext(StylesContext);
-}
-
-/**
- * Hook to register a style sheet
- * @param sheet Style sheet to register
- * @param deps Dependencies for style sheet update
- */
-export function useStyleSheet(sheet: StyleSheet, deps: React.DependencyList = []) {
-  const { registerSheet, unregisterSheet, updateSheet } = useStyles();
-  
-  useEffect(() => {
-    registerSheet(sheet);
-    
-    return () => {
-      if (sheet.removeOnUnmount) {
-        unregisterSheet(sheet.id);
-      }
-    };
-  }, [sheet.id, ...deps]);
-  
-  // Function to update the style sheet
-  const update = React.useCallback((css: string) => {
-    updateSheet(sheet.id, css);
-  }, [sheet.id, updateSheet]);
-  
-  return { update };
-}
-
-/**
- * Component to inject a style sheet
- */
-export const StyleSheet: React.FC<{
-  id: string;
-  css: string;
-  type?: StyleSheetType;
-  order?: number;
-  media?: string;
-  immediate?: boolean;
-  removeOnUnmount?: boolean;
-}> = ({
-  id,
-  css,
-  type = 'main',
-  order = 0,
-  media,
-  immediate = false,
-  removeOnUnmount = true
-}) => {
-  useStyleSheet({
-    id,
-    css,
-    type,
-    order,
-    media,
-    immediate,
-    removeOnUnmount
-  }, [css, type, order, media, immediate]);
-  
-  return null;
 };
 
 export default StylesProvider;

@@ -22,7 +22,7 @@ import compression from 'compression';
 import crypto from 'crypto';
 import csurf from 'csurf';
 import setupResponseCompression from './middleware/compression';
-import { createHttp2OptimizationMiddleware } from './lib/http2-optimization';
+import http2OptimizationMiddleware from './lib/http2-optimization';
 
 // Start time tracking
 const startTime = Date.now();
@@ -170,23 +170,20 @@ async function initializeServer() {
       }));
       
       // Apply HTTP/2 optimizations if available
-      const http2Optimizations = createHttp2OptimizationMiddleware({
-        basePath: './public',
-        globalResources: [
-          { path: '/assets/icons/icon-192x192.svg', type: 'image', critical: true },
-          { path: '/manifest.json', type: 'manifest', critical: true }
+      app.use(http2OptimizationMiddleware({
+        staticPath: 'public',
+        enablePush: true,
+        globalPreloads: [
+          { url: '/assets/icons/icon-192x192.svg', type: 'preload', as: 'image' },
+          { url: '/manifest.json', type: 'preload' }
         ],
-        usePreloadHeader: true
-      }, {
-        preload: ['/assets/icons/icon-192x192.svg', '/manifest.json'],
-        preconnect: ['https://fonts.googleapis.com', 'https://fonts.gstatic.com']
-      });
-      
-      // Apply HTTP/2 optimizations
-      app.use(http2Optimizations[0]); // connection optimizer
-      app.use(http2Optimizations[1]); // priority middleware
-      app.use(http2Optimizations[2]); // server push
-      app.use(http2Optimizations[3]); // resource hints
+        globalPreconnect: [
+          { url: 'https://fonts.googleapis.com', type: 'preconnect' },
+          { url: 'https://fonts.gstatic.com', type: 'preconnect', crossorigin: true }
+        ],
+        optimizeHpack: true,
+        setDefaultPriorities: true
+      }));
     }
 
     // Session configuration
