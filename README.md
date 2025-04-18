@@ -13,6 +13,17 @@ A sophisticated music and cosmic experience web application that creates an imme
 - Component management scripts
 - ClamAV virus scanning infrastructure
 
+### Performance Optimization Stack
+
+- VirtualizedList for efficient rendering of large datasets
+- Optimized image and media loading with modern formats
+- Lazy loading and code splitting for improved load times
+- Memory leak detection and management
+- Web Workers for CPU-intensive operations
+- IntersectionObserver for visibility-based optimizations
+- Progressive Web App capabilities with service worker caching
+- Comprehensive performance measurement and monitoring
+
 ## Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
@@ -24,6 +35,14 @@ Comprehensive documentation is available in the `docs/` directory:
 - [Component Documentation Guide](docs/COMPONENT_DOCUMENTATION_GUIDE.md) - Standards for documenting components
 - [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) - Step-by-step implementation plan
 - [Updating Documentation](docs/UPDATING_DOCUMENTATION.md) - How to maintain documentation
+
+### Performance Optimization Documentation
+
+Documentation on the application's performance optimizations:
+
+- [Performance Optimizations](docs/PERFORMANCE_OPTIMIZATIONS.md) - Detailed description of all 25 performance optimizations
+- [Optimization Status](docs/PERFORMANCE_OPTIMIZATION_STATUS.md) - Implementation status of optimizations
+- [Future Recommendations](docs/FUTURE_PERFORMANCE_RECOMMENDATIONS.md) - Recommendations for future enhancements
 
 ### Replit Agent Documentation
 
@@ -45,6 +64,15 @@ client/src/
 ├── assets/                     # Static assets (images, fonts, etc.)
 ├── components/                 # Shared UI components
 │   ├── common/                 # Common UI components (buttons, cards, etc.)
+│   │   ├── VirtualizedList.tsx # Optimized list rendering component
+│   │   ├── OptimizedImage.tsx  # Performance-optimized image component
+│   │   ├── LazyLoad.tsx        # Component for lazy loading content
+│   │   └── StylesProvider.tsx  # Optimized CSS delivery component
+│   ├── performance/            # Performance-specific components
+│   │   ├── PerformanceProfiler.tsx # Component performance measurement
+│   │   ├── ResourceHintsManager.tsx # Resource hint optimization 
+│   │   ├── TouchOptimizer.tsx  # Touch event optimization
+│   │   └── LCPOptimizer.tsx    # Largest Contentful Paint optimization
 │   ├── layout/                 # Layout components (Header, Footer, etc.)
 │   ├── features/               # Feature-specific components
 │   │   ├── shop/               # Shop-related components  
@@ -57,7 +85,14 @@ client/src/
 │   ├── ui/                     # Shadcn/UI component library
 │   └── music/                  # Legacy music components (for backward compatibility)
 ├── hooks/                      # Custom hooks
+│   ├── use-worker.ts           # Web Worker integration hook
+│   ├── use-memory-tracker.ts   # Memory usage tracking hook
+│   ├── use-selective-state.ts  # Optimized state management hook
+│   └── use-resize-observer.ts  # Resize detection hook
 ├── lib/                        # Utility functions and helpers
+│   ├── performance.ts          # Performance measurement utilities
+│   ├── animation-frame-batch.ts # Animation optimization utilities
+│   └── css-optimization.ts     # CSS performance utilities
 ├── pages/                      # Page components
 │   ├── shop/                   # Shop-related pages
 │   ├── admin/                  # Admin portal pages
@@ -68,6 +103,14 @@ client/src/
 │   ├── archived/               # Archived versions of pages (not in production)
 │   └── old-pages/              # Legacy pages for reference
 ├── store/                      # State management
+├── utils/                      # Utility functions
+│   ├── memory-leak-detector.ts # Memory leak detection utility
+│   ├── event-delegation.ts     # Optimized event handling
+│   ├── tree-shaking.ts         # Bundle optimization utilities
+│   └── svg-optimization.ts     # SVG rendering optimization
+├── workers/                    # Web Workers
+│   ├── data-processing.worker.ts # Background data processing
+│   └── image-processing.worker.ts # Image manipulation worker
 └── types/                      # TypeScript type definitions
 ```
 
@@ -148,6 +191,17 @@ The `scripts/` directory contains utilities for managing the codebase:
 6. **Security:** Follow security best practices outlined in the security documentation
 7. **Dependency Management:** Regularly update dependencies using the provided scripts
 
+### Performance Best Practices
+
+1. **Virtualization:** Use VirtualizedList for rendering large datasets
+2. **Image Optimization:** Use OptimizedImage for all image content
+3. **Lazy Loading:** Implement LazyLoad for components not needed on initial render
+4. **Memoization:** Use React.memo, useMemo, and useCallback appropriately
+5. **Memory Management:** Include useMemoryLeakDetection in complex components
+6. **Animation:** Use requestAnimationFrame and the animation batching utilities
+7. **Performance Monitoring:** Implement PerformanceProfiler for critical components
+8. **Code Splitting:** Use dynamic imports for routes and large components
+
 ## Agentic Development
 
 The project leverages Replit's Agentic vibe-coding approach for enhanced development:
@@ -167,6 +221,17 @@ The application uses an Express backend that connects to a PostgreSQL database. 
 - **server/routes.ts:** API route definitions
 - **server/storage.ts:** Data storage interface
 - **shared/schema.ts:** Shared data model definitions
+
+### Server-Side Performance Optimizations
+
+The backend includes several performance optimizations:
+
+- **Response Compression:** Middleware for compressing HTTP responses
+- **HTTP/2 Optimization:** Server push and multiplexing optimizations
+- **Database Query Optimization:** Optimized query patterns and connection pooling
+- **API Request Batching:** Consolidated API requests to reduce network overhead
+- **CDN Integration:** Optimized static asset delivery via CDN
+- **Cache Headers:** Proper cache control headers for improved resource caching
 
 ## Database Updates
 
