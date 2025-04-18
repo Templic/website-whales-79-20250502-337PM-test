@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { UsersRound, BarChart3 } from "lucide-react";
 import { useEffect } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
-import GeometricSection from "@/components/cosmic/GeometricSection";
+import GeometricSection from "@/components/cosmic/GeometricSection.optimized";
 import { DynamicContent } from "@/components/content";
+import { createDynamicComponent } from "@/lib/bundle-optimization";
 
 export default function HomePage() {
   useEffect(() => {

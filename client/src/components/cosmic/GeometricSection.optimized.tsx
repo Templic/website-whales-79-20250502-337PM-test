@@ -8,7 +8,7 @@
 import React, { useMemo, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import './cosmic-animations.css';
-import SacredGeometry from './SacredGeometry.optimized';
+import SacredGeometry from './SacredGeometry';
 import CosmicShape, { CosmicShapeGroup } from './CosmicShapesFixed';
 import useIsMobile from './useIsMobile';
 import { useRenderCount, useSkipRenderIfInvisible, useInView } from '@/lib/performance';
@@ -68,6 +68,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   
   // The visibility ref helps skip unnecessary renders when component is not visible
   const skipRenderRef = useSkipRenderIfInvisible(isInView);
+  const combinedRef = React.useRef<HTMLElement>(null);
   
   // Check if we're on mobile
   const isMobile = useIsMobile();
@@ -170,7 +171,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
                 color: variantColors[variant].main,
                 glowColor: variantColors[variant].glow,
                 fillOpacity: 0.03,
-                strokeOpacity: 0.2,
+                strokeWidth: 2,
                 position: { top: '20%', left: '15%' },
                 rotation: 0
               },
@@ -181,7 +182,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
                 color: variantColors[variant].main,
                 glowColor: variantColors[variant].glow,
                 fillOpacity: 0.02,
-                strokeOpacity: 0.15,
+                opacity: 0.15,
                 position: { bottom: '15%', right: '10%' },
                 rotation: 15
               }
@@ -324,13 +325,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
 
   return (
     <section 
-      ref={(el) => {
-        // Combine both refs
-        if (el) {
-          inViewRef.current = el;
-          skipRenderRef.current = el;
-        }
-      }}
+      ref={inViewRef}
       className={cn(
         'relative mb-8 shadow-lg overflow-hidden', 
         backgroundClasses[backgroundStyle],
@@ -341,13 +336,13 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
       style={{ 
         clipPath: clipPaths[shape],
         ...style,
-        ...getPaddingStyle()
+        ...(typeof getPaddingStyle === 'function' ? getPaddingStyle() : getPaddingStyle)
       }}
     >
       {renderDecorativeShapes}
 
       <div className="relative z-10" style={{ 
-        maxWidth: getContentWidthStyle,
+        maxWidth: typeof getContentWidthStyle === 'function' ? getContentWidthStyle() : getContentWidthStyle,
         margin: alignment === 'center' ? '0 auto' : 
                 alignment === 'right' ? '0 0 0 auto' : '0',
       }}>
