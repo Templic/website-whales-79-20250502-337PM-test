@@ -1,90 +1,144 @@
 /**
  * LazyLoad Component
  * 
- * A wrapper component for lazy loading other components with React.lazy and Suspense.
- * This helps reduce initial page load times by only loading components when needed.
+ * A component that lazily loads its children only when they enter the viewport.
+ * Useful for deferring the loading of heavy components until they're needed.
  */
 
-import React, { Suspense, lazy, ComponentType } from 'react';
-import { useInView } from '@/lib/performance';
+import React, { useEffect, useState, useRef } from 'react';
 
-// Fallback loading component with configurable height 
-const LoadingFallback = ({ height = '200px' }: { height?: string }) => (
-  <div 
-    className="flex items-center justify-center w-full" 
-    style={{ height }}
-    aria-live="polite"
-    aria-busy="true"
-  >
-    <div className="flex flex-col items-center space-y-2">
-      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-      <p className="text-sm text-muted-foreground">Loading...</p>
-    </div>
-  </div>
-);
-
-interface LazyLoadProps<T> {
-  /**
-   * Factory function that returns a dynamic import
-   * @example () => import('./HeavyComponent')
-   */
-  factory: () => Promise<{ default: ComponentType<T> }>;
-  
-  /**
-   * Props to pass to the lazy-loaded component
-   */
-  componentProps?: T;
-  
-  /**
-   * Height of the loading fallback component
-   * @default '200px'
-   */
-  fallbackHeight?: string;
-  
-  /**
-   * Whether to load the component only when it's visible in the viewport
-   * @default false
-   */
-  loadOnlyWhenVisible?: boolean;
+interface LazyLoadProps {
+  /** The content to load lazily */
+  children: React.ReactNode;
+  /** Height to take up before loading (to prevent layout shifts) */
+  height?: string | number;
+  /** Width to take up before loading (to prevent layout shifts) */
+  width?: string | number;
+  /** Margin around the element that will trigger loading (in pixels or with units) */
+  margin?: string;
+  /** Threshold value between 0 and 1 indicating what percentage of the target must be visible */
+  threshold?: number;
+  /** Placeholder to show while content is loading */
+  placeholder?: React.ReactNode;
+  /** Whether to load content immediately regardless of visibility */
+  immediate?: boolean;
+  /** Function called when the component becomes visible */
+  onVisible?: () => void;
+  /** CSS class to apply to the wrapper */
+  className?: string;
+  /** Unique identifier for tracking */
+  id?: string;
 }
 
 /**
- * LazyLoad component for optimized component loading
+ * LazyLoad Component
  * 
- * @example
- * ```tsx
- * <LazyLoad 
- *   factory={() => import('./HeavyComponent')}
- *   componentProps={{ title: 'My Component' }}
- *   fallbackHeight="300px"
- *   loadOnlyWhenVisible
- * />
- * ```
+ * Renders children only when they become visible in the viewport
  */
-export function LazyLoad<T>({
-  factory,
-  componentProps,
-  fallbackHeight = '200px',
-  loadOnlyWhenVisible = false
-}: LazyLoadProps<T>) {
-  // Only load component when it comes into view
-  const [ref, isVisible] = useInView({
-    rootMargin: '200px', // Start loading 200px before component comes into view
-    threshold: 0
-  });
+const LazyLoad: React.FC<LazyLoadProps> = ({
+  children,
+  height,
+  width,
+  margin = '100px',
+  threshold = 0.1,
+  placeholder,
+  immediate = false,
+  onVisible,
+  className = '',
+  id,
+}) => {
+  const [isVisible, setIsVisible] = useState(immediate);
+  const [hasRendered, setHasRendered] = useState(immediate);
+  const containerRef = useRef<HTMLDivElement>(null);
   
-  // Lazy load the component
-  const LazyComponent = lazy(factory);
+  useEffect(() => {
+    // Skip if set to immediate load or already visible
+    if (immediate || isVisible) {
+      return;
+    }
+    
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (onVisible) {
+            onVisible();
+          }
+          
+          // Once content is visible, no need to keep observing
+          observer.disconnect();
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: margin,
+        threshold,
+      }
+    );
+    
+    observer.observe(container);
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, [immediate, isVisible, margin, onVisible, threshold]);
   
-  if (loadOnlyWhenVisible && !isVisible) {
-    return <div ref={ref as React.RefObject<HTMLDivElement>} style={{ minHeight: fallbackHeight }} />;
+  // After becoming visible, render the content with a short delay
+  // to prevent jank during scrolling
+  useEffect(() => {
+    if (isVisible && !hasRendered) {
+      const timer = setTimeout(() => {
+        setHasRendered(true);
+      }, 10);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, hasRendered]);
+  
+  // Style for the placeholder
+  const style: React.CSSProperties = {};
+  if (height !== undefined) {
+    style.height = height;
+  }
+  if (width !== undefined) {
+    style.width = width;
   }
   
   return (
-    <Suspense fallback={<LoadingFallback height={fallbackHeight} />}>
-      <LazyComponent {...(componentProps as any)} />
-    </Suspense>
+    <div
+      ref={containerRef}
+      className={`lazy-load-container ${className}`}
+      style={hasRendered ? {} : style}
+      id={id}
+      data-loaded={hasRendered}
+    >
+      {hasRendered ? (
+        children
+      ) : (
+        placeholder || (
+          <div 
+            className="lazy-load-placeholder"
+            style={{ 
+              height: '100%', 
+              width: '100%', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <div className="lazy-load-spinner" />
+          </div>
+        )
+      )}
+    </div>
   );
-}
+};
 
 export default LazyLoad;

@@ -427,17 +427,23 @@ export const BinauralBeatGenerator = memo(({
   
   // Handle left frequency change (memoized)
   const handleLeftFreqChange = useCallback((value: number[]) => {
-    setFrequencies(prev => ({ ...prev, left: value[0] }));
+    if (typeof value[0] === 'number') {
+      setFrequencies(prev => ({ ...prev, left: value[0] }));
+    }
   }, []);
   
   // Handle right frequency change (memoized)
   const handleRightFreqChange = useCallback((value: number[]) => {
-    setFrequencies(prev => ({ ...prev, right: value[0] }));
+    if (typeof value[0] === 'number') {
+      setFrequencies(prev => ({ ...prev, right: value[0] }));
+    }
   }, []);
   
   // Handle volume change (memoized)
   const handleVolumeChange = useCallback((value: number[]) => {
-    setAudioSettings(prev => ({ ...prev, volume: value[0] }));
+    if (typeof value[0] === 'number') {
+      setAudioSettings(prev => ({ ...prev, volume: value[0] }));
+    }
   }, []);
   
   // Handle wave type change (memoized)
@@ -447,7 +453,9 @@ export const BinauralBeatGenerator = memo(({
   
   // Handle timer duration change (memoized)
   const handleTimerDurationChange = useCallback((value: number[]) => {
-    setTimer(prev => ({ ...prev, duration: value[0] }));
+    if (typeof value[0] === 'number') {
+      setTimer(prev => ({ ...prev, duration: value[0] }));
+    }
   }, []);
   
   // Toggle timer (memoized)
@@ -524,21 +532,23 @@ export const BinauralBeatGenerator = memo(({
         }
         
         // Need at least 50 samples to calculate
-        if (redValues.length >= 50) {
+        if (redValues.length >= 50 && redValues[0] !== undefined) {
           // Simple peak detection
           let peaks = 0;
           let lastValue = redValues[0];
           let rising = false;
           
           for (let i = 1; i < redValues.length; i++) {
-            if (redValues[i] > lastValue && !rising) {
-              rising = true;
-            } else if (redValues[i] < lastValue && rising) {
-              peaks++;
-              rising = false;
+            if (redValues[i] !== undefined && lastValue !== undefined) {
+              if (redValues[i] > lastValue && !rising) {
+                rising = true;
+              } else if (redValues[i] < lastValue && rising) {
+                peaks++;
+                rising = false;
+              }
+              
+              lastValue = redValues[i];
             }
-            
-            lastValue = redValues[i];
           }
           
           // Calculate heart rate (peaks per minute)
@@ -565,13 +575,15 @@ export const BinauralBeatGenerator = memo(({
         ctx.lineWidth = 2;
         
         for (let i = 0; i < redValues.length; i++) {
-          const x = (i / maxSamples) * canvas.width;
-          const y = canvas.height - (((redValues[i] - 100) / 50) * canvas.height) / 2;
-          
-          if (i === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
+          if (redValues[i] !== undefined) {
+            const x = (i / maxSamples) * canvas.width;
+            const y = canvas.height - (((redValues[i] - 100) / 50) * canvas.height) / 2;
+            
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
           }
         }
         

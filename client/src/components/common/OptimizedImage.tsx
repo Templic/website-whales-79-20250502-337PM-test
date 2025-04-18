@@ -1,176 +1,237 @@
 /**
  * OptimizedImage Component
  * 
- * A wrapper component for optimizing image loading with lazy loading and responsive sizing.
- * This component helps improve performance by deferring image loading until needed
- * and using appropriate image sizes for different device sizes.
+ * A component that optimizes image loading and rendering:
+ * - Supports responsive sizing with srcSet
+ * - Implements lazy loading
+ * - Provides placeholder/blur-up loading
+ * - Optimized for Core Web Vitals metrics
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { getResponsiveImageProps } from '@/lib/image-optimizer';
+import LazyLoad from './LazyLoad';
 
 interface OptimizedImageProps {
-  /**
-   * Source URL of the image
-   */
+  /** Source URL of the image */
   src: string;
-  
-  /**
-   * Alt text for the image (required for accessibility)
-   */
+  /** Alternative text for accessibility */
   alt: string;
-  
-  /**
-   * Width of the image in pixels
-   */
+  /** Width of the image in pixels */
   width?: number;
-  
-  /**
-   * Height of the image in pixels
-   */
+  /** Height of the image in pixels */
   height?: number;
-  
-  /**
-   * Additional CSS classes to apply to the image
-   */
+  /** CSS class name to apply to the image */
   className?: string;
-  
-  /**
-   * Load the image in prioritized mode (for critical images above the fold)
-   */
-  priority?: boolean;
-  
-  /**
-   * Sources array for responsive images
-   * @example [{ srcSet: '/image-sm.jpg', media: '(max-width: 640px)' }]
-   */
-  sources?: Array<{
-    srcSet: string;
-    media?: string;
-    type?: string;
-  }>;
-  
-  /**
-   * Object fit property for the image
-   */
+  /** Object fit style */
   objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
-  
-  /**
-   * Placeholder blur hash or URL
-   */
-  placeholder?: string;
+  /** Object position style */
+  objectPosition?: string;
+  /** Whether to load immediately or lazily */
+  loading?: 'eager' | 'lazy';
+  /** Higher priority images load sooner */
+  priority?: boolean;
+  /** Whether to enable blur-up loading effect */
+  blurUp?: boolean;
+  /** Color to use for placeholder */
+  placeholderColor?: string;
+  /** CSS class to apply to the wrapper */
+  wrapperClass?: string;
+  /** Responsive sizes attribute */
+  sizes?: string;
+  /** Maximum width to load (saves bandwidth) */
+  maxWidth?: number;
+  /** Custom onLoad callback */
+  onLoad?: () => void;
+  /** Custom onError callback */
+  onError?: (error: Error) => void;
 }
 
 /**
- * OptimizedImage component for better image loading performance
+ * OptimizedImage Component
  * 
- * @example
- * ```tsx
- * <OptimizedImage 
- *   src="/images/hero.jpg"
- *   alt="Hero image"
- *   width={800}
- *   height={600}
- *   className="rounded-lg"
- *   priority={true}
- *   sources={[
- *     { srcSet: '/images/hero-sm.jpg', media: '(max-width: 640px)' },
- *     { srcSet: '/images/hero-md.jpg', media: '(max-width: 1024px)' }
- *   ]}
- *   objectFit="cover"
- * />
- * ```
+ * A component that optimizes image loading and rendering using responsive techniques
  */
-export function OptimizedImage({
+const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
   width,
   height,
   className = '',
-  priority = false,
-  sources = [],
   objectFit = 'cover',
-  placeholder
-}: OptimizedImageProps) {
+  objectPosition = 'center',
+  loading = 'lazy',
+  priority = false,
+  blurUp = true,
+  placeholderColor = '#f0f0f0',
+  wrapperClass = '',
+  sizes = '100vw',
+  maxWidth,
+  onLoad,
+  onError
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   
-  useEffect(() => {
-    if (!imgRef.current || priority) return;
-    
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect();
-          }
-        });
-      },
-      { rootMargin: '200px' } // Start loading 200px before visible
-    );
-    
-    observer.observe(imgRef.current);
-    
-    return () => {
-      observer.disconnect();
-    };
-  }, [priority]);
+  // Calculate aspect ratio for the placeholder
+  const aspectRatio = height && width ? height / width : undefined;
   
-  // Support for native lazy loading
-  const shouldLoad = priority || isInView;
+  // Get responsive image properties
+  const responsiveProps = width && height
+    ? getResponsiveImageProps(src, {
+        width,
+        height,
+        sizes: [{ size: sizes }],
+        placeholder: blurUp,
+        placeholderColor,
+        priority: priority || loading === 'eager'
+      })
+    : { src };
   
-  const style: React.CSSProperties = {
-    objectFit,
-    transition: 'opacity 0.3s ease-in-out',
-    opacity: isLoaded ? 1 : 0,
-    backgroundColor: placeholder ? undefined : '#f0f0f0',
-    backgroundImage: placeholder ? `url(${placeholder})` : undefined,
-    backgroundSize: placeholder ? 'cover' : undefined,
-    width: width ? `${width}px` : '100%',
-    height: height ? `${height}px` : 'auto',
+  // Handle successful loading
+  const handleLoad = () => {
+    setIsLoaded(true);
+    if (onLoad) {
+      onLoad();
+    }
   };
   
-  return (
-    <div 
-      className={`relative overflow-hidden ${className}`}
-      style={{
-        width: width ? `${width}px` : '100%',
-        height: height ? `${height}px` : 'auto',
-      }}
+  // Handle loading errors
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const errorMessage = `Failed to load image: ${src}`;
+    const error = new Error(errorMessage);
+    setError(error);
+    if (onError) {
+      onError(error);
+    }
+    console.error(errorMessage);
+  };
+  
+  // Verify image is in view
+  useEffect(() => {
+    if (priority && imgRef.current) {
+      // For priority images, we check if they're actually loaded
+      if (imgRef.current.complete) {
+        handleLoad();
+      }
+    }
+  }, [priority]);
+  
+  // Image styles
+  const imageStyles: React.CSSProperties = {
+    objectFit,
+    objectPosition,
+    opacity: isLoaded ? 1 : 0,
+    transition: 'opacity 0.2s ease-in-out',
+    width: '100%',
+    height: '100%',
+  };
+  
+  // Wrapper style, maintaining aspect ratio if dimensions are provided
+  const wrapperStyles: React.CSSProperties = {};
+  if (aspectRatio) {
+    wrapperStyles.paddingBottom = `${aspectRatio * 100}%`;
+    wrapperStyles.height = 0;
+    wrapperStyles.position = 'relative';
+  }
+  
+  // Placeholder styles for blur-up effect
+  const placeholderStyles: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: placeholderColor,
+    opacity: isLoaded ? 0 : 1,
+    transition: 'opacity 0.2s ease-in-out',
+  };
+  
+  // Render the image
+  const renderImage = () => (
+    <div
+      className={`optimized-image-wrapper ${wrapperClass}`}
+      style={wrapperStyles}
     >
-      {sources.length > 0 ? (
-        <picture>
-          {sources.map((source, index) => (
-            <source key={index} srcSet={shouldLoad ? source.srcSet : undefined} media={source.media} type={source.type} />
-          ))}
-          <img
-            ref={imgRef}
-            src={shouldLoad ? src : ''}
-            alt={alt}
-            width={width}
-            height={height}
-            loading={priority ? 'eager' : 'lazy'}
-            className={className}
-            style={style}
-            onLoad={() => setIsLoaded(true)}
-          />
-        </picture>
-      ) : (
-        <img
-          ref={imgRef}
-          src={shouldLoad ? src : ''}
-          alt={alt}
-          width={width}
-          height={height}
-          loading={priority ? 'eager' : 'lazy'}
-          className={className}
-          style={style}
-          onLoad={() => setIsLoaded(true)}
-        />
+      {/* Actual image */}
+      <img
+        ref={imgRef}
+        src={responsiveProps.src}
+        srcSet={responsiveProps.srcSet}
+        sizes={sizes}
+        alt={alt}
+        className={`optimized-image ${className}`}
+        style={imageStyles}
+        width={width}
+        height={height}
+        loading={loading}
+        onLoad={handleLoad}
+        onError={handleError}
+        data-priority={priority}
+      />
+      
+      {/* Placeholder/blur element */}
+      {blurUp && !isLoaded && !error && (
+        <div 
+          className="optimized-image-placeholder"
+          style={placeholderStyles}
+        >
+          {responsiveProps.placeholder && (
+            <img
+              src={responsiveProps.placeholder}
+              alt=""
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                filter: 'blur(10px)',
+                transform: 'scale(1.1)', // Prevent blur edges
+              }}
+            />
+          )}
+        </div>
+      )}
+      
+      {/* Error state */}
+      {error && (
+        <div
+          className="optimized-image-error"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: '#f8d7da',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            color: '#721c24',
+          }}
+        >
+          <span>Failed to load image</span>
+        </div>
       )}
     </div>
   );
-}
+  
+  // For non-priority images, wrap in LazyLoad
+  return priority ? (
+    renderImage()
+  ) : (
+    <LazyLoad
+      height={height}
+      width={width}
+      className={wrapperClass}
+    >
+      {renderImage()}
+    </LazyLoad>
+  );
+};
 
 export default OptimizedImage;
