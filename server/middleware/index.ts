@@ -2,6 +2,7 @@
  * Middleware Setup Module
  * 
  * Centralizes middleware configuration for the Express application.
+ * Includes performance optimizations for API response times and resource usage.
  */
 
 import express from 'express';
@@ -18,12 +19,22 @@ import { defaultLimiter } from './rateLimit';
 import { checkAuth } from './auth';
 import { safeUserMiddleware } from './safeUserMiddleware';
 import { loadConfig } from '../config';
+import { 
+  cache, 
+  optimizedCompression, 
+  responseTime,
+  payloadSizeLimit
+} from './performance';
 
 /**
  * Set up all middleware for the Express application
+ * Incorporates performance optimizations for faster response times
  */
 export function setupMiddleware(app: express.Application, sessionSecret: string): void {
   const config = loadConfig();
+  
+  // Request timing middleware for performance monitoring
+  app.use(responseTime({ logSlowRequests: true, threshold: 500 }));
 
   // Basic middleware
   app.use(express.json({ limit: config.maxRequestBodySize }));
@@ -54,9 +65,10 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     credentials: true
   }));
 
-  // Compression middleware (if enabled)
+  // Optimized compression middleware (if enabled)
   if (config.enableCompression) {
-    app.use(compression());
+    // Use optimized compression with threshold and content-type filtering
+    app.use(optimizedCompression());
   }
 
   // Session configuration
