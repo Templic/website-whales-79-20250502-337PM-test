@@ -140,11 +140,53 @@
   }
 }
 
+/* Geometric clip paths for shape variants */
+.clip-path-hexagon {
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.clip-path-diamond {
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.clip-path-triangle {
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.clip-path-pentagon {
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+/* Text container glow effects */
+.text-content {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: 8px;
+  z-index: 1;
+}
+
+/* Text container glow mat */
+.text-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(136, 87, 255, 0.1));
+  border-radius: 8px;
+  z-index: -1;
+  box-shadow: 0 0 15px 2px rgba(139, 92, 246, 0.2);
+}
+
 /* Optimizations for mobile devices */
 @media (max-width: 768px) {
   .sacred-geometry-shape {
     /* Reduce shadow complexity on mobile */
     box-shadow: none !important;
+  }
+  
+  /* Enhanced text container glow for mobile */
+  .text-content::before {
+    background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(136, 87, 255, 0.15));
+    box-shadow: 0 0 20px 3px rgba(139, 92, 246, 0.25);
   }
   
   /* Simplified animations */

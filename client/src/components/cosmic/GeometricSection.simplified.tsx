@@ -145,6 +145,36 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   };
   
   // Render the component
+  // Apply shape class based on shape prop
+  const getShapeClass = () => {
+    if (!shape) return '';
+    
+    switch(shape) {
+      case 'hexagon': return 'clip-path-hexagon';
+      case 'diamond': return 'clip-path-diamond';
+      case 'circle': return 'rounded-full';
+      case 'triangle': return 'clip-path-triangle';
+      case 'pentagon': return 'clip-path-pentagon';
+      default: return '';
+    }
+  };
+  
+  // Add glow effect based on variant
+  const getGlowEffects = () => {
+    if (variant !== 'cosmic') return '';
+    
+    const glowBaseClass = 'before:absolute before:inset-0 before:rounded-xl before:z-0 before:opacity-70 before:transition-opacity before:duration-500';
+    
+    // Different glow styles for different background styles
+    if (backgroundStyle === 'glass') {
+      return `${glowBaseClass} before:bg-gradient-to-br before:from-cyan-500/30 before:to-purple-600/20 before:blur-lg`;
+    } else if (backgroundStyle === 'gradient') {
+      return `${glowBaseClass} before:bg-gradient-to-br before:from-cyan-500/50 before:to-purple-600/30 before:blur-xl`;
+    }
+    
+    return `${glowBaseClass} before:bg-gradient-to-br before:from-cyan-500/20 before:to-purple-600/10 before:blur-lg`;
+  };
+  
   const containerStyles = {
     backgroundColor,
     color: textColor,
@@ -156,11 +186,14 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
 
   // Check if there are children or if we should render default content
   const hasCustomContent = !!children;
+  
+  const shapeClass = getShapeClass();
+  const glowEffects = getGlowEffects();
 
   return (
     <div 
       ref={containerRef}
-      className={`geometric-section ${className} ${isHovered ? 'hovered' : ''}`}
+      className={`geometric-section ${className} ${isHovered ? 'hovered' : ''} ${shapeClass} ${glowEffects} relative`}
       style={containerStyles}
     >
       {hasCustomContent ? (

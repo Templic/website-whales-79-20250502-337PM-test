@@ -351,10 +351,10 @@ export function MainHeader() {
                 </span>
               </Link>
               
-              {/* Mobile menu button */}
+              {/* Mobile menu button - Enhanced visibility */}
               <button
                 type="button"
-                className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors"
+                className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors bg-[#0a1f3c] p-2 rounded-full shadow-lg shadow-cyan-500/20 border border-cyan-500/30"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle navigation menu"
