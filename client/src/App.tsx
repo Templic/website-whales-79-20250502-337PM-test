@@ -286,6 +286,11 @@ function App() {
                 {/* <TaskadeWidget /> */}
                 <CookieConsent />
                 <Toaster />
+                <ServiceWorkerManager 
+                  registerOnMount={true}
+                  showUpdateNotification={true} 
+                  showOfflineNotification={true}
+                />
               </ErrorBoundary>
             </ChatProvider>
           </AccessibilityProvider>
