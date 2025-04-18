@@ -1,62 +1,73 @@
 /**
  * LazyLoad Component
  * 
- * A component that lazily loads its children only when they enter the viewport.
- * Useful for deferring the loading of heavy components until they're needed.
+ * A component that defers loading its children until they are 
+ * about to enter the viewport.
+ * 
+ * Features:
+ * - Uses Intersection Observer for performance
+ * - Configurable threshold and root margin
+ * - Custom placeholder support
+ * - Prevents layout shifts by maintaining dimensions
  */
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface LazyLoadProps {
-  /** The content to load lazily */
+  /** The content to lazy load */
   children: React.ReactNode;
-  /** Height to take up before loading (to prevent layout shifts) */
-  height?: string | number;
-  /** Width to take up before loading (to prevent layout shifts) */
-  width?: string | number;
-  /** Margin around the element that will trigger loading (in pixels or with units) */
-  margin?: string;
-  /** Threshold value between 0 and 1 indicating what percentage of the target must be visible */
-  threshold?: number;
-  /** Placeholder to show while content is loading */
+  /** Custom placeholder to show before content is loaded */
   placeholder?: React.ReactNode;
-  /** Whether to load content immediately regardless of visibility */
+  /** Height to maintain (prevents layout shift) */
+  height?: string | number;
+  /** Width to maintain (prevents layout shift) */
+  width?: string | number;
+  /** Intersection observer threshold (0-1) */
+  threshold?: number;
+  /** Intersection observer root margin */
+  margin?: string;
+  /** Load immediately without waiting for intersection */
   immediate?: boolean;
-  /** Function called when the component becomes visible */
-  onVisible?: () => void;
-  /** CSS class to apply to the wrapper */
+  /** CSS class for container */
   className?: string;
-  /** Unique identifier for tracking */
+  /** Unique identifier */
   id?: string;
+  /** Callback function called when content becomes visible */
+  onVisible?: () => void;
 }
 
 /**
  * LazyLoad Component
  * 
- * Renders children only when they become visible in the viewport
+ * Improves initial page load performance by deferring the loading of
+ * off-screen components until they're about to be viewed.
  */
 const LazyLoad: React.FC<LazyLoadProps> = ({
   children,
+  placeholder,
   height,
   width,
-  margin = '100px',
   threshold = 0.1,
-  placeholder,
+  margin = '100px',
   immediate = false,
-  onVisible,
   className = '',
   id,
+  onVisible,
 }) => {
+  // Track if component is visible and rendered
   const [isVisible, setIsVisible] = useState(immediate);
   const [hasRendered, setHasRendered] = useState(immediate);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Set up intersection observer to detect when component is visible
   useEffect(() => {
-    // Skip if set to immediate load or already visible
-    if (immediate || isVisible) {
+    // Skip if already visible or we've requested immediate loading
+    if (isVisible || immediate) {
+      setHasRendered(true);
       return;
     }
     
+    // Get the container element to observe
     const container = containerRef.current;
     if (!container) {
       return;
@@ -66,7 +77,7 @@ const LazyLoad: React.FC<LazyLoadProps> = ({
       (entries) => {
         const [entry] = entries;
         
-        if (entry.isIntersecting) {
+        if (entry && entry.isIntersecting) {
           setIsVisible(true);
           if (onVisible) {
             onVisible();
@@ -100,6 +111,7 @@ const LazyLoad: React.FC<LazyLoadProps> = ({
       
       return () => clearTimeout(timer);
     }
+    return undefined; // Explicitly return for the case when no cleanup needed
   }, [isVisible, hasRendered]);
   
   // Style for the placeholder

@@ -1,164 +1,238 @@
 /**
  * Image Optimization Utilities
  * 
- * Provides utilities for optimizing image loading and rendering.
+ * Provides utilities for optimizing images for web display using
+ * responsive techniques, lazy loading, and optimal formats.
  */
 
-/**
- * Calculate the srcSet attribute for responsive images
- * 
- * @param basePath Base path to the image
- * @param extension Image file extension (e.g., 'jpg', 'png')
- * @param widths Array of image widths to include in the srcSet
- * @returns Properly formatted srcSet string
- */
-export function generateSrcSet(
-  basePath: string,
-  extension: string,
-  widths: number[] = [640, 768, 1024, 1280, 1536, 1920]
-): string {
-  const basePathWithoutExtension = basePath.replace(new RegExp(`\\.${extension}$`), '');
-  
-  return widths
-    .map(width => {
-      const responsiveImagePath = `${basePathWithoutExtension}-${width}w.${extension}`;
-      return `${responsiveImagePath} ${width}w`;
-    })
-    .join(', ');
+// Types for image optimization
+export interface ResponsiveSize {
+  size: string; // CSS size value like "800px" or "100vw"
+  maxWidth?: number; // Max width in pixels for this size
+}
+
+export interface ResponsiveImageOptions {
+  width: number;
+  height: number;
+  sizes: ResponsiveSize[];
+  placeholder?: boolean;
+  placeholderColor?: string;
+  priority?: boolean;
+}
+
+export interface ResponsiveImageProps {
+  src: string;
+  srcSet?: string;
+  placeholder?: string;
 }
 
 /**
- * Calculate the appropriate sizes attribute for a responsive image
+ * Generate a responsive srcSet for an image
  * 
- * @param sizes Array of media query configurations
- * @returns Formatted sizes attribute string
- */
-export function generateSizes(
-  sizes: Array<{ mediaQuery?: string; size: string }>
-): string {
-  return sizes
-    .map(({ mediaQuery, size }) => {
-      if (mediaQuery) {
-        return `${mediaQuery} ${size}`;
-      }
-      return size;
-    })
-    .join(', ');
-}
-
-/**
- * Generate a placeholder blur data URL for an image
- * 
- * @param width Width of the placeholder
- * @param height Height of the placeholder
- * @param color Background color (hex)
- * @returns Data URL for the placeholder
- */
-export function generatePlaceholder(
-  width: number,
-  height: number,
-  color: string = '#f0f0f0'
-): string {
-  // Create a small SVG to use as a placeholder
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <rect width="100%" height="100%" fill="${color}" />
-    </svg>
-  `;
-  
-  // Convert the SVG to a base64 data URL
-  const svgBase64 = btoa(svg.trim());
-  return `data:image/svg+xml;base64,${svgBase64}`;
-}
-
-/**
- * Get responsive image props for an image
- * 
- * @param src Image source path
- * @param options Configuration options
- * @returns Object with responsive image attributes
+ * @param src Original image source URL
+ * @param options Options for generating responsive images
+ * @returns Object with src, srcSet, and placeholder properties
  */
 export function getResponsiveImageProps(
   src: string,
-  options: {
-    width?: number;
-    height?: number;
-    sizes?: Array<{ mediaQuery?: string; size: string }>;
-    widths?: number[];
-    placeholder?: boolean;
-    placeholderColor?: string;
-    priority?: boolean;
-  } = {}
-): {
-  src: string;
-  srcSet?: string;
-  sizes?: string;
-  width?: number;
-  height?: number;
-  loading?: 'lazy' | 'eager';
-  placeholder?: string;
-} {
-  // Extract options with defaults
-  const {
-    width,
-    height,
-    sizes = [{ size: '100vw' }],
-    widths = [640, 768, 1024, 1280, 1536, 1920],
-    placeholder = true,
-    placeholderColor = '#f0f0f0',
-    priority = false
-  } = options;
+  options: ResponsiveImageOptions
+): ResponsiveImageProps {
+  // Default widths for responsive images (can be customized)
+  const defaultWidths = [320, 640, 960, 1280, 1920];
   
-  // Basic properties
-  const props: any = {
+  // Get widths based on original image size and responsive needs
+  const widths = getOptimalWidths(options.width, defaultWidths, options.sizes);
+  
+  // Generate srcSet with optimal widths
+  const srcSet = generateSrcSet(src, widths);
+  
+  // Generate placeholder if needed
+  const placeholder = options.placeholder ? generatePlaceholder(src, options) : undefined;
+  
+  return {
     src,
-    loading: priority ? 'eager' : 'lazy',
+    srcSet,
+    placeholder
   };
-  
-  // Add dimensions if provided
-  if (width) props.width = width;
-  if (height) props.height = height;
-  
-  // Extract file extension from src
-  const extension = src.split('.').pop() || 'jpg';
-  
-  // Generate srcSet for responsive images
-  props.srcSet = generateSrcSet(src, extension, widths);
-  
-  // Generate sizes attribute
-  props.sizes = generateSizes(sizes);
-  
-  // Generate placeholder if requested and dimensions are available
-  if (placeholder && width && height) {
-    props.placeholder = generatePlaceholder(width, height, placeholderColor);
-  }
-  
-  return props;
 }
 
 /**
- * Calculate the best image size for the current viewport and device pixel ratio
+ * Calculate optimal widths for responsive images
  * 
- * @param availableWidths Available image width options
- * @param containerWidth Width of the container element
- * @returns The optimal image width to load
+ * @param originalWidth Original image width
+ * @param defaultWidths Default widths to use
+ * @param sizes Responsive sizes configuration
+ * @returns Array of optimal widths
  */
-export function getOptimalImageWidth(
-  availableWidths: number[],
-  containerWidth: number
-): number {
-  if (!availableWidths.length) return containerWidth;
+function getOptimalWidths(
+  originalWidth: number,
+  defaultWidths: number[],
+  sizes: ResponsiveSize[]
+): number[] {
+  // Filter out widths larger than original to avoid upscaling
+  const filteredWidths = defaultWidths.filter(width => width <= originalWidth);
   
-  // Get device pixel ratio
-  const pixelRatio = window.devicePixelRatio || 1;
+  // Always include the original width
+  if (!filteredWidths.includes(originalWidth)) {
+    filteredWidths.push(originalWidth);
+  }
   
-  // Calculate the optimal width (container width * pixel ratio)
-  const optimalWidth = containerWidth * pixelRatio;
+  // Add any maxWidth from sizes if specified
+  sizes.forEach(size => {
+    if (size.maxWidth && size.maxWidth <= originalWidth && !filteredWidths.includes(size.maxWidth)) {
+      filteredWidths.push(size.maxWidth);
+    }
+  });
   
-  // Find the smallest width that is larger than the optimal width
-  // or the largest available width if none are large enough
-  const sorted = [...availableWidths].sort((a, b) => a - b);
-  const bestWidth = sorted.find(width => width >= optimalWidth) || sorted[sorted.length - 1];
+  // Sort widths in ascending order
+  return filteredWidths.sort((a, b) => a - b);
+}
+
+/**
+ * Generate srcSet attribute for responsive images
+ * 
+ * @param src Original image source
+ * @param widths Array of widths to generate srcSet for
+ * @returns srcSet string
+ */
+function generateSrcSet(src: string, widths: number[]): string {
+  return widths
+    .map(width => {
+      // Generate optimized URL for this width
+      const optimizedUrl = getOptimizedImageUrl(src, width);
+      return `${optimizedUrl} ${width}w`;
+    })
+    .join(', ');
+}
+
+/**
+ * Generate a placeholder image for blur-up loading
+ * 
+ * @param src Original image source
+ * @param options Optimization options
+ * @returns Placeholder image URL
+ */
+function generatePlaceholder(src: string, options: ResponsiveImageOptions): string {
+  // In a production environment, you would generate a tiny placeholder
+  // For this implementation, we'll just use a small version of the image
+  return getOptimizedImageUrl(src, 20); // Tiny 20px wide version
+}
+
+/**
+ * Get an optimized image URL for a specific width
+ * 
+ * @param src Original image source
+ * @param width Target width
+ * @returns Optimized image URL
+ */
+function getOptimizedImageUrl(src: string, width: number): string {
+  // In a production environment, you would transform the URL to point to
+  // an image optimization service like Cloudinary, Imgix, or a custom endpoint
   
-  return bestWidth;
+  // For this implementation, we'll just add a width parameter to the URL
+  // This assumes the server can handle width parameters
+  
+  // Check if URL already has query parameters
+  const hasQuery = src.includes('?');
+  const separator = hasQuery ? '&' : '?';
+  
+  return `${src}${separator}w=${width}`;
+}
+
+/**
+ * Calculate aspect ratio for an image
+ * 
+ * @param width Image width
+ * @param height Image height
+ * @returns Aspect ratio (height / width)
+ */
+export function calculateAspectRatio(width: number, height: number): number {
+  return height / width;
+}
+
+/**
+ * Preload critical images for faster rendering
+ * 
+ * @param urls Array of image URLs to preload
+ */
+export function preloadCriticalImages(urls: string[]): void {
+  urls.forEach(url => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = url;
+    document.head.appendChild(link);
+  });
+}
+
+/**
+ * Determine if WebP format is supported by the browser
+ * 
+ * @returns Promise that resolves to true if WebP is supported
+ */
+export async function supportsWebP(): Promise<boolean> {
+  if (!self.createImageBitmap) return false;
+  
+  const webpData = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+  const blob = await fetch(webpData).then(r => r.blob());
+  
+  return createImageBitmap(blob).then(() => true, () => false);
+}
+
+/**
+ * Get the best image format supported by the browser
+ * 
+ * @returns Promise that resolves to the best format ('webp', 'avif', or 'jpg')
+ */
+export async function getBestImageFormat(): Promise<'webp' | 'avif' | 'jpg'> {
+  // Check for AVIF support
+  try {
+    if (await supportsFormat('avif')) {
+      return 'avif';
+    }
+  } catch (e) {
+    console.warn('Error checking AVIF support:', e);
+  }
+  
+  // Check for WebP support
+  try {
+    if (await supportsWebP()) {
+      return 'webp';
+    }
+  } catch (e) {
+    console.warn('Error checking WebP support:', e);
+  }
+  
+  // Fallback to JPG
+  return 'jpg';
+}
+
+/**
+ * Test if a specific image format is supported
+ * 
+ * @param format Image format to test
+ * @returns Promise that resolves to true if format is supported
+ */
+async function supportsFormat(format: string): Promise<boolean> {
+  if (!self.createImageBitmap) return false;
+  
+  let testData = '';
+  
+  switch (format.toLowerCase()) {
+    case 'webp':
+      testData = 'data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=';
+      break;
+    case 'avif':
+      testData = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+      break;
+    default:
+      return false;
+  }
+  
+  try {
+    const blob = await fetch(testData).then(r => r.blob());
+    return createImageBitmap(blob).then(() => true, () => false);
+  } catch (e) {
+    return false;
+  }
 }

@@ -1,236 +1,221 @@
 /**
  * OptimizedImage Component
  * 
- * A component that optimizes image loading and rendering:
- * - Supports responsive sizing with srcSet
- * - Implements lazy loading
- * - Provides placeholder/blur-up loading
- * - Optimized for Core Web Vitals metrics
+ * A React component for optimized image loading with:
+ * - Progressive loading (blur-up technique)
+ * - Lazy loading with Intersection Observer
+ * - Responsive image loading with srcSet
+ * - WebP format support with fallback
+ * - Image error handling
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { getResponsiveImageProps } from '@/lib/image-optimizer';
 import LazyLoad from './LazyLoad';
 
 interface OptimizedImageProps {
-  /** Source URL of the image */
+  /** Main image source URL */
   src: string;
   /** Alternative text for accessibility */
   alt: string;
+  /** Optional low-quality placeholder image */
+  placeholderSrc?: string;
   /** Width of the image in pixels */
   width?: number;
   /** Height of the image in pixels */
   height?: number;
-  /** CSS class name to apply to the image */
+  /** CSS class for the image */
   className?: string;
-  /** Object fit style */
-  objectFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
-  /** Object position style */
-  objectPosition?: string;
-  /** Whether to load immediately or lazily */
-  loading?: 'eager' | 'lazy';
-  /** Higher priority images load sooner */
-  priority?: boolean;
-  /** Whether to enable blur-up loading effect */
-  blurUp?: boolean;
-  /** Color to use for placeholder */
-  placeholderColor?: string;
-  /** CSS class to apply to the wrapper */
-  wrapperClass?: string;
-  /** Responsive sizes attribute */
+  /** CSS class for the container */
+  containerClassName?: string;
+  /** Unique identifier */
+  id?: string;
+  /** Whether to lazy load the image */
+  lazy?: boolean;
+  /** Responsive srcSet attribute */
+  srcSet?: string;
+  /** Sizes attribute for responsive images */
   sizes?: string;
-  /** Maximum width to load (saves bandwidth) */
-  maxWidth?: number;
-  /** Custom onLoad callback */
+  /** Callback for when image is loaded */
   onLoad?: () => void;
-  /** Custom onError callback */
+  /** Callback for when image fails to load */
   onError?: (error: Error) => void;
+  /** Whether to use WebP format if supported */
+  useWebP?: boolean;
+  /** Style overrides for the image */
+  style?: React.CSSProperties;
 }
 
 /**
  * OptimizedImage Component
  * 
- * A component that optimizes image loading and rendering using responsive techniques
+ * Renders images with optimized loading techniques for performance.
  */
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
+  placeholderSrc,
   width,
   height,
   className = '',
-  objectFit = 'cover',
-  objectPosition = 'center',
-  loading = 'lazy',
-  priority = false,
-  blurUp = true,
-  placeholderColor = '#f0f0f0',
-  wrapperClass = '',
-  sizes = '100vw',
-  maxWidth,
+  containerClassName = '',
+  id,
+  lazy = true,
+  srcSet,
+  sizes,
   onLoad,
-  onError
+  onError,
+  useWebP = true,
+  style,
 }) => {
+  // State
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [webPSupported, setWebPSupported] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
   
-  // Calculate aspect ratio for the placeholder
-  const aspectRatio = height && width ? height / width : undefined;
+  // Check WebP support on mount
+  useEffect(() => {
+    if (useWebP) {
+      const webPImage = new Image();
+      webPImage.onload = () => setWebPSupported(true);
+      webPImage.onerror = () => setWebPSupported(false);
+      webPImage.src = 'data:image/webp;base64,UklGRiQAAABXRUJQVlA4IBgAAAAwAQCdASoBAAEAAwA0JaQAA3AA/vuUAAA=';
+    }
+  }, [useWebP]);
   
-  // Get responsive image properties
-  const responsiveProps = width && height
-    ? getResponsiveImageProps(src, {
-        width,
-        height,
-        sizes: [{ size: sizes }],
-        placeholder: blurUp,
-        placeholderColor,
-        priority: priority || loading === 'eager'
+  // Prepare image sources
+  const getImageSrc = (): string => {
+    if (!useWebP || !webPSupported) return src;
+    
+    // Convert to WebP if supported
+    if (src.match(/\.(jpg|jpeg|png)(\?.*)?$/i)) {
+      return src.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2');
+    }
+    
+    return src;
+  };
+  
+  const getSrcSet = (): string | undefined => {
+    if (!srcSet || !useWebP || !webPSupported) return srcSet;
+    
+    // Convert all srcSet entries to WebP
+    return srcSet
+      .split(',')
+      .map((srcSetItem) => {
+        const parts = srcSetItem.trim().split(' ');
+        if (parts.length < 2) return srcSetItem;
+        
+        const url = parts[0];
+        const descriptor = parts.slice(1).join(' ');
+        
+        if (url && url.match(/\.(jpg|jpeg|png)(\?.*)?$/i)) {
+          return `${url.replace(/\.(jpg|jpeg|png)(\?.*)?$/i, '.webp$2')} ${descriptor}`;
+        }
+        return srcSetItem;
       })
-    : { src };
+      .join(', ');
+  };
   
-  // Handle successful loading
+  // Handle image loading
   const handleLoad = () => {
     setIsLoaded(true);
-    if (onLoad) {
-      onLoad();
-    }
+    if (onLoad) onLoad();
   };
   
-  // Handle loading errors
+  // Handle image error
   const handleError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const errorMessage = `Failed to load image: ${src}`;
-    const error = new Error(errorMessage);
-    setError(error);
-    if (onError) {
-      onError(error);
+    const imgError = new Error(`Failed to load image: ${src}`);
+    setError(imgError);
+    if (onError) onError(imgError);
+    
+    // If WebP failed, try falling back to original format
+    if (useWebP && webPSupported && imageRef.current) {
+      imageRef.current.src = src;
     }
-    console.error(errorMessage);
   };
   
-  // Verify image is in view
-  useEffect(() => {
-    if (priority && imgRef.current) {
-      // For priority images, we check if they're actually loaded
-      if (imgRef.current.complete) {
-        handleLoad();
-      }
-    }
-  }, [priority]);
-  
-  // Image styles
-  const imageStyles: React.CSSProperties = {
-    objectFit,
-    objectPosition,
-    opacity: isLoaded ? 1 : 0,
-    transition: 'opacity 0.2s ease-in-out',
-    width: '100%',
-    height: '100%',
+  // Style for progressive loading effect
+  const imgStyle: React.CSSProperties = {
+    transition: 'filter 0.3s ease-out, opacity 0.3s ease-out',
+    filter: isLoaded ? 'blur(0)' : 'blur(10px)',
+    opacity: isLoaded ? 1 : 0.6,
+    width: width ? '100%' : undefined,
+    height: height ? '100%' : undefined,
+    objectFit: width && height ? 'cover' : undefined,
+    ...style,
   };
   
-  // Wrapper style, maintaining aspect ratio if dimensions are provided
-  const wrapperStyles: React.CSSProperties = {};
-  if (aspectRatio) {
-    wrapperStyles.paddingBottom = `${aspectRatio * 100}%`;
-    wrapperStyles.height = 0;
-    wrapperStyles.position = 'relative';
-  }
-  
-  // Placeholder styles for blur-up effect
-  const placeholderStyles: React.CSSProperties = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: placeholderColor,
-    opacity: isLoaded ? 0 : 1,
-    transition: 'opacity 0.2s ease-in-out',
+  // Container style
+  const containerStyle: React.CSSProperties = {
+    position: 'relative',
+    overflow: 'hidden',
+    width: width ? `${width}px` : 'auto',
+    height: height ? `${height}px` : 'auto',
   };
   
-  // Render the image
-  const renderImage = () => (
+  // Placeholder image if provided
+  const placeholderImage = placeholderSrc ? (
+    <img
+      src={placeholderSrc}
+      alt=""
+      aria-hidden="true"
+      className={`optimized-image-placeholder ${className}`}
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        filter: 'blur(10px)',
+        opacity: isLoaded ? 0 : 0.8,
+        transition: 'opacity 0.3s ease-out',
+        objectFit: 'cover',
+      }}
+    />
+  ) : null;
+  
+  // Image component
+  const imageComponent = (
     <div
-      className={`optimized-image-wrapper ${wrapperClass}`}
-      style={wrapperStyles}
+      className={`optimized-image-container ${containerClassName}`}
+      style={containerStyle}
     >
-      {/* Actual image */}
+      {placeholderImage}
       <img
-        ref={imgRef}
-        src={responsiveProps.src}
-        srcSet={responsiveProps.srcSet}
+        ref={imageRef}
+        src={getImageSrc()}
+        srcSet={getSrcSet()}
         sizes={sizes}
         alt={alt}
         className={`optimized-image ${className}`}
-        style={imageStyles}
+        style={imgStyle}
         width={width}
         height={height}
-        loading={loading}
         onLoad={handleLoad}
         onError={handleError}
-        data-priority={priority}
+        id={id}
+        loading="lazy" // Native lazy loading as additional fallback
       />
       
-      {/* Placeholder/blur element */}
-      {blurUp && !isLoaded && !error && (
-        <div 
-          className="optimized-image-placeholder"
-          style={placeholderStyles}
-        >
-          {responsiveProps.placeholder && (
-            <img
-              src={responsiveProps.placeholder}
-              alt=""
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                filter: 'blur(10px)',
-                transform: 'scale(1.1)', // Prevent blur edges
-              }}
-            />
-          )}
-        </div>
-      )}
-      
-      {/* Error state */}
       {error && (
-        <div
-          className="optimized-image-error"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: '#f8d7da',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            color: '#721c24',
-          }}
-        >
+        <div className="optimized-image-error">
           <span>Failed to load image</span>
         </div>
       )}
     </div>
   );
   
-  // For non-priority images, wrap in LazyLoad
-  return priority ? (
-    renderImage()
-  ) : (
+  // Wrap with LazyLoad if requested
+  return lazy ? (
     <LazyLoad
       height={height}
       width={width}
-      className={wrapperClass}
+      className="optimized-image-lazy-container"
     >
-      {renderImage()}
+      {imageComponent}
     </LazyLoad>
+  ) : (
+    imageComponent
   );
 };
 

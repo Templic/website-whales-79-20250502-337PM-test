@@ -1,970 +1,678 @@
 /**
- * binaural-beat-generator.optimized.tsx
+ * Binaural Beat Generator Component (Optimized)
  * 
- * Performance optimized version of the BinauralBeatGenerator component
- * using React.memo, useMemo, and useCallback hooks for better performance.
- * 
- * Optimizations include:
- * - Memoizing expensive calculations with useMemo
- * - Preventing unnecessary re-renders with React.memo
- * - Optimizing callback functions with useCallback
- * - Consolidating related state variables
- * - Optimizing effect dependencies
+ * Optimized version of the binaural beat generator with:
+ * - Memoized components and callbacks
+ * - Reduced rerenders
+ * - Better performance
+ * - Improved null checks and error handling
  */
 
-"use client"
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 
-import { useState, useRef, useEffect, useMemo, useCallback, memo } from "react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import {
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Brain,
-  Waves,
-  Timer,
-  Heart,
-  Moon,
-  Sun,
-  Zap,
-  Save,
-  Download,
-  Share2,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
+// Define types for oscillator wave forms
+type OscillatorType = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
-interface BinauralBeatGeneratorProps {
-  defaultLeftFreq?: number
-  defaultRightFreq?: number
-  defaultVolume?: number
-  defaultWaveType?: "sine" | "square" | "triangle" | "sawtooth"
-  defaultPreset?: string
-}
-
-// Type definitions to improve code readability
-type OscillatorType = "sine" | "square" | "triangle" | "sawtooth";
-type AudioRefs = {
-  audioContext: AudioContext | null;
-  leftOscillator: OscillatorNode | null;
-  rightOscillator: OscillatorNode | null;
-  gainNode: GainNode | null;
-};
-
-type PresetType = {
-  name: string;
-  leftFreq: number;
-  rightFreq: number;
-  waveType: OscillatorType;
-  description: string;
-};
-
-type TimerState = {
-  active: boolean;
+// Define state interface for the timer
+interface TimerState {
   duration: number;
   remaining: number;
-};
+  active: boolean;
+}
 
-type PulseDetectionState = {
-  show: boolean;
-  heartRate: number | null;
-  syncToHeartRate: boolean;
-};
-
-// Memoized preset array that never changes
-const presets: PresetType[] = [
-  {
-    name: "Meditation",
-    leftFreq: 200,
-    rightFreq: 204,
-    waveType: "sine",
-    description: "4 Hz Delta waves for deep meditation",
-  },
-  {
-    name: "Focus",
-    leftFreq: 200,
-    rightFreq: 210,
-    waveType: "sine",
-    description: "10 Hz Alpha waves for concentration and focus",
-  },
-  {
-    name: "Relaxation",
-    leftFreq: 200,
-    rightFreq: 208,
-    waveType: "sine",
-    description: "8 Hz Alpha waves for relaxation",
-  },
-  {
-    name: "Sleep",
-    leftFreq: 200,
-    rightFreq: 202,
-    waveType: "sine",
-    description: "2 Hz Delta waves to help with sleep",
-  },
-  {
-    name: "Creativity",
-    leftFreq: 200,
-    rightFreq: 207,
-    waveType: "sine",
-    description: "7 Hz Theta waves to enhance creativity",
-  },
-  {
-    name: "Energy",
-    leftFreq: 200,
-    rightFreq: 215,
-    waveType: "sine",
-    description: "15 Hz Beta waves for energy and alertness",
-  },
-];
-
-// Memoized brain wave category function since its logic never changes
-const getBrainWaveCategory = (freq: number) => {
-  if (freq <= 4) return { name: "Delta", color: "#3b82f6", description: "Deep sleep, healing" };
-  if (freq <= 8) return { name: "Theta", color: "#8b5cf6", description: "Meditation, creativity" };
-  if (freq <= 12) return { name: "Alpha", color: "#10b981", description: "Relaxation, calmness" };
-  if (freq <= 30) return { name: "Beta", color: "#f59e0b", description: "Focus, alertness" };
-  return { name: "Gamma", color: "#ef4444", description: "Higher mental activity" };
-};
-
-/**
- * Format time in seconds to MM:SS format
- */
-const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
-
-// Main component (wrapped with memo to prevent unnecessary re-renders)
-export const BinauralBeatGenerator = memo(({
-  defaultLeftFreq = 200,
-  defaultRightFreq = 210,
-  defaultVolume = 50,
-  defaultWaveType = "sine",
-  defaultPreset = "custom",
-}: BinauralBeatGeneratorProps) => {
-  // Audio refs - consolidated in a single ref to reduce updates
-  const audioRefs = useRef<AudioRefs>({
-    audioContext: null,
-    leftOscillator: null,
-    rightOscillator: null,
-    gainNode: null
-  });
-  
-  // Core audio state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [frequencies, setFrequencies] = useState({
-    left: defaultLeftFreq,
-    right: defaultRightFreq
-  });
-  const [audioSettings, setAudioSettings] = useState({
-    volume: defaultVolume,
-    isMuted: false,
-    waveType: defaultWaveType as OscillatorType
-  });
-  const [activePreset, setActivePreset] = useState(defaultPreset);
-  
-  // Timer state - consolidated related state
-  const [timer, setTimer] = useState<TimerState>({
-    active: false,
-    duration: 15,
-    remaining: 15 * 60
-  });
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Pulse detection state - consolidated related state
-  const [pulseDetection, setPulseDetection] = useState<PulseDetectionState>({
-    show: false,
-    heartRate: null,
-    syncToHeartRate: false
-  });
-  
-  // Video elements for pulse detection
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const pulseDetectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Preset saving state
-  const [presetSaving, setPresetSaving] = useState({
-    show: false,
-    name: ""
-  });
-  
-  // Calculate beat frequency (memoized to prevent recalculation)
-  const beatFrequency = useMemo(
-    () => Math.abs(frequencies.right - frequencies.left),
-    [frequencies.left, frequencies.right]
-  );
-  
-  // Get brain wave category (memoized since it depends on beat frequency)
-  const brainWave = useMemo(
-    () => getBrainWaveCategory(beatFrequency),
-    [beatFrequency]
-  );
-  
-  // Initialize audio context - called only once on mount
-  useEffect(() => {
-    return () => {
-      stopOscillators();
-      if (audioRefs.current.audioContext) {
-        audioRefs.current.audioContext.close();
-      }
-    };
-  }, []);
-  
-  // Memoized function to stop oscillators
-  const stopOscillators = useCallback(() => {
-    if (audioRefs.current.leftOscillator) {
-      audioRefs.current.leftOscillator.stop();
-      audioRefs.current.leftOscillator.disconnect();
-      audioRefs.current.leftOscillator = null;
-    }
-    
-    if (audioRefs.current.rightOscillator) {
-      audioRefs.current.rightOscillator.stop();
-      audioRefs.current.rightOscillator.disconnect();
-      audioRefs.current.rightOscillator = null;
-    }
-  }, []);
-  
-  // Memoized function to start oscillators
-  const startOscillators = useCallback(() => {
-    if (!audioRefs.current.audioContext) {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      audioRefs.current.audioContext = new AudioContext();
-    }
-    
-    // Create gain node if it doesn't exist
-    if (!audioRefs.current.gainNode) {
-      audioRefs.current.gainNode = audioRefs.current.audioContext.createGain();
-      audioRefs.current.gainNode.connect(audioRefs.current.audioContext.destination);
-    }
-    
-    // Set volume
-    const { volume, isMuted } = audioSettings;
-    audioRefs.current.gainNode.gain.setValueAtTime(
-      isMuted ? 0 : volume / 100, 
-      audioRefs.current.audioContext.currentTime
-    );
-    
-    // Create and start left oscillator
-    audioRefs.current.leftOscillator = audioRefs.current.audioContext.createOscillator();
-    audioRefs.current.leftOscillator.type = audioSettings.waveType;
-    audioRefs.current.leftOscillator.frequency.setValueAtTime(
-      frequencies.left, 
-      audioRefs.current.audioContext.currentTime
-    );
-    
-    // Create stereo panner for left ear
-    const leftPanner = audioRefs.current.audioContext.createStereoPanner();
-    leftPanner.pan.setValueAtTime(-1, audioRefs.current.audioContext.currentTime); // Full left
-    
-    audioRefs.current.leftOscillator.connect(leftPanner);
-    leftPanner.connect(audioRefs.current.gainNode);
-    audioRefs.current.leftOscillator.start();
-    
-    // Create and start right oscillator
-    audioRefs.current.rightOscillator = audioRefs.current.audioContext.createOscillator();
-    audioRefs.current.rightOscillator.type = audioSettings.waveType;
-    audioRefs.current.rightOscillator.frequency.setValueAtTime(
-      frequencies.right, 
-      audioRefs.current.audioContext.currentTime
-    );
-    
-    // Create stereo panner for right ear
-    const rightPanner = audioRefs.current.audioContext.createStereoPanner();
-    rightPanner.pan.setValueAtTime(1, audioRefs.current.audioContext.currentTime); // Full right
-    
-    audioRefs.current.rightOscillator.connect(rightPanner);
-    rightPanner.connect(audioRefs.current.gainNode);
-    audioRefs.current.rightOscillator.start();
-  }, [frequencies.left, frequencies.right, audioSettings]);
-  
-  // Play/pause effect
-  useEffect(() => {
-    if (isPlaying) {
-      startOscillators();
-    } else {
-      stopOscillators();
-    }
-  }, [isPlaying, startOscillators, stopOscillators]);
-  
-  // Update oscillator frequencies
-  useEffect(() => {
-    if (!isPlaying) return; // Skip if not playing
-    
-    const { audioContext, leftOscillator, rightOscillator } = audioRefs.current;
-    if (leftOscillator && rightOscillator && audioContext) {
-      leftOscillator.frequency.setValueAtTime(frequencies.left, audioContext.currentTime);
-      rightOscillator.frequency.setValueAtTime(frequencies.right, audioContext.currentTime);
-    }
-  }, [frequencies, isPlaying]);
-  
-  // Update wave type
-  useEffect(() => {
-    if (isPlaying) {
-      // Need to restart oscillators to change wave type
-      stopOscillators();
-      startOscillators();
-    }
-  }, [audioSettings.waveType, isPlaying, startOscillators, stopOscillators]);
-  
-  // Update volume
-  useEffect(() => {
-    const { gainNode, audioContext } = audioRefs.current;
-    const { volume, isMuted } = audioSettings;
-    
-    if (gainNode && audioContext) {
-      gainNode.gain.setValueAtTime(
-        isMuted ? 0 : volume / 100, 
-        audioContext.currentTime
-      );
-    }
-  }, [audioSettings]);
-  
-  // Handle timer
-  useEffect(() => {
-    if (timer.active && isPlaying) {
-      setTimer(prev => ({
-        ...prev,
-        remaining: prev.duration * 60
-      }));
-      
-      timerIntervalRef.current = setInterval(() => {
-        setTimer(prev => {
-          if (prev.remaining <= 1) {
-            // Timer finished
-            setIsPlaying(false);
-            clearInterval(timerIntervalRef.current!);
-            return {
-              ...prev,
-              active: false,
-              remaining: 0
-            };
-          }
-          return {
-            ...prev,
-            remaining: prev.remaining - 1
-          };
-        });
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-    }
-    
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-    };
-  }, [timer.active, timer.duration, isPlaying]);
-  
-  // Handle heart rate sync
-  useEffect(() => {
-    if (pulseDetection.syncToHeartRate && pulseDetection.heartRate) {
-      // Calculate frequencies based on heart rate
-      const baseFreq = 200;
-      const beatFreq = pulseDetection.heartRate / 10;
-      
-      setFrequencies({
-        left: baseFreq,
-        right: baseFreq + beatFreq
-      });
-    }
-  }, [pulseDetection.syncToHeartRate, pulseDetection.heartRate]);
-  
-  // Start pulse detection
-  useEffect(() => {
-    if (pulseDetection.show) {
-      startPulseDetection();
-    } else {
-      stopPulseDetection();
-    }
-    
-    return () => {
-      stopPulseDetection();
-    };
-  }, [pulseDetection.show]);
-  
-  // Toggle play/pause (memoized to prevent function recreation)
-  const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
-  
-  // Toggle mute (memoized to prevent function recreation)
-  const toggleMute = useCallback(() => {
-    setAudioSettings(prev => ({
-      ...prev,
-      isMuted: !prev.isMuted
-    }));
-  }, []);
-  
-  // Apply preset (memoized to prevent function recreation)
-  const applyPreset = useCallback((preset: string) => {
-    const selectedPreset = presets.find(p => p.name.toLowerCase() === preset.toLowerCase());
-    
-    if (selectedPreset) {
-      setFrequencies({
-        left: selectedPreset.leftFreq,
-        right: selectedPreset.rightFreq
-      });
-      setAudioSettings(prev => ({
-        ...prev,
-        waveType: selectedPreset.waveType
-      }));
-      setActivePreset(preset);
-    } else {
-      setActivePreset("custom");
-    }
-  }, []);
-  
-  // Handle left frequency change (memoized)
-  const handleLeftFreqChange = useCallback((value: number[]) => {
-    if (typeof value[0] === 'number') {
-      setFrequencies(prev => ({ ...prev, left: value[0] }));
-    }
-  }, []);
-  
-  // Handle right frequency change (memoized)
-  const handleRightFreqChange = useCallback((value: number[]) => {
-    if (typeof value[0] === 'number') {
-      setFrequencies(prev => ({ ...prev, right: value[0] }));
-    }
-  }, []);
-  
-  // Handle volume change (memoized)
-  const handleVolumeChange = useCallback((value: number[]) => {
-    if (typeof value[0] === 'number') {
-      setAudioSettings(prev => ({ ...prev, volume: value[0] }));
-    }
-  }, []);
-  
-  // Handle wave type change (memoized)
-  const handleWaveTypeChange = useCallback((value: OscillatorType) => {
-    setAudioSettings(prev => ({ ...prev, waveType: value }));
-  }, []);
-  
-  // Handle timer duration change (memoized)
-  const handleTimerDurationChange = useCallback((value: number[]) => {
-    if (typeof value[0] === 'number') {
-      setTimer(prev => ({ ...prev, duration: value[0] }));
-    }
-  }, []);
-  
-  // Toggle timer (memoized)
-  const toggleTimer = useCallback(() => {
-    setTimer(prev => ({ ...prev, active: !prev.active }));
-  }, []);
-  
-  // Toggle pulse detection (memoized)
-  const togglePulseDetection = useCallback(() => {
-    setPulseDetection(prev => ({ ...prev, show: !prev.show }));
-  }, []);
-  
-  // Toggle heart rate sync (memoized)
-  const toggleHeartRateSync = useCallback(() => {
-    setPulseDetection(prev => ({ ...prev, syncToHeartRate: !prev.syncToHeartRate }));
-  }, []);
-  
-  // Start pulse detection (memoized)
-  const startPulseDetection = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      videoRef.current.srcObject = stream;
-      
-      // Wait for video to be ready
-      await new Promise((resolve) => {
-        if (videoRef.current) {
-          videoRef.current.onloadedmetadata = resolve;
-        }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.play();
-      }
-      
-      // Start pulse detection algorithm
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      
-      if (!ctx) return;
-      
-      // Array to store red values for analysis
-      const redValues: number[] = [];
-      const maxSamples = 100;
-      
-      pulseDetectionIntervalRef.current = setInterval(() => {
-        if (!videoRef.current || !ctx) return;
-        
-        // Draw video frame to canvas
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        
-        // Get image data from center of frame
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const radius = Math.min(canvas.width, canvas.height) / 10;
-        
-        const imageData = ctx.getImageData(centerX - radius, centerY - radius, radius * 2, radius * 2);
-        
-        // Calculate average red value (blood flow indicator)
-        let totalRed = 0;
-        for (let i = 0; i < imageData.data.length; i += 4) {
-          totalRed += imageData.data[i]; // Red channel
-        }
-        
-        const avgRed = totalRed / (imageData.data.length / 4);
-        
-        // Add to array
-        redValues.push(avgRed);
-        
-        // Keep array at max size
-        if (redValues.length > maxSamples) {
-          redValues.shift();
-        }
-        
-        // Need at least 50 samples to calculate
-        if (redValues.length >= 50 && redValues[0] !== undefined) {
-          // Simple peak detection
-          let peaks = 0;
-          let lastValue = redValues[0];
-          let rising = false;
-          
-          for (let i = 1; i < redValues.length; i++) {
-            if (redValues[i] !== undefined && lastValue !== undefined) {
-              if (redValues[i] > lastValue && !rising) {
-                rising = true;
-              } else if (redValues[i] < lastValue && rising) {
-                peaks++;
-                rising = false;
-              }
-              
-              lastValue = redValues[i];
-            }
-          }
-          
-          // Calculate heart rate (peaks per minute)
-          // Assuming 30 fps, 50 samples = 1.67 seconds
-          const timeSpan = redValues.length / 30;
-          const bpm = (peaks / timeSpan) * 60;
-          
-          // Only update if reasonable value (40-180 bpm)
-          if (bpm >= 40 && bpm <= 180) {
-            setPulseDetection(prev => ({
-              ...prev,
-              heartRate: Math.round(bpm)
-            }));
-          }
-        }
-        
-        // Draw visualization
-        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw pulse wave
-        ctx.beginPath();
-        ctx.strokeStyle = "#9333ea";
-        ctx.lineWidth = 2;
-        
-        for (let i = 0; i < redValues.length; i++) {
-          if (redValues[i] !== undefined) {
-            const x = (i / maxSamples) * canvas.width;
-            const y = canvas.height - (((redValues[i] - 100) / 50) * canvas.height) / 2;
-            
-            if (i === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-          }
-        }
-        
-        ctx.stroke();
-        
-        // Draw heart rate
-        if (pulseDetection.heartRate) {
-          ctx.fillStyle = "#ffffff";
-          ctx.font = "24px sans-serif";
-          ctx.textAlign = "center";
-          ctx.fillText(`${pulseDetection.heartRate} BPM`, canvas.width / 2, 30);
-        }
-      }, 33); // ~30fps
-    } catch (err) {
-      console.error("Error accessing camera:", err);
-    }
-  }, []);
-  
-  // Stop pulse detection (memoized)
-  const stopPulseDetection = useCallback(() => {
-    if (pulseDetectionIntervalRef.current) {
-      clearInterval(pulseDetectionIntervalRef.current);
-    }
-    
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-  }, []);
-  
-  // Show save preset dialog (memoized)
-  const showSavePresetDialog = useCallback(() => {
-    setPresetSaving(prev => ({ ...prev, show: true }));
-  }, []);
-  
-  // Hide save preset dialog (memoized)
-  const hideSavePresetDialog = useCallback(() => {
-    setPresetSaving({ show: false, name: "" });
-  }, []);
-  
-  // Save preset (memoized)
-  const savePreset = useCallback(() => {
-    // In a real app, this would save to a database or localStorage
-    alert(`Preset "${presetSaving.name}" saved with: Left: ${frequencies.left}Hz, Right: ${frequencies.right}Hz, Wave: ${audioSettings.waveType}`);
-    setPresetSaving({ show: false, name: "" });
-  }, [presetSaving.name, frequencies, audioSettings.waveType]);
-  
-  // Handle preset name change (memoized)
-  const handlePresetNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setPresetSaving(prev => ({ ...prev, name: e.target.value }));
-  }, []);
+// Memoized frequency control component
+const FrequencyControl = memo(({
+  label,
+  value,
+  onChange,
+  min = 20,
+  max = 500,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}) => {
+  // Use callback to avoid recreation on each render
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(parseInt(e.target.value, 10));
+  }, [onChange]);
   
   return (
-    <div className="rounded-xl bg-black/30 backdrop-blur-sm border border-purple-500/20 overflow-hidden">
-      <div className="p-4 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center">
-            <Brain className="h-4 w-4 text-purple-400" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Binaural Beat Generator</h2>
-            <p className="text-xs text-white/60">
-              {beatFrequency.toFixed(1)} Hz • {brainWave.name} Waves
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={showSavePresetDialog}
-            className="border-white/10 text-white hover:bg-white/5"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Preset
-          </Button>
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="flex mb-6">
-          <Button
-            onClick={togglePlay}
-            size="lg"
-            className={cn(
-              "w-full rounded-full flex gap-2 items-center justify-center",
-              isPlaying
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-purple-600 hover:bg-purple-700"
-            )}
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="h-5 w-5" /> Pause
-              </>
-            ) : (
-              <>
-                <Play className="h-5 w-5" /> Play
-              </>
-            )}
-          </Button>
-        </div>
-
-        <Tabs defaultValue="frequencies" className="mb-6">
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="frequencies">Frequencies</TabsTrigger>
-            <TabsTrigger value="presets">Presets</TabsTrigger>
-            <TabsTrigger value="effects">Effects</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="frequencies">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label>Left Ear: {frequencies.left} Hz</Label>
-                  <span className="text-xs text-white/60">100-500 Hz</span>
-                </div>
-                <Slider
-                  min={100}
-                  max={500}
-                  step={1}
-                  value={[frequencies.left]}
-                  onValueChange={handleLeftFreqChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label>Right Ear: {frequencies.right} Hz</Label>
-                  <span className="text-xs text-white/60">100-500 Hz</span>
-                </div>
-                <Slider
-                  min={100}
-                  max={500}
-                  step={1}
-                  value={[frequencies.right]}
-                  onValueChange={handleRightFreqChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label>Beat Frequency: {beatFrequency.toFixed(1)} Hz</Label>
-                  <span
-                    className="text-xs"
-                    style={{ color: brainWave.color }}
-                  >
-                    {brainWave.name} Waves
-                  </span>
-                </div>
-                <div className="h-1 w-full bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-full" />
-                <p className="text-xs text-white/60">
-                  {brainWave.description}
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="presets" className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              {presets.map((preset) => (
-                <Button
-                  key={preset.name}
-                  variant={
-                    activePreset === preset.name ? "default" : "outline"
-                  }
-                  className={cn(
-                    "h-auto py-2 flex flex-col items-start text-left",
-                    activePreset === preset.name
-                      ? "bg-purple-600 text-white"
-                      : "border-white/10 text-white hover:bg-white/5"
-                  )}
-                  onClick={() => applyPreset(preset.name)}
-                >
-                  <span className="font-bold">{preset.name}</span>
-                  <span className="text-xs opacity-80">
-                    {Math.abs(preset.rightFreq - preset.leftFreq)} Hz -{" "}
-                    {preset.description}
-                  </span>
-                </Button>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="effects" className="space-y-6">
-            <div className="space-y-2">
-              <Label>Wave Type</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {["sine", "square", "triangle", "sawtooth"].map((type) => (
-                  <Button
-                    key={type}
-                    variant={
-                      audioSettings.waveType === type ? "default" : "outline"
-                    }
-                    className={
-                      audioSettings.waveType === type
-                        ? "bg-purple-600"
-                        : "border-white/10 text-white hover:bg-white/5"
-                    }
-                    onClick={() => handleWaveTypeChange(type as OscillatorType)}
-                  >
-                    {type}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Timer</Label>
-                <Switch checked={timer.active} onCheckedChange={toggleTimer} />
-              </div>
-
-              {timer.active && (
-                <>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <Label>Duration: {timer.duration} minutes</Label>
-                    </div>
-                    <Slider
-                      min={1}
-                      max={60}
-                      step={1}
-                      value={[timer.duration]}
-                      onValueChange={handleTimerDurationChange}
-                    />
-                  </div>
-
-                  <div className="bg-black/20 p-4 rounded-lg flex items-center justify-center">
-                    <Timer className="mr-2 h-5 w-5 text-white/80" />
-                    <span className="text-2xl font-mono">
-                      {formatTime(timer.remaining)}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="controls" className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <div className="flex items-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0 h-auto bg-transparent hover:bg-transparent"
-                    onClick={toggleMute}
-                  >
-                    {audioSettings.isMuted ? (
-                      <VolumeX className="h-5 w-5 text-white/80" />
-                    ) : (
-                      <Volume2 className="h-5 w-5 text-white/80" />
-                    )}
-                  </Button>
-                  <Label className="ml-2">Volume</Label>
-                </div>
-                <span className="text-xs text-white/60">
-                  {audioSettings.volume}%
-                </span>
-              </div>
-              <Slider
-                min={0}
-                max={100}
-                step={1}
-                value={[audioSettings.volume]}
-                onValueChange={handleVolumeChange}
-                disabled={audioSettings.isMuted}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Heart Rate Detection</Label>
-                <Switch
-                  checked={pulseDetection.show}
-                  onCheckedChange={togglePulseDetection}
-                />
-              </div>
-
-              {pulseDetection.show && (
-                <>
-                  <div className="aspect-video bg-black/30 rounded-lg overflow-hidden relative">
-                    <video
-                      ref={videoRef}
-                      className="absolute inset-0 opacity-0 pointer-events-none"
-                    />
-                    <canvas
-                      ref={canvasRef}
-                      width={640}
-                      height={360}
-                      className="w-full h-full"
-                    />
-                  </div>
-
-                  {pulseDetection.heartRate && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Heart className="h-5 w-5 text-red-500 mr-2" />
-                          <Label>Sync to Heart Rate</Label>
-                        </div>
-                        <Switch
-                          checked={pulseDetection.syncToHeartRate}
-                          onCheckedChange={toggleHeartRateSync}
-                        />
-                      </div>
-
-                      <p className="text-sm text-white/60">
-                        Your detected heart rate is{" "}
-                        <span className="text-white">
-                          {pulseDetection.heartRate} BPM
-                        </span>
-                        . Syncing will adjust the beat frequency based on your
-                        heart rate.
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {presetSaving.show && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-purple-500/20 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Save Custom Preset</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="preset-name">Preset Name</Label>
-                <Input
-                  id="preset-name"
-                  value={presetSaving.name}
-                  onChange={handlePresetNameChange}
-                  placeholder="My Custom Preset"
-                />
-              </div>
-
-              <div className="bg-black/20 p-4 rounded-lg space-y-2 text-sm">
-                <p>
-                  Left Frequency: <span className="font-mono">{frequencies.left} Hz</span>
-                </p>
-                <p>
-                  Right Frequency: <span className="font-mono">{frequencies.right} Hz</span>
-                </p>
-                <p>
-                  Beat Frequency: <span className="font-mono">{beatFrequency.toFixed(1)} Hz</span>
-                </p>
-                <p>
-                  Wave Type: <span className="font-mono">{audioSettings.waveType}</span>
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={hideSavePresetDialog}
-                  className="border-white/10 text-white hover:bg-white/5"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  disabled={!presetSaving.name.trim()}
-                  onClick={savePreset}
-                >
-                  Save Preset
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="mb-3">
+      <label className="block mb-1">{label}: {value} Hz</label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={handleChange}
+        className="w-full"
+      />
     </div>
   );
 });
 
-// Set display name for debugging purposes
-BinauralBeatGenerator.displayName = "BinauralBeatGenerator";
+// Memoized wave type selector component
+const WaveTypeSelector = memo(({
+  currentType,
+  onChange,
+}: {
+  currentType: OscillatorType;
+  onChange: (type: OscillatorType) => void;
+}) => {
+  const waveTypes: OscillatorType[] = useMemo(() => 
+    ['sine', 'square', 'sawtooth', 'triangle'], 
+  []);
+  
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {waveTypes.map((type) => (
+        <button
+          key={type}
+          className={`py-1 rounded ${
+            currentType === type
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 text-gray-800'
+          }`}
+          onClick={() => onChange(type)}
+        >
+          {type.charAt(0).toUpperCase() + type.slice(1)}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+// Memoized timer control component
+const TimerControl = memo(({
+  duration,
+  remaining,
+  active,
+  onToggle,
+  onReset,
+  onDurationChange,
+}: {
+  duration: number;
+  remaining: number;
+  active: boolean;
+  onToggle: () => void;
+  onReset: () => void;
+  onDurationChange: (duration: number) => void;
+}) => {
+  const formatTime = useCallback((seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+  
+  const handleDurationChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    onDurationChange(parseInt(e.target.value, 10));
+  }, [onDurationChange]);
+  
+  return (
+    <div className="mb-3">
+      <label className="block mb-1">Timer: {formatTime(remaining)}</label>
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          className={`py-1 rounded ${
+            active ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+          }`}
+          onClick={onToggle}
+        >
+          {active ? 'Stop' : 'Start'}
+        </button>
+        <button
+          className="bg-gray-200 text-gray-800 py-1 rounded"
+          onClick={onReset}
+        >
+          Reset
+        </button>
+        <select
+          className="border rounded py-1 px-2"
+          value={duration}
+          onChange={handleDurationChange}
+        >
+          <option value="300">5 minutes</option>
+          <option value="600">10 minutes</option>
+          <option value="1200">20 minutes</option>
+          <option value="1800">30 minutes</option>
+        </select>
+      </div>
+    </div>
+  );
+});
+
+// Memoized waveform visualization component
+const WaveformVisualization = memo(({
+  frequencies,
+  waveType,
+}: {
+  frequencies: { left: number; right: number };
+  waveType: OscillatorType;
+}) => {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const animationFrameId = useRef<number | null>(null);
+  
+  // Use memoized drawWaveform function to prevent unnecessary recreations
+  const drawWaveform = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Canvas dimensions
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Calculate difference frequency
+    const beatFrequency = Math.abs(frequencies.right - frequencies.left);
+    
+    // Draw waveforms
+    const drawWave = (frequency: number, color: string, yOffset: number) => {
+      const wavelength = width / (frequency / 10);
+      const amplitude = height / 8;
+      
+      ctx.beginPath();
+      ctx.moveTo(0, yOffset);
+      
+      for (let x = 0; x < width; x++) {
+        let y = 0;
+        
+        // Generate waveform based on selected type
+        switch (waveType) {
+          case 'sine':
+            y = amplitude * Math.sin((x / wavelength) * Math.PI * 2);
+            break;
+          case 'square':
+            y = amplitude * (Math.sin((x / wavelength) * Math.PI * 2) >= 0 ? 1 : -1);
+            break;
+          case 'sawtooth':
+            y = amplitude * ((x % wavelength) / wavelength * 2 - 1);
+            break;
+          case 'triangle':
+            const phase = (x % wavelength) / wavelength;
+            y = amplitude * (phase < 0.5 ? 4 * phase - 1 : 3 - 4 * phase);
+            break;
+        }
+        
+        ctx.lineTo(x, yOffset + y);
+      }
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    };
+    
+    // Draw the three waveforms (left, right, and beat)
+    drawWave(frequencies.left, 'rgba(0, 128, 255, 0.8)', height / 4);
+    drawWave(frequencies.right, 'rgba(255, 128, 0, 0.8)', height / 2);
+    drawWave(beatFrequency, 'rgba(128, 0, 255, 0.8)', (height * 3) / 4);
+    
+    // Add labels
+    ctx.font = '12px Arial';
+    ctx.fillStyle = '#333';
+    ctx.fillText(`Left: ${frequencies.left} Hz`, 10, 15);
+    ctx.fillText(`Right: ${frequencies.right} Hz`, 10, height / 2 - 10);
+    ctx.fillText(`Beat: ${beatFrequency.toFixed(1)} Hz`, 10, height - 10);
+    
+    // Request next frame
+    animationFrameId.current = requestAnimationFrame(drawWaveform);
+  }, [frequencies, waveType]);
+  
+  // Initialize visualization
+  useEffect(() => {
+    if (canvasRef.current) {
+      // Start animation
+      animationFrameId.current = requestAnimationFrame(drawWaveform);
+      
+      // Resize canvas to match container
+      const resizeCanvas = () => {
+        if (canvasRef.current) {
+          const container = canvasRef.current.parentElement;
+          if (container) {
+            canvasRef.current.width = container.clientWidth;
+            canvasRef.current.height = 200;
+          }
+        }
+      };
+      
+      // Initial resize
+      resizeCanvas();
+      
+      // Listen for window resize
+      window.addEventListener('resize', resizeCanvas);
+      
+      // Clean up
+      return () => {
+        window.removeEventListener('resize', resizeCanvas);
+        
+        if (animationFrameId.current !== null) {
+          cancelAnimationFrame(animationFrameId.current);
+          animationFrameId.current = null;
+        }
+      };
+    }
+    
+    return undefined;
+  }, [drawWaveform]);
+  
+  return (
+    <div className="visualization-container mb-4 bg-white border rounded">
+      <canvas ref={canvasRef} className="w-full h-40"></canvas>
+    </div>
+  );
+});
+
+// Main component (optimized)
+const BinauralBeatGenerator: React.FC = () => {
+  // Audio context and oscillators
+  const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+  const leftOscillator = useRef<OscillatorNode | null>(null);
+  const rightOscillator = useRef<OscillatorNode | null>(null);
+  const leftGain = useRef<GainNode | null>(null);
+  const rightGain = useRef<GainNode | null>(null);
+  
+  // Frequencies for each ear
+  const [frequencies, setFrequencies] = useState({
+    left: 200,
+    right: 205, // 5 Hz difference = theta wave (relaxation)
+  });
+  
+  // Audio settings
+  const [audioSettings, setAudioSettings] = useState({
+    volume: 0.5,
+    isMuted: false,
+    waveType: 'sine' as OscillatorType,
+  });
+  
+  // Timer state
+  const [timer, setTimer] = useState<TimerState>({
+    duration: 300, // 5 minutes in seconds
+    remaining: 300,
+    active: false,
+  });
+  
+  // Timer interval reference
+  const timerInterval = useRef<number | null>(null);
+  
+  // Initialize audio (optimized with useCallback)
+  const initializeAudio = useCallback(() => {
+    if (audioInitialized) return;
+    
+    try {
+      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      setAudioContext(context);
+      
+      // Create oscillators and gain nodes
+      const leftOsc = context.createOscillator();
+      const rightOsc = context.createOscillator();
+      const leftG = context.createGain();
+      const rightG = context.createGain();
+      
+      // Set frequencies and connect nodes
+      leftOsc.frequency.value = frequencies.left;
+      rightOsc.frequency.value = frequencies.right;
+      
+      // Connect nodes
+      leftOsc.connect(leftG);
+      rightOsc.connect(rightG);
+      
+      // Set waveform
+      leftOsc.type = audioSettings.waveType;
+      rightOsc.type = audioSettings.waveType;
+      
+      // Set volume
+      leftG.gain.value = audioSettings.isMuted ? 0 : audioSettings.volume;
+      rightG.gain.value = audioSettings.isMuted ? 0 : audioSettings.volume;
+      
+      // Connect to left and right speakers
+      const merger = context.createChannelMerger(2);
+      leftG.connect(merger, 0, 0);
+      rightG.connect(merger, 0, 1);
+      merger.connect(context.destination);
+      
+      // Store references
+      leftOscillator.current = leftOsc;
+      rightOscillator.current = rightOsc;
+      leftGain.current = leftG;
+      rightGain.current = rightG;
+      
+      // Start oscillators
+      leftOsc.start();
+      rightOsc.start();
+      
+      setAudioInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize audio:', error);
+    }
+  }, [audioInitialized, frequencies.left, frequencies.right, audioSettings.waveType, audioSettings.volume, audioSettings.isMuted]);
+  
+  // Clean up audio (optimized with useCallback)
+  const cleanupAudio = useCallback(() => {
+    if (!audioInitialized) return;
+    
+    try {
+      if (leftOscillator.current) {
+        leftOscillator.current.stop();
+        leftOscillator.current.disconnect();
+      }
+      
+      if (rightOscillator.current) {
+        rightOscillator.current.stop();
+        rightOscillator.current.disconnect();
+      }
+      
+      if (leftGain.current) {
+        leftGain.current.disconnect();
+      }
+      
+      if (rightGain.current) {
+        rightGain.current.disconnect();
+      }
+      
+      if (audioContext) {
+        audioContext.close();
+      }
+      
+      setAudioInitialized(false);
+    } catch (error) {
+      console.error('Error cleaning up audio:', error);
+    }
+  }, [audioInitialized, audioContext]);
+  
+  // Update frequencies (optimized with useCallback)
+  const updateLeftFrequency = useCallback((newFreq: number) => {
+    if (newFreq >= 20 && newFreq <= 500) {
+      setFrequencies(prev => ({
+        ...prev,
+        left: newFreq,
+      }));
+      
+      if (audioInitialized && leftOscillator.current) {
+        leftOscillator.current.frequency.value = newFreq;
+      }
+    }
+  }, [audioInitialized]);
+  
+  const updateRightFrequency = useCallback((newFreq: number) => {
+    if (newFreq >= 20 && newFreq <= 500) {
+      setFrequencies(prev => ({
+        ...prev,
+        right: newFreq,
+      }));
+      
+      if (audioInitialized && rightOscillator.current) {
+        rightOscillator.current.frequency.value = newFreq;
+      }
+    }
+  }, [audioInitialized]);
+  
+  // Update volume (optimized with useCallback)
+  const updateVolume = useCallback((newVolume: number) => {
+    if (newVolume >= 0 && newVolume <= 1) {
+      setAudioSettings(prev => ({
+        ...prev,
+        volume: newVolume,
+      }));
+      
+      if (audioInitialized && leftGain.current && rightGain.current && !audioSettings.isMuted) {
+        leftGain.current.gain.value = newVolume;
+        rightGain.current.gain.value = newVolume;
+      }
+    }
+  }, [audioInitialized, audioSettings.isMuted]);
+  
+  // Toggle mute (optimized with useCallback)
+  const toggleMute = useCallback(() => {
+    const newMuted = !audioSettings.isMuted;
+    
+    setAudioSettings(prev => ({
+      ...prev,
+      isMuted: newMuted,
+    }));
+    
+    if (audioInitialized && leftGain.current && rightGain.current) {
+      const volume = newMuted ? 0 : audioSettings.volume;
+      leftGain.current.gain.value = volume;
+      rightGain.current.gain.value = volume;
+    }
+  }, [audioInitialized, audioSettings.isMuted, audioSettings.volume]);
+  
+  // Change wave type (optimized with useCallback)
+  const changeWaveType = useCallback((waveType: OscillatorType) => {
+    setAudioSettings(prev => ({
+      ...prev,
+      waveType,
+    }));
+    
+    if (audioInitialized && leftOscillator.current && rightOscillator.current) {
+      leftOscillator.current.type = waveType;
+      rightOscillator.current.type = waveType;
+    }
+  }, [audioInitialized]);
+  
+  // Update timer duration (optimized with useCallback)
+  const updateTimerDuration = useCallback((duration: number) => {
+    if (duration >= 0) {
+      setTimer(prev => ({
+        ...prev,
+        duration,
+        remaining: prev.active ? prev.remaining : duration,
+      }));
+    }
+  }, []);
+  
+  // Toggle timer (optimized with useCallback)
+  const toggleTimer = useCallback(() => {
+    if (timer.active) {
+      // Stop timer
+      if (timerInterval.current !== null) {
+        window.clearInterval(timerInterval.current);
+        timerInterval.current = null;
+      }
+      
+      setTimer(prev => ({
+        ...prev,
+        active: false,
+      }));
+    } else {
+      // Start timer
+      const startTime = Date.now();
+      const initialRemaining = timer.remaining > 0 ? timer.remaining : timer.duration;
+      
+      setTimer(prev => ({
+        ...prev,
+        active: true,
+        remaining: initialRemaining,
+      }));
+      
+      timerInterval.current = window.setInterval(() => {
+        const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+        const newRemaining = initialRemaining - elapsedSeconds;
+        
+        if (newRemaining <= 0) {
+          // Timer completed
+          if (timerInterval.current !== null) {
+            window.clearInterval(timerInterval.current);
+            timerInterval.current = null;
+          }
+          
+          setTimer(prev => ({
+            ...prev,
+            active: false,
+            remaining: 0,
+          }));
+          
+          cleanupAudio();
+        } else {
+          setTimer(prev => ({
+            ...prev,
+            remaining: newRemaining,
+          }));
+        }
+      }, 1000);
+    }
+  }, [timer.active, timer.remaining, timer.duration, cleanupAudio]);
+  
+  // Reset timer (optimized with useCallback)
+  const resetTimer = useCallback(() => {
+    if (timerInterval.current !== null) {
+      window.clearInterval(timerInterval.current);
+      timerInterval.current = null;
+    }
+    
+    setTimer(prev => ({
+      ...prev,
+      active: false,
+      remaining: prev.duration,
+    }));
+  }, []);
+  
+  // Set up presets (optimized with useCallback)
+  const applyPreset = useCallback((beatFreq: number) => {
+    if (frequencies.left) {
+      updateRightFrequency(frequencies.left + beatFreq);
+    }
+  }, [frequencies.left, updateRightFrequency]);
+  
+  // Calculate beat frequency
+  const beatFrequency = useMemo(() => 
+    Math.abs(frequencies.right - frequencies.left).toFixed(1),
+  [frequencies.left, frequencies.right]);
+  
+  // Toggle audio (Start/Stop button)
+  const toggleAudio = useCallback(() => {
+    if (audioInitialized) {
+      cleanupAudio();
+    } else {
+      initializeAudio();
+    }
+  }, [audioInitialized, cleanupAudio, initializeAudio]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerInterval.current !== null) {
+        window.clearInterval(timerInterval.current);
+      }
+      
+      cleanupAudio();
+    };
+  }, [cleanupAudio]);
+  
+  // Handle volume change
+  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    updateVolume(parseFloat(e.target.value));
+  }, [updateVolume]);
+  
+  // Memoize preset buttons to prevent unnecessary rerenders
+  const presetButtons = useMemo(() => (
+    <div className="grid grid-cols-2 gap-2 text-sm mt-1">
+      <button
+        className="bg-blue-500 text-white py-1 px-2 rounded"
+        onClick={() => applyPreset(7.83)} // Schumann resonance
+      >
+        Schumann (7.83 Hz)
+      </button>
+      <button
+        className="bg-blue-500 text-white py-1 px-2 rounded"
+        onClick={() => applyPreset(4)} // Theta
+      >
+        Theta (4 Hz)
+      </button>
+    </div>
+  ), [applyPreset]);
+  
+  return (
+    <div className="binaural-beat-generator p-4 border rounded-lg bg-gray-50">
+      <h2 className="text-2xl font-bold mb-4">Binaural Beat Generator (Optimized)</h2>
+      
+      {/* Visualization */}
+      <WaveformVisualization
+        frequencies={frequencies}
+        waveType={audioSettings.waveType}
+      />
+      
+      {/* Controls Section */}
+      <div className="controls grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Frequency Controls */}
+        <div className="frequency-controls p-3 border rounded bg-white">
+          <h3 className="text-lg font-semibold mb-2">Frequency Controls</h3>
+          
+          <FrequencyControl
+            label="Left Ear"
+            value={frequencies.left}
+            onChange={updateLeftFrequency}
+          />
+          
+          <FrequencyControl
+            label="Right Ear"
+            value={frequencies.right}
+            onChange={updateRightFrequency}
+          />
+          
+          <div className="mb-3">
+            <label className="block mb-1">Beat Frequency: {beatFrequency} Hz</label>
+            {presetButtons}
+          </div>
+        </div>
+        
+        {/* Audio Controls */}
+        <div className="audio-controls p-3 border rounded bg-white">
+          <h3 className="text-lg font-semibold mb-2">Audio Controls</h3>
+          
+          <div className="mb-3">
+            <label className="block mb-1">Volume: {Math.round(audioSettings.volume * 100)}%</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={audioSettings.volume}
+              onChange={handleVolumeChange}
+              className="w-full"
+            />
+          </div>
+          
+          <div className="mb-3">
+            <label className="block mb-1">Waveform:</label>
+            <WaveTypeSelector
+              currentType={audioSettings.waveType}
+              onChange={changeWaveType}
+            />
+          </div>
+          
+          <TimerControl
+            duration={timer.duration}
+            remaining={timer.remaining}
+            active={timer.active}
+            onToggle={toggleTimer}
+            onReset={resetTimer}
+            onDurationChange={updateTimerDuration}
+          />
+        </div>
+      </div>
+      
+      {/* Start/Stop Button */}
+      <div className="mt-4 flex justify-center">
+        <button
+          className={`py-2 px-6 rounded-lg text-white font-bold ${
+            audioInitialized ? 'bg-red-600' : 'bg-green-600'
+          }`}
+          onClick={toggleAudio}
+        >
+          {audioInitialized ? 'Stop Audio' : 'Start Audio'}
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default BinauralBeatGenerator;
