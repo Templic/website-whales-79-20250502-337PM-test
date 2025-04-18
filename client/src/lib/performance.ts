@@ -1,4 +1,144 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useContext, useMemo, FC, ReactNode } from 'react';
+import { useInView as useReactInView } from 'react-intersection-observer';
+
+// Export the useInView hook from react-intersection-observer
+export const useInView = useReactInView;
+
+/**
+ * Custom hook to skip rendering a component when it's not visible
+ * @param options Options for controlling when to skip rendering
+ */
+export function useSkipRenderIfInvisible(options: {
+  enabled?: boolean;
+  rootMargin?: string;
+  threshold?: number;
+  fallback?: React.ReactNode;
+} = {}): { 
+  isVisible: boolean; 
+  ref: (node: Element | null) => void;
+  shouldRender: boolean;
+  fallbackContent: React.ReactNode;
+} {
+  const { 
+    enabled = true,
+    rootMargin = '0px',
+    threshold = 0,
+    fallback = null
+  } = options;
+  
+  const { ref, inView } = useReactInView({
+    rootMargin,
+    threshold,
+    triggerOnce: false,
+  });
+  
+  const isVisible = !enabled || inView;
+  const shouldRender = isVisible;
+  
+  return {
+    isVisible,
+    ref,
+    shouldRender,
+    fallbackContent: fallback,
+  };
+}
+
+/**
+ * A performance profiler component that measures and reports rendering metrics
+ */
+export interface PerformanceProfilerProps {
+  /** ID of the component to profile */
+  id: string;
+  /** Whether to enable profiling */
+  enabled?: boolean;
+  /** Children to render */
+  children: React.ReactNode;
+  /** Whether to log metrics to console */
+  logToConsole?: boolean;
+  /** Custom metrics callback */
+  onMetrics?: (metrics: any) => void;
+  /** Whether to show a visual indicator */
+  showVisualIndicator?: boolean;
+}
+
+/**
+ * PerformanceProfiler component that wraps children and measures render performance
+ */
+export const PerformanceProfiler: FC<PerformanceProfilerProps> = ({
+  id,
+  enabled = true,
+  children,
+  logToConsole = false,
+  onMetrics,
+  showVisualIndicator = false,
+}) => {
+  const startTimeRef = useRef(0);
+  const renderCountRef = useRef(0);
+  const [lastRenderTime, setLastRenderTime] = useState(0);
+  
+  useEffect(() => {
+    if (!enabled) return;
+    
+    const endTime = performance.now();
+    const renderTime = endTime - startTimeRef.current;
+    renderCountRef.current += 1;
+    
+    // Save metrics
+    const metrics = {
+      id,
+      renderCount: renderCountRef.current,
+      renderTime,
+      timestamp: Date.now(),
+    };
+    
+    // Update state for visual indicator
+    if (showVisualIndicator) {
+      setLastRenderTime(renderTime);
+    }
+    
+    // Optional logging
+    if (logToConsole) {
+      console.log(`[PerformanceProfiler] ${id} render #${renderCountRef.current}: ${renderTime.toFixed(2)}ms`);
+    }
+    
+    // Report metrics through callback
+    if (onMetrics) {
+      onMetrics(metrics);
+    }
+  });
+  
+  // Record start time before render
+  startTimeRef.current = performance.now();
+  
+  if (showVisualIndicator) {
+    const isSlow = lastRenderTime > 16.7; // 60fps threshold
+    
+    return React.createElement(
+      'div',
+      { style: { position: 'relative' } },
+      children,
+      React.createElement(
+        'div',
+        {
+          style: {
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            backgroundColor: isSlow ? 'rgba(255, 0, 0, 0.5)' : 'rgba(0, 255, 0, 0.5)',
+            color: 'white',
+            fontSize: '10px',
+            padding: '2px 4px',
+            borderRadius: '2px',
+            pointerEvents: 'none',
+          }
+        },
+        `${lastRenderTime.toFixed(1)}ms`
+      )
+    );
+  }
+  
+  return React.createElement(React.Fragment, null, children);
+};
 
 /**
  * Throttle a function to only execute once per specified time period
