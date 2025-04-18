@@ -18,6 +18,8 @@ import ChatWidget from "@/components/chat/ChatWidget";
 import TaskadeWidget from "@/components/chat/TaskadeWidget";
 import CookieConsent from "@/components/common/CookieConsent";
 import ServiceWorkerManager from "@/components/common/ServiceWorkerManager";
+import StylesProvider from "@/components/common/StylesProvider";
+import FontLoader from "@/components/common/FontLoader";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -278,20 +280,46 @@ function App() {
         <CartProvider>
           <AccessibilityProvider>
             <ChatProvider>
-              <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <StarBackground starCount={150} />
-                <AppRouter />
-                <ChatWidget />
-                {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
-                {/* <TaskadeWidget /> */}
-                <CookieConsent />
-                <Toaster />
-                <ServiceWorkerManager 
-                  registerOnMount={true}
-                  showUpdateNotification={true} 
-                  showOfflineNotification={true}
-                />
-              </ErrorBoundary>
+              {/* Add StylesProvider to optimize CSS-in-JS rendering */}
+              <StylesProvider
+                extractCritical={true}
+                optimizeSheets={true}
+                injectIntoHead={true}
+                deduplicate={true}
+                delayNonCritical={100}
+              >
+                <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <StarBackground starCount={150} />
+                  <AppRouter />
+                  <ChatWidget />
+                  {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
+                  {/* <TaskadeWidget /> */}
+                  <CookieConsent />
+                  <Toaster />
+                  {/* Add Font optimization */}
+                  <FontLoader
+                    fonts={[
+                      { family: 'Orbitron', display: 'swap' },
+                      { family: 'Space Grotesk', display: 'swap' },
+                      { family: 'Cinzel', display: 'swap' },
+                      { family: 'Exo 2', display: 'swap' },
+                      { family: 'Gruppo', display: 'swap' },
+                      { family: 'Michroma', display: 'swap' },
+                      { family: 'Poiret One', display: 'swap' },
+                      { family: 'Syncopate', display: 'swap' }
+                    ]}
+                    display="swap"
+                    preload={true}
+                    addBodyClass={true}
+                  />
+                  {/* Service Worker for offline capabilities */}
+                  <ServiceWorkerManager 
+                    registerOnMount={true}
+                    showUpdateNotification={true} 
+                    showOfflineNotification={true}
+                  />
+                </ErrorBoundary>
+              </StylesProvider>
             </ChatProvider>
           </AccessibilityProvider>
         </CartProvider>
