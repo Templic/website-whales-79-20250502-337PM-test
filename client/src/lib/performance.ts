@@ -109,11 +109,7 @@ export const PerformanceProfiler: React.FC<{
     [id, onRenderCallback]
   );
   
-  return (
-    <React.Profiler id={id} onRender={handleRender}>
-      {children}
-    </React.Profiler>
-  );
+  return React.createElement(React.Profiler, { id, onRender: handleRender }, children);
 };
 
 /**

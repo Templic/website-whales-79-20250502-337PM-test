@@ -568,3 +568,4 @@ const BinauralBeatGenerator: React.FC = () => {
 };
 
 export default BinauralBeatGenerator;
+export { BinauralBeatGenerator };

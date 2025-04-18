@@ -37,12 +37,12 @@ export async function measureComponentPerformance(
   try {
     // Measure initial render time
     const startInitialRender = performance.now();
-    render(<Component />, container);
+    render(React.createElement(Component), container);
     const initialRenderTime = performance.now() - startInitialRender;
     
     // Measure re-render time
     const startRerender = performance.now();
-    render(<Component />, container);
+    render(React.createElement(Component), container);
     const rerenderTime = performance.now() - startRerender;
     
     // Measure state change propagation (using a wrapper)
@@ -66,12 +66,12 @@ export async function measureComponentPerformance(
         }
       }, [state]);
       
-      return <Component />;
+      return React.createElement(Component);
     };
     
     // Clear and remount with state wrapper
     unmountComponentAtNode(container);
-    render(<StateWrapper />, container);
+    render(React.createElement(StateWrapper), container);
     
     // Wait for state change to complete
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -103,12 +103,12 @@ export async function measureComponentPerformance(
         }
       }, [prop]);
       
-      return <Component testProp={prop} />;
+      return React.createElement(Component, { testProp: prop });
     };
     
     // Clear and remount with prop wrapper
     unmountComponentAtNode(container);
-    render(<PropWrapper />, container);
+    render(React.createElement(PropWrapper), container);
     
     // Wait for prop change to complete
     await new Promise(resolve => setTimeout(resolve, 100));
