@@ -229,6 +229,12 @@ function AppRouter() {
           <Route path="/cosmic-test" component={CosmicTest} />
           <Route path="/type-system-demo" component={TypeSystemDemo} />
           <Route path="/dynamic-content-demo" component={DynamicContentDemo} />
+          <Route path="/test/binaural-beat-performance" component={
+            () => import('./pages/tests/binaural-beat-performance-test').then(module => {
+              const Page = module.default;
+              return <Page />;
+            })
+          } />
           {/* Archived Page - /button-demo */}
           {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
