@@ -2,7 +2,7 @@ import React, { ReactNode, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import './cosmic-animations.css';
 import { useIsMobile } from '@/hooks/use-responsive';
-import { CosmicShapeGroup, ShapeProps } from './CosmicShapeGroup';
+import CosmicShapeGroup, { ShapeProps } from './CosmicShapeGroup';
 
 interface GeometricSectionProps {
   children: ReactNode;

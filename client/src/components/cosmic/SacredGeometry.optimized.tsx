@@ -1,595 +1,604 @@
-/**
- * SacredGeometry.optimized.tsx
- * 
- * Performance-optimized version of the SacredGeometry component.
- * Implements render skipping when not visible, throttled animations,
- * and memoization to reduce CPU usage.
- */
-
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import { useRenderCount, useSkipRenderIfInvisible, useInView, throttle, measureExecutionTime } from '@/lib/performance';
+import React, { useMemo, useRef, useEffect, useState, CSSProperties, memo } from 'react';
+import { measureExecutionTime, useRenderCount, throttle } from '@/lib/performance';
 import { useIsMobile } from '@/hooks/use-responsive';
 
+type GeometryType = 
+  'flower-of-life' | 
+  'seed-of-life' | 
+  'tree-of-life' | 
+  'metatron-cube' | 
+  'sri-yantra' | 
+  'pentagon-star' | 
+  'hexagon' | 
+  'heptagon' | 
+  'octagon' | 
+  'enneagon' | 
+  'decagon' |
+  'golden-spiral' |
+  'fibonacci-spiral' |
+  'vesica-piscis';
+
 interface SacredGeometryProps {
-  type: 'flower-of-life' | 'sri-yantra' | 'metatron-cube' | 'pentagon-star' | 'hexagon' | 'vesica-piscis' | 'golden-spiral';
-  size?: number;
+  type: GeometryType;
   color?: string;
+  secondaryColor?: string;
+  size?: number;
+  strokeWidth?: number;
+  animated?: boolean;
   animate?: boolean;
-  animationDuration?: number;
-  lineWidth?: number;
+  animationSpeed?: number;
   className?: string;
-  showLabels?: boolean;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
+  opacity?: number;
+  rotation?: number;
+  renderingQuality?: 'low' | 'medium' | 'high';
+  glowEffect?: boolean;
+  glowColor?: string;
+  glowIntensity?: number;
 }
 
-const SacredGeometry: React.FC<SacredGeometryProps> = ({
-  type,
-  size = 300,
+const SacredGeometry = memo(({
+  type = 'flower-of-life',
   color = '#7c3aed',
+  secondaryColor,
+  size = 300,
+  strokeWidth = 1,
   animate = false,
-  animationDuration = 60,
-  lineWidth = 1,
+  animationSpeed = 1,
   className = '',
-  showLabels = false,
   style = {},
-}) => {
-  // Performance monitoring and optimization hooks
-  useRenderCount('SacredGeometry');
-  const [inViewRef, isInView] = useInView({
-    threshold: 0.1,
-    rootMargin: '100px',
-  });
-  const skipRenderRef = useSkipRenderIfInvisible(isInView);
+  opacity = 1,
+  rotation = 0,
+  renderingQuality = 'medium',
+  glowEffect = false,
+  glowColor,
+  glowIntensity = 3,
+}: SacredGeometryProps) => {
+  // Performance optimization hooks
+  const renderCount = useRenderCount('SacredGeometry');
+  const svgRef = useRef<SVGSVGElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
-  const rotationRef = useRef<number>(0);
+  const [animationPhase, setAnimationPhase] = useState(0);
   const isMobile = useIsMobile();
+  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
   
-  // Memoize expensive initial calculations
-  const memoizedSize = useMemo(() => isMobile ? Math.min(size, window.innerWidth * 0.8) : size, [size, isMobile]);
-  const memoizedLineWidth = useMemo(() => isMobile ? Math.max(0.5, lineWidth * 0.8) : lineWidth, [lineWidth, isMobile]);
+  // Define actual size based on mobile or not
+  const actualSize = useMemo(() => {
+    return isMobile ? Math.min(size, window.innerWidth * 0.8) : size;
+  }, [size, isMobile]);
   
-  // Create throttled animation function to reduce CPU usage
-  const throttledAnimate = useRef(
-    throttle(() => {
-      if (!animate || !isInView) return;
-      
-      rotationRef.current += 0.001; // Adjust rotation speed
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      
-      drawPattern(ctx, rotationRef.current);
-      animationRef.current = requestAnimationFrame(throttledAnimate.current);
-    }, 1000 / 30) // Limit to 30fps
-  ).current;
-
+  // Determine the effective glow color
+  const effectiveGlowColor = useMemo(() => glowColor || color, [glowColor, color]);
+  
+  // Determine the secondary color if not provided
+  const effectiveSecondaryColor = useMemo(() => {
+    return secondaryColor || 
+    (color === '#7c3aed' ? '#00ebd6' : 
+     color === '#00ebd6' ? '#7c3aed' : 
+     color === '#e15554' ? '#00ebd6' : 
+     '#e15554');
+  }, [color, secondaryColor]);
+  
+  // Set up intersection observer to only animate when visible
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !isInView) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Set canvas size
-    canvas.width = memoizedSize;
-    canvas.height = memoizedSize;
+    if (!svgRef.current) return;
     
-    // Draw pattern immediately
-    measureExecutionTime('SacredGeometry.drawPattern', () => {
-      drawPattern(ctx, rotationRef.current);
-    });
-
-    // Start animation if enabled
-    if (animate && isInView) {
-      animationRef.current = requestAnimationFrame(throttledAnimate);
+    // Only create an observer if we need animations
+    if (animate) {
+      intersectionObserverRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(entry => {
+            setIsVisible(entry.isIntersecting);
+          });
+        },
+        { threshold: 0.1 }
+      );
+      
+      intersectionObserverRef.current.observe(svgRef.current);
+    } else {
+      setIsVisible(true); // Always visible if not animating
     }
-
+    
+    return () => {
+      if (intersectionObserverRef.current) {
+        intersectionObserverRef.current.disconnect();
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [animate]);
+  
+  // Calculate points based on geometry type
+  const renderGeometry = useMemo(() => {
+    return measureExecutionTime('calculateGeometryPoints', () => {
+      // Define the quality settings based on rendering quality
+      const qualitySettings = {
+        low: {
+          circleSegments: 20,
+          spiralSegments: 100,
+        },
+        medium: {
+          circleSegments: 40,
+          spiralSegments: 200,
+        },
+        high: {
+          circleSegments: 60,
+          spiralSegments: 300,
+        }
+      };
+      
+      const quality = qualitySettings[renderingQuality];
+      
+      switch (type) {
+        case 'flower-of-life':
+          return renderFlowerOfLife(actualSize, quality.circleSegments);
+        case 'seed-of-life':
+          return renderSeedOfLife(actualSize);
+        case 'metatron-cube':
+          return renderMetatronCube(actualSize);
+        case 'sri-yantra':
+          return renderSriYantra(actualSize);
+        case 'pentagon-star':
+          return renderPentagonStar(actualSize);
+        case 'hexagon':
+          return renderPolygon(actualSize, 6);
+        case 'heptagon':
+          return renderPolygon(actualSize, 7);
+        case 'octagon':
+          return renderPolygon(actualSize, 8);
+        case 'enneagon':
+          return renderPolygon(actualSize, 9);
+        case 'decagon':
+          return renderPolygon(actualSize, 10);
+        case 'golden-spiral':
+          return renderSpiral(actualSize, 'golden', quality.spiralSegments);
+        case 'fibonacci-spiral':
+          return renderSpiral(actualSize, 'fibonacci', quality.spiralSegments);
+        case 'vesica-piscis':
+          return renderVesicaPiscis(actualSize);
+        case 'tree-of-life':
+        default:
+          return renderTreeOfLife(actualSize);
+      }
+    });
+  }, [type, actualSize, renderingQuality]);
+  
+  // Animation effect
+  useEffect(() => {
+    if (!animate || !isVisible) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+      return;
+    }
+    
+    const animateGeometry = () => {
+      setAnimationPhase(prevPhase => (prevPhase + (0.002 * animationSpeed)) % (Math.PI * 2));
+      animationRef.current = requestAnimationFrame(animateGeometry);
+    };
+    
+    animationRef.current = requestAnimationFrame(animateGeometry);
+    
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [type, memoizedSize, color, animate, isInView, memoizedLineWidth, showLabels, throttledAnimate]);
-
-  // Function to draw different sacred geometry patterns
-  function drawPattern(ctx: CanvasRenderingContext2D, rotation = 0) {
-    ctx.clearRect(0, 0, memoizedSize, memoizedSize);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = memoizedLineWidth;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    const centerX = memoizedSize / 2;
-    const centerY = memoizedSize / 2;
-    const radius = memoizedSize * 0.4;
-
-    switch (type) {
-      case 'flower-of-life':
-        drawFlowerOfLife(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'sri-yantra':
-        drawSriYantra(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'metatron-cube':
-        drawMetatronCube(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'pentagon-star':
-        drawPentagonStar(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'hexagon':
-        drawHexagon(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'vesica-piscis':
-        drawVesicaPiscis(ctx, centerX, centerY, radius, rotation);
-        break;
-      case 'golden-spiral':
-        drawGoldenSpiral(ctx, centerX, centerY, radius, rotation);
-        break;
-      default:
-        drawFlowerOfLife(ctx, centerX, centerY, radius, rotation);
-    }
-
-    if (showLabels) {
-      drawLabel(ctx, centerX, centerY + radius + 30, type.replace(/-/g, ' '));
-    }
-  }
-
-  // Flower of Life pattern
-  function drawFlowerOfLife(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    const smallerRadius = radius / 2;
-    // Center circle
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, smallerRadius, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Only draw detailed circles if not on mobile to improve performance
-    const circleLimit = isMobile ? 6 : 12;
+  }, [animate, animationSpeed, isVisible]);
+  
+  // Filter definition for glow effect
+  const glowFilter = useMemo(() => {
+    if (!glowEffect) return null;
     
-    // Surrounding circles
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
-      const x = centerX + smallerRadius * Math.cos(angle);
-      const y = centerY + smallerRadius * Math.sin(angle);
-      
-      ctx.beginPath();
-      ctx.arc(x, y, smallerRadius, 0, Math.PI * 2);
-      ctx.stroke();
-      
-      // Add second layer of circles (reduced for performance)
-      if (i < circleLimit) {
-        for (let j = 0; j < 6; j++) {
-          if (j % (isMobile ? 2 : 1) !== 0) continue; // Skip some circles on mobile
-          
-          const innerAngle = (Math.PI / 3) * j;
-          const innerX = x + smallerRadius * Math.cos(innerAngle);
-          const innerY = y + smallerRadius * Math.sin(innerAngle);
-          
-          // Only draw if the circle is within the overall radius
-          const distFromCenter = Math.sqrt(Math.pow(innerX - centerX, 2) + Math.pow(innerY - centerY, 2));
-          if (distFromCenter <= radius * 1.1) {
-            ctx.beginPath();
-            ctx.arc(innerX, innerY, smallerRadius, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // Sri Yantra pattern
-  function drawSriYantra(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    // Draw triangles
-    // Downward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - radius, centerY + radius * 0.577);
-    ctx.lineTo(centerX + radius, centerY + radius * 0.577);
-    ctx.lineTo(centerX, centerY - radius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Upward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - radius, centerY - radius * 0.577);
-    ctx.lineTo(centerX + radius, centerY - radius * 0.577);
-    ctx.lineTo(centerX, centerY + radius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Inner triangles
-    const innerRadius = radius * 0.8;
-    // Inner downward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - innerRadius, centerY + innerRadius * 0.577);
-    ctx.lineTo(centerX + innerRadius, centerY + innerRadius * 0.577);
-    ctx.lineTo(centerX, centerY - innerRadius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Inner upward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - innerRadius, centerY - innerRadius * 0.577);
-    ctx.lineTo(centerX + innerRadius, centerY - innerRadius * 0.577);
-    ctx.lineTo(centerX, centerY + innerRadius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Smallest triangles
-    const smallestRadius = radius * 0.5;
-    // Smallest downward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - smallestRadius, centerY + smallestRadius * 0.577);
-    ctx.lineTo(centerX + smallestRadius, centerY + smallestRadius * 0.577);
-    ctx.lineTo(centerX, centerY - smallestRadius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Smallest upward-pointing triangle
-    ctx.beginPath();
-    ctx.moveTo(centerX - smallestRadius, centerY - smallestRadius * 0.577);
-    ctx.lineTo(centerX + smallestRadius, centerY - smallestRadius * 0.577);
-    ctx.lineTo(centerX, centerY + smallestRadius * 1.155);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Central dot (bindu)
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  // Metatron's Cube pattern
-  function drawMetatronCube(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    // Draw 13 circles representing the 13 spheres of Metatron's Cube
-    const points = [];
+    return (
+      <defs>
+        <filter id={`glow-${type}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation={glowIntensity} result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+    );
+  }, [glowEffect, type, glowIntensity]);
+  
+  // Animation transformation
+  const animationStyle = useMemo(() => {
+    if (!animate) return {};
     
-    // Center point
-    points.push({x: centerX, y: centerY});
-    
-    // First ring: 6 points in a hexagon
-    const innerRadius = radius * 0.5;
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
-      points.push({
-        x: centerX + innerRadius * Math.cos(angle),
-        y: centerY + innerRadius * Math.sin(angle)
-      });
-    }
-    
-    // Second ring: 6 points in a larger hexagon
-    const outerRadius = radius * 0.85;
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i + Math.PI / 6; // Offset by 30 degrees
-      points.push({
-        x: centerX + outerRadius * Math.cos(angle),
-        y: centerY + outerRadius * Math.sin(angle)
-      });
-    }
-
-    // Draw circles at each point
-    points.forEach(point => {
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
-
-    // Connect all points to create the "cube"
-    // Optimized to reduce line count on mobile
-    for (let i = 0; i < points.length; i++) {
-      for (let j = i + 1; j < points.length; j++) {
-        // Skip some connections on mobile for better performance
-        if (isMobile && (i * j) % 3 === 0 && j > 7) continue;
-        
-        ctx.beginPath();
-        ctx.moveTo(points[i].x, points[i].y);
-        ctx.lineTo(points[j].x, points[j].y);
-        ctx.stroke();
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // Pentagon star (pentagram)
-  function drawPentagonStar(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    ctx.beginPath();
-    // Draw a pentagram
-    const points = 5;
-    const angleOffset = Math.PI / 2; // Start from top
-    
-    // First, calculate all the outer points
-    const outerPoints = [];
-    for (let i = 0; i < points; i++) {
-      const angle = angleOffset + (Math.PI * 2 * i) / points;
-      outerPoints.push({
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle)
-      });
-    }
-    
-    // Connect every second point to create the star
-    ctx.moveTo(outerPoints[0].x, outerPoints[0].y);
-    ctx.lineTo(outerPoints[2].x, outerPoints[2].y);
-    ctx.lineTo(outerPoints[4].x, outerPoints[4].y);
-    ctx.lineTo(outerPoints[1].x, outerPoints[1].y);
-    ctx.lineTo(outerPoints[3].x, outerPoints[3].y);
-    ctx.closePath();
-    ctx.stroke();
-
-    // Also draw the pentagon
-    ctx.beginPath();
-    for (let i = 0; i < points; i++) {
-      const angle = angleOffset + (Math.PI * 2 * i) / points;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // Hexagon
-  function drawHexagon(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    // Draw main hexagon
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-      
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    // Draw inner hexagon
-    const innerRadius = radius * 0.7;
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
-      const x = centerX + innerRadius * Math.cos(angle);
-      const y = centerY + innerRadius * Math.sin(angle);
-      
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    // Connect vertices to create sacred geometry pattern
-    // On mobile, reduce the number of connections for better performance
-    for (let i = 0; i < 6; i++) {
-      // Skip some connections on mobile
-      if (isMobile && i % 2 === 1) continue;
-      
-      const angle1 = (Math.PI / 3) * i;
-      const x1 = centerX + radius * Math.cos(angle1);
-      const y1 = centerY + radius * Math.sin(angle1);
-      
-      for (let j = 0; j < 6; j++) {
-        if (i !== j && (i + j) % 3 === 0) { // Connect opposite points
-          const angle2 = (Math.PI / 3) * j;
-          const x2 = centerX + radius * Math.cos(angle2);
-          const y2 = centerY + radius * Math.sin(angle2);
-          
-          ctx.beginPath();
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-          ctx.stroke();
-        }
-      }
-    }
-
-    ctx.restore();
-  }
-
-  // Vesica Piscis
-  function drawVesicaPiscis(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    const r = radius * 0.6;
-    const d = r; // Distance between circle centers (equal to radius for Vesica Piscis)
-    
-    // First circle
-    ctx.beginPath();
-    ctx.arc(centerX - d/2, centerY, r, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Second circle
-    ctx.beginPath();
-    ctx.arc(centerX + d/2, centerY, r, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Connecting lines to show the vesica piscis shape
-    const h = Math.sqrt(r*r - (d/2)*(d/2)); // Height of the vesica piscis
-    
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY - h);
-    ctx.lineTo(centerX, centerY + h);
-    ctx.stroke();
-    
-    // Draw the eye-like shape
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY - h);
-    ctx.arc(centerX - d/2, centerY, r, -Math.PI/3, Math.PI/3, false);
-    ctx.arc(centerX + d/2, centerY, r, Math.PI*2/3, Math.PI*4/3, false);
-    ctx.closePath();
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // Golden Spiral
-  function drawGoldenSpiral(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number, rotation: number) {
-    ctx.save();
-    ctx.translate(centerX, centerY);
-    ctx.rotate(rotation);
-    ctx.translate(-centerX, -centerY);
-
-    const phi = 1.618033988749895; // Golden ratio
-    // Reduce iterations on mobile for better performance
-    const maxIterations = isMobile ? 6 : 10; 
-    const initialSize = radius * 0.7;
-    
-    let currentSize = initialSize;
-    let currentX = centerX - currentSize / 2;
-    let currentY = centerY - currentSize / 2;
-    
-    // Draw Fibonacci rectangles
-    for (let i = 0; i < maxIterations; i++) {
-      ctx.beginPath();
-      ctx.rect(currentX, currentY, currentSize, currentSize);
-      ctx.stroke();
-      
-      // Prepare for next rectangle
-      const nextSize = currentSize / phi;
-      
-      // Position next rectangle (rotates 90 degrees counter-clockwise each time)
-      if (i % 4 === 0) {
-        currentX = currentX;
-        currentY = currentY - nextSize;
-      } else if (i % 4 === 1) {
-        currentX = currentX - nextSize;
-        currentY = currentY;
-      } else if (i % 4 === 2) {
-        currentX = currentX;
-        currentY = currentY + currentSize - nextSize;
-      } else if (i % 4 === 3) {
-        currentX = currentX + currentSize - nextSize;
-        currentY = currentY;
-      }
-      
-      currentSize = nextSize;
-    }
-    
-    // Draw the spiral
-    ctx.beginPath();
-    currentSize = initialSize;
-    
-    // Start at the outer edge of the largest square
-    let startX = centerX + initialSize / 2;
-    let startY = centerY - initialSize / 2;
-    
-    ctx.moveTo(startX, startY);
-    
-    // Draw quarter circles for each rectangle
-    for (let i = 0; i < maxIterations; i++) {
-      let centerX, centerY, startAngle, endAngle;
-      
-      if (i % 4 === 0) {
-        centerX = centerX + currentSize / 2;
-        centerY = centerY + currentSize / 2;
-        startAngle = Math.PI * 3/2;
-        endAngle = Math.PI;
-      } else if (i % 4 === 1) {
-        centerX = centerX - currentSize / 2;
-        centerY = centerY + currentSize / 2;
-        startAngle = Math.PI;
-        endAngle = Math.PI / 2;
-      } else if (i % 4 === 2) {
-        centerX = centerX - currentSize / 2;
-        centerY = centerY - currentSize / 2;
-        startAngle = Math.PI / 2;
-        endAngle = 0;
-      } else if (i % 4 === 3) {
-        centerX = centerX + currentSize / 2;
-        centerY = centerY - currentSize / 2;
-        startAngle = 0;
-        endAngle = Math.PI * 3/2;
-      }
-      
-      ctx.arc(centerX, centerY, currentSize, startAngle, endAngle, false);
-      currentSize = currentSize / phi;
-    }
-    
-    ctx.stroke();
-
-    ctx.restore();
-  }
-
-  // Draw label text
-  function drawLabel(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
-    ctx.fillStyle = color;
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(text, x, y);
-  }
-
+    return {
+      transform: `rotate(${rotation + (animationPhase * (180 / Math.PI))}deg) scale(${1 + Math.sin(animationPhase) * 0.05})`,
+      transition: 'transform 0.1s ease-out'
+    };
+  }, [animate, rotation, animationPhase]);
+  
   return (
-    <canvas
-      ref={React.useCallback(
-        (node) => {
-          // Save the ref in our own ref
-          if (node !== null) {
-            canvasRef.current = node;
-          }
-          // Pass it to the inView ref
-          if (typeof inViewRef === 'function') {
-            inViewRef(node);
-          }
-        },
-        [inViewRef]
-      )}
-      width={memoizedSize}
-      height={memoizedSize}
-      className={cn('sacred-geometry', className)}
+    <svg
+      ref={svgRef}
+      width={actualSize}
+      height={actualSize}
+      viewBox={`0 0 ${actualSize} ${actualSize}`}
+      className={`sacred-geometry ${className}`}
       style={{
-        width: memoizedSize,
-        height: memoizedSize,
+        opacity,
         ...style,
+        ...animationStyle,
       }}
-      aria-label={`Sacred geometry visualization of ${type.replace(/-/g, ' ')}`}
+    >
+      {glowFilter}
+      <g
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill="none"
+        filter={glowEffect ? `url(#glow-${type})` : undefined}
+      >
+        {renderGeometry}
+      </g>
+    </svg>
+  );
+});
+
+SacredGeometry.displayName = 'SacredGeometry';
+
+// Helper functions to create sacred geometry patterns
+function renderFlowerOfLife(size: number, segments: number = 40) {
+  const radius = size / 4;
+  const center = size / 2;
+  const circles = [];
+  
+  // Center circle
+  circles.push(
+    <circle
+      key="center"
+      cx={center}
+      cy={center}
+      r={radius}
     />
   );
-};
+  
+  // First ring - 6 circles
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI) / 3;
+    const x = center + radius * Math.cos(angle);
+    const y = center + radius * Math.sin(angle);
+    
+    circles.push(
+      <circle
+        key={`ring1-${i}`}
+        cx={x}
+        cy={y}
+        r={radius}
+      />
+    );
+  }
+  
+  // Second ring - 12 circles
+  for (let i = 0; i < 12; i++) {
+    const angle = (i * Math.PI) / 6;
+    const x = center + 2 * radius * Math.cos(angle);
+    const y = center + 2 * radius * Math.sin(angle);
+    
+    circles.push(
+      <circle
+        key={`ring2-${i}`}
+        cx={x}
+        cy={y}
+        r={radius}
+      />
+    );
+  }
+  
+  return circles;
+}
 
-export default React.memo(SacredGeometry);
+function renderSeedOfLife(size: number) {
+  const radius = size / 4;
+  const center = size / 2;
+  const circles = [];
+  
+  // Center circle
+  circles.push(
+    <circle
+      key="center"
+      cx={center}
+      cy={center}
+      r={radius}
+    />
+  );
+  
+  // Six surrounding circles
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI) / 3;
+    const x = center + radius * Math.cos(angle);
+    const y = center + radius * Math.sin(angle);
+    
+    circles.push(
+      <circle
+        key={`seed-${i}`}
+        cx={x}
+        cy={y}
+        r={radius}
+      />
+    );
+  }
+  
+  return circles;
+}
+
+function renderTreeOfLife(size: number) {
+  const unit = size / 12;
+  const circles = [];
+  const paths = [];
+  const radius = unit * 1.2;
+  
+  // Define the positions of the 10 sephirot
+  const positions = [
+    { name: 'Keter', x: 6, y: 1 },
+    { name: 'Chokmah', x: 3, y: 3 },
+    { name: 'Binah', x: 9, y: 3 },
+    { name: 'Chesed', x: 3, y: 5 },
+    { name: 'Geburah', x: 9, y: 5 },
+    { name: 'Tiferet', x: 6, y: 6 },
+    { name: 'Netzach', x: 3, y: 8 },
+    { name: 'Hod', x: 9, y: 8 },
+    { name: 'Yesod', x: 6, y: 9 },
+    { name: 'Malkuth', x: 6, y: 11 }
+  ];
+  
+  // Add circles for each sephirot
+  positions.forEach((pos, i) => {
+    circles.push(
+      <circle
+        key={`sephirah-${i}`}
+        cx={pos.x * unit}
+        cy={pos.y * unit}
+        r={radius}
+      />
+    );
+  });
+  
+  // Add connecting paths
+  // This is a simplified version with just the main paths
+  const pathConnections = [
+    [0, 1], [0, 2], [1, 2], [1, 3], [2, 4], [3, 4],
+    [3, 6], [4, 7], [1, 5], [2, 5], [3, 5], [4, 5],
+    [5, 6], [5, 7], [5, 8], [6, 7], [6, 8], [7, 8], [8, 9]
+  ];
+  
+  pathConnections.forEach((conn, i) => {
+    const start = positions[conn[0]];
+    const end = positions[conn[1]];
+    
+    paths.push(
+      <line
+        key={`path-${i}`}
+        x1={start.x * unit}
+        y1={start.y * unit}
+        x2={end.x * unit}
+        y2={end.y * unit}
+      />
+    );
+  });
+  
+  return [...circles, ...paths];
+}
+
+function renderMetatronCube(size: number) {
+  const center = size / 2;
+  const radius = size / 3;
+  const elements = [];
+  
+  // Create the 13 circles
+  const circlePositions = [
+    { x: center, y: center }, // Center circle
+  ];
+  
+  // Add the 12 circles around
+  for (let i = 0; i < 12; i++) {
+    const angle = (i * Math.PI) / 6;
+    circlePositions.push({
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+    });
+  }
+  
+  // Draw circles
+  circlePositions.forEach((pos, i) => {
+    elements.push(
+      <circle
+        key={`metatron-circle-${i}`}
+        cx={pos.x}
+        cy={pos.y}
+        r={size / 20}
+      />
+    );
+  });
+  
+  // Connect lines
+  for (let i = 1; i < circlePositions.length; i++) {
+    for (let j = i + 1; j < circlePositions.length; j++) {
+      elements.push(
+        <line
+          key={`metatron-line-${i}-${j}`}
+          x1={circlePositions[i].x}
+          y1={circlePositions[i].y}
+          x2={circlePositions[j].x}
+          y2={circlePositions[j].y}
+        />
+      );
+    }
+  }
+  
+  return elements;
+}
+
+function renderSriYantra(size: number) {
+  const center = size / 2;
+  const radius = size / 2.5;
+  const elements = [];
+  
+  // Draw outer circle
+  elements.push(
+    <circle
+      key="sri-outer-circle"
+      cx={center}
+      cy={center}
+      r={radius}
+    />
+  );
+  
+  // Draw triangles
+  const triangles = [
+    // Upward triangle
+    `${center},${center - radius * 0.9} ${center - radius * 0.8},${center + radius * 0.5} ${center + radius * 0.8},${center + radius * 0.5}`,
+    // Downward triangle
+    `${center},${center + radius * 0.9} ${center - radius * 0.8},${center - radius * 0.5} ${center + radius * 0.8},${center - radius * 0.5}`,
+    // Four smaller triangles
+    `${center},${center - radius * 0.6} ${center - radius * 0.5},${center + radius * 0.3} ${center + radius * 0.5},${center + radius * 0.3}`,
+    `${center},${center + radius * 0.6} ${center - radius * 0.5},${center - radius * 0.3} ${center + radius * 0.5},${center - radius * 0.3}`,
+    `${center - radius * 0.3},${center} ${center},${center + radius * 0.3} ${center},${center - radius * 0.3}`,
+    `${center + radius * 0.3},${center} ${center},${center + radius * 0.3} ${center},${center - radius * 0.3}`,
+  ];
+  
+  triangles.forEach((points, i) => {
+    elements.push(
+      <polygon
+        key={`sri-triangle-${i}`}
+        points={points}
+      />
+    );
+  });
+  
+  // Add center dot
+  elements.push(
+    <circle
+      key="sri-bindu"
+      cx={center}
+      cy={center}
+      r={radius * 0.05}
+      fill="#fff"
+    />
+  );
+  
+  return elements;
+}
+
+function renderPentagonStar(size: number) {
+  const center = size / 2;
+  const outerRadius = size / 2.2;
+  const innerRadius = outerRadius * 0.382; // Golden ratio
+  const elements = [];
+  
+  // Calculate points for the star
+  let points = '';
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+    const innerAngle = outerAngle + Math.PI / 5;
+    
+    const outerX = center + outerRadius * Math.cos(outerAngle);
+    const outerY = center + outerRadius * Math.sin(outerAngle);
+    const innerX = center + innerRadius * Math.cos(innerAngle);
+    const innerY = center + innerRadius * Math.sin(innerAngle);
+    
+    points += `${outerX},${outerY} ${innerX},${innerY} `;
+  }
+  
+  elements.push(
+    <polygon
+      key="pentagon-star"
+      points={points}
+    />
+  );
+  
+  return elements;
+}
+
+function renderPolygon(size: number, sides: number) {
+  const center = size / 2;
+  const radius = size / 2.2;
+  let points = '';
+  
+  for (let i = 0; i < sides; i++) {
+    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2; // Start at top
+    const x = center + radius * Math.cos(angle);
+    const y = center + radius * Math.sin(angle);
+    points += `${x},${y} `;
+  }
+  
+  return (
+    <polygon
+      key={`polygon-${sides}`}
+      points={points}
+    />
+  );
+}
+
+function renderSpiral(size: number, type: 'golden' | 'fibonacci', segments: number) {
+  const center = size / 2;
+  const maxRadius = size / 2.2;
+  let points = '';
+  
+  const a = type === 'golden' ? 0.1 : 0.2;
+  const b = type === 'golden' ? 0.1 : 0.2;
+  
+  for (let i = 0; i < segments; i++) {
+    const t = (i / segments) * Math.PI * 8; // 4 full turns
+    
+    let radius;
+    if (type === 'golden') {
+      // Golden spiral based on logarithmic spiral
+      radius = maxRadius * Math.exp(b * t) / Math.exp(b * Math.PI * 8);
+    } else {
+      // Fibonacci based on arithmetic growth
+      radius = maxRadius * (t / (Math.PI * 8));
+    }
+    
+    const x = center + radius * Math.cos(t);
+    const y = center + radius * Math.sin(t);
+    
+    if (i === 0) {
+      points += `M ${x},${y} `;
+    } else {
+      points += `L ${x},${y} `;
+    }
+  }
+  
+  return (
+    <path
+      key={`spiral-${type}`}
+      d={points}
+    />
+  );
+}
+
+function renderVesicaPiscis(size: number) {
+  const center = size / 2;
+  const radius = size / 3;
+  const offset = radius / 2;
+  const elements = [];
+  
+  // Left circle
+  elements.push(
+    <circle
+      key="vesica-left"
+      cx={center - offset}
+      cy={center}
+      r={radius}
+    />
+  );
+  
+  // Right circle
+  elements.push(
+    <circle
+      key="vesica-right"
+      cx={center + offset}
+      cy={center}
+      r={radius}
+    />
+  );
+  
+  return elements;
+}
+
+export default SacredGeometry;
