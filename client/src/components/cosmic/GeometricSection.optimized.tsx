@@ -182,7 +182,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
                 color: variantColors[variant].main,
                 glowColor: variantColors[variant].glow,
                 fillOpacity: 0.02,
-                opacity: 0.15,
+                strokeWidth: 1.5,
                 position: { bottom: '15%', right: '10%' },
                 rotation: 15
               }
@@ -333,19 +333,27 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         className,
         isMobile ? 'geometric-section-mobile' : ''
       )}
-      style={{ 
-        clipPath: clipPaths[shape],
-        ...style,
-        ...(typeof getPaddingStyle === 'function' ? getPaddingStyle() : getPaddingStyle)
-      }}
+      style={Object.assign(
+        {
+          clipPath: clipPaths[shape]
+        },
+        style || {},
+        getPaddingStyle
+      )}
     >
       {renderDecorativeShapes}
 
-      <div className="relative z-10" style={{ 
-        maxWidth: typeof getContentWidthStyle === 'function' ? getContentWidthStyle() : getContentWidthStyle,
-        margin: alignment === 'center' ? '0 auto' : 
-                alignment === 'right' ? '0 0 0 auto' : '0',
-      }}>
+      <div className="relative z-10" style={Object.assign(
+        {
+          maxWidth: typeof contentWidth === 'number' 
+            ? (isMobile ? `${contentWidth * 1.2}px` : `${contentWidth}px`) 
+            : getContentWidthStyle
+        },
+        {
+          margin: alignment === 'center' ? '0 auto' : 
+                  alignment === 'right' ? '0 0 0 auto' : '0'
+        }
+      )}>
         {title && (
           <div className="section-header mb-4 sm:mb-6 md:mb-8">
             <h2 
