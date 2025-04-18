@@ -1,16 +1,11 @@
 /**
- * Optimized Geometric Section Component
+ * Optimized Geometric Section Component - Simplified Version
  * 
- * This component renders sacred geometry shapes with optimized performance
- * using device capabilities detection, lazy loading, and efficient rendering techniques.
+ * This is a simplified version of the component that retains core functionality
+ * while fixing rendering issues.
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useDeviceCapabilities, useResponsiveRendering, useCPUBudget } from '@/hooks/use-responsive';
-import { useSkipRenderIfInvisible } from '@/components/common/LazyLoad';
-import { useAnimationFrameThrottled } from '@/lib/animation-frame-batch';
-import { measureExecutionTime, debounce } from '@/lib/performance';
-import { useMemoryLeakDetection } from '@/lib/memory-leak-detector';
 
 // SVG Shapes
 import { 

@@ -1,0 +1,209 @@
+/**
+ * GeometricSection.simplified.tsx
+ * 
+ * A simplified version of the GeometricSection component that renders
+ * sacred geometry shapes with basic animations and effects.
+ * This version removes dependencies on complex performance optimization hooks
+ * to ensure the component renders correctly.
+ */
+
+import React, { useState, useRef, useEffect } from 'react';
+
+// SVG Shapes
+import { 
+  FlowerOfLife, 
+  Metatron, 
+  SriYantra, 
+  Torus, 
+  SacredSpiral, 
+  PlatonicsolidsSvg
+} from './SacredGeometryShapes';
+
+// Import CSS
+import './geometricEffects.css';
+
+export interface GeometricSectionProps {
+  title?: string | React.ReactNode;
+  subtitle?: string;
+  description?: string;
+  primaryShape?: 'flower-of-life' | 'metatron' | 'sri-yantra' | 'torus' | 'sacred-spiral' | 'platonic-solids';
+  backgroundColor?: string;
+  textColor?: string;
+  glowColor?: string;
+  glowIntensity?: number;
+  className?: string;
+  animate?: boolean;
+  size?: number | string;
+  onShapeClick?: (shape: string) => void;
+  children?: React.ReactNode;
+  variant?: string;
+  shape?: string; 
+  alignment?: string;
+  backgroundStyle?: string;
+  textContained?: boolean;
+  style?: React.CSSProperties;
+}
+
+/**
+ * A simplified section displaying sacred geometry
+ */
+const GeometricSection: React.FC<GeometricSectionProps> = ({
+  title = 'Sacred Geometry',
+  subtitle = 'Ancient Wisdom',
+  description = 'Explore the fundamental patterns of creation and consciousness.',
+  primaryShape = 'flower-of-life',
+  backgroundColor = '#111827',
+  textColor = '#f3f4f6',
+  glowColor = '#8b5cf6',
+  glowIntensity = 5,
+  className = '',
+  animate = true,
+  size = '80%',
+  onShapeClick,
+  children,
+  variant,
+  shape,
+  alignment,
+  backgroundStyle,
+  textContained,
+  style,
+}) => {
+  // Basic state for animations
+  const [rotation, setRotation] = useState(0);
+  const [scale, setScale] = useState(1);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  // Container refs
+  const containerRef = useRef<HTMLDivElement>(null);
+  const shapeRef = useRef<HTMLDivElement>(null);
+  
+  // Simple animation effect
+  useEffect(() => {
+    if (!animate) return;
+    
+    const animationFrame = () => {
+      setRotation(prev => (prev + 0.2) % 360);
+      
+      const time = Date.now() * 0.001;
+      const newScale = 1 + Math.sin(time) * 0.03;
+      setScale(newScale);
+    };
+    
+    const intervalId = setInterval(animationFrame, 50);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [animate]);
+  
+  // Simple event handlers
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+  
+  const handleClick = () => {
+    if (onShapeClick) {
+      onShapeClick(primaryShape);
+    }
+  };
+  
+  // Calculate glow effect
+  const glowEffect = `0 0 ${glowIntensity * 5}px ${glowIntensity}px ${glowColor}`;
+  
+  // Render the selected shape
+  const renderShape = () => {
+    const commonProps = {
+      className: "sacred-geometry-shape",
+      style: {
+        transform: `rotate(${rotation}deg) scale(${scale})`,
+        width: '100%',
+        height: '100%',
+        boxShadow: glowEffect,
+      }
+    };
+    
+    switch (primaryShape) {
+      case 'flower-of-life':
+        return <FlowerOfLife {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      case 'metatron':
+        return <Metatron {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      case 'sri-yantra':
+        return <SriYantra {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      case 'torus':
+        return <Torus {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      case 'sacred-spiral':
+        return <SacredSpiral {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      case 'platonic-solids':
+        return <PlatonicsolidsSvg {...commonProps} detail={0.5} colorScheme={glowColor} />;
+      default:
+        return <FlowerOfLife {...commonProps} detail={0.5} colorScheme={glowColor} />;
+    }
+  };
+  
+  // Render the component
+  const containerStyles = {
+    backgroundColor,
+    color: textColor,
+    padding: '4rem 2rem',
+    position: 'relative',
+    overflow: 'hidden',
+    ...style,
+  };
+
+  // Check if there are children or if we should render default content
+  const hasCustomContent = !!children;
+
+  return (
+    <div 
+      ref={containerRef}
+      className={`geometric-section ${className} ${isHovered ? 'hovered' : ''}`}
+      style={containerStyles}
+    >
+      {hasCustomContent ? (
+        // If children are provided, render them
+        children
+      ) : (
+        // Otherwise render the default layout
+        <div className="container mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            {/* Text content */}
+            <div className="text-content order-2 md:order-1">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>
+              <h3 className="text-xl md:text-2xl mb-4 opacity-80">{subtitle}</h3>
+              <p className="text-base md:text-lg opacity-70 max-w-prose">
+                {description}
+              </p>
+            </div>
+            
+            {/* Sacred geometry */}
+            <div 
+              className="geometric-container order-1 md:order-2 flex items-center justify-center p-6"
+            >
+              <div
+                ref={shapeRef}
+                className="shape-wrapper relative"
+                style={{ 
+                  width: size, 
+                  height: size, 
+                  maxWidth: '100%',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                onClick={handleClick}
+              >
+                {renderShape()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GeometricSection;
