@@ -14,7 +14,7 @@ import { runDeferredSecurityScan } from './securityScan';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
-import expressSession from 'express-session';
+import session from 'express-session';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -273,7 +273,7 @@ async function initializeServer() {
     log('Generated dynamic session secret for this instance', 'server');
 
     // Create the session middleware
-    app.use(expressSession({
+    app.use(session({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,

@@ -136,7 +136,7 @@ const startupModes = {
 const defaultConfig: ServerConfig = {
   port: parseInt(process.env.PORT || '5000', 10),
   host: '0.0.0.0',
-  startupPriority: (process.env.STARTUP_PRIORITY as StartupPriority) || 'standard',
+  startupPriority: (process.env.STARTUP_PRIORITY as StartupPriority) || 'quickstart',
   deferBackgroundServices: true,
   enableHttps: process.env.ENABLE_HTTPS === 'true',
   environment: process.env.NODE_ENV || 'development',
@@ -185,8 +185,8 @@ const defaultConfig: ServerConfig = {
  */
 export function loadConfig(): ServerConfig {
   try {
-    // Get startup priority from env var or default to 'standard'
-    const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'standard';
+    // Get startup priority from env var or default to 'quickstart'
+    const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'quickstart';
     
     // Apply the startup mode configurations
     let config = { 
