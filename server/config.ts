@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configuration types
-export type StartupPriority = 'minimal' | 'standard' | 'full';
+export type StartupPriority = 'quickstart' | 'minimal' | 'standard' | 'full';
 
 export interface DatabaseConfig {
   enableOptimization: boolean;
@@ -68,6 +68,23 @@ export interface ServerConfig {
 
 // Startup mode configurations
 const startupModes = {
+  quickstart: {
+    deferBackgroundServices: true,
+    features: {
+      enableDatabaseOptimization: false,
+      enableSecurityScans: false,
+      enableBackgroundTasks: false,
+      enableWebSockets: true,
+      enableRateLimiting: false,
+      enableExtraLogging: false,
+      enableContentScheduling: false
+    },
+    maintenanceDelay: 300000, // 5 minutes
+    backgroundServicesDelay: 120000, // 2 minutes
+    securityScanDelay: 900000, // 15 minutes
+    enableCompression: false, // Disable compression initially for faster startup
+    csrfProtection: false // Disable CSRF initially for faster startup
+  },
   minimal: {
     deferBackgroundServices: true,
     features: {
