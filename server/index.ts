@@ -14,7 +14,7 @@ import { runDeferredSecurityScan } from './securityScan';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
-import session from 'express-session';
+import expressSession from 'express-session';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -74,7 +74,9 @@ if (config.csrfProtection) {
  * - Third stage: Deferred non-critical services
  */
 async function initializeServer() {
-  console.log('Starting server initialization...');
+  console.log('=======================================');
+  console.log(`STARTING SERVER IN ${config.startupPriority.toUpperCase()} MODE`);
+  console.log('=======================================');
   log(`Server startup priority: ${config.startupPriority}`, 'server');
 
   try {
@@ -183,41 +185,95 @@ async function initializeServer() {
       credentials: true
     }));
 
-    // Enable compression if configured
+    // Handle compression based on startup priority
     if (config.enableCompression) {
-      // Use enhanced compression middleware with optimized options
-      app.use(setupResponseCompression({
-        threshold: '1kb',
-        level: 6,
-        memLevel: 8,
-        forceCompression: false,
-        dynamicCompression: true,
-        useBrotli: true,
-        includeVaryHeader: true
-      }));
-      
-      // Apply HTTP/2 optimizations if available
-      app.use(http2OptimizationMiddleware({
-        staticPath: 'public',
-        enablePush: true,
-        globalPreloads: [
-          { url: '/assets/icons/icon-192x192.svg', type: 'preload', as: 'image' },
-          { url: '/manifest.json', type: 'preload' }
-        ],
-        globalPreconnect: [
-          { url: 'https://fonts.googleapis.com', type: 'preconnect' },
-          { url: 'https://fonts.gstatic.com', type: 'preconnect', crossorigin: true }
-        ],
-        optimizeHpack: true,
-        setDefaultPriorities: true
-      }));
+      if (config.startupPriority === 'quickstart') {
+        // In quickstart mode, use simplified compression for faster startup
+        log('Using simplified compression for faster startup', 'server');
+        app.use(compression({
+          level: 1, // Use lowest compression level for fastest processing
+          threshold: '10kb', // Only compress responses larger than 10KB
+          filter: (req, res) => {
+            // Skip compression for images and audio/video which are already compressed
+            const contentType = res.getHeader('Content-Type') as string || '';
+            if (contentType.includes('image/') || 
+                contentType.includes('audio/') || 
+                contentType.includes('video/')) {
+              return false;
+            }
+            return compression.filter(req, res);
+          }
+        }));
+        
+        // Enable full compression after delay
+        setTimeout(() => {
+          log('Upgrading to full compression settings', 'server');
+          // Replace the middleware (this is for the next requests, not existing ones)
+          app.use(setupResponseCompression({
+            threshold: '1kb',
+            level: 6,
+            memLevel: 8,
+            forceCompression: false,
+            dynamicCompression: true,
+            useBrotli: true,
+            includeVaryHeader: true
+          }));
+        }, 120000); // After 2 minutes
+        
+        // Defer HTTP/2 optimizations
+        setTimeout(() => {
+          log('Enabling HTTP/2 optimizations', 'server');
+          app.use(http2OptimizationMiddleware({
+            staticPath: 'public',
+            enablePush: true,
+            globalPreloads: [
+              { url: '/assets/icons/icon-192x192.svg', type: 'preload', as: 'image' },
+              { url: '/manifest.json', type: 'preload' }
+            ],
+            globalPreconnect: [
+              { url: 'https://fonts.googleapis.com', type: 'preconnect' },
+              { url: 'https://fonts.gstatic.com', type: 'preconnect', crossorigin: true }
+            ],
+            optimizeHpack: true,
+            setDefaultPriorities: true
+          }));
+        }, 180000); // After 3 minutes
+      } else {
+        // For standard and other modes, use full compression immediately
+        app.use(setupResponseCompression({
+          threshold: '1kb',
+          level: 6,
+          memLevel: 8,
+          forceCompression: false,
+          dynamicCompression: true,
+          useBrotli: true,
+          includeVaryHeader: true
+        }));
+        
+        // Apply HTTP/2 optimizations if available
+        app.use(http2OptimizationMiddleware({
+          staticPath: 'public',
+          enablePush: true,
+          globalPreloads: [
+            { url: '/assets/icons/icon-192x192.svg', type: 'preload', as: 'image' },
+            { url: '/manifest.json', type: 'preload' }
+          ],
+          globalPreconnect: [
+            { url: 'https://fonts.googleapis.com', type: 'preconnect' },
+            { url: 'https://fonts.gstatic.com', type: 'preconnect', crossorigin: true }
+          ],
+          optimizeHpack: true,
+          setDefaultPriorities: true
+        }));
+      }
     }
 
     // Session configuration
     const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
     log('Generated dynamic session secret for this instance', 'server');
 
-    app.use(session({
+    // Create the session middleware
+    app.use(expressSession({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
@@ -226,7 +282,7 @@ async function initializeServer() {
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       }
-    } as any));
+    }));
 
     // Set up routes
     await registerRoutes(app);
