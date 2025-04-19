@@ -21,22 +21,19 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  // Type definitions to ensure proper theme types
-  type CosmicTheme = "light" | "dark" | "blackout" | "system";
-  
   const cycleTheme = () => {
     // Cycle between cosmic themes (light, dark, blackout)
-    const themeOrder: CosmicTheme[] = ["light", "dark", "blackout"];
+    const themeOrder = ["light", "dark", "blackout"] as const;
     
     // Use dark theme as fallback
     const currentThemeValue = theme || "dark";
-    const currentIndex = themeOrder.indexOf(currentThemeValue as Exclude<CosmicTheme, "system">);
+    const currentIndex = themeOrder.indexOf(currentThemeValue as any);
     const nextIndex = (currentIndex !== -1) 
       ? (currentIndex + 1) % themeOrder.length 
       : 0; // Default to first theme if current theme not found
     
     // Set the next theme
-    setTheme(themeOrder[nextIndex]);
+    setTheme(themeOrder[nextIndex] as any);
   };
 
   // Avoid flash of incorrect theme while loading

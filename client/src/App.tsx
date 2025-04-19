@@ -20,6 +20,7 @@ import CookieConsent from "@/components/common/CookieConsent";
 import ServiceWorkerManager from "@/components/common/ServiceWorkerManager";
 import StylesProvider from "@/components/common/StylesProvider";
 import FontLoader from "@/components/common/FontLoader";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Pages
 import HomePage from "@/pages/HomePage";

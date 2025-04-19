@@ -32,7 +32,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAccessibility } from "@/contexts/AccessibilityContext";
 import { motion } from "framer-motion";
 import SacredGeometry from "../../components/ui/sacred-geometry";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+// Remove ThemeToggle import as it's now managed in MainLayout
 
 // Define the navigation items structure
 interface NavItem {
@@ -406,9 +406,9 @@ export function MainHeader() {
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               </form>
               
-              {/* Theme Toggle */}
+              {/* Theme Toggle removed - now managed in MainLayout */}
               <div className="flex items-center">
-                <ThemeToggle />
+                {/* Space for potential profile or other controls */}
               </div>
 
               {user ? (
@@ -727,10 +727,11 @@ export function MainHeader() {
                 {/* Mobile Theme Toggle */}
                 <div className="border-b border-[#00ebd6]/20 pb-6">
                   <h3 className="text-xs font-semibold text-[#00ebd6] uppercase tracking-wider mb-4">
-                    Theme
+                    Menu Options
                   </h3>
                   <div className="flex justify-center">
-                    <ThemeToggle />
+                    {/* Theme toggle moved to MainLayout */}
+                    <p className="text-sm text-[#e8e6e3]/70">Theme toggle available in top right</p>
                   </div>
                 </div>
 
