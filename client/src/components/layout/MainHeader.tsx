@@ -351,18 +351,24 @@ export function MainHeader() {
                 </span>
               </Link>
               
-              {/* Mobile menu button - Enhanced visibility */}
+              {/* Mobile menu button - Enhanced visibility with text */}
               <button
                 type="button"
-                className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors bg-[#0a1f3c] p-2 rounded-full shadow-lg shadow-cyan-500/20 border border-cyan-500/30"
+                className="ml-4 md:hidden text-[#e8e6e3] hover:text-[#00ebd6] transition-colors bg-gradient-to-r from-[#0a1f3c] to-[#151d3b] p-2 pl-3 pr-4 rounded-lg shadow-lg shadow-cyan-500/30 border border-cyan-500/50 flex items-center gap-2"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle navigation menu"
               >
                 {isMobileMenuOpen ? (
-                  <X className="h-6 w-6" aria-hidden="true" />
+                  <>
+                    <X className="h-6 w-6" aria-hidden="true" />
+                    <span className="text-sm font-medium">Close</span>
+                  </>
                 ) : (
-                  <Menu className="h-6 w-6" aria-hidden="true" />
+                  <>
+                    <Menu className="h-6 w-6" aria-hidden="true" />
+                    <span className="text-sm font-medium">Menu</span>
+                  </>
                 )}
               </button>
             </div>

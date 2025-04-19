@@ -90,7 +90,7 @@ export function ThemeToggle() {
       variant="outline"
       size="icon"
       onClick={cycleTheme}
-      className="relative w-12 h-12 rounded-full bg-background border-2 border-cosmic-primary shadow-lg hover:shadow-cosmic-primary/50 transition-all duration-300 animate-glow"
+      className="relative w-12 h-12 rounded-full bg-background border-2 border-cosmic-primary shadow-lg hover:shadow-cosmic-primary/50 transition-all duration-300"
     >
       <Sun className={`absolute inset-0 m-auto h-6 w-6 text-yellow-300 transition-all duration-300 ${theme !== 'light' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`} />
       <Moon className={`absolute inset-0 m-auto h-6 w-6 text-blue-300 transition-all duration-300 ${theme !== 'dark' ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`} />

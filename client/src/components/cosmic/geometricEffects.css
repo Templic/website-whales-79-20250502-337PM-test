@@ -143,18 +143,52 @@
 /* Geometric clip paths for shape variants */
 .clip-path-hexagon {
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  position: relative;
+  padding: 5% !important; /* Increased padding */
+  box-sizing: border-box;
 }
 
 .clip-path-diamond {
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  position: relative;
+  padding: 15% !important; /* More padding for narrower shape */
+  box-sizing: border-box;
 }
 
 .clip-path-triangle {
   clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  position: relative;
+  padding: 12% 8% 8% 8% !important; /* Adjusted for triangle shape */
+  box-sizing: border-box;
 }
 
 .clip-path-pentagon {
   clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  position: relative;
+  padding: 8% !important; /* Increased padding */
+  box-sizing: border-box;
+}
+
+/* Add glow effect to all geometric shapes */
+.clip-path-hexagon,
+.clip-path-diamond,
+.clip-path-triangle,
+.clip-path-pentagon {
+  position: relative;
+}
+
+/* Glow effect for geometric shapes */
+.clip-path-hexagon::after,
+.clip-path-diamond::after,
+.clip-path-triangle::after,
+.clip-path-pentagon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: inherit;
+  filter: blur(15px);
+  opacity: 0.7;
+  z-index: -1;
 }
 
 /* Text container glow effects */
@@ -170,10 +204,38 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(136, 87, 255, 0.1));
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(136, 87, 255, 0.15));
   border-radius: 8px;
   z-index: -1;
-  box-shadow: 0 0 15px 2px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 20px 5px rgba(139, 92, 246, 0.3);
+}
+
+/* Cosmic text glow effects */
+.cosmic-text-responsive {
+  position: relative;
+  text-shadow: 0 0 10px rgba(0, 235, 214, 0.5), 0 0 15px rgba(0, 235, 214, 0.3);
+}
+
+.cosmic-heading-responsive-lg {
+  text-shadow: 0 0 15px rgba(225, 85, 84, 0.6), 0 0 20px rgba(225, 85, 84, 0.4) !important;
+}
+
+/* Quote "Ride the cosmic wave" style */
+.cosmic-text-container {
+  position: relative;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.cosmic-text-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0, 235, 214, 0.1), rgba(136, 87, 255, 0.1));
+  border-radius: 8px;
+  z-index: -1;
+  box-shadow: 0 0 25px 5px rgba(0, 235, 214, 0.25);
 }
 
 /* Optimizations for mobile devices */
