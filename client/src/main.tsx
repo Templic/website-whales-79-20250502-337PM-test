@@ -5,12 +5,15 @@ import "./index.css";
 import "./main.css";
 import "./components/cosmic/cosmic-animations.css";
 import "./components/shop/shop-animations.css";
+import { ThemeProvider } from "./components/ui/ThemeProvider";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");
 
 createRoot(root).render(
   <React.StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </React.StrictMode>
 );

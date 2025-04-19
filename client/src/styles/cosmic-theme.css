@@ -430,3 +430,67 @@
     rgba(0, 0, 0, 0)
   );
 }
+
+/* Special styles for blackout mode */
+.blackout .cosmic-nav-container {
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.blackout .shadow-glow-cosmic {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3),
+              0 0 40px rgba(124, 58, 237, 0.15);
+}
+
+.blackout .cosmic-hover-glow:hover {
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.8),
+              0 0 25px rgba(124, 58, 237, 0.5);
+}
+
+/* Enhanced stars for blackout mode */
+.blackout .cosmic-stars-subtle {
+  background-image: radial-gradient(
+    2px 2px at 20px 30px,
+    rgba(155, 135, 245, 0.9) 50%,
+    rgba(0, 0, 0, 0)
+  ),
+  radial-gradient(
+    1.5px 1.5px at 40px 70px,
+    rgba(155, 135, 245, 0.8) 50%,
+    rgba(0, 0, 0, 0)
+  ),
+  radial-gradient(
+    2px 2px at 70px 120px,
+    rgba(155, 135, 245, 0.9) 50%,
+    rgba(0, 0, 0, 0)
+  ),
+  radial-gradient(
+    1px 1px at 100px 60px,
+    rgba(155, 135, 245, 0.7) 50%,
+    rgba(0, 0, 0, 0)
+  );
+  animation: stars-twinkle 3s ease-in-out infinite;
+}
+
+/* Responsive adjustments for themes on different devices */
+@media (max-width: 640px) {
+  /* Mobile theme adjustments */
+  .blackout .cosmic-text-responsive {
+    font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+  }
+  
+  .blackout .shadow-glow-cosmic {
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.2),
+                0 0 20px rgba(124, 58, 237, 0.1);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Tablet theme adjustments */
+  .blackout .cosmic-pattern-subtle {
+    background-image: 
+      radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.1) 0%, transparent 25%),
+      radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.1) 0%, transparent 25%);
+  }
+}
