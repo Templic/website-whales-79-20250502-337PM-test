@@ -197,6 +197,15 @@
   padding: 1.5rem;
   border-radius: 8px;
   z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  /* Improve text wrapping */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  /* Ensure text is readable */
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 /* Text container glow mat */
@@ -240,9 +249,50 @@
 
 /* Optimizations for mobile devices */
 @media (max-width: 768px) {
+  /* Make geometric shapes bigger on mobile */
+  .shape-wrapper {
+    transform: scale(1.15);
+    margin: 1rem auto;
+  }
+  
+  /* Improve padding around shapes for better layout */
+  .geometric-container {
+    padding: 1.5rem !important;
+    margin-bottom: 1rem;
+  }
+  
+  /* Better text positioning for mobile */
+  .text-content {
+    padding: 1.25rem;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Text size optimizations for better readability */
+  .text-content h2 {
+    font-size: 1.75rem !important;
+    line-height: 1.3 !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .text-content h3 {
+    font-size: 1.25rem !important;
+    line-height: 1.4 !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .text-content p {
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    letter-spacing: 0.01em;
+    word-spacing: 0.05em;
+  }
+  
+  /* Reduce shadow complexity on mobile */
   .sacred-geometry-shape {
-    /* Reduce shadow complexity on mobile */
-    box-shadow: none !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3) !important;
   }
   
   /* Enhanced text container glow for mobile */

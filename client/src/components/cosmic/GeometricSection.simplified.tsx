@@ -201,27 +201,27 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         children
       ) : (
         // Otherwise render the default layout
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            {/* Text content */}
-            <div className="text-content order-2 md:order-1">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>
-              <h3 className="text-xl md:text-2xl mb-4 opacity-80">{subtitle}</h3>
-              <p className="text-base md:text-lg opacity-70 max-w-prose">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-center">
+            {/* Text content - Improved for mobile */}
+            <div className="text-content order-2 md:order-1 w-full">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 md:mb-4">{title}</h2>
+              <h3 className="text-lg sm:text-xl md:text-2xl mb-3 md:mb-4 opacity-80">{subtitle}</h3>
+              <p className="text-sm sm:text-base md:text-lg opacity-70 w-full">
                 {description}
               </p>
             </div>
             
             {/* Sacred geometry */}
             <div 
-              className="geometric-container order-1 md:order-2 flex items-center justify-center p-6"
+              className="geometric-container order-1 md:order-2 flex items-center justify-center p-4 md:p-6"
             >
               <div
                 ref={shapeRef}
                 className="shape-wrapper relative"
                 style={{ 
-                  width: size, 
-                  height: size, 
+                  width: typeof size === 'string' ? size : `${size}px`, 
+                  height: typeof size === 'string' ? size : `${size}px`,
                   maxWidth: '100%',
                   cursor: 'pointer',
                 }}
