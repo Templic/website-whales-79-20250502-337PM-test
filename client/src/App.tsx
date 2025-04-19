@@ -20,7 +20,7 @@ import CookieConsent from "@/components/common/CookieConsent";
 import ServiceWorkerManager from "@/components/common/ServiceWorkerManager";
 import StylesProvider from "@/components/common/StylesProvider";
 import FontLoader from "@/components/common/FontLoader";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ThemeController } from "@/components/ui/ThemeController";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -281,16 +281,20 @@ function App() {
         <CartProvider>
           <AccessibilityProvider>
             <ChatProvider>
-              {/* Add StylesProvider to optimize CSS-in-JS rendering */}
-              <StylesProvider
-                extractCritical={true}
-                optimizeSheets={true}
-                injectIntoHead={true}
-                deduplicate={true}
-                delayNonCritical={100}
-              >
+                {/* Add StylesProvider to optimize CSS-in-JS rendering */}
+                <StylesProvider
+                  extractCritical={true}
+                  optimizeSheets={true}
+                  injectIntoHead={true}
+                  deduplicate={true}
+                  delayNonCritical={100}
+                >
                 <ErrorBoundary FallbackComponent={ErrorFallback}>
                   <StarBackground starCount={150} />
+                  
+                  {/* Add ThemeController - a wrapper that safely uses the theme context */}
+                  <ThemeController />
+                  
                   <AppRouter />
                   <ChatWidget />
                   {/* Temporarily disable Taskade widget to prevent overlapping AI assistant buttons */}
@@ -320,12 +324,12 @@ function App() {
                     showOfflineNotification={true}
                   />
                 </ErrorBoundary>
-              </StylesProvider>
-            </ChatProvider>
-          </AccessibilityProvider>
-        </CartProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+                </StylesProvider>
+              </ChatProvider>
+            </AccessibilityProvider>
+          </CartProvider>
+        </AuthProvider>
+      </QueryClientProvider>
   );
 }
 
