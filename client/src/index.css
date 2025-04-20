@@ -53,34 +53,39 @@
   --cosmic-accent: #00c2cb;
 }
 
-/* Blackout theme (True Cosmic Void with Nebula accents) */
+/* Blackout theme (True Cosmic Void with enhanced Nebula accents) */
 .blackout {
-  /* Deeper, truer black for background */
+  /* Absolute black for deepest space background */
   --background: #000000;
-  /* Slightly purple-tinted white for text */
-  --foreground: #f2eeff;
-  /* Very dark purple for card backgrounds */
-  --card: #07051a;
-  --card-foreground: #f2eeff;
-  /* Vibrant purple for primary elements */
-  --primary: #b565ff;
-  --primary-foreground: #f0f8ff;
+  /* Brighter purple-tinted white for improved text contrast */
+  --foreground: #f8f5ff;
+  /* Very dark purple for card backgrounds with slight transparency */
+  --card: #03021a;
+  --card-foreground: #ffffff;
+  /* Electric neon purple for primary elements - more vibrant */
+  --primary: #d100ff;
+  --primary-foreground: #ffffff;
   /* Deep space purple for secondary elements */
   --secondary: #0d0a22;
-  --secondary-foreground: #f2eeff;
-  /* Electric purple for accents */
-  --accent: #cc00ff;
-  --accent-foreground: #f0f8ff;
-  /* Subtle deep purple for muted areas */
-  --muted: #0a071c;
-  --muted-foreground: #baa8e2;
-  /* Dark purple borders with slight glow */
-  --border: #1c1248;
-  --input: #0a071c;
-  /* Bright ring focus color */
+  --secondary-foreground: #ffffff;
+  /* Ultra-vibrant electric purple for accents with blue undertones */
+  --accent: #c210ff;
+  --accent-foreground: #ffffff;
+  /* Nearly black deep purple for muted areas */
+  --muted: #070417;
+  --muted-foreground: #c9b8ff;
+  /* Enhanced dark purple borders with subtle cosmic glow */
+  --border: #2d1a66;
+  --input: #070417;
+  /* Bright focus ring with enhanced visibility */
   --ring: #d254ff;
-  --cosmic-primary: #cc00ff;
-  --cosmic-accent: #6600ff;
+  /* Cosmic theme-specific variables */
+  --cosmic-primary: #d100ff;
+  --cosmic-accent: #6633ff;
+  /* Additional cosmic-themed variables for enhanced styling */
+  --cosmic-glow: rgba(209, 0, 255, 0.4);
+  --cosmic-shadow: 0 0 20px rgba(209, 0, 255, 0.25);
+  --cosmic-stardust: rgba(102, 0, 255, 0.15);
 }
 
 /* Accessibility styles */
