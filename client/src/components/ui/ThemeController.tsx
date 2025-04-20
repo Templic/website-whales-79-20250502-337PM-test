@@ -10,43 +10,61 @@ import React, { useState, useEffect } from "react";
 import { CircleDot, Moon, Sun } from "lucide-react";
 import { Button } from "./button";
 
+// Define type for our themes
+type CosmicTheme = 'light' | 'dark' | 'blackout';
+
 // Simple standalone theme toggle that doesn't rely on context
 export function ThemeController() {
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<string>("dark");
+  const [theme, setTheme] = useState<CosmicTheme>("dark");
 
   // Set mounted state
   useEffect(() => {
     setMounted(true);
     // Get the saved theme from localStorage or default to dark
     const savedTheme = localStorage.getItem("theme") || "dark";
-    setTheme(savedTheme);
+    
+    // Validate theme value is one of our allowed themes
+    const validTheme = ["light", "dark", "blackout"].includes(savedTheme) 
+      ? savedTheme as "light" | "dark" | "blackout" 
+      : "dark";
+    
+    setTheme(validTheme);
     
     // Apply the theme directly to the document
     document.documentElement.classList.remove("light", "dark", "blackout");
-    document.documentElement.classList.add(savedTheme);
-    document.documentElement.dataset.theme = savedTheme;
+    document.documentElement.classList.add(validTheme);
+    
+    // Safely set dataset property
+    if (document.documentElement.dataset) {
+      document.documentElement.dataset.theme = validTheme;
+    }
   }, []);
 
   const cycleTheme = () => {
     // Cycle between cosmic themes (light, dark, blackout)
-    const themeOrder = ["light", "dark", "blackout"] as const;
+    const themeOrder: CosmicTheme[] = ["light", "dark", "blackout"];
     
-    // Use dark theme as fallback
-    const currentThemeValue = theme || "dark";
-    const currentIndex = themeOrder.indexOf(currentThemeValue as any);
-    const nextIndex = (currentIndex !== -1) 
-      ? (currentIndex + 1) % themeOrder.length 
-      : 0; // Default to first theme if current theme not found
+    // Get current index (will always find it due to our CosmicTheme type)
+    const currentIndex = themeOrder.indexOf(theme);
     
-    // Set the next theme
+    // Calculate next theme index
+    const nextIndex = (currentIndex + 1) % themeOrder.length;
+    
+    // Get the next theme
     const newTheme = themeOrder[nextIndex];
+    
+    // Set state
     setTheme(newTheme);
     
-    // Apply theme directly
-    document.documentElement.classList.remove("light", "dark", "blackout");
+    // Apply theme directly to the document
+    document.documentElement.classList.remove(...themeOrder);
     document.documentElement.classList.add(newTheme);
-    document.documentElement.dataset.theme = newTheme;
+    
+    // Safely set dataset property
+    if (document.documentElement.dataset) {
+      document.documentElement.dataset.theme = newTheme;
+    }
     
     // Store in localStorage
     localStorage.setItem("theme", newTheme);
@@ -75,10 +93,10 @@ export function ThemeController() {
     },
     blackout: {
       icon: <CircleDot className="h-5 w-5" />,
-      color: 'text-[#b565ff]',
-      bgGlow: 'after:bg-[#b565ff]',
+      color: 'text-[#cc00ff]',
+      bgGlow: 'after:bg-[#6600ff]',
       name: 'Cosmic Void',
-      borderColor: 'border-[#b565ff]'
+      borderColor: 'border-[#cc00ff]'
     }
   };
 
@@ -148,7 +166,7 @@ export function ThemeController() {
         <div className={`
           w-2 h-2 rounded-full transition-all duration-300 
           ${theme === 'blackout' 
-            ? 'bg-[#b565ff] w-3 h-3 shadow-[0_0_5px_#b565ff]' 
+            ? 'bg-[#cc00ff] w-3 h-3 shadow-[0_0_8px_#cc00ff]' 
             : 'bg-card/50'}
         `}></div>
       </div>

@@ -55,23 +55,32 @@
 
 /* Blackout theme (True Cosmic Void with Nebula accents) */
 .blackout {
+  /* Deeper, truer black for background */
   --background: #000000;
-  --foreground: #e6e6fa;
-  --card: #050510;
-  --card-foreground: #e6e6fa;
-  --primary: #a855f7;
+  /* Slightly purple-tinted white for text */
+  --foreground: #f2eeff;
+  /* Very dark purple for card backgrounds */
+  --card: #07051a;
+  --card-foreground: #f2eeff;
+  /* Vibrant purple for primary elements */
+  --primary: #b565ff;
   --primary-foreground: #f0f8ff;
-  --secondary: #0c0c1d;
-  --secondary-foreground: #e6e6fa;
-  --accent: #b565ff;
+  /* Deep space purple for secondary elements */
+  --secondary: #0d0a22;
+  --secondary-foreground: #f2eeff;
+  /* Electric purple for accents */
+  --accent: #cc00ff;
   --accent-foreground: #f0f8ff;
-  --muted: #080818;
-  --muted-foreground: #9d9dcb;
-  --border: #14142c;
-  --input: #080818;
-  --ring: #a855f7;
-  --cosmic-primary: #b565ff;
-  --cosmic-accent: #4f3fff;
+  /* Subtle deep purple for muted areas */
+  --muted: #0a071c;
+  --muted-foreground: #baa8e2;
+  /* Dark purple borders with slight glow */
+  --border: #1c1248;
+  --input: #0a071c;
+  /* Bright ring focus color */
+  --ring: #d254ff;
+  --cosmic-primary: #cc00ff;
+  --cosmic-accent: #6600ff;
 }
 
 /* Accessibility styles */
