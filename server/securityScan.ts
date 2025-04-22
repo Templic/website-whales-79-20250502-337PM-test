@@ -484,7 +484,7 @@ async function checkPackageVersion(packageName: string, version: string): Promis
   // Known problematic package versions
   const problematicVersions: Record<string, {
     version: string;
-    severity: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
     description: string;
     recommendation: string;
   }[]> = {

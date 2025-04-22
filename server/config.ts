@@ -185,20 +185,28 @@ const defaultConfig: ServerConfig = {
  */
 export function loadConfig(): ServerConfig {
   try {
-    // Get startup priority from env var or default to 'quickstart'
-    const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'quickstart';
+    // Get startup priority from env var or default to 'full'
+    const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'full';
     
     // Apply the startup mode configurations
     let config = { 
       ...defaultConfig,
-      ...startupModes[startupPriority],
+      ...(startupModes[startupPriority] || {}),
       startupPriority
     };
     
     // Try to load environment-specific config
     const envConfigPath = path.join(__dirname, '..', 'config', `${config.environment}.json`);
     
-    if (fs.existsSync(envConfigPath)) {
+    // Try to load full security config (takes precedence)
+    const fullSecurityPath = path.join(__dirname, '..', 'config', 'full_security.json');
+    
+    if (fs.existsSync(fullSecurityPath)) {
+      const securityConfig = JSON.parse(fs.readFileSync(fullSecurityPath, 'utf8'));
+      config = mergeConfigs(config, securityConfig);
+      console.log('Loaded full security configuration with enhanced protection');
+    }
+    else if (fs.existsSync(envConfigPath)) {
       const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
       config = mergeConfigs(config, envConfig);
       console.log(`Loaded environment-specific configuration for: ${config.environment}`);

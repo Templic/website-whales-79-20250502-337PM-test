@@ -1,0 +1,20 @@
+{
+  "startupPriority": "full",
+  "deferBackgroundServices": false,
+  "features": {
+    "enableDatabaseOptimization": true,
+    "enableSecurityScans": true,
+    "enableBackgroundTasks": true,
+    "enableWebSockets": true,
+    "enableRateLimiting": true,
+    "enableExtraLogging": true,
+    "enableContentScheduling": true
+  },
+  "security": {
+    "enableScans": true,
+    "scanInterval": 3600000,
+    "enableRateLimiting": true,
+    "csrfProtection": true,
+    "maxPayloadSize": "50mb"
+  }
+}
