@@ -1136,12 +1136,21 @@ export class PostgresStorage implements IStorage {
 
   async getSystemSettings(): Promise<any> {
     try {
-      const result = await db.execute(sql`
-        SELECT *
-        FROM system_settings
-        LIMIT 1
-      `);
-      return result.rows[0] || {
+      // Define the system_settings table schema for type safety
+      const systemSettingsTable = pgTable('system_settings', {
+        id: serial('id').primaryKey(),
+        enableRegistration: integer('enable_registration').notNull().default(1),
+        requireEmailVerification: integer('require_email_verification').notNull().default(0),
+        autoApproveContent: integer('auto_approve_content').notNull().default(0),
+        updatedAt: timestamp('updated_at')
+      });
+      
+      // Use ORM query builder for type-safe parameterized query
+      const systemSettings = await db.select()
+        .from(systemSettingsTable)
+        .limit(1);
+      
+      return systemSettings[0] || {
         enableRegistration: true,
         requireEmailVerification: false,
         autoApproveContent: false
@@ -1154,12 +1163,48 @@ export class PostgresStorage implements IStorage {
 
   async updateSystemSettings(settings: any): Promise<void> {
     try {
-      await db.execute(sql`
-        INSERT INTO system_settings ${sql.raw(Object.keys(settings).join(', '))}
-        VALUES ${sql.raw(Object.values(settings).map(v => typeof v === 'boolean' ? v : `'${v}'`).join(', '))}
-        ON CONFLICT (id) DO UPDATE
-        SET ${sql.raw(Object.entries(settings).map(([k, v]) => `${k} = ${typeof v === 'boolean' ? v : `'${v}'`}`).join(', '))}
-      `);
+      // Define the system_settings table schema for type safety - same as in getSystemSettings
+      const systemSettingsTable = pgTable('system_settings', {
+        id: serial('id').primaryKey(),
+        enableRegistration: integer('enable_registration').notNull().default(1),
+        requireEmailVerification: integer('require_email_verification').notNull().default(0),
+        autoApproveContent: integer('auto_approve_content').notNull().default(0),
+        updatedAt: timestamp('updated_at')
+      });
+      
+      // Get existing settings or use default ID
+      const existingSettings = await db.select().from(systemSettingsTable).limit(1);
+      const settingId = existingSettings[0]?.id || 1;
+      
+      // Clean and validate settings object to prevent injection
+      const validKeys = ['enableRegistration', 'requireEmailVerification', 'autoApproveContent'];
+      const cleanedSettings: Record<string, any> = {};
+      
+      // Only allow known keys to be updated
+      Object.keys(settings).forEach(key => {
+        if (validKeys.includes(key)) {
+          // Convert boolean values to integers for database storage
+          if (typeof settings[key] === 'boolean') {
+            cleanedSettings[key] = settings[key] ? 1 : 0;
+          } else if (typeof settings[key] === 'number') {
+            cleanedSettings[key] = settings[key];
+          }
+        }
+      });
+      
+      // Add updatedAt field
+      cleanedSettings.updatedAt = new Date();
+      
+      // Use upsert to safely handle the insert or update
+      await db.insert(systemSettingsTable)
+        .values({
+          id: settingId,
+          ...cleanedSettings
+        })
+        .onConflictDoUpdate({
+          target: systemSettingsTable.id,
+          set: cleanedSettings
+        });
     } catch (error) {
       console.error("Error updating system settings:", error);
       throw error;
@@ -1314,20 +1359,28 @@ export class PostgresStorage implements IStorage {
 
   async getUserActivity(userId: number): Promise<any> {
     try {
-      const result = await db.execute(sql`
-        SELECT 
-          u.username,
-          u.created_at,
-          u.updated_at,
-          COUNT(DISTINCT p.id) as post_count,
-          COUNT(DISTINCT c.id) as comment_count
-        FROM users u
-        LEFT JOIN posts p ON p.author_id = u.id
-        LEFT JOIN comments c ON c.author_id = u.id
-        WHERE u.id = ${userId}
-        GROUP BY u.id, u.username, u.created_at, u.updated_at
-      `);
-      return result.rows[0] || {
+      // Use the ORM's built-in functions to create a properly parameterized query
+      // This is safer than using raw SQL with template literals
+      
+      // Define the table structure for comments if needed
+      const commentsTable = comments;
+      
+      // Use parameterized queries with proper type checking
+      const result = await db.select({
+        username: users.username,
+        created_at: users.createdAt,
+        updated_at: users.updatedAt,
+        // Use aggregation functions in a type-safe manner
+        post_count: sql<number>`COUNT(DISTINCT ${posts.id})`, 
+        comment_count: sql<number>`COUNT(DISTINCT ${commentsTable.id})`
+      })
+      .from(users)
+      .leftJoin(posts, eq(posts.authorId, users.id))
+      .leftJoin(commentsTable, eq(commentsTable.authorId, users.id))
+      .where(eq(users.id, userId)) // Safely parameterized
+      .groupBy(users.id, users.username, users.createdAt, users.updatedAt);
+      
+      return result[0] || {
         username: 'Unknown User',
         created_at: new Date(),
         updated_at: null,
