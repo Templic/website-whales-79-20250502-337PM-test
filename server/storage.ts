@@ -20,7 +20,7 @@ import {
   tracks, albums, newsletters, contentItems,
   contentHistory, contentUsage, contentWorkflowHistory, products
 } from "@shared/schema";
-import { sql, eq, and, desc } from "drizzle-orm";
+import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
 import { db } from "./db";
 import session from "express-session";
@@ -212,7 +212,10 @@ export class PostgresStorage implements IStorage {
   }
 
   async getAllNewsletters(): Promise<Newsletter[]> {
-    return await db.select().from(newsletters).orderBy(sql`created_at DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(newsletters)
+      .orderBy(desc(newsletters.createdAt));
   }
 
   async getNewsletterById(id: number): Promise<Newsletter | null> {
@@ -259,19 +262,24 @@ export class PostgresStorage implements IStorage {
 
   async getPosts(): Promise<Post[]> {
     // Return only published and approved posts for public consumption
-    return await db.select().from(posts)
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(posts)
       .where(
         and(
           eq(posts.published, true),
           eq(posts.approved, true)
         )
       )
-      .orderBy(sql`created_at DESC`);
+      .orderBy(desc(posts.createdAt));
   }
   
   async getAllPosts(): Promise<Post[]> {
     // Return all posts regardless of status (for admin use)
-    return await db.select().from(posts).orderBy(sql`created_at DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(posts)
+      .orderBy(desc(posts.createdAt));
   }
 
   async getPostById(id: number): Promise<Post | null> {
@@ -306,25 +314,22 @@ export class PostgresStorage implements IStorage {
   async getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
     console.log(`Fetching comments for post ID: ${postId}, onlyApproved: ${onlyApproved}`);
 
-    // Build the SQL query based on the parameters
-    let query;
+    // Use drizzle-orm's built-in parameterized queries with proper type checking
+    // instead of building raw SQL strings
     if (onlyApproved) {
-      query = sql`
-        SELECT * FROM comments 
-        WHERE post_id = ${postId} AND approved = true
-        ORDER BY created_at DESC
-      `;
+      return await db.select()
+        .from(comments)
+        .where(and(
+          eq(comments.postId, postId),
+          eq(comments.approved, true)
+        ))
+        .orderBy(desc(comments.createdAt));
     } else {
-      query = sql`
-        SELECT * FROM comments 
-        WHERE post_id = ${postId}
-        ORDER BY created_at DESC
-      `;
+      return await db.select()
+        .from(comments)
+        .where(eq(comments.postId, postId))
+        .orderBy(desc(comments.createdAt));
     }
-
-    const result = await db.execute(query);
-    console.log(`Found ${result.rowCount} comments for post ID ${postId}`);
-    return result.rows as Comment[];
   }
 
   async approveComment(id: number): Promise<Comment> {
@@ -344,43 +349,93 @@ export class PostgresStorage implements IStorage {
 
   // Password recovery methods
   async createPasswordResetToken(userId: number): Promise<string> {
+    // Generate a secure random token
     const token = randomBytes(32).toString("hex");
     const expires = new Date();
     expires.setHours(expires.getHours() + 1); // Token expires in 1 hour
 
-    await db.execute(sql`
-      INSERT INTO password_reset_tokens (user_id, token, expires, used)
-      VALUES (${userId}, ${token}, ${expires}, false)
-    `);
+    // Create a properly defined table for password reset tokens if it doesn't exist already
+    // Note: In production this should be moved to the schema definition in shared/schema.ts
+    const passwordResetTokens = pgTable('password_reset_tokens', {
+      id: serial('id').primaryKey(),
+      userId: integer('user_id').notNull(),
+      token: text('token').notNull(),
+      expires: timestamp('expires').notNull(),
+      used: integer('used').notNull().default(0), // Using integer for boolean (0=false, 1=true)
+      createdAt: timestamp('created_at').defaultNow()
+    });
+
+    // Use ORM to insert data securely with proper parameter handling
+    await db.insert(passwordResetTokens).values({
+      userId: userId,
+      token: token,
+      expires: expires,
+      used: 0
+    });
 
     return token;
   }
 
   async validatePasswordResetToken(token: string): Promise<User | undefined> {
-    const result = await db.execute(sql`
-      SELECT u.* FROM users u
-      JOIN password_reset_tokens t ON u.id = t.user_id
-      WHERE t.token = ${token}
-      AND t.expires > NOW()
-      AND t.used = false
-    `);
-
-    return result.rows[0];
+    // Define password reset tokens table structure
+    const passwordResetTokens = pgTable('password_reset_tokens', {
+      id: serial('id').primaryKey(),
+      userId: integer('user_id').notNull(),
+      token: text('token').notNull(),
+      expires: timestamp('expires').notNull(),
+      used: integer('used').notNull().default(0),
+      createdAt: timestamp('created_at').defaultNow()
+    });
+    
+    // Use a properly parameterized join query
+    // This approach prevents SQL injection by using the ORM's 
+    // parameter handling mechanisms
+    const validTokens = await db.select({
+      userId: passwordResetTokens.userId
+    })
+    .from(passwordResetTokens)
+    .where(and(
+      eq(passwordResetTokens.token, token),
+      // Use a safer parameterized approach instead of raw SQL
+      gt(passwordResetTokens.expires, new Date()),
+      eq(passwordResetTokens.used, 0)
+    ));
+    
+    // If no valid token found, return undefined
+    if (validTokens.length === 0) {
+      return undefined;
+    }
+    
+    // Get the user associated with the token
+    const userId = validTokens[0].userId;
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    return user;
   }
 
   async updateUserPassword(userId: number, newPassword: string): Promise<User> {
+    // Update the user's password with parameterized query
     const [updatedUser] = await db
       .update(users)
       .set({ password: newPassword, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
 
-    // Mark any existing reset tokens as used
-    await db.execute(sql`
-      UPDATE password_reset_tokens
-      SET used = true
-      WHERE user_id = ${userId}
-    `);
+    // Define password reset tokens table structure (same as in other methods)
+    const passwordResetTokens = pgTable('password_reset_tokens', {
+      id: serial('id').primaryKey(),
+      userId: integer('user_id').notNull(),
+      token: text('token').notNull(),
+      expires: timestamp('expires').notNull(),
+      used: integer('used').notNull().default(0),
+      createdAt: timestamp('created_at').defaultNow()
+    });
+
+    // Update all reset tokens for this user to be used
+    // Using ORM's update method instead of raw SQL for parameterized queries
+    await db.update(passwordResetTokens)
+      .set({ used: 1 }) // 1 = true
+      .where(eq(passwordResetTokens.userId, userId));
 
     return updatedUser;
   }
@@ -418,10 +473,11 @@ export class PostgresStorage implements IStorage {
   }
 
   async getUnapprovedPosts(): Promise<Post[]> {
+    // Use properly parameterized queries with ORM methods instead of raw SQL
     return await db.select()
       .from(posts)
-      .where(sql`approved = false`)
-      .orderBy(sql`created_at DESC`);
+      .where(eq(posts.approved, false))
+      .orderBy(desc(posts.createdAt));
   }
 
   async deletePost(id: number): Promise<void> {
@@ -436,12 +492,17 @@ export class PostgresStorage implements IStorage {
         throw new Error('Post not found');
       }
 
-      // Delete post category associations using raw SQL
-      // (postCategories is a junction table)
-      await db.execute(sql`
-        DELETE FROM post_categories 
-        WHERE post_id = ${id}
-      `);
+      // Define post categories junction table structure
+      const postCategories = pgTable('post_categories', {
+        id: serial('id').primaryKey(),
+        postId: integer('post_id').notNull(),
+        categoryId: integer('category_id').notNull(),
+      });
+
+      // Delete post category associations using ORM instead of raw SQL
+      // This is safer and prevents SQL injection
+      await db.delete(postCategories)
+        .where(eq(postCategories.postId, id));
 
       // Delete post comments
       await db.delete(comments)
@@ -459,10 +520,11 @@ export class PostgresStorage implements IStorage {
   async getUnapprovedComments(): Promise<Comment[]> {
     console.log('Attempting to fetch unapproved comments...');
     try {
+      // Use properly parameterized queries with ORM methods instead of raw SQL
       const results = await db.select()
         .from(comments)
         .where(eq(comments.approved, false))
-        .orderBy(sql`created_at DESC`);
+        .orderBy(desc(comments.createdAt));
 
       console.log('Fetched unapproved comments:', results);
       return results;
@@ -474,16 +536,25 @@ export class PostgresStorage implements IStorage {
 
   // Music methods
   async getTracks(): Promise<Track[]> {
-    return await db.select().from(tracks).orderBy(sql`created_at DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(tracks)
+      .orderBy(desc(tracks.createdAt));
   }
   
   async getAllTracks(): Promise<Track[]> {
     // This returns all tracks including non-published ones (for admin use)
-    return await db.select().from(tracks).orderBy(sql`created_at DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(tracks)
+      .orderBy(desc(tracks.createdAt));
   }
 
   async getAlbums(): Promise<Album[]> {
-    return await db.select().from(albums).orderBy(sql`release_date DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(albums)
+      .orderBy(desc(albums.releaseDate));
   }
 
   async deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void> {
@@ -513,7 +584,10 @@ export class PostgresStorage implements IStorage {
   
   // Product methods
   async getAllProducts(): Promise<Product[]> {
-    return await db.select().from(products).orderBy(sql`created_at DESC`);
+    // Use parameterized queries with ORM methods
+    return await db.select()
+      .from(products)
+      .orderBy(desc(products.createdAt));
   }
 
   async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
@@ -950,14 +1024,31 @@ export class PostgresStorage implements IStorage {
   // Session analytics methods
   async getSessionAnalytics(userId: number): Promise<any> {
     try {
-      const result = await db.execute(sql`
-        SELECT s.*
-        FROM "session" s
-        JOIN "users" u ON s.sess->>'passport'->>'user' = u.id::text
-        WHERE u.id = ${userId}
-        ORDER BY s.expire DESC
-      `);
-      return result.rows;
+      // Query for the session table - this is safer as it uses parameterized queries
+      // First define the session table to match the table structure
+      const sessionTable = pgTable('session', {
+        sid: text('sid').primaryKey(),
+        sess: json('sess').notNull(),
+        expire: timestamp('expire').notNull()
+      });
+      
+      // Now we can create a properly parameterized query
+      // This prevents SQL injection by using the ORM's parameter binding
+      const sessions = await db.select({
+        sid: sessionTable.sid,
+        sess: sessionTable.sess,
+        expire: sessionTable.expire
+      })
+      .from(sessionTable)
+      .innerJoin(
+        users,
+        // This safely joins the tables using the ORM's parameter binding
+        sql`${sessionTable.sess}->>'passport'->>'user' = ${users.id}::text`
+      )
+      .where(eq(users.id, userId)) // Safely parameterized
+      .orderBy(desc(sessionTable.expire));
+      
+      return sessions;
     } catch (error) {
       console.error("Error fetching session analytics:", error);
       throw error;
@@ -966,11 +1057,21 @@ export class PostgresStorage implements IStorage {
 
   async updateSessionActivity(sessionId: string, data: any): Promise<void> {
     try {
-      await db.execute(sql`
-        UPDATE "session"
-        SET sess = jsonb_set(sess::jsonb, '{analytics}', ${JSON.stringify(data)}::jsonb)
-        WHERE sid = ${sessionId}
-      `);
+      // Define the session table structure for type safety
+      const sessionTable = pgTable('session', {
+        sid: text('sid').primaryKey(),
+        sess: json('sess').notNull(),
+        expire: timestamp('expire').notNull()
+      });
+      
+      // Use ORM's update method with parameter binding to prevent SQL injection
+      await db.update(sessionTable)
+        .set({
+          // Using a raw SQL fragment only for the specific JSON operation
+          // All user inputs (sessionId and data) are properly parameterized
+          sess: sql`jsonb_set(${sessionTable.sess}::jsonb, '{analytics}', ${JSON.stringify(data)}::jsonb)`
+        })
+        .where(eq(sessionTable.sid, sessionId)); // Safely parameterized
     } catch (error) {
       console.error("Error updating session activity:", error);
       throw error;
@@ -1248,7 +1349,10 @@ export class PostgresStorage implements IStorage {
   // Content management methods
   async getAllContentItems(): Promise<ContentItem[]> {
     try {
-      return await db.select().from(contentItems).orderBy(sql`updated_at DESC`);
+      // Use parameterized queries with ORM methods
+      return await db.select()
+        .from(contentItems)
+        .orderBy(desc(contentItems.updatedAt));
     } catch (error) {
       console.error("Error fetching content items:", error);
       throw error;
@@ -1503,6 +1607,8 @@ export class PostgresStorage implements IStorage {
 
   async getContentUsageReport(contentId?: number): Promise<any[]> {
     try {
+      // Use built-in ORM functions for aggregates where possible
+      // For complex operations, use parameterized SQL functions to prevent SQL injection
       let query = db.select({
         id: contentItems.id,
         key: contentItems.key,
@@ -1510,16 +1616,19 @@ export class PostgresStorage implements IStorage {
         page: contentItems.page,
         section: contentItems.section,
         type: contentItems.type,
-        totalViews: sql`SUM(COALESCE(${contentUsage.views}, 0))`.as('total_views'),
-        lastViewed: sql`MAX(${contentUsage.lastViewed})`.as('last_viewed'),
-        usageCount: sql`COUNT(${contentUsage.id})`.as('usage_count'),
-        locations: sql`ARRAY_AGG(DISTINCT ${contentUsage.location})`.as('locations'),
+        // Use SQL template safely by not directly inserting user-controlled values
+        totalViews: count(contentUsage.views).as('total_views'),
+        lastViewed: max(contentUsage.lastViewed).as('last_viewed'),
+        usageCount: count().as('usage_count'),
+        // Array aggregations still need SQL templates but they're used on fixed column names, not user input
+        locations: sql`ARRAY_AGG(DISTINCT ${contentUsage.location})`.as('locations'), 
         paths: sql`ARRAY_AGG(DISTINCT ${contentUsage.path})`.as('paths')
       })
       .from(contentItems)
       .leftJoin(contentUsage, eq(contentItems.id, contentUsage.contentId))
       .groupBy(contentItems.id);
 
+      // Apply content ID filter if provided using parameterized query
       if (contentId) {
         query = query.where(eq(contentItems.id, contentId));
       }
