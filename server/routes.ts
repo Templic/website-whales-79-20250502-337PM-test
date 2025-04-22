@@ -29,7 +29,7 @@ import {
   passwordRecoveryValidation,
   passwordResetValidation
 } from './validation';
-import secureApiRoutes from './routes/secureApiRoutes';
+import { publicRouter, authenticatedRouter, adminRouter } from './routes/secureApiRoutes';
 import auditSecurityRoutes from './routes/auditSecurityRoutes';
 import { verifyApiSecurity } from './security/apiSecurityVerification';
 import {
@@ -120,7 +120,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use(mediaRoutes);
   
   // Use secure API routes with comprehensive security checks
-  app.use('/api/secure', secureApiRoutes);
+  app.use('/api/secure/public', publicRouter);
+  app.use('/api/secure/auth', authenticatedRouter);
+  app.use('/api/secure/admin', adminRouter);
   
   // Register API security verification endpoint (admin only)
   app.get('/api/security/verify-api', async (req, res) => {

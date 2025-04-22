@@ -50,16 +50,27 @@ const DEFAULT_ALGORITHM = 'HS256';         // HMAC with SHA-256
 
 /**
  * Generate a JWT access token for a user
+ * @param user User object or user ID
+ * @param additionalClaims Additional claims to include in the token
+ * @returns JWT access token
  */
-export function generateAccessToken(userId: string | number, additionalClaims = {}): string {
+export function generateAccessToken(user: any, additionalClaims = {}): string {
   const jti = randomBytes(16).toString('hex');
   
+  // Extract user ID and role from user object if provided
+  const userId = typeof user === 'object' ? user.id : user;
+  const userRole = typeof user === 'object' && user.role ? user.role : undefined;
+  
+  // Build claims object
+  const claims = {
+    sub: userId.toString(),
+    jti,
+    ...(userRole ? { role: userRole } : {}),
+    ...additionalClaims
+  };
+  
   return jwt.sign(
-    {
-      sub: userId.toString(),
-      jti,
-      ...additionalClaims
-    },
+    claims,
     JWT_SECRET,
     {
       expiresIn: DEFAULT_ACCESS_TOKEN_EXPIRY,

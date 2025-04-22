@@ -90,13 +90,17 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
     return options.max || defaultOptions.max || 100;
   };
   
+  // Ensure windowMs is defined to avoid type errors
+  const windowMs = options.windowMs || defaultOptions.windowMs || 15 * 60 * 1000;
+  
   // Merge default options with provided options
-  const mergedOptions: Options = {
+  const mergedOptions = {
     ...defaultOptions,
     ...options,
+    windowMs,
     handler,
     max: dynamicMax
-  };
+  } as Options;
   
   return rateLimit(mergedOptions);
 };
