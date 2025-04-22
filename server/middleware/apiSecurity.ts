@@ -16,7 +16,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { logSecurityEvent } from '../security/security';
 import { verifyAccessToken, extractTokenFromHeader } from '../security/jwt';
-import { getLimiter } from './rateLimit';
+import { JwtPayload } from './jwtAuth';
+import { createRateLimit, authRateLimit, sensitiveOpRateLimit, publicApiRateLimit, protectedApiRateLimit } from './rateLimit';
 
 // API Security Verification Types
 export enum APISecurityCheckType {
@@ -38,7 +39,7 @@ interface APISecurityVerification {
  * Middleware that performs comprehensive API authentication checks
  * Verifies token validity, expiration, and issuer
  */
-export function verifyApiAuthentication(req: Request, res: Response, next: NextFunction) {
+export function verifyApiAuthentication(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'] as string;
   
@@ -138,7 +139,14 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     });
     
     // Store the token payload in the request for later use
-    req.jwtPayload = payload;
+    // Create a properly typed JwtPayload object
+    req.jwtPayload = {
+      sub: typeof payload.sub === 'string' ? payload.sub : '',
+      iat: typeof payload.iat === 'number' ? payload.iat : 0,
+      exp: typeof payload.exp === 'number' ? payload.exp : 0,
+      jti: typeof payload.jti === 'string' ? payload.jti : undefined,
+      role: typeof payload.role === 'string' ? payload.role : undefined
+    };
     
     // Log successful authentication
     logApiSecurityEvent(req, 'AUTHENTICATION_SUCCESS', securityVerifications);
@@ -168,17 +176,40 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
  * and custom response format
  */
 export function enforceApiRateLimit(limitType: 'default' | 'auth' | 'security' | 'admin' | 'public' = 'default') {
-  const limiter = getLimiter(limitType);
+  // Select the appropriate rate limiter based on the limitType
+  let limiter;
+  switch (limitType) {
+    case 'auth':
+      limiter = authRateLimit;
+      break;
+    case 'security':
+      limiter = sensitiveOpRateLimit;
+      break;
+    case 'admin':
+      limiter = protectedApiRateLimit;
+      break;
+    case 'public':
+      limiter = publicApiRateLimit;
+      break;
+    default:
+      // Create a default rate limiter
+      limiter = createRateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100, // Default limit
+        message: {
+          success: false,
+          message: 'Too many requests, please try again later.'
+        },
+        logSecurityEvents: true,
+        securityEventSeverity: 'medium'
+      });
+  }
   
+  // Return a middleware function that wraps the chosen limiter
   return (req: Request, res: Response, next: NextFunction) => {
-    // Apply the rate limiter
-    limiter(req, res, (err: any) => {
-      if (err) {
-        // If there's an error, pass it to the next middleware
-        return next(err);
-      }
-      
-      // Create verification result
+    // Use an intermediary function to capture the rate limit result
+    const afterRateLimit = () => {
+      // Create verification result for successful rate limit check
       const verification: APISecurityVerification = {
         type: APISecurityCheckType.RATE_LIMITING,
         passed: true,
@@ -189,7 +220,10 @@ export function enforceApiRateLimit(limitType: 'default' | 'auth' | 'security' |
       logApiSecurityEvent(req, 'RATE_LIMIT_CHECK', [verification]);
       
       next();
-    });
+    };
+
+    // Apply the rate limiter, using our custom callback for success
+    limiter(req, res, afterRateLimit);
   };
 }
 
@@ -263,7 +297,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Ensures that the request contains the expected data
  */
 export function validateApiRequest(schema: any) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> => {
     try {
       // Validation using provided schema
       // This can be integrated with Zod, Joi, or any validation library
@@ -318,16 +352,19 @@ export function validateApiRequest(schema: any) {
  * Helper function to log API security events
  */
 function logApiSecurityEvent(req: Request, eventType: string, verifications: APISecurityVerification[]) {
+  // Convert object details to a string for logging
+  const detailsString = JSON.stringify({
+    verifications,
+    headers: filterSensitiveHeaders(req.headers)
+  });
+  
   logSecurityEvent({
     type: `API_SECURITY_${eventType}`,
     ip: req.ip,
     userAgent: req.headers['user-agent'] || 'unknown',
     path: req.path,
     method: req.method,
-    details: {
-      verifications,
-      headers: filterSensitiveHeaders(req.headers)
-    },
+    details: detailsString,
     severity: determineSeverity(eventType, verifications)
   });
 }

@@ -20,13 +20,13 @@ import {
 } from '../security/jwt';
 import { logSecurityEvent } from '../security/security';
 import { authenticateJwt } from '../middleware/jwtAuth';
-import { authLimiter } from '../middleware/rateLimit';
+import { authRateLimit } from '../middleware/rateLimit';
 import { comparePasswords } from '../auth';
 
 const router = express.Router();
 
 // Apply rate limiting to all JWT auth routes
-router.use(authLimiter);
+router.use(authRateLimit);
 
 // Validate login input
 const loginSchema = z.object({
