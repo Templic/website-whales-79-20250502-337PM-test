@@ -1,0 +1,44 @@
+{
+  "id": "8536cac2-f182-45c1-968a-e7346b276068",
+  "timestamp": 1745359352604,
+  "scanDuration": 1807,
+  "vulnerabilities": [
+    {
+      "id": "24ffc430-4099-4e6f-a079-b94c23a1c13a",
+      "severity": "high",
+      "category": "backdoor",
+      "description": "Script downloading and execution",
+      "resource": "/scripts/maximum-security-scan.js",
+      "recommendation": "Review this code for potential security issues",
+      "detectionMethod": "pattern matching",
+      "confidence": "medium",
+      "falsePositiveRisk": "medium"
+    },
+    {
+      "id": "113f158d-635d-4231-b9d8-d4afe98ec313",
+      "severity": "high",
+      "category": "backdoor",
+      "description": "Script downloading and execution",
+      "resource": "/server/security/maximumSecurityScan.ts",
+      "recommendation": "Review this code for potential security issues",
+      "detectionMethod": "pattern matching",
+      "confidence": "medium",
+      "falsePositiveRisk": "medium"
+    }
+  ],
+  "securityScore": 80,
+  "completionStatus": "complete",
+  "scannedResources": {
+    "totalPackages": 138,
+    "totalFiles": 4820,
+    "totalLinesOfCode": 858535,
+    "totalNetworkEndpoints": 0
+  },
+  "summary": {
+    "critical": 0,
+    "high": 2,
+    "medium": 0,
+    "low": 0,
+    "total": 2
+  }
+}

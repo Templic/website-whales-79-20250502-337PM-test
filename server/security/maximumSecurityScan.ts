@@ -154,7 +154,7 @@ const MALWARE_PATTERNS = [
   
   // Suspicious browser API usage
   { 
-    pattern: /(?:navigator\.sendBeacon|document\.createElement\s*\(\s*['"]script['"][\s\S]*?(?:\.src|\.setAttribute\s*\(\s*['"]src['"]))\s*=|document\.write)/i, 
+    pattern: /(?:navigator\.sendBeacon|document\.createElement\s*\(\s*['"]script['"][\s\S]*?(?:\.src|\.setAttribute\s*\(\s*['"]src['"]\))\s*=|document\.write)/i, 
     category: 'exploit',
     severity: 'high', 
     description: 'Suspicious browser API usage detected',

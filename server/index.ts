@@ -11,6 +11,7 @@ import { log, setupVite } from './vite';
 import { initializeDatabase } from './db';
 import { registerRoutes } from './routes';
 import { runDeferredSecurityScan } from './securityScan';
+import { enableMaximumSecurity } from './security/enableMaximumSecurity';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
@@ -346,7 +347,16 @@ function initializeNonCriticalServices() {
   // Initialize security scans (if enabled)
   if (config.features.enableSecurityScans) {
     setTimeout(() => {
-      runDeferredSecurityScan();
+      // Check if full security mode is enabled
+      // Look for either security.scanMode or features.enableDeepSecurityScanning
+      if ((config.security as any)?.scanMode === 'maximum' || 
+          (config.features as any)?.enableDeepSecurityScanning) {
+        log('Activating MAXIMUM security scan mode', 'security');
+        enableMaximumSecurity();
+      } else {
+        log('Running standard security scan', 'security');
+        runDeferredSecurityScan();
+      }
     }, config.securityScanDelay);
   }
 }
@@ -370,7 +380,14 @@ async function initializeAllServices() {
   // Initialize security scans
   if (config.features.enableSecurityScans) {
     log('Initializing security scans...', 'server');
-    await runDeferredSecurityScan();
+    
+    // Check if maximum security mode is enabled
+    if (config.security?.scanMode === 'maximum' || config.features.enableDeepSecurityScanning) {
+      log('Activating MAXIMUM security scan mode', 'security');
+      enableMaximumSecurity();
+    } else {
+      runDeferredSecurityScan();
+    }
   }
 }
 
@@ -383,7 +400,15 @@ function logStartupPerformance(initTime: number) {
   console.log(`Startup priority: ${config.startupPriority}`);
   console.log(`Database optimization: ${config.features.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
   console.log(`Background services: ${config.features.enableBackgroundTasks ? 'enabled' : 'disabled'}`);
+  
+  // Check if maximum security mode is enabled
+  const maximumSecurity = config.security?.scanMode === 'maximum' || 
+                          config.features.enableDeepSecurityScanning === true;
+  
   console.log(`Security scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
+  if (config.features.enableSecurityScans && maximumSecurity) {
+    console.log(`Security mode: MAXIMUM (All shields up)`);
+  }
   console.log(`Non-critical services deferred: ${config.deferBackgroundServices ? 'yes' : 'no'}`);
   console.log('=================================');
 }
