@@ -136,7 +136,7 @@ const startupModes = {
 const defaultConfig: ServerConfig = {
   port: parseInt(process.env.PORT || '5000', 10),
   host: '0.0.0.0',
-  startupPriority: (process.env.STARTUP_PRIORITY as StartupPriority) || 'quickstart',
+  startupPriority: (process.env.STARTUP_PRIORITY as StartupPriority) || 'full',
   deferBackgroundServices: true,
   enableHttps: process.env.ENABLE_HTTPS === 'true',
   environment: process.env.NODE_ENV || 'development',
