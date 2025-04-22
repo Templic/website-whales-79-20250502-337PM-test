@@ -983,6 +983,9 @@ function checkEnvFileSecurity(
     if (match) {
       const [, key, value] = match;
       
+      // Skip if key or value is undefined
+      if (!key || !value) continue;
+      
       // Check if key suggests credentials and has a non-placeholder value
       const sensitiveKeyPattern = /password|secret|key|token|auth|credential|api[_-]?key/i;
       
