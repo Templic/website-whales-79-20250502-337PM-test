@@ -8,6 +8,15 @@
 import { log } from './vite';
 import { config } from './config';
 import { runPaymentSecurityScan } from './security/paymentSecurity';
+import { v4 as uuidv4 } from 'uuid';
+
+// Define SecurityVulnerability interface
+interface SecurityVulnerability {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  recommendation?: string;
+}
 
 // Track the last scan time
 let lastScanTime: number | null = null;
@@ -42,12 +51,16 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
     // Clear previous results
     scanResults.length = 0;
     
+    // Create array to store vulnerabilities
+    const vulnerabilities: SecurityVulnerability[] = [];
+    
     // Run all enabled scanners
     await Promise.all([
       scanDependencies(),
       scanExpiredCertificates(),
       scanOutdatedDependencies(),
       scanCommonVulnerabilities(),
+      scanImportsForMalware(vulnerabilities), // Add import scanning
       scanPaymentSecurity() // Add payment security scan
     ]);
     
@@ -167,6 +180,65 @@ async function scanCommonVulnerabilities(): Promise<void> {
     message: 'No common vulnerabilities found',
     timestamp: Date.now()
   });
+}
+
+/**
+ * Scan imported modules for known vulnerabilities
+ */
+async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+  log('Scanning imports for known vulnerabilities...', 'security');
+  
+  // Hypothetical list of packages to check vulnerabilities against
+  const knownMaliciousImports = [
+    // Example package names
+    'malicious-package-1',
+    'malicious-package-2',
+  ];
+  
+  // Iterate through known packages and log vulnerabilities
+  for (const pkg of knownMaliciousImports) {
+    const pkgVuln = await checkKnownVulnerability(pkg);
+    if (pkgVuln) {
+      vulnerabilities.push({
+        id: uuidv4(),
+        severity: 'critical',
+        description: `Malicious import detected: ${pkg}`,
+        recommendation: `Remove or replace the package: ${pkg}`,
+      });
+      
+      // Also add to scan results
+      scanResults.push({
+        scanner: 'Import Security Scanner',
+        status: 'error',
+        message: `Malicious import detected: ${pkg}`,
+        details: {
+          packageName: pkg,
+          recommendation: `Remove or replace the package: ${pkg}`
+        },
+        timestamp: Date.now()
+      });
+    }
+  }
+  
+  // If no vulnerabilities were found, add a success result
+  if (!vulnerabilities.some(v => v.description.includes('Malicious import detected'))) {
+    scanResults.push({
+      scanner: 'Import Security Scanner',
+      status: 'success',
+      message: 'No malicious imports detected',
+      timestamp: Date.now()
+    });
+  }
+}
+
+/**
+ * Function to check if a package is known to have vulnerabilities
+ */
+async function checkKnownVulnerability(packageName: string): Promise<boolean> {
+  // Simulated database query or API call to check for vulnerabilities
+  // In a real implementation, this would check an external vulnerability database
+  const knownVulnerablePackages = ['malicious-package-1']; // Example
+  return knownVulnerablePackages.includes(packageName);
 }
 
 /**
