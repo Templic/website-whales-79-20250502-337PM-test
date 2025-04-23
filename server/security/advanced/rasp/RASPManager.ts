@@ -588,7 +588,7 @@ export class RASPManager {
       return;
     }
     
-    const { method, path, headers } = context;
+    const { method, path, headers, request } = context;
     
     // Check for missing API security headers
     if (path.startsWith('/api/')) {
@@ -607,6 +607,14 @@ export class RASPManager {
           location: 'headers',
           value: 'No authorization header found for protected method'
         };
+        this.logSecurityEvent({
+          type: 'api-security-violation',
+          category: 'missing-auth',
+          details: 'No authorization header found for protected method',
+          method,
+          path,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
       
@@ -619,9 +627,102 @@ export class RASPManager {
           location: 'headers',
           value: 'No content-type header found for POST/PUT request'
         };
+        this.logSecurityEvent({
+          type: 'api-security-violation',
+          category: 'missing-content-type',
+          details: 'No content-type header found for POST/PUT request',
+          method,
+          path,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+      
+      // Check for missing CSRF token on state-changing operations
+      if (method === 'POST' || method === 'PUT' || method === 'DELETE') {
+        // Skip CSRF check for API endpoints that use token-based auth
+        if (!headers.authorization) {
+          const csrfToken = headers['x-csrf-token'] || headers['csrf-token'];
+          
+          // If the request came from a browser (has origin/referer)
+          if ((headers.origin || headers.referer) && !csrfToken) {
+            context.detected = true;
+            context.detectionCategory = RASPProtectionCategory.API_SECURITY;
+            context.detectionDetails = {
+              type: 'missing-csrf-token',
+              location: 'headers',
+              value: 'No CSRF token found for state-changing operation'
+            };
+            this.logSecurityEvent({
+              type: 'api-security-violation',
+              category: 'missing-csrf-token',
+              details: 'No CSRF token found for state-changing operation',
+              method,
+              path,
+              timestamp: new Date().toISOString()
+            });
+            return;
+          }
+        }
+      }
+      
+      // Check for suspicious combinations of headers or parameters
+      const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers, method, path);
+      if (suspiciousPatterns) {
+        context.detected = true;
+        context.detectionCategory = RASPProtectionCategory.API_SECURITY;
+        context.detectionDetails = suspiciousPatterns;
+        this.logSecurityEvent({
+          type: 'api-security-violation',
+          category: 'suspicious-pattern',
+          details: `Suspicious API pattern detected: ${suspiciousPatterns.type}`,
+          method,
+          path,
+          timestamp: new Date().toISOString()
+        });
         return;
       }
     }
+  }
+  
+  /**
+   * Detect suspicious API usage patterns
+   */
+  private detectSuspiciousAPIPatterns(headers: any, method: string, path: string): any | null {
+    // Check for inconsistent content types
+    if (
+      headers['content-type'] && 
+      headers['content-type'].includes('application/json') &&
+      headers['accept'] && 
+      !headers['accept'].includes('application/json') &&
+      !headers['accept'].includes('*/*')
+    ) {
+      return {
+        type: 'inconsistent-content-types',
+        location: 'headers',
+        value: `Content-Type is JSON but Accept does not include JSON`
+      };
+    }
+    
+    // Check for API version skipping (potential security bypass)
+    if (path.match(/\/api\/v\d+/) && !path.match(/\/api\/v[1-9]/)) {
+      return {
+        type: 'api-version-bypass',
+        location: 'path',
+        value: `Potential API version bypass attempt detected`
+      };
+    }
+    
+    // Check for known API abuse patterns
+    if (headers['x-forwarded-for'] && headers['x-forwarded-for'].includes(',')) {
+      return {
+        type: 'ip-spoofing',
+        location: 'headers',
+        value: `Potential IP spoofing detected with multiple X-Forwarded-For values`
+      };
+    }
+    
+    return null;
   }
   
   /**
