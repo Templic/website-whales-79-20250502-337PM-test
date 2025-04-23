@@ -27,7 +27,7 @@ export function applySecurityMiddleware(app: Express) {
       component: 'securityMiddleware',
       timestamp: new Date().toISOString()
     }
-  }).catch(err: string: string => {
+  }).catch(err => {
     console.error('[SECURITY ERROR] Failed to log security middleware initialization:', err);
   });
   
@@ -101,7 +101,7 @@ export function applySecurityMiddleware(app: Express) {
         ].filter(Boolean),
         timestamp: new Date().toISOString()
       }
-    }).catch(err: string: string => {
+    }).catch(err => {
       console.error('[SECURITY ERROR] Failed to log security middleware completion:', err);
     });
     
@@ -119,7 +119,7 @@ export function applySecurityMiddleware(app: Express) {
         stack: error.stack,
         timestamp: new Date().toISOString()
       }
-    }).catch(err: string: string => {
+    }).catch(err => {
       console.error('[SECURITY ERROR] Failed to log security middleware failure:', err);
     });
     
@@ -173,13 +173,13 @@ export function createCustomSecurityMiddleware(options: {
           ip: req.ip,
           timestamp: new Date().toISOString()
         }
-      }).catch(err: string: string => {
+      }).catch(err => {
         console.error('[SECURITY ERROR] Failed to log request start:', err);
       });
       
       // Capture response for logging
       const originalEnd = res.end;
-      res.end = function(...args: any: any[]) {
+      res.end = function(...args: any[]) {
         securityBlockchain.addSecurityEvent({
           category: SecurityEventCategory.REQUEST as any,
           severity: SecurityEventSeverity.INFO,
@@ -194,7 +194,7 @@ export function createCustomSecurityMiddleware(options: {
             securityChecks: req.securityContext.securityChecks,
             timestamp: new Date().toISOString()
           }
-        }).catch(err: string: string => {
+        }).catch(err => {
           console.error('[SECURITY ERROR] Failed to log request completion:', err);
         });
         
@@ -225,7 +225,7 @@ export function createCustomSecurityMiddleware(options: {
         console.log('[SECURITY] Initializing ML-based anomaly detection with quantum-resistant security');
         
         // Run anomaly detection asynchronously to not block request processing
-        detectAnomaly(req).then(result: string: string => {
+        detectAnomaly(req).then(result => {
           req.securityContext.securityChecks.mlAnomalyDetection = true;
           
           if (result.isAnomaly) {
@@ -258,7 +258,7 @@ export function createCustomSecurityMiddleware(options: {
                 anomalyDetails: result.details,
                 timestamp: new Date().toISOString()
               }
-            }).catch(err: string: string => {
+            }).catch(err => {
               console.error('[SECURITY ERROR] Failed to log anomaly detection:', err);
             });
             
@@ -275,7 +275,7 @@ export function createCustomSecurityMiddleware(options: {
               // This would depend on your security policy
             }
           }
-        }).catch(err: string: string => {
+        }).catch(err => {
           console.error('[SECURITY ERROR] Error in anomaly detection:', err);
         });
       } catch (error) {
@@ -290,7 +290,7 @@ export function createCustomSecurityMiddleware(options: {
         const { monitorRuntime } = require('../security/advanced/rasp/RuntimeProtection');
         
         // Monitor runtime for suspicious activities
-        monitorRuntime(req, res).then(result: string: string => {
+        monitorRuntime(req, res).then(result => {
           req.securityContext.securityChecks.runtimeProtection = true;
           
           if (result.threatDetected) {
@@ -307,11 +307,11 @@ export function createCustomSecurityMiddleware(options: {
                 threatDetails: result.threatDetails,
                 timestamp: new Date().toISOString()
               }
-            }).catch(err: string: string => {
+            }).catch(err => {
               console.error('[SECURITY ERROR] Failed to log runtime threat:', err);
             });
           }
-        }).catch(err: string: string => {
+        }).catch(err => {
           console.error('[SECURITY ERROR] Error in runtime protection:', err);
         });
       } catch (error) {
@@ -387,7 +387,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
             method: req.method,
             validatedTarget: target,
           }
-        }).catch(err: string: string => {
+        }).catch(err => {
           console.error(`[SECURITY ERROR] Failed to log validation success:`, err);
         });
         
@@ -404,7 +404,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
             method: req.method,
             validationErrors: error.errors,
           }
-        }).catch(err: string: string => {
+        }).catch(err => {
           console.error(`[SECURITY ERROR] Failed to log validation error:`, err);
         });
         
@@ -514,7 +514,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
               error: error.message,
               stack: error.stack
             }
-          }).catch(err: string: string => {
+          }).catch(err => {
             console.error('[SECURITY ERROR] Failed to log API error:', err);
           });
           
@@ -563,7 +563,7 @@ export function createAdminRouter(): SecureRouter {
           userId: req.user ? (req.user as any).id : null,
           ip: req.ip
         }
-      }).catch(err: string: string => {
+      }).catch(err => {
         console.error('[SECURITY ERROR] Failed to log unauthorized admin access:', err);
       });
       

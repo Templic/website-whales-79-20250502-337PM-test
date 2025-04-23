@@ -289,7 +289,7 @@ function calculateQueryHash(query: string, parameters: any[]): string {
   // In a real implementation, we would use a proper hash function
   // For simplicity, we'll use a basic string manipulation
   const normalized = query.replace(/\s+/g, ' ').trim().toLowerCase();
-  const paramString = parameters.map(p: string: string => String(p)).join(',');
+  const paramString = parameters.map(p => String(p)).join(',');
   return Buffer.from(`${normalized}|${paramString}`).toString('base64').substring(0, 16);
 }
 
@@ -463,7 +463,7 @@ export function createDatabaseProtectionMiddleware() {
       const eventData = {
         type: 'SQL_INJECTION_BLOCKED',
         query: analysisResult.queryHash,
-        detectedPatterns: analysisResult.detectedPatterns.map(d: string: string => d.pattern.name),
+        detectedPatterns: analysisResult.detectedPatterns.map(d => d.pattern.name),
         ip: context?.ip || 'unknown',
         userId: context?.userId || 'unknown',
         timestamp: new Date()

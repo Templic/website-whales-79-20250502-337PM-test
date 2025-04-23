@@ -51,7 +51,7 @@ let boss: any; // Using 'any' temporarily to avoid type issues
 export async function initDatabaseOptimization() {
   try {
     // Start the monitoring asynchronously - doesn't block initialization
-    setupMonitoring().catch(err: string: string => {
+    setupMonitoring().catch(err => {
       console.warn('Failed to set up database monitoring:', err);
     });
     
@@ -245,7 +245,7 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     
     // If the query is potentially dangerous, block it
     if (!analysisResult.isSafe) {
-      const errorMessage = `Potentially dangerous query blocked: ${analysisResult.detectedPatterns.map(p: string: string => p.pattern.name).join(', ')}`;
+      const errorMessage = `Potentially dangerous query blocked: ${analysisResult.detectedPatterns.map(p => p.pattern.name).join(', ')}`;
       log(errorMessage, 'security');
       console.error(errorMessage);
       throw new Error('Query blocked due to security concerns');
@@ -281,7 +281,7 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
       log(`Database connection error (${error.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
       
       // Wait before retrying
-      await new Promise(resolve: string: string => setTimeout(resolve, retryDelay));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
       
       // Retry the query with incremented retry count
       return executeOptimizedQuery(query, params, retryCount + 1);

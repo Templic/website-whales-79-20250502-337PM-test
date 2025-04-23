@@ -566,7 +566,7 @@ export async function hash(
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
       severity: SecurityEventSeverity.INFO,
-      message: `Hashing data using quantum-resistant function (${strength: any: any})`,
+      message: `Hashing data using quantum-resistant function (${strength})`,
       timestamp: Date.now(),
       metadata: {
         strength,
@@ -590,7 +590,7 @@ export async function hash(
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
       severity: SecurityEventSeverity.INFO,
-      message: `Successfully hashed data using quantum-resistant function (${strength: any: any})`,
+      message: `Successfully hashed data using quantum-resistant function (${strength})`,
       timestamp: Date.now(),
       metadata: {
         strength,

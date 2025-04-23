@@ -213,7 +213,7 @@ export class DatabaseConfigurationChecker {
     markdown += `## Configuration Categories\n\n`;
     
     for (const [category, data] of Object.entries(report.categories)) {
-      const displayCategory = category.replace(/([A-Z])/g, ' $1').replace(/^./, str: string: string => str.toUpperCase());
+      const displayCategory = category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
       
       markdown += `### ${displayCategory}: ${statusEmoji[data.status] || ''} ${data.status.toUpperCase()}\n\n`;
       
@@ -259,7 +259,7 @@ export class DatabaseConfigurationChecker {
       if (report.categories) {
         // Map checks to categories based on keywords
         const matchingCategories = Object.entries(report.categories).filter(([category, data]) => {
-          return data.issues && data.issues.some(issue: string: string => 
+          return data.issues && data.issues.some(issue => 
             check.toLowerCase().includes(category.toLowerCase()) || 
             issue.message.toLowerCase().includes(check.toLowerCase())
           );
@@ -292,12 +292,12 @@ export class DatabaseConfigurationChecker {
     
     setInterval(() => {
       this.checkDatabaseConfiguration()
-        .catch(error: string: string => console.error('Scheduled database configuration check failed:', error));
+        .catch(error => console.error('Scheduled database configuration check failed:', error));
     }, intervalHours * 60 * 60 * 1000);
     
     // Run an initial check
     this.checkDatabaseConfiguration()
-      .catch(error: string: string => console.error('Initial database configuration check failed:', error));
+      .catch(error => console.error('Initial database configuration check failed:', error));
   }
 }
 

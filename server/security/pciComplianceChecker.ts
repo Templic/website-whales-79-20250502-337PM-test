@@ -408,22 +408,22 @@ class PCIComplianceChecker {
     reportContent += `Generated: ${new Date().toISOString()}\n\n`;
     
     // Add summary
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     const totalChecks = results.length;
     const passRate = ((passedChecks / totalChecks) * 100).toFixed(1);
     
     reportContent += `## Summary\n\n`;
     reportContent += `- **Compliance Rate**: ${passRate}% (${passedChecks}/${totalChecks})\n`;
-    reportContent += `- **Critical Issues**: ${results.filter(result: string: string => !result.passed && result.critical).length}\n`;
-    reportContent += `- **High Issues**: ${results.filter(result: string: string => !result.passed && !result.critical).length}\n\n`;
+    reportContent += `- **Critical Issues**: ${results.filter(result => !result.passed && result.critical).length}\n`;
+    reportContent += `- **High Issues**: ${results.filter(result => !result.passed && !result.critical).length}\n\n`;
     
     // Group results by category
-    const categories = [...new Set(results.map(result: string: string => result.category))];
+    const categories = [...new Set(results.map(result => result.category))];
     
     // Add detailed results for each category
     for (const category of categories) {
-      const categoryResults = results.filter(result: string: string => result.category === category);
-      const categoryPassed = categoryResults.filter(result: string: string => result.passed).length;
+      const categoryResults = results.filter(result => result.category === category);
+      const categoryPassed = categoryResults.filter(result => result.passed).length;
       const categoryTotal = categoryResults.length;
       
       reportContent += `## ${category}\n\n`;
@@ -446,7 +446,7 @@ class PCIComplianceChecker {
     }
     
     // Add recommendations section for failed checks
-    const failedChecks = results.filter(result: string: string => !result.passed);
+    const failedChecks = results.filter(result => !result.passed);
     if (failedChecks.length > 0) {
       reportContent += `## Recommendations\n\n`;
       
@@ -472,7 +472,7 @@ class PCIComplianceChecker {
   public getLatestReport(): string | null {
     try {
       const files = fs.readdirSync(this.reportsDir);
-      const reportFiles = files.filter(file: string: string => file.startsWith('pci-compliance-') && file.endsWith('.md'));
+      const reportFiles = files.filter(file => file.startsWith('pci-compliance-') && file.endsWith('.md'));
       
       if (reportFiles.length === 0) {
         return null;
@@ -522,7 +522,7 @@ class PCIComplianceChecker {
             
             if (hasSeparatorsForParsing && hasFormatDocumentation && hasRecentTimestamps) {
               // Do a deeper check on log entry format
-              const logLines = logContent.split('\n').filter(line: string: string => 
+              const logLines = logContent.split('\n').filter(line => 
                 line.trim() && !line.startsWith('#')
               );
               
@@ -571,11 +571,11 @@ class PCIComplianceChecker {
         if (logHashes && typeof logHashes === 'object' && Object.keys(logHashes).length > 0) {
           // Check if there are enough log files tracked (at least 3)
           const trackedLogs = Object.keys(logHashes).length;
-          const paymentLogsTracked = Object.keys(logHashes).some(key: string: string => key.includes('payment'));
-          const securityLogsTracked = Object.keys(logHashes).some(key: string: string => key.includes('security'));
+          const paymentLogsTracked = Object.keys(logHashes).some(key => key.includes('payment'));
+          const securityLogsTracked = Object.keys(logHashes).some(key => key.includes('security'));
           
           // Check if hash entries have all required fields
-          const entriesWithRequiredFields = Object.values(logHashes).filter(entry: string: string => 
+          const entriesWithRequiredFields = Object.values(logHashes).filter(entry => 
             typeof entry === 'object' && 
             entry !== null &&
             'hash' in entry && 
@@ -584,7 +584,7 @@ class PCIComplianceChecker {
           ).length;
           
           // Check if hashes are valid SHA256 format
-          const validHashFormat = Object.values(logHashes).every(entry: string: string => 
+          const validHashFormat = Object.values(logHashes).every(entry => 
             typeof entry === 'object' && 
             entry !== null && 
             'hash' in entry && 
@@ -592,7 +592,7 @@ class PCIComplianceChecker {
           );
           
           // Check if timestamps are recent (at least one in the last 24 hours)
-          const recentEntries = Object.values(logHashes).some(entry: string: string => {
+          const recentEntries = Object.values(logHashes).some(entry => {
             if (typeof entry === 'object' && entry !== null && 'timestamp' in entry) {
               const entryTime = new Date(entry.timestamp as string).getTime();
               const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
@@ -602,7 +602,7 @@ class PCIComplianceChecker {
           });
           
           // Verify verification status exists for critical logs
-          const hasVerificationStatus = Object.values(logHashes).every(entry: string: string => 
+          const hasVerificationStatus = Object.values(logHashes).every(entry => 
             typeof entry === 'object' && 
             entry !== null && 
             'verificationStatus' in entry
@@ -679,14 +679,14 @@ class PCIComplianceChecker {
           
           // Check if reviews include critical log types
           const criticalLogTypes = ['payment', 'security', 'api', 'admin'];
-          const reviewsPaymentLogs = logReviews.some(review: string: string => 
-            review.logFiles && review.logFiles.some(file: string: string => 
-              criticalLogTypes.some(type: string: string => file.includes(type))
+          const reviewsPaymentLogs = logReviews.some(review => 
+            review.logFiles && review.logFiles.some(file => 
+              criticalLogTypes.some(type => file.includes(type))
             )
           );
           
           // Check if reviews have proper structure
-          const hasProperStructure = logReviews.every(review: string: string => 
+          const hasProperStructure = logReviews.every(review => 
             review.timestamp && 
             review.reviewer && 
             review.reviewType && 
@@ -698,8 +698,8 @@ class PCIComplianceChecker {
           );
           
           // Check if findings are properly documented
-          const hasProperFindings = logReviews.every(review: string: string => 
-            review.findings && review.findings.every(finding: string: string => 
+          const hasProperFindings = logReviews.every(review => 
+            review.findings && review.findings.every(finding => 
               finding.severity && 
               finding.description && 
               finding.logFile
@@ -710,7 +710,7 @@ class PCIComplianceChecker {
           const hasScheduledNextReview = latestReview.nextScheduledReview !== undefined;
           
           // Check if hash integrity verification is included
-          const includesHashVerification = logReviews.some(review: string: string => 
+          const includesHashVerification = logReviews.some(review => 
             review.verifiedHashIntegrity === true
           );
           
