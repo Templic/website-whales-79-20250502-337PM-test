@@ -65,8 +65,8 @@ export async function runIntelligentMaintenance(): Promise<void> {
     const tableStats = await getTableStatistics();
     
     // Get tables needing maintenance
-    const vacuumCandidates = identifyVacuumCandidates(tableStats: any);
-    const analyzeCandidates = identifyAnalyzeCandidates(tableStats: any);
+    const vacuumCandidates = identifyVacuumCandidates(tableStats);
+    const analyzeCandidates = identifyAnalyzeCandidates(tableStats);
 
     // Log what we're going to do
     log(`Found ${vacuumCandidates.length} tables needing VACUUM`, 'db-maintenance');
@@ -74,12 +74,12 @@ export async function runIntelligentMaintenance(): Promise<void> {
 
     // Run VACUUM on tables needing it
     if (vacuumCandidates.length > 0) {
-      await runVacuum(vacuumCandidates: any);
+      await runVacuum(vacuumCandidates);
     }
 
     // Run ANALYZE on tables needing it
     if (analyzeCandidates.length > 0) {
-      await runAnalyze(analyzeCandidates: any);
+      await runAnalyze(analyzeCandidates);
     }
 
     // Update last maintenance time
@@ -155,7 +155,7 @@ function identifyVacuumCandidates(tableStats: TableStats[]): string[] {
   const { excludeTables, targetTables, vacuumThreshold } = config.database;
   const candidates: string[] = [];
 
-  for (const stats of tableStats: any) {
+  for (const stats of tableStats) {
     // Skip excluded tables
     if (excludeTables.includes(stats.tableName)) {
       continue;
@@ -183,7 +183,7 @@ function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
   const { excludeTables, targetTables, analyzeThreshold } = config.database;
   const candidates: string[] = [];
 
-  for (const stats of tableStats: any) {
+  for (const stats of tableStats) {
     // Skip excluded tables
     if (excludeTables.includes(stats.tableName)) {
       continue;

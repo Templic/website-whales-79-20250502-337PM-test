@@ -177,7 +177,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error running API security verification:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         success: false, 
         message: 'Error running API security verification'
       });
@@ -189,9 +189,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     if (req.isAuthenticated && req.isAuthenticated()) {
       // Use the safe user creator to return only non-sensitive fields
       const safeUser = createSafeUser(req.user);
-      res.json(safeUser: any);
+      res.json(safeUser);
     } else {
-      res.status(401: any).json({ message: 'Not authenticated' });
+      res.status(401).json({ message: 'Not authenticated' });
     }
   });
   
@@ -208,7 +208,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       
       try {
         // Direct database query to get user
-        const userRows = await db.select().from(users: any).where(eq(users.username, username));
+        const userRows = await db.select().from(users).where(eq(users.username, username));
         console.log(`Direct DB query for ${username} found ${userRows.length} rows`);
         
         if (userRows.length > 0) {
@@ -220,11 +220,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       
       // If we didn't find the user with direct query, try the storage method
       if (!fullUserRecord) {
-        fullUserRecord = await storage.getUserByUsername(username: any);
+        fullUserRecord = await storage.getUserByUsername(username);
       }
       
       // User exists in database
-      if (fullUserRecord: any) {
+      if (fullUserRecord) {
         console.log("User found in database:", fullUserRecord.username);
         
         // For demo purposes, using hardcoded password verification
@@ -256,7 +256,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           
           // Return sanitized user data
           // @ts-ignore - Response type issue
-  return res.json(sanitizedUser: any);
+  return res.json(sanitizedUser);
         }
       } else {
         console.log("User not found in database, checking mock users");
@@ -315,10 +315,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
       
       // Incorrect credentials
-      res.status(401: any).json({ message: 'Invalid username or password' });
+      res.status(401).json({ message: 'Invalid username or password' });
     } catch (error: any) {
       console.error('Login error:', error);
-      res.status(500: any).json({ message: 'An error occurred during login' });
+      res.status(500).json({ message: 'An error occurred during login' });
     }
   });
 
@@ -337,10 +337,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log("Fetching all subscribers...");
       const subscribers = await storage.getAllSubscribers();
       console.log("Found subscribers:", subscribers);
-      res.json(subscribers: any);
+      res.json(subscribers);
     } catch (error: any) {
       console.error("Error fetching subscribers:", error);
-      res.status(500: any).json({ message: "Error fetching subscribers" });
+      res.status(500).json({ message: "Error fetching subscribers" });
     }
   });
 
@@ -391,11 +391,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       // Calculate approval rate (if any reviews have been done: any)
       const approvedComments = await db.select({ count: sql`count(*)` })
-        .from(comments: any)
+        .from(comments)
         .where(eq(comments.approved, true));
 
       const rejectedComments = await db.select({ count: sql`count(*)` })
-        .from(comments: any)
+        .from(comments)
         .where(eq(comments.approved, false));
 
       const totalReviewed = parseInt(approvedComments[0]?.count.toString() || '0') + 
@@ -419,7 +419,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Simulating recent activities by taking newest users and generating activities
       const newestUsers = [...users]
         .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        .slice(0: any, 5: any);
+        .slice(0, 5);
         
       newestUsers.forEach((user: any, index: any) => {
         recentActivities.push({
@@ -449,7 +449,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log('Admin stats successfully retrieved');
     } catch (error: any) {
       console.error("Error fetching admin stats:", error);
-      res.status(500: any).json({ message: "Error fetching admin stats" });
+      res.status(500).json({ message: "Error fetching admin stats" });
     }
   });
 
@@ -461,10 +461,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const users = await storage.getAllUsers();
       // Map each user to a safe user object without sensitive fields
-      const safeUsers = users.map(user => createSafeUser(user: any));
-      res.json(safeUsers: any);
+      const safeUsers = users.map(user => createSafeUser(user));
+      res.json(safeUsers);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error fetching users" });
+      res.status(500).json({ message: "Error fetching users" });
     }
   });
 
@@ -479,31 +479,31 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const { action } = req.body;
 
       // Handle different actions based on the request
-      switch (action: any) {
+      switch (action) {
         case 'promote':
           if (req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can promote users" });
           }
           const promotedUser = await storage.updateUserRole(userId, 'admin');
-          return res.json(createSafeUser(promotedUser: any));
+          return res.json(createSafeUser(promotedUser));
 
         case 'demote':
           if (req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can demote users" });
           }
           const demotedUser = await storage.updateUserRole(userId, 'user');
-          return res.json(createSafeUser(demotedUser: any));
+          return res.json(createSafeUser(demotedUser));
 
         case 'delete':
           // Check if user is trying to delete themselves
           if (userId === req.user.id) {
-            return res.status(400: any).json({ message: "You cannot delete your own account" });
+            return res.status(400).json({ message: "You cannot delete your own account" });
           }
 
           // Get user to delete and perform role checks
-          const userToDelete = await storage.getUser(userId: any);
+          const userToDelete = await storage.getUser(userId);
           if (!userToDelete) {
-            return res.status(404: any).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
           }
 
           // Prevent deletion of super_admin by non-super_admin
@@ -516,20 +516,20 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return res.status(403).json({ message: "Only super admins can delete admin accounts" });
           }
 
-          await storage.deleteUser(userId: any);
+          await storage.deleteUser(userId);
           // @ts-ignore - Response type issue
   return res.json({ success: true, message: "User deleted successfully" });
           
         case 'ban':
           // Check if user is trying to ban themselves
           if (userId === req.user.id) {
-            return res.status(400: any).json({ message: "You cannot ban your own account" });
+            return res.status(400).json({ message: "You cannot ban your own account" });
           }
 
           // Get user to ban and perform role checks
-          const userToBan = await storage.getUser(userId: any);
+          const userToBan = await storage.getUser(userId);
           if (!userToBan) {
-            return res.status(404: any).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
           }
 
           // Prevent banning of super_admin
@@ -542,14 +542,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return res.status(403).json({ message: "Only super admins can ban admin accounts" });
           }
 
-          const bannedUser = await storage.banUser(userId: any);
-          return res.json(createSafeUser(bannedUser: any));
+          const bannedUser = await storage.banUser(userId);
+          return res.json(createSafeUser(bannedUser));
           
         case 'unban':
           // Get user to unban and perform role checks
-          const userToUnban = await storage.getUser(userId: any);
+          const userToUnban = await storage.getUser(userId);
           if (!userToUnban) {
-            return res.status(404: any).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found" });
           }
 
           // Prevent admin from unbanning other admins
@@ -557,15 +557,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             return res.status(403).json({ message: "Only super admins can unban admin accounts" });
           }
 
-          const unbannedUser = await storage.unbanUser(userId: any);
-          return res.json(createSafeUser(unbannedUser: any));
+          const unbannedUser = await storage.unbanUser(userId);
+          return res.json(createSafeUser(unbannedUser));
 
         default:
-          return res.status(400: any).json({ message: "Invalid action" });
+          return res.status(400).json({ message: "Invalid action" });
       }
     } catch (error: any) {
       console.error("Error updating user:", error);
-      res.status(500: any).json({ message: "Failed to update user" });
+      res.status(500).json({ message: "Failed to update user" });
     }
   });
 
@@ -575,11 +575,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log("Received subscription request:", req.body);
       // Input validation performed by express-validator middleware
       const data = insertSubscriberSchema.parse(req.body);
-      const subscriber = await storage.createSubscriber(data: any);
+      const subscriber = await storage.createSubscriber(data);
       console.log("Created new subscriber:", subscriber);
 
       // Send welcome email if SMTP is configured
-      if (transporter: any) {
+      if (transporter) {
         try {
           await transporter.sendMail({
             from: process.env.SMTP_FROM || 'noreply@example.com',
@@ -616,12 +616,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
     } catch (error: any) {
       if (error.code === '23505') { // PostgreSQL unique violation
-        res.status(400: any).json({ message: "This email is already subscribed" });
+        res.status(400).json({ message: "This email is already subscribed" });
       } else if (error.errors) { // Zod validation error
-        res.status(400: any).json({ message: error.errors[0].message });
+        res.status(400).json({ message: error.errors[0].message });
       } else {
         console.error("Subscription error:", error);
-        res.status(500: any).json({ message: "Failed to process subscription" });
+        res.status(500).json({ message: "Failed to process subscription" });
       }
     }
   });
@@ -645,7 +645,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({ exists: !!subscriber });
     } catch (error: any) {
       console.error("Error checking subscriber:", error);
-      res.status(500: any).json({ message: "Error checking subscriber" });
+      res.status(500).json({ message: "Error checking subscriber" });
     }
   });
 
@@ -679,7 +679,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(enhancedPosts: any);
     } catch (error: any) {
       console.error("Error fetching unapproved posts:", error);
-      res.status(500: any).json({ message: "Error fetching unapproved posts" });
+      res.status(500).json({ message: "Error fetching unapproved posts" });
     }
   });
 
@@ -695,7 +695,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(newsletters: any);
     } catch (error: any) {
       console.error("Error fetching newsletters:", error);
-      res.status(500: any).json({ message: "Error fetching newsletters" });
+      res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
 
@@ -706,7 +706,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(newsletters: any);
     } catch (error: any) {
       console.error("Error fetching newsletters:", error);
-      res.status(500: any).json({ message: "Error fetching newsletters" });
+      res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
   
@@ -716,7 +716,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const user = await storage.getUserByUsername('admin');
       
       if (!user) {
-        return res.status(404: any).json({ message: "User not found" });
+        return res.status(404).json({ message: "User not found" });
       }
       
       // Create a safe version of the user object
@@ -737,7 +737,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error("Error fetching safe user:", error);
-      res.status(500: any).json({ message: "Error fetching safe user" });
+      res.status(500).json({ message: "Error fetching safe user" });
     }
   });
 
@@ -751,7 +751,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error("Error initializing security settings:", error);
-      res.status(500: any).json({ message: "Error initializing security settings" });
+      res.status(500).json({ message: "Error initializing security settings" });
     }
   });
 
@@ -780,7 +780,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       );
 
       if (!success) {
-        return res.status(500: any).json({ message: 'Failed to update security setting' });
+        return res.status(500).json({ message: 'Failed to update security setting' });
       }
 
       res.json({ 
@@ -791,7 +791,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error updating security setting:', error);
-      res.status(500: any).json({ message: 'Failed to update security setting' });
+      res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
 
@@ -805,7 +805,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error retrieving security settings:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: 'Failed to retrieve security settings', 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
@@ -826,13 +826,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         method: 'GET'
       });
 
-      res.status(401: any).json({
+      res.status(401).json({
         message: 'Unauthorized access attempt logged successfully',
         details: 'This endpoint simulates an unauthorized access attempt to test security logging'
       });
     } catch (error: any) {
       console.error('Error simulating unauthorized access:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: 'Failed to simulate unauthorized access', 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
@@ -939,7 +939,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error retrieving security statistics:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: 'Failed to retrieve security statistics', 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
@@ -1001,7 +1001,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error retrieving security logs:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: 'Failed to retrieve security logs', 
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
@@ -1040,7 +1040,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error running security scan:', error);
-      res.status(500: any).json({
+      res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1081,7 +1081,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error running authentication security scan:', error);
-      res.status(500: any).json({
+      res.status(500).json({
         message: 'Failed to run authentication security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1107,7 +1107,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
     } catch (error: any) {
       console.error('Error running security scan:', error);
-      res.status(500: any).json({
+      res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1131,7 +1131,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(newsletter: any);
     } catch (error: any) {
       console.error(`Error fetching newsletter:`, error);
-      res.status(500: any).json({ message: "Error fetching newsletter" });
+      res.status(500).json({ message: "Error fetching newsletter" });
     }
   });
 
@@ -1226,7 +1226,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
 
       // Send newsletter to all active subscribers (in a real app: any, this would use a queue: any)
-      if (transporter: any) {
+      if (transporter) {
         try {
           // Send newsletter (just to the first subscriber for demo purposes: any)
           await transporter.sendMail({
@@ -1237,7 +1237,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           });
         } catch (emailError: any) {
           console.error("Failed to send newsletter:", emailError);
-          return res.status(500: any).json({ message: "Failed to send newsletter email" });
+          return res.status(500).json({ message: "Failed to send newsletter email" });
         }
       }
 
@@ -1246,7 +1246,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({ message: "Newsletter sent successfully", newsletter: sentNewsletter });
     } catch (error: any) {
       console.error("Error sending newsletter:", error);
-      res.status(500: any).json({ message: "Error sending newsletter" });
+      res.status(500).json({ message: "Error sending newsletter" });
     }
   });
 
@@ -1288,7 +1288,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(enhancedComments: any);
     } catch (error: any) {
       console.error("Error fetching unapproved comments:", error);
-      res.status(500: any).json({ message: "Error fetching unapproved comments" });
+      res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
 
@@ -1328,7 +1328,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(enhancedTracks: any);
     } catch (error: any) {
       console.error("Error fetching recent tracks:", error);
-      res.status(500: any).json({ message: "Error fetching recent tracks" });
+      res.status(500).json({ message: "Error fetching recent tracks" });
     }
   });
 
@@ -1344,7 +1344,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(approvedPost: any);
     } catch (error: any) {
       console.error(`Error approving post:`, error);
-      res.status(500: any).json({ message: "Error approving post" });
+      res.status(500).json({ message: "Error approving post" });
     }
   });
 
@@ -1360,7 +1360,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(approvedComment: any);
     } catch (error: any) {
       console.error(`Error approving comment:`, error);
-      res.status(500: any).json({ message: "Error approving comment" });
+      res.status(500).json({ message: "Error approving comment" });
     }
   });
 
@@ -1376,7 +1376,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(rejectedComment: any);
     } catch (error: any) {
       console.error(`Error rejecting comment:`, error);
-      res.status(500: any).json({ message: "Error rejecting comment" });
+      res.status(500).json({ message: "Error rejecting comment" });
     }
   });
 
@@ -1392,7 +1392,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({ success: true, message: "Track deleted successfully" });
     } catch (error: any) {
       console.error(`Error deleting track:`, error);
-      res.status(500: any).json({ message: "Error deleting track" });
+      res.status(500).json({ message: "Error deleting track" });
     }
   });
 
@@ -1419,7 +1419,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(filteredPosts: any);
     } catch (error: any) {
       console.error("Error fetching posts:", error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: "Error fetching posts",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1443,7 +1443,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const posts = await storage.getUnapprovedPosts();
       res.json(posts: any);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error fetching unapproved posts" });
+      res.status(500).json({ message: "Error fetching unapproved posts" });
     }
   });
 
@@ -1455,7 +1455,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const post = await storage.approvePost(Number(req.params.id));
       res.json(post: any);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error approving post" });
+      res.status(500).json({ message: "Error approving post" });
     }
   });
 
@@ -1471,7 +1471,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
       res.json(post: any);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error fetching post" });
+      res.status(500).json({ message: "Error fetching post" });
     }
   });
 
@@ -1519,7 +1519,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(updatedPost: any);
     } catch (error: any) {
       console.error("Error updating post:", error);
-      res.status(500: any).json({ message: "Error updating post" });
+      res.status(500).json({ message: "Error updating post" });
     }
   });
   
@@ -1550,7 +1550,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({ success: true, message: "Post deleted successfully" });
     } catch (error: any) {
       console.error("Error deleting post:", error);
-      res.status(500: any).json({ message: "Error deleting post" });
+      res.status(500).json({ message: "Error deleting post" });
     }
   });
 
@@ -1560,7 +1560,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const categories = await storage.getCategories();
       res.json(categories: any);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error fetching categories" });
+      res.status(500).json({ message: "Error fetching categories" });
     }
   });
 
@@ -1622,7 +1622,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(comments: any);
     } catch (error: any) {
       console.error("Error fetching comments:", error);
-      res.status(500: any).json({ message: "Error fetching comments" });
+      res.status(500).json({ message: "Error fetching comments" });
     }
   });
 
@@ -1638,7 +1638,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json(comments: any);
     } catch (error: any) {
       console.error("Error fetching unapproved comments:", error);
-      res.status(500: any).json({ message: "Error fetching unapproved comments" });
+      res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
 
@@ -1650,7 +1650,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const comment = await storage.approveComment(Number(req.params.id));
       res.json(comment: any);
     } catch (error: any) {
-      res.status(500: any).json({ message: "Error approving comment" });
+      res.status(500).json({ message: "Error approving comment" });
     }
   });
 
@@ -1691,7 +1691,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(comment: any);
     } catch (error: any) {
       console.error("Error rejecting comment:", error);
-      res.status(500: any).json({ message: "Error rejecting comment" });
+      res.status(500).json({ message: "Error rejecting comment" });
     }
   });
 
@@ -1726,7 +1726,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json({ message: "If an account exists with this email, you will receive a recovery link." });
     } catch (error: any) {
       console.error("Password recovery error:", error);
-      res.status(500: any).json({ message: "Failed to process recovery request" });
+      res.status(500).json({ message: "Failed to process recovery request" });
     }
   });
 
@@ -1747,12 +1747,12 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
     } catch (error: any) {
       console.error("Password reset error:", error);
       if (error instanceof Error: any) {
-        res.status(500: any).json({ 
+        res.status(500).json({ 
           message: "Failed to reset password",
           details: error.message 
         });
       } else {
-        res.status(500: any).json({ message: "Failed to reset password" });
+        res.status(500).json({ message: "Failed to reset password" });
       }
     }
   });
@@ -1808,7 +1808,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(result: any);
     } catch (error: any) {
       console.error("Error uploading music file:", error);
-      res.status(500: any).json({ message: "Failed to upload file" });
+      res.status(500).json({ message: "Failed to upload file" });
     }
   });
 
@@ -1819,7 +1819,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(tracks: any);
     } catch (error: any) {
       console.error("Error fetching tracks:", error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: "Error fetching tracks",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1832,7 +1832,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(albums: any);
     } catch (error: any) {
       console.error("Error fetching albums:", error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: "Error fetching albums",
         error: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -1991,7 +1991,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(response: any);
     } catch (error: any) {
       console.error("Error fetching analytics data:", error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         message: "Error fetching analytics data",
         error: error instanceof Error ? error.message : 'Unknown error' 
       });
@@ -2117,7 +2117,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json({ success: true });
     } catch (error: any) {
       console.error('Failed to save contact form:', error);
-      res.status(500: any).json({ error: 'Failed to save contact form' });
+      res.status(500).json({ error: 'Failed to save contact form' });
     }
   });
 
@@ -2129,7 +2129,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json({ success: true, message: 'Security event logged successfully' });
     } catch (error: any) {
       console.error('Error logging security event:', error);
-      res.status(500: any).json({ 
+      res.status(500).json({ 
         success: false, 
         message: 'Failed to log security event',
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -2148,7 +2148,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(settings: any);
     } catch (error: any) {
       console.error('Error fetching security settings:', error);
-      res.status(500: any).json({ message: 'Failed to fetch security settings' });
+      res.status(500).json({ message: 'Failed to fetch security settings' });
     }
   });
 
@@ -2181,7 +2181,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       );
 
       if (!success) {
-        return res.status(500: any).json({ message: 'Failed to update security setting' });
+        return res.status(500).json({ message: 'Failed to update security setting' });
       }
 
       res.json({ 
@@ -2191,7 +2191,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       });
     } catch (error: any) {
       console.error('Error updating security setting:', error);
-      res.status(500: any).json({ message: 'Failed to update security setting' });
+      res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
 
@@ -2231,7 +2231,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(enhancedItems: any);
     } catch (error: any) {
       console.error("Error fetching admin content items:", error);
-      res.status(500: any).json({ message: "Error fetching content items" });
+      res.status(500).json({ message: "Error fetching content items" });
     }
   });
 
@@ -2262,7 +2262,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(enhancedHistory: any);
     } catch (error: any) {
       console.error("Error fetching content workflow history:", error);
-      res.status(500: any).json({ message: "Error fetching workflow history" });
+      res.status(500).json({ message: "Error fetching workflow history" });
     }
   });
 
@@ -2298,7 +2298,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json(updatedContent: any);
     } catch (error: any) {
       console.error("Error updating content status:", error);
-      res.status(500: any).json({ message: "Error updating content status" });
+      res.status(500).json({ message: "Error updating content status" });
     }
   });
 
@@ -2332,7 +2332,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       res.json({ logs });
     } catch (error: any) {
       console.error('Error fetching security logs:', error);
-      res.status(500: any).json({ message: 'Failed to fetch security logs' });
+      res.status(500).json({ message: 'Failed to fetch security logs' });
     }
   });
 

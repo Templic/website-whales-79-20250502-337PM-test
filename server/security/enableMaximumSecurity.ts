@@ -91,10 +91,10 @@ export function enableMaximumSecurity(): void {
     console.log('[SECURITY] Enabling maximum security mode');
     
     // Set all security features to maximum
-    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES: any);
+    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
     
     // Start collecting security metrics
-    startMetricsCollection(30000: any); // Collect metrics every 30 seconds
+    startMetricsCollection(30000); // Collect metrics every 30 seconds
     
     // Initialize events collector
     initializeEventsCollector();
@@ -116,7 +116,7 @@ export function enableMaximumSecurity(): void {
             category: SecurityEventCategory.SYSTEM,
             severity: SecurityEventSeverity.ERROR,
             message: 'Error initializing security components in maximum security mode',
-            data: { error: (error as Error: any).message }
+            data: { error: (error as Error).message }
           });
         });
     }
@@ -136,7 +136,7 @@ export function enableMaximumSecurity(): void {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error enabling maximum security mode',
-      data: { error: (error as Error: any).message, stack: (error as Error: any).stack }
+      data: { error: (error as Error).message, stack: (error as Error).stack }
     });
     
     throw error;
