@@ -1,266 +1,263 @@
 /**
  * API Validation Middleware
  * 
- * This middleware provides robust validation for API requests using Zod schemas.
- * It validates request parameters, query strings, and body data.
+ * This middleware validates API requests against Zod schemas to ensure
+ * proper input validation and prevent security vulnerabilities.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
-import { logger } from '../../utils/logger';
-import { logSecurityEvent } from '../utils/securityUtils';
+import { logSecurityEvent, maskSensitiveData } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
-/**
- * Type for validation locations in a request
- */
-type ValidationTarget = 'params' | 'query' | 'body' | 'headers' | 'cookies';
-
-/**
- * Configuration for validation middleware
- */
-interface ValidationConfig {
-  sanitize?: boolean;
-  abortEarly?: boolean;
-  logViolations?: boolean;
-  strictMode?: boolean;
-}
-
-/**
- * Default validation configuration
- */
-const defaultValidationConfig: ValidationConfig = {
-  sanitize: true,      // Sanitize inputs when possible
-  abortEarly: false,   // Return all validation errors, not just the first one
-  logViolations: true, // Log validation violations
-  strictMode: true     // Reject requests with unexpected properties
+// Simple logger for when the main logger is not available
+const logger = {
+  debug: (message: string, meta?: any) => console.debug(message, meta),
+  info: (message: string, meta?: any) => console.info(message, meta),
+  warn: (message: string, meta?: any) => console.warn(message, meta),
+  error: (message: string, meta?: any) => console.error(message, meta)
 };
 
 /**
- * Creates validation middleware for a specific part of the request
+ * Type of request parts that can be validated
+ */
+export type RequestPart = 'body' | 'query' | 'params' | 'headers' | 'cookies';
+
+/**
+ * Options for validation middleware
+ */
+interface ValidationOptions {
+  stripUnknown?: boolean;
+  abortEarly?: boolean;
+  detailed?: boolean;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'none';
+}
+
+/**
+ * Default validation options
+ */
+const defaultOptions: ValidationOptions = {
+  stripUnknown: true,
+  abortEarly: false,
+  detailed: true,
+  logLevel: 'warn'
+};
+
+/**
+ * Middleware to validate a specific part of a request against a Zod schema
  * 
  * @param schema Zod schema to validate against
- * @param target Part of request to validate ('params', 'query', 'body', etc.)
- * @param config Validation configuration options
- * @returns Express middleware function
+ * @param part Request part to validate (body, query, params, headers, cookies)
+ * @param options Validation options
+ * @returns Express middleware
  */
 export function validate(
   schema: AnyZodObject,
-  target: ValidationTarget = 'body',
-  config: ValidationConfig = defaultValidationConfig
+  part: RequestPart = 'body',
+  options: ValidationOptions = defaultOptions
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Get the data to validate from the request
-      const dataToValidate = req[target];
+      // Get the part of the request to validate
+      const requestData = req[part];
       
-      // Skip validation if the target doesn't exist and we're validating body/params/query
-      // Headers and cookies always exist, so we'll validate empty objects
-      if (!dataToValidate && !['headers', 'cookies'].includes(target)) {
-        if (config.strictMode) {
-          return res.status(400).json({
-            status: 'error',
-            message: `Missing ${target} data to validate`,
-            error: 'VALIDATION_ERROR',
-            code: 'MISSING_DATA'
-          });
-        } else {
-          return next();
-        }
-      }
-      
-      // Parse and validate the data
-      const validData = await schema.parseAsync(dataToValidate);
-      
-      // If sanitization is enabled, replace the original data with the sanitized version
-      if (config.sanitize) {
-        req[target] = validData;
-      }
-      
-      // Continue to the next middleware
-      next();
-    } catch (error) {
-      // Handle validation errors
-      if (error instanceof ZodError) {
-        // Log the validation error if configured to do so
-        if (config.logViolations) {
-          const validationErrors = error.errors.map(err => ({
-            path: err.path.join('.'),
-            code: err.code,
-            message: err.message
-          }));
-          
-          logger.warn(`Validation error for ${req.method} ${req.path} on ${target}`, {
-            validationErrors,
-            ip: req.ip,
-            userAgent: req.headers['user-agent']
-          });
-          
-          // Log as security event
-          logSecurityEvent('API_VALIDATION_FAILURE', {
-            ip: req.ip,
-            method: req.method,
-            path: req.path,
-            target,
-            errors: validationErrors,
-            timestamp: new Date()
-          });
-        }
-        
-        // Send formatted validation error response
+      if (!requestData) {
         return res.status(400).json({
           status: 'error',
-          message: 'Validation error',
-          error: 'VALIDATION_ERROR',
-          validationErrors: error.errors.map(err => ({
-            path: err.path.join('.'),
-            code: err.code,
-            message: err.message
-          }))
+          message: `Request ${part} is undefined or null`
         });
       }
       
-      // Handle unexpected errors
-      logger.error('Unexpected validation error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+      // Parse the data through the schema
+      const validatedData = await schema.parseAsync(requestData);
       
-      return res.status(500).json({
-        status: 'error',
-        message: 'Internal server error during request validation'
-      });
+      // If stripUnknown is true, replace the original request part with the validated data
+      if (options.stripUnknown) {
+        req[part] = validatedData;
+      }
+      
+      next();
+    } catch (error) {
+      // Handle Zod validation errors
+      if (error instanceof ZodError) {
+        const formattedErrors = error.errors.map(err => ({
+          path: err.path.join('.'),
+          code: err.code,
+          message: err.message
+        }));
+        
+        // Log the validation failure if logLevel is not 'none'
+        if (options.logLevel !== 'none') {
+          const logMessage = `API validation failed for ${req.method} ${req.path} on ${part}`;
+          
+          switch (options.logLevel) {
+            case 'error':
+              logger.error(logMessage, {
+                errors: formattedErrors,
+                requestData: maskSensitiveData(req[part])
+              });
+              break;
+            case 'warn':
+              logger.warn(logMessage, {
+                errors: formattedErrors,
+                requestData: maskSensitiveData(req[part])
+              });
+              break;
+            case 'info':
+              logger.info(logMessage, {
+                errors: formattedErrors,
+                requestData: maskSensitiveData(req[part])
+              });
+              break;
+            case 'debug':
+              logger.debug(logMessage, {
+                errors: formattedErrors,
+                requestData: maskSensitiveData(req[part])
+              });
+              break;
+          }
+          
+          // Log as security event
+          logSecurityEvent('API_VALIDATION_FAILURE', {
+            method: req.method,
+            path: req.path,
+            part,
+            errors: formattedErrors,
+            ip: req.ip,
+            userAgent: req.headers['user-agent'],
+            timestamp: new Date()
+          }, SecurityLogLevel.WARN);
+        }
+        
+        // Send the validation error response
+        return res.status(400).json({
+          status: 'error',
+          message: 'Validation failed',
+          errors: options.detailed ? formattedErrors : undefined
+        });
+      }
+      
+      // Handle other errors
+      logger.error('Unexpected error during API validation:', { error });
+      next(error);
     }
   };
 }
 
 /**
- * Combined validator that can validate multiple parts of a request at once
+ * Middleware to validate multiple parts of a request against multiple schemas
  * 
- * @param validators Object mapping request parts to schemas
- * @param config Validation configuration
- * @returns Express middleware function
+ * @param schemas Object with schemas for different request parts
+ * @param options Validation options
+ * @returns Express middleware
  */
 export function validateRequest(
-  validators: Partial<Record<ValidationTarget, AnyZodObject>>,
-  config: ValidationConfig = defaultValidationConfig
+  schemas: Partial<Record<RequestPart, AnyZodObject>>,
+  options: ValidationOptions = defaultOptions
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      // Create a deep copy of the request to prevent mutation during validation
-      const reqCopy = JSON.parse(JSON.stringify({
-        params: req.params,
-        query: req.query,
-        body: req.body,
-        headers: req.headers,
-        cookies: req.cookies
-      }));
-      
-      // Validate each part of the request
-      for (const [target, schema] of Object.entries(validators) as [ValidationTarget, AnyZodObject][]) {
-        const dataToValidate = reqCopy[target];
+    // Process each schema in sequence
+    for (const [part, schema] of Object.entries(schemas) as [RequestPart, AnyZodObject][]) {
+      try {
+        const requestData = req[part];
         
-        // Skip if no data and we're not in strict mode
-        if (!dataToValidate && !config.strictMode) {
-          continue;
+        if (!requestData) {
+          return res.status(400).json({
+            status: 'error',
+            message: `Request ${part} is undefined or null`
+          });
         }
         
-        // Validate the data
-        const validData = await schema.parseAsync(dataToValidate);
+        // Parse the data through the schema
+        const validatedData = await schema.parseAsync(requestData);
         
-        // Update the request with validated data if sanitization is enabled
-        if (config.sanitize) {
-          req[target] = validData;
+        // If stripUnknown is true, replace the original request part with the validated data
+        if (options.stripUnknown) {
+          req[part] = validatedData;
         }
-      }
-      
-      next();
-    } catch (error) {
-      // Handle validation errors
-      if (error instanceof ZodError) {
-        if (config.logViolations) {
-          const validationErrors = error.errors.map(err => ({
+      } catch (error) {
+        // Handle Zod validation errors
+        if (error instanceof ZodError) {
+          const formattedErrors = error.errors.map(err => ({
             path: err.path.join('.'),
             code: err.code,
             message: err.message
           }));
           
-          logger.warn(`Combined validation error for ${req.method} ${req.path}`, {
-            validationErrors,
-            ip: req.ip,
-            userAgent: req.headers['user-agent']
-          });
+          // Log the validation failure
+          if (options.logLevel !== 'none') {
+            const logMessage = `API validation failed for ${req.method} ${req.path} on ${part}`;
+            logger.warn(logMessage, {
+              errors: formattedErrors,
+              requestData: maskSensitiveData(req[part])
+            });
+            
+            // Log as security event
+            logSecurityEvent('API_VALIDATION_FAILURE', {
+              method: req.method,
+              path: req.path,
+              part,
+              errors: formattedErrors,
+              ip: req.ip,
+              userAgent: req.headers['user-agent'],
+              timestamp: new Date()
+            }, SecurityLogLevel.WARN);
+          }
           
-          // Log as security event
-          logSecurityEvent('API_VALIDATION_FAILURE', {
-            ip: req.ip,
-            method: req.method,
-            path: req.path,
-            errors: validationErrors,
-            timestamp: new Date()
+          // Send the validation error response
+          return res.status(400).json({
+            status: 'error',
+            message: `Validation failed for ${part}`,
+            errors: options.detailed ? formattedErrors : undefined
           });
         }
         
-        return res.status(400).json({
-          status: 'error',
-          message: 'Validation error',
-          error: 'VALIDATION_ERROR',
-          validationErrors: error.errors.map(err => ({
-            path: err.path.join('.'),
-            code: err.code,
-            message: err.message
-          }))
-        });
+        // Handle other errors
+        logger.error(`Unexpected error during API validation for ${part}:`, { error });
+        return next(error);
       }
-      
-      // Handle unexpected errors
-      logger.error('Unexpected validation error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      
-      return res.status(500).json({
-        status: 'error',
-        message: 'Internal server error during request validation'
-      });
     }
+    
+    // If all validations pass, continue
+    next();
   };
 }
 
 /**
- * Sanitizes request data based on schemas without performing validation
- * Useful for non-critical endpoints where you want to clean data but not block requests
+ * Middleware to sanitize a request part according to a schema without strict validation
  * 
- * @param schema Schema to use for sanitization
- * @param target Part of request to sanitize
- * @returns Express middleware function
+ * @param schema Zod schema for sanitization
+ * @param part Request part to sanitize
+ * @returns Express middleware
  */
-export function sanitize(schema: AnyZodObject, target: ValidationTarget = 'body') {
+export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const dataToSanitize = req[target];
+      const requestData = req[part];
       
-      if (!dataToSanitize) {
+      if (!requestData) {
+        // Skip sanitization if the data doesn't exist
         return next();
       }
       
-      // Attempt to sanitize with the schema (but don't throw on errors)
-      const result = await schema.safeParseAsync(dataToSanitize);
+      // Use the schema's shape to create a sanitized version
+      const sanitizedData = {};
+      const schemaShape = schema.shape;
       
-      if (result.success) {
-        // Replace the original data with the sanitized version
-        req[target] = result.data;
+      // Only keep fields that are in the schema
+      for (const key in schemaShape) {
+        if (key in requestData) {
+          sanitizedData[key] = requestData[key];
+        }
       }
       
-      // Continue regardless of validation result
+      // Replace the original data with the sanitized version
+      req[part] = sanitizedData;
+      
       next();
     } catch (error) {
-      // Just log the error and continue
-      logger.debug('Error during request sanitization', {
-        error: error instanceof Error ? error.message : String(error),
-        path: req.path,
-        method: req.method
-      });
-      
+      // Log sanitization failures but don't block the request
+      logger.warn(`API sanitization failed for ${req.method} ${req.path} on ${part}`, { error });
       next();
     }
   };

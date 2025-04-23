@@ -1,209 +1,241 @@
 /**
- * Security Utility Functions
+ * Security Utilities
  * 
- * This module provides various utility functions for security-related operations
- * including response security headers, security logging, and token generation.
+ * This module provides utility functions for security operations.
  */
 
-import { Response, Request } from 'express';
-import { randomBytes, createHash } from 'crypto';
-import { Session } from 'express-session';
-import { SecurityEventType, SecurityEvent, SecurityLogLevel } from '../types/securityTypes';
+import crypto from 'crypto';
+import { Request } from 'express';
+import { SecurityEventType, SecurityLogLevel } from '../types/securityTypes';
 
-// Create a simple logger if the actual logger is not available
-const logger = {
-  debug: (message: string, meta?: any) => console.debug(message, meta),
-  info: (message: string, meta?: any) => console.info(message, meta),
-  warn: (message: string, meta?: any) => console.warn(message, meta),
-  error: (message: string, meta?: any) => console.error(message, meta)
-};
+// In-memory store for security events
+// In production, use a proper storage solution
+const securityEvents: Array<{
+  type: string;
+  timestamp: Date;
+  level: string;
+  data: any;
+}> = [];
 
 /**
- * Apply security headers to HTTP responses
+ * Log a security event for auditing and monitoring
  * 
- * @param res Express response object
+ * @param type Type of security event
+ * @param data Additional data for the event
+ * @param level Log level for the event
  */
-export function applySecurityHeaders(res: Response): void {
-  // Content Security Policy (CSP)
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' https://analytics.example.com; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    "font-src 'self' https://fonts.gstatic.com; " +
-    "img-src 'self' data: https://img.example.com; " +
-    "connect-src 'self' https://api.example.com; " +
-    "frame-src 'none'; " +
-    "object-src 'none'; " +
-    "base-uri 'self'; " +
-    "form-action 'self';"
-  );
+export function logSecurityEvent(
+  type: string,
+  data: Record<string, any>,
+  level: SecurityLogLevel = SecurityLogLevel.INFO
+): void {
+  // Create event object
+  const event = {
+    type,
+    timestamp: new Date(),
+    level,
+    data
+  };
   
-  // HTTP Strict Transport Security (HSTS)
-  res.setHeader(
-    'Strict-Transport-Security',
-    'max-age=31536000; includeSubDomains; preload'
-  );
+  // Store event
+  securityEvents.push(event);
   
-  // X-Content-Type-Options
-  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Log to console
+  const logMessage = `[Security] ${event.timestamp.toISOString()} [${level}] ${type}`;
   
-  // X-Frame-Options
-  res.setHeader('X-Frame-Options', 'DENY');
+  switch (level) {
+    case SecurityLogLevel.DEBUG:
+      console.debug(logMessage, data);
+      break;
+    case SecurityLogLevel.INFO:
+      console.info(logMessage, data);
+      break;
+    case SecurityLogLevel.WARN:
+      console.warn(logMessage, data);
+      break;
+    case SecurityLogLevel.ERROR:
+    case SecurityLogLevel.CRITICAL:
+      console.error(logMessage, data);
+      break;
+  }
   
-  // X-XSS-Protection
-  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // For critical events, perform additional actions
+  if (level === SecurityLogLevel.CRITICAL) {
+    // Send alerts, etc. (implementation details omitted)
+  }
+}
+
+/**
+ * Get recent security events, filtered by type and level
+ * 
+ * @param types Event types to include (optional)
+ * @param levels Log levels to include (optional)
+ * @param limit Maximum number of events to return
+ * @returns Array of security events
+ */
+export function getSecurityEvents(
+  types?: string[],
+  levels?: string[],
+  limit = 100
+): Array<{
+  type: string;
+  timestamp: Date;
+  level: string;
+  data: any;
+}> {
+  // Filter events by type and level
+  let filteredEvents = securityEvents;
   
-  // Referrer Policy
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (types && types.length > 0) {
+    filteredEvents = filteredEvents.filter(event => types.includes(event.type));
+  }
   
-  // Permissions Policy
-  res.setHeader(
-    'Permissions-Policy',
-    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-  );
+  if (levels && levels.length > 0) {
+    filteredEvents = filteredEvents.filter(event => levels.includes(event.level));
+  }
+  
+  // Sort by timestamp (newest first) and limit
+  return filteredEvents
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, limit);
 }
 
 /**
  * Generate a secure random token
  * 
- * @param byteLength Number of random bytes to generate
- * @returns Hex string of the token
+ * @param length Length of the token
+ * @returns Random token string
  */
-export function generateSecureToken(byteLength = 32): string {
-  return randomBytes(byteLength).toString('hex');
+export function generateSecureToken(length = 32): string {
+  return crypto.randomBytes(length).toString('hex');
 }
 
 /**
- * Generate a secure hash for the given data
+ * Generate a nonce for Content Security Policy
  * 
- * @param data Data to hash
- * @param algorithm Hash algorithm to use
- * @returns Hex string of the hash
+ * @returns Random nonce string
  */
-export function secureHash(data: string, algorithm = 'sha256'): string {
-  return createHash(algorithm).update(data).digest('hex');
+export function generateNonce(): string {
+  return crypto.randomBytes(16).toString('base64');
 }
 
 /**
- * Sanitize a string for safe output
+ * Hash a string using bcrypt-like algorithm
  * 
- * @param input String to sanitize
- * @returns Sanitized string
+ * @param input String to hash
+ * @param salt Salt for hashing (optional)
+ * @param rounds Number of rounds for hashing
+ * @returns Hashed string
  */
-export function sanitizeString(input: string): string {
-  // Replace potentially dangerous characters
-  return input
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;')
-    .replace(/\//g, '&#x2F;');
-}
-
-/**
- * Log a security event
- * 
- * @param type Type of security event
- * @param data Additional event data
- * @param level Log level for the event
- */
-export function logSecurityEvent(
-  type: SecurityEventType, 
-  data: Record<string, any>,
-  level: SecurityLogLevel = SecurityLogLevel.INFO
-): void {
-  const event: SecurityEvent = {
-    type,
-    timestamp: new Date(),
-    level,
-    source: 'security-utils',
-    data
-  };
+export function hashString(input: string, salt?: string, rounds = 10): string {
+  // Generate salt if not provided
+  const finalSalt = salt || crypto.randomBytes(16).toString('hex');
   
-  // Log to the appropriate logger level
-  switch (level) {
-    case SecurityLogLevel.DEBUG:
-      logger.debug(`Security event: ${type}`, { securityEvent: event });
-      break;
-    case SecurityLogLevel.INFO:
-      logger.info(`Security event: ${type}`, { securityEvent: event });
-      break;
-    case SecurityLogLevel.WARN:
-      logger.warn(`Security event: ${type}`, { securityEvent: event });
-      break;
-    case SecurityLogLevel.ERROR:
-    case SecurityLogLevel.CRITICAL:
-      logger.error(`Security event: ${type}`, { securityEvent: event });
-      break;
+  // Create key using PBKDF2
+  const key = crypto.pbkdf2Sync(
+    input,
+    finalSalt,
+    rounds * 1000,
+    64,
+    'sha512'
+  );
+  
+  return `${finalSalt}:${key.toString('hex')}`;
+}
+
+/**
+ * Verify a hash
+ * 
+ * @param input Input string
+ * @param hash Hash to verify against
+ * @returns True if the hash matches the input
+ */
+export function verifyHash(input: string, hash: string): boolean {
+  const [salt, originalHash] = hash.split(':');
+  
+  // Hash the input with the same salt
+  const key = crypto.pbkdf2Sync(
+    input,
+    salt,
+    10 * 1000,
+    64,
+    'sha512'
+  );
+  
+  // Compare the hashes
+  return originalHash === key.toString('hex');
+}
+
+/**
+ * Extract client IP address from request
+ * 
+ * @param req Express request
+ * @returns Client IP address
+ */
+export function getClientIp(req: Request): string {
+  // Check for X-Forwarded-For header
+  const forwardedFor = req.headers['x-forwarded-for'];
+  
+  if (forwardedFor) {
+    // If X-Forwarded-For is a string, extract the first IP
+    if (typeof forwardedFor === 'string') {
+      const ips = forwardedFor.split(',').map(ip => ip.trim());
+      return ips[0];
+    }
+    
+    // If X-Forwarded-For is an array, use the first element
+    return forwardedFor[0];
   }
   
-  // In a production environment, consider also sending to:
-  // - Security information and event management (SIEM) system
-  // - Blockchain-based immutable security log
-  // - Anomaly detection system
+  // Fall back to remote address
+  return req.socket.remoteAddress || '0.0.0.0';
 }
 
 /**
- * Check if a request is from an authenticated user
+ * Mask sensitive data in objects for logging
  * 
- * @param req Express request object
- * @returns Boolean indicating if user is authenticated
+ * @param data Object containing sensitive data
+ * @returns Object with sensitive data masked
  */
-export function isAuthenticated(req: Request): boolean {
-  return !!(req.session && req.session.userId);
-}
-
-/**
- * Check if a user has a specific role
- * 
- * @param req Express request object
- * @param role Role to check for
- * @returns Boolean indicating if user has the role
- */
-export function hasRole(req: Request, role: string): boolean {
-  if (!req.session) {
-    return false;
-  }
+export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
+  if (!data) return data;
   
-  const userRoles = (req.session as any).roles || [];
-  return userRoles.includes(role);
-}
-
-/**
- * Get the user ID from the session
- * 
- * @param session Express session
- * @returns User ID or null if not authenticated
- */
-export function getUserIdFromSession(session: Session): string | null {
-  if (!session) {
-    return null;
-  }
+  const sensitiveFields = [
+    'password',
+    'token',
+    'secret',
+    'key',
+    'apiKey',
+    'api_key',
+    'authToken',
+    'auth_token',
+    'credentials',
+    'credit_card',
+    'creditCard',
+    'ssn',
+    'social_security',
+    'socialSecurity'
+  ];
   
-  return (session as any).userId || null;
-}
-
-/**
- * Mask sensitive data for logging
- * 
- * @param data Object containing data to mask
- * @param sensitiveFields Fields to mask
- * @returns Object with masked sensitive fields
- */
-export function maskSensitiveData<T extends Record<string, any>>(
-  data: T,
-  sensitiveFields: string[] = ['password', 'token', 'secret', 'apiKey', 'credit_card']
-): T {
   const maskedData = { ...data };
   
-  for (const field of sensitiveFields) {
-    if (field in maskedData) {
-      // Mask with asterisks, preserving length
-      const value = String(maskedData[field]);
-      maskedData[field] = '*'.repeat(Math.min(value.length, 8)) + 
-        (value.length > 8 ? `[${value.length - 8} more]` : '');
+  // Mask sensitive fields
+  for (const key of Object.keys(maskedData)) {
+    // Check if the field is sensitive
+    const isSensitive = sensitiveFields.some(field => 
+      key.toLowerCase().includes(field.toLowerCase())
+    );
+    
+    if (isSensitive && maskedData[key]) {
+      // Mask the sensitive value
+      if (typeof maskedData[key] === 'string') {
+        maskedData[key] = '********';
+      } else if (typeof maskedData[key] === 'object' && maskedData[key] !== null) {
+        maskedData[key] = maskSensitiveData(maskedData[key]);
+      }
+    } else if (typeof maskedData[key] === 'object' && maskedData[key] !== null) {
+      // Recursively mask sensitive data in nested objects
+      maskedData[key] = maskSensitiveData(maskedData[key]);
     }
   }
   
@@ -211,102 +243,101 @@ export function maskSensitiveData<T extends Record<string, any>>(
 }
 
 /**
- * Generate a nonce for use in CSP
- * 
- * @returns Random nonce value
- */
-export function generateNonce(): string {
-  return randomBytes(16).toString('base64');
-}
-
-/**
- * Get client IP address from request
+ * Generate a device fingerprint from request data
  * 
  * @param req Express request
- * @returns IP address string
+ * @returns Device fingerprint
  */
-export function getClientIp(req: Request): string {
-  // Check for proxy headers first
-  const xForwardedFor = req.headers['x-forwarded-for'];
-  if (xForwardedFor) {
-    // X-Forwarded-For can be a comma-separated list of IPs
-    // The leftmost is the original client
-    const ips = Array.isArray(xForwardedFor) 
-      ? xForwardedFor[0]
-      : xForwardedFor.split(',')[0];
-    
-    return ips.trim();
-  }
+export function generateDeviceFingerprint(req: Request): string {
+  // Gather data for fingerprinting
+  const data = {
+    ip: getClientIp(req),
+    userAgent: req.headers['user-agent'] || '',
+    accept: req.headers['accept'] || '',
+    acceptLanguage: req.headers['accept-language'] || '',
+    acceptEncoding: req.headers['accept-encoding'] || ''
+  };
   
-  // If no proxy headers, use the remote address
-  return req.ip || 'unknown';
+  // Create hash of the data
+  const hash = crypto.createHash('sha256');
+  hash.update(JSON.stringify(data));
+  
+  return hash.digest('hex');
 }
 
 /**
- * Validate password strength
+ * Sanitize a string for logging or display
  * 
- * @param password Password to validate
- * @returns Validation result with score and feedback
+ * @param input String to sanitize
+ * @returns Sanitized string
  */
-export function validatePasswordStrength(password: string): {
-  isValid: boolean;
-  score: number;
-  feedback: string[];
-} {
-  const feedback: string[] = [];
-  let score = 0;
+export function sanitizeString(input: string): string {
+  if (!input) return '';
   
-  // Length check
-  if (password.length < 8) {
-    feedback.push('Password must be at least 8 characters long');
-  } else {
-    score += 1;
-  }
+  // Convert to string if not already
+  const str = String(input);
   
-  // Complexity checks
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Password should contain at least one uppercase letter');
-  }
+  // Replace newlines, tabs, and other control characters
+  const sanitized = str
+    .replace(/[\r\n\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Password should contain at least one lowercase letter');
-  }
+  // Limit the length
+  return sanitized.length > 1000 ? sanitized.substring(0, 1000) + '...' : sanitized;
+}
+
+/**
+ * Check if a string contains suspicious patterns
+ * 
+ * @param input String to check
+ * @returns True if the string is suspicious
+ */
+export function isSuspiciousInput(input: string): boolean {
+  if (!input) return false;
   
-  if (/[0-9]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Password should contain at least one number');
-  }
+  // Convert to string if not already
+  const str = String(input);
   
-  if (/[^A-Za-z0-9]/.test(password)) {
-    score += 1;
-  } else {
-    feedback.push('Password should contain at least one special character');
-  }
+  // Check for SQL injection patterns
+  const sqlPatterns = [
+    /(\b|'|")SELECT(\b|'|")/i,
+    /(\b|'|")INSERT(\b|'|")/i,
+    /(\b|'|")UPDATE(\b|'|")/i,
+    /(\b|'|")DELETE(\b|'|")/i,
+    /(\b|'|")DROP(\b|'|")/i,
+    /(\b|'|")TABLE(\b|'|")/i,
+    /(\b|'|")FROM(\b|'|")/i,
+    /(\b|'|")WHERE(\b|'|")/i,
+    /(\b|'|")AND(\b|'|")/i,
+    /(\b|'|")OR(\b|'|")/i,
+    /--/,
+    /;.*/,
+    /\/\*.*\*\//,
+    /UNION\s+SELECT/i
+  ];
   
-  // Advanced checks
-  if (password.length >= 12) {
-    score += 1;
-  }
+  // Check for XSS patterns
+  const xssPatterns = [
+    /<script\b[^>]*>/i,
+    /<\/script>/i,
+    /javascript:/i,
+    /on\w+\s*=/i,
+    /<img[^>]+src=[^>]+onerror[^>]+>/i
+  ];
   
-  if (password.length >= 16) {
-    score += 1;
-  }
+  // Check for command injection patterns
+  const commandPatterns = [
+    /\|\s*\w+/,
+    /;\s*\w+/,
+    /`.*`/,
+    /\$\([^)]*\)/,
+    /&&/,
+    /\|\|/
+  ];
   
-  // Common password check (simplified for example)
-  const commonPasswords = ['password', '123456', 'qwerty', 'admin'];
-  if (commonPasswords.includes(password.toLowerCase())) {
-    score = 0;
-    feedback.push('Password is too common');
-  }
+  // Check against all patterns
+  const allPatterns = [...sqlPatterns, ...xssPatterns, ...commandPatterns];
   
-  return {
-    isValid: score >= 4,
-    score,
-    feedback
-  };
+  return allPatterns.some(pattern => pattern.test(str));
 }

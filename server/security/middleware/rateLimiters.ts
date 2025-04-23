@@ -1,248 +1,380 @@
 /**
- * Rate Limiting Middleware
+ * Rate Limiters
  * 
- * This module provides configurable rate limiters to protect against brute force attacks,
- * API abuse, and denial of service attacks.
+ * This module provides various rate limiters to protect against abuse and brute force attacks.
+ * It includes specialized rate limiters for different types of endpoints.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { rateLimit, Options } from 'express-rate-limit';
-import { logger } from '../../utils/logger';
 import { logSecurityEvent } from '../utils/securityUtils';
+import { SecurityLogLevel } from '../types/securityTypes';
 
-/**
- * Default rate limit configurations for different endpoint types
- */
-const RATE_LIMIT_DEFAULTS = {
-  // General API endpoints
-  STANDARD: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many requests, please try again later',
-  },
-  
-  // Authentication endpoints (login, register, password reset)
-  AUTH: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many authentication attempts, please try again later',
-  },
-  
-  // Admin endpoints
-  ADMIN: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // 20 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many administrative requests, please try again later',
-  },
-  
-  // Payment and sensitive endpoints
-  PAYMENT: {
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 10, // 10 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: 'Too many payment requests, please try again later',
-  }
+// Simple logger for when the main logger is not available
+const logger = {
+  debug: (message: string, meta?: any) => console.debug(message, meta),
+  info: (message: string, meta?: any) => console.info(message, meta),
+  warn: (message: string, meta?: any) => console.warn(message, meta),
+  error: (message: string, meta?: any) => console.error(message, meta)
 };
 
 /**
- * Creates a standard rate limiter middleware with default options
- * 
- * @returns Express middleware function
+ * In-memory store for rate limiter data
+ * In a production environment, use Redis or another distributed store
  */
-export function standardRateLimiter() {
-  return createRateLimiter(RATE_LIMIT_DEFAULTS.STANDARD);
+const rateLimiterStore: Record<string, {
+  count: number;
+  resetTime: number;
+  blocked?: boolean;
+  blockUntil?: number;
+}> = {};
+
+/**
+ * Options for rate limiters
+ */
+interface RateLimiterOptions {
+  windowMs: number;      // Time window in milliseconds
+  maxRequests: number;   // Maximum number of requests in the window
+  message?: string;      // Custom error message
+  statusCode?: number;   // HTTP status code for rate limit errors
+  skipSuccessfulRequests?: boolean; // Skip counting successful requests
+  keyGenerator?: (req: Request) => string; // Function to generate keys
+  handler?: (req: Request, res: Response) => void; // Custom handler
+  skip?: (req: Request, res: Response) => boolean; // Function to skip rate limiting
+  blockDuration?: number; // Duration to block after exceeding maxRequests
+  blockThreshold?: number; // Number of violations before blocking
 }
 
 /**
- * Creates a more restrictive rate limiter for authentication endpoints
- * 
- * @returns Express middleware function
+ * Default rate limiter options
  */
-export function authRateLimiter() {
-  return createRateLimiter(RATE_LIMIT_DEFAULTS.AUTH);
-}
+const defaultOptions: RateLimiterOptions = {
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 100,         // 100 requests per windowMs
+  message: 'Too many requests, please try again later',
+  statusCode: 429,          // Too Many Requests
+  skipSuccessfulRequests: false,
+  keyGenerator: (req: Request) => `${req.ip}:${req.path}`,
+  handler: undefined,
+  skip: undefined,
+  blockDuration: 60 * 60 * 1000, // 1 hour
+  blockThreshold: 5             // Block after 5 violations
+};
 
 /**
- * Creates a rate limiter for admin endpoints
+ * Creates a middleware function that limits repeated requests
  * 
- * @returns Express middleware function
+ * @param options Rate limiter options
+ * @returns Express middleware
  */
-export function adminRateLimiter() {
-  return createRateLimiter(RATE_LIMIT_DEFAULTS.ADMIN);
-}
-
-/**
- * Creates a rate limiter for payment and other sensitive endpoints
- * 
- * @returns Express middleware function
- */
-export function paymentRateLimiter() {
-  return createRateLimiter(RATE_LIMIT_DEFAULTS.PAYMENT);
-}
-
-/**
- * Creates a customized rate limiter with specified options
- * 
- * @param options Rate limiter configuration options
- * @returns Express middleware function
- */
-export function createRateLimiter(options: Partial<Options>) {
-  const defaultOptions = {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req: Request) => false, // No skipping by default
-    keyGenerator: (req: Request) => {
-      // Use IP address as the default key
-      return req.ip || 'unknown';
-    },
-    handler: (req: Request, res: Response, next: NextFunction, options: Options) => {
-      // Log the rate limit violation
-      const path = req.originalUrl || req.url;
-      const ip = req.ip || 'unknown';
-      const method = req.method;
-      
-      logger.warn(`Rate limit exceeded for ${method} ${path}`, {
-        ip,
-        userAgent: req.headers['user-agent']
-      });
-      
-      // Log as security event
-      logSecurityEvent('RATE_LIMIT_EXCEEDED', {
-        ip,
-        method,
-        path,
-        userAgent: req.headers['user-agent'],
-        timestamp: new Date()
-      });
-      
-      // Send standardized error response
-      res.status(429).json({
-        status: 'error',
-        message: 'Rate limit exceeded',
-        error: 'TOO_MANY_REQUESTS',
-        retryAfter: Math.ceil(options.windowMs / 1000)
-      });
+export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  const opts = { ...defaultOptions, ...options };
+  
+  return function rateLimiter(req: Request, res: Response, next: NextFunction) {
+    // Skip rate limiting if the skip function returns true
+    if (opts.skip && opts.skip(req, res)) {
+      return next();
     }
-  };
-  
-  return rateLimit({...defaultOptions, ...options});
-}
-
-/**
- * Creates a sliding window rate limiter that tracks requests over time
- * more precisely than the standard rate limiter
- * 
- * @param windowMs Time window in milliseconds
- * @param maxRequests Maximum requests allowed in the window
- * @returns Express middleware function
- */
-export function slidingWindowRateLimiter(windowMs = 60000, maxRequests = 30) {
-  // Map to store client request timestamps
-  const requestLog = new Map<string, number[]>();
-  
-  // Clean up old entries periodically
-  const cleanup = () => {
+    
+    const key = opts.keyGenerator(req);
     const now = Date.now();
-    for (const [key, timestamps] of requestLog.entries()) {
-      const newTimestamps = timestamps.filter(time => now - time < windowMs);
-      if (newTimestamps.length === 0) {
-        requestLog.delete(key);
-      } else {
-        requestLog.set(key, newTimestamps);
-      }
+    
+    // Initialize or get the rate limiter data for this key
+    if (!rateLimiterStore[key]) {
+      rateLimiterStore[key] = {
+        count: 0,
+        resetTime: now + opts.windowMs
+      };
     }
-  };
-  
-  // Run cleanup every windowMs
-  setInterval(cleanup, windowMs);
-  
-  return (req: Request, res: Response, next: NextFunction) => {
-    const key = req.ip || 'unknown';
-    const now = Date.now();
-    const timestamps = requestLog.get(key) || [];
     
-    // Filter out timestamps outside the current window
-    const recentTimestamps = timestamps.filter(time => now - time < windowMs);
+    const limiterData = rateLimiterStore[key];
     
-    // Check if adding this request would exceed the limit
-    if (recentTimestamps.length >= maxRequests) {
-      // Log the rate limit violation
-      logger.warn(`Sliding window rate limit exceeded for ${req.method} ${req.path}`, {
-        ip: key,
-        userAgent: req.headers['user-agent']
-      });
+    // Check if the key is blocked
+    if (limiterData.blocked && limiterData.blockUntil && limiterData.blockUntil > now) {
+      const remainingBlockMs = limiterData.blockUntil - now;
+      const remainingBlockMinutes = Math.ceil(remainingBlockMs / 60000);
       
-      // Log as security event
+      // Log the blocked request
       logSecurityEvent('RATE_LIMIT_EXCEEDED', {
-        ip: key,
-        method: req.method,
+        ip: req.ip,
         path: req.path,
+        method: req.method,
         userAgent: req.headers['user-agent'],
+        key,
+        blocked: true,
+        remainingBlockMs,
         timestamp: new Date()
-      });
+      }, SecurityLogLevel.WARN);
       
-      // Send standardized error response
-      return res.status(429).json({
+      // Use custom handler if provided, otherwise send standard response
+      if (opts.handler) {
+        return opts.handler(req, res);
+      }
+      
+      res.setHeader('Retry-After', Math.ceil(remainingBlockMs / 1000));
+      return res.status(opts.statusCode).json({
         status: 'error',
-        message: 'Rate limit exceeded',
-        error: 'TOO_MANY_REQUESTS',
-        retryAfter: Math.ceil(windowMs / 1000)
+        message: `Account temporarily blocked due to excessive requests. Please try again in ${remainingBlockMinutes} minute(s).`
       });
     }
     
-    // Add the current timestamp and update the store
-    recentTimestamps.push(now);
-    requestLog.set(key, recentTimestamps);
+    // Reset the counter if the reset time has passed
+    if (now > limiterData.resetTime) {
+      limiterData.count = 0;
+      limiterData.resetTime = now + opts.windowMs;
+    }
+    
+    // Check if the rate limit has been exceeded
+    if (limiterData.count >= opts.maxRequests) {
+      // Increment violation count and check if blocking is needed
+      limiterData.count++;
+      
+      // Check if the client should be blocked due to repeated violations
+      if (opts.blockThreshold && limiterData.count >= opts.maxRequests + opts.blockThreshold) {
+        limiterData.blocked = true;
+        limiterData.blockUntil = now + opts.blockDuration;
+      }
+      
+      // Log the rate limit exceeded event
+      logSecurityEvent('RATE_LIMIT_EXCEEDED', {
+        ip: req.ip,
+        path: req.path,
+        method: req.method,
+        userAgent: req.headers['user-agent'],
+        key,
+        count: limiterData.count,
+        maxRequests: opts.maxRequests,
+        resetTime: limiterData.resetTime,
+        timestamp: new Date()
+      }, SecurityLogLevel.WARN);
+      
+      // Set rate limit headers
+      const remainingMs = limiterData.resetTime - now;
+      res.setHeader('Retry-After', Math.ceil(remainingMs / 1000));
+      res.setHeader('X-RateLimit-Limit', opts.maxRequests.toString());
+      res.setHeader('X-RateLimit-Remaining', '0');
+      res.setHeader('X-RateLimit-Reset', Math.ceil(limiterData.resetTime / 1000).toString());
+      
+      // Use custom handler if provided, otherwise send standard response
+      if (opts.handler) {
+        return opts.handler(req, res);
+      }
+      
+      return res.status(opts.statusCode).json({
+        status: 'error',
+        message: opts.message
+      });
+    }
+    
+    // Increment the request count
+    limiterData.count++;
     
     // Set rate limit headers
-    res.setHeader('X-RateLimit-Limit', String(maxRequests));
-    res.setHeader('X-RateLimit-Remaining', String(maxRequests - recentTimestamps.length));
-    res.setHeader('X-RateLimit-Reset', String(Math.ceil((now + windowMs) / 1000)));
+    res.setHeader('X-RateLimit-Limit', opts.maxRequests.toString());
+    res.setHeader('X-RateLimit-Remaining', (opts.maxRequests - limiterData.count).toString());
+    res.setHeader('X-RateLimit-Reset', Math.ceil(limiterData.resetTime / 1000).toString());
+    
+    // If skipSuccessfulRequests is true, decrement the counter when the response is successful
+    if (opts.skipSuccessfulRequests) {
+      const originalEnd = res.end;
+      res.end = function(chunk?: any, encoding?: BufferEncoding, callback?: () => void) {
+        if (res.statusCode < 400) {
+          limiterData.count = Math.max(0, limiterData.count - 1);
+        }
+        
+        return originalEnd.call(res, chunk, encoding, callback);
+      };
+    }
     
     next();
   };
 }
 
 /**
- * Creates a rate limiter that is sensitive to the user's authentication status
- * Authenticated users get a higher rate limit than unauthenticated users
- * 
- * @param authMaxRequests Maximum requests allowed for authenticated users
- * @param unauthMaxRequests Maximum requests allowed for unauthenticated users
- * @param windowMs Time window in milliseconds
- * @returns Express middleware function
+ * Standard rate limiter for general API endpoints
+ * 100 requests per 15 minutes
  */
-export function userAwareRateLimiter(
-  authMaxRequests = 150,
-  unauthMaxRequests = 50,
-  windowMs = 15 * 60 * 1000
+export function standardRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 100,
+    keyGenerator: (req) => {
+      // Use user ID if available, otherwise use IP
+      const userId = req.session?.userId;
+      return userId ? `user:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
+    },
+    ...options
+  });
+}
+
+/**
+ * Strict rate limiter for authentication endpoints
+ * 5 requests per 15 minutes
+ */
+export function authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5,           // 5 requests per 15 minutes
+    message: 'Too many login attempts, please try again later',
+    blockDuration: 60 * 60 * 1000, // 1 hour block
+    blockThreshold: 3,        // Block after 3 additional attempts
+    keyGenerator: (req) => {
+      // Use provided username/email if available
+      const identifier = req.body?.email || req.body?.username || req.body?.userId || req.ip;
+      return `auth:${identifier}:${req.path}`;
+    },
+    ...options
+  });
+}
+
+/**
+ * Administrative endpoint rate limiter
+ * 20 requests per 15 minutes
+ */
+export function adminRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 20,          // 20 requests per 15 minutes
+    message: 'Too many admin requests, please try again later',
+    keyGenerator: (req) => {
+      const userId = req.session?.userId;
+      return userId ? `admin:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
+    },
+    ...options
+  });
+}
+
+/**
+ * Payment endpoint rate limiter
+ * 10 requests per 10 minutes
+ */
+export function paymentRateLimiter(options: Partial<RateLimiterOptions> = {}) {
+  return createRateLimiter({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    maxRequests: 10,          // 10 requests per 10 minutes
+    message: 'Too many payment requests, please try again later',
+    blockDuration: 24 * 60 * 60 * 1000, // 24 hour block for payment abuse
+    blockThreshold: 2,        // Block after 2 additional attempts
+    keyGenerator: (req) => {
+      const userId = req.session?.userId;
+      return userId ? `payment:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
+    },
+    ...options
+  });
+}
+
+/**
+ * Sliding window rate limiter
+ * More precise rate limiting based on a sliding time window
+ * 
+ * @param windowMs Time window in milliseconds
+ * @param maxRequests Maximum number of requests in the window
+ * @param options Additional rate limiter options
+ * @returns Express middleware
+ */
+export function slidingWindowRateLimiter(
+  windowMs: number,
+  maxRequests: number,
+  options: Partial<RateLimiterOptions> = {}
 ) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Determine if the user is authenticated (using session)
-    const isAuthenticated = !!(req.session && req.session.userId);
+  // Store timestamps of requests
+  const requestLog: Record<string, number[]> = {};
+  
+  return function slidingWindowLimiter(req: Request, res: Response, next: NextFunction) {
+    // Skip rate limiting if the skip function returns true
+    if (options.skip && options.skip(req, res)) {
+      return next();
+    }
     
-    // Apply appropriate rate limiter based on authentication status
-    const limiter = createRateLimiter({
-      windowMs,
-      max: isAuthenticated ? authMaxRequests : unauthMaxRequests,
-      // Use a key that includes the user ID for authenticated users
-      keyGenerator: (req) => {
-        if (isAuthenticated && req.session && req.session.userId) {
-          return `user_${req.session.userId}`;
-        }
-        return req.ip || 'unknown';
+    const keyGenerator = options.keyGenerator || defaultOptions.keyGenerator;
+    const key = keyGenerator(req);
+    const now = Date.now();
+    
+    // Initialize request log for this key if not exists
+    if (!requestLog[key]) {
+      requestLog[key] = [];
+    }
+    
+    // Remove timestamps outside of the window
+    const windowStart = now - windowMs;
+    requestLog[key] = requestLog[key].filter(timestamp => timestamp > windowStart);
+    
+    // Check if the rate limit has been exceeded
+    if (requestLog[key].length >= maxRequests) {
+      // Log the rate limit exceeded event
+      logSecurityEvent('RATE_LIMIT_EXCEEDED', {
+        ip: req.ip,
+        path: req.path,
+        method: req.method,
+        userAgent: req.headers['user-agent'],
+        key,
+        count: requestLog[key].length,
+        maxRequests,
+        slidingWindow: true,
+        timestamp: new Date()
+      }, SecurityLogLevel.WARN);
+      
+      // Set headers for rate limiting info
+      const oldestRequest = requestLog[key][0];
+      const resetTime = oldestRequest + windowMs;
+      const remainingMs = resetTime - now;
+      
+      res.setHeader('Retry-After', Math.ceil(remainingMs / 1000));
+      res.setHeader('X-RateLimit-Limit', maxRequests.toString());
+      res.setHeader('X-RateLimit-Remaining', '0');
+      res.setHeader('X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString());
+      
+      // Use custom handler if provided, otherwise send standard response
+      if (options.handler) {
+        return options.handler(req, res);
       }
-    });
+      
+      const message = options.message || defaultOptions.message;
+      const statusCode = options.statusCode || defaultOptions.statusCode;
+      
+      return res.status(statusCode).json({
+        status: 'error',
+        message
+      });
+    }
     
-    return limiter(req, res, next);
+    // Add current timestamp to the log
+    requestLog[key].push(now);
+    
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', maxRequests.toString());
+    res.setHeader('X-RateLimit-Remaining', (maxRequests - requestLog[key].length).toString());
+    
+    // If there are previous requests, calculate the reset time based on the oldest
+    if (requestLog[key].length > 0) {
+      const oldestRequest = requestLog[key][0];
+      const resetTime = oldestRequest + windowMs;
+      res.setHeader('X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString());
+    } else {
+      res.setHeader('X-RateLimit-Reset', Math.ceil((now + windowMs) / 1000).toString());
+    }
+    
+    next();
   };
+}
+
+/**
+ * Cleanup function to periodically remove old rate limiter data
+ * Call this periodically to prevent memory leaks
+ */
+export function cleanupRateLimiters() {
+  const now = Date.now();
+  
+  // Remove expired entries from the rate limiter store
+  for (const key in rateLimiterStore) {
+    const data = rateLimiterStore[key];
+    
+    // Remove if reset time has passed and not blocked
+    if (data.resetTime < now && (!data.blocked || (data.blockUntil && data.blockUntil < now))) {
+      delete rateLimiterStore[key];
+    }
+  }
+  
+  logger.debug('Rate limiter cleanup completed', {
+    remainingEntries: Object.keys(rateLimiterStore).length
+  });
 }

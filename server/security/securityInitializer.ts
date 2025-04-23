@@ -1,117 +1,107 @@
 /**
  * Security Initializer
  * 
- * This module initializes all security components and middleware for the application.
- * It provides a central place to configure and apply security features.
+ * This module initializes all security components and applies
+ * security middleware to the Express application.
  */
 
-import { Application, Router, Request, Response, NextFunction } from 'express';
+import { Application, Router } from 'express';
 import { applyGlobalSecurityMiddleware, enhanceSecurityRoutes, enhanceNewsletterRoutes, enhanceOrderRoutes } from './enhancement/routeEnhancements';
-import { securityHeadersMiddleware, staticContentSecurityHeadersMiddleware } from './middleware/securityHeadersMiddleware';
-import { apiUsageTracker, secureErrorHandler } from './utils/securityPatterns';
 import { logSecurityEvent } from './utils/securityUtils';
+import { SecurityLogLevel } from './types/securityTypes';
+import { cleanupRateLimiters } from './middleware/rateLimiters';
 
-interface SecurityInitializerOptions {
-  enableAdvancedSecurity?: boolean;
+/**
+ * Interface for security configuration
+ */
+export interface SecurityInitializerOptions {
+  enableAPIValidation?: boolean;
   enableRateLimiting?: boolean;
-  enableCSRFProtection?: boolean;
   enableSecurityHeaders?: boolean;
-  enableInputValidation?: boolean;
-  enableSecurityMonitoring?: boolean;
+  enableCSRFProtection?: boolean;
+  enableAdvancedAnalytics?: boolean;
+  enableRuntimeProtection?: boolean;
+  enableAnomalyDetection?: boolean;
+  maxScanDepth?: 'normal' | 'deep' | 'maximum';
 }
 
 /**
- * Default security initializer options
+ * Default security configuration
  */
 const defaultOptions: SecurityInitializerOptions = {
-  enableAdvancedSecurity: true,
+  enableAPIValidation: true,
   enableRateLimiting: true,
-  enableCSRFProtection: true,
   enableSecurityHeaders: true,
-  enableInputValidation: true,
-  enableSecurityMonitoring: true
+  enableCSRFProtection: true,
+  enableAdvancedAnalytics: false,
+  enableRuntimeProtection: false,
+  enableAnomalyDetection: false,
+  maxScanDepth: 'normal'
 };
 
 /**
- * Initialize security features for the application
+ * Initialize security components and apply security middleware
  * 
  * @param app Express application
- * @param apiRouter Express router for API routes
  * @param options Security configuration options
  */
-export function initializeSecurity(
-  app: Application,
-  apiRouter: Router,
-  shopRouter: Router,
-  options: SecurityInitializerOptions = defaultOptions
-): void {
-  console.log('Initializing security features...');
-
-  try {
-    // Apply global security middleware to all routes
-    applyGlobalSecurityMiddleware(app);
-    
-    // Apply security headers to static content
-    app.use('/static', staticContentSecurityHeadersMiddleware);
-    app.use('/assets', staticContentSecurityHeadersMiddleware);
-    
-    // Track API usage for security monitoring
-    if (options.enableSecurityMonitoring) {
-      app.use(apiUsageTracker);
-    }
-    
-    // Enhance API routes with security features
-    if (options.enableInputValidation) {
-      enhanceSecurityRoutes(apiRouter);
-      enhanceNewsletterRoutes(apiRouter);
-      enhanceOrderRoutes(shopRouter);
-    }
-    
-    // Set up global error handler
-    app.use(secureErrorHandler);
-    
-    // Log successful security initialization
-    console.log('Security features initialized successfully');
-    logSecurityEvent('SECURITY_INITIALIZED', {
-      options,
-      timestamp: new Date()
-    });
-    
-    // Return advanced security system if it was initialized
-    return;
-  } catch (error) {
-    // Log initialization error
-    console.error('Error initializing security features:', error);
-    
-    // Apply fallback security in case of failure
-    applyFallbackSecurity(app);
-  }
+export function initializeSecurity(app: Application, options: SecurityInitializerOptions = {}) {
+  // Merge provided options with defaults
+  const securityOptions = { ...defaultOptions, ...options };
+  
+  // Log security initialization
+  logSecurityEvent('SECURITY_INITIALIZED', {
+    options: securityOptions,
+    timestamp: new Date()
+  }, SecurityLogLevel.INFO);
+  
+  // Apply global security middleware
+  applyGlobalSecurityMiddleware(app);
+  
+  // Set up API routes
+  const apiRouter = Router();
+  app.use('/api', apiRouter);
+  
+  // Set up shop routes
+  const shopRouter = Router();
+  app.use('/api/shop', shopRouter);
+  
+  // Enhance security routes
+  enhanceSecurityRoutes(apiRouter);
+  
+  // Enhance newsletter routes
+  enhanceNewsletterRoutes(apiRouter);
+  
+  // Enhance order routes
+  enhanceOrderRoutes(shopRouter);
+  
+  // Set up periodic cleanup for rate limiters
+  setupPeriodicCleanup();
+  
+  // Log successful initialization
+  console.log('[Security] Security system initialized successfully');
 }
 
 /**
- * Apply minimal fallback security if full initialization fails
- * 
- * @param app Express application
+ * Set up periodic cleanup tasks
  */
-function applyFallbackSecurity(app: Application): void {
-  console.warn('Applying fallback security measures...');
+function setupPeriodicCleanup() {
+  // Clean up rate limiters every 15 minutes
+  setInterval(() => {
+    cleanupRateLimiters();
+  }, 15 * 60 * 1000);
+}
+
+/**
+ * Shutdown security components
+ */
+export function shutdownSecurity() {
+  // Perform any cleanup needed when shutting down the application
   
-  // Apply basic security headers
-  app.use(securityHeadersMiddleware);
+  // Log security shutdown
+  logSecurityEvent('SECURITY_SHUTDOWN', {
+    timestamp: new Date()
+  }, SecurityLogLevel.INFO);
   
-  // Apply basic error handler
-  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error('Server error (fallback handler):', err);
-    
-    if (res.headersSent) {
-      return next(err);
-    }
-    
-    res.status(500).json({
-      status: 'error',
-      message: 'An unexpected error occurred'
-    });
-  });
-  
-  console.log('Fallback security measures applied');
+  console.log('[Security] Security system shutdown completed');
 }

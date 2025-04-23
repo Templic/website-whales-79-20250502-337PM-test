@@ -1,61 +1,108 @@
 /**
- * Newsletter API Validation Schemas
+ * Newsletter Validation Schemas
  * 
- * This module provides Zod validation schemas for newsletter-related endpoints.
+ * This module provides Zod schemas for validating newsletter-related requests.
+ * These schemas ensure proper input validation and prevent security vulnerabilities.
  */
 
 import { z } from 'zod';
 
 /**
- * Validation schema for newsletter ID parameter
+ * Schema for newsletter subscription requests
  */
-export const newsletterIdSchema = z.object({
-  id: z.string().uuid({ message: 'Invalid newsletter ID format' })
+export const newsletterSubscribeSchema = z.object({
+  email: z.string()
+    .email('Please provide a valid email address')
+    .min(5, 'Email must be at least 5 characters long')
+    .max(254, 'Email must be at most 254 characters long')
+    .trim(),
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters long')
+    .max(100, 'Name must be at most 100 characters long')
+    .trim()
+    .optional(),
+  preferences: z.array(z.string())
+    .optional(),
+  source: z.string()
+    .max(100, 'Source must be at most 100 characters long')
+    .trim()
+    .optional()
 });
 
 /**
- * Validation schema for GET /api/newsletters/:id
+ * Schema for newsletter unsubscribe requests
  */
-export const getNewsletterSchema = z.object({
-  id: z.string().uuid({ message: 'Invalid newsletter ID format' })
+export const newsletterUnsubscribeSchema = z.object({
+  email: z.string()
+    .email('Please provide a valid email address')
+    .min(5, 'Email must be at least 5 characters long')
+    .max(254, 'Email must be at most 254 characters long')
+    .trim(),
+  reason: z.string()
+    .max(500, 'Reason must be at most 500 characters long')
+    .trim()
+    .optional(),
+  token: z.string()
+    .min(32, 'Invalid unsubscribe token')
+    .max(128, 'Invalid unsubscribe token')
+    .trim()
+    .optional()
 });
 
 /**
- * Validation schema for newsletter query parameters
+ * Schema for newsletter preferences update
  */
-export const newsletterQuerySchema = z.object({
-  page: z.coerce.number().int().positive().optional().default(1),
-  limit: z.coerce.number().int().positive().max(100).optional().default(20),
-  sort: z.enum(['date', 'title', 'status']).optional().default('date'),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
-  status: z.enum(['draft', 'published', 'archived']).optional(),
-  search: z.string().trim().max(100).optional()
+export const newsletterPreferencesSchema = z.object({
+  email: z.string()
+    .email('Please provide a valid email address')
+    .min(5, 'Email must be at least 5 characters long')
+    .max(254, 'Email must be at most 254 characters long')
+    .trim(),
+  preferences: z.array(z.string())
+    .min(1, 'Please select at least one preference')
+    .max(10, 'Too many preferences selected'),
+  frequency: z.enum(['daily', 'weekly', 'monthly']),
+  token: z.string()
+    .min(32, 'Invalid preferences token')
+    .max(128, 'Invalid preferences token')
+    .trim()
 });
 
 /**
- * Validation schema for creating a newsletter
+ * Schema for checking newsletter subscription status
  */
-export const createNewsletterSchema = z.object({
-  title: z.string().trim().min(1, { message: 'Title is required' }).max(200, { message: 'Title must be 200 characters or less' }),
-  content: z.string().min(1, { message: 'Content is required' }),
-  status: z.enum(['draft', 'published', 'archived']).default('draft'),
-  publishDate: z.string().datetime({ offset: true }).optional(),
-  expiryDate: z.string().datetime({ offset: true }).optional(),
-  tags: z.array(z.string().trim()).optional().default([]),
-  featuredImage: z.string().url().optional(),
-  allowComments: z.boolean().optional().default(true)
+export const newsletterStatusSchema = z.object({
+  email: z.string()
+    .email('Please provide a valid email address')
+    .min(5, 'Email must be at least 5 characters long')
+    .max(254, 'Email must be at most 254 characters long')
+    .trim()
 });
 
 /**
- * Validation schema for updating a newsletter (PATCH /api/newsletters/:id)
+ * Schema for newsletter admin batch operations
  */
-export const updateNewsletterSchema = z.object({
-  title: z.string().trim().min(1).max(200).optional(),
-  content: z.string().optional(),
-  status: z.enum(['draft', 'published', 'archived']).optional(),
-  publishDate: z.string().datetime({ offset: true }).optional().nullable(),
-  expiryDate: z.string().datetime({ offset: true }).optional().nullable(),
-  tags: z.array(z.string().trim()).optional(),
-  featuredImage: z.string().url().optional().nullable(),
-  allowComments: z.boolean().optional()
+export const newsletterBatchSchema = z.object({
+  emails: z.array(z.string().email('All emails must be valid'))
+    .min(1, 'Please provide at least one email')
+    .max(100, 'Too many emails in a single batch'),
+  action: z.enum(['subscribe', 'unsubscribe', 'delete']),
+  listId: z.string()
+    .uuid('Invalid list ID')
+    .optional()
+});
+
+/**
+ * Schema for newsletter delivery info
+ */
+export const newsletterDeliverySchema = z.object({
+  campaignId: z.string()
+    .uuid('Invalid campaign ID'),
+  scheduledAt: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(.\d{3})?Z$/, 'Invalid date format')
+    .optional(),
+  status: z.enum(['draft', 'scheduled', 'sending', 'sent', 'failed']),
+  audienceSize: z.number()
+    .int('Audience size must be an integer')
+    .min(0, 'Audience size cannot be negative')
 });
