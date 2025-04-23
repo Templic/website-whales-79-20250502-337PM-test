@@ -106,6 +106,9 @@ async function setupMaintenanceTasks() {
     await boss.schedule('vacuum-analyze', '0 3 * * *'); // Every day at 3am
     await boss.work('vacuum-analyze', async () => {
       try {
+        // VACUUM ANALYZE is a PostgreSQL system command for maintenance
+        // This is a fixed command string with no variable parts, so it's safe from SQL injection
+        // We're explicitly not using user input or variable interpolation here
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
         return { success: true };
@@ -119,16 +122,17 @@ async function setupMaintenanceTasks() {
     await boss.schedule('reindex-database', '0 4 * * 0'); // Every Sunday at 4am
     await boss.work('reindex-database', async () => {
       try {
-        // First get the current database name
+        // First get the current database name using a safe system function
         const dbNameResult = await pgPool.query('SELECT current_database()');
         const dbName = dbNameResult.rows[0].current_database;
         
         // Reindex tables one by one to avoid locks
+        // Using parameterized query for schema name
         const tablesResult = await pgPool.query(`
           SELECT tablename 
           FROM pg_tables 
-          WHERE schemaname = 'public'
-        `);
+          WHERE schemaname = $1
+        `, ['public']);
         
         // Function to validate tablename to prevent SQL injection
         function isValidTableName(name: string): boolean {
@@ -143,9 +147,27 @@ async function setupMaintenanceTasks() {
             continue;
           }
           
-          // Use double quotes for identifier safety and validated table name
-          await pgPool.query(`REINDEX TABLE "${row.tablename}"`);
-          log(`Reindexed table ${row.tablename}`, 'db-maintenance');
+          // PostgreSQL doesn't support parametrization for table/schema identifiers
+          // So we need to validate the tablename and then use it directly with proper quoting
+          // This is specifically for the REINDEX command which doesn't accept parameters for identifiers
+          
+          // Double check tablename meets the strict validation rules before executing
+          if (isValidTableName(row.tablename)) {
+            // Safe to use with proper double-quoting for PostgreSQL identifiers
+            const reindexQuery = `REINDEX TABLE "${row.tablename}"`;
+            
+            // Analyze the query using our SQL injection prevention
+            const analysisResult = sqlInjectionPrevention.analyzeQuery(reindexQuery);
+            
+            if (analysisResult.isSafe) {
+              await pgPool.query(reindexQuery);
+              log(`Reindexed table ${row.tablename}`, 'db-maintenance');
+            } else {
+              log(`Skipping potentially unsafe reindex operation for table: ${row.tablename}`, 'security');
+            }
+          } else {
+            log(`Skipping invalid table name: ${row.tablename}`, 'db-maintenance');
+          }
         }
         
         log('Database reindexing completed', 'db-maintenance');
@@ -159,26 +181,28 @@ async function setupMaintenanceTasks() {
     // Register query analysis task
     await boss.work('analyze-slow-queries', async () => {
       try {
-        // Check if pg_stat_statements extension exists
+        // Check if pg_stat_statements extension exists with parameterized query
         const checkExtension = await pgPool.query(`
           SELECT exists(
-            SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements'
+            SELECT 1 FROM pg_extension WHERE extname = $1
           );
-        `);
+        `, ['pg_stat_statements']);
         
         if (checkExtension.rows[0].exists) {
-          // If extension exists, analyze slow queries
+          // If extension exists, analyze slow queries with a safe limit parameter
+          const queryLimit = 10; // Hardcoded limit for security
           const result = await pgPool.query(`
             SELECT query, calls, total_time, mean_time, rows
             FROM pg_stat_statements
             ORDER BY mean_time DESC
-            LIMIT 10;
-          `);
+            LIMIT $1;
+          `, [queryLimit]);
           
           log('Slow query analysis completed', 'db-performance');
           return { success: true, slowQueries: result.rows };
         } else {
-          // Otherwise, return basic query stats
+          // Otherwise, return basic query stats with a safe limit parameter
+          const queryLimit = 10; // Hardcoded limit for security
           const result = await pgPool.query(`
             SELECT relname as table_name, 
                   seq_scan, 
@@ -187,8 +211,8 @@ async function setupMaintenanceTasks() {
                   idx_tup_fetch
             FROM pg_stat_user_tables
             ORDER BY seq_scan DESC
-            LIMIT 10;
-          `);
+            LIMIT $1;
+          `, [queryLimit]);
           
           // Log basic query stats
           log('Basic query stats analysis completed', 'db-performance');
@@ -204,15 +228,31 @@ async function setupMaintenanceTasks() {
   }
 }
 
-// Utility function to execute query with detailed performance metrics
+// Import SQLInjectionPrevention module
+import { sqlInjectionPrevention } from './security/advanced/database/SQLInjectionPrevention';
+
+// Utility function to execute query with detailed performance metrics and SQL injection protection
 export async function executeOptimizedQuery(query: string, params?: any[]) {
   const start = Date.now();
   try {
+    // Analyze the query for potential SQL injection
+    const analysisResult = sqlInjectionPrevention.analyzeQuery(query, params || []);
+    
+    // If the query is potentially dangerous, block it
+    if (!analysisResult.isSafe) {
+      const errorMessage = `Potentially dangerous query blocked: ${analysisResult.detectedPatterns.map(p => p.pattern.name).join(', ')}`;
+      log(errorMessage, 'security');
+      console.error(errorMessage);
+      throw new Error('Query blocked due to security concerns');
+    }
+    
+    // Execute the query if it's safe
     const result = await pgPool.query(query, params);
     const duration = Date.now() - start;
     
     // Log performance details only if query takes more than 100ms
     if (duration > 100) {
+      // Truncate query for logging to avoid exposing sensitive details
       log(`Slow query (${duration}ms): ${query.substring(0, 100)}...`, 'db-performance');
     }
     
@@ -227,25 +267,34 @@ export async function executeOptimizedQuery(query: string, params?: any[]) {
 // Connection pooling optimization
 export async function getConnectionPoolStats() {
   try {
-    // Try to get pool stats from pg_stat_activity instead of internal properties
+    // Use parameterized query where applicable
+    // For database catalog operations, use safe system function calls
+    // All column names and table names here are fixed system table references, not user inputs
     const result = await pgPool.query(`
       SELECT count(*) as total,
-             count(*) FILTER (WHERE state = 'active') as active,
-             count(*) FILTER (WHERE state = 'idle') as idle,
-             count(*) FILTER (WHERE state = 'idle in transaction') as idle_in_transaction,
+             count(*) FILTER (WHERE state = $1) as active,
+             count(*) FILTER (WHERE state = $2) as idle,
+             count(*) FILTER (WHERE state = $3) as idle_in_transaction,
              count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
       FROM pg_stat_activity 
       WHERE datname = current_database()
         AND pid <> pg_backend_pid();
-    `);
+    `, ['active', 'idle', 'idle in transaction']);
     
     const stats = result.rows[0] || {};
     
+    // Safely parse integer values with validation
+    function safeParseInt(value: any, defaultValue: number = 0): number {
+      if (value === undefined || value === null) return defaultValue;
+      const parsed = parseInt(value);
+      return isNaN(parsed) ? defaultValue : parsed;
+    }
+    
     return {
-      total: parseInt(stats.total) || 0,
-      active: parseInt(stats.active) || 0,
-      idle: parseInt(stats.idle) || 0,
-      waiting: parseInt(stats.waiting) || 0,
+      total: safeParseInt(stats.total),
+      active: safeParseInt(stats.active),
+      idle: safeParseInt(stats.idle),
+      waiting: safeParseInt(stats.waiting),
     };
   } catch (error) {
     console.error('Failed to get connection pool stats:', error);
