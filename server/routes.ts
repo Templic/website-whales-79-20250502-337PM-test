@@ -31,6 +31,7 @@ import {
 } from './validation';
 import { publicRouter, authenticatedRouter, adminRouter } from './routes/secureApiRoutes';
 import auditSecurityRoutes from './routes/auditSecurityRoutes';
+import secureApiRoutes from './routes/secure-api';
 import { verifyApiSecurity } from './security/apiSecurityVerification';
 // Import CSRF protection middleware
 import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtection';
@@ -93,6 +94,7 @@ import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
 import csrfRoutes from './routes/csrf-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
+import { protectApiRoutes } from './security/apiRoutesProtector';
 
 // Email transporter for nodemailer
 const transporter = createTransport({
@@ -2035,6 +2037,33 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/security/audit', auditSecurityRoutes);
   app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
+  
+  // Quantum-resistant security API routes
+  app.use('/api/security/quantum', secureApiRoutes);
+  
+  // TODO: Fix API routes protection with missing modules
+  // Temporarily commented out to fix build errors
+  /*
+  protectApiRoutes(app, {
+    enableRASP: true,
+    enableApiSecurity: true,
+    enableDefaultValidation: true,
+    enableSensitiveProcedures: true,
+    enableQuantumResistance: true,
+    enableRateLimiting: true,
+    enableBlockchainAudit: true,
+    excludePaths: [
+      '/api/health',
+      '/api/public',
+      '/api/webhooks',
+      '/api/external-callbacks',
+      '/api/stripe-webhook'
+    ]
+  });
+  */
+  
+  // Log API protection status
+  console.log('[API-PROTECTION] Advanced API protection temporarily disabled due to missing modules');
 
   // Create HTTP server with the Express app
   const httpServer = createServer(app);
