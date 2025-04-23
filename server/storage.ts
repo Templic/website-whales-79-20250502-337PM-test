@@ -932,28 +932,53 @@ export class PostgresStorage implements IStorage {
         console.error('Error initializing patrons:', error);
       }
 
-      // Initialize tour dates
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS tour_dates (
-          id SERIAL PRIMARY KEY,
-          venue TEXT NOT NULL,
-          city TEXT NOT NULL,
-          date TIMESTAMP NOT NULL,
-          ticket_link TEXT,
-          status TEXT DEFAULT 'upcoming'
-        )
-      `);
-
-      const existingTours = await db.execute(sql`SELECT * FROM tour_dates`);
-      if (existingTours.rowCount === 0) {
-        await db.execute(sql`
-          INSERT INTO tour_dates (venue, city, date, ticket_link, status)
-          VALUES 
-            ('Ocean Sound Arena', 'Miami', '2024-04-15 20:00:00', 'https://tickets.example.com/miami', 'upcoming'),
-            ('Cosmic Waves Theater', 'Los Angeles', '2024-05-01 19:30:00', 'https://tickets.example.com/la', 'upcoming'),
-            ('Blue Note Jazz Club', 'New York', '2024-05-15 21:00:00', 'https://tickets.example.com/ny', 'upcoming'),
-            ('Marine Gardens', 'Seattle', '2024-06-01 20:00:00', 'https://tickets.example.com/seattle', 'upcoming')
-        `);
+      // Define tour dates table using Drizzle ORM
+      const tourDatesTable = pgTable('tour_dates', {
+        id: serial('id').primaryKey(),
+        venue: text('venue').notNull(),
+        city: text('city').notNull(),
+        date: timestamp('date').notNull(),
+        ticket_link: text('ticket_link'),
+        status: text('status').default('upcoming')
+      });
+      
+      // Use Drizzle's ORM methods instead of raw SQL
+      try {
+        const existingTours = await db.select().from(tourDatesTable);
+        if (existingTours.length === 0) {
+          await db.insert(tourDatesTable).values([
+            {
+              venue: 'Ocean Sound Arena',
+              city: 'Miami',
+              date: new Date('2024-04-15 20:00:00'),
+              ticket_link: 'https://tickets.example.com/miami',
+              status: 'upcoming'
+            },
+            {
+              venue: 'Cosmic Waves Theater',
+              city: 'Los Angeles',
+              date: new Date('2024-05-01 19:30:00'),
+              ticket_link: 'https://tickets.example.com/la',
+              status: 'upcoming'
+            },
+            {
+              venue: 'Blue Note Jazz Club',
+              city: 'New York',
+              date: new Date('2024-05-15 21:00:00'),
+              ticket_link: 'https://tickets.example.com/ny',
+              status: 'upcoming'
+            },
+            {
+              venue: 'Marine Gardens',
+              city: 'Seattle',
+              date: new Date('2024-06-01 20:00:00'),
+              ticket_link: 'https://tickets.example.com/seattle',
+              status: 'upcoming'
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error initializing tour dates:', error);
       }
 
       // Check if sample tracks exist and maintain "Feels So Good" at the top
@@ -1024,10 +1049,20 @@ export class PostgresStorage implements IStorage {
   // Session cleanup method
   async cleanupExpiredSessions(): Promise<void> {
     try {
-      await db.execute(sql`
-        DELETE FROM "session"
-        WHERE expire < NOW()
-      `);
+      // Define the session table structure for type safety and consistent use
+      const sessionTable = pgTable('session', {
+        sid: text('sid').primaryKey(),
+        sess: json('sess').notNull(),
+        expire: timestamp('expire').notNull()
+      });
+      
+      // Use ORM's delete method with parameter binding to prevent SQL injection
+      await db.delete(sessionTable)
+        .where(
+          // Using sql template literal for the date comparison, but in a safe way
+          // This is safer than raw SQL as it's still using the ORM's parameter binding system
+          sql`${sessionTable.expire} < NOW()`
+        );
     } catch (error) {
       console.error("Error cleaning up expired sessions:", error);
       throw error;
@@ -1282,44 +1317,81 @@ export class PostgresStorage implements IStorage {
       const [tracksCount] = await db.select({ count: sql<number>`count(*)` })
         .from(tracks);
 
-      // Get user roles distribution
-      const userRolesResult = await db.execute(sql`
-        SELECT role, COUNT(*) as count
-        FROM users
-        GROUP BY role
-      `);
-
+      // Get user roles distribution using parameterized queries
       const userRolesDistribution = {
         user: 0,
         admin: 0,
         super_admin: 0
       };
-
-      userRolesResult.rows.forEach((row: any) => {
-        if (row.role && userRolesDistribution.hasOwnProperty(row.role)) {
-          userRolesDistribution[row.role as keyof typeof userRolesDistribution] = parseInt(row.count);
-        }
-      });
+      
+      // Get count by role using safe parameterized queries
+      // Query for user role
+      const userRoleResult = await db.select({
+        count: count()
+      })
+      .from(users)
+      .where(eq(users.role, 'user'));
+      
+      // Query for admin role
+      const adminRoleResult = await db.select({
+        count: count()
+      })
+      .from(users)
+      .where(eq(users.role, 'admin'));
+      
+      // Query for super_admin role
+      const superAdminRoleResult = await db.select({
+        count: count()
+      })
+      .from(users)
+      .where(eq(users.role, 'super_admin'));
+      
+      // Populate the distribution object with the results
+      userRolesDistribution.user = Number(userRoleResult[0]?.count || 0);
+      userRolesDistribution.admin = Number(adminRoleResult[0]?.count || 0);
+      userRolesDistribution.super_admin = Number(superAdminRoleResult[0]?.count || 0);
 
       // Generate monthly user data for charts (last 6 months)
-      const userActivityData = await db.execute(sql`
-        SELECT 
-          to_char(date_trunc('month', created_at), 'Mon') as month,
-          COUNT(*) as count
-        FROM users
-        WHERE created_at > now() - interval '6 months'
-        GROUP BY date_trunc('month', created_at)
-        ORDER BY date_trunc('month', created_at)
-      `);
-
-      // Extract months and counts for charts
-      const months: string[] = [];
-      const activeUsersOverTime: number[] = [];
-
-      userActivityData.rows.forEach((row: any) => {
-        months.push(row.month);
-        activeUsersOverTime.push(parseInt(row.count));
-      });
+      // This is more complex and requires using SQL template literals, but we use them safely
+      // with proper parameter binding
+      
+      // Default months array (fallback if query fails or returns no data)
+      const months: string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+      const activeUsersOverTime: number[] = [0, 0, 0, 0, 0, 0];
+      
+      try {
+        // For this aggregation, we need to use SQL template literals, but in a safe way
+        // All raw date calculations are using SQL literals (not user input)
+        const userActivityData = await db.execute(
+          sql`
+            SELECT 
+              to_char(date_trunc('month', created_at), 'Mon') as month,
+              COUNT(id) as count
+            FROM users
+            WHERE created_at > NOW() - INTERVAL '6 months'
+            GROUP BY date_trunc('month', created_at)
+            ORDER BY date_trunc('month', created_at)
+          `
+        );
+        
+        // Clear default arrays if we have actual data
+        if (userActivityData.rows.length > 0) {
+          months.length = 0;
+          activeUsersOverTime.length = 0;
+          
+          // Parse the results
+          // TypeScript type checking for each property access
+          userActivityData.rows.forEach((row: { month?: string; count?: string }) => {
+            if (row.month && row.count) {
+              months.push(String(row.month));
+              activeUsersOverTime.push(Number(row.count));
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching monthly user data:", error);
+        // Keep using the default arrays defined above
+      }
 
       // Fill in missing months to always have 6 data points
       while (months.length < 6) {
