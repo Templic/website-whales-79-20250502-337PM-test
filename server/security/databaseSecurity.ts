@@ -318,12 +318,12 @@ export class DatabaseSecurity implements DatabaseSecurityInterface {
         // Access control checks
         const accessControlIssues: SecurityIssue[] = [];
         
-        // Check for default roles with too many privileges
+        // Check for default roles with too many privileges using parameterized query
         const defaultRolesCheck = await client.query(`
           SELECT rolname, rolsuper, rolcreaterole, rolcreatedb 
           FROM pg_roles 
-          WHERE rolname IN ('postgres', 'public')
-        `);
+          WHERE rolname = ANY($1)
+        `, [['postgres', 'public']]);
         
         for (const role of defaultRolesCheck.rows) {
           if (role.rolsuper || role.rolcreaterole || role.rolcreatedb) {

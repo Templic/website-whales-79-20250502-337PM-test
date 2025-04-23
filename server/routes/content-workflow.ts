@@ -538,29 +538,45 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'You do not have permission to view this content history' });
     }
     
-    // Get workflow history with user details
-    const historyQuery = `
-      SELECT 
-        wh.id,
-        wh.content_id AS "contentId",
-        wh.user_id AS "userId",
-        u.username,
-        wh.action,
-        wh.comments,
-        wh.created_at AS "timestamp"
-      FROM 
-        content_workflow_history wh
-      LEFT JOIN
-        users u ON wh.user_id = u.id
-      WHERE 
-        wh.content_id = $1
-      ORDER BY 
-        wh.created_at DESC
-    `;
+    // Get workflow history with user details using Drizzle ORM instead of raw SQL
+    // This eliminates the risk of SQL injection by using the ORM's parameterized queries
     
-    const result = await db.client.query(historyQuery, [contentId]);
+    // First, get the workflow history entries
+    const workflowHistoryEntries = await db
+      .select({
+        id: contentWorkflowHistory.id,
+        contentId: contentWorkflowHistory.contentId,
+        userId: contentWorkflowHistory.userId,
+        action: contentWorkflowHistory.action,
+        comments: contentWorkflowHistory.comments,
+        timestamp: contentWorkflowHistory.createdAt
+      })
+      .from(contentWorkflowHistory)
+      .where(eq(contentWorkflowHistory.contentId, contentId))
+      .orderBy(desc(contentWorkflowHistory.createdAt));
     
-    res.json(result.rows);
+    // Then, for each entry, fetch the associated username
+    const result = await Promise.all(
+      workflowHistoryEntries.map(async (entry) => {
+        if (!entry.userId) {
+          return { ...entry, username: null };
+        }
+        
+        const user = await db
+          .select({ username: users.username })
+          .from(users)
+          .where(eq(users.id, entry.userId))
+          .limit(1);
+          
+        return {
+          ...entry,
+          username: user[0]?.username || null
+        };
+      })
+    );
+    
+    // Return the array of workflow history entries with usernames
+    res.json(result);
   } catch (error) {
     logger.error('Error getting review history:', error);
     res.status(500).json({ error: 'Failed to get review history' });
