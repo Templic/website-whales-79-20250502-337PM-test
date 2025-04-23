@@ -11,7 +11,7 @@ import {
   zeroKnowledgeProof 
 } from './OpenStandardMethods';
 import { quantumCrypto, QuantumAlgorithmType } from './QuantumResistantCrypto';
-import { ImmutableSecurityLogger } from '../blockchain/ImmutableSecurityLogs';
+import { ImmutableSecurityLogger } from '../blockchain/SecurityLogger';
 
 const logger = new ImmutableSecurityLogger('CRYPTO-INTEGRATION');
 

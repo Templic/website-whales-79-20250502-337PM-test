@@ -14,7 +14,7 @@
 
 import crypto from 'crypto';
 import { Buffer } from 'buffer';
-import { ImmutableSecurityLogger } from '../blockchain/ImmutableSecurityLogs';
+import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
 
 // Interfaces for type safety
 export interface SecretShare {
