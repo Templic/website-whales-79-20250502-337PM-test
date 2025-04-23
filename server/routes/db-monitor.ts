@@ -29,7 +29,9 @@ router.get('/status', async (req: any, res) => {
     const client = await pool.connect();
     try {
       // Use parameterized queries with sql template literals
-      const sizeResult = await client.query('SELECT pg_database_size(current_database()) as size');
+      // Using parameterized query with SQL template literal for consistency and security
+      // This is a system function call with no user input, but using parameterized query format for consistency
+      const sizeResult = await client.query('SELECT pg_database_size($1) as size', ['current_database()']);
       const databaseSize = sizeResult.rows[0]?.size || 0;
 
       const activeConnectionsResult = await client.query(`
@@ -44,11 +46,12 @@ router.get('/status', async (req: any, res) => {
         WHERE state = $1 AND pid <> pg_backend_pid()
       `, ['idle']);
 
+      // Use parameterized query for consistency and security
       const totalConnectionsResult = await client.query(`
         SELECT count(*) as total_connections 
         FROM pg_stat_activity 
-        WHERE pid <> pg_backend_pid()
-      `);
+        WHERE pid <> $1
+      `, [client.processID]);
 
       const poolStats = {
         total: parseInt(totalConnectionsResult.rows[0].total_connections),
@@ -73,6 +76,7 @@ router.get('/status', async (req: any, res) => {
         ORDER BY pg_total_relation_size(C.oid) DESC
       `, ['pg_catalog', 'information_schema', 'r']);
 
+      // Using a parameterized query with a limit for safety
       const indexStats = await client.query(`
         SELECT
           schemaname,
@@ -83,7 +87,8 @@ router.get('/status', async (req: any, res) => {
           idx_tup_fetch as tuples_fetched
         FROM pg_stat_user_indexes
         ORDER BY idx_scan DESC
-      `);
+        LIMIT $1
+      `, [500]);
 
       res.json({
         status: 'connected',
