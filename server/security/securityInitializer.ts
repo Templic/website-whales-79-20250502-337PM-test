@@ -38,6 +38,11 @@ export async function initializeSecuritySystems(app: express.Application): Promi
       mode: 'maximum'
     });
     
+    // Apply enhanced security to vulnerable routes
+    console.log('[SecurityInitializer] Applying enhanced security to vulnerable routes...');
+    const { applyRouteEnhancements } = await import('./enhancement/routeEnhancements');
+    applyRouteEnhancements(app);
+    
     // Train machine learning models
     console.log('[SecurityInitializer] Training machine learning models...');
     await mlEngine.trainModels();
