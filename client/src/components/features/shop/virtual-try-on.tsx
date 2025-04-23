@@ -79,7 +79,7 @@ export function VirtualTryOn({
         videoRef.current.srcObject = stream
         setCameraActive(true)
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error accessing camera:", err)
       alert("Unable to access camera. Please make sure you've granted camera permissions.")
     }
@@ -668,7 +668,7 @@ function VirtualTryOnOriginal({
         videoRef.current.srcObject = stream
         setCameraActive(true)
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Error accessing camera:", err)
       alert("Unable to access camera. Please make sure you've granted camera permissions.")
     }

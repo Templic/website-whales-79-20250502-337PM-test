@@ -111,7 +111,7 @@ export default function AdminPortalPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: 'Action Failed',
         description: `Could not ${action} user`,
@@ -127,7 +127,7 @@ export default function AdminPortalPage() {
         title: "Success",
         description: "Logged out successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to logout",

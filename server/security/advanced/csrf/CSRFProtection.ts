@@ -202,7 +202,7 @@ export class CSRFProtection {
       cookieTokenData.used = true;
       
       return { valid: true };
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error validating CSRF token:', error);
       return { valid: false, reason: 'Invalid CSRF token format' };
     }

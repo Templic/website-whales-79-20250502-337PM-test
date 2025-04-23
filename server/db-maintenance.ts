@@ -98,7 +98,7 @@ export async function runIntelligentMaintenance(): Promise<void> {
     }
     
     return;
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error during database maintenance: ${error}`, 'db-maintenance');
     console.error('Database maintenance error:', error);
   }
@@ -142,7 +142,7 @@ async function getTableStatistics(): Promise<TableStats[]> {
       lastAutoVacuum: row.last_autovacuum,
       lastAutoAnalyze: row.last_autoanalyze
     }));
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error fetching table statistics: ${error}`, 'db-maintenance');
     return [];
   }
@@ -244,7 +244,7 @@ async function runVacuum(tables: string[]): Promise<void> {
     }
 
     client.release();
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error during VACUUM: ${error}`, 'db-maintenance');
   }
 }
@@ -279,7 +279,7 @@ async function runAnalyze(tables: string[]): Promise<void> {
     }
 
     client.release();
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error during ANALYZE: ${error}`, 'db-maintenance');
   }
 }
@@ -340,7 +340,7 @@ export async function forceFullMaintenance(): Promise<void> {
     const duration = lastMaintenanceRun - startTime;
     
     log(`Full database maintenance completed in ${duration}ms`, 'db-maintenance');
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error during full database maintenance: ${error}`, 'db-maintenance');
     console.error('Full database maintenance error:', error);
   }

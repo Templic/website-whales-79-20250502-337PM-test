@@ -54,7 +54,7 @@ const DEFAULT_ALGORITHM = 'HS256';         // HMAC with SHA-256
  * @param additionalClaims Additional claims to include in the token
  * @returns JWT access token
  */
-export function generateAccessToken(user, additionalClaims = {}): string {
+export function generateAccessToken(user: any, additionalClaims: any = {}): string {
   const jti = randomBytes(16).toString('hex');
   
   // Extract user ID and role from user object if provided
@@ -123,7 +123,7 @@ export function verifyAccessToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     // Log verification errors
     console.error('JWT verification error:', error);
     return null;
@@ -163,7 +163,7 @@ export function verifyRefreshToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     // Log verification errors
     console.error('Refresh token verification error:', error);
     return null;
@@ -180,7 +180,7 @@ export function revokeToken(token: string): boolean {
     
     try {
       decoded = jwt.decode(token);
-    } catch (e) {
+    } catch (e: unknown) {
       return false;
     }
     
@@ -191,7 +191,7 @@ export function revokeToken(token: string): boolean {
     // Add the JTI to the revoked tokens set
     revokedTokens.add(decoded.jti);
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error revoking token:', error);
     return false;
   }

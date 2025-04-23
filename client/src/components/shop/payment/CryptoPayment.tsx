@@ -25,7 +25,7 @@ interface CryptoPaymentProps {
   amount: number;
   currency: string;
   onPaymentSuccess: (paymentId: string) => Promise<void>;
-  onPaymentError?: (error: any) => void;
+  onPaymentError?: (error) => void;
 }
 
 /**
@@ -74,7 +74,7 @@ export default function CryptoPayment({
         } else {
           setError(response.error || 'Failed to initialize cryptocurrency payment');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(err.message || 'An error occurred while setting up the payment');
         
         if (onPaymentError) {

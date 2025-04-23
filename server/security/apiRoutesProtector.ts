@@ -231,7 +231,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
         }
         
         next();
-      } catch (error) {
+      } catch (error: Error) {
         // Continue in case of RASP error to avoid blocking legitimate requests
         console.error('RASP error:', error);
         next();
@@ -275,7 +275,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
         }
         
         next();
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error but allow the request to continue
         console.error('API security check error:', error);
         next();
@@ -302,7 +302,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
         
         // Call the validation middleware
         validationMiddleware(req, res, next);
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error but allow the request to continue
         console.error('Input validation error:', error);
         next();
@@ -347,7 +347,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
               message: 'Failed to provide quantum key'
             });
           });
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error in quantum key endpoint:', error);
         next(error);
       }

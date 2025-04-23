@@ -116,7 +116,7 @@ export function CosmicFooter() {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         setSubscriptionStatus("success")
         setEmail("")
-      } catch (error) {
+      } catch (error: unknown) {
         setSubscriptionStatus("error")
         console.error("Subscription error:", error)
       } finally {
@@ -362,7 +362,7 @@ function CosmicFooterOriginal() {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         setSubscriptionStatus("success")
         setEmail("")
-      } catch (error) {
+      } catch (error: unknown) {
         setSubscriptionStatus("error")
         console.error("Subscription error:", error)
       } finally {

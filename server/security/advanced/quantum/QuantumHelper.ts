@@ -115,7 +115,7 @@ export async function secureData(
       signature,
       publicKey
     };
-  } catch (error) {
+  } catch (error: Error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -213,7 +213,7 @@ export async function processSecuredData(
       verified,
       verificationReason
     };
-  } catch (error) {
+  } catch (error: Error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -273,7 +273,7 @@ export async function secureHash(
     });
     
     return hash;
-  } catch (error) {
+  } catch (error: Error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -356,7 +356,7 @@ export async function createSecureToken(
     });
     
     return token;
-  } catch (error) {
+  } catch (error: Error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -450,7 +450,7 @@ export async function verifySecureToken(
       expired,
       reason: expired ? 'Token expired' : verificationResult.reason
     };
-  } catch (error) {
+  } catch (error: Error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,

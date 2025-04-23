@@ -101,7 +101,7 @@ export const CartSummary = ({
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: 'Error applying coupon',
         description: 'There was an error applying your coupon. Please try again.',

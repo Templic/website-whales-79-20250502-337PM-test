@@ -116,7 +116,7 @@ export function createSecureDatabase(db: DatabaseConnection): SecureDatabase {
  * WARNING: This approach is more invasive and should be used with caution.
  * It's better to use the SecureDatabase wrapper if possible.
  */
-export function patchDatabaseModule(db): void {
+export function patchDatabaseModule(db: any): void {
   const originalQuery = db.query;
   const sqlFix = createSQLFix(db);
   

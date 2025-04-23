@@ -447,7 +447,7 @@ export class DeepScanEngine {
       });
       
       console.log(`[DEEP-SCAN] Scan completed: ${scanId} - ${scan.findings.length} findings (${scan.duration}ms)`);
-    } catch (error) {
+    } catch (error: Error) {
       // Log scan error
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
@@ -567,7 +567,7 @@ export class DeepScanEngine {
             files.push(fullPath);
           }
         }
-      } catch (error) {
+      } catch (error: Error) {
         scan.errors.push(`Error scanning directory ${dir}: ${error}`);
       }
     };
@@ -589,7 +589,7 @@ export class DeepScanEngine {
     try {
       const stat = await fs.promises.stat(dirPath);
       return stat.isDirectory();
-    } catch (error) {
+    } catch (error: Error) {
       return false;
     }
   }
@@ -613,7 +613,7 @@ export class DeepScanEngine {
         await this.scanJavaScriptCode(scan, filePath, content, lines);
       }
       
-    } catch (error) {
+    } catch (error: Error) {
       scan.errors.push(`Error scanning file ${filePath}: ${error.message}`);
     }
   }
@@ -725,7 +725,7 @@ export class DeepScanEngine {
         } else if (fileExt === '.json') {
           await this.scanJsonConfig(scan, file, content, lines);
         }
-      } catch (error) {
+      } catch (error: Error) {
         scan.errors.push(`Error scanning configuration file ${file}: ${error.message}`);
       }
     }
@@ -762,7 +762,7 @@ export class DeepScanEngine {
           }
         }
       }
-    } catch (error) {
+    } catch (error: Error) {
       scan.errors.push(`Error parsing package.json: ${error.message}`);
     }
   }
@@ -904,7 +904,7 @@ export class DeepScanEngine {
         
         // Scan for API security issues
         await this.scanApiCode(scan, file, content, lines);
-      } catch (error) {
+      } catch (error: Error) {
         scan.errors.push(`Error scanning file ${file} for API issues: ${error.message}`);
       }
     }

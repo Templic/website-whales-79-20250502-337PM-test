@@ -56,7 +56,7 @@ export function CommentManagement() {
         const res = await fetch('/api/admin/comments');
         if (!res.ok) throw new Error('Failed to fetch comments');
         return res.json();
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching comments:', err);
         return [];
       }

@@ -157,7 +157,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
                 message: 'The request signature could not be verified'
               });
             }
-          } catch (error) {
+          } catch (error: Error) {
             if (opts.verifySignature === 'required') {
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({
@@ -233,7 +233,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
                 }
               });
             }
-          } catch (error) {
+          } catch (error: Error) {
             if (opts.logToBlockchain) {
               await securityBlockchain.addSecurityEvent({
                 category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -369,7 +369,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             const jsonBody = JSON.parse(body);
             // @ts-ignore - Response type issue
   return res.json(jsonBody);
-          } catch (e) {
+          } catch (e: Error) {
             // Not valid JSON, continue with original send
           }
         }
@@ -380,7 +380,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
       
       // Continue to the next middleware
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Log any errors that occur during middleware execution
       if (opts.logToBlockchain) {
         securityBlockchain.addSecurityEvent({

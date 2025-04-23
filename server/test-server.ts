@@ -52,7 +52,7 @@ testRouter.post('/quantum/generate-keys', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum key generation endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -84,7 +84,7 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
       message: "This is a test response - not using real cryptography",
       originalDataHash: Buffer.from(JSON.stringify(data)).toString('base64').substring(0, 10) + '...'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum encryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -115,7 +115,7 @@ testRouter.post('/quantum/decrypt', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum decryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',

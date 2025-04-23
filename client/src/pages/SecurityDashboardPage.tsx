@@ -170,7 +170,7 @@ export default function SecurityDashboardPage() {
   }, [eventCategory, eventType, timeRange]);
 
   // Handle config changes
-  const handleConfigChange = (path: string, value: any) => {
+  const handleConfigChange = (path: string, value) => {
     const newConfig = { ...securityConfig };
     
     // Handle nested properties
@@ -199,7 +199,7 @@ export default function SecurityDashboardPage() {
       });
       
       setPendingChanges(false);
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Failed to save",
         description: "There was an error saving your security settings.",
@@ -222,7 +222,7 @@ export default function SecurityDashboardPage() {
         title: "Security scan completed",
         description: "No critical vulnerabilities were found.",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Scan failed",
         description: "There was an error running the security scan.",

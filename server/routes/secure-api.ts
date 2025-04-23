@@ -47,7 +47,7 @@ router.get('/status', async (req: Request, res: Response) => {
         apiSecurity: 'active'
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in security status endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -87,7 +87,7 @@ router.get('/info', async (req: Request, res: Response) => {
         'Tamper-evident logging'
       ]
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in security info endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -130,7 +130,7 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
       publicKey: keyPair.publicKey,
       privateKey: keyPair.privateKey
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error generating quantum-resistant key pair:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -180,7 +180,7 @@ router.post('/encrypt', async (req: Request, res: Response) => {
       encrypted,
       algorithm
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error encrypting data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -229,7 +229,7 @@ router.post('/decrypt', async (req: Request, res: Response) => {
       decrypted,
       algorithm
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error decrypting data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -279,7 +279,7 @@ router.post('/sign', async (req: Request, res: Response) => {
       signature,
       algorithm
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error signing data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -332,7 +332,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       reason: result.reason,
       algorithm
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error verifying signature:', error);
     res.status(500).json({
       error: 'Internal Server Error',

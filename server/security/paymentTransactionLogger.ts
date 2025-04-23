@@ -260,7 +260,7 @@ class PaymentTransactionLogger {
       
       // Also log to console for development
       log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
-    } catch (error) {
+    } catch (error: Error) {
       // Log error to console, but don't throw (to avoid disrupting payment flow)
       log(`Error logging payment transaction: ${error}`, 'error');
     }
@@ -293,7 +293,7 @@ class PaymentTransactionLogger {
         .map(line => {
           try {
             return JSON.parse(line);
-          } catch (e) {
+          } catch (e: Error) {
             log(`Error parsing transaction log line: ${e}`, 'error');
             return null;
           }
@@ -318,7 +318,7 @@ class PaymentTransactionLogger {
       }
       
       return transactions;
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error getting transaction logs: ${error}`, 'error');
       return [];
     }
@@ -356,7 +356,7 @@ class PaymentTransactionLogger {
         
         log(`Rotated transaction logs to ${rotatedLogFile}`, 'security');
       }
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error rotating transaction logs: ${error}`, 'error');
     }
   }

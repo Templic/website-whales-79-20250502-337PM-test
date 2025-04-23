@@ -453,9 +453,7 @@ export function StarburstContainer({
  * AdaptiveTextContainer - A container with custom clip path and adaptive text
  */
 export function AdaptiveTextContainer({
-  children,
-  className,
-  clipPath = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+  children: any, className: any, clipPath = "polygon(50% 0%: any, 100% 25%: any, 100% 75%: any, 50% 100%: any, 0% 75%: any, 0% 25%: any)",
   glowColor = "rgba(139, 92, 246, 0.5)",
   maxLines = 8,
 }: GeometryContainerProps & { clipPath?: string }) {

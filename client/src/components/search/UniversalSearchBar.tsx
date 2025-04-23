@@ -235,7 +235,7 @@ const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
                     Music ({previewResults.music.length})
                   </div>
                   <ul>
-                    {previewResults.music.slice(0, 2).map((item: any) => (
+                    {previewResults.music.slice(0, 2).map((item) => (
                       <li key={item.id}>
                         <a
                           href={`/music/${item.id}`}
@@ -260,7 +260,7 @@ const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
                     Blog Posts ({previewResults.posts.length})
                   </div>
                   <ul>
-                    {previewResults.posts.slice(0, 2).map((item: any) => (
+                    {previewResults.posts.slice(0, 2).map((item) => (
                       <li key={item.id}>
                         <a
                           href={`/blog/${item.id}`}
@@ -285,7 +285,7 @@ const UniversalSearchBar: React.FC<UniversalSearchBarProps> = ({
                     Products ({previewResults.products.length})
                   </div>
                   <ul>
-                    {previewResults.products.slice(0, 2).map((item: any) => (
+                    {previewResults.products.slice(0, 2).map((item) => (
                       <li key={item.id}>
                         <a
                           href={`/shop/${item.id}`}

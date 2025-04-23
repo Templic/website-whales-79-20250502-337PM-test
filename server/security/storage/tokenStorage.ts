@@ -141,7 +141,7 @@ class RedisTokenStore implements TokenStore {
           timestamp: new Date()
         }, SecurityLogLevel.ERROR);
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error initializing Redis token store:', error);
     }
   }
@@ -161,7 +161,7 @@ class RedisTokenStore implements TokenStore {
       if (!data) return null;
       
       return JSON.parse(data);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error getting token from Redis:', error);
       return null;
     }
@@ -185,7 +185,7 @@ class RedisTokenStore implements TokenStore {
       if (ttl <= 0) return; // Don't store expired tokens
       
       await this.client.set(key, data, { EX: ttl });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error setting token in Redis:', error);
     }
   }
@@ -201,7 +201,7 @@ class RedisTokenStore implements TokenStore {
     try {
       const key = this.prefix + sessionId;
       await this.client.del(key);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error deleting token from Redis:', error);
     }
   }
@@ -238,7 +238,7 @@ class RedisTokenStore implements TokenStore {
           }
         }
       } while (cursor !== '0');
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error cleaning up tokens in Redis:', error);
     }
   }

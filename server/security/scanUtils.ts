@@ -70,7 +70,7 @@ export async function findFiles(dir: string, extensions: string[]): Promise<stri
         results.push(filePath);
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error scanning directory ${dir}:`, error);
   }
   
@@ -113,7 +113,7 @@ export async function searchPatternsInFiles(
       if (fileMatches.size > 0) {
         results.set(filePath, fileMatches);
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error reading file ${filePath}:`, error);
     }
   }
@@ -150,7 +150,7 @@ export async function findPotentialSecrets(): Promise<{ file: string, matches: s
         });
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error finding potential secrets:', error);
   }
   
@@ -211,7 +211,7 @@ export async function detectSecurityPackages(): Promise<{
         recommendations.push('Add HTML sanitization for user-generated content');
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error detecting security packages:', error);
   }
   
@@ -305,11 +305,11 @@ export async function detectCommonSecurityIssues(): Promise<SecurityVulnerabilit
             });
           }
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error(`Error analyzing file ${file}:`, error);
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error detecting common security issues:', error);
   }
   
@@ -453,7 +453,7 @@ export async function generateSecurityReport(
     // Write the report to a file
     await fs.promises.writeFile(outputPath, report);
     console.log(`Security report generated: ${outputPath}`);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error generating security report:', error);
   }
 }
@@ -513,7 +513,7 @@ export async function runNpmAudit(): Promise<{
       criticalSeverity,
       details
     };
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error running npm audit:', error);
     return {
       vulnerablePackages: 0,
@@ -552,7 +552,7 @@ export async function checkFileForValidation(filePath: string): Promise<boolean>
     ];
     
     return validationPatterns.some(pattern => pattern.test(content));
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error checking file for validation: ${filePath}`, error);
     return false;
   }

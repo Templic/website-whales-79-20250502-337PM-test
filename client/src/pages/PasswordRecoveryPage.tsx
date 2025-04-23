@@ -45,7 +45,7 @@ export default function PasswordRecoveryPage() {
         title: "Recovery email sent",
         description: "Please check your email for further instructions.",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to send recovery email. Please try again.",

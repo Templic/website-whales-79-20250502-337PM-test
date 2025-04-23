@@ -152,7 +152,7 @@ async function scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]> 
         }
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error scanning directory ${dir}:`, error);
   }
   
@@ -291,7 +291,7 @@ async function main() {
     
     fs.writeFileSync(reportPath, report);
     console.log(`Report saved to ${reportPath}`);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error saving report:', error);
   }
   

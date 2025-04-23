@@ -116,7 +116,7 @@ export function SecuritySettings() {
       await disable2FAMutation.mutateAsync(data);
       setShowDisable2FA(false);
       passwordForm.reset();
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };
@@ -132,7 +132,7 @@ export function SecuritySettings() {
         setShowRegenerateDialog(false);
         regenerateForm.reset();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };

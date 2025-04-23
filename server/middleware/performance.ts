@@ -41,7 +41,7 @@ const metrics = {
  * @param duration Cache duration in seconds
  * @returns Express middleware
  */
-export function cache(duration = DEFAULT_CACHE_DURATION) {
+export function cache(duration = DEFAULT_CACHE_DURATION: any) {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip cache for non-GET requests
     if (req.method !== 'GET') {
@@ -192,7 +192,7 @@ export function responseTime() {
  * @param limit Maximum request body size
  * @returns Express middleware
  */
-export function payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT) {
+export function payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT: any) {
   return (req: Request, res: Response, next: NextFunction) => {
     // We would use body-parser or express's own limit here
     // This is a simplified implementation

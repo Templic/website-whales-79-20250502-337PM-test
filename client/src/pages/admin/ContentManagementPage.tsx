@@ -140,7 +140,7 @@ const ContentManagementPage: React.FC = () => {
       });
       setIsDeleteDialogOpen(false);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Error',
         description: error.message || 'Error deleting content',

@@ -33,7 +33,7 @@ export async function updateContent(params: ContentUpdateParams): Promise<boolea
     }
     
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating content:', error);
     throw error;
   }
@@ -54,7 +54,7 @@ async function updateTextContent(contentId: string | number, text: string): Prom
     }
     
     return response.data.data;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating text content:', error);
     throw error;
   }
@@ -81,7 +81,7 @@ async function updateImageContent(contentId: string | number, image: File): Prom
     }
     
     return response.data.data;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating image content:', error);
     throw error;
   }

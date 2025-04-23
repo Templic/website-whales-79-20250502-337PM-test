@@ -56,7 +56,7 @@ export interface PerformanceProfilerProps {
   /** Whether to log metrics to console */
   logToConsole?: boolean;
   /** Custom metrics callback */
-  onMetrics?: (metrics: any) => void;
+  onMetrics?: (metrics) => void;
   /** Whether to show a visual indicator */
   showVisualIndicator?: boolean;
 }
@@ -358,7 +358,7 @@ export function createPerformanceMarker(name: string, metadata?: Record<string, 
       if (typeof performance !== 'undefined' && performance.measure) {
         try {
           performance.measure(name, `${name}-start`);
-        } catch (e) {
+        } catch (e: unknown) {
           // Some browsers might throw if the mark doesn't exist
         }
       }
@@ -704,7 +704,7 @@ export function processInChunks<T, R>(
       } else if (onComplete) {
         onComplete(results);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       if (onError) {
         onError(error as Error);
       } else {

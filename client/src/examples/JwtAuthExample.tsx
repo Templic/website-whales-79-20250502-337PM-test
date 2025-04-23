@@ -38,7 +38,7 @@ export function JwtAuthExample() {
       try {
         const token = await getCsrfToken();
         setCsrfToken(token);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Failed to get CSRF token:', err);
         setError('Failed to get CSRF token');
       }
@@ -63,7 +63,7 @@ export function JwtAuthExample() {
       if (success) {
         setPassword(''); // Clear password field after successful login
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'Login failed');
     }
   };
@@ -75,7 +75,7 @@ export function JwtAuthExample() {
     
     try {
       await logout();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'Logout failed');
     }
   };
@@ -104,7 +104,7 @@ export function JwtAuthExample() {
       
       const data = await response.json();
       setApiResponse(JSON.stringify(data, null, 2));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'API request failed');
     }
   };
@@ -137,7 +137,7 @@ export function JwtAuthExample() {
       
       const data = await response.json();
       setApiResponse(JSON.stringify(data, null, 2));
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || 'Protected action failed');
     }
   };

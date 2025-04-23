@@ -27,7 +27,7 @@ export const initializeDatabase = async () => {
     console.log('Successfully connected to PostgreSQL database');
     client.release();
     return true;
-  } catch (err) {
+  } catch (err: Error) {
     console.error('Failed to connect to PostgreSQL:', err);
     throw err;
   }

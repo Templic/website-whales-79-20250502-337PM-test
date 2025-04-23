@@ -101,7 +101,7 @@ export default function AuthPage() {
         // Direct login endpoint is at /api/login (not /api/auth/login)
         const result = await apiRequest('POST', '/api/login', data);
         return result;
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Login failed:', error);
         throw error;
       }
@@ -151,7 +151,7 @@ export default function AuthPage() {
         window.location.href = '/';
       }
     },
-    onError: (error: any) => {
+    onError: (error) => {
       // Handle login error
       console.error('Login failed:', error);
       
@@ -196,7 +196,7 @@ export default function AuthPage() {
     setPasswordStrength(calculatePasswordStrength(password));
   };
 
-  const handle2FASuccess = (userData: any) => {
+  const handle2FASuccess = (userData) => {
     // The user is now fully authenticated
     console.log("2FA verification successful", userData);
     
@@ -348,7 +348,7 @@ export default function AuthPage() {
                 
                 // Reset the form
                 registerForm.reset();
-              } catch (error) {
+              } catch (error: unknown) {
                 console.error('Registration failed:', error);
                 alert('Registration failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
               }

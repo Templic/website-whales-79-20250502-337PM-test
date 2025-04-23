@@ -116,7 +116,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         ]
       })
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error getting security status:', error);
     res.status(500).json({ error: 'Failed to get security status' });
   }
@@ -178,7 +178,7 @@ securityRouter.get('/logs', requireAuth, checkPermission('admin'), async (req: R
         pages: Math.ceil(allLogs.length / limit)
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error getting security logs:', error);
     res.status(500).json({ error: 'Failed to get security logs' });
   }
@@ -223,7 +223,7 @@ securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async 
         total: 2
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error getting latest scan:', error);
     res.status(500).json({ error: 'Failed to get latest scan' });
   }
@@ -243,7 +243,7 @@ securityRouter.post('/scan/start', requireAuth, checkPermission('admin'), async 
       timestamp: new Date().toISOString(),
       message: 'Security scan started successfully'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error starting security scan:', error);
     res.status(500).json({ error: 'Failed to start security scan' });
   }

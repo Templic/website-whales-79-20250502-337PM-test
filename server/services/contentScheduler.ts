@@ -77,7 +77,7 @@ export async function runContentScheduler() {
         
         published++;
         logger.info(`Published content ID ${item.id}: ${item.title}`);
-      } catch (error) {
+      } catch (error: Error) {
         failed++;
         logger.error(`Failed to publish content ID ${item.id}:`, error);
         
@@ -131,7 +131,7 @@ export async function runContentScheduler() {
         
         archived++;
         logger.info(`Archived expired content ID ${item.id}: ${item.title}`);
-      } catch (error) {
+      } catch (error: Error) {
         archivedFailed++;
         logger.error(`Failed to archive expired content ID ${item.id}:`, error);
       }
@@ -172,7 +172,7 @@ export async function runContentScheduler() {
           
           logger.info(`Sent expiration warning for content ID ${item.id}: ${daysUntilExpiration} days remaining`);
         }
-      } catch (error) {
+      } catch (error: Error) {
         logger.error(`Failed to send expiration warning for content ID ${item.id}:`, error);
       }
     }
@@ -195,7 +195,7 @@ export async function runContentScheduler() {
       archivedFailed,
       upcomingExpiring: expiringContent.length
     };
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error running content scheduler:', error);
     throw error;
   }

@@ -77,7 +77,7 @@ export default function ProductSearchComponent({
         });
         
         setSearchResults(response.data || []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error searching products:', error);
         setSearchResults([]);
       } finally {
@@ -176,7 +176,7 @@ export default function ProductSearchComponent({
           >
             <Command className="rounded-lg border-0">
               <div className="px-3 pt-3 pb-1">
-                <Tabs defaultValue={searchFilter} onValueChange={(v: any) => setSearchFilter(v)} className="w-full">
+                <Tabs defaultValue={searchFilter} onValueChange={(v) => setSearchFilter(v)} className="w-full">
                   <TabsList className="grid grid-cols-4 w-full">
                     <TabsTrigger value="all" className="text-xs">
                       All

@@ -482,7 +482,7 @@ class PCIComplianceChecker {
       reportFiles.sort().reverse();
       
       return path.join(this.reportsDir, reportFiles[0]);
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error getting latest compliance report: ${error}`, 'error');
       return null;
     }
@@ -539,7 +539,7 @@ class PCIComplianceChecker {
             }
           }
         }
-      } catch (error) {
+      } catch (error: Error) {
         log(`Error checking transaction logs: ${error}`, 'security');
         return false;
       }
@@ -625,7 +625,7 @@ class PCIComplianceChecker {
             recommendation = 'Extend cryptographic protection to all critical log files, especially payment and security logs';
           }
         }
-      } catch (error) {
+      } catch (error: Error) {
         passed = false;
         details = `Log integrity file exists but is not valid: ${error}`;
         recommendation = 'Fix the log hash file format and verification process';
@@ -742,7 +742,7 @@ class PCIComplianceChecker {
             recommendation = 'Perform log reviews at least weekly, preferably daily';
           }
         }
-      } catch (error) {
+      } catch (error: Error) {
         passed = false;
         details = `Log review file exists but is not valid: ${error}`;
         recommendation = 'Fix the log review history file format';
@@ -776,7 +776,7 @@ class PCIComplianceChecker {
       
       const fileContent = fs.readFileSync(fullPath, 'utf8');
       return require("crypto").createHash('sha256').update(fileContent).digest('hex');
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error creating log integrity hash: ${error}`, 'error');
       throw error;
     }
@@ -819,7 +819,7 @@ class PCIComplianceChecker {
       
       log(`Registered integrity hash for log: ${logPath}`, 'security');
       return true;
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error registering log hash: ${error}`, 'error');
       return false;
     }
@@ -885,7 +885,7 @@ class PCIComplianceChecker {
       
       log(`Recorded log review by ${reviewer}`, 'security');
       return true;
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error recording log review: ${error}`, 'error');
       return false;
     }

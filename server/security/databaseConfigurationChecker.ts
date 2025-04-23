@@ -68,7 +68,7 @@ export class DatabaseConfigurationChecker {
       // Additional database-specific checks
       await this.performAdditionalChecks(report);
       
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error during database configuration check:', error);
       report.overallStatus = 'error';
       report.error = error instanceof Error ? error.message : 'Unknown error during configuration check';
@@ -160,7 +160,7 @@ export class DatabaseConfigurationChecker {
       } finally {
         client.release();
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error during additional database checks:', error);
       if (!report.recommendations) {
         report.recommendations = [];
@@ -185,7 +185,7 @@ export class DatabaseConfigurationChecker {
       const mdReport = this.generateMarkdownReport(report);
       fs.writeFileSync(mdReportFile, mdReport);
       console.log(`Database configuration markdown report saved to ${mdReportFile}`);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error saving database configuration report:', error);
     }
   }
@@ -304,7 +304,7 @@ export class DatabaseConfigurationChecker {
 /**
  * Helper function to map security assessment to report format
  */
-function mapCategoryToReportFormat(category): DatabaseConfigCategoryReport {
+function mapCategoryToReportFormat(category: any): DatabaseConfigCategoryReport {
   return {
     status: category.score >= 80 ? 'passed' : 
            category.score >= 60 ? 'warning' : 'failed',

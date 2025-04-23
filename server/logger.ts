@@ -36,7 +36,7 @@ function formatMessage(level: string, message: string, context?: any): string {
         ? JSON.stringify(context)
         : context.toString();
       return `${baseMessage} - ${contextStr}`;
-    } catch (err) {
+    } catch (err: Error) {
       return `${baseMessage} - [Context serialization failed]`;
     }
   }

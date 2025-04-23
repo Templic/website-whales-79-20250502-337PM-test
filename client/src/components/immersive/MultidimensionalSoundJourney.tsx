@@ -233,7 +233,7 @@ export function MultidimensionalSoundJourney() {
       try {
         oscillatorsRef.current[index]!.stop();
         oscillatorsRef.current[index]!.disconnect();
-      } catch (e) {
+      } catch (e: unknown) {
         // Oscillator might have already been stopped
       }
       oscillatorsRef.current[index] = null;

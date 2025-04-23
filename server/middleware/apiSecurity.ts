@@ -152,7 +152,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     logApiSecurityEvent(req, 'AUTHENTICATION_SUCCESS', securityVerifications);
     
     next();
-  } catch (error) {
+  } catch (error: Error) {
     console.error('API authentication error:', error);
     
     securityVerifications.push({
@@ -296,7 +296,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Middleware that conducts API request validation
  * Ensures that the request contains the expected data
  */
-export function validateApiRequest(schema) {
+export function validateApiRequest(schema: any) {
   return (req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> => {
     try {
       // Validation using provided schema
@@ -328,7 +328,7 @@ export function validateApiRequest(schema) {
       req.body = validationResult.data;
       
       next();
-    } catch (error) {
+    } catch (error: Error) {
       console.error('API validation error:', error);
       
       const verification: APISecurityVerification = {
@@ -372,7 +372,7 @@ function logApiSecurityEvent(req: Request, eventType: string, verifications: API
 /**
  * Filter sensitive information from request headers for logging
  */
-function filterSensitiveHeaders(headers) {
+function filterSensitiveHeaders(headers: any) {
   const filtered = { ...headers };
   
   // Remove sensitive headers

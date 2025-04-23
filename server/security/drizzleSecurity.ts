@@ -74,7 +74,7 @@ export class SecureDrizzle {
       
       // Execute the query
       return await this.db.execute(query);
-    } catch (error) {
+    } catch (error: Error) {
       // Log the error
       this.logError(error, query);
       throw error;
@@ -98,7 +98,7 @@ export class SecureDrizzle {
       
       // Execute the query
       return await this.db.query(query);
-    } catch (error) {
+    } catch (error: Error) {
       // Log the error
       this.logError(error, query);
       throw error;
@@ -226,7 +226,7 @@ export function secureDrizzle(
 /**
  * Patch Drizzle models for better security
  */
-export function patchDrizzleModel(model) {
+export function patchDrizzleModel(model: any) {
   // Make a copy of the original methods
   const originalFindFirst = model.findFirst;
   const originalFindMany = model.findMany;
@@ -238,7 +238,7 @@ export function patchDrizzleModel(model) {
     model.findFirst = async function(...args: any: any[]): Promise<any> {
       try {
         return await originalFindFirst.apply(this, args);
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -263,7 +263,7 @@ export function patchDrizzleModel(model) {
     model.findMany = async function(...args: any: any[]): Promise<any> {
       try {
         return await originalFindMany.apply(this, args);
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -294,7 +294,7 @@ export function patchDrizzleModel(model) {
         }
         
         return await originalUpdate.apply(this, args);
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,
@@ -325,7 +325,7 @@ export function patchDrizzleModel(model) {
         }
         
         return await originalDelete.apply(this, args);
-      } catch (error) {
+      } catch (error: Error) {
         // Log the error
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.ERROR,

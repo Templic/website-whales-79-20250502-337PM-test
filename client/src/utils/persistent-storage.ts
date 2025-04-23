@@ -150,7 +150,7 @@ export class PersistentStorage {
         localStorage.removeItem(testKey);
         engines.push('localstorage');
       }
-    } catch (e) {
+    } catch (e: unknown) {
       // localStorage not available
     }
     
@@ -162,7 +162,7 @@ export class PersistentStorage {
         sessionStorage.removeItem(testKey);
         engines.push('sessionstorage');
       }
-    } catch (e) {
+    } catch (e: unknown) {
       // sessionStorage not available
     }
     
@@ -194,7 +194,7 @@ export class PersistentStorage {
         if (this.config.debug) {
           console.log(`[PersistentStorage] Current usage: ${this.formatSize(this.totalSize)}`);
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error('[PersistentStorage] Error calculating storage size', e);
       }
     }
@@ -265,7 +265,7 @@ export class PersistentStorage {
         reader.onloadend = () => resolve(`gz:${reader.result as string}`);
         reader.readAsDataURL(compressedBlob);
       });
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[PersistentStorage] Compression error', e);
       return data;
     }
@@ -297,7 +297,7 @@ export class PersistentStorage {
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsText(decompressedBlob);
       });
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[PersistentStorage] Decompression error', e);
       return data;
     }
@@ -357,7 +357,7 @@ export class PersistentStorage {
       
       // Convert to base64
       return `enc:${btoa(String.fromCharCode(...new Uint8Array(result)))}`;
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[PersistentStorage] Encryption error', e);
       return data;
     }
@@ -419,7 +419,7 @@ export class PersistentStorage {
       
       // Convert to string
       return new TextDecoder().decode(decryptedBuffer);
-    } catch (e) {
+    } catch (e: unknown) {
       console.error('[PersistentStorage] Decryption error', e);
       return data;
     }
@@ -446,7 +446,7 @@ export class PersistentStorage {
                 removedCount++;
               }
             }
-          } catch (e) {
+          } catch (e: unknown) {
             // Ignore parsing errors
           }
         }
@@ -501,7 +501,7 @@ export class PersistentStorage {
     
     try {
       return schema.parse(data) as T;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`[PersistentStorage] Validation error for key '${key}':`, error);
       throw new Error(`Data validation failed for key '${key}'`);
     }
@@ -592,7 +592,7 @@ export class PersistentStorage {
       }
       
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`[PersistentStorage] Error storing '${key}':`, error);
       
       // Attempt to use fallback storage
@@ -709,14 +709,14 @@ export class PersistentStorage {
             }
             
             return validatedData;
-          } catch (e) {
+          } catch (e: unknown) {
             if (this.config.debug) {
               console.error(`[PersistentStorage] Validation failed for '${key}'`);
             }
             return null;
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`[PersistentStorage] Error retrieving '${key}' from ${engine}:`, error);
       }
     }
@@ -754,7 +754,7 @@ export class PersistentStorage {
       }
       
       return removed;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`[PersistentStorage] Error removing '${key}':`, error);
       return false;
     }
@@ -805,7 +805,7 @@ export class PersistentStorage {
       }
       
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[PersistentStorage] Error clearing storage:', error);
       return false;
     }

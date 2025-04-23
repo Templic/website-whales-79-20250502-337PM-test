@@ -472,7 +472,7 @@ export function createDatabaseProtectionMiddleware() {
       // Log with security fabric if available
       try {
         securityFabric.emit('security:sqlInjection:blocked', eventData);
-      } catch (error) {
+      } catch (error: Error) {
         // Fall back to console logging
         console.error('[Database] SQL injection attempt:', eventData);
       }

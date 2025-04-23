@@ -206,7 +206,7 @@ export const LCPOptimizer: React.FC<LCPOptimizerProps> = ({
       return () => {
         lcpObserver.disconnect();
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (debug) {
         console.error('[LCPOptimizer] Error setting up PerformanceObserver:', error);
       }

@@ -23,7 +23,7 @@ export function ProtectedRoute({
 }: {
   path: string;
   component?: () => React.JSX.Element;
-  children?: (params: any) => React.ReactNode;
+  children?: (params) => React.ReactNode;
   requiredRole?: UserRole;
 }) {
   const { user, isLoading } = useAuth();

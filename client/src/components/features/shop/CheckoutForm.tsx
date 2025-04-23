@@ -178,7 +178,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       );
       setIsComplete(true);
       setCurrentStep(3); // Go to confirmation step
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
       // Handle checkout error
     } finally {

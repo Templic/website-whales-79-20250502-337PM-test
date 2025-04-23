@@ -31,7 +31,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (savedCart) {
         setItems(JSON.parse(savedCart));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load cart from localStorage:', error);
     }
   }, []);
@@ -40,7 +40,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     try {
       localStorage.setItem('cart', JSON.stringify(items));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save cart to localStorage:', error);
     }
   }, [items]);

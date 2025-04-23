@@ -130,7 +130,7 @@ const initializeSecuritySettings = () => {
       console.log(`Security settings file created at ${SECURITY_SETTINGS_FILE}`);
     }
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to initialize security settings:', error);
     return defaultSecuritySettings;
   }
@@ -140,7 +140,7 @@ const initializeSecuritySettings = () => {
 const getSecuritySettings = () => {
   try {
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to read security settings:', error);
     return defaultSecuritySettings;
   }
@@ -157,7 +157,7 @@ const updateSecuritySettings = (newSettings) => {
       'utf8'
     );
     return updatedSettings;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to update security settings:', error);
     throw error;
   }
@@ -184,7 +184,7 @@ const getSecurityStats = () => {
         const jsonStart = line.indexOf('- ') + 2;
         const jsonContent = line.substring(jsonStart);
         return JSON.parse(jsonContent);
-      } catch (e) {
+      } catch (e: Error) {
         console.error('Failed to parse security log line:', e);
         return null;
       }
@@ -209,7 +209,7 @@ const getSecurityStats = () => {
       bySetting,
       recentEvents: events.slice(-50).reverse() // Get last 50 events in reverse chronological order
     };
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to get security stats:', error);
     return { 
       total: 0,
@@ -247,7 +247,7 @@ securityRouter.get(
       });
       
       res.json({ message: 'Security settings retrieved successfully', settings });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error retrieving security settings:', error);
       res.status(500).json({ message: 'Failed to retrieve security settings' });
     }
@@ -321,7 +321,7 @@ securityRouter.post(
         message: 'Security setting updated successfully',
         settings: updatedSettings
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error updating security setting:', error);
       
       // Log the error
@@ -356,7 +356,7 @@ securityRouter.get(
       });
       
       res.json({ message: 'Security statistics retrieved successfully', stats });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error retrieving security stats:', error);
       res.status(500).json({ message: 'Failed to retrieve security statistics' });
     }
@@ -402,7 +402,7 @@ securityRouter.post(
         message: 'Security scan completed successfully',
         result: scanResult
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error running security scan:', error);
       
       // Log error
@@ -458,7 +458,7 @@ securityRouter.get(
         message: 'Latest security scan results retrieved successfully',
         result: latestScanResult
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error retrieving latest security scan results:', error);
       res.status(500).json({ message: 'Failed to retrieve latest security scan results' });
     }
@@ -576,7 +576,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         ]
       })
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error getting security status:', error);
     res.status(500).json({ error: 'Failed to get security status' });
   }
@@ -618,7 +618,7 @@ testSecurityRouter.get('/security/scan', async (req, res) => {
       },
       vulnerabilities: scanResult.vulnerabilities
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error running security scan:', error);
     res.status(500).json({ message: 'Failed to run security scan' });
   }

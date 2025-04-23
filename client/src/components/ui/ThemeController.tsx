@@ -56,7 +56,7 @@ export function ThemeController() {
       if (document.documentElement.dataset) {
         document.documentElement.dataset.theme = validTheme;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // Fallback to dark theme if any error occurs
       console.error("Error initializing theme:", error);
       setTheme("dark");
@@ -94,7 +94,7 @@ export function ThemeController() {
       
       // Store in localStorage
       localStorage.setItem("theme", newTheme);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating theme:", error);
     }
   };

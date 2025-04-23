@@ -64,7 +64,7 @@ const WebSocketExample = () => {
       
       setInputMessage('');
       setError(null);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(`Failed to send message: ${err instanceof Error ? err.message : String(err)}`);
     }
   };

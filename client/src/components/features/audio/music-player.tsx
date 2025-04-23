@@ -117,7 +117,7 @@ export function MusicPlayer() {
       try {
         const silentUrl = generateSilentAudio()
         setSilentAudioUrl(silentUrl)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to generate silent audio:", error)
       }
 
@@ -415,7 +415,7 @@ function MusicPlayerOriginal() {
       try {
         const silentUrl = generateSilentAudio()
         setSilentAudioUrl(silentUrl)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to generate silent audio:", error)
       }
 

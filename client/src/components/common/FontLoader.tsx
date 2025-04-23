@@ -148,7 +148,7 @@ const FontLoader: React.FC<FontLoaderProps> = ({
             });
             
             fontFacePromises.push(fontPromise);
-          } catch (err) {
+          } catch (err: unknown) {
             console.error(`Error creating FontFace: ${font.family}`, err);
           }
         });

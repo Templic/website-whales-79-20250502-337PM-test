@@ -87,7 +87,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       success: true,
       clientSecret: paymentIntent.client_secret,
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error creating payment intent:', error);
     
     // Log payment error (PCI DSS Requirement 10.2)
@@ -166,7 +166,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
       success: true,
       order: mockOrder,
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error confirming payment:', error);
     
     // Log payment failure (PCI DSS Requirement 10.2)

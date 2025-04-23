@@ -132,7 +132,7 @@ export class VerifiableSecretSharingModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to create verifiable secret sharing', {
         error: (error as Error).message,
         threshold,
@@ -178,7 +178,7 @@ export class VerifiableSecretSharingModule {
       });
       
       return isValid;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to verify share', {
         error: (error as Error).message,
         index: share.index,
@@ -240,7 +240,7 @@ export class VerifiableSecretSharingModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to reconstruct secret', {
         error: (error as Error).message,
         sharesProvided: shares.length,
@@ -384,7 +384,7 @@ export class ForwardSecureSignatureModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to generate forward-secure key pair', {
         error: (error as Error).message,
         periods,
@@ -427,7 +427,7 @@ export class ForwardSecureSignatureModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to create forward-secure signature', {
         error: (error as Error).message,
         period,
@@ -464,7 +464,7 @@ export class ForwardSecureSignatureModule {
       });
       
       return isValid;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to verify forward-secure signature', {
         error: (error as Error).message,
         period: signature.period,
@@ -498,7 +498,7 @@ export class ForwardSecureSignatureModule {
       });
       
       return updatedKeys;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to update forward-secure key', {
         error: (error as Error).message,
         currentPeriod,
@@ -564,7 +564,7 @@ export class ZeroKnowledgeProofModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to create range proof', {
         error: (error as Error).message,
         range: `[${min}, ${max}]`,
@@ -597,7 +597,7 @@ export class ZeroKnowledgeProofModule {
       });
       
       return isValid;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to verify range proof', {
         error: (error as Error).message,
         range: `[${min}, ${max}]`,
@@ -659,7 +659,7 @@ export class ZeroKnowledgeProofModule {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to create sum proof', {
         error: (error as Error).message,
         valuesCount: values?.length || 0,
@@ -693,7 +693,7 @@ export class ZeroKnowledgeProofModule {
       });
       
       return isValid;
-    } catch (error) {
+    } catch (error: Error) {
       this.logger.error('Failed to verify sum proof', {
         error: (error as Error).message,
         valuesCount: sumProof.valueCommitments?.length || 0,

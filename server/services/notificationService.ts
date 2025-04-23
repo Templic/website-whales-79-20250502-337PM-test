@@ -79,7 +79,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<nu
       logger.info(`Sent notification to user ${payload.userId}`);
       return notification?.id;
     }
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error sending notification:', error);
     return undefined;
   }
@@ -98,7 +98,7 @@ export async function markNotificationAsRead(id: number): Promise<boolean> {
     
     logger.info(`Marked notification ${id} as read`);
     return true;
-  } catch (error) {
+  } catch (error: Error) {
     logger.error(`Error marking notification ${id} as read:`, error);
     return false;
   }
@@ -117,7 +117,7 @@ export async function markAllNotificationsAsRead(userId: number): Promise<boolea
     
     logger.info(`Marked all notifications for user ${userId} as read`);
     return true;
-  } catch (error) {
+  } catch (error: Error) {
     logger.error(`Error marking all notifications as read for user ${userId}:`, error);
     return false;
   }
@@ -139,7 +139,7 @@ export async function getUnreadNotificationCount(userId: number): Promise<number
     }
     
     return 0;
-  } catch (error) {
+  } catch (error: Error) {
     logger.error(`Error getting unread notification count for user ${userId}:`, error);
     return 0;
   }
@@ -160,7 +160,7 @@ export async function purgeOldNotifications(olderThan: number = 30): Promise<num
     logger.info(`Purged ${count} notifications older than ${olderThan} days`);
     
     return count;
-  } catch (error) {
+  } catch (error: Error) {
     logger.error(`Error purging old notifications:`, error);
     return 0;
   }

@@ -84,7 +84,7 @@ router.get('/content', requireAuth, async (req, res) => {
         totalPages: Math.ceil(totalCount / limit)
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting content list:', error);
     res.status(500).json({ error: 'Failed to get content list' });
   }
@@ -129,7 +129,7 @@ router.get('/content/:id', requireAuth, async (req, res) => {
       versions,
       workflowHistory
     });
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting content details:', error);
     res.status(500).json({ error: 'Failed to get content details' });
   }
@@ -197,7 +197,7 @@ router.post('/content', requireAuth, async (req, res) => {
     
     logger.info(`New content created: ${newContent.id} by user ${userId}`);
     res.status(201).json(newContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error creating content:', error);
     res.status(500).json({ error: 'Failed to create content' });
   }
@@ -288,7 +288,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
     
     logger.info(`Content updated: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error updating content:', error);
     res.status(500).json({ error: 'Failed to update content' });
   }
@@ -346,7 +346,7 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
     
     logger.info(`Content submitted for review: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error submitting content for review:', error);
     res.status(500).json({ error: 'Failed to submit content for review' });
   }
@@ -403,7 +403,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
     
     logger.info(`Content ${shouldPublishNow ? 'published' : 'approved'}: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error approving content:', error);
     res.status(500).json({ error: 'Failed to approve content' });
   }
@@ -454,7 +454,7 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
     
     logger.info(`Content rejected: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error rejecting content:', error);
     res.status(500).json({ error: 'Failed to reject content' });
   }
@@ -510,7 +510,7 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
     
     logger.info(`Changes requested for content: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error requesting changes:', error);
     res.status(500).json({ error: 'Failed to request changes' });
   }
@@ -577,7 +577,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
     
     // Return the array of workflow history entries with usernames
     res.json(result);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting review history:', error);
     res.status(500).json({ error: 'Failed to get review history' });
   }
@@ -629,7 +629,7 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
     
     logger.info(`Content archived: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error archiving content:', error);
     res.status(500).json({ error: 'Failed to archive content' });
   }
@@ -649,7 +649,7 @@ router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin'])
       message: 'Content scheduler executed successfully',
       metrics
     });
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error running content scheduler:', error);
     res.status(500).json({ error: 'Failed to run content scheduler' });
   }
@@ -660,7 +660,7 @@ router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin
   try {
     const metrics = getSchedulingMetrics();
     res.json(metrics);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting scheduler metrics:', error);
     res.status(500).json({ error: 'Failed to get scheduler metrics' });
   }
@@ -674,7 +674,7 @@ router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'supe
       success: true,
       message: 'Scheduler metrics reset successfully'
     });
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error resetting scheduler metrics:', error);
     res.status(500).json({ error: 'Failed to reset scheduler metrics' });
   }
@@ -685,7 +685,7 @@ router.get('/upcoming', requireAuth, async (req, res) => {
   try {
     const scheduledContent = await getUpcomingScheduledContent();
     res.json(scheduledContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting upcoming scheduled content:', error);
     res.status(500).json({ error: 'Failed to get upcoming scheduled content' });
   }
@@ -696,7 +696,7 @@ router.get('/expiring', requireAuth, async (req, res) => {
   try {
     const expiringContent = await getExpiringContent();
     res.json(expiringContent);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting expiring content:', error);
     res.status(500).json({ error: 'Failed to get expiring content' });
   }
@@ -721,7 +721,7 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
     
     const analytics = await getAllContentAnalytics();
     res.json(analytics);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting content analytics:', error);
     res.status(500).json({ error: 'Failed to get content analytics' });
   }

@@ -76,7 +76,7 @@ export default function ShopPage_old() {
         // const response = await apiRequest(url);
         // return response as Product[];
         return getMockProducts();
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching products:', err);
         return getMockProducts();
       }
@@ -92,7 +92,7 @@ export default function ShopPage_old() {
         // const response = await apiRequest('/api/categories');
         // return response as string[];
         return ['Clothing', 'Accessories', 'Art', 'Music', 'Digital'];
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching categories:', err);
         return ['Clothing', 'Accessories', 'Art', 'Music', 'Digital'];
       }

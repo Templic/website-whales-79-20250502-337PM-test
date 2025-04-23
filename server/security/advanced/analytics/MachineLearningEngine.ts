@@ -380,7 +380,7 @@ class IsolationForestModel extends MLModel {
       
       // Mark as ready
       this.status = ModelStatus.READY;
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[IsolationForestModel] Error training model:', error);
       this.status = ModelStatus.FAILED;
       throw error;
@@ -468,7 +468,7 @@ class IsolationForestModel extends MLModel {
       this.performance.lastEvaluationDate = new Date();
       
       return { ...this.performance };
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[IsolationForestModel] Error evaluating model:', error);
       throw error;
     } finally {
@@ -1047,7 +1047,7 @@ export class MachineLearningEngine {
         console.log(`[MachineLearningEngine] Training model: ${name}`);
         await model.train();
         console.log(`[MachineLearningEngine] Model ${name} trained successfully`);
-      } catch (error) {
+      } catch (error: Error) {
         console.error(`[MachineLearningEngine] Error training model ${name}:`, error);
       }
     }

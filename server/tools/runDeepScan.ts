@@ -127,7 +127,7 @@ async function runDeepScan() {
     });
     
     return scanResult;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('\n❌ Error running deep security scan:', error);
     
     // Log scan error event

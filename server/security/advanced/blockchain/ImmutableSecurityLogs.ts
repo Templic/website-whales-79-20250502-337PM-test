@@ -307,7 +307,7 @@ export class ImmutableSecurityLogs {
       } else {
         this.createGenesisBlock();
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[ImmutableSecurityLogs] Error loading blockchain:', error);
       this.createGenesisBlock();
     }
@@ -323,7 +323,7 @@ export class ImmutableSecurityLogs {
         JSON.stringify(this.chain, null, 2),
         'utf8'
       );
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[ImmutableSecurityLogs] Error saving blockchain:', error);
     }
   }

@@ -108,7 +108,7 @@ export default function CheckoutPage() {
   
   // Create order mutation
   const createOrderMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data) => {
       return await apiRequest('POST', '/api/orders', {
         data,
       });
@@ -122,7 +122,7 @@ export default function CheckoutPage() {
         description: `Your order #${data.orderNumber} has been placed successfully.`,
       });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to place order. Please try again.',
@@ -163,7 +163,7 @@ export default function CheckoutPage() {
       
       // Move to payment tab if shipping form is valid
       setActiveTab('payment');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Payment intent error:', error);
       setPaymentError(error.message || 'Failed to initialize payment system');
       toast({
@@ -240,7 +240,7 @@ export default function CheckoutPage() {
       } else {
         throw new Error('Failed to process order');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Payment Error',
         description: error.message || 'Failed to process payment',

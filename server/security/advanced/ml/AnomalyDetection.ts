@@ -302,7 +302,7 @@ export async function detectAnomaly(req: Request): Promise<AnomalyDetectionResul
     }
     
     return result;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('[ANOMALY-DETECTION] Error in anomaly detection:', error);
     
     // Even if there's an error, log it as a potential anomaly with medium confidence

@@ -65,7 +65,7 @@ export const generateQrCode = async (totpUri: string): Promise<string> => {
     // Generate a QR code as a data URL
     const qrCodeDataUrl = await qrcode.toDataURL(totpUri);
     return qrCodeDataUrl;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
   }
@@ -81,7 +81,7 @@ export const verifyToken = (token: string, secret: string): boolean => {
   try {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error verifying token:', error);
     return false;
   }

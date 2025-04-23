@@ -103,7 +103,7 @@ const BinauralBeatGenerator: React.FC = () => {
       rightOsc.start();
       
       setAudioInitialized(true);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize audio:', error);
     }
   };
@@ -136,7 +136,7 @@ const BinauralBeatGenerator: React.FC = () => {
       }
       
       setAudioInitialized(false);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error cleaning up audio:', error);
     }
   };

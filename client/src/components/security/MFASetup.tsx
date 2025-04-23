@@ -63,7 +63,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
           const data = await response.json();
           // Handle the response based on user's current MFA status
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to check MFA status:', error);
       }
     };
@@ -99,7 +99,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
           await setupRecoveryCodes();
           break;
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'An error occurred during setup');
       setSetupState(SetupState.ERROR);
     } finally {
@@ -123,7 +123,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
       setQrCodeUrl(data.qrCode);
       setSecretKey(data.secret);
       setSetupState(SetupState.QR_DISPLAYED);
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Failed to set up TOTP');
       setSetupState(SetupState.ERROR);
     }
@@ -151,7 +151,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
         title: 'Verification code sent',
         description: 'Please check your email for the verification code',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Failed to send verification code');
       setSetupState(SetupState.ERROR);
     }
@@ -179,7 +179,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
         title: 'Verification code sent',
         description: 'Please check your phone for the verification code',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Failed to send verification code');
       setSetupState(SetupState.ERROR);
     }
@@ -204,7 +204,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
       if (onSetupComplete) {
         onSetupComplete(MFAMethod.RECOVERY, true);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Failed to generate recovery codes');
       setSetupState(SetupState.ERROR);
     }
@@ -258,7 +258,7 @@ export function MFASetup({ userId, username, onSetupComplete }: MFASetupProps) {
       if (onSetupComplete) {
         onSetupComplete(activeTab, true);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Verification failed');
     } finally {
       setIsLoading(false);

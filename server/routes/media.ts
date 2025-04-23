@@ -100,7 +100,7 @@ router.get('/api/media', checkAuth, requireAdmin, async (req, res) => {
     const result = await db.select().from(mediaFiles).orderBy(mediaFiles.uploadedAt);
     // @ts-ignore - Response type issue
   return res.json(result);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching media files:', error);
     return res.status(500).json({ error: 'Failed to fetch media files' });
   }
@@ -118,7 +118,7 @@ router.get('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
     
     // @ts-ignore - Response type issue
   return res.json(result[0]);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching media file:', error);
     return res.status(500).json({ error: 'Failed to fetch media file' });
   }
@@ -146,7 +146,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
     if (req.body.position) {
       try {
         position = JSON.parse(req.body.position);
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error parsing position JSON:', error);
       }
     }
@@ -154,7 +154,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
     if (req.body.metadata) {
       try {
         metadata = JSON.parse(req.body.metadata);
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error parsing metadata JSON:', error);
       }
     }
@@ -233,7 +233,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
         message: 'File uploaded successfully',
         media: newMediaFile[0]
       });
-    } catch (error) {
+    } catch (error: Error) {
       // Handle validation errors specifically
       if (error instanceof Error) {
         const errorMessage = error.message;
@@ -242,7 +242,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
       }
       throw error; // Re-throw unexpected errors
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error uploading media file:', error);
     return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Failed to upload file'
@@ -279,7 +279,7 @@ router.delete('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
     
     // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'Media file deleted successfully' });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error deleting media file:', error);
     return res.status(500).json({ error: 'Failed to delete media file' });
   }

@@ -338,7 +338,7 @@ class SecurityScanner {
       console.log(`[SECURITY-SCANNER] Completed scan ${scanId} of type ${scan.scanType} with ${scan.findingsCount} findings in ${scan.duration}ms`);
       
       return scan;
-    } catch (error) {
+    } catch (error: Error) {
       // Update scan metadata
       scan.endTime = new Date();
       scan.duration = scan.endTime.getTime() - scan.startTime.getTime();

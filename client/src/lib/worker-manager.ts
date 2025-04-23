@@ -27,8 +27,8 @@ export type WorkerResponse = {
 type QueuedTask = {
   taskId: string;
   task: ComputationTask;
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
+  resolve: (value) => void;
+  reject: (reason) => void;
   timestamp: number;
 };
 
@@ -89,7 +89,7 @@ class WorkerManager {
 
       // Start processing the task queue
       this.processQueue();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to initialize Worker Manager:', error);
       throw error;
     }
@@ -132,7 +132,7 @@ class WorkerManager {
         };
 
         worker.addEventListener('message', readyHandler);
-      } catch (error) {
+      } catch (error: unknown) {
         reject(error);
       }
     });
@@ -221,7 +221,7 @@ class WorkerManager {
     // Create a new worker to replace it
     try {
       await this.createWorker();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to replace worker:', error);
     }
   }
@@ -262,11 +262,11 @@ class WorkerManager {
     const originalResolve = nextTask.resolve;
     const originalReject = nextTask.reject;
     this.taskCallbacks.set(nextTask.taskId, {
-      resolve: (value: any) => {
+      resolve: (value) => {
         clearTimeout(timeoutId);
         originalResolve(value);
       },
-      reject: (reason: any) => {
+      reject: (reason) => {
         clearTimeout(timeoutId);
         originalReject(reason);
       }

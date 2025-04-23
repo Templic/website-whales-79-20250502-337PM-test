@@ -17,7 +17,7 @@ if (!fs.existsSync(securityLogsDir)) {
 const securityLogFile = path.join(securityLogsDir, 'security.log');
 
 // Function to write security logs to file
-export function logSecurityEvent(event): void {
+export function logSecurityEvent(event: any): void {
   const timestamp = new Date().toISOString();
   const logEntry = {
     timestamp,
@@ -28,7 +28,7 @@ export function logSecurityEvent(event): void {
   
   try {
     fs.appendFileSync(securityLogFile, logLine);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to write to security log file:', error);
   }
   
@@ -38,7 +38,7 @@ export function logSecurityEvent(event): void {
 
 // Handler for the security log API endpoint
 export function handleSecurityLog(req: Request, res: Response): void;
-export function handleSecurityLog(event): void;
+export function handleSecurityLog(event: any): void;
 export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): void {
   try {
     // If this is a direct event object (not a request)
@@ -79,7 +79,7 @@ export function handleSecurityLog(reqOrEvent: Request | any, res?: Response): vo
     logSecurityEvent(eventData);
     
     res.status(200).json({ message: 'Security event logged successfully' });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error handling security log:', error);
     if (res) {
       res.status(500).json({ message: 'Failed to log security event' });
@@ -124,7 +124,7 @@ export function rotateSecurityLogs(): void {
         }
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error rotating security logs:', error);
   }
 }

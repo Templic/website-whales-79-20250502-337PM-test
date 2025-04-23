@@ -77,14 +77,14 @@ export async function initDatabaseOptimization() {
     setTimeout(async () => {
       try {
         await setupMaintenanceTasks();
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error during delayed maintenance setup:', err);
       }
     }, 3000); // 3 second delay
     
     log('Database optimization initialized', 'db-optimize');
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to initialize database optimization:', error);
     return false;
   }
@@ -112,7 +112,7 @@ async function setupMaintenanceTasks() {
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
         return { success: true };
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('VACUUM ANALYZE failed:', error);
         return { success: false, error };
       }
@@ -172,7 +172,7 @@ async function setupMaintenanceTasks() {
         
         log('Database reindexing completed', 'db-maintenance');
         return { success: true, tablesReindexed: tablesResult.rows.length };
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Database reindexing failed:', error);
         return { success: false, error };
       }
@@ -218,12 +218,12 @@ async function setupMaintenanceTasks() {
           log('Basic query stats analysis completed', 'db-performance');
           return { success: true, basicQueryStats: result.rows };
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Slow query analysis failed:', error);
         return { success: false, error };
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error setting up maintenance tasks:', error);
   }
 }
@@ -262,23 +262,24 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     }
     
     return result;
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = Date.now() - start;
     
     // Check if this is a connection error that we should retry
-    const isConnectionError = error.code === '57P01' || // admin shutdown
-                            error.code === '08006' || // connection terminated
-                            error.code === '08001' || // connection refused
-                            error.code === '08004' || // rejected connection
-                            error.code === 'ECONNRESET' || // connection reset by peer
-                            error.code === 'ETIMEDOUT' || // connection timeout
-                            error.message?.includes('Connection terminated');
+    const pgError = error as any; // Type assertion for PostgreSQL error object
+    const isConnectionError = pgError.code === '57P01' || // admin shutdown
+                            pgError.code === '08006' || // connection terminated
+                            pgError.code === '08001' || // connection refused
+                            pgError.code === '08004' || // rejected connection
+                            pgError.code === 'ECONNRESET' || // connection reset by peer
+                            pgError.code === 'ETIMEDOUT' || // connection timeout
+                            pgError.message?.includes('Connection terminated');
     
     if (isConnectionError && retryCount < MAX_RETRY_ATTEMPTS) {
       // Calculate exponential backoff delay
       const retryDelay = BASE_RETRY_DELAY * Math.pow(2, retryCount);
       
-      log(`Database connection error (${error.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
+      log(`Database connection error (${pgError.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
       
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, retryDelay));
@@ -313,7 +314,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
     const stats = result.rows[0] || {};
     
     // Safely parse integer values with validation
-    function safeParseInt(value, defaultValue: number = 0): number {
+    function safeParseInt(value: any, defaultValue: number = 0): number {
       if (value === undefined || value === null) return defaultValue;
       const parsed = parseInt(value);
       return isNaN(parsed) ? defaultValue : parsed;
@@ -325,7 +326,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
       idle: safeParseInt(stats.idle),
       waiting: safeParseInt(stats.waiting),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to get connection pool stats:', error);
     
     // Return default values instead of error to prevent frontend from crashing
@@ -352,7 +353,7 @@ export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'a
       default:
         throw new Error(`Unknown maintenance task: ${task}`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Failed to trigger ${task} task:`, error);
     throw error;
   }

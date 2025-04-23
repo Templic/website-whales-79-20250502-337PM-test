@@ -93,14 +93,14 @@ const DynamicContent: React.FC<DynamicContentProps> = ({
               // If creation failed, we'll just use the fallback text
               throw new Error('Failed to create content');
             }
-          } catch (createErr) {
+          } catch (createErr: unknown) {
             console.error('Error creating content:', createErr);
             throw new Error('Content not found');
           }
         } else {
           throw new Error('Content not found');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error loading content:', err);
         throw err;
       }

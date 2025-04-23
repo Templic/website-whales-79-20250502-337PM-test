@@ -30,7 +30,7 @@ interface CollectionItem {
 
 // Props interface
 interface CosmicCollectiblesProps {
-  onAddToCart?: (product: any) => void;
+  onAddToCart?: (product) => void;
   userPoints?: number;
 }
 
@@ -178,7 +178,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
 };
 
 // Card component for collection items with modified octagon shape to prevent overflow
-const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: any) => void }> = ({ item, onAddToCart }) => {
+const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product) => void }> = ({ item, onAddToCart }) => {
   const handleViewProduct = () => {
     console.log(`Viewing product details for ${item.name}`);
     // In a real app, this would navigate to product detail page

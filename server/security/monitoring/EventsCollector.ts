@@ -117,7 +117,7 @@ export async function getSecurityEventsHistory(
         events = events.slice(0, limit);
       }
     }
-  } catch (error) {
+  } catch (error: Error) {
     // Log error but continue with in-memory events
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
@@ -145,7 +145,7 @@ async function getBlockchainEvents(
     // Simulate retrieving events from blockchain
     // In a real implementation, this would call the blockchain logger
     return [];
-  } catch (error) {
+  } catch (error: Error) {
     throw new Error(`Failed to retrieve blockchain events: ${(error as Error).message}`);
   }
 }

@@ -231,7 +231,7 @@ class PaymentSecurityService {
         log(`WARNING: ${criticalIssues} critical PCI compliance issues found!`, 'security');
         // In a real application, we would send alerts here
       }
-    } catch (error) {
+    } catch (error: Error) {
       log(`Error running PCI compliance scan: ${error}`, 'error');
     }
   }
@@ -394,7 +394,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
     log(`Payment security scan completed. Found ${results.length} checks.`, 'security');
     
     return results;
-  } catch (error) {
+  } catch (error: Error) {
     log(`Error in payment security scan: ${error}`, 'error');
     
     // Return error result

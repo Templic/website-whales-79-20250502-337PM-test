@@ -172,7 +172,7 @@ export class PostgresStorage implements IStorage {
     try {
       const [newUser] = await db.insert(users).values(user).returning();
       return newUser;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error creating user:", error);
       if (error.code === '23505') { // PostgreSQL unique constraint violation
         if (error.constraint?.includes('email')) {
@@ -458,7 +458,7 @@ export class PostgresStorage implements IStorage {
 
       // Optionally, delete related records (comments, posts, etc.)
       // This depends on your database constraints and requirements
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error deleting user:', error);
       throw error;
     }
@@ -511,7 +511,7 @@ export class PostgresStorage implements IStorage {
       // Delete post
       await db.delete(posts)
         .where(eq(posts.id, id));
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error deleting post:", error);
       throw error;
     }
@@ -528,7 +528,7 @@ export class PostgresStorage implements IStorage {
 
       console.log('Fetched unapproved comments:', results);
       return results;
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error fetching unapproved comments:', error);
       throw error;
     }
@@ -573,7 +573,7 @@ export class PostgresStorage implements IStorage {
     const filePath = path.join(process.cwd(), 'uploads', track.audioUrl);
     try {
       await fs.unlink(filePath);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error deleting file:', error);
       // Continue with database deletion even if file deletion fails
     }
@@ -635,11 +635,11 @@ export class PostgresStorage implements IStorage {
             await this.createUser(userData);
             console.log(`Created user: ${userData.username}`);
           }
-        } catch (error) {
+        } catch (error: Error) {
           console.error(`Error creating user ${userData.username}:`, error);
         }
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error creating initial users:", error);
     }
   }
@@ -885,7 +885,7 @@ export class PostgresStorage implements IStorage {
             if (postCategoryRelations.length > 0) {
               await db.insert(postCategoriesTable).values(postCategoryRelations);
             }
-          } catch (error) {
+          } catch (error: Error) {
             console.error('Error creating post-category relationships:', error);
           }
         }
@@ -930,7 +930,7 @@ export class PostgresStorage implements IStorage {
             }
           ]);
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error initializing collaboration proposals:', error);
       }
 
@@ -954,7 +954,7 @@ export class PostgresStorage implements IStorage {
             { name: 'James Wilson', email: 'james@example.com', tier: 'Wave Rider' }
           ]);
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error initializing patrons:', error);
       }
 
@@ -1003,7 +1003,7 @@ export class PostgresStorage implements IStorage {
             }
           ]);
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error('Error initializing tour dates:', error);
       }
 
@@ -1067,7 +1067,7 @@ export class PostgresStorage implements IStorage {
           }
         ]);
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error initializing sample data:", error);
     }
   }
@@ -1089,7 +1089,7 @@ export class PostgresStorage implements IStorage {
           // This is safer than raw SQL as it's still using the ORM's parameter binding system
           sql`${sessionTable.expire} < NOW()`
         );
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error cleaning up expired sessions:", error);
       throw error;
     }
@@ -1123,7 +1123,7 @@ export class PostgresStorage implements IStorage {
       .orderBy(desc(sessionTable.expire));
       
       return sessions;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching session analytics:", error);
       throw error;
     }
@@ -1146,7 +1146,7 @@ export class PostgresStorage implements IStorage {
           sess: sql`jsonb_set(${sessionTable.sess}::jsonb, '{analytics}', ${JSON.stringify(data)}::jsonb)`
         })
         .where(eq(sessionTable.sid, sessionId)); // Safely parameterized
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error updating session activity:", error);
       throw error;
     }
@@ -1160,7 +1160,7 @@ export class PostgresStorage implements IStorage {
         .where(eq(users.id, userId))
         .returning();
       return updatedUser;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error updating user role:", error);
       throw error;
     }
@@ -1181,7 +1181,7 @@ export class PostgresStorage implements IStorage {
         throw new Error(`User with ID ${userId} not found after banning`);
       }
       return updatedUser;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error banning user:", error);
       throw error;
     }
@@ -1202,7 +1202,7 @@ export class PostgresStorage implements IStorage {
         throw new Error(`User with ID ${userId} not found after unbanning`);
       }
       return updatedUser;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error unbanning user:", error);
       throw error;
     }
@@ -1229,7 +1229,7 @@ export class PostgresStorage implements IStorage {
         requireEmailVerification: false,
         autoApproveContent: false
       };
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching system settings:", error);
       throw error;
     }
@@ -1279,7 +1279,7 @@ export class PostgresStorage implements IStorage {
           target: systemSettingsTable.id,
           set: cleanedSettings
         });
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error updating system settings:", error);
       throw error;
     }
@@ -1414,7 +1414,7 @@ export class PostgresStorage implements IStorage {
             }
           });
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error("Error fetching monthly user data:", error);
         // Keep using the default arrays defined above
       }
@@ -1443,7 +1443,7 @@ export class PostgresStorage implements IStorage {
         },
         userRolesDistribution: userRolesDistribution
       };
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching admin analytics:", error);
       // Return default values if there's an error
       return {
@@ -1498,7 +1498,7 @@ export class PostgresStorage implements IStorage {
         post_count: 0,
         comment_count: 0
       };
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching user activity:", error);
       return {
         username: 'Unknown User',
@@ -1517,7 +1517,7 @@ export class PostgresStorage implements IStorage {
       return await db.select()
         .from(contentItems)
         .orderBy(desc(contentItems.updatedAt));
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching content items:", error);
       throw error;
     }
@@ -1527,7 +1527,7 @@ export class PostgresStorage implements IStorage {
     try {
       const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.id, id));
       return contentItem || null;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error fetching content item by ID ${id}:`, error);
       throw error;
     }
@@ -1537,7 +1537,7 @@ export class PostgresStorage implements IStorage {
     try {
       const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.key, key));
       return contentItem || null;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error fetching content item by key "${key}":`, error);
       throw error;
     }
@@ -1554,7 +1554,7 @@ export class PostgresStorage implements IStorage {
 
       const [newContentItem] = await db.insert(contentItems).values(data).returning();
       return newContentItem;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error creating content item:", error);
       throw error;
     }
@@ -1582,7 +1582,7 @@ export class PostgresStorage implements IStorage {
         .returning();
 
       return updatedContentItem;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error updating content item with ID ${contentData.id}:`, error);
       throw error;
     }
@@ -1604,7 +1604,7 @@ export class PostgresStorage implements IStorage {
 
       // Finally delete the content item
       await db.delete(contentItems).where(eq(contentItems.id, id));
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error deleting content item with ID ${id}:`, error);
       throw error;
     }
@@ -1619,7 +1619,7 @@ export class PostgresStorage implements IStorage {
         .orderBy(desc(contentHistory.modifiedAt));
 
       return history;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error fetching content history for content ID ${contentId}:`, error);
       throw error;
     }
@@ -1661,7 +1661,7 @@ export class PostgresStorage implements IStorage {
         .where(eq(contentItems.id, contentId));
 
       return historyRecord;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error creating content version for content ID ${contentId}:`, error);
       throw error;
     }
@@ -1692,7 +1692,7 @@ export class PostgresStorage implements IStorage {
         .returning();
 
       return updatedContent;
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error restoring content version from history ID ${historyId}:`, error);
       throw error;
     }
@@ -1740,7 +1740,7 @@ export class PostgresStorage implements IStorage {
 
         return newUsage;
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error recording content usage for content ID ${contentId}:`, error);
       throw error;
     }
@@ -1763,7 +1763,7 @@ export class PostgresStorage implements IStorage {
           })
           .where(eq(contentUsage.id, record.id));
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`Error incrementing content views for content ID ${contentId}:`, error);
       throw error;
     }
@@ -1798,7 +1798,7 @@ export class PostgresStorage implements IStorage {
       }
 
       return await query;
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error generating content usage report:', error);
       throw error;
     }
@@ -1813,7 +1813,7 @@ export class PostgresStorage implements IStorage {
         .orderBy(desc(contentWorkflowHistory.actionAt));
       
       return history;
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error fetching content workflow history:", error);
       throw error;
     }
@@ -1894,7 +1894,7 @@ export class PostgresStorage implements IStorage {
         
         return updatedContent;
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error("Error updating content status:", error);
       throw error;
     }

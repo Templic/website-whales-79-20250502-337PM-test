@@ -77,7 +77,7 @@ function validateToken(token: string | undefined): boolean {
     // In a real implementation, this would verify the token against your auth system
     // Example JWT verification or session token validation
     return true; // Replace with actual validation
-  } catch (error) {
+  } catch (error: Error) {
     log('Token validation error', 'websocket');
     return false;
   }
@@ -293,14 +293,14 @@ export function setupWebSockets(httpServer: Server) {
           // Count inactive states
           inactiveConnections++;
         }
-      } catch (error) {
+      } catch (error: Error) {
         log(`Health check error for client: ${error}`, 'websocket');
         inactiveConnections++;
         
         // Try to close problematic connections
         try {
           client.close(1011, 'Health check failed');
-        } catch (e) {
+        } catch (e: Error) {
           // Last resort - force terminate
           client.terminate();
         }
@@ -716,7 +716,7 @@ export function setupWebSockets(httpServer: Server) {
         let rawData;
         try {
           rawData = JSON.parse(message.toString());
-        } catch (parseError) {
+        } catch (parseError: Error) {
           // Invalid JSON format
           if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.2; // Increase anomaly score for invalid JSON
           log(`Invalid JSON from ${ws.ipAddress || 'unknown IP'}: ${message.toString().slice(0, 100)}`, 'websocket');
@@ -915,7 +915,7 @@ export function setupWebSockets(httpServer: Server) {
             }));
             break;
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error('WebSocket message error:', error);
         ws.send(JSON.stringify({
           type: 'error',
@@ -928,7 +928,7 @@ export function setupWebSockets(httpServer: Server) {
       console.error('WebSocket error:', error);
       try {
         ws.close(1011, 'Internal server error'); // Internal error close code
-      } catch (e) {
+      } catch (e: Error) {
         console.error('Error closing WebSocket:', e);
       }
     });
@@ -1306,7 +1306,7 @@ export function setupWebSockets(httpServer: Server) {
           session.anomalyScore = Math.max(0, session.anomalyScore - 0.01);
         }
         
-      } catch (error) {
+      } catch (error: Error) {
         log(`Socket.IO message error (${event}): ${error}`, 'websocket');
         socket.emit('error', { 
           type: 'processing',
@@ -1371,7 +1371,7 @@ export function setupWebSockets(httpServer: Server) {
       
       // Log audit information
       log(`WebSocket security audit: Cleaned up connection tracker, ${connectionTracker.size} IPs tracked`, 'websocket');
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error in WebSocket security audit:', error);
     }
   }, 15 * 60 * 1000); // Run every 15 minutes
@@ -1395,7 +1395,7 @@ export function setupWebSockets(httpServer: Server) {
           if (client.readyState === WebSocket.OPEN) {
             client.close(1001, 'Server shutting down');
           }
-        } catch (e) {
+        } catch (e: Error) {
           console.error('Error closing WebSocket connection during shutdown:', e);
         }
       });
@@ -1413,7 +1413,7 @@ export function setupWebSockets(httpServer: Server) {
       io.sockets.sockets.forEach((socket) => {
         try {
           socket.disconnect(true);
-        } catch (e) {
+        } catch (e: Error) {
           console.error('Error disconnecting Socket.IO client during shutdown:', e);
         }
       });
@@ -1429,7 +1429,7 @@ export function setupWebSockets(httpServer: Server) {
       
       // Final security log entry
       log('WebSocket security service stopped', 'websocket');
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error during WebSocket server shutdown:', error);
     }
   });

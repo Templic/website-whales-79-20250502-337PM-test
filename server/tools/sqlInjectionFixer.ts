@@ -95,7 +95,7 @@ async function fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabil
       fixes,
       success: true
     };
-  } catch (error) {
+  } catch (error: Error) {
     return {
       file: filePath,
       fixes: [],
@@ -307,7 +307,7 @@ async function main() {
     
     fs.writeFileSync(reportPath, report);
     console.log(`Report saved to ${reportPath}`);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error saving report:', error);
   }
   

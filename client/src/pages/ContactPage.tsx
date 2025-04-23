@@ -51,7 +51,7 @@ export default function ContactPage() {
       });
 
       form.reset();
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: error.message || "Failed to send message",

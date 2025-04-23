@@ -226,7 +226,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           reason: decisionReason
         });
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[ZeroTrust] Error in zero-trust middleware:', error);
       
       // In case of internal error, deny access

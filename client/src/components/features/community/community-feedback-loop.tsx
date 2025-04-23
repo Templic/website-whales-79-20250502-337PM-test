@@ -103,7 +103,7 @@ export function CommunityFeedbackLoop({
       setFeedbackContent("")
       setFeedbackCategory("feature")
       setActiveTab("browse")
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error submitting feedback:", error)
     } finally {
       setIsSubmitting(false)
@@ -485,7 +485,7 @@ function CommunityFeedbackLoopOriginal({
       setFeedbackContent("")
       setFeedbackCategory("feature")
       setActiveTab("browse")
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error submitting feedback:", error)
     } finally {
       setIsSubmitting(false)

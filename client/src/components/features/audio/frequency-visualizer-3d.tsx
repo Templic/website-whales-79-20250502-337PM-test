@@ -825,7 +825,7 @@ function FrequencyVisualizer3DOriginal({
           });
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error initializing audio:", error);
     }
 
@@ -977,7 +977,7 @@ function FrequencyVisualizer3DOriginal({
       audioSource.connect(analyserRef.current);
       sourceRef.current = audioSource;
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn('Audio source already connected, using existing connection');
     }
   };
@@ -1003,7 +1003,7 @@ function FrequencyVisualizer3DOriginal({
 
       sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
       sourceRef.current.connect(analyserRef.current);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error accessing microphone:", error);
       setIsUsingMic(false);
     }
@@ -2333,7 +2333,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
           });
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error initializing audio:", error);
     }
 
@@ -2485,7 +2485,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
       audioSource.connect(analyserRef.current);
       sourceRef.current = audioSource;
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.warn('Audio source already connected, using existing connection');
     }
   };
@@ -2511,7 +2511,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
 
       sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
       sourceRef.current.connect(analyserRef.current);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error accessing microphone:", error);
       setIsUsingMic(false);
     }

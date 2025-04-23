@@ -139,7 +139,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
           timestamp: new Date().toISOString()
         });
       }
-    } catch (error) {
+    } catch (error: Error) {
       console.error(`[API Security] Error checking authentication for ${endpoint.path}:`, error);
     }
   }
@@ -240,7 +240,7 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
         timestamp: new Date().toISOString()
       });
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('[API Security] Error testing rate limiting:', error);
     
     results.push({
@@ -477,7 +477,7 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
       details: `Generated API security report with ${results.length} checks`,
       severity: 'low'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('[API Security] Error generating report:', error);
   }
 }

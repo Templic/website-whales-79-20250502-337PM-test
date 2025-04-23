@@ -106,7 +106,7 @@ export function attemptGarbageCollection(): void {
         // @ts-ignore
         window.gc();
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.log('Manual GC not available');
     }
   }

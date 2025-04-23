@@ -32,7 +32,7 @@ const BinauralBeatPerformanceTest: React.FC = () => {
       
       setOriginalResults(original);
       setOptimizedResults(optimized);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Performance test failed:', error);
       setErrorMessage(
         error instanceof Error ? error.message : 'Unknown error during performance test'

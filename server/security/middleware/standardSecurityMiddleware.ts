@@ -130,7 +130,7 @@ export function createStandardSecurityMiddleware(options: StandardSecurityOption
       
       // Continue to next middleware
       next();
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[StandardSecurity] Error in standard security middleware:', error);
       next(error);
     }

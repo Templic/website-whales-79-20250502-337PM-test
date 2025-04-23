@@ -91,7 +91,7 @@ export function createSecureExpressApp() {
       }
       
       res.redirect(url);
-    } catch (error) {
+    } catch (error: Error) {
       res.status(400).json({ error: 'Invalid URL format' });
     }
   });

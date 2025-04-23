@@ -43,7 +43,7 @@ export function getSecuritySettings(): SecuritySettings {
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(DEFAULT_SECURITY_SETTINGS, null, 2));
       return DEFAULT_SECURITY_SETTINGS;
     }
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error reading security settings:', error);
     return DEFAULT_SECURITY_SETTINGS;
   }
@@ -75,7 +75,7 @@ export function updateSecuritySetting(setting: keyof SecuritySettings, value: bo
     });
     
     return true;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error updating security setting:', error);
     return false;
   }

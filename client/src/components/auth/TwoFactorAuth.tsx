@@ -41,7 +41,7 @@ type TwoFactorForm = z.infer<typeof twoFactorSchema>;
 type BackupCodeForm = z.infer<typeof backupCodeSchema>;
 
 interface TwoFactorAuthProps {
-  onSuccess?: (userData: any) => void;
+  onSuccess?: (userData) => void;
   onCancel?: () => void;
 }
 
@@ -67,7 +67,7 @@ export function TwoFactorAuth({ onSuccess, onCancel }: TwoFactorAuthProps) {
     try {
       const userData = await verify2FAMutation.mutateAsync(data);
       if (onSuccess) onSuccess(userData);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };
@@ -76,7 +76,7 @@ export function TwoFactorAuth({ onSuccess, onCancel }: TwoFactorAuthProps) {
     try {
       const userData = await verifyBackupCodeMutation.mutateAsync(data);
       if (onSuccess) onSuccess(userData);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };

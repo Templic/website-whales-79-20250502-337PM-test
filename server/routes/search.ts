@@ -144,7 +144,7 @@ router.get('/api/search', async (req, res) => {
     
     // Return combined results
     res.json(results);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Search error:', error);
     res.status(500).json({ error: 'Failed to perform search' });
   }
@@ -205,7 +205,7 @@ router.get('/api/music/search', async (req, res) => {
     
     // Return results
     res.json(musicResults);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Music search error:', error);
     res.status(500).json({ error: 'Failed to perform music search' });
   }
@@ -304,7 +304,7 @@ router.get('/api/products/search', async (req, res) => {
     
     // Return results
     res.json(formattedResults);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Product search error:', error);
     res.status(500).json({ error: 'Failed to perform product search' });
   }

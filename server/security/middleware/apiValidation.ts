@@ -77,7 +77,7 @@ export function validate(
       }
       
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Handle Zod validation errors
       if (error instanceof ZodError) {
         const formattedErrors = error.errors.map(err => ({
@@ -175,7 +175,7 @@ export function validateRequest(
         if (options.stripUnknown) {
           req[part] = validatedData;
         }
-      } catch (error) {
+      } catch (error: Error) {
         // Handle Zod validation errors
         if (error instanceof ZodError) {
           const formattedErrors = error.errors.map(err => ({
@@ -255,7 +255,7 @@ export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
       req[part] = sanitizedData;
       
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Log sanitization failures but don't block the request
       logger.warn(`API sanitization failed for ${req.method} ${req.path} on ${part}`, { error });
       next();

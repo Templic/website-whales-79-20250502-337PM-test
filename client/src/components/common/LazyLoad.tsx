@@ -182,7 +182,7 @@ const LazyLoad: React.FC<LazyLoadProps> = ({
         {renderContent()}
       </div>
     );
-  } catch (err) {
+  } catch (err: unknown) {
     if (debug) {
       console.error('[LazyLoad] Error rendering content:', err);
     }
@@ -200,11 +200,7 @@ export default memo(LazyLoad);
  * @param enabled Whether to enable visibility detection
  * @returns Object with isVisible flag and ref to attach to the element
  */
-export function useSkipRenderIfInvisible(
-  rootMargin = '200px',
-  threshold = 0.1,
-  enabled = true
-) {
+export function useSkipRenderIfInvisible(rootMargin: string = '200px', threshold: number = 0.1, enabled: boolean = true) {
   const [isVisible, setIsVisible] = useState(!enabled);
   const containerRef = useRef<HTMLDivElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);

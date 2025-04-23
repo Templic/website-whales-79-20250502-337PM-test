@@ -28,7 +28,7 @@ export default function MusicReleasePage() {
     try {
       const response = await axios.get('/api/tracks');
       setTracks(response.data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching tracks:', error);
     }
   };

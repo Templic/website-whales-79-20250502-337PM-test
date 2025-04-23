@@ -124,7 +124,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       if (result.errors.length > 0) {
         result.valid = false;
       }
-    } catch (error) {
+    } catch (error: Error) {
       // Add unexpected error
       result.valid = false;
       result.errors.push({
@@ -305,7 +305,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   /**
    * Sanitize an object in-place
    */
-  function sanitizeObject(obj): void {
+  function sanitizeObject(obj: any): void {
     if (obj === null || typeof obj !== 'object') {
       return;
     }
@@ -393,7 +393,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       
       // Continue to next middleware
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Log error to blockchain
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.API,

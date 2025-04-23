@@ -384,7 +384,7 @@ function getJsonMaxDepth(obj, currentDepth: number = 0): number {
 /**
  * Count fields in a JSON object
  */
-function countFields(obj): number {
+function countFields(obj: any): number {
   if (!obj || typeof obj !== 'object') {
     return 0;
   }
@@ -847,7 +847,7 @@ export class AnomalyDetection {
       // Normalize numeric IDs and UUIDs in URL segments
       return pathOnly.replace(/\/[0-9]+\/?/g, '/ID/')
                      .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?/gi, '/UUID/');
-    } catch (error) {
+    } catch (error: Error) {
       console.error('[AnomalyDetection] Error normalizing URL:', error);
       return url;
     }

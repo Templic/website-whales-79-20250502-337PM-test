@@ -58,7 +58,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         // Otherwise use the cosmic albums as placeholder
         setAlbums(cosmicAlbums as unknown as Album[]);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching music from API:', error);
       // Fallback to cosmic data
       setTracks(cosmicTracks as unknown as Track[]);
@@ -74,7 +74,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         title: "Success",
         description: "Track deleted successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to delete track",
@@ -91,7 +91,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         title: "Success",
         description: "Album deleted successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to delete album",

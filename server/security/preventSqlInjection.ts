@@ -72,7 +72,7 @@ export class SQLInjectionPrevention {
         if (!fs.existsSync(this.config.reportDir)) {
           fs.mkdirSync(this.config.reportDir, { recursive: true });
         }
-      } catch (error) {
+      } catch (error: Error) {
         console.error('[SQL-PREVENTION] Error creating reports directory:', error);
       }
     }
@@ -190,7 +190,7 @@ export class SQLInjectionPrevention {
       try {
         fs.writeFileSync(reportPath, report);
         console.log(`[SQL-PREVENTION] Security report saved to ${reportPath}`);
-      } catch (error) {
+      } catch (error: Error) {
         console.error('[SQL-PREVENTION] Error saving security report:', error);
       }
     }

@@ -125,7 +125,7 @@ export class SecureWebSocket {
       this.ws.onclose = this.handleClose.bind(this);
       this.ws.onmessage = this.handleMessage.bind(this);
       this.ws.onerror = this.handleError.bind(this);
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error creating WebSocket:', error);
       this.isConnecting = false;
       this.scheduleReconnect();
@@ -244,7 +244,7 @@ export class SecureWebSocket {
       if (this.options.onMessage) {
         this.options.onMessage(message);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error handling message:', error);
     }
   }
@@ -305,7 +305,7 @@ export class SecureWebSocket {
     try {
       this.ws.send(JSON.stringify(message));
       this.lastActivity = Date.now();
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error sending message:', error);
       throw error;
     }
@@ -327,7 +327,7 @@ export class SecureWebSocket {
       if (message) {
         try {
           this.sendRaw(message);
-        } catch (error) {
+        } catch (error: unknown) {
           this.log('Error sending queued message:', error);
           // Re-queue the message at the front
           this.messageQueue.unshift(message);
@@ -401,7 +401,7 @@ export class SecureWebSocket {
     
     try {
       this.sendRaw(healthCheckMessage);
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error sending health check:', error);
     }
   }
@@ -422,7 +422,7 @@ export class SecureWebSocket {
     
     try {
       this.sendRaw(ackMessage);
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error sending acknowledgement:', error);
     }
   }
@@ -475,7 +475,7 @@ export class SecureWebSocket {
     
     try {
       this.sendRaw(refreshMessage);
-    } catch (error) {
+    } catch (error: unknown) {
       this.log('Error refreshing token:', error);
     }
   }
@@ -520,7 +520,7 @@ export class SecureWebSocket {
     if (this.ws) {
       try {
         this.ws.close(1000, 'Normal closure');
-      } catch (error) {
+      } catch (error: unknown) {
         this.log('Error closing WebSocket:', error);
       }
       this.ws = null;

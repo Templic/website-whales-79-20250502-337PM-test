@@ -120,7 +120,7 @@ export async function secureApiRequest<T = any>(
       status: response.status,
       headers: response.headers
     };
-  } catch (error) {
+  } catch (error: unknown) {
     // Return the error response
     return {
       data: null,

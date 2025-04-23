@@ -166,7 +166,7 @@ export namespace AdminTypes {
   export interface TableColumn<T> {
     header: string;
     accessor: keyof T | ((row: T) => any);
-    cell?: (value: any, row: T) => ReactNode;
+    cell?: (value, row: T) => ReactNode;
     sortable?: boolean;
     filterable?: boolean;
     width?: number | string;

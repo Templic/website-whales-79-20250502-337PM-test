@@ -163,7 +163,7 @@ export function HarmonicJourneysGrid({
             setPlayingFrequency(null)
           }
         }, 30000)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error playing frequency:", error)
       }
     }
@@ -509,7 +509,7 @@ function HarmonicJourneysGridOriginal({
             setPlayingFrequency(null)
           }
         }, 30000)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error playing frequency:", error)
       }
     }

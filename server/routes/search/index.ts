@@ -138,7 +138,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Return the search results
     // @ts-ignore - Response type issue
   return res.json(results);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Search error:', error);
     return res.status(500).json({ error: 'An error occurred while searching' });
   }
@@ -194,7 +194,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredTracks.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching music:', error);
     return [];
   }
@@ -260,7 +260,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     // Return limited results
     return filteredProducts.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching products:', error);
     return [];
   }
@@ -327,7 +327,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredPosts.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching posts:', error);
     return [];
   }
@@ -373,7 +373,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredUsers.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching users:', error);
     return [];
   }
@@ -485,7 +485,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     // Return limited results
     return filteredNewsletters.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching newsletters:', error);
     return [];
   }
@@ -601,7 +601,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     // Return limited results
     return filteredSuggestions.slice(0, limit);
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error searching community suggestions:', error);
     return [];
   }

@@ -122,7 +122,7 @@ export function MFAChallenge({
 
       // Notify parent component
       onComplete(true);
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Verification failed. Please try again.');
       setState(ChallengeState.ERROR);
     } finally {
@@ -160,7 +160,7 @@ export function MFAChallenge({
 
       // Notify parent component
       onComplete(true);
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Verification failed. Please try again.');
       setState(ChallengeState.ERROR);
     } finally {
@@ -191,7 +191,7 @@ export function MFAChallenge({
       } else {
         throw new Error('Failed to send a new code');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setError((error as Error).message || 'Failed to send a new code');
     } finally {
       setIsLoading(false);

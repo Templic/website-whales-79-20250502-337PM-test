@@ -119,7 +119,7 @@ export function AnalyticsDisplay({
         const response = await fetch(`/api/content-workflow/analytics?start=${dateRange.start}&end=${dateRange.end}`);
         if (!response.ok) throw new Error('Failed to fetch content analytics');
         return response.json();
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error fetching content analytics:', error);
         return null;
       }
@@ -335,7 +335,7 @@ export function AnalyticsDisplay({
                 </div>
               ) : contentAnalytics?.expiringContent && contentAnalytics.expiringContent.length > 0 ? (
                 <div className="space-y-2">
-                  {contentAnalytics.expiringContent.map((item: any, index: number) => (
+                  {contentAnalytics.expiringContent.map((item, index: number) => (
                     <div 
                       key={index} 
                       className="flex justify-between items-center border-b pb-2"

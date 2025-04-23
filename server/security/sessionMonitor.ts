@@ -232,7 +232,7 @@ export async function handlePasswordChange(userId: number, currentSessionId: str
       details: 'User password was changed, other sessions invalidated',
       severity: 'medium'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error handling password change:', error);
   }
 }
@@ -242,7 +242,7 @@ export async function handlePasswordChange(userId: number, currentSessionId: str
  * @param user The user object
  * @returns True if password change is required
  */
-export function passwordChangeRequired(user): boolean {
+export function passwordChangeRequired(user: any): boolean {
   // Check for forced password change flag
   if (user.mustChangePassword) {
     return true;

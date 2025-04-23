@@ -7,7 +7,7 @@ export const formatDisplayDate = (date: string | Date | null | undefined) => {
     // Handle different types: string or Date object
     const dateObj = typeof date === 'string' ? parseISO(date) : date;
     return isValid(dateObj) ? format(dateObj, 'MMM dd, yyyy') : "Recent";
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("Error formatting date:", e);
     return "Recent";
   }

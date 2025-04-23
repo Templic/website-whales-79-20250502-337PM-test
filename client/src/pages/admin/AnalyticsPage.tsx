@@ -499,7 +499,7 @@ export default function AnalyticsPage() {
         description: `Analytics data exported as ${filename}`,
         duration: 3000
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Export error:', error);
       toast({
         title: "Export Failed",

@@ -19,7 +19,7 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 
 // Simple security logging function to track events
-function logSecurityEvent(eventType: string, data, level: string): void {
+function logSecurityEvent(eventType: string, data: any, level: string): void {
   console.log(`[SECURITY] ${level.toUpperCase()} - ${eventType}: ${JSON.stringify(data)}`);
 }
 
@@ -178,7 +178,7 @@ function verifyEnhancedCsrfToken(req: Request, token: string, providedNonce?: st
       Buffer.from(token),
       Buffer.from(storedData.token)
     );
-  } catch (error) {
+  } catch (error: unknown) {
     // Handle case where token lengths don't match
     logSecurityEvent('CSRF_TOKEN_COMPARISON_ERROR', {
       sessionId,

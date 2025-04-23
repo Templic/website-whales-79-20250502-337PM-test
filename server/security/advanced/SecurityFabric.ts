@@ -215,7 +215,7 @@ export class SecurityFabric {
           severity: SecurityEventSeverity.INFO,
           message: `Security component initialized: ${name}`
         });
-      } catch (error) {
+      } catch (error: Error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
@@ -244,7 +244,7 @@ export class SecurityFabric {
           severity: SecurityEventSeverity.INFO,
           message: `Security component shutdown: ${name}`
         });
-      } catch (error) {
+      } catch (error: Error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,

@@ -80,7 +80,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
       setSaving(false);
       if (onSave) onSave(content);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       setError(error.message || 'Error creating content');
       setSaving(false);
     }
@@ -109,7 +109,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
       setSaving(false);
       if (onSave) onSave(content);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       setError(error.message || 'Error updating content');
       setSaving(false);
     }
@@ -161,7 +161,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
       } else {
         createContentMutation.mutate(content);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(error.message || 'Error saving content');
       setSaving(false);
     }
@@ -270,7 +270,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
           <div className="border rounded-md">
             <Editor
               apiKey={process.env.TINYMCE_API_KEY}
-              onInit={(evt: any, editor: any) => editorRef.current = editor}
+              onInit={(evt, editor) => editorRef.current = editor}
               value={content.content}
               onEditorChange={handleEditorChange}
               init={{

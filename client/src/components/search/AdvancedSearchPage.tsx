@@ -177,7 +177,7 @@ const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
   };
 
   // Handle filter changes
-  const handleFilterChange = (filterType: string, value: any) => {
+  const handleFilterChange = (filterType: string, value) => {
     setActiveFilters(prev => ({
       ...prev,
       [filterType]: value
@@ -371,22 +371,22 @@ const AdvancedSearchPage: React.FC<AdvancedSearchPageProps> = ({
           
           // Add type property to each item in the arrays
           if (data.music && Array.isArray(data.music)) {
-            mixedResults.push(...data.music.map((item: any) => ({ ...item, _type: 'music' })));
+            mixedResults.push(...data.music.map((item) => ({ ...item, _type: 'music' })));
           }
           if (data.products && Array.isArray(data.products)) {
-            mixedResults.push(...data.products.map((item: any) => ({ ...item, _type: 'products' })));
+            mixedResults.push(...data.products.map((item) => ({ ...item, _type: 'products' })));
           }
           if (data.posts && Array.isArray(data.posts)) {
-            mixedResults.push(...data.posts.map((item: any) => ({ ...item, _type: 'posts' })));
+            mixedResults.push(...data.posts.map((item) => ({ ...item, _type: 'posts' })));
           }
           if (data.users && Array.isArray(data.users)) {
-            mixedResults.push(...data.users.map((item: any) => ({ ...item, _type: 'users' })));
+            mixedResults.push(...data.users.map((item) => ({ ...item, _type: 'users' })));
           }
           if (data.newsletters && Array.isArray(data.newsletters)) {
-            mixedResults.push(...data.newsletters.map((item: any) => ({ ...item, _type: 'newsletters' })));
+            mixedResults.push(...data.newsletters.map((item) => ({ ...item, _type: 'newsletters' })));
           }
           if (data.suggestions && Array.isArray(data.suggestions)) {
-            mixedResults.push(...data.suggestions.map((item: any) => ({ ...item, _type: 'suggestions' })));
+            mixedResults.push(...data.suggestions.map((item) => ({ ...item, _type: 'suggestions' })));
           }
           
           return renderMixedResults(mixedResults);

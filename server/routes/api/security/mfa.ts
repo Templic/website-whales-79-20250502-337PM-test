@@ -63,7 +63,7 @@ router.post('/totp/setup', async (req, res) => {
       secret: totpSetup.secret,
       qrCode: totpSetup.qrCode
     });
-  } catch (error) {
+  } catch (error: Error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -136,7 +136,7 @@ router.post('/totp/verify', async (req, res) => {
         ? 'Too many failed attempts. Please try again later.'
         : 'Invalid verification code. Please try again.'
     });
-  } catch (error) {
+  } catch (error: Error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -183,7 +183,7 @@ router.post('/recovery/generate', async (req, res) => {
     }
     
     res.status(500).json({ error: 'Failed to save recovery codes' });
-  } catch (error) {
+  } catch (error: Error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -217,7 +217,7 @@ router.post('/disable', async (req, res) => {
     });
     
     res.json({ success: true });
-  } catch (error) {
+  } catch (error: Error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,

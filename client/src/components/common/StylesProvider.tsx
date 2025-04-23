@@ -132,7 +132,7 @@ const StylesProvider: React.FC<StylesProviderProps> = ({
 
       // Reconstruct CSS from unique rules
       return uniqueRules.join('\n');
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error optimizing CSS:', error);
       return css; // Return original on error
     }

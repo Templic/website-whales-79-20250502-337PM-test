@@ -209,7 +209,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
         totalArchived: parseInt(archivedLast30Days.rows[0]?.count?.toString() || '0', 10)
       }
     };
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting content throughput metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -309,7 +309,7 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
       totalPublished: statusMap['published'] || 0,
       totalArchived: statusMap['archived'] || 0
     };
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting workflow metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -366,7 +366,7 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
       upcomingPublications: parseInt(upcomingPublications.rows[0]?.count?.toString() || '0', 10),
       soonExpiring: parseInt(soonExpiring.rows[0]?.count?.toString() || '0', 10)
     };
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting scheduling metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -419,7 +419,7 @@ export async function getUpcomingScheduledContent() {
       createdBy: row.created_by ? Number(row.created_by) : null,
       createdAt: row.created_at instanceof Date ? row.created_at : null
     }));
-  } catch (error) {
+  } catch (error: Error) {
     logger.error('Error getting upcoming scheduled content:', error);
     return [];
   }
@@ -465,7 +465,7 @@ export async function getExpiringContent() {
       publishedAt: row.published_at instanceof Date ? row.published_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null
     }));
-  } catch (error) {
+  } catch (error: Error) {
     // Use detailed error logging but avoid exposing sensitive information
     // in error messages that could aid in crafting exploits
     logger.error('Error getting expiring content:', error);

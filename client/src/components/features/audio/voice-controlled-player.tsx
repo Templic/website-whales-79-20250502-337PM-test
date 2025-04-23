@@ -136,7 +136,7 @@ export function VoiceControlledPlayer({
       recognitionRef.current.interimResults = true
       recognitionRef.current.lang = "en-US"
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event) => {
         const result = event.results[event.results.length - 1]
         const transcript = result[0].transcript.toLowerCase().trim()
 
@@ -157,7 +157,7 @@ export function VoiceControlledPlayer({
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event) => {
         console.error("Speech recognition error", event.error)
         setIsListening(false)
       }
@@ -300,7 +300,7 @@ export function VoiceControlledPlayer({
       try {
         recognitionRef.current.start()
         setIsListening(true)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error starting speech recognition", error)
       }
     }
@@ -743,13 +743,13 @@ function VoiceControlledPlayerOriginal({
         if (isListening) {
           try {
             recognitionRef.current.start()
-          } catch (error) {
+          } catch (error: unknown) {
             console.error("Error restarting speech recognition:", error)
           }
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event) => {
         console.error("Speech recognition error:", event.error)
         if (event.error === "not-allowed") {
           setShowError(true)
@@ -758,9 +758,9 @@ function VoiceControlledPlayerOriginal({
         }
       }
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result) => result[0].transcript)
           .join("")
           .toLowerCase()
           .trim()
@@ -770,7 +770,7 @@ function VoiceControlledPlayerOriginal({
           processVoiceCommand(transcript, event.results[0][0].confidence)
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error initializing speech recognition:", error)
       setShowError(true)
       setErrorMessage("Failed to initialize voice controls. Your browser might not support this feature.")
@@ -860,7 +860,7 @@ function VoiceControlledPlayerOriginal({
     setIsListening(true)
     try {
       recognitionRef.current?.start()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error starting speech recognition:", error)
     }
   }
@@ -870,7 +870,7 @@ function VoiceControlledPlayerOriginal({
     setIsListening(false)
     try {
       recognitionRef.current?.stop()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error stopping speech recognition:", error)
     }
   }
@@ -1303,7 +1303,7 @@ function VoiceControlledPlayerOriginal({
       recognitionRef.current.interimResults = true
       recognitionRef.current.lang = "en-US"
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event) => {
         const result = event.results[event.results.length - 1]
         const transcript = result[0].transcript.toLowerCase().trim()
 
@@ -1324,7 +1324,7 @@ function VoiceControlledPlayerOriginal({
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event) => {
         console.error("Speech recognition error", event.error)
         setIsListening(false)
       }
@@ -1467,7 +1467,7 @@ function VoiceControlledPlayerOriginal({
       try {
         recognitionRef.current.start()
         setIsListening(true)
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error starting speech recognition", error)
       }
     }
@@ -1946,13 +1946,13 @@ function VoiceControlledPlayerOriginal({
         if (isListening) {
           try {
             recognitionRef.current.start()
-          } catch (error) {
+          } catch (error: unknown) {
             console.error("Error restarting speech recognition:", error)
           }
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event) => {
         console.error("Speech recognition error:", event.error)
         if (event.error === "not-allowed") {
           setShowError(true)
@@ -1961,9 +1961,9 @@ function VoiceControlledPlayerOriginal({
         }
       }
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event) => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result) => result[0].transcript)
           .join("")
           .toLowerCase()
           .trim()
@@ -1973,7 +1973,7 @@ function VoiceControlledPlayerOriginal({
           processEnhancedVoiceCommand(transcript, event.results[0][0].confidence)
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error initializing speech recognition:", error)
       setShowError(true)
       setErrorMessage("Failed to initialize voice controls. Your browser might not support this feature.")
@@ -2002,7 +2002,7 @@ function VoiceControlledPlayerOriginal({
       if (isPlaying && canvasRef.current) {
         drawVisualizer();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error initializing audio visualizer:", error);
       // Fall back to normal audio playback without visualization
       if (sourceNodeRef.current) {
@@ -2173,7 +2173,7 @@ function VoiceControlledPlayerOriginal({
     setIsListening(true)
     try {
       recognitionRef.current?.start()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error starting speech recognition:", error)
     }
   }
@@ -2183,7 +2183,7 @@ function VoiceControlledPlayerOriginal({
     setIsListening(false)
     try {
       recognitionRef.current?.stop()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error stopping speech recognition:", error)
     }
   }

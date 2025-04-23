@@ -195,6 +195,6 @@ export function isTourDate(value: any): value is TourDate {
  * @param itemGuard Type guard function for individual items
  * @returns True if value is an array of the specified type
  */
-export function isArrayOf<T>(value: any, itemGuard: (item: any) => item is T): value is T[] {
+export function isArrayOf<T>(value, itemGuard: (item) => item is T): value is T[] {
   return Array.isArray(value) && value.every(itemGuard);
 }

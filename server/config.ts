@@ -228,7 +228,7 @@ export function loadConfig(): ServerConfig {
     }
     
     return config;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error loading configuration:', error);
     return defaultConfig;
   }

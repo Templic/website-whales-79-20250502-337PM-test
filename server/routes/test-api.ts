@@ -53,7 +53,7 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
       privateKey: keyPair.privateKey,
       isTestEndpoint: true
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum key generation endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -107,7 +107,7 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
       algorithm,
       isTestEndpoint: true
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum encryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
@@ -160,7 +160,7 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
       algorithm,
       isTestEndpoint: true
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error in test quantum decryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',

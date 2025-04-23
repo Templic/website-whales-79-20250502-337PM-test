@@ -28,7 +28,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
       ]);
       setTracks(tracksRes.data);
       setAlbums(albumsRes.data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching music:', error);
     }
   };
@@ -41,7 +41,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
         title: "Success",
         description: "Track deleted successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to delete track",
@@ -58,7 +58,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
         title: "Success",
         description: "Album deleted successfully"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
         description: "Failed to delete album",

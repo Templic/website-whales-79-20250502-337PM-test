@@ -79,7 +79,7 @@ export function SafeImage({
         console.error('Blocked potentially dangerous URL scheme:', url.protocol);
         setValidSrc('');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // If URL parsing fails, it might be a relative URL which is generally safe
       setValidSrc(src);
     }
@@ -217,7 +217,7 @@ export function UserContent({
  * Hook to safely handle user input in forms
  * with built-in validation and sanitization.
  */
-export function useSafeInput(initialValue = '') {
+export function useSafeInput(initialValue = '': any) {
   const [value, setValue] = useState(initialValue);
   const [isSafe, setIsSafe] = useState(true);
   
@@ -284,7 +284,7 @@ export function SecureIframe({
         console.error('Blocked potentially dangerous iframe URL scheme:', url.protocol);
         setValidSrc('');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       // If URL parsing fails, it might be a relative URL which is generally safe
       setValidSrc(src);
     }

@@ -9,7 +9,7 @@ import { Request, Response, NextFunction } from 'express';
 /**
  * Create a sanitized user object without sensitive fields
  */
-export function createSafeUser(user) {
+export function createSafeUser(user: any) {
   if (!user) {
     return null;
   }

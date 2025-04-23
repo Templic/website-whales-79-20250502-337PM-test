@@ -33,7 +33,7 @@ export async function fetchCsrfToken(): Promise<string> {
           console.log('Successfully fetched CSRF token in development mode');
           return csrfToken || 'dev-csrf-token';
         }
-      } catch (devError) {
+      } catch (devError: unknown) {
         console.warn('Could not fetch CSRF token in development mode:', devError);
       }
       // Return a fallback token in development
@@ -56,7 +56,7 @@ export async function fetchCsrfToken(): Promise<string> {
     const data = await response.json();
     csrfToken = data.csrfToken;
     return csrfToken || '';
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching CSRF token:', error);
     // Return empty string instead of throwing to allow the request to proceed without CSRF
     // This will likely fail in production but allows dev testing to continue
@@ -110,7 +110,7 @@ export async function apiRequest(
       // Get CSRF token
       const token = await fetchCsrfToken();
       headers['X-CSRF-Token'] = token;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to get CSRF token:', error);
       // Continue with the request even if CSRF token fetching fails
     }
@@ -148,11 +148,11 @@ export async function apiRequest(
     // Parse JSON response
     try {
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       // Return raw response if JSON parsing fails
       return response;
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("API request failed:", error); // Log the error for debugging
     throw new Error(error instanceof Error ? error.message : "Failed to fetch data from API."); 
   }

@@ -134,7 +134,7 @@ async function generateServerKeyPair(): Promise<{
     });
     
     return serverKeyPair;
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error generating quantum-resistant key pair:', error);
     // Create a fallback key pair for development purposes
     const fallbackKeyPair = {
@@ -259,7 +259,7 @@ export function createQuantumResistantMiddleware(
               timestamp: new Date().toISOString()
             }
           });
-        } catch (verifyError) {
+        } catch (verifyError: Error) {
           // Log verification error
           await securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -327,7 +327,7 @@ export function createQuantumResistantMiddleware(
       
       // Continue to the next middleware
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Log the error
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -393,7 +393,7 @@ async function processResponseBody(
               value: encryptionResult
             };
           }
-        } catch (error) {
+        } catch (error: Error) {
           console.error(`Error encrypting field '${key}':`, error);
           // Keep the original value if encryption fails
         }
@@ -429,7 +429,7 @@ export function createPublicKeyEndpointMiddleware(): RequestHandler {
         algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
         signatureAlgorithm: DEFAULT_CONFIG.signatureAlgorithm
       });
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error in public key endpoint:', error);
       res.status(500).json({
         error: 'Internal Server Error',

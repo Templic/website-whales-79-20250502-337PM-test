@@ -310,7 +310,7 @@ const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({
         const report = getMemoryReport();
         setMemoryReport(report);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching performance data:', error);
     }
   }, [activeTab]);

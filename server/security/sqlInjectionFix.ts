@@ -33,7 +33,7 @@ export class SQLInjectionFix {
     try {
       // Execute the parameterized query using the provided connection
       return await this.db.query(sql, params) as T;
-    } catch (error) {
+    } catch (error: Error) {
       console.error('SQL Error:', error.message);
       throw error;
     }

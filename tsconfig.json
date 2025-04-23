@@ -16,7 +16,15 @@
       "@shared/*": [
         "./shared/*"
       ]
-    }
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./server/types"
+    ],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ]
   },
   "include": [
     "*.ts",

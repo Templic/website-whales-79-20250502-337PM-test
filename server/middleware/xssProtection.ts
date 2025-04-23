@@ -171,7 +171,7 @@ export function xssProtectionMiddleware(options: {
       }
       
       next();
-    } catch (error) {
+    } catch (error: Error) {
       // Log error
       console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
       
@@ -221,7 +221,7 @@ function sanitizeObject(obj, profile: SanitizationProfile): void {
 }
 
 // Function to log XSS attempt
-function logXssAttempt(data): void {
+function logXssAttempt(data: any): void {
   // Log to console
   console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
   
@@ -245,7 +245,7 @@ function logXssAttempt(data): void {
         timestamp: new Date().toISOString()
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('[XSS-PROTECTION] Error logging to blockchain:', error);
   }
 }

@@ -377,7 +377,7 @@ export function AccessibilityControls() {
         volume: speechVolume,
         voice: preferredVoice
       }));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save TTS settings to localStorage', error);
     }
   }, [speechRate, speechPitch, speechVolume, preferredVoice]);
@@ -395,7 +395,7 @@ export function AccessibilityControls() {
         setSpeechVolume(settings.volume || 1.0);
         if (settings.voice) setPreferredVoice(settings.voice);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to load TTS settings from localStorage', error);
     }
   }, []);

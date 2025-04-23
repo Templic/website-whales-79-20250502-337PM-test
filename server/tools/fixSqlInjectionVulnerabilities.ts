@@ -13,7 +13,7 @@ import { fixDirectory, generateFixReport } from './sqlInjectionFixer';
 /**
  * Run the SQL Injection detection and remediation process
  */
-async function runSQLInjectionRemediation(fixAutomatically = false) {
+async function runSQLInjectionRemediation(fixAutomatically = false: any) {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│          SQL INJECTION REMEDIATION PROCESS           │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -48,7 +48,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
     
     fs.writeFileSync(detectionReportPath, detectionReport);
     console.log(`Detection report saved to ${detectionReportPath}`);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error saving detection report:', error);
   }
   
@@ -88,7 +88,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
   try {
     fs.writeFileSync(dryRunReportPath, dryRunReport);
     console.log(`Dry run report saved to ${dryRunReportPath}`);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error saving dry run report:', error);
   }
   
@@ -116,7 +116,7 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
     try {
       fs.writeFileSync(fixReportPath, fixReport);
       console.log(`Fix report saved to ${fixReportPath}`);
-    } catch (error) {
+    } catch (error: Error) {
       console.error('Error saving fix report:', error);
     }
     

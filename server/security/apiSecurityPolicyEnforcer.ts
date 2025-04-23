@@ -82,7 +82,7 @@ class SecurityPolicyEnforcer {
       
       // All checks passed
       return { block: false };
-    } catch (error) {
+    } catch (error: Error) {
       // Log the error
       console.error('Error in security policy enforcer:', error);
       

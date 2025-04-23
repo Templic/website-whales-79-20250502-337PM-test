@@ -8,9 +8,7 @@ interface GeometryContainerProps {
 }
 
 export function HexagonContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -54,9 +52,7 @@ export function HexagonContainer({
 }
 
 export function TriangleContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -105,9 +101,7 @@ export function TriangleContainer({
 }
 
 export function InvertedTriangleContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -156,9 +150,7 @@ export function InvertedTriangleContainer({
 }
 
 export function OctagonContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -203,9 +195,7 @@ export function OctagonContainer({
 }
 
 export function StarburstContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -259,9 +249,7 @@ interface CircleContainerProps extends GeometryContainerProps {
 }
 
 export function CircleContainer({
-  children,
-  className,
-  glowColor = "rgba(0, 230, 230, 0.5)",
+  children: any, className: any, glowColor = "rgba(0: any, 230: any, 230: any, 0.5: any)",
   rotateSpeed = 60,
 }: CircleContainerProps) {
   return (

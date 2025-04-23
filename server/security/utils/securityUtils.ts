@@ -106,7 +106,7 @@ export function getSecurityEvents(
  * @param length Length of the token
  * @returns Random token string
  */
-export function generateSecureToken(length = 32): string {
+export function generateSecureToken(length: number = 32): string {
   return crypto.randomBytes(length).toString('hex');
 }
 
@@ -226,16 +226,19 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
       key.toLowerCase().includes(field.toLowerCase())
     );
     
-    if (isSensitive && maskedData[key]) {
+    // Using type assertion to resolve TypeScript's indexing limitations on generic types
+    const value = (maskedData as Record<string, any>)[key];
+    
+    if (isSensitive && value) {
       // Mask the sensitive value
-      if (typeof maskedData[key] === 'string') {
-        maskedData[key] = '********';
-      } else if (typeof maskedData[key] === 'object' && maskedData[key] !== null) {
-        maskedData[key] = maskSensitiveData(maskedData[key]);
+      if (typeof value === 'string') {
+        (maskedData as Record<string, any>)[key] = '********';
+      } else if (typeof value === 'object' && value !== null) {
+        (maskedData as Record<string, any>)[key] = maskSensitiveData(value);
       }
-    } else if (typeof maskedData[key] === 'object' && maskedData[key] !== null) {
+    } else if (typeof value === 'object' && value !== null) {
       // Recursively mask sensitive data in nested objects
-      maskedData[key] = maskSensitiveData(maskedData[key]);
+      (maskedData as Record<string, any>)[key] = maskSensitiveData(value);
     }
   }
   

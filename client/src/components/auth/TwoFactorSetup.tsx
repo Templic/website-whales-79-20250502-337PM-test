@@ -79,7 +79,7 @@ export function TwoFactorSetup({ onSetupComplete, onCancel }: TwoFactorSetupProp
       const data = await setup2FAMutation.mutateAsync();
       setSetupData(data);
       setStep(1);
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };
@@ -150,7 +150,7 @@ export function TwoFactorSetup({ onSetupComplete, onCancel }: TwoFactorSetupProp
       });
       
       setStep(3); // Move to completion step
-    } catch (error) {
+    } catch (error: unknown) {
       // Error handling is done in the mutation
     }
   };

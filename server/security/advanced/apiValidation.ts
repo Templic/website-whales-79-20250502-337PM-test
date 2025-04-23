@@ -22,7 +22,7 @@ import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
 /**
  * Log a security event to the security blockchain
  */
-function logSecurityEvent(event): void {
+function logSecurityEvent(event: any): void {
   securityBlockchain.addSecurityEvent({
     severity: SecurityEventSeverity.MEDIUM,
     category: SecurityEventCategory.API,
@@ -84,7 +84,7 @@ export function validate<T extends AnyZodObject>(
       req[target as keyof Request] = validationResult as any;
       
       next();
-    } catch (error) {
+    } catch (error: Error) {
       if (error instanceof ZodError) {
         // Log validation failure as security event
         logSecurityEvent({

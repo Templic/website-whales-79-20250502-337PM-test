@@ -21,7 +21,7 @@ export default function UserPortal() {
         title: "Logout successful",
         description: "You have been logged out successfully.",
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast({
         title: "Logout failed",
         description: "There was an error logging out.",

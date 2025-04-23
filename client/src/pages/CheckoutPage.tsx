@@ -284,7 +284,7 @@ export default function CheckoutPage() {
       setTimeout(() => {
         setLocation(`/shop/order/${orderId}`);
       }, 3000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Payment error:', error);
       toast({
         title: "Payment failed",

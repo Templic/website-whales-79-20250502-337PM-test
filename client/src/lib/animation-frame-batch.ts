@@ -114,7 +114,7 @@ class AnimationFrameBatch {
         if (task) {
           try {
             task.callback();
-          } catch (err) {
+          } catch (err: unknown) {
             console.error('Error in animation frame measure task:', err);
           }
         }
@@ -127,12 +127,12 @@ class AnimationFrameBatch {
         if (task) {
           try {
             task.callback();
-          } catch (err) {
+          } catch (err: unknown) {
             console.error('Error in animation frame mutate task:', err);
           }
         }
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error in animation frame batch execution:', err);
     }
   }
@@ -170,7 +170,7 @@ class AnimationFrameBatch {
    */
   createReadWriteSequence(
     measure: () => any, 
-    mutate: (measureResult: any) => void
+    mutate: (measureResult) => void
   ): () => void {
     return () => {
       this.add(() => {
@@ -223,7 +223,7 @@ export function useAnimationFrameThrottled(
  */
 export function useReadWriteSequence(
   measure: () => any,
-  mutate: (measureResult: any) => void
+  mutate: (measureResult) => void
 ) {
   const measureRef = useRef(measure);
   const mutateRef = useRef(mutate);

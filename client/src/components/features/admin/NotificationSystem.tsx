@@ -40,7 +40,7 @@ const NotificationSystem: React.FC = () => {
         const res = await fetch('/api/admin/notifications');
         if (!res.ok) throw new Error('Failed to fetch notifications');
         return res.json();
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching notifications:', err);
         return [];
       }

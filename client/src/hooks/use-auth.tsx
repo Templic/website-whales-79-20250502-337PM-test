@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           }
-        } catch (refreshError) {
+        } catch (refreshError: unknown) {
           // If refresh fails, logout
           await logout();
         }
@@ -143,7 +143,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       const token = response.data.csrfToken;
       csrfToken = token;
       return token;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch CSRF token:', error);
       return '';
     }
@@ -178,7 +178,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
         try {
           await api.get('/auth/verify');
           setUser(userData);
-        } catch (error) {
+        } catch (error: unknown) {
           // Token invalid, try to refresh
           const refreshed = await refreshToken();
           if (!refreshed) {
@@ -187,7 +187,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
             localStorage.removeItem(USER_DATA_KEY);
           }
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Auth check error:', error);
         setUser(null);
       } finally {
@@ -216,7 +216,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refreshToken);
       
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Token refresh error:', error);
       return false;
     }
@@ -248,7 +248,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       });
       
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Login failed",
         description: error.response?.data?.message || "Authentication failed. Please check your credentials.",
@@ -269,7 +269,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       if (refreshToken) {
         await api.post('/auth/logout', { refreshToken });
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Logout error:', error);
     } finally {
       // Clear all auth data regardless of request success

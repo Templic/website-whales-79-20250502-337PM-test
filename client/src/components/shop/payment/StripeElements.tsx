@@ -138,7 +138,7 @@ function CheckoutForm({ onSubmit }: { onSubmit: (paymentMethodId: string) => Pro
 
       // Call the onSubmit callback
       await onSubmit(paymentMethodId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Handle unexpected errors
       setErrorMessage(error.message || 'An unexpected error occurred');
       setPaymentStatus('error');

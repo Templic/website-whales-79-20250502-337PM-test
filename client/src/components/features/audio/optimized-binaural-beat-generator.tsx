@@ -344,7 +344,7 @@ export function BinauralBeatGenerator({
         gainNodeRef.current.disconnect()
         gainNodeRef.current = null
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error stopping oscillators:", error)
     }
   }, [])
@@ -400,7 +400,7 @@ export function BinauralBeatGenerator({
         // Start pulse detection algorithm
         startPulseDetection()
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error accessing camera:', error)
       setShowPulseDetection(false)
     }
@@ -506,7 +506,7 @@ export function BinauralBeatGenerator({
   /**
    * Apply preset
    */
-  const applyPreset = useCallback((preset: any) => {
+  const applyPreset = useCallback((preset) => {
     setLeftFreq(preset.leftFreq)
     setRightFreq(preset.rightFreq)
     setWaveType(preset.waveType)

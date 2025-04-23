@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
     const contentItems = await storage.getAllContentItems();
     // @ts-ignore - Response type issue
   return res.json(contentItems);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching content items:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -50,7 +50,7 @@ router.get('/:id', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(contentItem);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching content item by ID ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -72,7 +72,7 @@ router.get('/key/:key', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(contentItem);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching content item by key ${req.params.key}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -95,7 +95,7 @@ router.get('/page/:page', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(pageContentItems);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching content items for page ${req.params.page}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -139,7 +139,7 @@ router.post('/', async (req, res) => {
     }
     
     return res.status(201).json(contentItem);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error creating content item:', error);
     
     // Check for duplicate key error
@@ -190,7 +190,7 @@ router.put('/:id', async (req, res) => {
     const updatedItem = await storage.updateContentItem(updateData);
     // @ts-ignore - Response type issue
   return res.json(updatedItem);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error updating content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -220,7 +220,7 @@ router.delete('/:id', async (req, res) => {
     // Delete the content item
     await storage.deleteContentItem(contentId);
     return res.status(200).json({ message: 'Content item deleted successfully' });
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error deleting content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -251,7 +251,7 @@ router.get('/:id/history', async (req, res) => {
     const history = await storage.getContentHistory(contentId);
     // @ts-ignore - Response type issue
   return res.json(history);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching content history for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -288,7 +288,7 @@ router.post('/:id/version', async (req, res) => {
     );
     
     return res.status(201).json(version);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error creating content version for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -313,7 +313,7 @@ router.post('/history/:historyId/restore', async (req, res) => {
     const restoredItem = await storage.restoreContentVersion(historyId);
     // @ts-ignore - Response type issue
   return res.json(restoredItem);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error restoring content from history ID ${req.params.historyId}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -342,7 +342,7 @@ router.post('/:id/usage', async (req, res) => {
     // Record usage
     const usage = await storage.recordContentUsage(contentId, location, path);
     return res.status(201).json(usage);
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error recording content usage for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -366,7 +366,7 @@ router.post('/:id/view', async (req, res) => {
     // Increment view
     await storage.incrementContentViews(contentId);
     return res.status(200).json({ message: 'View recorded successfully' });
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error incrementing view for content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -389,7 +389,7 @@ router.get('/report/usage', async (req, res) => {
     const report = await storage.getContentUsageReport(contentId);
     // @ts-ignore - Response type issue
   return res.json(report);
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error generating content usage report:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }

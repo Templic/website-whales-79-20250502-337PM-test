@@ -79,7 +79,7 @@ export function CosmicCollectible({
     try {
       await onClaim(id)
       setClaimState("success")
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error claiming collectible:", error)
       setClaimState("error")
     }
@@ -332,7 +332,7 @@ function CosmicCollectibleOriginal({
     try {
       await onClaim(id)
       setClaimState("success")
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error claiming collectible:", error)
       setClaimState("error")
     }

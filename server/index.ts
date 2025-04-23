@@ -318,7 +318,7 @@ async function initializeServer() {
       await initializeAllServices();
     }
 
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Failed to initialize server:', error);
     process.exit(1);
   }

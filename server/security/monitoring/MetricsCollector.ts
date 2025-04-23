@@ -191,7 +191,7 @@ async function collectSecurityMetrics(): Promise<void> {
       
       // Adjust anomaly detection score based on blockchain activity
       latestMetrics.score.anomalyDetection = 75 + Math.min(25, blockCount / 4);
-    } catch (error) {
+    } catch (error: Error) {
       // Ignore blockchain errors
     }
     
@@ -205,7 +205,7 @@ async function collectSecurityMetrics(): Promise<void> {
         activeThreats: latestMetrics.threats.active
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,

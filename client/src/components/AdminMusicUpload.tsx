@@ -28,7 +28,7 @@ export default function AdminMusicUpload() {
         title: "Success",
         description: "File uploaded successfully"
       });
-    } catch (err) {
+    } catch (err: unknown) {
       toast({
         title: "Error",
         description: "Failed to upload file",

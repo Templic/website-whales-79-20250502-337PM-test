@@ -1,5 +1,5 @@
 /**
- * Security type definitions
+ * Type definitions for security-related interfaces
  */
 
 interface SecurityEvent {

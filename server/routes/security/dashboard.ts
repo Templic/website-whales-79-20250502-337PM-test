@@ -55,7 +55,7 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
         pages: Math.ceil(total / limit)
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching security events:', error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -82,7 +82,7 @@ securityDashboardRoutes.get('/events/:id', async (req: Request, res: Response) =
       description: 'This is a mock security event',
       timestamp: new Date()
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching security event ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -114,7 +114,7 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
       success: true,
       message: `Security event ${id} acknowledged by ${acknowledgedBy}`
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error acknowledging security event ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -203,7 +203,7 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
       dailyEventCounts,
       blockchainStats
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching security metrics:', error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -240,7 +240,7 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
       message: `Security scan of type ${scanType} started`,
       status: 'started'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error starting security scan:', error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -259,7 +259,7 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
     const scans = securityScanner.getAllScans();
     // @ts-ignore - Response type issue
   return res.json({ scans });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Error fetching security scans:', error);
     return res.status(500).json({
       error: 'Internal server error',
@@ -287,7 +287,7 @@ securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) =>
     
     // @ts-ignore - Response type issue
   return res.json({ scan });
-  } catch (error) {
+  } catch (error: Error) {
     console.error(`Error fetching security scan ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',

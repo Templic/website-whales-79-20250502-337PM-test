@@ -80,7 +80,7 @@ export async function registerServiceWorker(
     setupMessageListeners();
     
     return registration;
-  } catch (error) {
+  } catch (error: unknown) {
     swStatus = 'error';
     console.error('Service Worker registration failed:', error);
     
@@ -185,7 +185,7 @@ function notifyUpdateCallbacks(registration: ServiceWorkerRegistration): void {
   updateCallbacks.forEach(callback => {
     try {
       callback(registration);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in update callback:', error);
     }
   });
@@ -199,7 +199,7 @@ function notifyErrorCallbacks(error: Error): void {
   errorCallbacks.forEach(callback => {
     try {
       callback(error);
-    } catch (callbackError) {
+    } catch (callbackError: unknown) {
       console.error('Error in error callback:', callbackError);
     }
   });
@@ -213,7 +213,7 @@ function notifyMessageCallbacks(event: MessageEvent): void {
   messageCallbacks.forEach(callback => {
     try {
       callback(event);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error in message callback:', error);
     }
   });
@@ -248,7 +248,7 @@ export async function checkForUpdates(): Promise<boolean> {
     // Check for updates
     const hasUpdate = await swRegistration.update();
     return !!hasUpdate;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to check for Service Worker updates:', error);
     
     // Notify error callbacks
@@ -280,7 +280,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
     }
     
     return success;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to unregister Service Worker:', error);
     
     // Notify error callbacks

@@ -215,7 +215,7 @@ router.post('/login', async (req: Request, res: Response) => {
         role: user.role
       }
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('JWT login error:', error);
     
     return res.status(500).json({
@@ -317,7 +317,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       success: true,
       accessToken: newAccessToken
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('Token refresh error:', error);
     
     return res.status(500).json({
@@ -362,7 +362,7 @@ router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
       success: true,
       message: 'Logged out successfully'
     });
-  } catch (error) {
+  } catch (error: Error) {
     console.error('JWT logout error:', error);
     
     return res.status(500).json({

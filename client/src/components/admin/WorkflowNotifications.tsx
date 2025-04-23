@@ -116,7 +116,7 @@ export function WorkflowNotifications() {
         method: 'POST'
       });
       refetchNotifications();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to mark notifications as read:', error);
     }
   };

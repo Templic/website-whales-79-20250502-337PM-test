@@ -140,7 +140,7 @@ export class SafeDatabase {
       
       // Execute the query using SQL fix
       return this.sqlFix.query<T>(sql, params);
-    } catch (error) {
+    } catch (error: Error) {
       // Log the error
       console.error('[SAFE-DB] Query error:', error.message);
       console.error('[SAFE-DB] Query:', sql);
@@ -408,7 +408,7 @@ export class SafeDatabase {
       await this.query('COMMIT');
       
       return result;
-    } catch (error) {
+    } catch (error: Error) {
       // Rollback transaction
       await this.query('ROLLBACK');
       throw error;

@@ -48,12 +48,12 @@ export default function MusicReleasePage() {
       
       const response = await axios.get('/api/tracks', { params });
       setTracks(response.data);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching tracks:', error);
     }
   };
 
-  const handleTrackSelect = (track: any) => {
+  const handleTrackSelect = (track) => {
     // Navigate to the specific track detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

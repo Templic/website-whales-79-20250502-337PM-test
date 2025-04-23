@@ -23,8 +23,9 @@ export function startContentScheduler(intervalMinutes = 1) {
     .then((result: {published: number, failed: number, archived: number, archivedFailed: number, upcomingExpiring: number}) => {
       console.log(`[Background] Initial content scheduling run complete: ${result.published} published, ${result.archived} archived`);
     })
-    .catch((err: Error) => {
-      console.error('[Background] Error during initial content scheduling run:', err);
+    .catch((err: unknown) => {
+      const error = err as Error;
+      console.error('[Background] Error during initial content scheduling run:', error);
     });
   
   // Then set up interval
@@ -35,8 +36,9 @@ export function startContentScheduler(intervalMinutes = 1) {
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
-    } catch (err) {
-      console.error('[Background] Error in content scheduler:', err);
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('[Background] Error in content scheduler:', error);
     }
   }, intervalMs);
   
