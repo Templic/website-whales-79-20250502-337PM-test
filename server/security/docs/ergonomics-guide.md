@@ -1,284 +1,457 @@
-# Security Methods Ergonomics Guide
-
-This guide explains how to leverage the enhanced security methods for both administrators and developers, making it easier to integrate and monitor advanced security features in your application.
-
-## Table of Contents
-
-1. [Introduction](#introduction)
-2. [For Developers](#for-developers)
-   - [Security Toolkit Overview](#security-toolkit-overview)
-   - [Security Levels](#security-levels)
-   - [Easy Integration Methods](#easy-integration-methods)
-   - [Decorator-Based Security](#decorator-based-security)
-   - [Validation Helpers](#validation-helpers)
-   - [Security Headers](#security-headers)
-3. [For Administrators](#for-administrators)
-   - [Security Dashboard](#security-dashboard)
-   - [Monitoring Security Events](#monitoring-security-events)
-   - [Running Security Scans](#running-security-scans)
-   - [Configuring Security Settings](#configuring-security-settings)
-4. [Best Practices](#best-practices)
-5. [Troubleshooting](#troubleshooting)
+# Security Ergonomics Guide
 
 ## Introduction
 
-The security architecture of this application has been designed with both security effectiveness and developer/administrator ergonomics in mind. We provide simple, intuitive interfaces to leverage advanced security features without requiring deep security expertise.
+This guide is designed to help developers easily integrate advanced security features into their applications with minimal effort and cognitive load. The principles and patterns described here ensure that security becomes a natural part of development rather than an afterthought or burden.
 
-## For Developers
+## Security Toolkit: Development-Focused API
 
-### Security Toolkit Overview
-
-The Security Toolkit provides an ergonomic API for integrating security features into your application code. It encapsulates the complexity of the underlying security mechanisms while providing simple, intuitive methods.
-
-```typescript
-import { 
-  SecurityLevel,
-  securityToolkit,
-  createSecurityToolkit 
-} from '@server/security/toolkit';
-
-// Use default toolkit with standard security level
-app.use(securityToolkit.createMiddleware());
-
-// Or create a toolkit with custom security level
-const highSecurityToolkit = createSecurityToolkit(SecurityLevel.HIGH);
-app.use(highSecurityToolkit.createMiddleware());
-```
-
-### Security Levels
-
-The Security Toolkit provides predefined security levels to make it easy to apply appropriate security controls:
-
-- **BASIC**: Essential security features with minimal performance impact
-- **STANDARD**: Balanced security and performance for most applications (default)
-- **HIGH**: Enhanced security for sensitive operations
-- **MAXIMUM**: Maximum security for critical operations, with some performance impact
-
-Each level automatically configures appropriate settings for anomaly detection, blockchain logging, runtime protection, and other security features.
-
-```typescript
-// Create a route with high security
-app.get('/api/sensitive-data',
-  createSecurityToolkit(SecurityLevel.HIGH).createMiddleware(),
-  (req, res) => {
-    // Route handler
-  }
-);
-
-// Create a route with maximum security
-app.get('/api/very-sensitive-data',
-  createSecurityToolkit(SecurityLevel.MAXIMUM).createMiddleware(),
-  (req, res) => {
-    // Route handler
-  }
-);
-```
-
-### Easy Integration Methods
-
-The toolkit provides several easy ways to integrate security features:
-
-**1. Express Middleware:**
+The Security Toolkit provides an ergonomic, developer-friendly API for integrating advanced security features:
 
 ```typescript
 import { securityToolkit } from '@server/security/toolkit';
 
-// Apply to all routes
+// Apply middleware with sensible defaults
 app.use(securityToolkit.createMiddleware());
 
-// Apply to specific routes
-app.get('/api/data', securityToolkit.createMiddleware(), (req, res) => {
-  // Route handler
+// Secure a specific route
+app.get('/api/data', securityToolkit.secureRoute({
+  authentication: 'required',
+  authorization: ['admin', 'manager'],
+  rateLimit: { max: 100, window: '15m' },
+  inputValidation: 'strict'
+}), (req, res) => {
+  // Your route handler
 });
 
-// Protect routes requiring authentication
-app.get('/api/protected', securityToolkit.protectRoute(), (req, res) => {
-  // Route handler - only runs if authenticated
+// Validate input
+const validatedData = securityToolkit.validateInput(data, schema);
+
+// Secure output
+const securedOutput = securityToolkit.secureOutput(data, {
+  sanitize: true,
+  sign: true
 });
 ```
 
-**2. Custom Profile:**
+## Decorator-Based Security Controls (for TypeScript Applications)
+
+For TypeScript applications, we provide decorators for adding security controls to classes and methods:
 
 ```typescript
-import { createSecurityToolkit } from '@server/security/toolkit';
+import { 
+  Secure, 
+  ValidateInput, 
+  Authorize, 
+  RateLimit, 
+  AuditLog 
+} from '@server/security/toolkit/decorators';
 
-// Create toolkit with custom profile
-const customToolkit = createSecurityToolkit({
-  level: 'high',
-  enableAnomalyDetection: true,
-  enableBlockchainLogging: true,
-  enableRuntimeProtection: true,
-  blockHighRiskRequests: true,
-  anomalyThreshold: 0.7,
-  rateLimit: 'strict'
-});
-
-// Apply custom security middleware
-app.use(customToolkit.createMiddleware());
-```
-
-**3. Log Security Events:**
-
-```typescript
-import { securityToolkit, SecurityEventCategory, SecurityEventSeverity } from '@server/security/toolkit';
-
-// Log a security event
-securityToolkit.logSecurityEvent(
-  SecurityEventCategory.AUTHENTICATION,
-  SecurityEventSeverity.INFO,
-  'User logged in successfully',
-  {
-    userId: user.id,
-    ipAddress: req.ip
-  }
-);
-```
-
-### Decorator-Based Security
-
-For TypeScript applications using classes, the toolkit provides decorators for ergonomic security integration:
-
-```typescript
-import { secure, secureController, SecurityLevel } from '@server/security/toolkit';
-
-@secureController(SecurityLevel.STANDARD)
 class UserController {
-  // Standard security for this method
-  getUsers(req: Request, res: Response) {
-    // Method implementation
-  }
-  
-  // Custom security for this method
-  @secure({
-    level: SecurityLevel.HIGH,
-    requireAuth: true,
-    logActivity: true,
-    blockHighRisk: true
+  // Secure a method with multiple controls
+  @Secure({
+    authentication: 'required',
+    authorization: ['admin'],
+    rateLimit: { max: 10, window: '1m' },
+    auditLog: 'high'
   })
-  updateUser(req: Request, res: Response) {
+  updateUser(id: string, data: UserData) {
     // Method implementation
   }
   
-  // Maximum security for this method
-  @secure({ level: SecurityLevel.MAXIMUM })
-  deleteUser(req: Request, res: Response) {
+  // Apply individual security controls
+  @ValidateInput(userSchema)
+  @Authorize(['admin', 'user'])
+  @RateLimit({ max: 5, window: '1m' })
+  @AuditLog({ level: 'high', includeRequest: true })
+  createUser(data: UserData) {
     // Method implementation
   }
 }
 ```
 
-### Validation Helpers
+## Automatic Security Enforcement
 
-The toolkit provides validation helpers to easily validate and sanitize request data:
+Many security controls can be applied automatically based on conventions:
 
 ```typescript
-import { validateRequest, validators } from '@server/security/toolkit';
+// Enable automatic security enforcement
+securityToolkit.enableAutoSecurity({
+  enforceHttps: true,
+  secureHeaders: true,
+  rateLimiting: true,
+  inputValidation: true,
+  outputSanitization: true,
+  auditLogging: true
+});
 
-app.post('/api/user',
-  validateRequest({
-    name: validators.required,
-    email: validators.email,
-    age: validators.number,
-    password: validators.minLength(8)
+// The system will automatically:
+// - Redirect HTTP to HTTPS
+// - Add secure headers to all responses
+// - Apply rate limiting based on endpoint sensitivity
+// - Validate input based on parameter names and types
+// - Sanitize output to prevent XSS
+// - Log security-relevant operations
+```
+
+## Security Level Presets
+
+Use security level presets to quickly apply appropriate security controls:
+
+```typescript
+import { SecurityLevel, setSecurityLevel } from '@server/security/toolkit';
+
+// Set security level for the entire application
+setSecurityLevel(SecurityLevel.HIGH);
+
+// Override for specific components
+setSecurityLevel(SecurityLevel.MAXIMUM, {
+  component: 'authentication'
+});
+
+// Available levels:
+// - STANDARD: Basic security for non-sensitive operations
+// - HIGH: Enhanced security for sensitive operations (default)
+// - MAXIMUM: Maximum security for critical operations
+// - CUSTOM: Custom security configuration
+```
+
+## Validation Helpers
+
+Simplify input validation with our validation helpers:
+
+```typescript
+import { validate } from '@server/security/toolkit/validation';
+
+// Simple validation
+const result = validate(data, {
+  email: 'required|email',
+  password: 'required|min:8|complex',
+  role: 'in:admin,user,guest'
+});
+
+// Schema-based validation
+const result = validate(data, userSchema);
+
+// Advanced validation
+const result = validate(data, {
+  'user.email': {
+    required: true,
+    email: true,
+    custom: (value) => value.endsWith('@company.com')
+  },
+  'transaction.amount': {
+    required: true,
+    number: true,
+    min: 0.01,
+    max: 10000
+  }
+});
+
+// Access validation results
+if (result.valid) {
+  // Use validated data
+  const validData = result.data;
+} else {
+  // Handle validation errors
+  const errors = result.errors;
+}
+```
+
+## Security Context
+
+Access security information and utilities via the security context:
+
+```typescript
+import { useSecurityContext } from '@server/security/toolkit';
+
+function processData(data) {
+  // Get security context
+  const securityContext = useSecurityContext();
+  
+  // Access security information
+  const user = securityContext.currentUser;
+  const permissionLevel = securityContext.permissionLevel;
+  const isSecureConnection = securityContext.isSecureConnection;
+  
+  // Use security utilities
+  const secureData = securityContext.secureData(data);
+  const secureHash = securityContext.hash(data);
+  const isValidSignature = securityContext.verifySignature(data, signature);
+  
+  // Log security events
+  securityContext.logSecurityEvent({
+    action: 'process_data',
+    data: { size: data.length }
+  });
+}
+```
+
+## Quantum-Resistant Cryptography Made Easy
+
+Simplify the use of quantum-resistant cryptography:
+
+```typescript
+import { quantum } from '@server/security/toolkit';
+
+// Generate a key pair
+const keyPair = await quantum.generateKeyPair();
+
+// Encrypt data
+const securedData = await quantum.encrypt(data, publicKey);
+
+// Secure a payload for API transmission
+const securedPayload = await quantum.securePayload(payload, {
+  encrypt: true,
+  sign: true
+});
+
+// Verify and process a secured payload
+const { data, verified } = await quantum.processPayload(securedPayload);
+
+// Create and verify a quantum-resistant token
+const token = await quantum.createToken(tokenData);
+const { valid, payload } = await quantum.verifyToken(token);
+```
+
+## Security Middleware Factory
+
+Create custom security middleware with the middleware factory:
+
+```typescript
+import { createSecurityMiddleware } from '@server/security/toolkit';
+
+// Create custom security middleware
+const sensitiveDataMiddleware = createSecurityMiddleware({
+  authentication: 'required',
+  authorization: ['admin', 'data-officer'],
+  inputValidation: 'strict',
+  outputEncryption: true,
+  quantum: 'enabled',
+  auditLog: {
+    level: 'high',
+    includeRequest: true
+  }
+});
+
+// Apply the middleware to routes
+app.get('/api/sensitive-data', sensitiveDataMiddleware, (req, res) => {
+  // Route handler
+});
+```
+
+## Configuration-Driven Security
+
+Define security controls in configuration:
+
+```typescript
+// security.config.ts
+export default {
+  // API security configuration
+  api: {
+    // Route-specific security
+    routes: {
+      '/api/users': {
+        get: {
+          authentication: 'optional',
+          rateLimit: { max: 100, window: '15m' }
+        },
+        post: {
+          authentication: 'required',
+          authorization: ['admin'],
+          inputValidation: 'strict',
+          rateLimit: { max: 20, window: '15m' },
+          auditLog: 'high'
+        }
+      },
+      '/api/public-data': {
+        get: {
+          authentication: 'none',
+          rateLimit: { max: 200, window: '15m' }
+        }
+      }
+    }
+  },
+  
+  // Global security settings
+  global: {
+    secureHeaders: true,
+    rateLimiting: true,
+    auditLogging: true,
+    quantumResistance: true
+  }
+};
+```
+
+## Security Builder Pattern
+
+Use the builder pattern for complex security configurations:
+
+```typescript
+import { SecurityBuilder } from '@server/security/toolkit';
+
+// Create a security configuration using the builder pattern
+const security = new SecurityBuilder()
+  .withAuthentication('required')
+  .withAuthorization(['admin', 'manager'])
+  .withRateLimit({ max: 50, window: '15m' })
+  .withInputValidation('strict')
+  .withOutputSanitization(true)
+  .withQuantumResistance(true)
+  .withAuditLogging({ level: 'high', includeRequest: true })
+  .build();
+
+// Apply the security configuration
+app.use(security.createMiddleware());
+```
+
+## Security Chainable API
+
+Use chainable methods for fluent configuration:
+
+```typescript
+import { createSecurity } from '@server/security/toolkit';
+
+// Create and apply security in a fluent chainable way
+createSecurity()
+  .authenticate('required')
+  .authorize(['admin'])
+  .rateLimit({ max: 100, window: '15m' })
+  .validateInput('strict')
+  .sanitizeOutput()
+  .enableQuantum()
+  .auditLog('high')
+  .apply(app);
+```
+
+## Practical Examples
+
+### Example 1: Securing an Express Route
+
+```typescript
+import express from 'express';
+import { securityToolkit } from '@server/security/toolkit';
+
+const app = express();
+
+// Apply global security middleware
+app.use(securityToolkit.createMiddleware());
+
+// Secure a specific route
+app.post('/api/orders',
+  securityToolkit.secureRoute({
+    authentication: 'required',
+    authorization: ['customer', 'admin'],
+    rateLimit: { max: 20, window: '15m' },
+    inputValidation: orderSchema,
+    auditLog: 'high'
   }),
   (req, res) => {
-    // Request data is validated and sanitized
+    // The request is already validated and secured
+    const order = req.validatedBody;
+    
+    // Process the order
+    // ...
+    
+    // Send a secure response
+    const secureResponse = securityToolkit.secureOutput({
+      orderId: 'abc123',
+      status: 'created'
+    });
+    
+    res.json(secureResponse);
   }
 );
 ```
 
-### Security Headers
-
-Add security headers to all responses with a single middleware:
+### Example 2: Securing Data Transmission
 
 ```typescript
-import { securityHeaders } from '@server/security/toolkit';
+import { securityToolkit } from '@server/security/toolkit';
 
-// Apply security headers to all responses
-app.use(securityHeaders());
+// Function to securely transmit data
+async function securelyTransmitData(data, recipient) {
+  // Generate secure keys if needed
+  const { publicKey, privateKey } = await securityToolkit.quantum.generateKeyPair();
+  
+  // Secure the data
+  const securedData = await securityToolkit.secureData(data, {
+    recipientPublicKey: recipient.publicKey,
+    sign: true,
+    encrypt: true,
+    quantum: true
+  });
+  
+  // Transmit the secured data
+  await transmitData(securedData, recipient);
+  
+  // Log the transmission
+  securityToolkit.logSecurityEvent({
+    action: 'data_transmission',
+    recipient: recipient.id,
+    dataSize: data.length,
+    securityLevel: 'high'
+  });
+}
 ```
 
-## For Administrators
+### Example 3: Securing a Database Operation
 
-### Security Dashboard
+```typescript
+import { securityToolkit } from '@server/security/toolkit';
+import { db } from '@server/database';
 
-The security dashboard provides a comprehensive view of your application's security status. Access it at `/admin/security` to monitor security events, run security scans, and configure security settings.
+// Function to securely update a user
+async function securelyUpdateUser(userId, userData) {
+  // Validate the input
+  const validatedData = securityToolkit.validateInput(userData, userUpdateSchema);
+  
+  // Ensure authorization
+  securityToolkit.enforceAuthorization(['admin', 'user-manager']);
+  
+  // Prepare secure storage
+  const secureData = {
+    ...validatedData,
+    password: validatedData.password ? await securityToolkit.hashPassword(validatedData.password) : undefined,
+    last_updated: Date.now(),
+    updated_by: securityToolkit.getCurrentUserId()
+  };
+  
+  // Create a secure database query
+  const secureQuery = securityToolkit.createSecureQuery({
+    operation: 'update',
+    table: 'users',
+    data: secureData,
+    where: { id: userId }
+  });
+  
+  // Execute the secure query
+  const result = await db.query(secureQuery);
+  
+  // Log the operation
+  securityToolkit.logSecurityEvent({
+    action: 'user_update',
+    userId,
+    fieldsUpdated: Object.keys(validatedData)
+  });
+  
+  return result;
+}
+```
 
-The dashboard includes:
+## Best Practices for Ergonomic Security
 
-1. **Overview Panel**: Shows the current health status of all security components
-2. **Security Events Panel**: Lists all security events with filtering and sorting options
-3. **Anomaly Detection Panel**: Displays detected anomalies and their details
-4. **Blockchain Logs Panel**: Shows the security blockchain for audit purposes
-5. **Settings Panel**: Allows configuration of security settings
+1. **Default to secure**: Make the default path the secure path.
+2. **Progressive disclosure**: Hide complexity behind simple interfaces with sensible defaults.
+3. **Contextual help**: Provide guidance specific to the security context.
+4. **Consistent API**: Use consistent patterns across all security interfaces.
+5. **Sensible defaults**: Choose defaults that are secure but not overly restrictive.
+6. **Clear error messages**: Provide actionable feedback for security errors.
+7. **Security levels**: Allow quick adjustment of security strictness.
+8. **Minimal boilerplate**: Reduce the code required to implement security.
+9. **Automation**: Automate security tasks where possible.
+10. **Discoverability**: Make security features easy to find and understand.
 
-### Monitoring Security Events
+## Conclusion
 
-The Security Events panel in the dashboard allows you to monitor all security events captured by the system. You can:
-
-1. **Filter Events**: Filter by category, severity, time period, or search term
-2. **View Critical Events**: Quickly access high-priority events that require attention
-3. **Analyze Trends**: View statistics and charts showing event patterns
-4. **Export Data**: Export event data for external analysis
-
-### Running Security Scans
-
-Run security scans directly from the dashboard:
-
-1. **Normal Scan**: Basic security check with minimal performance impact
-2. **Deep Scan**: Comprehensive security check of all components
-3. **Maximum Security Scan**: Exhaustive security analysis with detailed reporting
-4. **Quantum Resistance Test**: Verify quantum-resistant cryptography implementation
-
-### Configuring Security Settings
-
-The Settings panel allows you to configure:
-
-1. **Security Levels**: Set the default security level for the application
-2. **Anomaly Detection**: Configure thresholds and detection parameters
-3. **Blockchain Logging**: Configure what events to log and retention policies
-4. **Runtime Protection**: Enable or disable runtime protection features
-5. **Rate Limiting**: Adjust rate limiting thresholds for different endpoints
-
-## Best Practices
-
-1. **Start with Standard Level**: Begin with the `STANDARD` security level and increase to `HIGH` or `MAXIMUM` only when necessary for sensitive operations.
-
-2. **Use Decorators for Controllers**: The decorator-based approach provides a clean, declarative way to add security to controller methods.
-
-3. **Add Validation to All Endpoints**: Always use the validation helpers to validate and sanitize request data.
-
-4. **Log Important Security Events**: Use `logSecurityEvent` to record important security-related actions.
-
-5. **Run Regular Security Scans**: Schedule regular security scans to identify potential issues.
-
-6. **Monitor the Dashboard**: Regularly check the security dashboard to stay aware of security events.
-
-7. **Layer Security Controls**: Apply multiple security controls at different levels (application, route, method) for defense in depth.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Performance Impact**: If you notice performance issues, consider:
-   - Lowering the security level from `MAXIMUM` to `HIGH` or `STANDARD`
-   - Disabling blockchain logging for non-critical operations
-   - Adjusting anomaly detection thresholds
-
-2. **False Positives**: If anomaly detection is flagging legitimate requests:
-   - Increase the `anomalyThreshold` value
-   - Exclude specific paths from anomaly detection
-   - Disable blocking for anomaly detection
-
-3. **Integration Issues**: If you're having trouble integrating security features:
-   - Start with the simplest integration method (middleware)
-   - Use the example files in `server/security/examples`
-   - Refer to the API documentation for detailed usage information
-
-### Getting Help
-
-For more detailed information, refer to:
-
-- The API documentation in `server/security/docs/api.md`
-- The example files in `server/security/examples`
-- The source code for the toolkit in `server/security/toolkit`
+By following these patterns and using the provided tools, you can make security a seamless part of your development process. The Security Toolkit is designed to make it easy to do the right thing, reducing the cognitive load of implementing advanced security features.

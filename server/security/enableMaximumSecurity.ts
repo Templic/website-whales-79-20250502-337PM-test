@@ -119,15 +119,17 @@ export function enableMaximumSecurity(app: Express, options: MaximumSecurityOpti
   app.get('/api/security/quantum-key', createPublicKeyEndpointMiddleware());
   
   // Log maximum security enablement
-  securityBlockchain.recordEvent({
+  securityBlockchain.addSecurityEvent({
     severity: SecurityEventSeverity.INFO,
-    category: SecurityEventCategory.GENERAL,
-    title: 'Maximum Security Mode Enabled',
-    description: 'Maximum security mode has been enabled for the application',
+    category: SecurityEventCategory.CRYPTOGRAPHY, // Using existing category
+    message: 'Maximum Security Mode Enabled',
+    timestamp: Date.now(),
     metadata: {
       options,
       timestamp: new Date().toISOString()
     }
+  }).catch(error => {
+    console.error('Error logging maximum security enablement:', error);
   });
   
   // Emit maximum security enablement event

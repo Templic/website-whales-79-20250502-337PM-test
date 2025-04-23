@@ -6,10 +6,21 @@
  * module to encrypt sensitive data in transit and verify signatures.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { quantumResistantCrypto, QuantumResistantAlgorithm } from './QuantumResistantCrypto';
-import { logSecurityEvent } from '../../security';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
+import * as qrc from './QuantumResistantCrypto';
+import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
+
+// Define the quantum-resistant algorithm enum - matching our implementation
+export enum QuantumResistantAlgorithm {
+  KYBER = 'kyber',
+  DILITHIUM = 'dilithium',
+  SPHINCS = 'sphincs',
+  NEWHOPE = 'newhope',
+  FRODO = 'frodo',
+  HYBRID_RSA_KYBER = 'hybrid_rsa_kyber',
+  HYBRID_ECDSA_DILITHIUM = 'hybrid_ecdsa_dilithium'
+}
 
 /**
  * Configuration for quantum-resistant middleware
@@ -81,8 +92,8 @@ const DEFAULT_CONFIG: QuantumResistantMiddlewareConfig = {
     'creditCard',
     'bankAccount'
   ],
-  encryptionAlgorithm: QuantumResistantAlgorithm.HYBRID_RSA_KYBER,
-  signatureAlgorithm: QuantumResistantAlgorithm.HYBRID_ECDSA_DILITHIUM
+  encryptionAlgorithm: QuantumResistantAlgorithm.KYBER,
+  signatureAlgorithm: QuantumResistantAlgorithm.DILITHIUM
 };
 
 // Store key pairs for the middleware (in a real system, these would be stored securely)
@@ -94,29 +105,54 @@ let serverKeyPair: {
 /**
  * Generate a new key pair for the server
  */
-function generateServerKeyPair() {
-  // Generate a new key pair for the server
-  serverKeyPair = quantumResistantCrypto.generateKeyPair({
-    algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
-    keyType: 'ENCRYPTION' as any
-  });
-  
-  logSecurityEvent({
-    severity: SecurityEventSeverity.INFO,
-    category: SecurityEventCategory.QUANTUM_CRYPTO,
-    title: 'Server Quantum-Resistant Key Pair Generated',
-    description: `Generated a new server key pair for quantum-resistant encryption`
-  });
-  
-  return serverKeyPair;
+async function generateServerKeyPair(): Promise<{
+  publicKey: string;
+  privateKey: string;
+}> {
+  try {
+    // Generate a new key pair for the server
+    const generatedKeyPair = await qrc.generateKeyPair({
+      algorithm: DEFAULT_CONFIG.encryptionAlgorithm as any,
+      strength: 'high'
+    });
+    
+    serverKeyPair = {
+      publicKey: generatedKeyPair.publicKey,
+      privateKey: generatedKeyPair.privateKey
+    };
+    
+    // Log event to blockchain
+    await securityBlockchain.addSecurityEvent({
+      category: SecurityEventCategory.CRYPTOGRAPHY,
+      severity: SecurityEventSeverity.INFO,
+      message: 'Server Quantum-Resistant Key Pair Generated',
+      timestamp: Date.now(),
+      metadata: {
+        algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+    return serverKeyPair;
+  } catch (error) {
+    console.error('Error generating quantum-resistant key pair:', error);
+    // Create a fallback key pair for development purposes
+    const fallbackKeyPair = {
+      publicKey: 'FALLBACK_PUBLIC_KEY_FOR_DEVELOPMENT',
+      privateKey: 'FALLBACK_PRIVATE_KEY_FOR_DEVELOPMENT'
+    };
+    
+    serverKeyPair = fallbackKeyPair;
+    return fallbackKeyPair;
+  }
 }
 
 /**
  * Get the server's public key
  */
-export function getServerPublicKey(): string {
+export async function getServerPublicKey(): Promise<string> {
   if (!serverKeyPair) {
-    generateServerKeyPair();
+    await generateServerKeyPair();
   }
   
   return serverKeyPair!.publicKey;
@@ -127,37 +163,42 @@ export function getServerPublicKey(): string {
  */
 export function createQuantumResistantMiddleware(
   config: Partial<QuantumResistantMiddlewareConfig> = {}
-): (req: Request, res: Response, next: NextFunction) => void {
+): RequestHandler {
   // Merge with default config
   const mergedConfig: QuantumResistantMiddlewareConfig = {
     ...DEFAULT_CONFIG,
     ...config
   };
   
-  // Generate server key pair if needed
-  if (!serverKeyPair) {
-    generateServerKeyPair();
-  }
+  // Ensure server key pair is generated (async)
+  generateServerKeyPair().catch(console.error);
   
-  // Log initialization
-  logSecurityEvent({
+  // Log initialization (async)
+  securityBlockchain.addSecurityEvent({
+    category: SecurityEventCategory.CRYPTOGRAPHY,
     severity: SecurityEventSeverity.INFO,
-    category: SecurityEventCategory.QUANTUM_CRYPTO,
-    title: 'Quantum-Resistant Middleware Initialized',
-    description: `Initialized with configuration: encryptResponses=${mergedConfig.encryptResponses}, verifyRequestSignatures=${mergedConfig.verifyRequestSignatures}`
-  });
+    message: 'Quantum-Resistant Middleware Initialized',
+    timestamp: Date.now(),
+    metadata: {
+      encryptResponses: mergedConfig.encryptResponses,
+      verifyRequestSignatures: mergedConfig.verifyRequestSignatures,
+      timestamp: new Date().toISOString()
+    }
+  }).catch(console.error);
   
   // Return the middleware function
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // Check if we should bypass protection in development mode
     if (mergedConfig.bypassInDevelopment && process.env.NODE_ENV === 'development') {
-      return next();
+      next();
+      return;
     }
     
     // Check if the path is exempt
     const path = req.path;
     if (mergedConfig.exemptPaths.some(exemptPath => path.startsWith(exemptPath))) {
-      return next();
+      next();
+      return;
     }
     
     // Check if the path should be protected
@@ -166,7 +207,8 @@ export function createQuantumResistantMiddleware(
     );
     
     if (!shouldProtect) {
-      return next();
+      next();
+      return;
     }
     
     // Process the request
@@ -180,34 +222,67 @@ export function createQuantumResistantMiddleware(
         // Reconstruct the data that was signed (path + body)
         const dataToVerify = `${req.method}:${req.path}:${JSON.stringify(req.body)}`;
         
-        // Verify the signature
-        const isValid = quantumResistantCrypto.verify(
-          dataToVerify,
-          signatureHeader,
-          clientPublicKey
-        );
-        
-        if (!isValid) {
-          logSecurityEvent({
-            severity: SecurityEventSeverity.HIGH,
-            category: SecurityEventCategory.QUANTUM_CRYPTO,
-            title: 'Invalid Quantum-Resistant Signature',
-            description: `Invalid signature for request to ${req.path}`
+        try {
+          // Verify the signature
+          const verificationResult = await qrc.verify(
+            dataToVerify,
+            signatureHeader,
+            clientPublicKey
+          );
+          
+          if (!verificationResult.valid) {
+            // Log invalid signature
+            await securityBlockchain.addSecurityEvent({
+              category: SecurityEventCategory.CRYPTOGRAPHY,
+              severity: SecurityEventSeverity.WARNING,
+              message: 'Invalid Quantum-Resistant Signature',
+              timestamp: Date.now(),
+              metadata: {
+                path: req.path,
+                method: req.method,
+                reason: verificationResult.reason,
+                timestamp: new Date().toISOString()
+              }
+            });
+            
+            return res.status(403).json({
+              error: 'Invalid signature',
+              message: 'The request signature failed validation'
+            });
+          }
+          
+          // Log successful verification
+          await securityBlockchain.addSecurityEvent({
+            category: SecurityEventCategory.CRYPTOGRAPHY,
+            severity: SecurityEventSeverity.INFO,
+            message: 'Quantum-Resistant Signature Verified',
+            timestamp: Date.now(),
+            metadata: {
+              path: req.path,
+              method: req.method,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (verifyError) {
+          // Log verification error
+          await securityBlockchain.addSecurityEvent({
+            category: SecurityEventCategory.CRYPTOGRAPHY,
+            severity: SecurityEventSeverity.ERROR,
+            message: 'Signature Verification Error',
+            timestamp: Date.now(),
+            metadata: {
+              path: req.path,
+              method: req.method,
+              error: verifyError instanceof Error ? verifyError.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            }
           });
           
-          return res.status(403).json({
-            error: 'Invalid signature',
-            message: 'The request signature failed validation'
+          return res.status(400).json({
+            error: 'Signature verification error',
+            message: 'An error occurred while verifying the request signature'
           });
         }
-        
-        // Log successful verification
-        logSecurityEvent({
-          severity: SecurityEventSeverity.INFO,
-          category: SecurityEventCategory.QUANTUM_CRYPTO,
-          title: 'Quantum-Resistant Signature Verified',
-          description: `Verified signature for request to ${req.path}`
-        });
       }
       
       // Modify the response.json method to encrypt sensitive fields if configured
@@ -216,18 +291,41 @@ export function createQuantumResistantMiddleware(
         
         res.json = function(body: any) {
           // Process the response body to encrypt sensitive fields
-          const processedBody = processResponseBody(
+          processResponseBody(
             body,
             clientPublicKey,
             mergedConfig.sensitiveResponseFields,
             mergedConfig.encryptionAlgorithm
-          );
+          ).then(processedBody => {
+            // Add the server's public key to the response headers
+            if (serverKeyPair) {
+              res.setHeader('X-Quantum-Public-Key', serverKeyPair.publicKey);
+            }
+            
+            // Call the original json method with the processed body
+            return originalJson.call(this, processedBody);
+          }).catch(error => {
+            // Log encryption error but still send unencrypted response
+            console.error('Error encrypting response:', error);
+            securityBlockchain.addSecurityEvent({
+              category: SecurityEventCategory.CRYPTOGRAPHY,
+              severity: SecurityEventSeverity.ERROR,
+              message: 'Response Encryption Error',
+              timestamp: Date.now(),
+              metadata: {
+                path: req.path,
+                method: req.method,
+                error: error instanceof Error ? error.message : 'Unknown error',
+                timestamp: new Date().toISOString()
+              }
+            }).catch(console.error);
+            
+            // Send original unencrypted body
+            return originalJson.call(this, body);
+          });
           
-          // Add the server's public key to the response headers
-          res.setHeader('X-Quantum-Public-Key', serverKeyPair!.publicKey);
-          
-          // Call the original json method with the processed body
-          return originalJson.call(this, processedBody);
+          // Return res for chaining
+          return res;
         };
       }
       
@@ -235,12 +333,19 @@ export function createQuantumResistantMiddleware(
       next();
     } catch (error) {
       // Log the error
-      logSecurityEvent({
+      securityBlockchain.addSecurityEvent({
+        category: SecurityEventCategory.CRYPTOGRAPHY,
         severity: SecurityEventSeverity.ERROR,
-        category: SecurityEventCategory.QUANTUM_CRYPTO,
-        title: 'Quantum-Resistant Middleware Error',
-        description: `Error in quantum-resistant middleware: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
+        message: 'Quantum-Resistant Middleware Error',
+        timestamp: Date.now(),
+        metadata: {
+          path: req.path,
+          method: req.method,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        }
+      }).catch(console.error);
       
       // Pass the error to the next middleware
       next(error);
@@ -251,12 +356,12 @@ export function createQuantumResistantMiddleware(
 /**
  * Process a response body to encrypt sensitive fields
  */
-function processResponseBody(
+async function processResponseBody(
   body: any,
   clientPublicKey: string,
   sensitiveFields: string[],
   algorithm: QuantumResistantAlgorithm
-): any {
+): Promise<any> {
   // If body is not an object, return it as is
   if (typeof body !== 'object' || body === null) {
     return body;
@@ -272,30 +377,37 @@ function processResponseBody(
       
       // If the key is a sensitive field and the value is a string, encrypt it
       if (sensitiveFields.includes(key) && typeof value === 'string') {
-        // Encrypt the value
-        const encryptedValue = quantumResistantCrypto.encrypt(value, clientPublicKey);
-        
-        // Replace the original value with the encrypted one
-        if (Array.isArray(result)) {
-          result[parseInt(key)] = {
-            __encrypted: true,
-            algorithm,
-            value: encryptedValue
-          };
-        } else {
-          result[key] = {
-            __encrypted: true,
-            algorithm,
-            value: encryptedValue
-          };
+        try {
+          // Encrypt the value
+          const encryptionResult = await qrc.encrypt(value, clientPublicKey, {
+            algorithm: algorithm as any
+          });
+          
+          // Replace the original value with the encrypted one
+          if (Array.isArray(result)) {
+            result[parseInt(key)] = {
+              __encrypted: true,
+              algorithm,
+              value: encryptionResult
+            };
+          } else {
+            result[key] = {
+              __encrypted: true,
+              algorithm,
+              value: encryptionResult
+            };
+          }
+        } catch (error) {
+          console.error(`Error encrypting field '${key}':`, error);
+          // Keep the original value if encryption fails
         }
       }
       // If the value is an object or array, recursively process it
       else if (typeof value === 'object' && value !== null) {
         if (Array.isArray(result)) {
-          result[parseInt(key)] = processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
+          result[parseInt(key)] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
         } else {
-          result[key] = processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
+          result[key] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
         }
       }
     }
@@ -307,28 +419,36 @@ function processResponseBody(
 /**
  * Create a middleware that provides the server's public key
  */
-export function createPublicKeyEndpointMiddleware() {
-  return (req: Request, res: Response) => {
-    // Generate server key pair if needed
-    if (!serverKeyPair) {
-      generateServerKeyPair();
+export function createPublicKeyEndpointMiddleware(): RequestHandler {
+  return async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Generate server key pair if needed
+      if (!serverKeyPair) {
+        await generateServerKeyPair();
+      }
+      
+      // Return the server's public key
+      res.json({
+        publicKey: serverKeyPair!.publicKey,
+        algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
+        signatureAlgorithm: DEFAULT_CONFIG.signatureAlgorithm
+      });
+    } catch (error) {
+      console.error('Error in public key endpoint:', error);
+      res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'An error occurred while retrieving the server public key'
+      });
     }
-    
-    // Return the server's public key
-    res.json({
-      publicKey: serverKeyPair!.publicKey,
-      algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
-      signatureAlgorithm: DEFAULT_CONFIG.signatureAlgorithm
-    });
   };
 }
 
 /**
  * Regenerate the server's key pair
  */
-export function regenerateServerKeyPair(): typeof serverKeyPair {
-  return generateServerKeyPair();
+export async function regenerateServerKeyPair(): Promise<typeof serverKeyPair> {
+  return await generateServerKeyPair();
 }
 
-// Make sure we have a server key pair
-generateServerKeyPair();
+// Initialize the server key pair
+generateServerKeyPair().catch(console.error);

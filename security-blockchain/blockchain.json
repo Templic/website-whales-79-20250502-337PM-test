@@ -1,0 +1,21 @@
+[
+  {
+    "index": 0,
+    "timestamp": 1745434126159,
+    "events": [
+      {
+        "category": "system",
+        "severity": "info",
+        "message": "Genesis block created",
+        "timestamp": 1745434126159,
+        "metadata": {
+          "version": "1.0.0",
+          "createdAt": "2025-04-23T18:48:46.159Z"
+        }
+      }
+    ],
+    "previousHash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "nonce": 0,
+    "hash": "7025dbefbc31cfbf10dec7b484134d508bca996773e4b19716e4783a3f50d4a6"
+  }
+]

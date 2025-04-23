@@ -311,12 +311,19 @@ class SecurityFabric {
     }
     
     // Record the event
-    securityBlockchain.recordEvent({
+    securityBlockchain.addSecurityEvent({
       severity,
       category,
-      title,
-      description,
-      metadata: { event, data }
+      message: title, // Changed title to message to match the new interface
+      timestamp: Date.now(),
+      metadata: { 
+        description, // Added description in metadata
+        event, 
+        data,
+        timestamp: new Date().toISOString()
+      }
+    }).catch(error => {
+      console.error('Error recording security event:', error);
     });
   }
 }
