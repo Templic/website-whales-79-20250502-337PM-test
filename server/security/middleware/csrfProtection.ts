@@ -51,7 +51,7 @@ setInterval(cleanupExpiredTokens, 15 * 60 * 1000); // every 15 minutes
  * @param req Express request
  * @returns The generated token
  */
-function generateCsrfToken(req: Request): string {
+export function generateCsrfToken(req: Request): string {
   // Generate a new token using secure random bytes
   const token = generateSecureToken(32);
   

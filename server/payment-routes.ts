@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import paymentTransactionLogger, { PaymentTransactionType } from './security/paymentTransactionLogger';
+import { csrfProtection } from './security/middleware/csrfProtection';
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ function getStripeClient() {
 }
 
 // Create payment intent
-router.post('/create-intent', async (req: Request, res: Response) => {
+router.post('/create-intent', csrfProtection(), async (req: Request, res: Response) => {
   try {
     // Check if Stripe API key is available
     if (!stripeApiKey) {
@@ -109,7 +110,7 @@ router.post('/create-intent', async (req: Request, res: Response) => {
 });
 
 // Confirm payment
-router.post('/confirm', async (req: Request, res: Response) => {
+router.post('/confirm', csrfProtection(), async (req: Request, res: Response) => {
   try {
     // Check if Stripe API key is available
     if (!stripeApiKey) {

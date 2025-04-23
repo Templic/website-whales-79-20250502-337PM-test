@@ -88,6 +88,7 @@ import contentWorkflowRoutes from './routes/content-workflow';
 import notificationsRoutes from './routes/notifications';
 import mediaRoutes from './routes/media';
 import searchRoutes from './routes/search/index';
+import csrfRoutes from './routes/csrf-routes';
 import { preventAlgorithmConfusionAttack } from './middleware/jwtAuth';
 
 // Email transporter for nodemailer
@@ -118,6 +119,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   
   // Use media routes
   app.use(mediaRoutes);
+  
+  // Use CSRF routes
+  app.use('/api', csrfRoutes);
   
   // Use secure API routes with comprehensive security checks
   app.use('/api/secure/public', publicRouter);
