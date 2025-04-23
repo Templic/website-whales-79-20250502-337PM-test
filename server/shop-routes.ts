@@ -14,7 +14,7 @@ import {
   insertCartItemSchema,
   insertOrderSchema,
   insertOrderItemSchema
-} from '@shared/schema';
+} from '../shared/schema';
 import { eq, and, or, like, desc, asc, between, gt, lt, isNull, isNotNull, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';

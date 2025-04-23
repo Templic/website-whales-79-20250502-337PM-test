@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { contentItems } from '@shared/schema';
+import { contentItems } from '../../shared/schema';
 import { eq, and, lte, gte, ne } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { logger } from '../logger';

@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '../db';
-import { contentItems, contentVersions, contentWorkflowHistory } from '@shared/schema';
+import { contentItems, contentVersions, contentWorkflowHistory } from '../../shared/schema';
 import { eq, and, between, like, desc, asc, gte, lte, isNull, ne } from 'drizzle-orm';
 import { requireAuth, requireRole } from '../middleware/authMiddleware';
 import { logger } from '../logger';

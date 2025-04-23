@@ -45,7 +45,7 @@ import {
   comments,
   users,
   User
-} from "@shared/schema";
+} from "../shared/schema";
 
 // Function to create a safe user object without sensitive fields
 function createSafeUser(user: User | null | undefined) {

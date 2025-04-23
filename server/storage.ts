@@ -19,7 +19,7 @@ import {
   subscribers, posts, categories, comments, users, 
   tracks, albums, newsletters, contentItems,
   contentHistory, contentUsage, contentWorkflowHistory, products
-} from "@shared/schema";
+} from "../shared/schema";
 import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
 import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
 import { db } from "./db";

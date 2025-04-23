@@ -1,38 +1,22 @@
 {
-  "include": ["client/src/**/*", "shared/**/*", "server/**/*"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
-    "incremental": true,
-    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
-    "noEmit": true,
-    "module": "ESNext",
-    "target": "es2015",
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictBindCallApply": true,
-    "strictPropertyInitialization": true,
-    "noImplicitThis": true,
-    "useUnknownInCatchVariables": true,
-    "alwaysStrict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "lib": ["esnext", "dom", "dom.iterable"],
-    "jsx": "preserve",
+    "target": "ES2021",
+    "module": "commonjs",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
-    "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "types": ["node", "vite/client"],
-    "downlevelIteration": true,
-    "paths": {
-      "@/*": ["./client/src/*"],
-      "@shared/*": ["./shared/*"],
-      "@types": ["./client/src/types"],
-      "@types/*": ["./client/src/types/*"]
-    }
-  }
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "declaration": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

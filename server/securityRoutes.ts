@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { logSecurityEvent, handleSecurityLog, rotateSecurityLogs } from './security';
 import { scanProject } from './security/securityScan';
-import { User } from '@shared/schema';
+import { User } from '../shared/schema';
 
 // Add the user property to express-session
 declare module 'express-session' {
