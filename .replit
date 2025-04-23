@@ -114,5 +114,22 @@ mode = "sequential"
 task = "shell.exec"
 args = "NODE_ENV=production node scripts/monitor-performance.js"
 
+[[workflows.workflow]]
+name = "Security Scans"
+author = 38189967
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run security:audit"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run test:security"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run scan:vulnerabilities"
+
 [objectStorage]
 defaultBucketID = "replit-objstore-93771c52-e543-454e-b546-e170eacb4202"
