@@ -1,532 +1,476 @@
-// Database Security Module
-import { pool, db } from '../db';
-import logger from '../logger';
-import { sql } from 'drizzle-orm';
-import path from 'path';
-import fs from 'fs';
-import { logSecurityEvent } from '../security';
+/**
+ * Database Security Module
+ * 
+ * Provides secure database access patterns and protection against SQL injection
+ * by implementing parameterized queries, query sanitization, and monitoring.
+ */
+
+import { securityFabric } from './advanced/SecurityFabric';
+import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import * as crypto from 'crypto';
 
 /**
- * Database Security Interface
- * Implements comprehensive security checks for database operations
+ * Query type enumeration
  */
-export interface DatabaseSecurityInterface {
-  // Connection security
-  verifyConnectionSecurity(): Promise<SecurityCheckResult>;
+export enum QueryType {
+  SELECT = 'SELECT',
+  INSERT = 'INSERT',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+  CREATE = 'CREATE',
+  DROP = 'DROP',
+  ALTER = 'ALTER',
+  TRUNCATE = 'TRUNCATE',
+  OTHER = 'OTHER'
+}
+
+/**
+ * Database query interface
+ */
+export interface DatabaseQuery {
+  /**
+   * Query ID
+   */
+  id: string;
   
-  // Query security
-  validateQuery(query: string): ValidationResult;
-  sanitizeParameter(param: any): any;
+  /**
+   * Query type
+   */
+  type: QueryType;
   
-  // Access control
-  verifyUserAccess(userId: number, resource: string, action: string): Promise<boolean>;
+  /**
+   * SQL query text
+   */
+  sql: string;
   
-  // Configuration assessment
-  assessSecurityConfiguration(): Promise<SecurityAssessment>;
+  /**
+   * Query parameters
+   */
+  params: any[];
   
-  // Monitoring and audit
-  logDatabaseActivity(action: string, userId?: number, details?: any): void;
-  getSecurityAuditLog(days?: number): Promise<AuditLogEntry[]>;
-}
-
-// Type definitions
-export interface SecurityCheckResult {
-  secure: boolean;
-  issues: SecurityIssue[];
-}
-
-export interface SecurityIssue {
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  message: string;
-  remediation?: string;
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  risks: SecurityRisk[];
-}
-
-export interface SecurityRisk {
-  type: string;
-  description: string;
-}
-
-export interface SecurityAssessment {
-  overallScore: number; // 0-100
-  categories: {
-    connectionSecurity: CategoryAssessment;
-    accessControl: CategoryAssessment;
-    queryProtection: CategoryAssessment;
-    dataEncryption: CategoryAssessment;
-    auditLogging: CategoryAssessment;
-  };
-  recommendations: string[];
-}
-
-export interface CategoryAssessment {
-  score: number; // 0-100
-  issues: SecurityIssue[];
-}
-
-export interface AuditLogEntry {
+  /**
+   * Source location (file and line number)
+   */
+  source?: string;
+  
+  /**
+   * Timestamp
+   */
   timestamp: Date;
-  action: string;
-  userId?: number;
-  details?: any;
 }
 
 /**
- * Database Security implementation
+ * Database security options
  */
-export class DatabaseSecurity implements DatabaseSecurityInterface {
-  private readonly securityLogDir: string;
-  private readonly securityLogFile: string;
-  
-  constructor() {
-    // Set up logging directories
-    this.securityLogDir = path.join(process.cwd(), 'logs', 'security');
-    if (!fs.existsSync(this.securityLogDir)) {
-      fs.mkdirSync(this.securityLogDir, { recursive: true });
-    }
-    
-    this.securityLogFile = path.join(this.securityLogDir, 'database-security.log');
-    
-    // Initialize security logging
-    this.logDatabaseActivity('DatabaseSecurity initialized');
-  }
+export interface DatabaseSecurityOptions {
+  /**
+   * Enable query logging
+   */
+  enableQueryLogging?: boolean;
   
   /**
-   * Verify database connection security (SSL/TLS, etc.)
+   * Enable query analysis
    */
-  async verifyConnectionSecurity(): Promise<SecurityCheckResult> {
-    const issues: SecurityIssue[] = [];
-    let secure = true;
-    
-    try {
-      const client = await pool.connect();
-      try {
-        // Check if SSL is enabled
-        const sslResult = await client.query("SHOW ssl");
-        const sslEnabled = sslResult.rows[0].ssl === 'on';
-        
-        if (!sslEnabled) {
-          secure = false;
-          issues.push({
-            severity: 'high',
-            message: 'Database connection is not using SSL/TLS encryption',
-            remediation: 'Enable SSL in PostgreSQL configuration and use SSL mode in connection string'
-          });
-        }
-        
-        // Check database version for security patches
-        const versionResult = await client.query("SHOW server_version");
-        const serverVersion = versionResult.rows[0].server_version;
-        
-        // Log the version information
-        this.logDatabaseActivity('Database version check', undefined, { version: serverVersion });
-        
-        // Check connection timeout settings
-        const timeoutResult = await client.query("SHOW statement_timeout");
-        const statementTimeout = timeoutResult.rows[0].statement_timeout;
-        
-        if (statementTimeout === '0') {
-          issues.push({
-            severity: 'medium',
-            message: 'No statement timeout configured, which could lead to long-running queries',
-            remediation: 'Set a reasonable statement_timeout value'
-          });
-        }
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      secure = false;
-      issues.push({
-        severity: 'critical',
-        message: `Failed to verify connection security: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        remediation: 'Check database connection parameters and server availability'
-      });
-    }
-    
-    return { secure, issues };
-  }
+  enableQueryAnalysis?: boolean;
   
   /**
-   * Validate a SQL query for security risks
+   * Enable query blocking for dangerous operations
    */
-  validateQuery(query: string): ValidationResult {
-    const risks: SecurityRisk[] = [];
-    let valid = true;
-    
-    // Check for dangerous operations in SQL queries
-    const dangerousPatterns = [
-      { pattern: /;.*;/i, description: 'Multiple statements (potential SQL injection)' },
-      { pattern: /EXECUTE\s+.*?CONCAT/i, description: 'Dynamic SQL execution with concatenation' },
-      { pattern: /DROP\s+TABLE/i, description: 'DROP TABLE operation' },
-      { pattern: /DROP\s+DATABASE/i, description: 'DROP DATABASE operation' },
-      { pattern: /TRUNCATE\s+TABLE/i, description: 'TRUNCATE TABLE operation' },
-      { pattern: /DELETE\s+FROM.*?WHERE/i, description: 'DELETE operation' },
-      // UNION-based SQL injection patterns
-      { pattern: /UNION\s+ALL\s+SELECT/i, description: 'UNION ALL injection attempt' },
-      { pattern: /UNION\s+SELECT.*?FROM\s+information_schema/i, description: 'UNION injection with information_schema access' },
-      { pattern: /UNION\s+SELECT.*?0x[0-9a-f]+/i, description: 'UNION injection with hex encoding' },
-      // Detection of information_schema access in various forms
-      { pattern: /FROM\s+information_schema/i, description: 'Information schema access, potential database enumeration attempt' },
-      { pattern: /SELECT.*?FROM\s+pg_catalog/i, description: 'PostgreSQL system catalog access, potential database enumeration' },
-      // SQL Comments that might be used to hide malicious code
-      { pattern: /\/\*.+?\*\//i, description: 'SQL comment block, may indicate SQL injection attempt' },
-      // Blind SQL injection techniques
-      { pattern: /CASE\s+WHEN\s+\(.*?\)\s+THEN.*?ELSE/i, description: 'CASE WHEN statement, potential blind SQL injection' },
-      { pattern: /WAITFOR\s+DELAY/i, description: 'WAITFOR DELAY, potential time-based SQL injection' },
-      { pattern: /pg_sleep\s*\(/i, description: 'pg_sleep function, potential time-based SQL injection' }
-      // Add more patterns as needed
-    ];
-    
-    // Scan for dangerous patterns
-    for (const check of dangerousPatterns) {
-      if (check.pattern.test(query)) {
-        risks.push({
-          type: 'dangerous_operation',
-          description: check.description
-        });
-        valid = false;
-      }
-    }
-    
-    // Check for SQL comments which might indicate tampering
-    if (/--.*$/m.test(query) || /\/\*[\s\S]+?\*\//g.test(query)) {
-      risks.push({
-        type: 'comment_detection',
-        description: 'SQL comments detected, might indicate SQL injection attempt'
-      });
-    }
-    
-    return { valid, risks };
-  }
+  enableQueryBlocking?: boolean;
   
   /**
-   * Sanitize a parameter to prevent SQL injection
-   * Note: This is a basic implementation. Drizzle ORM and parameterized queries
-   * should be the primary defense against SQL injection.
+   * Maximum query length
    */
-  sanitizeParameter(param: any): any {
-    if (param === null || param === undefined) {
-      return null;
-    }
-    
-    if (typeof param === 'string') {
-      // Remove dangerous SQL characters
-      return param.replace(/['";\\\\]/g, '');
-    }
-    
-    return param;
-  }
+  maxQueryLength?: number;
   
   /**
-   * Verify user access to a database resource
+   * Maximum parameter count
    */
-  async verifyUserAccess(userId: number, resource: string, action: string): Promise<boolean> {
-    try {
-      // Get user role
-      const userQuery = await db.execute(sql`
-        SELECT role FROM users WHERE id = ${userId}
-      `);
-      
-      if (userQuery.rows.length === 0) {
-        this.logDatabaseActivity('Access denied - user not found', userId, { resource, action });
-        return false;
-      }
-      
-      const userRole = userQuery.rows[0].role;
-      
-      // Super admin can do everything
-      if (userRole === 'super_admin') {
-        return true;
-      }
-      
-      // Check resource-specific permissions
-      // This is a simplified example - in a real system, this would query a permissions table
-      let hasAccess = false;
-      
-      switch (resource) {
-        case 'users':
-          // Admin can read all users but only modify non-admin users
-          if (userRole === 'admin') {
-            hasAccess = action === 'read' || (action === 'write' && userId !== null);
-          }
-          break;
-          
-        case 'posts':
-          // Admins can do everything with posts
-          // Regular users can only read posts or modify their own
-          if (userRole === 'admin') {
-            hasAccess = true;
-          } else {
-            hasAccess = action === 'read';
-          }
-          break;
-          
-        // Add more resources as needed
-          
-        default:
-          // Default deny for unknown resources
-          hasAccess = false;
-      }
-      
-      this.logDatabaseActivity(
-        hasAccess ? 'Access granted' : 'Access denied',
-        userId,
-        { resource, action, role: userRole }
-      );
-      
-      return hasAccess;
-    } catch (error) {
-      console.error('Error verifying user access:', error);
-      this.logDatabaseActivity('Access verification error', userId, {
-        resource,
-        action,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-      
-      // Default to deny on error
-      return false;
-    }
-  }
+  maxParamCount?: number;
   
   /**
-   * Assess the security of the database configuration
+   * List of allowed query types
    */
-  async assessSecurityConfiguration(): Promise<SecurityAssessment> {
-    const issues: SecurityIssue[] = [];
-    
-    try {
-      const client = await pool.connect();
-      try {
-        // Connection security checks
-        const connectionIssues: SecurityIssue[] = [];
-        const sslResult = await client.query("SHOW ssl");
-        const sslEnabled = sslResult.rows[0].ssl === 'on';
-        
-        if (!sslEnabled) {
-          connectionIssues.push({
-            severity: 'high',
-            message: 'Database connection is not using SSL/TLS encryption',
-            remediation: 'Enable SSL in PostgreSQL configuration'
-          });
-        }
-        
-        // Access control checks
-        const accessControlIssues: SecurityIssue[] = [];
-        
-        // Check for default roles with too many privileges using parameterized query
-        const defaultRolesCheck = await client.query(`
-          SELECT rolname, rolsuper, rolcreaterole, rolcreatedb 
-          FROM pg_roles 
-          WHERE rolname = ANY($1)
-        `, [['postgres', 'public']]);
-        
-        for (const role of defaultRolesCheck.rows) {
-          if (role.rolsuper || role.rolcreaterole || role.rolcreatedb) {
-            accessControlIssues.push({
-              severity: 'high',
-              message: `Default role '${role.rolname}' has excessive privileges`,
-              remediation: 'Revoke unnecessary privileges from default roles'
-            });
-          }
-        }
-        
-        // Query protection checks
-        const queryProtectionIssues: SecurityIssue[] = [];
-        
-        // Check if prepared statements are enabled
-        const preparedStmtResult = await client.query("SHOW standard_conforming_strings");
-        if (preparedStmtResult.rows[0].standard_conforming_strings !== 'on') {
-          queryProtectionIssues.push({
-            severity: 'medium',
-            message: 'Standard conforming strings are not enabled, which may affect query safety',
-            remediation: 'Set standard_conforming_strings=on in PostgreSQL configuration'
-          });
-        }
-        
-        // Data encryption checks
-        const dataEncryptionIssues: SecurityIssue[] = [];
-        
-        // Audit logging checks
-        const auditLoggingIssues: SecurityIssue[] = [];
-        
-        // Check if logging is enabled
-        const loggingResult = await client.query("SHOW log_statement");
-        if (loggingResult.rows[0].log_statement === 'none') {
-          auditLoggingIssues.push({
-            severity: 'medium',
-            message: 'SQL statement logging is disabled',
-            remediation: 'Enable log_statement for better auditing'
-          });
-        }
-        
-        // Calculate scores based on issues
-        const connectionScore = calculateScore(connectionIssues);
-        const accessControlScore = calculateScore(accessControlIssues);
-        const queryProtectionScore = calculateScore(queryProtectionIssues);
-        const dataEncryptionScore = calculateScore(dataEncryptionIssues);
-        const auditLoggingScore = calculateScore(auditLoggingIssues);
-        
-        // Generate recommendations
-        const recommendations: string[] = [];
-        
-        // Add all remediation advice to recommendations
-        [...connectionIssues, ...accessControlIssues, ...queryProtectionIssues, 
-         ...dataEncryptionIssues, ...auditLoggingIssues].forEach(issue => {
-          if (issue.remediation) {
-            recommendations.push(issue.remediation);
-          }
-        });
-        
-        // Calculate overall score (weighted average)
-        const overallScore = (
-          connectionScore * 0.25 +
-          accessControlScore * 0.25 +
-          queryProtectionScore * 0.2 +
-          dataEncryptionScore * 0.15 +
-          auditLoggingScore * 0.15
-        );
-        
-        return {
-          overallScore: Math.round(overallScore),
-          categories: {
-            connectionSecurity: { score: connectionScore, issues: connectionIssues },
-            accessControl: { score: accessControlScore, issues: accessControlIssues },
-            queryProtection: { score: queryProtectionScore, issues: queryProtectionIssues },
-            dataEncryption: { score: dataEncryptionScore, issues: dataEncryptionIssues },
-            auditLogging: { score: auditLoggingScore, issues: auditLoggingIssues }
-          },
-          recommendations: recommendations
-        };
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      console.error('Error assessing database security configuration:', error);
-      
-      return {
-        overallScore: 0,
-        categories: {
-          connectionSecurity: { score: 0, issues: [{ severity: 'critical', message: 'Assessment failed' }] },
-          accessControl: { score: 0, issues: [{ severity: 'critical', message: 'Assessment failed' }] },
-          queryProtection: { score: 0, issues: [{ severity: 'critical', message: 'Assessment failed' }] },
-          dataEncryption: { score: 0, issues: [{ severity: 'critical', message: 'Assessment failed' }] },
-          auditLogging: { score: 0, issues: [{ severity: 'critical', message: 'Assessment failed' }] }
-        },
-        recommendations: ['Fix database connection to enable security assessment']
-      };
-    }
-  }
+  allowedQueryTypes?: QueryType[];
   
   /**
-   * Log database activity for security auditing
+   * Additional dangerous patterns to check
    */
-  logDatabaseActivity(action: string, userId?: number, details?: any): void {
-    const timestamp = new Date();
-    const logEntry = {
-      timestamp,
-      action,
-      userId,
-      details
+  dangerousPatterns?: RegExp[];
+}
+
+/**
+ * Database security class
+ */
+export class DatabaseSecurity {
+  /**
+   * Database security options
+   */
+  private options: DatabaseSecurityOptions;
+  
+  /**
+   * Query history
+   */
+  private queryHistory: DatabaseQuery[] = [];
+  
+  /**
+   * Maximum query history size
+   */
+  private readonly MAX_QUERY_HISTORY = 1000;
+  
+  /**
+   * Default dangerous patterns
+   */
+  private readonly DEFAULT_DANGEROUS_PATTERNS = [
+    /DROP\s+TABLE/i,
+    /DROP\s+DATABASE/i,
+    /TRUNCATE\s+TABLE/i,
+    /DELETE\s+FROM\s+.+\s+(?:WHERE\s+1\s*=\s*1|WITHOUT\s+WHERE)/i,
+    /sys\.fn_sqlvarbasetostr/i,
+    /EXEC\s+xp_cmdshell/i,
+    /sp_execute_external_script/i
+  ];
+  
+  /**
+   * Constructor
+   */
+  constructor(options: DatabaseSecurityOptions = {}) {
+    // Set default options
+    this.options = {
+      enableQueryLogging: true,
+      enableQueryAnalysis: true,
+      enableQueryBlocking: true,
+      maxQueryLength: 8192,
+      maxParamCount: 100,
+      allowedQueryTypes: [
+        QueryType.SELECT,
+        QueryType.INSERT,
+        QueryType.UPDATE,
+        QueryType.DELETE
+      ],
+      dangerousPatterns: [],
+      ...options
     };
     
-    // Write to specific database security log file
-    try {
-      const logLine = JSON.stringify(logEntry) + '\n';
-      fs.appendFileSync(this.securityLogFile, logLine);
-    } catch (error) {
-      console.error('Failed to write to database security log:', error);
+    // Add default dangerous patterns
+    if (this.options.dangerousPatterns) {
+      this.options.dangerousPatterns = [
+        ...this.DEFAULT_DANGEROUS_PATTERNS,
+        ...this.options.dangerousPatterns
+      ];
+    } else {
+      this.options.dangerousPatterns = this.DEFAULT_DANGEROUS_PATTERNS;
     }
     
-    // Also use the main security logging system
-    logSecurityEvent({
-      type: 'DATABASE_ACTIVITY',
-      action,
-      userId,
-      details
-    });
+    // Register with security fabric
+    securityFabric.registerComponent('databaseSecurity', this);
     
-    // Log to console for development visibility
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DATABASE SECURITY] ${timestamp.toISOString()} - ${action}${userId ? ` (User: ${userId})` : ''}`);
+    console.log('[DATABASE-SECURITY] Database security module initialized');
+  }
+  
+  /**
+   * Create a parameterized query
+   */
+  public createParameterizedQuery(sql: string, params: any[] = [], source?: string): DatabaseQuery {
+    // Determine query type
+    const type = this.determineQueryType(sql);
+    
+    // Create query object
+    const query: DatabaseQuery = {
+      id: crypto.randomUUID(),
+      type,
+      sql,
+      params,
+      source,
+      timestamp: new Date()
+    };
+    
+    // Validate and analyze query
+    if (this.options.enableQueryAnalysis) {
+      this.analyzeQuery(query);
+    }
+    
+    // Log query
+    if (this.options.enableQueryLogging) {
+      this.logQuery(query);
+    }
+    
+    return query;
+  }
+  
+  /**
+   * Determine query type
+   */
+  private determineQueryType(sql: string): QueryType {
+    const upperSql = sql.trim().toUpperCase();
+    
+    if (upperSql.startsWith('SELECT')) return QueryType.SELECT;
+    if (upperSql.startsWith('INSERT')) return QueryType.INSERT;
+    if (upperSql.startsWith('UPDATE')) return QueryType.UPDATE;
+    if (upperSql.startsWith('DELETE')) return QueryType.DELETE;
+    if (upperSql.startsWith('CREATE')) return QueryType.CREATE;
+    if (upperSql.startsWith('DROP')) return QueryType.DROP;
+    if (upperSql.startsWith('ALTER')) return QueryType.ALTER;
+    if (upperSql.startsWith('TRUNCATE')) return QueryType.TRUNCATE;
+    
+    return QueryType.OTHER;
+  }
+  
+  /**
+   * Analyze a query for security issues
+   */
+  private analyzeQuery(query: DatabaseQuery): void {
+    // Check query length
+    if (this.options.maxQueryLength && query.sql.length > this.options.maxQueryLength) {
+      this.handleSecurityViolation(
+        query,
+        'Query exceeds maximum length',
+        SecurityEventSeverity.MEDIUM
+      );
+    }
+    
+    // Check parameter count
+    if (this.options.maxParamCount && query.params.length > this.options.maxParamCount) {
+      this.handleSecurityViolation(
+        query,
+        'Query exceeds maximum parameter count',
+        SecurityEventSeverity.MEDIUM
+      );
+    }
+    
+    // Check if query type is allowed
+    if (
+      this.options.allowedQueryTypes &&
+      !this.options.allowedQueryTypes.includes(query.type)
+    ) {
+      this.handleSecurityViolation(
+        query,
+        `Query type ${query.type} is not allowed`,
+        SecurityEventSeverity.HIGH
+      );
+    }
+    
+    // Check for dangerous patterns
+    if (this.options.dangerousPatterns) {
+      for (const pattern of this.options.dangerousPatterns) {
+        if (pattern.test(query.sql)) {
+          this.handleSecurityViolation(
+            query,
+            `Query contains dangerous pattern: ${pattern}`,
+            SecurityEventSeverity.HIGH
+          );
+          break;
+        }
+      }
+    }
+    
+    // Check for SQL injection patterns in string parameters
+    for (const param of query.params) {
+      if (typeof param === 'string') {
+        const sqlInjectionPatterns = [
+          /'\s*OR\s*['"]/i,
+          /'\s*OR\s*(\d+|true)\s*--/i,
+          /'\s*;\s*[A-Z]/i,
+          /'\s*UNION\s+ALL\s+SELECT/i,
+          /'\s*DROP\s+TABLE/i
+        ];
+        
+        for (const pattern of sqlInjectionPatterns) {
+          if (pattern.test(param)) {
+            this.handleSecurityViolation(
+              query,
+              `Parameter contains potential SQL injection pattern: ${pattern}`,
+              SecurityEventSeverity.HIGH
+            );
+            break;
+          }
+        }
+      }
     }
   }
   
   /**
-   * Retrieve the security audit log
+   * Handle security violation
    */
-  async getSecurityAuditLog(days: number = 7): Promise<AuditLogEntry[]> {
-    try {
-      // Read from the log file
-      if (!fs.existsSync(this.securityLogFile)) {
-        return [];
-      }
-      
-      const logContent = fs.readFileSync(this.securityLogFile, 'utf8');
-      const logLines = logContent.split('\n').filter(line => line.trim() !== '');
-      
-      // Parse each line as JSON
-      const entries: AuditLogEntry[] = logLines.map(line => {
-        try {
-          const entry = JSON.parse(line);
-          entry.timestamp = new Date(entry.timestamp);
-          return entry;
-        } catch (e) {
-          console.error('Error parsing log entry:', e);
-          return null;
-        }
-      }).filter(entry => entry !== null);
-      
-      // Filter by date if days parameter is provided
-      if (days > 0) {
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
-        
-        return entries.filter(entry => entry.timestamp >= cutoffDate);
-      }
-      
-      return entries;
-    } catch (error) {
-      console.error('Error retrieving security audit log:', error);
-      return [];
+  private handleSecurityViolation(
+    query: DatabaseQuery,
+    reason: string,
+    severity: SecurityEventSeverity
+  ): void {
+    // Log security event
+    securityBlockchain.addSecurityEvent({
+      severity,
+      category: SecurityEventCategory.DATABASE_SECURITY as any,
+      message: `Database security violation: ${reason}`,
+      metadata: {
+        queryId: query.id,
+        queryType: query.type,
+        source: query.source
+      },
+      timestamp: new Date()
+    }).catch(error => {
+      console.error('[DATABASE-SECURITY] Error logging security event:', error);
+    });
+    
+    // Emit security event
+    securityFabric.emit('security:database:violation', {
+      queryId: query.id,
+      queryType: query.type,
+      reason,
+      severity,
+      timestamp: new Date()
+    });
+    
+    // Block query if enabled
+    if (this.options.enableQueryBlocking && severity === SecurityEventSeverity.HIGH) {
+      throw new Error(`[DATABASE-SECURITY] Blocked query execution: ${reason}`);
     }
+    
+    // Log warning
+    console.warn(`[DATABASE-SECURITY] Security violation: ${reason}`);
+  }
+  
+  /**
+   * Log a query
+   */
+  private logQuery(query: DatabaseQuery): void {
+    // Add to query history
+    this.queryHistory.unshift(query);
+    
+    // Trim history if needed
+    if (this.queryHistory.length > this.MAX_QUERY_HISTORY) {
+      this.queryHistory = this.queryHistory.slice(0, this.MAX_QUERY_HISTORY);
+    }
+    
+    // Emit query event
+    securityFabric.emit('security:database:query', {
+      queryId: query.id,
+      queryType: query.type,
+      source: query.source,
+      timestamp: new Date()
+    });
+    
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `[DATABASE-SECURITY] Query: ${query.sql}`,
+        'Params:',
+        query.params
+      );
+    }
+  }
+  
+  /**
+   * Execute a query securely
+   */
+  public async executeQuery<T>(
+    db: any,
+    sql: string,
+    params: any[] = [],
+    source?: string
+  ): Promise<T> {
+    // Create parameterized query
+    const query = this.createParameterizedQuery(sql, params, source);
+    
+    try {
+      // Execute query using the provided database connection
+      const startTime = Date.now();
+      const result = await db.query(query.sql, query.params);
+      const endTime = Date.now();
+      
+      // Emit query completion event
+      securityFabric.emit('security:database:query:complete', {
+        queryId: query.id,
+        queryType: query.type,
+        source: query.source,
+        duration: endTime - startTime,
+        timestamp: new Date()
+      });
+      
+      return result as T;
+    } catch (error: any) {
+      // Emit query error event
+      securityFabric.emit('security:database:query:error', {
+        queryId: query.id,
+        queryType: query.type,
+        source: query.source,
+        error: error.message,
+        timestamp: new Date()
+      });
+      
+      // Log error
+      securityBlockchain.addSecurityEvent({
+        severity: SecurityEventSeverity.MEDIUM,
+        category: SecurityEventCategory.DATABASE_ERROR as any,
+        message: `Database query error: ${error.message}`,
+        metadata: {
+          queryId: query.id,
+          queryType: query.type,
+          source: query.source,
+          sql: query.sql,
+          error: error.message
+        },
+        timestamp: new Date()
+      }).catch(logError => {
+        console.error('[DATABASE-SECURITY] Error logging security event:', logError);
+      });
+      
+      throw error;
+    }
+  }
+  
+  /**
+   * Get query history
+   */
+  public getQueryHistory(): DatabaseQuery[] {
+    return [...this.queryHistory];
+  }
+  
+  /**
+   * Clear query history
+   */
+  public clearQueryHistory(): void {
+    this.queryHistory = [];
+  }
+  
+  /**
+   * Sanitize SQL identifier
+   */
+  public sanitizeIdentifier(identifier: string): string {
+    // Remove potential SQL injection characters
+    return identifier.replace(/[^a-zA-Z0-9_]/g, '');
+  }
+  
+  /**
+   * Create a prepared statement
+   */
+  public createPreparedStatement(
+    db: any,
+    sql: string,
+    params: any[] = [],
+    source?: string
+  ): any {
+    // Create parameterized query
+    const query = this.createParameterizedQuery(sql, params, source);
+    
+    // Create prepared statement using the provided database connection
+    return db.prepare(query.sql);
+  }
+  
+  /**
+   * Create IN clause with parameters
+   */
+  public createInClause(values: any[]): { sql: string; params: any[] } {
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    return {
+      sql: `IN (${placeholders})`,
+      params: values
+    };
   }
 }
 
 /**
- * Helper function to calculate a score based on security issues
+ * Global database security instance
  */
-function calculateScore(issues: SecurityIssue[]): number {
-  if (issues.length === 0) {
-    return 100; // Perfect score if no issues
-  }
-  
-  // Count issues by severity
-  const counts = {
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 0
-  };
-  
-  issues.forEach(issue => {
-    counts[issue.severity]++;
-  });
-  
-  // Calculate penalty points (more severe issues have more weight)
-  const penaltyPoints = 
-    counts.critical * 25 +
-    counts.high * 15 +
-    counts.medium * 7 +
-    counts.low * 3;
-  
-  // Calculate score (100 - penalty points, minimum 0)
-  return Math.max(0, 100 - penaltyPoints);
-}
-
-// Create and export singleton instance
 export const databaseSecurity = new DatabaseSecurity();
