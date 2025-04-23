@@ -177,7 +177,7 @@ export const CosmicSidebar: React.FC<CosmicSidebarProps> = ({
 
   // Calculate sidebar width style
   const sidebarWidth = isMobile 
-    ? isOpen ? width : '0px'
+    ? isOpen ? width: 0
     : collapsed ? collapsedWidth : width;
 
   // Calculate content transformations for animations
@@ -204,7 +204,7 @@ export const CosmicSidebar: React.FC<CosmicSidebarProps> = ({
             'md:hidden',
             overlayClassName
           )}
-          style={{ opacity: isOpen ? 1 : 0 }}
+          style={{  opacity: isOpen ? 1 : 0  }}
           onClick={onClose}
         />
       )}
@@ -215,11 +215,11 @@ export const CosmicSidebar: React.FC<CosmicSidebarProps> = ({
           sidebarVariants({ variant, position, animation }),
           className
         )}
-        style={{ 
+        style={{  
           width: sidebarWidth,
           transform: contentTransform,
           opacity: animation === 'fade' ? (isOpen ? 1 : 0) : 1,
-        }}
+         }}
       >
         {/* Sidebar Header */}
         {(header || title || logo) && (

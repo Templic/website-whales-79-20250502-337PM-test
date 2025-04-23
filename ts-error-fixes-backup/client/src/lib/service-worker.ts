@@ -296,7 +296,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
  * @param {any} message The message to send
  * @returns {Promise<void>} Promise that resolves when the message is sent
  */
-export async function sendMessage(message: any): Promise<void> {
+export async function sendMessage(message$2: Promise<void> {
   if (!navigator.serviceWorker.controller) {
     throw new Error('No active Service Worker');
   }

@@ -41,7 +41,7 @@ type TwoFactorForm = z.infer<typeof twoFactorSchema>;
 type BackupCodeForm = z.infer<typeof backupCodeSchema>;
 
 interface TwoFactorAuthProps {
-  onSuccess?: (userData: any) => void;
+  onSuccess?: (userData$2 => void;
   onCancel?: () => void;
 }
 

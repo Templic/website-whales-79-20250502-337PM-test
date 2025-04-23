@@ -518,8 +518,8 @@ export const CosmicMediaPlayer: React.FC<CosmicMediaPlayerProps> = ({
               <div className="absolute inset-0 flex items-center justify-center">
                 <canvas 
                   ref={canvasRef} 
-                  width="300" 
-                  height="300"
+                  width={300} 
+                  height={300}
                   className="absolute inset-0 w-full h-full opacity-70"
                 />
               </div>
@@ -645,7 +645,7 @@ export const CosmicMediaPlayer: React.FC<CosmicMediaPlayerProps> = ({
                 <input
                   type="range"
                   min="0"
-                  max="1"
+                  max={1}
                   step="0.01"
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}

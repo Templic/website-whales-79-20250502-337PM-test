@@ -270,8 +270,7 @@ export const AdvancedSearchComponent: React.FC<AdvancedSearchComponentProps> = (
   const updateFilter = <T extends keyof AdvancedFilters, K extends keyof AdvancedFilters[T]>(
     category: T, 
     key: K, 
-    value: any
-  ) => {
+    value$2 => {
     setFilters(prev => ({
       ...prev,
       [category]: {

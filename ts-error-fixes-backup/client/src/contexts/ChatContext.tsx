@@ -102,7 +102,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedMessages = savedMessages ? JSON.parse(savedMessages) : [];
       
       // Convert string timestamps back to Date objects
-      return parsedMessages.map((msg: any) => ({
+      return parsedMessages.map((msg$2 => ({
         ...msg,
         timestamp: new Date(msg.timestamp)
       }));

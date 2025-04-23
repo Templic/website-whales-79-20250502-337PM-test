@@ -12,7 +12,7 @@ export function ProtectedRoute({
 }: {
   path: string;
   component?: () => React.JSX.Element;
-  children?: (params: any) => React.ReactNode;
+  children?: (params$2 => React.ReactNode;
 }) {
   const { user, isLoading } = useAuth();
 

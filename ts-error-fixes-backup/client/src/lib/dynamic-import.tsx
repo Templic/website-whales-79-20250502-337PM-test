@@ -129,7 +129,7 @@ export function createSplitPoint<T>(
       let mounted = true;
 
       importFunc()
-        .then((module: any) => {
+        .then((module$2 => {
           if (!mounted) return;
           const Component = module.default || module;
           setComponent(() => Component);

@@ -248,7 +248,7 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }
       });
       
       return true;
-    } catch (error: any) {
+    } catch (error$2 {
       toast({
         title: "Login failed",
         description: error.response?.data?.message || "Authentication failed. Please check your credentials.",

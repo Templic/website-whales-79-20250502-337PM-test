@@ -469,7 +469,7 @@ const CommunitySuggestionsSearchComponent: React.FC<CommunitySuggestionsSearchCo
                 Community Suggestions
               </div>
               <ul>
-                {previewResults.slice(0, 3).map((suggestion: any) => (
+                {previewResults.slice(0, 3).map((suggestion$2 => (
                   <li key={suggestion.id}>
                     <a
                       href={isAdminView ? `/admin/community/suggestions/${suggestion.id}` : `/community/suggestions/${suggestion.id}`}

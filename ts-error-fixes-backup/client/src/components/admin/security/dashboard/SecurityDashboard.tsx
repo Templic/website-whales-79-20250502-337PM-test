@@ -130,7 +130,7 @@ export default function SecurityDashboard() {
         refetchBlocks();
       }, 5000);
     },
-    onError: (error: any) => {
+    onError: (error$2 => {
       toast({
         title: 'Scan Failed',
         description: `Failed to initiate security scan: ${error.message}`,

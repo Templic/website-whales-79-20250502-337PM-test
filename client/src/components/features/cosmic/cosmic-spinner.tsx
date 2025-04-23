@@ -4,7 +4,7 @@
  * Component Type: common
  * Migrated as part of the repository reorganization.
  */
-import * as React from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 export interface CosmicSpinnerProps extends React.HTMLAttributes<HTMLDivElement> {

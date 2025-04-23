@@ -151,7 +151,7 @@ export default function AuthPage() {
         window.location.href = '/';
       }
     },
-    onError: (error: any) => {
+    onError: (error$2 => {
       // Handle login error
       console.error('Login failed:', error);
       
@@ -196,7 +196,7 @@ export default function AuthPage() {
     setPasswordStrength(calculatePasswordStrength(password));
   };
 
-  const handle2FASuccess = (userData: any) => {
+  const handle2FASuccess = (userData$2 => {
     // The user is now fully authenticated
     console.log("2FA verification successful", userData);
     

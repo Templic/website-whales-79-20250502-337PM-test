@@ -121,7 +121,7 @@ export function VoiceControlledPlayer({
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event$2 => {
         console.error("Speech recognition error:", event.error)
         if (event.error === "not-allowed") {
           setShowError(true)
@@ -130,9 +130,9 @@ export function VoiceControlledPlayer({
         }
       }
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event$2 => {
         const transcript = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result$2 => result[0].transcript)
           .join("")
           .toLowerCase()
           .trim()

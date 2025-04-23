@@ -53,7 +53,7 @@ export default function MusicReleasePage() {
     }
   };
 
-  const handleTrackSelect = (track: any) => {
+  const handleTrackSelect = (track$2 => {
     // Navigate to the specific track detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

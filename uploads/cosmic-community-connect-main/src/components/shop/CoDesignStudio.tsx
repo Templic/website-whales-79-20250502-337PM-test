@@ -72,7 +72,7 @@ const ShapeSelector = ({ onAddShape }) => {
           className="p-2 border border-cosmic-primary/30 rounded hover:bg-cosmic-primary/10"
           onClick={() => onAddShape(shape.path)}
         >
-          <svg width="40" height="40" viewBox="0 0 100 100" className="pointer-events-none">
+          <svg width={40} height={40} viewBox="0 0 100 100" className="pointer-events-none">
             <path d={shape.path} fill="var(--cosmic-primary)" className="pointer-events-none" />
           </svg>
           <p className="text-xs mt-1 relative z-10">{shape.name}</p>

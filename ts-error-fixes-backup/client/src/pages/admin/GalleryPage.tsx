@@ -127,7 +127,7 @@ export default function GalleryPage() {
 
   // Create gallery mutation
   const createGalleryMutation = useMutation({
-    mutationFn: async (galleryData: any) => {
+    mutationFn: async (galleryData$2 => {
       const res = await fetch('/api/galleries', {
         method: 'POST',
         headers: {

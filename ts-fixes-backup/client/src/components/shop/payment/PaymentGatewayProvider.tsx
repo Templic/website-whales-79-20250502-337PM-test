@@ -95,7 +95,7 @@ export function PaymentGatewayProvider({
       } else {
         throw new Error(response.data.message || 'Failed to create payment intent');
       }
-    } catch (err: any) {
+    } catch (err$2 {
       const errorMsg = err.response?.data?.message || err.message || 'An error occurred';
       setError(errorMsg);
       return null;

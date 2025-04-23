@@ -36,7 +36,7 @@ interface CollectionItem {
 
 // Props interface
 interface CosmicCollectiblesProps {
-  onAddToCart?: (product: any) => void;
+  onAddToCart?: (product$2 => void;
   userPoints?: number;
 }
 
@@ -181,7 +181,7 @@ const CosmicCollectibles: React.FC<CosmicCollectiblesProps> = ({ onAddToCart, us
 };
 
 // Card component for collection items with elliptical image container
-const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product: any) => void }> = ({ item, onAddToCart }) => {
+const CollectibleCard: React.FC<{ item: CollectionItem, onAddToCart?: (product$2 => void }> = ({ item, onAddToCart }) => {
   return (
     <Card className="cosmic-glass-card overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-primary/20">
       <div className="p-4 flex flex-col items-center">

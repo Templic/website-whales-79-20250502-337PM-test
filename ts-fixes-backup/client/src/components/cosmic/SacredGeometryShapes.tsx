@@ -669,8 +669,8 @@ export const PlatonicsolidsSvg: React.FC<GeometryShapeProps> = ({
           <rect
             x="175"
             y="175"
-            width="150"
-            height="150"
+            width={150}
+            height={150}
             fill={colorScheme}
             fillOpacity={fillOpacity}
             stroke={colorScheme}

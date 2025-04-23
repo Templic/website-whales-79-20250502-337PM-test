@@ -214,7 +214,7 @@ export default function UserSearchComponent({
             >
               <Command className="rounded-lg border-0">
                 <div className="px-3 pt-3 pb-1">
-                  <Tabs defaultValue={searchFilter} onValueChange={(v: any) => setSearchFilter(v)} className="w-full">
+                  <Tabs defaultValue={searchFilter} onValueChange={(v$2 => setSearchFilter(v)} className="w-full">
                     <TabsList className="grid grid-cols-4 w-full">
                       <TabsTrigger value="all" className="text-xs">
                         All

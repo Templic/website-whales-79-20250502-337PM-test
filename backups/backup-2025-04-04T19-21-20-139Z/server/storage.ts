@@ -1,6 +1,6 @@
 declare module 'connect-pg-simple' {
   import session from 'express-session';
-  export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
+  export default function connectPgSimple(session: typeof import('express-session')): new (options$2 => session.Store;
 }
 
 import { type Subscriber, type InsertSubscriber, type Post, type InsertPost, type Category, type InsertCategory, type Comment, type InsertComment, type User, type InsertUser, type Track, type Album, type Newsletter, type InsertNewsletter, subscribers, posts, categories, comments, users, tracks, albums, newsletters } from "@shared/schema";
@@ -75,14 +75,14 @@ export interface IStorage {
   // Session management methods
   cleanupExpiredSessions(): Promise<void>;
   getSessionAnalytics(userId: number): Promise<any>;
-  updateSessionActivity(sessionId: string, data: any): Promise<void>;
+  updateSessionActivity(sessionId: string, data$2: Promise<void>;
 
   // Advanced admin methods
   updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User>;
   banUser(userId: number): Promise<void>;
   unbanUser(userId: number): Promise<void>;
   getSystemSettings(): Promise<any>;
-  updateSystemSettings(settings: any): Promise<void>;
+  updateSystemSettings(settings$2: Promise<void>;
   getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any>;
   getUserActivity(userId: number): Promise<any>;
 }
@@ -119,7 +119,7 @@ export class PostgresStorage implements IStorage {
     try {
       const [newUser] = await db.insert(users).values(user).returning();
       return newUser;
-    } catch (error: any) {
+    } catch (error$2 {
       console.error("Error creating user:", error);
       if (error.code === '23505') { // PostgreSQL unique constraint violation
         if (error.constraint?.includes('email')) {
@@ -409,7 +409,7 @@ export class PostgresStorage implements IStorage {
   }
 
   async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
-    file: any, 
+    file$2 
     targetPage: string,
     uploadedBy: number,
     userRole: 'admin' | 'super_admin'
@@ -721,7 +721,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async updateSessionActivity(sessionId: string, data: any): Promise<void> {
+  async updateSessionActivity(sessionId: string, data$2: Promise<void> {
     try {
       await db.execute(sql`
         UPDATE "session"
@@ -794,7 +794,7 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async updateSystemSettings(settings: any): Promise<void> {
+  async updateSystemSettings(settings$2: Promise<void> {
     try {
       await db.execute(sql`
         INSERT INTO system_settings ${sql.raw(Object.keys(settings).join(', '))}
@@ -879,7 +879,7 @@ export class PostgresStorage implements IStorage {
         super_admin: 0
       };
 
-      userRolesResult.rows.forEach((row: any) => {
+      userRolesResult.rows.forEach((row$2 => {
         if (row.role && userRolesDistribution.hasOwnProperty(row.role)) {
           userRolesDistribution[row.role as keyof typeof userRolesDistribution] = parseInt(row.count);
         }
@@ -900,7 +900,7 @@ export class PostgresStorage implements IStorage {
       const months: string[] = [];
       const activeUsersOverTime: number[] = [];
 
-      userActivityData.rows.forEach((row: any) => {
+      userActivityData.rows.forEach((row$2 => {
         months.push(row.month);
         activeUsersOverTime.push(parseInt(row.count));
       });

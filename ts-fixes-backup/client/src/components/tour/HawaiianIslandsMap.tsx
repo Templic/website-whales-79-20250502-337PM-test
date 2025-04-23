@@ -228,7 +228,7 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
               <text 
                 x="0" 
                 y="4" 
-                fontSize="2" 
+                fontSize={2} 
                 fill="#fff" 
                 textAnchor="middle" 
                 className="pointer-events-none"

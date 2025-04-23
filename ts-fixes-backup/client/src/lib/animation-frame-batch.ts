@@ -170,7 +170,7 @@ class AnimationFrameBatch {
    */
   createReadWriteSequence(
     measure: () => any, 
-    mutate: (measureResult: any) => void
+    mutate: (measureResult$2 => void
   ): () => void {
     return () => {
       this.add(() => {
@@ -223,7 +223,7 @@ export function useAnimationFrameThrottled(
  */
 export function useReadWriteSequence(
   measure: () => any,
-  mutate: (measureResult: any) => void
+  mutate: (measureResult$2 => void
 ) {
   const measureRef = useRef(measure);
   const mutateRef = useRef(mutate);

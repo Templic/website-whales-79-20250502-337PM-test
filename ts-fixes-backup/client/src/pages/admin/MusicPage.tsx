@@ -42,7 +42,7 @@ export default function MusicPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tracks?.map((track: any) => (
+              {tracks?.map((track$2 => (
                 <TableRow key={track.id}>
                   <TableCell>{track.title}</TableCell>
                   <TableCell>{track.artist}</TableCell>

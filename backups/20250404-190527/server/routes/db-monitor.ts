@@ -14,7 +14,7 @@ const formatSize = (bytes: number): string => {
 };
 
 // GET /api/admin/db-monitor/status - Get database status information
-router.get('/status', async (req: any, res) => {
+router.get('/status', async (req$2 res) => {
   try {
     // We'll rely on the middleware auth check in routes.ts instead of checking here
     // This endpoint should only be accessible to authenticated admin users
@@ -106,7 +106,7 @@ router.get('/status', async (req: any, res) => {
 });
 
 // POST /api/admin/db-monitor/maintenance/:task - Trigger maintenance task
-router.post('/maintenance/:task', async (req: any, res) => {
+router.post('/maintenance/:task', async (req$2 res) => {
   try {
     // Super admin check can happen here since this is more restrictive than the middleware check
     if (req.user?.role !== 'super_admin') {

@@ -417,7 +417,7 @@ const NewsletterSearchComponent: React.FC<NewsletterSearchComponentProps> = ({
                 Newsletters
               </div>
               <ul>
-                {previewResults.slice(0, 3).map((newsletter: any) => (
+                {previewResults.slice(0, 3).map((newsletter$2 => (
                   <li key={newsletter.id}>
                     <a
                       href={isAdminView ? `/admin/newsletters/${newsletter.id}` : `/newsletters/${newsletter.id}`}

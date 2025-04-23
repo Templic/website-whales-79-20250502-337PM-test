@@ -297,7 +297,7 @@ const BlogSearchComponent: React.FC<BlogSearchComponentProps> = ({
           </Card>
         ) : data?.results?.length > 0 ? (
           <div className="space-y-4">
-            {data.results.map((post: any) => (
+            {data.results.map((post$2 => (
               <Card key={post.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <div className="md:flex">
                   {post.featuredImage && (

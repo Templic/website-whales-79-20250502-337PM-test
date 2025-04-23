@@ -133,7 +133,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             <circle cx="100" cy="100" r="5" fill={color} />
             
             {/* Outer square */}
-            <rect x="40" y="40" width="120" height="120" stroke={color} strokeWidth={strokeWidth} />
+            <rect x="40" y="40" width={120} height={120} stroke={color} strokeWidth={strokeWidth} />
             
             {/* Circles */}
             <circle cx="100" cy="100" r="60" stroke={color} strokeWidth={strokeWidth} />

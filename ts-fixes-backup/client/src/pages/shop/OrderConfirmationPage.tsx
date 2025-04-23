@@ -467,13 +467,13 @@ export default function OrderConfirmationPage() {
 }
 
 // Additional icons for the order confirmation page
-function Package(props: any) {
+function Package(props$2 {
   return (
     <svg
       {...props}
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width={24}
+      height={24}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -489,13 +489,13 @@ function Package(props: any) {
   )
 }
 
-function Truck(props: any) {
+function Truck(props$2 {
   return (
     <svg
       {...props}
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width={24}
+      height={24}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

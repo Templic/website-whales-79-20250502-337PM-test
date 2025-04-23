@@ -25,7 +25,7 @@ interface CryptoPaymentProps {
   amount: number;
   currency: string;
   onPaymentSuccess: (paymentId: string) => Promise<void>;
-  onPaymentError?: (error: any) => void;
+  onPaymentError?: (error$2 => void;
 }
 
 /**
@@ -74,7 +74,7 @@ export default function CryptoPayment({
         } else {
           setError(response.error || 'Failed to initialize cryptocurrency payment');
         }
-      } catch (err: any) {
+      } catch (err$2 {
         setError(err.message || 'An error occurred while setting up the payment');
         
         if (onPaymentError) {
@@ -211,7 +211,7 @@ function getGatewayInfo(gateway: PaymentGatewayType) {
       return {
         name: 'BitPay',
         icon: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="24" height="24" rx="12" fill="#0e3b5e" />
+          <rect width={24} height={24} rx="12" fill="#0e3b5e" />
           <path d="M17.5 8.5L14 12l3.5 3.5M6.5 8.5L10 12l-3.5 3.5" stroke="white" strokeWidth="2" />
         </svg>,
         currencies: ['BTC', 'ETH', 'BCH', 'XRP']
@@ -220,7 +220,7 @@ function getGatewayInfo(gateway: PaymentGatewayType) {
       return {
         name: 'Coinbase Commerce',
         icon: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="24" height="24" rx="12" fill="#0052ff" />
+          <rect width={24} height={24} rx="12" fill="#0052ff" />
           <path d="M12 6v12M6 12h12" stroke="white" strokeWidth="2" />
         </svg>,
         currencies: ['BTC', 'ETH', 'USDC', 'DAI']
@@ -229,7 +229,7 @@ function getGatewayInfo(gateway: PaymentGatewayType) {
       return {
         name: 'OpenNode',
         icon: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="24" height="24" rx="12" fill="#f7931a" />
+          <rect width={24} height={24} rx="12" fill="#f7931a" />
           <path d="M17 8H7l5 4-5 4h10" stroke="white" strokeWidth="2" />
         </svg>,
         currencies: ['BTC', 'Lightning Network']
@@ -238,7 +238,7 @@ function getGatewayInfo(gateway: PaymentGatewayType) {
       return {
         name: 'Cryptocurrency',
         icon: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="24" height="24" rx="12" fill="#333" />
+          <rect width={24} height={24} rx="12" fill="#333" />
           <path d="M12 6v12M6 12h12" stroke="white" strokeWidth="2" />
         </svg>,
         currencies: ['BTC', 'ETH']

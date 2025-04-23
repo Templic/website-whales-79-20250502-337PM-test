@@ -114,7 +114,7 @@ export function VoiceControlledPlayer({
       recognitionRef.current.interimResults = true
       recognitionRef.current.lang = "en-US"
 
-      recognitionRef.current.onresult = (event: any) => {
+      recognitionRef.current.onresult = (event$2 => {
         const result = event.results[event.results.length - 1]
         const transcript = result[0].transcript.toLowerCase().trim()
 
@@ -135,7 +135,7 @@ export function VoiceControlledPlayer({
         }
       }
 
-      recognitionRef.current.onerror = (event: any) => {
+      recognitionRef.current.onerror = (event$2 => {
         console.error("Speech recognition error", event.error)
         setIsListening(false)
       }

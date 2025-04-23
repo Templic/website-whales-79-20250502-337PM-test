@@ -157,8 +157,8 @@ export function AccessibilityControls() {
       const skipLinksContainer = document.getElementById('skip-links-container') || document.createElement('div');
       skipLinksContainer.id = 'skip-links-container';
       skipLinksContainer.style.position = 'absolute';
-      skipLinksContainer.style.top = '0';
-      skipLinksContainer.style.left = '0';
+      skipLinksContainer.style.top={0};
+      skipLinksContainer.style.left={0};
       skipLinksContainer.style.zIndex = '9999';
       
       if (!document.getElementById('skip-links-container')) {

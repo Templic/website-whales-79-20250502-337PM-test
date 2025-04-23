@@ -170,7 +170,7 @@ export default function SecurityDashboardPage() {
   }, [eventCategory, eventType, timeRange]);
 
   // Handle config changes
-  const handleConfigChange = (path: string, value: any) => {
+  const handleConfigChange = (path: string, value$2 => {
     const newConfig = { ...securityConfig };
     
     // Handle nested properties

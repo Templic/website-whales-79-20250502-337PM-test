@@ -1,0 +1,24 @@
+/**
+ * Extension for Express types
+ */
+
+import { Response } from 'express';
+
+// Add TypedResponse to fix express response typing issues
+declare global {
+  namespace Express {
+    interface TypedResponse<T> extends Response {
+      json(body: T): TypedResponse<T>;
+      status(code: number): TypedResponse<T>;
+      send(body: T): TypedResponse<T>;
+    }
+  }
+}
+
+// Extend the Request type
+declare module 'express-serve-static-core' {
+  interface Request {
+    csrfToken(): string;
+    user?: any;
+  }
+}

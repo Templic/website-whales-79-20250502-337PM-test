@@ -57,7 +57,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: any) {
+    } catch (err$2 {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to generate key pair');
       console.error('Key generation error:', err);
@@ -85,7 +85,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: any) {
+    } catch (err$2 {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to encrypt data');
       console.error('Encryption error:', err);
@@ -113,7 +113,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: any) {
+    } catch (err$2 {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to decrypt data');
       console.error('Decryption error:', err);

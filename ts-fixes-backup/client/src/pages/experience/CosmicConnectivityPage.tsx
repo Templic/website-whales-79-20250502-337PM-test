@@ -66,7 +66,7 @@ export default function CosmicConnectivityPage() {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAudioError = (err: any) => {
+  const handleAudioError = (err$2 => {
     console.error('Audio playback failed:', err);
     setError('Failed to play audio. Please try again.');
   };

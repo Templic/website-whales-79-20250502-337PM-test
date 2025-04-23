@@ -179,7 +179,7 @@ class MockSocketConnection {
     }
   }
   
-  emit(event: string, data: any) {
+  emit(event: string, data$2 {
     if (this.callbacks[event]) {
       this.callbacks[event].forEach(callback => {
         setTimeout(() => {
@@ -213,7 +213,7 @@ export const CollaborativeShoppingRoom = ({
       setIsConnected(true);
     };
     
-    const handleRoomJoined = (data: any) => {
+    const handleRoomJoined = (data$2 => {
       if (data.roomId === roomId) {
         setMessages(data.messages);
         setParticipants(data.participants);
@@ -221,13 +221,13 @@ export const CollaborativeShoppingRoom = ({
       }
     };
     
-    const handleRoomUpdated = (data: any) => {
+    const handleRoomUpdated = (data$2 => {
       if (data.roomId === roomId) {
         setParticipants(data.participants);
       }
     };
     
-    const handleRoomMessage = (data: any) => {
+    const handleRoomMessage = (data$2 => {
       if (data.roomId === roomId) {
         setMessages(data.messages);
       }

@@ -56,7 +56,7 @@ export interface PerformanceProfilerProps {
   /** Whether to log metrics to console */
   logToConsole?: boolean;
   /** Custom metrics callback */
-  onMetrics?: (metrics: any) => void;
+  onMetrics?: (metrics$2 => void;
   /** Whether to show a visual indicator */
   showVisualIndicator?: boolean;
 }

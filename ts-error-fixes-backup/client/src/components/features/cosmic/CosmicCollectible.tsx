@@ -10,7 +10,7 @@ import { Sparkles, Disc, Star, Music, ShoppingCart, Gift, ArrowRight } from "luc
 import { cn } from "../../../lib/utils"
 import { CosmicCard } from "./CosmicCard"
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton"
-import { Button } from "../../../components/ui/button"
+import { Button } from "@/components/ui/button"
 
 
 interface CollectibleAttribute {

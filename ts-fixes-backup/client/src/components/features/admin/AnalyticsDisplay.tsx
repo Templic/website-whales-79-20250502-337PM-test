@@ -335,7 +335,7 @@ export function AnalyticsDisplay({
                 </div>
               ) : contentAnalytics?.expiringContent && contentAnalytics.expiringContent.length > 0 ? (
                 <div className="space-y-2">
-                  {contentAnalytics.expiringContent.map((item: any, index: number) => (
+                  {contentAnalytics.expiringContent.map((item$2 index: number) => (
                     <div 
                       key={index} 
                       className="flex justify-between items-center border-b pb-2"

@@ -164,7 +164,7 @@ export default function VoiceCommands({
       });
     };
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event$2 => {
       const transcript = event.results[0][0].transcript;
       console.log(`Voice command detected: ${transcript}`);
       processVoiceCommand(transcript);
@@ -174,7 +174,7 @@ export default function VoiceCommands({
       setIsListening(false);
     };
 
-    recognition.onerror = (event: any) => {
+    recognition.onerror = (event$2 => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
       toast({

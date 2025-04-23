@@ -1,0 +1,1 @@
+<input className="w-full bg-black/30 text-white placeholder:text-gray-400 border border-cyan-500/20 rounded-lg px-4 py-2 focus:outline-none focus:border-cyan-500/50 backdrop-blur-sm"

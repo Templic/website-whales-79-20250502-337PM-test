@@ -506,7 +506,7 @@ export function BinauralBeatGenerator({
   /**
    * Apply preset
    */
-  const applyPreset = useCallback((preset: any) => {
+  const applyPreset = useCallback((preset$2 => {
     setLeftFreq(preset.leftFreq)
     setRightFreq(preset.rightFreq)
     setWaveType(preset.waveType)
@@ -795,8 +795,8 @@ export function BinauralBeatGenerator({
                       <canvas
                         ref={canvasRef}
                         className="absolute top-0 left-0 w-full h-full opacity-0"
-                        width="320"
-                        height="240"
+                        width={320}
+                        height={240}
                       />
                       
                       {heartRate && (

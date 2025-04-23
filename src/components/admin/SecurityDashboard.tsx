@@ -148,7 +148,7 @@ const SecurityDashboard: React.FC = () => {
       if (scanResponse.data && scanResponse.data.result) {
         setScanResults(scanResponse.data.result);
       }
-    } catch (err: Error) {
+    } catch (err: unknown) {
       console.error('Error fetching security data:', err);
       setError('Failed to fetch security data. You may not have sufficient permissions.');
     } finally {
@@ -179,7 +179,7 @@ const SecurityDashboard: React.FC = () => {
       // Log to console for development
       console.log(`Setting ${key} toggled from ${currentValue} to ${!currentValue}`);
       
-    } catch (err: Error) {
+    } catch (err: unknown) {
       console.error('Error updating security setting:', err);
       setError('Failed to update security setting. You may not have sufficient permissions.');
     }
@@ -192,7 +192,7 @@ const SecurityDashboard: React.FC = () => {
       if (response.data && response.data.result) {
         setScanResults(response.data.result);
       }
-    } catch (err: Error) {
+    } catch (err: unknown) {
       console.error('Error running security scan:', err);
       setError('Failed to run security scan. You may not have sufficient permissions.');
     } finally {
