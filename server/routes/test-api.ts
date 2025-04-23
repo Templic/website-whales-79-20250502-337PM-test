@@ -9,9 +9,13 @@ import express, { Request, Response } from 'express';
 import * as qrc from '../security/advanced/quantum/QuantumResistantCrypto';
 import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import { bypassCsrfForTesting } from '../security/middleware/bypassCsrfForTesting';
 
-// Create a router with no CSRF protection
+// Create a router
 const router = express.Router();
+
+// Apply CSRF bypass middleware for all routes in this router
+router.use(bypassCsrfForTesting());
 
 /**
  * Test endpoint for quantum key generation

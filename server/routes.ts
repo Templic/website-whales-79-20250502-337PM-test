@@ -2039,12 +2039,23 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/test', testSecurityRouter);
   
   // Import test API routes (these bypass CSRF protection for testing)
+  // These routes are explicitly mounted WITHOUT any CSRF protection
   import('./routes/test-api').then(module => {
     const testApiRoutes = module.default;
     // Test-only routes that bypass CSRF (only active in non-production)
     if (process.env.NODE_ENV !== 'production') {
+      // Create a special router just for test routes
+      const testRouter = express.Router();
+      
+      // Disable CSRF specifically for this router before mounting the routes
       console.log('[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection');
-      app.use('/api/test-only', testApiRoutes);
+      
+      // This is our top-level CSRF exemption setting
+      app.use('/api/test-only', (req, res, next) => {
+        // Mark the route as exempt from CSRF checks
+        req.csrfToken = () => 'test-only-csrf-bypass-token';
+        next();
+      }, testApiRoutes);
     }
   }).catch(error => {
     console.error('Failed to load test API routes:', error);
