@@ -40,6 +40,7 @@ import EnhancedAnalyticsPage from "@/pages/admin/EnhancedAnalyticsPage";
 import SecuritySettingsPage from "@/pages/admin/SecuritySettingsPage";
 import SecurityAlertsPage from "@/pages/admin/SecurityAlertsPage";
 import SecurityDashboardPage from "@/pages/SecurityDashboardPage";
+import SecurityTestPage from "@/pages/SecurityTestPage";
 import RoleManagementPage from "@/pages/admin/RoleManagementPage";
 import UserActivityPage from "@/pages/admin/UserActivityPage";
 import ContentSchedulerPage from "@/pages/admin/ContentSchedulerPage";
