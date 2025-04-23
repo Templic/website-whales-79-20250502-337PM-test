@@ -8,8 +8,9 @@
 
 import crypto from 'crypto';
 import { createHash, randomBytes } from 'crypto';
-import { logSecurityEvent } from '../../security';
-import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
+import { logSecurityEvent } from '../../securityController';
+// Using the event format defined in securityController
+import type { SecurityEventData } from '../../securityController';
 
 /**
  * Quantum-resistant algorithm types
@@ -123,10 +124,9 @@ class QuantumResistantCrypto {
     // Log initialization
     if (this.config.logOperations) {
       logSecurityEvent({
-        severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.QUANTUM_CRYPTO,
-        title: 'Quantum-Resistant Cryptography Module Initialized',
-        description: `Initialized with default algorithm: ${this.config.defaultAlgorithm}, security level: ${this.config.defaultSecurityLevel}`
+        type: 'SECURITY_SETTING_CHANGED',
+        severity: 'low',
+        details: `Quantum-Resistant Cryptography Module Initialized with default algorithm: ${this.config.defaultAlgorithm}, security level: ${this.config.defaultSecurityLevel}`
       });
     }
   }
@@ -142,10 +142,9 @@ class QuantumResistantCrypto {
     // Log operation
     if (this.config.logOperations) {
       logSecurityEvent({
-        severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.QUANTUM_CRYPTO,
-        title: 'Quantum-Resistant Key Pair Generated',
-        description: `Generated key pair using algorithm: ${algorithm}, type: ${keyType}, security level: ${securityLevel}`
+        type: 'SECURITY_SETTING_CHANGED',
+        severity: 'low',
+        details: `Quantum-Resistant Key Pair Generated using algorithm: ${algorithm}, type: ${keyType}, security level: ${securityLevel}`
       });
     }
     
@@ -208,10 +207,9 @@ class QuantumResistantCrypto {
     // Log operation
     if (this.config.logOperations) {
       logSecurityEvent({
-        severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.QUANTUM_CRYPTO,
-        title: 'Quantum-Resistant Encryption Performed',
-        description: `Encrypted data using algorithm: ${algorithm}`
+        type: 'SECURITY_SETTING_CHANGED',
+        severity: 'low',
+        details: `Quantum-Resistant Encryption Performed using algorithm: ${algorithm}`
       });
     }
     
@@ -258,10 +256,9 @@ class QuantumResistantCrypto {
     // Log operation
     if (this.config.logOperations) {
       logSecurityEvent({
-        severity: SecurityEventSeverity.INFO,
-        category: SecurityEventCategory.QUANTUM_CRYPTO,
-        title: 'Quantum-Resistant Decryption Performed',
-        description: `Decrypted data using algorithm: ${algorithm}`
+        type: 'SECURITY_SETTING_CHANGED',
+        severity: 'low',
+        details: `Quantum-Resistant Decryption Performed using algorithm: ${algorithm}`
       });
     }
     

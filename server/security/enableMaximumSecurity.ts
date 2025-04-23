@@ -13,6 +13,7 @@ import { anomalyDetectionMiddleware } from './advanced/ml/AnomalyDetection';
 import { securityFabric } from './advanced/SecurityFabric';
 import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
+import { createQuantumResistantMiddleware, createPublicKeyEndpointMiddleware } from './advanced/quantum/QuantumResistantMiddleware';
 
 /**
  * Maximum security options
@@ -89,6 +90,33 @@ export function enableMaximumSecurity(app: Express, options: MaximumSecurityOpti
     blockchainLogging: true,
     performanceImpactWarnings: true
   }));
+  
+  // Apply quantum-resistant middleware for sensitive data protection
+  app.use(createQuantumResistantMiddleware({
+    encryptResponses: true,
+    verifyRequestSignatures: true,
+    protectedPaths: [
+      '/api/user',
+      '/api/auth',
+      '/api/security',
+      '/api/payment',
+      '/api/admin'
+    ],
+    exemptPaths: excludePaths,
+    bypassInDevelopment: process.env.NODE_ENV === 'development',
+    sensitiveResponseFields: [
+      'password',
+      'token',
+      'key',
+      'secret',
+      'ssn',
+      'creditCard',
+      'bankAccount'
+    ]
+  }));
+  
+  // Add endpoint to provide the server's quantum-resistant public key
+  app.get('/api/security/quantum-key', createPublicKeyEndpointMiddleware());
   
   // Log maximum security enablement
   securityBlockchain.recordEvent({

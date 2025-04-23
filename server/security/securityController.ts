@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from 'express';
 import { asyncHandler } from '../middleware/errorHandler';
-import { scanProject, SecurityScanResult } from '../securityScan';
+import { forceSecurityScan } from '../securityScan';
 import { 
   detectSecurityPackages, 
   detectCommonSecurityIssues, 
@@ -352,7 +352,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
   
   try {
     // Run the security scan
-    const scanResults = await scanProject();
+    const scanResults = await forceSecurityScan();
     
     // Enhance with additional security package information
     const packageInfo = await detectSecurityPackages();

@@ -1,0 +1,18 @@
+{
+  "enforceStrictTransportSecurity": true,
+  "enableContentSecurityPolicy": true,
+  "enableRateLimiting": true,
+  "enableCSRFProtection": true,
+  "enableSQLInjectionProtection": true,
+  "enableXSSProtection": true,
+  "enableSecurityHeaders": true,
+  "enableSanitization": true,
+  "logSecurityEvents": true,
+  "autoRunSecurityScans": true,
+  "preventCredentialExposure": true,
+  "requireStrongPasswords": true,
+  "lockAccountAfterFailedAttempts": true,
+  "requireMFA": false,
+  "sessionTimeout": 60,
+  "passwordExpiryDays": 90
+}
