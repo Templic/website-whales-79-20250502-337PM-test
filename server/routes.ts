@@ -594,12 +594,25 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Check if email exists in subscribers
+  // Check if email exists in subscribers - with validation
   app.get("/api/subscribers/check/:email", async (req, res) => {
     try {
-      const subscriber = await storage.findSubscriberByEmail(req.params.email);
+      // Validate email format
+      const email = req.params.email;
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          message: "Invalid email format",
+          exists: false
+        });
+      }
+      
+      // Use the ORM's parameterized query to prevent SQL injection
+      const subscriber = await storage.findSubscriberByEmail(email);
       res.json({ exists: !!subscriber });
     } catch (error) {
+      console.error("Error checking subscriber:", error);
       res.status(500).json({ message: "Error checking subscriber" });
     }
   });
