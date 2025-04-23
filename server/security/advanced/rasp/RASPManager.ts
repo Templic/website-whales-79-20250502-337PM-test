@@ -9,6 +9,7 @@ import * as express from 'express';
 import * as crypto from 'crypto';
 import { securityFabric } from '../SecurityFabric';
 import { SecurityEventSeverity, SecurityEventCategory, securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { z, ZodError } from 'zod';
 
 /**
  * RASP protection level
@@ -588,7 +589,7 @@ export class RASPManager {
       return;
     }
     
-    const { method, path, headers, request } = context;
+    const { method, path, headers, request, body, query } = context;
     
     // Check for missing API security headers
     if (path.startsWith('/api/')) {
