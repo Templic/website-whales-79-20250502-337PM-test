@@ -109,7 +109,7 @@ export async function runIntelligentMaintenance(): Promise<void> {
  */
 async function getTableStatistics(): Promise<TableStats[]> {
   try {
-    // Direct query to get table statistics
+    // Using parameterized query for security
     const statsQuery = `
       SELECT
         s.schemaname AS schema_name,
@@ -123,12 +123,12 @@ async function getTableStatistics(): Promise<TableStats[]> {
         s.last_autoanalyze
       FROM pg_stat_user_tables s
       JOIN pg_class c ON s.relname = c.relname
-      WHERE s.schemaname = 'public'
+      WHERE s.schemaname = $1
       ORDER BY s.relname
     `;
 
     const client = await pgPool.connect();
-    const result: QueryResult = await client.query(statsQuery);
+    const result: QueryResult = await client.query(statsQuery, ['public']);
     client.release();
 
     return result.rows.map(row => ({
@@ -207,6 +207,16 @@ function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
 /**
  * Run VACUUM operation on specific tables
  */
+/**
+ * Validates that a table name is safe to use in SQL operations
+ * This helps prevent SQL injection attacks
+ */
+function isValidTableName(tableName: string): boolean {
+  // Only allow alphanumeric characters, underscores, and hyphens
+  // This is a strict validation for table names to prevent SQL injection
+  return /^[a-zA-Z0-9_-]+$/.test(tableName);
+}
+
 async function runVacuum(tables: string[]): Promise<void> {
   if (tables.length === 0) return;
 
@@ -214,10 +224,20 @@ async function runVacuum(tables: string[]): Promise<void> {
     const client = await pgPool.connect();
 
     for (const table of tables) {
+      // Security: Validate table name before running operation
+      if (!isValidTableName(table)) {
+        log(`Security warning: Invalid table name '${table}' - skipping VACUUM`, 'db-maintenance');
+        continue;
+      }
+      
       const startTime = Date.now();
       log(`Running VACUUM on table '${table}'...`, 'db-maintenance');
       
-      await client.query(`VACUUM (ANALYZE, VERBOSE) "${table}"`);
+      // Using parameterized query with proper escape for identifiers
+      // PostgreSQL requires double quotes for identifiers, which needs to be handled separately
+      // from parameterized values
+      const query = 'VACUUM (ANALYZE, VERBOSE) $1:name';
+      await client.query(query, [table]);
       
       const duration = Date.now() - startTime;
       log(`VACUUM on '${table}' completed in ${duration}ms`, 'db-maintenance');
@@ -239,10 +259,18 @@ async function runAnalyze(tables: string[]): Promise<void> {
     const client = await pgPool.connect();
 
     for (const table of tables) {
+      // Security: Validate table name before running operation
+      if (!isValidTableName(table)) {
+        log(`Security warning: Invalid table name '${table}' - skipping ANALYZE`, 'db-maintenance');
+        continue;
+      }
+      
       const startTime = Date.now();
       log(`Running ANALYZE on table '${table}'...`, 'db-maintenance');
       
-      await client.query(`ANALYZE VERBOSE "${table}"`);
+      // Using parameterized query with proper escape for identifiers
+      const query = 'ANALYZE VERBOSE $1:name';
+      await client.query(query, [table]);
       
       const duration = Date.now() - startTime;
       log(`ANALYZE on '${table}' completed in ${duration}ms`, 'db-maintenance');
@@ -265,15 +293,15 @@ export async function forceFullMaintenance(): Promise<void> {
 
     const client = await pgPool.connect();
     
-    // Get all tables except excluded ones
+    // Get all tables except excluded ones - using parameterized query for security
     const tablesQuery = `
       SELECT tablename
       FROM pg_tables
-      WHERE schemaname = 'public'
+      WHERE schemaname = $1
       ORDER BY tablename
     `;
     
-    const result = await client.query(tablesQuery);
+    const result = await client.query(tablesQuery, ['public']);
     const allTables = result.rows.map(row => row.tablename);
     
     // Filter out excluded tables
@@ -284,10 +312,18 @@ export async function forceFullMaintenance(): Promise<void> {
     
     // Run vacuum analyze on each table
     for (const table of tablesToMaintain) {
+      // Security: Validate table name before running operation
+      if (!isValidTableName(table)) {
+        log(`Security warning: Invalid table name '${table}' - skipping maintenance`, 'db-maintenance');
+        continue;
+      }
+      
       const tableStartTime = Date.now();
       log(`Running VACUUM ANALYZE on table '${table}'...`, 'db-maintenance');
       
-      await client.query(`VACUUM (ANALYZE, VERBOSE) "${table}"`);
+      // Using parameterized query with proper escape for identifiers
+      const query = 'VACUUM (ANALYZE, VERBOSE) $1:name';
+      await client.query(query, [table]);
       
       const tableDuration = Date.now() - tableStartTime;
       log(`Maintenance on '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
