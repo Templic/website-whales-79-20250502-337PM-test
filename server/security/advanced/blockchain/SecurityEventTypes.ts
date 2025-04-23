@@ -12,7 +12,9 @@ export enum SecurityEventSeverity {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
-  INFO = 'info'
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error'
 }
 
 /**
@@ -21,6 +23,8 @@ export enum SecurityEventSeverity {
 export enum SecurityEventCategory {
   // System events
   SYSTEM = 'system',
+  SECURITY_INITIALIZATION = 'security_initialization',
+  SECURITY_ERROR = 'security_error',
   
   // Authentication events
   AUTHENTICATION = 'authentication',
@@ -81,6 +85,7 @@ export enum SecurityEventCategory {
   API = 'api',
   API_REQUEST = 'api_request',
   API_ERROR = 'api_error',
+  REQUEST = 'request',
   
   // Security scan events
   SECURITY_SCAN = 'security_scan',
@@ -88,6 +93,8 @@ export enum SecurityEventCategory {
   
   // Anomaly detection events
   ANOMALY = 'anomaly',
+  ANOMALY_DETECTED = 'anomaly_detected',
+  THREAT_DETECTED = 'threat_detected',
   UNUSUAL_BEHAVIOR = 'unusual_behavior',
   UNUSUAL_ACCESS_PATTERN = 'unusual_access_pattern',
   
