@@ -107,7 +107,17 @@ export enum SecurityEventCategory {
   /**
    * Security scanning events
    */
-  SECURITY_SCAN = 'security_scan'
+  SECURITY_SCAN = 'security_scan',
+  
+  /**
+   * Quantum cryptography events
+   */
+  QUANTUM_CRYPTO = 'quantum_crypto',
+  
+  /**
+   * Runtime application self-protection events
+   */
+  RASP = 'rasp'
 }
 
 /**
