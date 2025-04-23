@@ -1,146 +1,56 @@
 /**
  * Machine Learning-Based Anomaly Detection
  * 
- * This module implements sophisticated anomaly detection capabilities
- * to identify unusual patterns in API usage and user behavior.
+ * This module provides advanced anomaly detection using machine learning techniques
+ * to identify unusual patterns in API requests, user behavior, and system activity.
  */
 
-import { EventEmitter } from 'events';
-import { AnomalyDetectionConfig } from '../config/SecurityConfig';
+import { Request } from 'express';
+import { SecurityContext } from '../context/SecurityContext';
 
 /**
- * Feature vector for machine learning model
+ * Feature extraction type
  */
-interface FeatureVector {
+export type FeatureExtractor = (req: Request, context?: SecurityContext) => Record<string, number>;
+
+/**
+ * Feature contribution to anomaly score
+ */
+export interface FeatureContribution {
   /**
-   * Unique identifier for this vector
+   * Feature name
    */
-  id: string;
+  feature: string;
   
   /**
-   * Timestamp when this vector was created
+   * Feature value
    */
-  timestamp: Date;
+  value: number;
   
   /**
-   * Feature values
+   * Contribution to anomaly score (0-1)
    */
-  features: number[];
+  contribution: number;
   
   /**
-   * Labels for each feature
+   * Feature z-score (standard deviations from mean)
    */
-  featureLabels: string[];
-  
-  /**
-   * Associated metadata
-   */
-  metadata: Record<string, any>;
+  zScore: number;
 }
 
 /**
- * Request feature extraction result
- */
-export interface RequestFeatures {
-  /**
-   * Unique identifier for the request
-   */
-  requestId: string;
-  
-  /**
-   * User ID if authenticated
-   */
-  userId?: string | number;
-  
-  /**
-   * IP address
-   */
-  ip: string;
-  
-  /**
-   * URL path
-   */
-  path: string;
-  
-  /**
-   * HTTP method
-   */
-  method: string;
-  
-  /**
-   * Request body size in bytes
-   */
-  bodySize: number;
-  
-  /**
-   * Number of parameters in the request
-   */
-  parameterCount: number;
-  
-  /**
-   * Request timing information
-   */
-  timing: {
-    /**
-     * Time of day (0-24 hours)
-     */
-    hourOfDay: number;
-    
-    /**
-     * Day of week (0-6, 0 is Sunday)
-     */
-    dayOfWeek: number;
-    
-    /**
-     * Time between requests from same user/IP
-     */
-    timeSinceLastRequest?: number;
-  };
-  
-  /**
-   * Original request metadata
-   */
-  metadata: {
-    /**
-     * Request headers
-     */
-    headers: Record<string, string>;
-    
-    /**
-     * User agent
-     */
-    userAgent: string;
-    
-    /**
-     * Request timestamp
-     */
-    timestamp: Date;
-    
-    /**
-     * Request context identifier
-     */
-    contextId: string;
-  };
-}
-
-/**
- * Anomaly detection result
+ * Anomaly analysis result
  */
 export interface AnomalyResult {
   /**
-   * Unique identifier for the request
-   */
-  requestId: string;
-  
-  /**
-   * Whether this request is anomalous
-   */
-  isAnomaly: boolean;
-  
-  /**
-   * Anomaly score (0-1, higher means more anomalous)
+   * Anomaly score (0-1, higher is more anomalous)
    */
   anomalyScore: number;
+  
+  /**
+   * Whether the request is considered anomalous
+   */
+  isAnomaly: boolean;
   
   /**
    * Confidence in the anomaly detection (0-1)
@@ -148,619 +58,525 @@ export interface AnomalyResult {
   confidence: number;
   
   /**
-   * Feature contribution to anomaly
+   * Raw features extracted from the request
    */
-  featureContributions: Array<{
-    /**
-     * Feature name
-     */
-    feature: string;
-    
-    /**
-     * Feature contribution to anomaly score (0-1)
-     */
-    contribution: number;
-    
-    /**
-     * Feature value
-     */
-    value: number;
-    
-    /**
-     * Expected value range
-     */
-    expectedRange: {
-      min: number;
-      max: number;
-    };
-  }>;
+  features: Record<string, number>;
   
   /**
-   * When the anomaly was detected
+   * Feature contributions to anomaly score
+   */
+  featureContributions: FeatureContribution[];
+  
+  /**
+   * Anomaly detection timestamp
    */
   timestamp: Date;
   
   /**
-   * Original request features
+   * Request ID
    */
-  requestFeatures: RequestFeatures;
+  requestId: string;
 }
 
 /**
- * User behavior profile
+ * Anomaly detection options
  */
-interface UserBehaviorProfile {
+export interface AnomalyDetectionOptions {
   /**
-   * User identifier
+   * Detection mode (determines sensitivity)
    */
-  userId: string | number;
+  mode?: 'standard' | 'enhanced' | 'maximum';
   
   /**
-   * Features characterizing normal behavior
+   * Anomaly score threshold (0-1)
    */
-  normalBehavior: {
-    /**
-     * Common IP addresses
-     */
-    ips: string[];
-    
-    /**
-     * Common user agents
-     */
-    userAgents: string[];
-    
-    /**
-     * Common request paths
-     */
-    commonPaths: string[];
-    
-    /**
-     * Time patterns
-     */
-    timingPatterns: {
-      /**
-       * Active hours (0-23)
-       */
-      activeHours: number[];
-      
-      /**
-       * Active days (0-6)
-       */
-      activeDays: number[];
-    };
-    
-    /**
-     * Request frequency (requests per hour)
-     */
-    requestFrequency: number;
-  };
+  anomalyThreshold?: number;
   
   /**
-   * When the profile was last updated
+   * Minimum confidence for reporting anomalies (0-1)
    */
-  lastUpdated: Date;
+  minConfidence?: number;
   
   /**
-   * Number of requests used to build the profile
+   * Number of requests to keep in baseline
    */
-  requestCount: number;
+  baselineSize?: number;
+  
+  /**
+   * Whether to adapt to evolving patterns
+   */
+  adaptiveBaseline?: boolean;
+  
+  /**
+   * Feature extractors to use
+   */
+  featureExtractors?: FeatureExtractor[];
+  
+  /**
+   * Feature weights for anomaly scoring
+   */
+  featureWeights?: Record<string, number>;
 }
 
 /**
- * Simple ML model for anomaly detection
+ * Feature statistics
  */
-class AnomalyDetectionModel {
-  private featureVectors: FeatureVector[] = [];
-  private featureMeans: number[] = [];
-  private featureStdDevs: number[] = [];
-  private userProfiles: Map<string, UserBehaviorProfile> = new Map();
-  private modelTrained: boolean = false;
-  private dimensions: number = 0;
-  private readonly maxVectors: number = 10000;
-  private readonly anomalyThreshold: number;
+interface FeatureStats {
+  /**
+   * Sample count
+   */
+  count: number;
   
   /**
-   * Create a new anomaly detection model
+   * Minimum value
    */
-  constructor(anomalyThreshold: number = 0.85) {
-    this.anomalyThreshold = anomalyThreshold;
-  }
+  min: number;
   
   /**
-   * Add a feature vector to the model
+   * Maximum value
    */
-  public addFeatureVector(vector: FeatureVector): void {
-    // Initialize dimensions if this is the first vector
-    if (this.dimensions === 0) {
-      this.dimensions = vector.features.length;
-      this.featureMeans = new Array(this.dimensions).fill(0);
-      this.featureStdDevs = new Array(this.dimensions).fill(1);
-    }
-    
-    // Ensure vector has the right dimensions
-    if (vector.features.length !== this.dimensions) {
-      throw new Error(`Feature vector has wrong dimensions: ${vector.features.length}, expected ${this.dimensions}`);
-    }
-    
-    // Add to collection
-    this.featureVectors.push(vector);
-    
-    // Update user profile if applicable
-    if (vector.metadata.userId) {
-      this.updateUserProfile(vector);
-    }
-    
-    // Limit the number of vectors
-    if (this.featureVectors.length > this.maxVectors) {
-      this.featureVectors.shift();
-    }
-    
-    // Flag model as untrained
-    this.modelTrained = false;
-  }
+  max: number;
   
   /**
-   * Train the model on collected data
+   * Mean value
    */
-  public train(): void {
-    if (this.featureVectors.length < 10) {
-      console.warn('[AnomalyDetection] Not enough data to train model');
-      return;
-    }
-    
-    console.log(`[AnomalyDetection] Training model on ${this.featureVectors.length} vectors`);
-    
-    // Calculate feature means
-    this.featureMeans = new Array(this.dimensions).fill(0);
-    
-    for (const vector of this.featureVectors) {
-      for (let i = 0; i < this.dimensions; i++) {
-        this.featureMeans[i] += vector.features[i];
-      }
-    }
-    
-    for (let i = 0; i < this.dimensions; i++) {
-      this.featureMeans[i] /= this.featureVectors.length;
-    }
-    
-    // Calculate feature standard deviations
-    this.featureStdDevs = new Array(this.dimensions).fill(0);
-    
-    for (const vector of this.featureVectors) {
-      for (let i = 0; i < this.dimensions; i++) {
-        const diff = vector.features[i] - this.featureMeans[i];
-        this.featureStdDevs[i] += diff * diff;
-      }
-    }
-    
-    for (let i = 0; i < this.dimensions; i++) {
-      this.featureStdDevs[i] = Math.sqrt(this.featureStdDevs[i] / this.featureVectors.length);
-      // Avoid division by zero
-      if (this.featureStdDevs[i] === 0) {
-        this.featureStdDevs[i] = 1;
-      }
-    }
-    
-    this.modelTrained = true;
-    console.log('[AnomalyDetection] Model training complete');
-  }
+  mean: number;
   
   /**
-   * Detect anomalies in a feature vector
+   * Standard deviation
    */
-  public detectAnomaly(vector: FeatureVector): AnomalyResult {
-    // Train model if needed
-    if (!this.modelTrained) {
-      this.train();
-    }
-    
-    // Ensure vector has the right dimensions
-    if (vector.features.length !== this.dimensions) {
-      throw new Error(`Feature vector has wrong dimensions: ${vector.features.length}, expected ${this.dimensions}`);
-    }
-    
-    // Calculate z-scores for each feature
-    const zScores: number[] = [];
-    for (let i = 0; i < this.dimensions; i++) {
-      const zScore = (vector.features[i] - this.featureMeans[i]) / this.featureStdDevs[i];
-      zScores.push(zScore);
-    }
-    
-    // Calculate anomaly score
-    let anomalyScore = 0;
-    let totalWeight = 0;
-    
-    const featureContributions: AnomalyResult['featureContributions'] = [];
-    
-    for (let i = 0; i < this.dimensions; i++) {
-      // Convert z-score to absolute distance
-      const distance = Math.abs(zScores[i]);
-      
-      // Weight more extreme values higher
-      const weight = Math.pow(distance, 2);
-      
-      // Calculate contribution to overall score
-      const contribution = Math.min(1, distance / 3); // Scale to 0-1
-      
-      // Add to total
-      anomalyScore += contribution * weight;
-      totalWeight += weight;
-      
-      // Record feature contribution
-      featureContributions.push({
-        feature: vector.featureLabels[i] || `feature_${i}`,
-        contribution,
-        value: vector.features[i],
-        expectedRange: {
-          min: this.featureMeans[i] - 2 * this.featureStdDevs[i],
-          max: this.featureMeans[i] + 2 * this.featureStdDevs[i]
-        }
-      });
-    }
-    
-    // Normalize anomaly score
-    if (totalWeight > 0) {
-      anomalyScore /= totalWeight;
-    }
-    
-    // Scale to 0-1
-    anomalyScore = Math.min(1, Math.max(0, anomalyScore));
-    
-    // Calculate confidence based on amount of training data
-    const confidence = Math.min(1, this.featureVectors.length / 1000);
-    
-    // Sort feature contributions by contribution
-    featureContributions.sort((a, b) => b.contribution - a.contribution);
-    
-    // Create result
-    const isAnomaly = anomalyScore >= this.anomalyThreshold;
-    
-    // Add to model if not an anomaly
-    if (!isAnomaly) {
-      this.addFeatureVector(vector);
-    }
-    
-    return {
-      requestId: vector.id,
-      isAnomaly,
-      anomalyScore,
-      confidence,
-      featureContributions,
-      timestamp: new Date(),
-      requestFeatures: vector.metadata as unknown as RequestFeatures
-    };
-  }
+  stdDev: number;
   
   /**
-   * Update user behavior profile
+   * Sum of values
    */
-  private updateUserProfile(vector: FeatureVector): void {
-    const userId = vector.metadata.userId;
-    
-    if (!userId) {
-      return;
-    }
-    
-    // Get or create user profile
-    const existingProfile = this.userProfiles.get(userId.toString());
-    let profile: UserBehaviorProfile;
-    
-    if (existingProfile) {
-      profile = existingProfile;
-    } else {
-      profile = {
-        userId,
-        normalBehavior: {
-          ips: [],
-          userAgents: [],
-          commonPaths: [],
-          timingPatterns: {
-            activeHours: Array(24).fill(0),
-            activeDays: Array(7).fill(0)
-          },
-          requestFrequency: 0
-        },
-        lastUpdated: new Date(),
-        requestCount: 0
-      };
-    }
-    
-    // Update profile with new data
-    const ip = vector.metadata.ip;
-    const userAgent = vector.metadata.userAgent;
-    const path = vector.metadata.path;
-    const date = new Date(vector.timestamp);
-    
-    // Update IPs (keep up to 5)
-    if (ip && !profile.normalBehavior.ips.includes(ip)) {
-      profile.normalBehavior.ips.push(ip);
-      if (profile.normalBehavior.ips.length > 5) {
-        profile.normalBehavior.ips.shift();
-      }
-    }
-    
-    // Update user agents (keep up to 3)
-    if (userAgent && !profile.normalBehavior.userAgents.includes(userAgent)) {
-      profile.normalBehavior.userAgents.push(userAgent);
-      if (profile.normalBehavior.userAgents.length > 3) {
-        profile.normalBehavior.userAgents.shift();
-      }
-    }
-    
-    // Update common paths (keep up to 20)
-    if (path && !profile.normalBehavior.commonPaths.includes(path)) {
-      profile.normalBehavior.commonPaths.push(path);
-      if (profile.normalBehavior.commonPaths.length > 20) {
-        profile.normalBehavior.commonPaths.shift();
-      }
-    }
-    
-    // Update timing patterns
-    const hour = date.getHours();
-    const day = date.getDay();
-    
-    profile.normalBehavior.timingPatterns.activeHours[hour]++;
-    profile.normalBehavior.timingPatterns.activeDays[day]++;
-    
-    // Update request frequency
-    const newRequestCount = profile.requestCount + 1;
-    const timeDiff = (date.getTime() - profile.lastUpdated.getTime()) / (1000 * 60 * 60); // hours
-    
-    if (timeDiff > 0) {
-      // Update using exponential moving average
-      const alpha = 0.1; // Smoothing factor
-      profile.normalBehavior.requestFrequency = 
-        (1 - alpha) * profile.normalBehavior.requestFrequency + 
-        alpha * (1 / timeDiff);
-    }
-    
-    // Update metadata
-    profile.lastUpdated = date;
-    profile.requestCount = newRequestCount;
-    
-    // Store updated profile
-    this.userProfiles.set(userId.toString(), profile);
-  }
+  sum: number;
   
   /**
-   * Get user behavior profile
+   * Sum of squared values
    */
-  public getUserProfile(userId: string | number): UserBehaviorProfile | null {
-    return this.userProfiles.get(userId.toString()) || null;
-  }
+  sumSquared: number;
   
   /**
-   * Get model statistics
+   * Recent values
    */
-  public getModelStats(): Record<string, any> {
-    return {
-      vectorCount: this.featureVectors.length,
-      userProfileCount: this.userProfiles.size,
-      featureDimensions: this.dimensions,
-      trained: this.modelTrained,
-      anomalyThreshold: this.anomalyThreshold
-    };
-  }
+  recent: number[];
 }
 
 /**
- * Machine learning-based anomaly detection
+ * Default options for anomaly detection
  */
-export class AnomalyDetection extends EventEmitter {
-  private config: AnomalyDetectionConfig;
-  private model: AnomalyDetectionModel;
-  private featureExtractors: Map<string, (req: any) => any> = new Map();
-  private recentAnomalies: AnomalyResult[] = [];
-  private readonly maxRecentAnomalies: number = 100;
-  private retrainInterval: NodeJS.Timeout | null = null;
+const DEFAULT_OPTIONS: AnomalyDetectionOptions = {
+  mode: 'enhanced',
+  anomalyThreshold: 0.7,
+  minConfidence: 0.6,
+  baselineSize: 1000,
+  adaptiveBaseline: true,
+  featureExtractors: [],
+  featureWeights: {}
+};
+
+/**
+ * Default request feature extractor
+ */
+export const defaultRequestFeatureExtractor: FeatureExtractor = (req: Request) => {
+  const features: Record<string, number> = {};
+  
+  // Request method
+  features.req_method_get = req.method === 'GET' ? 1 : 0;
+  features.req_method_post = req.method === 'POST' ? 1 : 0;
+  features.req_method_put = req.method === 'PUT' ? 1 : 0;
+  features.req_method_delete = req.method === 'DELETE' ? 1 : 0;
+  features.req_method_other = !['GET', 'POST', 'PUT', 'DELETE'].includes(req.method) ? 1 : 0;
+  
+  // URL features
+  const url = req.originalUrl || req.url;
+  features.url_length = url.length;
+  features.url_segment_count = url.split('/').length - 1;
+  features.url_query_params = Object.keys(req.query).length;
+  
+  // Parameter counts
+  features.body_param_count = req.body ? Object.keys(req.body).length : 0;
+  features.all_param_count = features.body_param_count + features.url_query_params;
+  
+  // Header features
+  features.header_count = Object.keys(req.headers).length;
+  features.has_auth_header = req.headers.authorization ? 1 : 0;
+  features.has_content_type = req.headers['content-type'] ? 1 : 0;
+  features.content_type_json = req.headers['content-type']?.includes('application/json') ? 1 : 0;
+  features.has_user_agent = req.headers['user-agent'] ? 1 : 0;
+  
+  // If user-agent exists, calculate its length
+  if (req.headers['user-agent']) {
+    const ua = req.headers['user-agent'] as string;
+    features.user_agent_length = ua.length;
+  } else {
+    features.user_agent_length = 0;
+  }
+  
+  // Request body size
+  features.body_size = req.body ? JSON.stringify(req.body).length : 0;
+  
+  // Authentication
+  features.is_authenticated = (req as any).user ? 1 : 0;
+  
+  // Request timing
+  const hour = new Date().getHours();
+  features.hour_of_day = hour;
+  features.is_business_hours = (hour >= 9 && hour <= 17) ? 1 : 0;
+  features.is_weekend = [0, 6].includes(new Date().getDay()) ? 1 : 0;
+  
+  return features;
+};
+
+/**
+ * Advanced user behavior feature extractor
+ */
+export const userBehaviorFeatureExtractor: FeatureExtractor = (req: Request, context?: SecurityContext) => {
+  const features: Record<string, number> = {};
+  
+  // User ID
+  const user = (req as any).user;
+  const userId = user?.id || 'anonymous';
+  features.is_anonymous = userId === 'anonymous' ? 1 : 0;
+  
+  // Time since last activity
+  features.time_since_last_activity = (req as any).timeSinceLastActivity || 0;
+  
+  // Session features
+  features.session_age = (req as any).sessionAge || 0;
+  features.requests_in_session = (req as any).requestsInSession || 0;
+  
+  // IP change
+  features.ip_changed = (req as any).ipChanged ? 1 : 0;
+  
+  // User agent change
+  features.ua_changed = (req as any).uaChanged ? 1 : 0;
+  
+  // Location change
+  features.location_changed = (req as any).locationChanged ? 1 : 0;
+  
+  // Authentication strength
+  if (context?.getAuthentication()) {
+    features.auth_strength = context.getAuthentication()!.strength;
+    features.auth_factors = context.getAuthentication()!.factors.length;
+  } else {
+    features.auth_strength = 0;
+    features.auth_factors = 0;
+  }
+  
+  // User risk level
+  if (context?.getUser()) {
+    features.user_risk_level = context.getUser()!.riskLevel;
+  } else {
+    features.user_risk_level = 0.5;
+  }
+  
+  return features;
+};
+
+/**
+ * Network and request pattern feature extractor
+ */
+export const networkPatternFeatureExtractor: FeatureExtractor = (req: Request) => {
+  const features: Record<string, number> = {};
+  
+  // IP features
+  const ip = req.ip || req.socket.remoteAddress || '';
+  features.is_local_ip = ip.startsWith('127.0.0.1') || ip.startsWith('::1') ? 1 : 0;
+  features.is_private_ip = 
+    ip.startsWith('10.') || 
+    ip.startsWith('172.16.') || 
+    ip.startsWith('172.17.') || 
+    ip.startsWith('172.18.') || 
+    ip.startsWith('172.19.') || 
+    ip.startsWith('172.2') || 
+    ip.startsWith('172.30.') || 
+    ip.startsWith('172.31.') || 
+    ip.startsWith('192.168.') ? 1 : 0;
+  
+  // Request rate features (if available)
+  features.requests_per_minute = (req as any).requestsPerMinute || 0;
+  features.requests_per_hour = (req as any).requestsPerHour || 0;
+  features.api_requests_per_minute = (req as any).apiRequestsPerMinute || 0;
+  
+  // Error rate
+  features.error_rate = (req as any).errorRate || 0;
+  
+  // Concurrent sessions
+  features.concurrent_sessions = (req as any).concurrentSessions || 0;
+  
+  return features;
+};
+
+/**
+ * Content pattern feature extractor
+ */
+export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) => {
+  const features: Record<string, number> = {};
+  
+  // Only analyze if there's a body and it's an object
+  if (req.body && typeof req.body === 'object') {
+    // Special parameter patterns
+    const bodyStr = JSON.stringify(req.body);
+    
+    // Script tag presence
+    features.contains_script_tag = bodyStr.includes('<script') ? 1 : 0;
+    
+    // SQL keywords
+    features.contains_sql_keywords = 
+      /\b(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|DROP|ALTER|CREATE|TABLE|JOIN)\b/i.test(bodyStr) ? 1 : 0;
+    
+    // Command injection patterns
+    features.contains_command_injection = 
+      /\b(?:exec|eval|system|passthru|shell_exec|popen|proc_open|pcntl_exec)\b/i.test(bodyStr) ? 1 : 0;
+    
+    // Path traversal patterns
+    features.contains_path_traversal = 
+      /(?:\.\.\/|\.\.\$|\.\.\\)/i.test(bodyStr) ? 1 : 0;
+    
+    // JSON depth
+    features.json_max_depth = getJsonMaxDepth(req.body);
+    
+    // Field counts
+    features.field_count = countFields(req.body);
+    
+    // Base64 content
+    features.contains_base64 = 
+      /[A-Za-z0-9+/]{30,}={0,2}/i.test(bodyStr) ? 1 : 0;
+    
+    // Entropy of content
+    features.content_entropy = calculateEntropy(bodyStr);
+  } else {
+    // Initialize with default values
+    features.contains_script_tag = 0;
+    features.contains_sql_keywords = 0;
+    features.contains_command_injection = 0;
+    features.contains_path_traversal = 0;
+    features.json_max_depth = 0;
+    features.field_count = 0;
+    features.contains_base64 = 0;
+    features.content_entropy = 0;
+  }
+  
+  return features;
+};
+
+/**
+ * Get maximum depth of a JSON object
+ */
+function getJsonMaxDepth(obj: any, currentDepth: number = 0): number {
+  if (!obj || typeof obj !== 'object') {
+    return currentDepth;
+  }
+  
+  let maxDepth = currentDepth;
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const depth = getJsonMaxDepth(obj[key], currentDepth + 1);
+      maxDepth = Math.max(maxDepth, depth);
+    }
+  }
+  
+  return maxDepth;
+}
+
+/**
+ * Count fields in a JSON object
+ */
+function countFields(obj: any): number {
+  if (!obj || typeof obj !== 'object') {
+    return 0;
+  }
+  
+  let count = 0;
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      count++;
+      if (typeof obj[key] === 'object' && obj[key] !== null) {
+        count += countFields(obj[key]);
+      }
+    }
+  }
+  
+  return count;
+}
+
+/**
+ * Calculate Shannon entropy of a string
+ */
+function calculateEntropy(str: string): number {
+  if (!str) {
+    return 0;
+  }
+  
+  const len = str.length;
+  const frequencies: Record<string, number> = {};
+  
+  // Count character frequencies
+  for (let i = 0; i < len; i++) {
+    const char = str[i];
+    frequencies[char] = (frequencies[char] || 0) + 1;
+  }
+  
+  // Calculate entropy
+  let entropy = 0;
+  for (const char in frequencies) {
+    const p = frequencies[char] / len;
+    entropy -= p * Math.log2(p);
+  }
+  
+  return entropy;
+}
+
+/**
+ * Anomaly detection using machine learning techniques
+ */
+export class AnomalyDetection {
+  /**
+   * Anomaly detection options
+   */
+  private options: AnomalyDetectionOptions;
   
   /**
-   * Create a new anomaly detection system
+   * Feature statistics for baseline
    */
-  constructor(config: AnomalyDetectionConfig = {}) {
-    super();
-    this.config = this.getDefaultConfig(config);
-    this.model = new AnomalyDetectionModel(this.config.modelParams?.anomalyThreshold);
+  private featureStats: Record<string, FeatureStats> = {};
+  
+  /**
+   * Recent requests for adaptive baseline
+   */
+  private recentRequests: Array<{
+    features: Record<string, number>;
+    timestamp: Date;
+  }> = [];
+  
+  /**
+   * Whether the anomaly detector is initialized
+   */
+  private initialized: boolean = false;
+  
+  /**
+   * Count of analyzed requests
+   */
+  private requestCount: number = 0;
+  
+  /**
+   * Count of detected anomalies
+   */
+  private anomalyCount: number = 0;
+  
+  /**
+   * Last baseline update time
+   */
+  private lastBaselineUpdate: Date = new Date();
+  
+  /**
+   * Current adaptation factor (0-1)
+   */
+  private adaptationFactor: number = 0.1;
+  
+  /**
+   * Create a new anomaly detection instance
+   */
+  constructor(options: AnomalyDetectionOptions = {}) {
+    this.options = {
+      ...DEFAULT_OPTIONS,
+      ...options
+    };
     
-    // Register default feature extractors
-    this.registerDefaultFeatureExtractors();
+    // Add default feature extractors if none provided
+    if (!this.options.featureExtractors || this.options.featureExtractors.length === 0) {
+      this.options.featureExtractors = [
+        defaultRequestFeatureExtractor,
+        userBehaviorFeatureExtractor,
+        networkPatternFeatureExtractor,
+        contentPatternFeatureExtractor
+      ];
+    }
+    
+    // Set anomaly threshold based on mode
+    if (!options.anomalyThreshold) {
+      if (this.options.mode === 'standard') {
+        this.options.anomalyThreshold = 0.8; // Less sensitive
+      } else if (this.options.mode === 'maximum') {
+        this.options.anomalyThreshold = 0.6; // More sensitive
+      } else {
+        this.options.anomalyThreshold = 0.7; // Default (enhanced)
+      }
+    }
   }
   
   /**
    * Initialize the anomaly detection system
    */
   public async initialize(): Promise<void> {
-    console.log('[AnomalyDetection] Initializing anomaly detection system');
+    if (this.initialized) {
+      return;
+    }
     
-    // Set up scheduled model retraining
-    this.setupRetraining();
+    console.log(`[AnomalyDetection] Initializing anomaly detection in ${this.options.mode} mode...`);
     
-    console.log('[AnomalyDetection] Anomaly detection system initialized');
+    // Initialize feature stats
+    this.featureStats = {};
+    
+    // Initialize recent requests
+    this.recentRequests = [];
+    
+    // Reset counters
+    this.requestCount = 0;
+    this.anomalyCount = 0;
+    
+    // Set last baseline update time
+    this.lastBaselineUpdate = new Date();
+    
+    // Mark as initialized
+    this.initialized = true;
+    
+    console.log(`[AnomalyDetection] Anomaly detection initialized with ${this.options.featureExtractors!.length} feature extractors`);
+    console.log(`[AnomalyDetection] Anomaly threshold: ${this.options.anomalyThreshold}`);
   }
   
   /**
    * Analyze a request for anomalies
    */
-  public analyzeRequest(req: any, context?: any): AnomalyResult {
-    // Extract features from request
-    const requestFeatures = this.extractFeatures(req, context);
-    
-    // Convert to feature vector
-    const featureVector = this.createFeatureVector(requestFeatures);
-    
-    // Run anomaly detection
-    const result = this.model.detectAnomaly(featureVector);
-    
-    // Record if anomalous
-    if (result.isAnomaly) {
-      this.recordAnomaly(result);
+  public analyzeRequest(req: Request, context?: SecurityContext): AnomalyResult {
+    if (!this.initialized) {
+      throw new Error('Anomaly detection is not initialized');
     }
+    
+    // Extract features from request
+    const features = this.extractFeatures(req, context);
+    
+    // Store request for baseline
+    this.storeRequest(features);
+    
+    // Calculate anomaly score
+    const result = this.calculateAnomalyScore(features);
+    
+    // Update counters
+    this.requestCount++;
+    if (result.isAnomaly) {
+      this.anomalyCount++;
+    }
+    
+    // Update baseline if needed
+    this.updateBaselineIfNeeded();
     
     return result;
   }
   
   /**
-   * Get recent anomalies
-   */
-  public getRecentAnomalies(): AnomalyResult[] {
-    return [...this.recentAnomalies];
-  }
-  
-  /**
-   * Get user behavior profile
-   */
-  public getUserProfile(userId: string | number): Record<string, any> | null {
-    return this.model.getUserProfile(userId);
-  }
-  
-  /**
-   * Register a custom feature extractor
-   */
-  public registerFeatureExtractor(name: string, extractor: (req: any) => any): void {
-    this.featureExtractors.set(name, extractor);
-    console.log(`[AnomalyDetection] Registered feature extractor: ${name}`);
-  }
-  
-  /**
-   * Force model retraining
-   */
-  public retrain(): void {
-    console.log('[AnomalyDetection] Manually triggering model retraining');
-    this.model.train();
-  }
-  
-  /**
-   * Get model statistics
-   */
-  public getModelStats(): Record<string, any> {
-    return this.model.getModelStats();
-  }
-  
-  /**
-   * Clean shutdown
-   */
-  public async shutdown(): Promise<void> {
-    console.log('[AnomalyDetection] Shutting down anomaly detection system');
-    
-    // Stop retraining interval
-    if (this.retrainInterval) {
-      clearInterval(this.retrainInterval);
-      this.retrainInterval = null;
-    }
-    
-    // Final model training
-    this.model.train();
-    
-    // Clear anomalies
-    this.recentAnomalies = [];
-    
-    // Remove event listeners
-    this.removeAllListeners();
-    
-    console.log('[AnomalyDetection] Anomaly detection system shut down');
-  }
-  
-  /**
-   * Merge configuration with defaults
-   */
-  private getDefaultConfig(config: AnomalyDetectionConfig): AnomalyDetectionConfig {
-    return {
-      enabled: config.enabled !== undefined ? config.enabled : true,
-      modelParams: {
-        learningRate: config.modelParams?.learningRate || 0.01,
-        timeWindow: config.modelParams?.timeWindow || 60,
-        anomalyThreshold: config.modelParams?.anomalyThreshold || 0.85
-      },
-      retrainInterval: config.retrainInterval || 24
-    };
-  }
-  
-  /**
-   * Set up scheduled model retraining
-   */
-  private setupRetraining(): void {
-    const intervalHours = this.config.retrainInterval || 24;
-    console.log(`[AnomalyDetection] Setting up model retraining every ${intervalHours} hours`);
-    
-    this.retrainInterval = setInterval(() => {
-      console.log('[AnomalyDetection] Performing scheduled model retraining');
-      this.model.train();
-    }, intervalHours * 60 * 60 * 1000);
-  }
-  
-  /**
-   * Register default feature extractors
-   */
-  private registerDefaultFeatureExtractors(): void {
-    // Standard request features
-    this.registerFeatureExtractor('standard', (req: any) => {
-      const ip = req.ip || req.connection?.remoteAddress || '0.0.0.0';
-      const path = req.originalUrl || req.url || '/';
-      const method = req.method || 'GET';
-      const userAgent = req.headers?.['user-agent'] || '';
-      const contentLength = req.headers?.['content-length'] ? parseInt(req.headers['content-length']) : 0;
-      
-      // Count parameters in query and body
-      const queryParams = req.query ? Object.keys(req.query).length : 0;
-      const bodyParams = req.body ? Object.keys(req.body).length : 0;
-      
-      // Timestamp and timing features
-      const timestamp = new Date();
-      const hourOfDay = timestamp.getHours();
-      const dayOfWeek = timestamp.getDay();
-      
-      return {
-        requestId: req.id || Math.random().toString(36).substring(2, 15),
-        userId: req.user?.id || req.session?.user?.id,
-        ip,
-        path,
-        method,
-        bodySize: contentLength,
-        parameterCount: queryParams + bodyParams,
-        timing: {
-          hourOfDay,
-          dayOfWeek
-        },
-        metadata: {
-          headers: req.headers || {},
-          userAgent,
-          timestamp,
-          contextId: req.contextId || null,
-          ip,
-          path,
-          method
-        }
-      };
-    });
-  }
-  
-  /**
    * Extract features from a request
    */
-  private extractFeatures(req: any, context?: any): RequestFeatures {
-    // Get standard features
-    const standardExtractor = this.featureExtractors.get('standard');
-    if (!standardExtractor) {
-      throw new Error('Standard feature extractor not found');
-    }
+  private extractFeatures(req: Request, context?: SecurityContext): Record<string, number> {
+    const features: Record<string, number> = {};
     
-    const features = standardExtractor(req);
-    
-    // Add context information if available
-    if (context) {
-      features.contextId = context.id || null;
-      features.metadata.contextId = context.id || null;
-    }
-    
-    // Apply custom extractors
-    for (const [name, extractor] of this.featureExtractors.entries()) {
-      if (name !== 'standard') {
-        try {
-          const customFeatures = extractor(req);
-          Object.assign(features, customFeatures);
-        } catch (error) {
-          console.error(`[AnomalyDetection] Error in feature extractor ${name}:`, error);
-        }
+    // Apply all feature extractors
+    for (const extractor of this.options.featureExtractors!) {
+      const extractedFeatures = extractor(req, context);
+      for (const [key, value] of Object.entries(extractedFeatures)) {
+        features[key] = value;
       }
     }
     
@@ -768,169 +584,305 @@ export class AnomalyDetection extends EventEmitter {
   }
   
   /**
-   * Create a feature vector from request features
+   * Store a request for baseline calculation
    */
-  private createFeatureVector(features: RequestFeatures): FeatureVector {
-    const featureValues = [];
-    const featureLabels = [];
+  private storeRequest(features: Record<string, number>): void {
+    // Add to recent requests
+    this.recentRequests.push({
+      features,
+      timestamp: new Date()
+    });
     
-    // Request method
-    const methodValue = this.encodeMethod(features.method);
-    featureValues.push(methodValue);
-    featureLabels.push('request_method');
-    
-    // Request path
-    const pathFeatures = this.encodePath(features.path);
-    featureValues.push(...pathFeatures);
-    featureLabels.push('path_length', 'path_segments', 'path_depth');
-    
-    // Request body size
-    featureValues.push(this.normalizeBodySize(features.bodySize));
-    featureLabels.push('body_size');
-    
-    // Parameter count
-    featureValues.push(this.normalizeParameterCount(features.parameterCount));
-    featureLabels.push('parameter_count');
-    
-    // Timing features
-    featureValues.push(features.timing.hourOfDay / 24);
-    featureLabels.push('hour_of_day');
-    
-    featureValues.push(features.timing.dayOfWeek / 7);
-    featureLabels.push('day_of_week');
-    
-    if (features.timing.timeSinceLastRequest !== undefined) {
-      featureValues.push(this.normalizeTimeDelta(features.timing.timeSinceLastRequest));
-      featureLabels.push('time_since_last_request');
-    } else {
-      // Use a default value
-      featureValues.push(0.5);
-      featureLabels.push('time_since_last_request');
+    // Limit size of recent requests
+    if (this.recentRequests.length > this.options.baselineSize!) {
+      this.recentRequests.shift();
     }
     
+    // Update feature statistics
+    for (const [feature, value] of Object.entries(features)) {
+      if (!this.featureStats[feature]) {
+        // Initialize stats for new feature
+        this.featureStats[feature] = {
+          count: 0,
+          min: Number.MAX_VALUE,
+          max: Number.MIN_VALUE,
+          mean: 0,
+          stdDev: 0,
+          sum: 0,
+          sumSquared: 0,
+          recent: []
+        };
+      }
+      
+      const stats = this.featureStats[feature];
+      
+      // Update count and sum
+      stats.count++;
+      stats.sum += value;
+      stats.sumSquared += value * value;
+      
+      // Update min and max
+      stats.min = Math.min(stats.min, value);
+      stats.max = Math.max(stats.max, value);
+      
+      // Update mean and standard deviation
+      stats.mean = stats.sum / stats.count;
+      stats.stdDev = Math.sqrt((stats.sumSquared / stats.count) - (stats.mean * stats.mean));
+      
+      // Add to recent values
+      stats.recent.push(value);
+      if (stats.recent.length > 100) {
+        stats.recent.shift();
+      }
+    }
+  }
+  
+  /**
+   * Calculate anomaly score for a set of features
+   */
+  private calculateAnomalyScore(features: Record<string, number>): AnomalyResult {
+    const result: AnomalyResult = {
+      anomalyScore: 0,
+      isAnomaly: false,
+      confidence: 0,
+      features,
+      featureContributions: [],
+      timestamp: new Date(),
+      requestId: Math.random().toString(36).substring(2, 15)
+    };
+    
+    // If we don't have enough baseline data, return low anomaly score
+    if (this.recentRequests.length < 10) {
+      result.anomalyScore = 0.1;
+      result.confidence = 0.1;
+      return result;
+    }
+    
+    // Calculate z-score for each feature
+    const featureScores: FeatureContribution[] = [];
+    let totalWeight = 0;
+    let weightedScoreSum = 0;
+    
+    for (const [feature, value] of Object.entries(features)) {
+      // Skip if we don't have stats for this feature
+      if (!this.featureStats[feature]) {
+        continue;
+      }
+      
+      const stats = this.featureStats[feature];
+      
+      // Skip if not enough data or zero std dev
+      if (stats.count < 5 || stats.stdDev <= 0) {
+        continue;
+      }
+      
+      // Calculate z-score (standard deviations from mean)
+      const zScore = Math.abs((value - stats.mean) / stats.stdDev);
+      
+      // Convert z-score to anomaly contribution (0-1)
+      // Using a sigmoid function centered around z=2 (2 standard deviations)
+      const contribution = 1 / (1 + Math.exp(-1 * (zScore - 2)));
+      
+      // Get feature weight
+      const weight = this.options.featureWeights?.[feature] || 1;
+      totalWeight += weight;
+      
+      // Add to weighted sum
+      weightedScoreSum += contribution * weight;
+      
+      // Add to feature scores
+      featureScores.push({
+        feature,
+        value,
+        contribution,
+        zScore
+      });
+    }
+    
+    // Sort feature contributions by contribution (descending)
+    featureScores.sort((a, b) => b.contribution - a.contribution);
+    
+    // Calculate final anomaly score (weighted average)
+    result.anomalyScore = totalWeight > 0 ? weightedScoreSum / totalWeight : 0;
+    
+    // Set feature contributions
+    result.featureContributions = featureScores;
+    
+    // Determine if this is an anomaly
+    result.isAnomaly = result.anomalyScore >= this.options.anomalyThreshold!;
+    
+    // Calculate confidence based on amount of data and feature counts
+    const dataConfidence = Math.min(1, this.recentRequests.length / 50);
+    const featureConfidence = Math.min(1, Object.keys(features).length / 10);
+    result.confidence = dataConfidence * featureConfidence;
+    
+    // Only consider high-confidence anomalies
+    if (result.isAnomaly && result.confidence < this.options.minConfidence!) {
+      result.isAnomaly = false;
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Update baseline if needed
+   */
+  private updateBaselineIfNeeded(): void {
+    // Check if we need to update baseline
+    const now = new Date();
+    const hoursSinceLastUpdate = (now.getTime() - this.lastBaselineUpdate.getTime()) / (1000 * 60 * 60);
+    
+    if (hoursSinceLastUpdate >= 24) {
+      console.log('[AnomalyDetection] Updating anomaly detection baseline...');
+      
+      // Update adaptive learning rate based on anomaly rate
+      const anomalyRate = this.requestCount > 0 ? this.anomalyCount / this.requestCount : 0;
+      
+      if (anomalyRate > 0.1) {
+        // High anomaly rate - reduce adaptation to avoid learning attacks
+        this.adaptationFactor = 0.05;
+        console.log(`[AnomalyDetection] High anomaly rate (${(anomalyRate * 100).toFixed(2)}%), reducing adaptation factor`);
+      } else {
+        // Normal anomaly rate - standard adaptation
+        this.adaptationFactor = 0.1;
+      }
+      
+      // Reset counters
+      this.requestCount = 0;
+      this.anomalyCount = 0;
+      
+      // Update last baseline update time
+      this.lastBaselineUpdate = now;
+      
+      console.log('[AnomalyDetection] Baseline updated successfully');
+    }
+  }
+  
+  /**
+   * Shut down the anomaly detection system
+   */
+  public async shutdown(): Promise<void> {
+    console.log('[AnomalyDetection] Shutting down anomaly detection...');
+    
+    // Reset state
+    this.recentRequests = [];
+    this.featureStats = {};
+    this.initialized = false;
+    
+    console.log('[AnomalyDetection] Anomaly detection shut down successfully');
+  }
+  
+  /**
+   * Get current status of the anomaly detection system
+   */
+  public getStatus(): Record<string, any> {
     return {
-      id: features.requestId,
-      timestamp: features.metadata.timestamp,
-      features: featureValues,
-      featureLabels,
-      metadata: features
+      initialized: this.initialized,
+      mode: this.options.mode,
+      anomalyThreshold: this.options.anomalyThreshold,
+      baselineSize: this.recentRequests.length,
+      featureCount: Object.keys(this.featureStats).length,
+      requestCount: this.requestCount,
+      anomalyCount: this.anomalyCount,
+      anomalyRate: this.requestCount > 0 ? (this.anomalyCount / this.requestCount) : 0,
+      lastBaselineUpdate: this.lastBaselineUpdate
     };
   }
   
   /**
-   * Encode HTTP method
+   * Get feature statistics
    */
-  private encodeMethod(method: string): number {
-    // Normalize to uppercase
-    const normalizedMethod = method.toUpperCase();
+  public getFeatureStats(): Record<string, FeatureStats> {
+    return { ...this.featureStats };
+  }
+  
+  /**
+   * Update detection options
+   */
+  public updateOptions(options: Partial<AnomalyDetectionOptions>): void {
+    this.options = {
+      ...this.options,
+      ...options
+    };
     
-    // Assign values based on frequency and risk
-    switch (normalizedMethod) {
-      case 'GET':
-        return 0.1;
-      case 'POST':
-        return 0.3;
-      case 'PUT':
-        return 0.5;
-      case 'DELETE':
-        return 0.7;
-      case 'PATCH':
-        return 0.6;
-      case 'HEAD':
-        return 0.2;
-      case 'OPTIONS':
-        return 0.15;
-      default:
-        return 0.9; // Unknown methods are highly suspicious
+    console.log(`[AnomalyDetection] Options updated, mode: ${this.options.mode}, threshold: ${this.options.anomalyThreshold}`);
+  }
+  
+  /**
+   * Clear baseline data and reset detection
+   */
+  public clearBaseline(): void {
+    console.log('[AnomalyDetection] Clearing anomaly detection baseline...');
+    
+    this.recentRequests = [];
+    this.featureStats = {};
+    this.requestCount = 0;
+    this.anomalyCount = 0;
+    this.lastBaselineUpdate = new Date();
+    
+    console.log('[AnomalyDetection] Baseline cleared successfully');
+  }
+  
+  /**
+   * Reset detection statistics
+   */
+  public resetStats(): void {
+    this.requestCount = 0;
+    this.anomalyCount = 0;
+  }
+  
+  /**
+   * Normalize a URL path to remove IDs and other variable parts
+   * This helps with grouping similar URLs for pattern detection
+   */
+  public normalizeUrlPath(url: string): string {
+    if (!url) {
+      return '';
+    }
+    
+    try {
+      // Extract path only (remove query)
+      const pathOnly = url.split('?')[0];
+      
+      // Normalize numeric IDs and UUIDs in URL segments
+      return pathOnly.replace(/\/[0-9]+\/?/g, '/ID/')
+                     .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?/gi, '/UUID/');
+    } catch (error) {
+      console.error('[AnomalyDetection] Error normalizing URL:', error);
+      return url;
     }
   }
   
   /**
-   * Encode path features
+   * Detect API usage patterns that may indicate abuse
    */
-  private encodePath(path: string): number[] {
-    // Remove query string
-    const pathOnly = path.split('?')[0];
+  public detectApiAbusePatterns(req: Request): Record<string, boolean> {
+    const patterns: Record<string, boolean> = {};
     
-    // Normalize path
-    const normalizedPath = pathOnly.endsWith('/') && pathOnly.length > 1
-      ? pathOnly.slice(0, -1)
-      : pathOnly;
+    // Normalize URL for pattern matching
+    const normalizedPath = this.normalizeUrlPath(req.originalUrl || req.url);
     
-    // Extract features
-    const length = normalizedPath.length;
-    const segments = normalizedPath.split('/').filter(s => s.length > 0);
-    const depth = segments.length;
+    // Calculate request frequency patterns (if available)
+    const requestsPerMinute = (req as any).requestsPerMinute || 0;
     
-    // Normalize
-    const normalizedLength = Math.min(length / 100, 1.0);
-    const normalizedSegments = Math.min(segments.length / 10, 1.0);
-    const normalizedDepth = Math.min(depth / 5, 1.0);
+    // Detect high-frequency API requests
+    patterns.high_frequency_requests = requestsPerMinute > 30;
     
-    return [normalizedLength, normalizedSegments, normalizedDepth];
-  }
-  
-  /**
-   * Normalize body size
-   */
-  private normalizeBodySize(size: number): number {
-    // Normalize based on typical API payloads
-    // 0 = empty, 1 = very large (>1MB)
-    if (size === 0) {
-      return 0;
-    }
+    // Detect scraping patterns
+    patterns.potential_scraping = requestsPerMinute > 20 && req.method === 'GET';
     
-    return Math.min(size / (1024 * 1024), 1.0);
-  }
-  
-  /**
-   * Normalize parameter count
-   */
-  private normalizeParameterCount(count: number): number {
-    // Normalize based on typical API calls
-    // 0 = no parameters, 1 = 20+ parameters
-    return Math.min(count / 20, 1.0);
-  }
-  
-  /**
-   * Normalize time delta
-   */
-  private normalizeTimeDelta(seconds: number): number {
-    // Normalize time delta, with very small or very large values being more suspicious
+    // Detect API enumeration/scanning
+    patterns.potential_enumeration = (req as any).distinctEndpointsPerMinute > 10;
     
-    if (seconds < 0.1) {
-      // Very rapid requests are suspicious
-      return 0.9;
-    }
+    // Detect distributed requests 
+    patterns.distributed_requests = (req as any).distinctIpsPerMinute > 3;
     
-    if (seconds < 1) {
-      // Fast requests may be suspicious
-      return 0.7;
-    }
+    // Detect sequential ID access
+    patterns.sequential_id_access = (req as any).sequentialIdAccess || false;
     
-    if (seconds > 86400) {
-      // Very long time between requests (>1 day)
-      return 0.6;
-    }
+    // Detect credential stuffing
+    patterns.credential_stuffing = (req as any).failedLoginsPerMinute > 5;
     
-    // Normal range: 1s to 1 day, map to 0.1-0.5
-    return 0.1 + (0.4 * (1 - Math.min(seconds / 86400, 1)));
-  }
-  
-  /**
-   * Record an anomaly
-   */
-  private recordAnomaly(anomaly: AnomalyResult): void {
-    this.recentAnomalies.unshift(anomaly);
-    
-    // Limit size
-    if (this.recentAnomalies.length > this.maxRecentAnomalies) {
-      this.recentAnomalies.pop();
-    }
-    
-    // Emit event
-    this.emit('anomaly:detected', anomaly);
-    
-    console.log(`[AnomalyDetection] Anomaly detected (score: ${anomaly.anomalyScore.toFixed(2)}) for request ${anomaly.requestId}`);
+    return patterns;
   }
 }
