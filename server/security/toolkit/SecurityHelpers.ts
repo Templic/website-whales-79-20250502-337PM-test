@@ -50,7 +50,7 @@ export function createSecureDecorator() {
     ) {
       const originalMethod = descriptor.value;
       
-      descriptor.value = async function(req: Request, res: Response, next: NextFunction) {
+      descriptor.value = async function(req: Request, res: Response, next: NextFunction: any: any) {
         try {
           // Check authentication if required
           if (requireAuth && (!req.isAuthenticated || !req.isAuthenticated())) {
@@ -129,11 +129,11 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
     const originalConstructor = constructor;
     
     // Create a new constructor function
-    const newConstructor: any = function(...args: any[]) {
+    const newConstructor: any = function(...args: any: any[]) {
       const instance = new originalConstructor(...args);
       
       // Wrap all methods with security middleware
-      Object.getOwnPropertyNames(originalConstructor.prototype).forEach(methodName => {
+      Object.getOwnPropertyNames(originalConstructor.prototype).forEach(methodName: string: string => {
         // Skip constructor
         if (methodName === 'constructor') return;
         
@@ -147,7 +147,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if ((method as any).__secured) return;
         
         // Wrap method with security
-        (instance as any)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
+        (instance as an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
           try {
             // Create security toolkit with base level
             const toolkit = new SecurityToolkit(baseLevel);
@@ -329,7 +329,7 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
   return (req: Request, res: Response, next: NextFunction) => {
     // Only verify occasionally to avoid performance impact
     if (Date.now() - lastVerification > intervalMs) {
-      securityBlockchain.verifyChain().then(valid => {
+      securityBlockchain.verifyChain().then(valid: string: string => {
         chainValid = valid;
         lastVerification = Date.now();
         

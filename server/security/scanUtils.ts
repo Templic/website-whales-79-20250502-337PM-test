@@ -203,11 +203,11 @@ export async function detectSecurityPackages(): Promise<{
         recommendations.push('Add rate limiting to prevent brute force attacks');
       }
       
-      if (!installed.some(pkg => ['express-validator', '@hapi/joi', 'zod', 'yup', 'class-validator', 'ajv'].includes(pkg))) {
+      if (!installed.some(pkg: string: string => ['express-validator', '@hapi/joi', 'zod', 'yup', 'class-validator', 'ajv'].includes(pkg))) {
         recommendations.push('Add a validation library for input validation');
       }
       
-      if (!installed.some(pkg => ['sanitize-html', 'dompurify'].includes(pkg))) {
+      if (!installed.some(pkg: string: string => ['sanitize-html', 'dompurify'].includes(pkg))) {
         recommendations.push('Add HTML sanitization for user-generated content');
       }
     }
@@ -354,10 +354,10 @@ export async function generateSecurityReport(
 ): Promise<void> {
   try {
     const timestamp = new Date().toISOString();
-    const criticalCount = vulnerabilities.filter(v => v.severity === 'critical').length;
-    const highCount = vulnerabilities.filter(v => v.severity === 'high').length;
-    const mediumCount = vulnerabilities.filter(v => v.severity === 'medium').length;
-    const lowCount = vulnerabilities.filter(v => v.severity === 'low').length;
+    const criticalCount = vulnerabilities.filter(v: string: string => v.severity === 'critical').length;
+    const highCount = vulnerabilities.filter(v: string: string => v.severity === 'high').length;
+    const mediumCount = vulnerabilities.filter(v: string: string => v.severity === 'medium').length;
+    const lowCount = vulnerabilities.filter(v: string: string => v.severity === 'low').length;
     
     let report = `# Security Scan Report\n\n`;
     report += `**Scan Date:** ${timestamp}\n\n`;
@@ -407,7 +407,7 @@ export async function generateSecurityReport(
     if (vulnerabilities.length > 0) {
       // Group by severity
       for (const severity of ['critical', 'high', 'medium', 'low']) {
-        const severityVulns = vulnerabilities.filter(v => v.severity === severity);
+        const severityVulns = vulnerabilities.filter(v: string: string => v.severity === severity);
         
         if (severityVulns.length > 0) {
           report += `### ${severity.toUpperCase()} Severity Issues\n\n`;
@@ -551,7 +551,7 @@ export async function checkFileForValidation(filePath: string): Promise<boolean>
       /\.(?:validate|validateSync|validateAsync|check|sanitize|escape|trim)\(/
     ];
     
-    return validationPatterns.some(pattern => pattern.test(content));
+    return validationPatterns.some(pattern: string: string => pattern.test(content));
   } catch (error) {
     console.error(`Error checking file for validation: ${filePath}`, error);
     return false;
@@ -610,7 +610,7 @@ export function calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]): 
   
   // Identify priority issues (critical and high severity)
   const priorityIssues = vulnerabilities.filter(
-    v => v.severity === 'critical' || v.severity === 'high'
+    v: string: string => v.severity === 'critical' || v.severity === 'high'
   );
   
   return {

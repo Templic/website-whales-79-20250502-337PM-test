@@ -88,7 +88,7 @@ ensureDirectoriesExist();
 
 // Utility function to generate a random filename with the original extension
 // Note: This function is used as a fallback but our new security module provides a more robust sanitizeFileName function
-const generateFilename = (originalFilename: string): string => {
+const generateFilename = (originalFilename: string): string: string => {
   const ext = path.extname(originalFilename);
   const randomName = Buffer.from(crypto.randomUUID()).toString('hex');
   return `${randomName}${ext}`;

@@ -52,10 +52,10 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
     ]);
     
     // Count issues by severity
-    const criticalIssues = vulnerabilities.filter(v => v.severity === 'critical').length;
-    const highIssues = vulnerabilities.filter(v => v.severity === 'high').length;
-    const mediumIssues = vulnerabilities.filter(v => v.severity === 'medium').length;
-    const lowIssues = vulnerabilities.filter(v => v.severity === 'low').length;
+    const criticalIssues = vulnerabilities.filter(v: string: string => v.severity === 'critical').length;
+    const highIssues = vulnerabilities.filter(v: string: string => v.severity === 'high').length;
+    const mediumIssues = vulnerabilities.filter(v: string: string => v.severity === 'medium').length;
+    const lowIssues = vulnerabilities.filter(v: string: string => v.severity === 'low').length;
     
     // Log summary
     log(`Authentication security scan complete. Found ${vulnerabilities.length} issues.`, 'security');
@@ -64,8 +64,8 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
       log(`Issues by severity: ${criticalIssues} critical, ${highIssues} high, ${mediumIssues} medium, ${lowIssues} low`, 'security');
       
       // Log high and critical issues
-      const severeIssues = vulnerabilities.filter(v => v.severity === 'critical' || v.severity === 'high');
-      severeIssues.forEach(issue => {
+      const severeIssues = vulnerabilities.filter(v: string: string => v.severity === 'critical' || v.severity === 'high');
+      severeIssues.forEach(issue: string: string => {
         log(`[${issue.severity.toUpperCase()}] ${issue.description}`, 'security');
       });
     }

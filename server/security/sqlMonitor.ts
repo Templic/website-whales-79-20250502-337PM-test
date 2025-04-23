@@ -241,7 +241,7 @@ export class SQLMonitor {
         severity
       },
       timestamp: new Date()
-    }).catch(error => {
+    }).catch(error: string: string => {
       console.error('[SQL-MONITOR] Error logging to blockchain:', error);
     });
   }
@@ -281,7 +281,7 @@ export class SQLMonitor {
     const originalQuery = db.query;
     
     // Override the query method with security checks
-    db.query = async function(sql: string, params: any[] = []): Promise<any> {
+    db.query = async function(sql: string, params: any: any[] = []): Promise<any> {
       // Get the call stack to determine the source
       const stack = new Error().stack;
       const source = stack?.split('\n')[2]?.trim() || 'unknown';

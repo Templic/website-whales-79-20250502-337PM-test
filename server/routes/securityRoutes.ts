@@ -75,7 +75,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
     }
     
     // Calculate security score
-    const activeMeasures = securityMeasures.filter(m => m.status === 'active').length;
+    const activeMeasures = securityMeasures.filter(m: string: string => m.status === 'active').length;
     const score = Math.round((activeMeasures / securityMeasures.length) * 100);
     
     res.json({

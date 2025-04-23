@@ -134,7 +134,7 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
     });
     
     // Override send to add resource hints to HTML responses
-    res.send = function(body) {
+    res.send = function(body: any) {
       // Only modify HTML responses
       if (typeof body === 'string' && isHtmlResponse(res)) {
         // Add resource hints as <link> tags

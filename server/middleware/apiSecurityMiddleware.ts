@@ -173,7 +173,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
         return res.status(400).json({
           success: false,
           message: 'Validation failed',
-          errors: error.errors.map(err => ({
+          errors: error.errors.map(err: string: string => ({
             path: err.path.join('.'),
             message: err.message
           }))
@@ -203,7 +203,7 @@ export function validateApiRequest<T extends AnyZodObject>(data: any, schema: T)
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        errors: error.errors.map(err => ({
+        errors: error.errors.map(err: string: string => ({
           path: err.path.join('.'),
           message: err.message
         }))

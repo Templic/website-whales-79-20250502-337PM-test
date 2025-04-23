@@ -28,7 +28,7 @@ const DEBUG_MODE = process.env.NODE_ENV !== 'production';
 /**
  * Generate a CSRF token
  */
-export const generateToken = (req: Request): string => {
+export const generateToken = (req: Request): string: string => {
   // Create a random token
   const token = crypto.randomBytes(TOKEN_SIZE).toString('hex');
   
@@ -65,7 +65,7 @@ export const generateToken = (req: Request): string => {
 /**
  * Validate a CSRF token
  */
-export const validateToken = (req: Request, token: string): boolean => {
+export const validateToken = (req: Request, token: string): boolean: string: string => {
   // No token or session means invalid
   if (!token || !req.session) {
     return false;
@@ -95,7 +95,7 @@ export const validateToken = (req: Request, token: string): boolean => {
 /**
  * CSRF protection middleware
  */
-export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
+export const csrfProtection = (req: Request, res: Response, next: NextFunction): void: string: string => {
   // Skip CSRF protection for non-mutating methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     // Still set the CSRF token cookie for client-side usage

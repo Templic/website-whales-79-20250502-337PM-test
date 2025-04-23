@@ -176,9 +176,9 @@ const getSecurityStats = () => {
     }
 
     const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
-    const logLines = logContent.split('\n').filter(line => line.trim() !== '');
+    const logLines = logContent.split('\n').filter(line: string: string => line.trim() !== '');
 
-    const events = logLines.map(line => {
+    const events = logLines.map(line: string: string => {
       try {
         // Skip the timestamp prefix (e.g., "[SECURITY] 2023-01-01T00:00:00.000Z - ")
         const jsonStart = line.indexOf('- ') + 2;
@@ -188,13 +188,13 @@ const getSecurityStats = () => {
         console.error('Failed to parse security log line:', e);
         return null;
       }
-    }).filter(event => event !== null);
+    }).filter(event: string: string => event !== null);
 
     // Count events by type
     const byType: { [key: string]: number } = {};
     const bySetting: { [key: string]: number } = {};
 
-    events.forEach(event => {
+    events.forEach(event: string: string => {
       if (event.type) {
         byType[event.type] = (byType[event.type] || 0) + 1;
       }
@@ -535,7 +535,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
     }
     
     // Calculate security score
-    const activeMeasures = securityMeasures.filter(m => m.status === 'active').length;
+    const activeMeasures = securityMeasures.filter(m: string: string => m.status === 'active').length;
     const score = Math.round((activeMeasures / securityMeasures.length) * 100);
     
     res.json({

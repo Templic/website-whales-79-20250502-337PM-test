@@ -575,7 +575,7 @@ class IsolationForestModel extends MLModel {
     // In a real implementation, we would traverse the tree
     // For simulation, we'll compute a random path length
     let pathLength = 0;
-    const relevantFeatures = Object.keys(tree.featureMap).filter(key => features[key] !== undefined);
+    const relevantFeatures = Object.keys(tree.featureMap).filter(key: string: string => features[key] !== undefined);
     
     if (relevantFeatures.length === 0) {
       return tree.height / 2; // Default if no relevant features
@@ -968,7 +968,7 @@ export class MachineLearningEngine {
       isAnomaly: overallAnomalyScore > 0.7 && overallConfidence > 0.5,
       confidence: overallConfidence,
       features,
-      featureContributions: anomalousFeatures.map(feature => ({
+      featureContributions: anomalousFeatures.map(feature: string: string => ({
         feature,
         value: features[feature],
         contribution: 1,

@@ -219,7 +219,7 @@ async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulne
       const fullPath = path.join(dir, entry.name);
       
       // Skip excluded directories
-      if (exclude.some(pattern => 
+      if (exclude.some(pattern: string: string => 
         entry.name === pattern || 
         fullPath.includes(`/${pattern}/`) || 
         fullPath.includes(`\\${pattern}\\`)
@@ -261,10 +261,10 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   report += `Total vulnerabilities found: ${vulnerabilities.length}\n\n`;
   
   // Summarize vulnerabilities by risk level
-  const criticalVulns = vulnerabilities.filter(v => v.pattern.risk === RiskLevel.CRITICAL);
-  const highVulns = vulnerabilities.filter(v => v.pattern.risk === RiskLevel.HIGH);
-  const mediumVulns = vulnerabilities.filter(v => v.pattern.risk === RiskLevel.MEDIUM);
-  const lowVulns = vulnerabilities.filter(v => v.pattern.risk === RiskLevel.LOW);
+  const criticalVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.CRITICAL);
+  const highVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.HIGH);
+  const mediumVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.MEDIUM);
+  const lowVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.LOW);
   
   report += `Risk Level Summary:\n`;
   report += `- Critical: ${criticalVulns.length}\n`;
@@ -376,13 +376,13 @@ function generateJsonReport(vulnerabilities: Vulnerability[]): string {
     generatedAt: new Date().toISOString(),
     totalVulnerabilities: vulnerabilities.length,
     summary: {
-      critical: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.CRITICAL).length,
-      high: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.HIGH).length,
-      medium: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.MEDIUM).length,
-      low: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.LOW).length
+      critical: vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.CRITICAL).length,
+      high: vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.HIGH).length,
+      medium: vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.MEDIUM).length,
+      low: vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.LOW).length
     },
     categories: {} as Record<string, number>,
-    vulnerabilities: vulnerabilities.map(v => ({
+    vulnerabilities: vulnerabilities.map(v: string: string => ({
       file: v.file,
       line: v.line,
       column: v.column,
@@ -413,9 +413,9 @@ async function main() {
   
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const dirs = args.filter(arg => !arg.startsWith('--') && !arg.startsWith('-'));
+  const dirs = args.filter(arg: string: string => !arg.startsWith('--') && !arg.startsWith('-'));
   const jsonOutput = args.includes('--json') || args.includes('-j');
-  const outputFile = args.find(arg => arg.startsWith('--output=') || arg.startsWith('-o='))?.split('=')[1];
+  const outputFile = args.find(arg: string: string => arg.startsWith('--output=') || arg.startsWith('-o='))?.split('=')[1];
   
   // Default directories to scan
   const dirsToScan = dirs.length > 0 ? dirs : ['server', 'client', 'shared'];
@@ -440,10 +440,10 @@ async function main() {
   }
   
   console.log(`\nScan complete. Found ${vulnerabilities.length} potential SQL injection vulnerabilities:`);
-  console.log(`- Critical: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.CRITICAL).length}`);
-  console.log(`- High: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.HIGH).length}`);
-  console.log(`- Medium: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.MEDIUM).length}`);
-  console.log(`- Low: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.LOW).length}`);
+  console.log(`- Critical: ${vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.CRITICAL).length}`);
+  console.log(`- High: ${vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.HIGH).length}`);
+  console.log(`- Medium: ${vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.MEDIUM).length}`);
+  console.log(`- Low: ${vulnerabilities.filter(v: string: string => v.pattern.risk === RiskLevel.LOW).length}`);
   
   // Generate report
   const report = jsonOutput ? 
@@ -488,7 +488,7 @@ async function main() {
 
 // Run the inspector if this file is executed directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch(error: string: string => {
     console.error('Error running SQL injection vulnerability inspector:', error);
     process.exit(1);
   });

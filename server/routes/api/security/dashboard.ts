@@ -153,7 +153,7 @@ router.post('/scan', async (req, res) => {
     });
     
     // Simulate a scan delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 2000));
     
     // Log the scan completion
     logSecurityEvent({

@@ -171,7 +171,7 @@ export async function validateFileType(
   const fileExtension = path.extname(file.name).toLowerCase().substring(1);
   
   // Validate file extension
-  const isExtensionValid = allowedCategories.some(category => 
+  const isExtensionValid = allowedCategories.some(category: string: string => 
     config.allowedExtensions[category].includes(fileExtension)
   );
   
@@ -181,7 +181,7 @@ export async function validateFileType(
   
   // Validate file MIME type
   const declaredMimeType = file.mimetype;
-  const isTypeDeclaredValid = allowedCategories.some(category => 
+  const isTypeDeclaredValid = allowedCategories.some(category: string: string => 
     config.allowedFileTypes[category].includes(declaredMimeType)
   );
   
@@ -196,7 +196,7 @@ export async function validateFileType(
     
     if (fileTypeResult) {
       const actualMimeType = fileTypeResult.mime;
-      const isTypeActualValid = allowedCategories.some(category => 
+      const isTypeActualValid = allowedCategories.some(category: string: string => 
         config.allowedFileTypes[category].includes(actualMimeType)
       );
       

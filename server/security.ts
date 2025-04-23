@@ -109,8 +109,8 @@ export function rotateSecurityLogs(): void {
         
         // Clean up old log files (keep only the 5 most recent)
         const logFiles = fs.readdirSync(securityLogsDir)
-          .filter(file => file.startsWith('security-') && file.endsWith('.log'))
-          .map(file => path.join(securityLogsDir, file));
+          .filter(file: string: string => file.startsWith('security-') && file.endsWith('.log'))
+          .map(file: string: string => path.join(securityLogsDir, file));
         
         if (logFiles.length > 5) {
           // Sort by modification time (oldest first)

@@ -269,7 +269,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
         qrc.generateKeyPair({
           algorithm: opts.algorithm,
           strength: opts.strength
-        }).then(keyPair => {
+        }).then(keyPair: string: string => {
           // Sign the response if needed
           if (shouldSignResponse(body, opts)) {
             const responseData = JSON.stringify(processedBody);
@@ -277,7 +277,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             qrc.sign(responseData, keyPair.privateKey, {
               algorithm: opts.algorithm,
               strength: opts.strength
-            }).then(signatureResult => {
+            }).then(signatureResult: string: string => {
               // Add signature and public key to response headers
               res.setHeader('X-Quantum-Signature', signatureResult.signature);
               res.setHeader('X-Quantum-Public-Key', signatureResult.publicKey);
@@ -302,7 +302,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               
               // Continue with the original json method
               return originalJson.call(res, processedBody);
-            }).catch(error => {
+            }).catch(error: string: string => {
               // Log error but still send the response
               console.error('Failed to sign response:', error);
               
@@ -331,7 +331,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             // Continue with the original json method without signature
             return originalJson.call(res, processedBody);
           }
-        }).catch(error => {
+        }).catch(error: string: string => {
           // Log error but still send the response
           console.error('Failed to generate key pair for response signing:', error);
           

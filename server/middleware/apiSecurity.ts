@@ -383,7 +383,7 @@ function filterSensitiveHeaders(headers: any) {
     'set-cookie'
   ];
   
-  sensitiveHeaders.forEach(header => {
+  sensitiveHeaders.forEach(header: string: string => {
     if (filtered[header]) {
       filtered[header] = '[REDACTED]';
     }

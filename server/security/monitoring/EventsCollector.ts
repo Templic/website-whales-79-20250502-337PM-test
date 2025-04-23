@@ -80,16 +80,16 @@ export async function getSecurityEventsHistory(
       break;
   }
   
-  events = events.filter(event => (now - event.timestamp.getTime()) <= timeRangeMs);
+  events = events.filter(event: string: string => (now - event.timestamp.getTime()) <= timeRangeMs);
   
   // Apply category filter
   if (category !== 'all') {
-    events = events.filter(event => event.category === category);
+    events = events.filter(event: string: string => event.category === category);
   }
   
   // Apply type filter
   if (type !== 'all') {
-    events = events.filter(event => event.type === type);
+    events = events.filter(event: string: string => event.type === type);
   }
   
   // Apply limit

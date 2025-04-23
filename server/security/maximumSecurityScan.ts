@@ -294,7 +294,7 @@ class SecurityScanner {
         scanType: scan.scanType,
         timestamp: new Date().toISOString()
       }
-    }).catch(error => {
+    }).catch(error: string: string => {
       console.error('[SECURITY-SCANNER] Error recording scan start:', error);
     });
     
@@ -331,7 +331,7 @@ class SecurityScanner {
           duration: scan.duration,
           timestamp: new Date().toISOString()
         }
-      }).catch(error => {
+      }).catch(error: string: string => {
         console.error('[SECURITY-SCANNER] Error recording scan completion:', error);
       });
       
@@ -357,7 +357,7 @@ class SecurityScanner {
           error: scan.error,
           timestamp: new Date().toISOString()
         }
-      }).catch(error => {
+      }).catch(error: string: string => {
         console.error('[SECURITY-SCANNER] Error recording scan error:', error);
       });
       
@@ -416,7 +416,7 @@ class SecurityScanner {
         references: finding.references,
         timestamp: new Date().toISOString()
       }
-    }).catch(error => {
+    }).catch(error: string: string => {
       console.error('[SECURITY-SCANNER] Error recording finding:', error);
     });
   }
@@ -466,7 +466,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running quick scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -503,7 +503,7 @@ class SecurityScanner {
     
     // Add deeper scanning
     // This is just a stub
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 5000));
     
     this.addFinding(scanId, {
       title: 'Sample finding from deep scan',
@@ -520,7 +520,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running API scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -541,7 +541,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running database scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -562,7 +562,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running web scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -582,7 +582,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running system scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -602,7 +602,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running static code scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -623,7 +623,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running dependency scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -646,7 +646,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Running custom scan ${scanId}`);
     
     // Simulate scanning
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve: string: string => setTimeout(resolve, 1000));
     
     // Add some sample findings
     this.addFinding(scanId, {
@@ -664,9 +664,9 @@ class SecurityScanner {
 export function createMaximumSecurityScanMiddleware(options: SecurityScannerOptions = {}): (req: Request, res: Response, next: NextFunction) => void {
   const securityScanner = new SecurityScanner(options);
   
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): void: string: string => {
     // Skip excluded paths
-    if (options.excludePaths?.some(path => req.path.startsWith(path))) {
+    if (options.excludePaths?.some(path: string: string => req.path.startsWith(path))) {
       return next();
     }
     

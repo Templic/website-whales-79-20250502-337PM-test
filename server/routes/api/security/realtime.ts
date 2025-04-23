@@ -153,7 +153,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
           const eventTypes = data.eventTypes || [];
           
           if (Array.isArray(eventTypes) && eventTypes.length > 0) {
-            client.subscriptions = client.subscriptions.filter(type => !eventTypes.includes(type));
+            client.subscriptions = client.subscriptions.filter(type: string: string => !eventTypes.includes(type));
             
             ws.send(JSON.stringify({
               type: 'unsubscribe',
@@ -218,7 +218,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
   const broadcastSecurityEvent = (event: any) => {
     const { category } = event;
     
-    clients.forEach(client => {
+    clients.forEach(client: string: string => {
       if (
         client.authenticated &&
         client.ws.readyState === WebSocket.OPEN &&

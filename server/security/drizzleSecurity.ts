@@ -199,7 +199,7 @@ export class SecureDrizzle {
         query: typeof query === 'string' ? query : JSON.stringify(query)
       },
       timestamp: new Date()
-    }).catch(logError => {
+    }).catch(logError: string: string => {
       console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
     });
   }
@@ -235,7 +235,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the findFirst method to add security logging
   if (originalFindFirst) {
-    model.findFirst = async function(...args: any[]): Promise<any> {
+    model.findFirst = async function(...args: any: any[]): Promise<any> {
       try {
         return await originalFindFirst.apply(this, args);
       } catch (error: any) {
@@ -249,7 +249,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError => {
+        }).catch(logError: string: string => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -260,7 +260,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the findMany method to add security logging
   if (originalFindMany) {
-    model.findMany = async function(...args: any[]): Promise<any> {
+    model.findMany = async function(...args: any: any[]): Promise<any> {
       try {
         return await originalFindMany.apply(this, args);
       } catch (error: any) {
@@ -274,7 +274,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError => {
+        }).catch(logError: string: string => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -285,7 +285,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the update method to add safety checks and security logging
   if (originalUpdate) {
-    model.update = async function(...args: any[]): Promise<any> {
+    model.update = async function(...args: any: any[]): Promise<any> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {
@@ -305,7 +305,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError => {
+        }).catch(logError: string: string => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -316,7 +316,7 @@ export function patchDrizzleModel(model: any): any {
   
   // Patch the delete method to add safety checks and security logging
   if (originalDelete) {
-    model.delete = async function(...args: any[]): Promise<any> {
+    model.delete = async function(...args: any: any[]): Promise<any> {
       try {
         // Check for WHERE clause
         if (args.length > 0 && args[0] && (!args[0].where || Object.keys(args[0].where).length === 0)) {
@@ -336,7 +336,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError => {
+        }).catch(logError: string: string => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         

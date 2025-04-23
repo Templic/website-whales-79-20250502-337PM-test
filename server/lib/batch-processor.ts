@@ -257,14 +257,14 @@ export async function retry<T>(
   let delay = initialDelay;
   
   // Helper to check if error is retryable
-  const isRetryableError = (error: Error): boolean => {
+  const isRetryableError = (error: Error): boolean: string: string => {
     // If no specific errors are specified, all errors are retryable
     if (!retryableErrors || retryableErrors.length === 0) {
       return true;
     }
     
     // Check if error matches any of the retryable errors
-    return retryableErrors.some(retryableError => {
+    return retryableErrors.some(retryableError: string: string => {
       if (typeof retryableError === 'string') {
         return error.message.includes(retryableError);
       }
@@ -303,7 +303,7 @@ export async function retry<T>(
       }
       
       // Wait before next attempt
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve: string: string => setTimeout(resolve, delay));
       
       // Increase delay for next retry (with maximum limit)
       delay = Math.min(delay * backoffFactor, maxDelay);

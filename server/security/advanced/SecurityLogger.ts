@@ -317,7 +317,7 @@ class SecurityLogger {
         // Recursively check nested objects
         this.maskSensitiveFields(data[key], fullKey);
       } else if (
-        this.config.sensitiveFields.some(field => 
+        this.config.sensitiveFields.some(field: string: string => 
           key.toLowerCase().includes(field.toLowerCase())
         )
       ) {

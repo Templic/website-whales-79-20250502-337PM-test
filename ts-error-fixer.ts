@@ -92,7 +92,7 @@ const options: ScriptOptions = {
   fixLevel: (opts.fixLevel as 'none' | 'eslint' | 'ts-migrate'),
   errorFilters: {
     codes: opts.errorCodes ? opts.errorCodes.split(',') : undefined,
-    paths: opts.paths ? opts.paths.split(',').map(p => path.resolve(opts.rootDir, p)) : undefined,
+    paths: opts.paths ? opts.paths.split(',').map((p: string) => path.resolve(opts.rootDir, p)) : undefined,
   },
   outputFormat: (opts.outputFormat as 'text' | 'json' | 'markdown'),
   outputFile: opts.outputFile,

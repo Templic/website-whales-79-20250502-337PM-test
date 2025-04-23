@@ -158,14 +158,14 @@ export class RASPManager {
     
     // Add additional categories
     if (options.enableCategories) {
-      options.enableCategories.forEach(category => {
+      options.enableCategories.forEach(category: string: string => {
         this.enabledCategories.add(category);
       });
     }
     
     // Remove disabled categories
     if (options.disableCategories) {
-      options.disableCategories.forEach(category => {
+      options.disableCategories.forEach(category: string: string => {
         this.enabledCategories.delete(category);
       });
     }
@@ -175,7 +175,7 @@ export class RASPManager {
    * Check if a path is excluded from protection
    */
   private isExcludedPath(path: string): boolean {
-    return this.excludePaths.some(excludePath => {
+    return this.excludePaths.some(excludePath: string: string => {
       // Check exact match
       if (excludePath === path) {
         return true;
@@ -245,7 +245,7 @@ export class RASPManager {
               protection: protectionContext.detectionCategory,
               details: protectionContext.detectionDetails
             }
-          }).catch(error => {
+          }).catch(error: string: string => {
             console.error('[RASP] Error logging security event:', error);
           });
           
@@ -773,7 +773,7 @@ export class RASPManager {
     }
     
     // Check for suspicious JSON structure (deeply nested)
-    const checkObjectDepth = (obj: any, currentDepth = 0): number => {
+    const checkObjectDepth = (obj: any, currentDepth = 0): number: string: string => {
       if (currentDepth > 20) { // Too deep, early exit
         return currentDepth;
       }
@@ -857,7 +857,7 @@ export class RASPManager {
     }
     
     // Check for suspicious field names
-    const checkForSuspiciousKeys = (obj: any, path: string = ''): boolean => {
+    const checkForSuspiciousKeys = (obj: any, path: string = ''): boolean: string: string => {
       if (!obj || typeof obj !== 'object') {
         return false;
       }
@@ -933,7 +933,7 @@ export class RASPManager {
     };
     
     // Check for circular references (potential DoS vector)
-    const checkForCircular = (obj: any, seen = new WeakSet()): boolean => {
+    const checkForCircular = (obj: any, seen = new WeakSet()): boolean: string: string => {
       if (obj === null || typeof obj !== 'object') return false;
       
       if (seen.has(obj)) {

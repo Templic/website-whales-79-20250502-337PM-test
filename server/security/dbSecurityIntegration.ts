@@ -121,7 +121,7 @@ export function patchDatabaseModule(db: any): void {
   const sqlFix = createSQLFix(db);
   
   // Replace the query method with a secure version
-  db.query = async function(sql: string, params: any[] = []): Promise<any> {
+  db.query = async function(sql: string, params: any: any[] = []): Promise<any> {
     // Check if this is a potentially unsafe query
     const hasDynamicContent = typeof sql === 'string' && 
       (sql.includes('${') || sql.includes('+') || sql.includes('concat'));

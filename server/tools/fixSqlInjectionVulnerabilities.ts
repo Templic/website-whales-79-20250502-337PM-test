@@ -53,9 +53,9 @@ async function runSQLInjectionRemediation(fixAutomatically = false) {
   }
   
   // Print vulnerability summary
-  const highCount = vulnerabilities.filter(v => v.severity === 'HIGH').length;
-  const mediumCount = vulnerabilities.filter(v => v.severity === 'MEDIUM').length;
-  const lowCount = vulnerabilities.filter(v => v.severity === 'LOW').length;
+  const highCount = vulnerabilities.filter(v: string: string => v.severity === 'HIGH').length;
+  const mediumCount = vulnerabilities.filter(v: string: string => v.severity === 'MEDIUM').length;
+  const lowCount = vulnerabilities.filter(v: string: string => v.severity === 'LOW').length;
   
   console.log('\nVulnerability detection summary:');
   console.log(`- HIGH: ${highCount}`);
@@ -153,10 +153,10 @@ const user = await sqlFix.query('SELECT * FROM users WHERE id = $1', [userId]);
 if (require.main === module) {
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const autoFixArg = args.find(arg => arg === '--fix' || arg === '-f');
+  const autoFixArg = args.find(arg: string: string => arg === '--fix' || arg === '-f');
   const fixAutomatically = autoFixArg !== undefined;
   
-  runSQLInjectionRemediation(fixAutomatically).catch(error => {
+  runSQLInjectionRemediation(fixAutomatically).catch(error: string: string => {
     console.error('Error running SQL injection remediation:', error);
     process.exit(1);
   });

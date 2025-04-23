@@ -376,14 +376,14 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
         }).catch(console.error);
         
         // Only return errors with severity 'error'
-        const criticalErrors = validationResult.errors.filter(error => error.severity === 'error');
+        const criticalErrors = validationResult.errors.filter(error: string: string => error.severity === 'error');
         
         // If there are critical errors, reject the request
         if (criticalErrors.length > 0) {
           return res.status(400).json({
             error: 'Bad Request',
             message: 'Input validation failed',
-            details: criticalErrors.map(error => ({
+            details: criticalErrors.map(error: string: string => ({
               path: error.path,
               message: error.message
             }))

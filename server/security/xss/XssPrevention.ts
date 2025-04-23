@@ -337,7 +337,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   
   // If it's an array and we should recurse
   if (Array.isArray(obj) && recurseArrays) {
-    return obj.map(item => validateAndSanitizeObject(item, options)) as unknown as T;
+    return obj.map(item: string: string => validateAndSanitizeObject(item, options)) as unknown as T;
   }
   
   // If it's an object and we should recurse

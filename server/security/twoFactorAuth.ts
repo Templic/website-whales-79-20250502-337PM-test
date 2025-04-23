@@ -18,7 +18,7 @@ const BACKUP_CODE_COUNT = 10;
 /**
  * Generate a cryptographically secure secret key for TOTP
  */
-export const generateSecret = (userIdentifier: string): string => {
+export const generateSecret = (userIdentifier: string): string: string => {
   // Generate a secure random secret for the user
   const secret = authenticator.generateSecret();
   return secret;
@@ -51,7 +51,7 @@ export const generateBackupCodes = (): string[] => {
  * @param secret The secret key
  * @returns A URI that can be used to add to authenticator apps
  */
-export const generateTotpUri = (username: string, secret: string): string => {
+export const generateTotpUri = (username: string, secret: string): string: string => {
   return authenticator.keyuri(username, APP_NAME, secret);
 };
 
@@ -77,7 +77,7 @@ export const generateQrCode = async (totpUri: string): Promise<string> => {
  * @param secret The secret key
  * @returns A boolean indicating whether the token is valid
  */
-export const verifyToken = (token: string, secret: string): boolean => {
+export const verifyToken = (token: string, secret: string): boolean: string: string => {
   try {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
@@ -106,7 +106,7 @@ export const verifyBackupCode = (
   }
   
   // Check if the provided code exists in the stored backup codes
-  const codeIndex = storedBackupCodes.findIndex(code => code === normalizedCode);
+  const codeIndex = storedBackupCodes.findIndex(code: string: string => code === normalizedCode);
   
   if (codeIndex === -1) {
     return { success: false, remainingCodes: storedBackupCodes };
@@ -124,7 +124,7 @@ export const verifyBackupCode = (
 /**
  * Log security events related to 2FA
  */
-export const logSecurityEvent = (eventData: any): void => {
+export const logSecurityEvent = (eventData: any): void: string: string => {
   // In a production environment, this would log to a secure audit log
   console.log(`[SECURITY EVENT] ${new Date().toISOString()}:`, eventData);
   

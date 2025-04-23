@@ -123,7 +123,7 @@ program
     try {
       // In a real implementation, this would call an actual endpoint
       // For now, we'll simulate a scan
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve: string: string => setTimeout(resolve, 2000));
       
       // Log scan initiation to blockchain
       await securityBlockchain.addSecurityEvent({
@@ -227,11 +227,11 @@ program
       let filteredEvents = events;
       
       if (options.category) {
-        filteredEvents = filteredEvents.filter(e => e.category === options.category.toUpperCase());
+        filteredEvents = filteredEvents.filter(e: string: string => e.category === options.category.toUpperCase());
       }
       
       if (options.severity) {
-        filteredEvents = filteredEvents.filter(e => e.severity === options.severity.toUpperCase());
+        filteredEvents = filteredEvents.filter(e: string: string => e.severity === options.severity.toUpperCase());
       }
       
       // Limit results
@@ -338,14 +338,14 @@ program
       const config = fs.readFileSync(configPath, 'utf8');
       
       // Simulate analysis
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve: string: string => setTimeout(resolve, 1000));
       
       spinner.succeed(`Security configuration analyzed: ${configPath}`);
       
       // Simple analysis for .env files
       if (configPath.endsWith('.env')) {
         const lines = config.split('\n');
-        const securitySettings = lines.filter(line => 
+        const securitySettings = lines.filter(line: string: string => 
           line.startsWith('SECURITY_') || 
           line.includes('SECRET') || 
           line.includes('KEY') ||
@@ -360,7 +360,7 @@ program
           
           const issues = [];
           
-          securitySettings.forEach(setting => {
+          securitySettings.forEach(setting: string: string => {
             const [key, value] = setting.split('=');
             
             if (!value || value.trim() === '') {
@@ -376,7 +376,7 @@ program
           
           if (issues.length > 0) {
             console.log(chalk.bold.yellow('\nIssues Found:'));
-            issues.forEach(issue => console.log(`- ${issue}`));
+            issues.forEach(issue: string: string => console.log(`- ${issue}`));
           } else {
             console.log(chalk.bold.green('\nNo issues found in security configuration'));
           }
@@ -472,7 +472,7 @@ program
       const anomalyResult = await detectAnomaly(mockRequest);
       
       // Simulate actual request (in a real implementation, this would make an actual request)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve: string: string => setTimeout(resolve, 1000));
       
       spinner.succeed(`Endpoint checked: ${method} ${endpointUrl}`);
       

@@ -176,7 +176,7 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
     // If skipSuccessfulRequests is true, decrement the counter when the response is successful
     if (opts.skipSuccessfulRequests) {
       const originalEnd = res.end;
-      res.end = function(chunk?: any, encoding?: BufferEncoding, callback?: () => void) {
+      res.end = function(chunk?: any, encoding?: BufferEncoding, callback: any: any?: () => void) {
         if (res.statusCode < 400) {
           limiterData.count = Math.max(0, limiterData.count - 1);
         }
@@ -296,7 +296,7 @@ export function slidingWindowRateLimiter(
     
     // Remove timestamps outside of the window
     const windowStart = now - windowMs;
-    requestLog[key] = requestLog[key].filter(timestamp => timestamp > windowStart);
+    requestLog[key] = requestLog[key].filter(timestamp: string: string => timestamp > windowStart);
     
     // Check if the rate limit has been exceeded
     if (requestLog[key].length >= maxRequests) {

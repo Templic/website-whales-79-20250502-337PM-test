@@ -53,7 +53,7 @@ export class SQLInjectionPrevention {
   ): Promise<any[]> {
     // Sanitize table and column names (these cannot be parameterized)
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
-    const sanitizedColumns = columns.map(col => {
+    const sanitizedColumns = columns.map(col: string: string => {
       // Handle special case for '*'
       if (col === '*') return '*';
       return databaseSecurity.sanitizeIdentifier(col);
@@ -93,7 +93,7 @@ export class SQLInjectionPrevention {
       // Simple sanitization for order by
       const sanitizedOrderBy = orderBy
         .split(',')
-        .map(part => {
+        .map(part: string: string => {
           const [field, direction] = part.trim().split(/\s+/);
           const sanitizedField = databaseSecurity.sanitizeIdentifier(field);
           const sanitizedDirection = direction && 
@@ -157,7 +157,7 @@ export class SQLInjectionPrevention {
     });
     
     // Sanitize returning columns
-    const sanitizedReturning = returningColumns.map(col => {
+    const sanitizedReturning = returningColumns.map(col: string: string => {
       // Handle special case for '*'
       if (col === '*') return '*';
       return databaseSecurity.sanitizeIdentifier(col);
@@ -237,7 +237,7 @@ export class SQLInjectionPrevention {
           caller: caller || new Error().stack?.split('\n')[1]
         },
         timestamp: new Date()
-      }).catch(error => {
+      }).catch(error: string: string => {
         console.error('[SQL-PREVENTION] Error logging security event:', error);
       });
       
@@ -245,7 +245,7 @@ export class SQLInjectionPrevention {
     }
     
     // Sanitize returning columns
-    const sanitizedReturning = returningColumns.map(col => {
+    const sanitizedReturning = returningColumns.map(col: string: string => {
       // Handle special case for '*'
       if (col === '*') return '*';
       return databaseSecurity.sanitizeIdentifier(col);
@@ -312,7 +312,7 @@ export class SQLInjectionPrevention {
           caller: caller || new Error().stack?.split('\n')[1]
         },
         timestamp: new Date()
-      }).catch(error => {
+      }).catch(error: string: string => {
         console.error('[SQL-PREVENTION] Error logging security event:', error);
       });
       
@@ -320,7 +320,7 @@ export class SQLInjectionPrevention {
     }
     
     // Sanitize returning columns
-    const sanitizedReturning = returningColumns.map(col => {
+    const sanitizedReturning = returningColumns.map(col: string: string => {
       // Handle special case for '*'
       if (col === '*') return '*';
       return databaseSecurity.sanitizeIdentifier(col);
@@ -361,7 +361,7 @@ export class SQLInjectionPrevention {
         caller: caller || new Error().stack?.split('\n')[1]
       },
       timestamp: new Date()
-    }).catch(error => {
+    }).catch(error: string: string => {
       console.error('[SQL-PREVENTION] Error logging security event:', error);
     });
     

@@ -87,11 +87,11 @@ export function getSecurityEvents(
   let filteredEvents = securityEvents;
   
   if (types && types.length > 0) {
-    filteredEvents = filteredEvents.filter(event => types.includes(event.type));
+    filteredEvents = filteredEvents.filter(event: string: string => types.includes(event.type));
   }
   
   if (levels && levels.length > 0) {
-    filteredEvents = filteredEvents.filter(event => levels.includes(event.level));
+    filteredEvents = filteredEvents.filter(event: string: string => levels.includes(event.level));
   }
   
   // Sort by timestamp (newest first) and limit
@@ -179,7 +179,7 @@ export function getClientIp(req: Request): string {
   if (forwardedFor) {
     // If X-Forwarded-For is a string, extract the first IP
     if (typeof forwardedFor === 'string') {
-      const ips = forwardedFor.split(',').map(ip => ip.trim());
+      const ips = forwardedFor.split(',').map(ip: string: string => ip.trim());
       return ips[0];
     }
     
@@ -222,7 +222,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
   // Mask sensitive fields
   for (const key of Object.keys(maskedData)) {
     // Check if the field is sensitive
-    const isSensitive = sensitiveFields.some(field => 
+    const isSensitive = sensitiveFields.some(field: string: string => 
       key.toLowerCase().includes(field.toLowerCase())
     );
     
@@ -339,5 +339,5 @@ export function isSuspiciousInput(input: string): boolean {
   // Check against all patterns
   const allPatterns = [...sqlPatterns, ...xssPatterns, ...commandPatterns];
   
-  return allPatterns.some(pattern => pattern.test(str));
+  return allPatterns.some(pattern: string: string => pattern.test(str));
 }

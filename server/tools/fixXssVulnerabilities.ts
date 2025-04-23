@@ -213,7 +213,7 @@ async function addNeededImports(
     const content = await readFile(filePath, 'utf-8');
     
     // Check if we need to add imports
-    const needsDOMPurify = vulnerabilities.some(v => 
+    const needsDOMPurify = vulnerabilities.some(v: string: string => 
       v.pattern.name === 'Unsafe innerHTML Assignment' ||
       v.pattern.name === 'Unsafe React dangerouslySetInnerHTML' ||
       v.pattern.name === 'Unsafe insertAdjacentHTML Usage' ||
@@ -221,7 +221,7 @@ async function addNeededImports(
       v.pattern.name === 'Unsafe document.write Usage'
     );
     
-    const needsEscapeHtml = vulnerabilities.some(v => 
+    const needsEscapeHtml = vulnerabilities.some(v: string: string => 
       v.pattern.name === 'Unsafe Express Response'
     );
     
@@ -288,7 +288,7 @@ async function main() {
   
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const dirs = args.filter(arg => !arg.startsWith('--'));
+  const dirs = args.filter(arg: string: string => !arg.startsWith('--'));
   const dryRun = args.includes('--dry-run');
   const fixHighOnly = args.includes('--high-only');
   const fixCriticalOnly = args.includes('--critical-only');
@@ -349,9 +349,9 @@ async function main() {
     // Filter vulnerabilities based on severity
     let vulnerabilitiesToFix = vulnerabilities;
     if (fixCriticalOnly) {
-      vulnerabilitiesToFix = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL);
+      vulnerabilitiesToFix = vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.CRITICAL);
     } else if (fixHighOnly) {
-      vulnerabilitiesToFix = vulnerabilities.filter(v => 
+      vulnerabilitiesToFix = vulnerabilities.filter(v: string: string => 
         v.pattern.risk === XssRiskLevel.CRITICAL || v.pattern.risk === XssRiskLevel.HIGH
       );
     }
@@ -471,7 +471,7 @@ async function main() {
 
 // Run the fixer if this file is executed directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch(error: string: string => {
     console.error('Error running XSS vulnerability remediation tool:', error);
     process.exit(1);
   });

@@ -402,11 +402,11 @@ async function updatePatternRepository(req: Request): Promise<void> {
   // Clean up old timestamps
   const oneMinuteAgo = now - 60000;
   patternRepository.globalPatterns.requestsTimestamps = 
-    patternRepository.globalPatterns.requestsTimestamps.filter(ts => ts > oneMinuteAgo);
+    patternRepository.globalPatterns.requestsTimestamps.filter(ts: string: string => ts > oneMinuteAgo);
   
   // Recalculate average requests per minute every 30 seconds
   if (now - patternRepository.globalPatterns.lastDatasetUpdate > 30000) {
-    const requestLast5Minutes = patternRepository.globalPatterns.requestsTimestamps.filter(ts => ts > now - 300000).length;
+    const requestLast5Minutes = patternRepository.globalPatterns.requestsTimestamps.filter(ts: string: string => ts > now - 300000).length;
     patternRepository.globalPatterns.avgRequestsPerMinute = requestLast5Minutes / 5;
     patternRepository.globalPatterns.requestsLastMinute = patternRepository.globalPatterns.requestsTimestamps.length;
     patternRepository.globalPatterns.lastDatasetUpdate = now;
@@ -519,7 +519,7 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
   if (routeInfo && routeInfo.frequentParams.length > 0) {
     const queryParams = Object.keys(req.query);
     if (queryParams.length > 0) {
-      const unknownParams = queryParams.filter(p => !routeInfo.frequentParams.includes(p));
+      const unknownParams = queryParams.filter(p: string: string => !routeInfo.frequentParams.includes(p));
       if (unknownParams.length > 0) {
         details.unusualParams = unknownParams;
         
@@ -778,7 +778,7 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
   
   // Calculate requests per minute for this IP
   const oneMinuteAgo = now - 60000;
-  const requestsLastMinute = ipPattern.timestamps.filter(ts => ts > oneMinuteAgo).length;
+  const requestsLastMinute = ipPattern.timestamps.filter(ts: string: string => ts > oneMinuteAgo).length;
   
   details.requestsLastMinute = requestsLastMinute;
   details.globalAvgRequestsPerMinute = patternRepository.globalPatterns.avgRequestsPerMinute;
@@ -809,8 +809,8 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
   
   // Calculate request acceleration (second derivative of request count)
   if (ipPattern.timestamps.length >= 15) {
-    const last5MinCount = ipPattern.timestamps.filter(ts => ts > now - 300000).length;
-    const prev5MinCount = ipPattern.timestamps.filter(ts => ts > now - 600000 && ts <= now - 300000).length;
+    const last5MinCount = ipPattern.timestamps.filter(ts: string: string => ts > now - 300000).length;
+    const prev5MinCount = ipPattern.timestamps.filter(ts: string: string => ts > now - 600000 && ts <= now - 300000).length;
     
     const acceleration = last5MinCount - prev5MinCount;
     details.requestAcceleration = acceleration;
@@ -858,7 +858,7 @@ export function anomalyDetectionMiddleware(
     '/api/stripe-webhook'
   ];
   
-  if (excludePaths.some(path => req.path.startsWith(path))) {
+  if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
     return next();
   }
   
@@ -867,7 +867,7 @@ export function anomalyDetectionMiddleware(
   
   // Run the full detection asynchronously to not block the request
   detectAnomaly(req)
-    .then(result => {
+    .then(result: string: string => {
       if (result.isAnomaly && result.score >= 0.7) {
         securityBlockchain.recordEvent({
           severity: result.score >= 0.9 ? SecurityEventSeverity.HIGH : SecurityEventSeverity.MEDIUM,
@@ -886,7 +886,7 @@ export function anomalyDetectionMiddleware(
         });
       }
     })
-    .catch(err => {
+    .catch(err: string: string => {
       console.error('[ANOMALY-DETECTION] Error in anomaly detection:', err);
     });
   
@@ -945,7 +945,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
     next: NextFunction
   ): void {
     // Skip excluded paths
-    if (excludePaths.some(path => req.path.startsWith(path))) {
+    if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
       return next();
     }
     
@@ -953,7 +953,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
     const startTime = Date.now();
     
     // Learn from the request even in learning mode
-    updatePatternRepository(req).catch(err => {
+    updatePatternRepository(req).catch(err: string: string => {
       console.error('[ANOMALY-DETECTION] Error updating pattern repository:', err);
     });
     
@@ -964,7 +964,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
     
     // Analyze the request
     detectAnomaly(req)
-      .then(result => {
+      .then(result: string: string => {
         // Apply adaptive thresholding if enabled
         let effectiveThreshold = confidenceThreshold;
         
@@ -1024,7 +1024,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
           next();
         }
       })
-      .catch(err => {
+      .catch(err: string: string => {
         console.error('[ANOMALY-DETECTION] Error in anomaly detection:', err);
         
         // Continue in case of error

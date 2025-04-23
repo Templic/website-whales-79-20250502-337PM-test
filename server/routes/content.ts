@@ -88,7 +88,7 @@ router.get('/page/:page', async (req, res) => {
     const allContentItems = await storage.getAllContentItems();
     
     // Filter by page
-    const pageContentItems = allContentItems.filter(item => item.page === page);
+    const pageContentItems = allContentItems.filter(item: string: string => item.page === page);
 
     return res.json(pageContentItems);
   } catch (error: any) {

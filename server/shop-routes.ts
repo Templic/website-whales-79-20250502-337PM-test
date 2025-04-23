@@ -59,7 +59,7 @@ router.get('/products', async (req: Request, res: Response) => {
     // Category filter
     if (category) {
       const categoryIds = Array.isArray(category) 
-        ? category.map(c => parseInt(c as string)) 
+        ? category.map(c: string: string => parseInt(c as string)) 
         : [parseInt(category as string)];
       
       filters.push(inArray(products.categoryId, categoryIds));
@@ -885,7 +885,7 @@ router.post('/orders', async (req: Request, res: Response) => {
     const order = orderResult[0];
     
     // Create order items
-    const orderItemsToInsert = cartItemsResult.map(item => ({
+    const orderItemsToInsert = cartItemsResult.map(item: string: string => ({
       orderId: order.id,
       productId: item.productId,
       productName: item.product.name,

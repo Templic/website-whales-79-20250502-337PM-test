@@ -100,7 +100,7 @@ class PaymentTransactionLogger {
     
     // Handle arrays
     if (Array.isArray(data)) {
-      return data.map(item => this.sanitizeData(item));
+      return data.map(item: string: string => this.sanitizeData(item));
     }
     
     // Handle objects
@@ -289,8 +289,8 @@ class PaymentTransactionLogger {
       // Split into lines and parse each line as JSON
       const transactions = logContent
         .split('\n')
-        .filter(line => line.trim() !== '')
-        .map(line => {
+        .filter(line: string: string => line.trim() !== '')
+        .map(line: string: string => {
           try {
             return JSON.parse(line);
           } catch (e) {
@@ -298,11 +298,11 @@ class PaymentTransactionLogger {
             return null;
           }
         })
-        .filter(transaction => transaction !== null) as TransactionLogEntry[];
+        .filter(transaction: string: string => transaction !== null) as TransactionLogEntry[];
       
       // Apply date filtering if specified
       if (startDate || endDate) {
-        return transactions.filter(transaction => {
+        return transactions.filter(transaction: string: string => {
           const transactionDate = new Date(transaction.timestamp);
           
           if (startDate && transactionDate < startDate) {

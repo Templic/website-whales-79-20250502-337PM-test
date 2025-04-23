@@ -23,7 +23,7 @@ export const authSchemas = {
     email: validationPatterns.email,
     password: validationPatterns.password,
     confirmPassword: z.string().min(1)
-  }).refine(data => data.password === data.confirmPassword, {
+  }).refine(data: string: string => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
   }),
@@ -32,7 +32,7 @@ export const authSchemas = {
     token: z.string().min(20).max(500),
     password: validationPatterns.password,
     confirmPassword: z.string().min(1)
-  }).refine(data => data.password === data.confirmPassword, {
+  }).refine(data: string: string => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
   }),
@@ -45,7 +45,7 @@ export const authSchemas = {
     currentPassword: z.string().min(1),
     newPassword: validationPatterns.password,
     confirmPassword: z.string().min(1)
-  }).refine(data => data.newPassword === data.confirmPassword, {
+  }).refine(data: string: string => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
   }),

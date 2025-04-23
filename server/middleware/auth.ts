@@ -63,7 +63,7 @@ export function isAdmin(req: Request, res: Response, next: NextFunction): void {
  * Ensure user has a specific role
  */
 export function requireSpecificRole(role: string) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): void: string: string => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       res.status(401).json({ 
         error: 'Unauthorized',

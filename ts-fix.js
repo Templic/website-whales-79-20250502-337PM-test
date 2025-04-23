@@ -98,12 +98,37 @@ function checkImportPaths(filePath) {
     const importIssues = [];
     
     lines.forEach((line, index) => {
+      // Check for path alias issues (@shared/schema)
       const importMatch = line.match(/import\s+.*\s+from\s+['"](@[^'"]+)['"]/);
       if (importMatch) {
         const importPath = importMatch[1];
         importIssues.push({
+          type: 'path-alias',
           line: index + 1,
           import: importPath,
+          raw: line.trim()
+        });
+      }
+      
+      // Check for implicit any type parameters (TS7006)
+      const implicitAnyMatch = line.match(/(\w+)\s*=>\s*|function\s*\([^)]*(\w+)[^:]*(?!(:|=>))/);
+      if (implicitAnyMatch && filePath.endsWith('.ts') && !line.includes('//')) {
+        const paramName = implicitAnyMatch[1] || implicitAnyMatch[2];
+        if (paramName && !line.includes(`${paramName}: `)) {
+          importIssues.push({
+            type: 'implicit-any',
+            line: index + 1,
+            param: paramName,
+            raw: line.trim()
+          });
+        }
+      }
+      
+      // Check for import.meta usage in module format issues (TS1343)
+      if (line.includes('import.meta') && filePath.endsWith('.ts') && !line.includes('//')) {
+        importIssues.push({
+          type: 'import-meta',
+          line: index + 1,
           raw: line.trim()
         });
       }
@@ -111,35 +136,70 @@ function checkImportPaths(filePath) {
     
     return importIssues;
   } catch (error) {
-    console.error(`Error checking import paths in ${filePath}:`, error);
+    console.error(`Error checking issues in ${filePath}:`, error);
     return [];
   }
 }
 
-// Step 5: Update the file to fix the import paths
+// Step 5: Update the file to fix TypeScript errors
 function fixImportPaths(filePath, issues) {
   try {
     let content = fs.readFileSync(filePath, 'utf8');
     const lines = content.split('\n');
     
     for (const issue of issues) {
-      const importPath = issue.import;
-      const relativePath = convertAliasToRelativePath(filePath, importPath);
-      
-      if (relativePath) {
-        // Replace the line with the fixed import
-        const oldLine = issue.raw;
-        const newLine = oldLine.replace(importPath, relativePath);
-        content = content.replace(oldLine, newLine);
+      // Fix based on issue type
+      if (issue.type === 'path-alias') {
+        const importPath = issue.import;
+        const relativePath = convertAliasToRelativePath(filePath, importPath);
         
-        console.log(`Fixed import: ${oldLine} -> ${newLine}`);
+        if (relativePath) {
+          // Replace the line with the fixed import
+          const oldLine = issue.raw;
+          const newLine = oldLine.replace(importPath, relativePath);
+          content = content.replace(oldLine, newLine);
+          
+          console.log(`Fixed path alias: ${oldLine} -> ${newLine}`);
+        }
+      } 
+      else if (issue.type === 'implicit-any') {
+        // Fix implicit any parameter by adding type annotation
+        const oldLine = issue.raw;
+        let newLine = oldLine;
+        const paramName = issue.param;
+        
+        // Find parameter and add type annotation
+        if (oldLine.includes(`${paramName} =>`)) {
+          newLine = oldLine.replace(`${paramName} =>`, `${paramName}: string =>`);
+        } else if (oldLine.includes(`(${paramName})`)) {
+          newLine = oldLine.replace(`(${paramName})`, `(${paramName}: any)`);
+        } else if (oldLine.match(new RegExp(`\\(([^)]*)${paramName}([^)]*)\\)`))) {
+          // Parameter in a function with multiple parameters
+          const match = oldLine.match(new RegExp(`(\\([^)]*)${paramName}([^)]*)\\)`));
+          if (match) {
+            newLine = oldLine.replace(match[0], `${match[1]}${paramName}: any${match[2]})`);
+          }
+        }
+        
+        if (newLine !== oldLine) {
+          content = content.replace(oldLine, newLine);
+          console.log(`Fixed implicit any: ${oldLine} -> ${newLine}`);
+        }
+      }
+      else if (issue.type === 'import-meta') {
+        // For import.meta issues, we need to update tsconfig.json to support it
+        console.log(`Note: import.meta issue detected in ${filePath} line ${issue.line}`);
+        console.log(`This requires updating tsconfig.json to use module: "esnext" or similar`);
+        
+        // We could update tsconfig.json here, but for safety, just log the issue
+        console.log(`To fix manually, update tsconfig.json with "module": "esnext" or "es2020"`);
       }
     }
     
     fs.writeFileSync(filePath, content);
     return true;
   } catch (error) {
-    console.error(`Error fixing import paths in ${filePath}:`, error);
+    console.error(`Error fixing TypeScript issues in ${filePath}:`, error);
     return false;
   }
 }
@@ -172,23 +232,85 @@ async function main() {
   let fixedFiles = 0;
   let totalIssues = 0;
   
+  // First check regular server files
   for (const filePath of serverTsFiles) {
     const importIssues = checkImportPaths(filePath);
     
     if (importIssues.length > 0) {
       totalIssues += importIssues.length;
-      console.log(`\nChecking ${filePath} for import path issues...`);
-      console.log(`Found ${importIssues.length} import path issues:`);
+      console.log(`\nChecking ${filePath} for TypeScript issues...`);
+      console.log(`Found ${importIssues.length} issues:`);
       
       importIssues.forEach(issue => {
-        console.log(`  Line ${issue.line}: ${issue.raw}`);
+        console.log(`  Line ${issue.line} (${issue.type}): ${issue.raw}`);
       });
       
       // Auto-fix for this demo
       const fixed = fixImportPaths(filePath, importIssues);
       if (fixed) {
-        console.log(`✅ Fixed import paths in ${filePath}`);
+        console.log(`✅ Fixed issues in ${filePath}`);
         fixedFiles++;
+      }
+    }
+  }
+  
+  // Next check specifically for the ts-error-fixer.ts file with parameter 'p' issue
+  const tsErrorFixerPath = path.join(rootDir, 'ts-error-fixer.ts');
+  if (fs.existsSync(tsErrorFixerPath)) {
+    console.log(`\nChecking ${tsErrorFixerPath} for implicit any issues...`);
+    
+    const content = fs.readFileSync(tsErrorFixerPath, 'utf8');
+    const lines = content.split('\n');
+    let updated = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Look for line with problematic parameter p
+      if (line.includes('paths: opts.paths ? opts.paths.split(\',\').map(p => path.resolve(opts.rootDir, p))')) {
+        console.log(`Found implicit any issue on line ${i+1}: ${line.trim()}`);
+        
+        // Replace with typed parameter
+        const newLine = line.replace('map(p =>', 'map((p: string) =>');
+        lines[i] = newLine;
+        
+        console.log(`Fixed implicit any: ${line.trim()} -> ${newLine.trim()}`);
+        updated = true;
+        totalIssues++;
+        break;
+      }
+    }
+    
+    if (updated) {
+      fs.writeFileSync(tsErrorFixerPath, lines.join('\n'));
+      console.log(`✅ Fixed implicit any parameter issue in ts-error-fixer.ts`);
+      fixedFiles++;
+    }
+  }
+  
+  // Check for import.meta issue in vite.config.ts
+  const viteConfigPath = path.join(rootDir, 'vite.config.ts');
+  if (fs.existsSync(viteConfigPath)) {
+    console.log(`\nChecking for import.meta issue in ${viteConfigPath}...`);
+    console.log(`Note: This issue requires updating tsconfig.json module setting.`);
+    
+    // Let's update the tsconfig.json file to support import.meta
+    const tsconfigPath = path.join(rootDir, 'tsconfig.json');
+    if (fs.existsSync(tsconfigPath)) {
+      try {
+        const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
+        if (tsconfig.compilerOptions && tsconfig.compilerOptions.module !== 'esnext' && 
+            tsconfig.compilerOptions.module !== 'es2020' && tsconfig.compilerOptions.module !== 'es2022') {
+          const oldModule = tsconfig.compilerOptions.module || 'commonjs';
+          tsconfig.compilerOptions.module = 'esnext';
+          fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2));
+          console.log(`✅ Updated tsconfig.json module setting from '${oldModule}' to 'esnext'`);
+          totalIssues++;
+          fixedFiles++;
+        } else {
+          console.log(`Module already set to ${tsconfig.compilerOptions.module}, no changes needed.`);
+        }
+      } catch (error) {
+        console.error(`Error updating tsconfig.json:`, error);
       }
     }
   }

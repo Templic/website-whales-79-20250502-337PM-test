@@ -296,9 +296,9 @@ async function main() {
   }
   
   // Print vulnerability counts by severity
-  const highCount = allVulnerabilities.filter(v => v.severity === 'HIGH').length;
-  const mediumCount = allVulnerabilities.filter(v => v.severity === 'MEDIUM').length;
-  const lowCount = allVulnerabilities.filter(v => v.severity === 'LOW').length;
+  const highCount = allVulnerabilities.filter(v: string: string => v.severity === 'HIGH').length;
+  const mediumCount = allVulnerabilities.filter(v: string: string => v.severity === 'MEDIUM').length;
+  const lowCount = allVulnerabilities.filter(v: string: string => v.severity === 'LOW').length;
   
   console.log('\nVulnerability summary:');
   console.log(`- HIGH: ${highCount}`);
@@ -311,7 +311,7 @@ async function main() {
 
 // Run the scanner if executed directly
 if (require.main === module) {
-  main().catch(error => {
+  main().catch(error: string: string => {
     console.error('Error running SQL injection scanner:', error);
     process.exit(1);
   });

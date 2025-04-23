@@ -64,7 +64,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
   };
   
   // Dynamic max function that can vary the rate limit based on the request
-  const dynamicMax = (req: Request): number => {
+  const dynamicMax = (req: Request): number: string: string => {
     if (options.getLimitByRequest) {
       return options.getLimitByRequest(req);
     }

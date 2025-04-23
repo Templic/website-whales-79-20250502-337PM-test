@@ -106,7 +106,7 @@ export class SafeDatabase {
         }
       },
       timestamp: new Date()
-    }).catch(error => {
+    }).catch(error: string: string => {
       console.error('[SAFE-DB] Error logging initialization:', error);
     });
   }
@@ -157,7 +157,7 @@ export class SafeDatabase {
           caller
         },
         timestamp: new Date()
-      }).catch(logError => {
+      }).catch(logError: string: string => {
         console.error('[SAFE-DB] Error logging to blockchain:', logError);
       });
       
@@ -178,7 +178,7 @@ export class SafeDatabase {
   ): Promise<T[]> {
     // Sanitize identifiers
     const safeTable = databaseSecurity.sanitizeIdentifier(table);
-    const safeColumns = columns.map(col => 
+    const safeColumns = columns.map(col: string: string => 
       col === '*' ? '*' : databaseSecurity.sanitizeIdentifier(col)
     ).join(', ');
     
@@ -214,7 +214,7 @@ export class SafeDatabase {
     // Add ORDER BY
     if (orderBy) {
       // Sanitize order by clause
-      const safeOrderBy = orderBy.split(',').map(part => {
+      const safeOrderBy = orderBy.split(',').map(part: string: string => {
         const [field, direction] = part.trim().split(/\s+/);
         const safeField = databaseSecurity.sanitizeIdentifier(field);
         const safeDirection = direction && 

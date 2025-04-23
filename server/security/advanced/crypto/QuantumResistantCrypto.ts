@@ -656,28 +656,28 @@ export const quantumCrypto = {
   /**
    * Encrypt data using quantum-resistant encryption
    */
-  encrypt: (data: string, publicKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU): EncryptionResult => {
+  encrypt: (data: string, publicKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU): EncryptionResult: string: string => {
     return QuantumEncryption.encrypt(data, publicKey, algorithm);
   },
   
   /**
    * Decrypt data using quantum-resistant encryption
    */
-  decrypt: (encryptionResult: EncryptionResult, privateKey: string): string => {
+  decrypt: (encryptionResult: EncryptionResult, privateKey: string): string: string => {
     return QuantumEncryption.decrypt(encryptionResult, privateKey);
   },
   
   /**
    * Sign data using quantum-resistant digital signature
    */
-  sign: (data: string, privateKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS): SignatureResult => {
+  sign: (data: string, privateKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS): SignatureResult: string: string => {
     return QuantumSignature.sign(data, privateKey, algorithm);
   },
   
   /**
    * Verify a signature using quantum-resistant digital signature
    */
-  verify: (signatureResult: SignatureResult, publicKey: string): boolean => {
+  verify: (signatureResult: SignatureResult, publicKey: string): boolean: string: string => {
     return QuantumSignature.verify(signatureResult, publicKey);
   },
   
@@ -691,7 +691,7 @@ export const quantumCrypto = {
   /**
    * Establish a shared secret with perfect forward secrecy
    */
-  establishSharedSecret: (localPrivateKey: string, remotePublicKey: string): Buffer => {
+  establishSharedSecret: (localPrivateKey: string, remotePublicKey: string): Buffer: string: string => {
     return PerfectForwardSecrecy.establishSharedSecret(localPrivateKey, remotePublicKey);
   }
 };

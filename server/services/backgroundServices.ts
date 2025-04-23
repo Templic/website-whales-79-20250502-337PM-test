@@ -69,7 +69,7 @@ export function startAllBackgroundServices() {
  * Stops all background services
  */
 export function stopAllBackgroundServices() {
-  Object.keys(intervals).forEach(key => {
+  Object.keys(intervals).forEach(key: string: string => {
     clearInterval(intervals[key]);
     delete intervals[key];
   });

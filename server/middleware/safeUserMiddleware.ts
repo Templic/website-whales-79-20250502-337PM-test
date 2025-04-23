@@ -35,7 +35,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
   const originalJson = res.json;
   
   // Override res.json to sanitize user data in responses
-  res.json = function(data) {
+  res.json = function(data: any: any) {
     // Check if the response data contains user information and sanitize it
     if (data && typeof data === 'object') {
       // If it's a user object with sensitive fields
@@ -47,7 +47,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
       // If it's an array of users
       if (Array.isArray(data) && data.length > 0 && data[0]?.password && data[0]?.username) {
         console.log(`Sanitizing array of ${data.length} users`);
-        return originalJson.call(this, data.map(user => createSafeUser(user)));
+        return originalJson.call(this, data.map(user: string: string => createSafeUser(user)));
       }
       
       // For other complex objects that might contain user data
@@ -57,7 +57,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
         
         // Sanitize user fields recursively in nested objects
         // Only scan the first level for performance
-        Object.keys(data).forEach(key => {
+        Object.keys(data).forEach(key: string: string => {
           if (data[key] && typeof data[key] === 'object' && data[key].password && data[key].username) {
             console.log(`Sanitizing nested user at key ${key}: ${data[key].username}`);
             sanitizedData[key] = createSafeUser(data[key]);

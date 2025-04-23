@@ -607,7 +607,7 @@ export class SecurityContext {
     
     // Check if user has all required permissions
     return this.resource.requiredPermissions.every(
-      permission => this.user!.permissions.includes(permission)
+      permission: string: string => this.user!.permissions.includes(permission)
     );
   }
   
