@@ -221,7 +221,7 @@ export function enhancedCsrfProtection(options: {
   // Return the middleware function
   return (req: Request, res: Response, next: NextFunction) => {
     // Check if route is exempt from CSRF protection
-    if (allExemptRoutes.some(exempt: string: string => req.path.startsWith(exempt))) {
+    if (allExemptRoutes.some(exempt => req.path.startsWith(exempt))) {
       return next();
     }
     
