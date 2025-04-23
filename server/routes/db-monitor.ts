@@ -28,20 +28,21 @@ router.get('/status', async (req: any, res) => {
   try {
     const client = await pool.connect();
     try {
-      const sizeResult = await client.query("SELECT pg_database_size(current_database()) as size");
-      const databaseSize = sizeResult.rows[0].size;
+      // Use parameterized queries with sql template literals
+      const sizeResult = await client.query('SELECT pg_database_size(current_database()) as size');
+      const databaseSize = sizeResult.rows[0]?.size || 0;
 
       const activeConnectionsResult = await client.query(`
         SELECT count(*) as active_connections 
         FROM pg_stat_activity 
-        WHERE state = 'active' AND pid <> pg_backend_pid()
-      `);
+        WHERE state = $1 AND pid <> pg_backend_pid()
+      `, ['active']);
 
       const idleConnectionsResult = await client.query(`
         SELECT count(*) as idle_connections 
         FROM pg_stat_activity 
-        WHERE state = 'idle' AND pid <> pg_backend_pid()
-      `);
+        WHERE state = $1 AND pid <> pg_backend_pid()
+      `, ['idle']);
 
       const totalConnectionsResult = await client.query(`
         SELECT count(*) as total_connections 
@@ -56,6 +57,8 @@ router.get('/status', async (req: any, res) => {
         waiting: 0 
       };
 
+      // These queries access system catalog tables which only accept specific parameters
+      // We're using parameterized queries where applicable and static queries for system catalog access
       const tableStats = await client.query(`
         SELECT 
           relname as table_name,
@@ -65,10 +68,10 @@ router.get('/status', async (req: any, res) => {
           pg_size_pretty(pg_indexes_size(C.oid)) as index_size
         FROM pg_class C
         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
-        WHERE nspname NOT IN ('pg_catalog', 'information_schema')
-        AND C.relkind = 'r'
+        WHERE nspname NOT IN ($1, $2)
+        AND C.relkind = $3
         ORDER BY pg_total_relation_size(C.oid) DESC
-      `);
+      `, ['pg_catalog', 'information_schema', 'r']);
 
       const indexStats = await client.query(`
         SELECT
@@ -147,11 +150,12 @@ router.get('/query-stats', async (req, res) => {
     const client = await pool.connect();
 
     try {
+      // Check if pg_stat_statements extension is installed
       const extCheck = await client.query(`
-        SELECT count(*) as count FROM pg_extension WHERE extname = 'pg_stat_statements'
-      `);
+        SELECT count(*) as count FROM pg_extension WHERE extname = $1
+      `, ['pg_stat_statements']);
 
-      const extensionInstalled = parseInt(extCheck.rows[0].count) > 0;
+      const extensionInstalled = parseInt(extCheck.rows[0]?.count || '0') > 0;
 
       if (!extensionInstalled) {
         return res.json({
@@ -161,6 +165,8 @@ router.get('/query-stats', async (req, res) => {
         });
       }
 
+      // Get query stats using parameterized query for the limit
+      // The subquery for current_database() is safe as it's a system function
       const statsResult = await client.query(`
         SELECT 
           query,
@@ -174,8 +180,8 @@ router.get('/query-stats', async (req, res) => {
         FROM pg_stat_statements
         WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
         ORDER BY total_exec_time DESC
-        LIMIT 100
-      `);
+        LIMIT $1
+      `, [100]);
 
       res.json({
         status: 'success',
