@@ -133,7 +133,7 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
       const instance = new originalConstructor(...args);
       
       // Wrap all methods with security middleware
-      Object.getOwnPropertyNames(originalConstructor.prototype).forEach(methodName: string: string => {
+      Object.getOwnPropertyNames(originalConstructor.prototype).forEach(methodName => {
         // Skip constructor
         if (methodName === 'constructor') return;
         
@@ -329,7 +329,7 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
   return (req: Request, res: Response, next: NextFunction) => {
     // Only verify occasionally to avoid performance impact
     if (Date.now() - lastVerification > intervalMs) {
-      securityBlockchain.verifyChain().then(valid: string: string => {
+      securityBlockchain.verifyChain().then(valid => {
         chainValid = valid;
         lastVerification = Date.now();
         

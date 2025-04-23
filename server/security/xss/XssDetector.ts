@@ -250,7 +250,7 @@ export async function scanDirectoryForXssVulnerabilities(
       const fullPath = path.join(dir, entry.name);
       
       // Skip excluded directories
-      if (exclude.some(pattern: string: string => entry.name === pattern)) {
+      if (exclude.some(pattern => entry.name === pattern)) {
         continue;
       }
       
@@ -287,10 +287,10 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
   report += `Total vulnerabilities found: ${vulnerabilities.length}\n\n`;
   
   // Group by risk level
-  const criticalVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.CRITICAL);
-  const highVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.HIGH);
-  const mediumVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.MEDIUM);
-  const lowVulns = vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.LOW);
+  const criticalVulns = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL);
+  const highVulns = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.HIGH);
+  const mediumVulns = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.MEDIUM);
+  const lowVulns = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.LOW);
   
   report += `Risk Level Summary:\n`;
   report += `- Critical: ${criticalVulns.length}\n`;
@@ -299,9 +299,9 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
   report += `- Low: ${lowVulns.length}\n\n`;
   
   // Group by XSS type
-  const storedVulns = vulnerabilities.filter(v: string: string => v.pattern.type === XssVulnerabilityType.STORED);
-  const reflectedVulns = vulnerabilities.filter(v: string: string => v.pattern.type === XssVulnerabilityType.REFLECTED);
-  const domVulns = vulnerabilities.filter(v: string: string => v.pattern.type === XssVulnerabilityType.DOM);
+  const storedVulns = vulnerabilities.filter(v => v.pattern.type === XssVulnerabilityType.STORED);
+  const reflectedVulns = vulnerabilities.filter(v => v.pattern.type === XssVulnerabilityType.REFLECTED);
+  const domVulns = vulnerabilities.filter(v => v.pattern.type === XssVulnerabilityType.DOM);
   
   report += `Vulnerability Type Summary:\n`;
   report += `- Stored XSS: ${storedVulns.length}\n`;

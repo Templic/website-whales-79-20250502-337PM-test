@@ -80,7 +80,7 @@ export const createOrderSchema = z.object({
     .max(500, 'Notes too long')
     .optional(),
   agreeToTerms: z.boolean()
-    .refine(val: string: string => val === true, 'You must agree to the terms and conditions')
+    .refine(val => val === true, 'You must agree to the terms and conditions')
 });
 
 /**

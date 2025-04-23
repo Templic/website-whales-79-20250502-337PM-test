@@ -224,7 +224,7 @@ function generateFixReport(results: FixResult[]): string {
     return 'No files processed.';
   }
   
-  const successCount = results.filter(r: string: string => r.success).length;
+  const successCount = results.filter(r => r.success).length;
   const failCount = results.length - successCount;
   
   let report = `SQL Injection Fix Report\n`;
@@ -270,7 +270,7 @@ async function main() {
   
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const dryRunArg = args.find(arg: string: string => arg === '--dry-run' || arg === '-d');
+  const dryRunArg = args.find(arg => arg === '--dry-run' || arg === '-d');
   const dryRun = dryRunArg !== undefined;
   
   if (dryRun) {
@@ -320,7 +320,7 @@ async function main() {
 
 // Run the fixer if executed directly
 if (require.main === module) {
-  main().catch(error: string: string => {
+  main().catch(error => {
     console.error('Error running SQL injection fixer:', error);
     process.exit(1);
   });

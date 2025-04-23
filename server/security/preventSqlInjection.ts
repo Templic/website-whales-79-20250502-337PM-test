@@ -88,7 +88,7 @@ export class SQLInjectionPrevention {
         config: this.config
       },
       timestamp: new Date()
-    }).catch(error: string: string => {
+    }).catch(error => {
       console.error('[SQL-PREVENTION] Error logging initialization:', error);
     });
   }
@@ -217,7 +217,7 @@ export class SQLInjectionPrevention {
         databaseCount: this.databases.size
       },
       timestamp: new Date()
-    }).catch(error: string: string => {
+    }).catch(error => {
       console.error('[SQL-PREVENTION] Error logging security scan:', error);
     });
   }

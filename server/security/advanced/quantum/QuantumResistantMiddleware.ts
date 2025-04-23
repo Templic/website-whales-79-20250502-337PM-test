@@ -196,13 +196,13 @@ export function createQuantumResistantMiddleware(
     
     // Check if the path is exempt
     const path = req.path;
-    if (mergedConfig.exemptPaths.some(exemptPath: string: string => path.startsWith(exemptPath))) {
+    if (mergedConfig.exemptPaths.some(exemptPath => path.startsWith(exemptPath))) {
       next();
       return;
     }
     
     // Check if the path should be protected
-    const shouldProtect = mergedConfig.protectedPaths.some(protectedPath: string: string => 
+    const shouldProtect = mergedConfig.protectedPaths.some(protectedPath => 
       path.startsWith(protectedPath)
     );
     
@@ -296,7 +296,7 @@ export function createQuantumResistantMiddleware(
             clientPublicKey,
             mergedConfig.sensitiveResponseFields,
             mergedConfig.encryptionAlgorithm
-          ).then(processedBody: string: string => {
+          ).then(processedBody => {
             // Add the server's public key to the response headers
             if (serverKeyPair) {
               res.setHeader('X-Quantum-Public-Key', serverKeyPair.publicKey);
@@ -304,7 +304,7 @@ export function createQuantumResistantMiddleware(
             
             // Call the original json method with the processed body
             return originalJson.call(this, processedBody);
-          }).catch(error: string: string => {
+          }).catch(error => {
             // Log encryption error but still send unencrypted response
             console.error('Error encrypting response:', error);
             securityBlockchain.addSecurityEvent({

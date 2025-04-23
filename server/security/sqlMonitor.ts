@@ -241,7 +241,7 @@ export class SQLMonitor {
         severity
       },
       timestamp: new Date()
-    }).catch(error: string: string => {
+    }).catch(error => {
       console.error('[SQL-MONITOR] Error logging to blockchain:', error);
     });
   }

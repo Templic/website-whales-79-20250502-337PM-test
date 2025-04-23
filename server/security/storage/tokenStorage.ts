@@ -81,7 +81,7 @@ class MemoryTokenStore implements TokenStore {
   
   cleanupExpiredTokens(): void {
     const now = new Date();
-    Object.keys(this.store).forEach(key: string: string => {
+    Object.keys(this.store).forEach(key => {
       if (this.store[key].expires < now) {
         delete this.store[key];
       }
@@ -101,7 +101,7 @@ class RedisTokenStore implements TokenStore {
   constructor() {
     try {
       // Dynamic import for Redis to avoid dependency when not using Redis
-      import('redis').then(redis: string: string => {
+      import('redis').then(redis => {
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         
         this.client = redis.createClient({
@@ -134,7 +134,7 @@ class RedisTokenStore implements TokenStore {
         
         // Set up periodic cleanup
         setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
-      }).catch(err: string: string => {
+      }).catch(err => {
         console.error('Failed to import Redis module:', err);
         logSecurityEvent('REDIS_IMPORT_FAILED', {
           error: err.message,

@@ -370,7 +370,7 @@ export class SecurityMetrics extends EventEmitter {
     const from = fromDate?.getTime() || 0;
     const to = toDate?.getTime() || Date.now();
     
-    return this.metricsHistory.filter(metric: string: string => {
+    return this.metricsHistory.filter(metric => {
       const timestamp = metric.timestamp.getTime();
       return timestamp >= from && timestamp <= to;
     });

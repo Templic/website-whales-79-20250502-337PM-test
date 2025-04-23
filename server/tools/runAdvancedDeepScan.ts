@@ -54,7 +54,7 @@ async function runAdvancedDeepScan() {
     
     while (!isComplete) {
       // Wait for 2 seconds between checks
-      await new Promise(resolve: string: string => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Get scan result
       const result = deepScanEngine.getScanById(scanId);
@@ -108,9 +108,9 @@ async function runAdvancedDeepScan() {
       });
       
       // Display the top findings for each severity level
-      const criticalFindings = sortedFindings.filter(f: string: string => f.severity === 'critical').slice(0, 3);
-      const highFindings = sortedFindings.filter(f: string: string => f.severity === 'high').slice(0, 3);
-      const mediumFindings = sortedFindings.filter(f: string: string => f.severity === 'medium').slice(0, 3);
+      const criticalFindings = sortedFindings.filter(f => f.severity === 'critical').slice(0, 3);
+      const highFindings = sortedFindings.filter(f => f.severity === 'high').slice(0, 3);
+      const mediumFindings = sortedFindings.filter(f => f.severity === 'medium').slice(0, 3);
       
       if (criticalFindings.length > 0) {
         console.log('│ CRITICAL FINDINGS:');
@@ -193,7 +193,7 @@ runAdvancedDeepScan()
   .then(() => {
     console.log('\n✅ Advanced deep security scan completed successfully.');
   })
-  .catch(error: string: string => {
+  .catch(error => {
     console.error('\n❌ Advanced deep security scan failed:', error);
   });
 

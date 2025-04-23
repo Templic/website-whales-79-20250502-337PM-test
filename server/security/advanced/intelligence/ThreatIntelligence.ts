@@ -401,7 +401,7 @@ export class ThreatIntelligence extends EventEmitter {
     console.log(`[ThreatIntelligence] Setting up regular updates every ${intervalMinutes} minutes`);
     
     this.updateInterval = setInterval(() => {
-      this.updateIntelligence().catch(error: string: string => {
+      this.updateIntelligence().catch(error => {
         console.error('[ThreatIntelligence] Failed to update intelligence:', error);
       });
     }, intervalMinutes * 60 * 1000);
@@ -584,7 +584,7 @@ export class ThreatIntelligence extends EventEmitter {
       totalConfidence += match.confidence;
       
       // Add categories
-      match.labels.forEach(label: string: string => categories.add(label));
+      match.labels.forEach(label => categories.add(label));
     }
     
     const riskScore = totalRisk / totalConfidence;

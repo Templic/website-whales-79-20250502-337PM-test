@@ -112,7 +112,7 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
           method: req.method,
           url: req.originalUrl
         }
-      }).catch(error: string: string => {
+      }).catch(error => {
         console.error('Error logging suspicious activity:', error);
       });
     }

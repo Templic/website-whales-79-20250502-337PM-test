@@ -212,7 +212,7 @@ class SecurityPolicyEnforcer {
     
     // Check if the content type is allowed for this method
     const allowed = allowedContentTypes[req.method];
-    if (allowed && !allowed.some(type: string: string => contentType.includes(type))) {
+    if (allowed && !allowed.some(type => contentType.includes(type))) {
       return {
         block: true,
         reason: `Unsupported content type for ${req.method}: ${contentType}`,

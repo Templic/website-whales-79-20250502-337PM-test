@@ -193,7 +193,7 @@ async function getUsers_Secure(columns: string[]) {
   const allowedColumns = ['id', 'username', 'email', 'created_at', 'active'];
   
   // Filter columns to only include allowed ones
-  const validColumns = columns.filter(col: string: string => allowedColumns.includes(col));
+  const validColumns = columns.filter(col => allowedColumns.includes(col));
   
   // If no valid columns, default to id and username
   if (validColumns.length === 0) {

@@ -319,7 +319,7 @@ router.post('/scan', async (req: Request, res: Response) => {
     });
     
     // Start scan in background
-    scanner.startScan(scanId).catch(error: string: string => {
+    scanner.startScan(scanId).catch(error => {
       console.error('Error running security scan:', error);
     });
     

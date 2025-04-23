@@ -374,14 +374,14 @@ export class DeepScanEngine {
         options
       },
       timestamp: new Date()
-    }).catch(error: string: string => {
+    }).catch(error => {
       console.error('[DEEP-SCAN] Error logging scan start:', error);
     });
     
     console.log(`[DEEP-SCAN] Starting scan: ${scanId} (${scanTypes.join(', ')})`);
     
     // Start the scan asynchronously
-    this.performScan(scanId).catch(error: string: string => {
+    this.performScan(scanId).catch(error => {
       console.error(`[DEEP-SCAN] Error performing scan ${scanId}:`, error);
       
       // Update scan result with error
@@ -408,7 +408,7 @@ export class DeepScanEngine {
     try {
       // If full scan, expand to all scan types
       if (scan.scanTypes.includes(DeepScanType.FULL)) {
-        scan.scanTypes = Object.values(DeepScanType).filter(type: string: string => type !== DeepScanType.FULL);
+        scan.scanTypes = Object.values(DeepScanType).filter(type => type !== DeepScanType.FULL);
       }
       
       // Perform each scan type
@@ -442,7 +442,7 @@ export class DeepScanEngine {
           summary: scan.summary
         },
         timestamp: new Date()
-      }).catch(error: string: string => {
+      }).catch(error => {
         console.error('[DEEP-SCAN] Error logging scan completion:', error);
       });
       
@@ -459,7 +459,7 @@ export class DeepScanEngine {
           error: error.message || String(error)
         },
         timestamp: new Date()
-      }).catch(logError: string: string => {
+      }).catch(logError => {
         console.error('[DEEP-SCAN] Error logging scan error:', logError);
       });
       
@@ -537,7 +537,7 @@ export class DeepScanEngine {
         return;
       }
       
-      if (excludeDirectories.some(exclude: string: string => dir.includes(exclude))) {
+      if (excludeDirectories.some(exclude => dir.includes(exclude))) {
         return;
       }
       
@@ -559,7 +559,7 @@ export class DeepScanEngine {
             }
             
             // Check if file should be excluded
-            if (scan.options.excludeFiles && scan.options.excludeFiles.some(exclude: string: string => fullPath.includes(exclude))) {
+            if (scan.options.excludeFiles && scan.options.excludeFiles.some(exclude => fullPath.includes(exclude))) {
               continue;
             }
             
@@ -1023,7 +1023,7 @@ export class DeepScanEngine {
         remediation: finding.remediation
       },
       timestamp: new Date()
-    }).catch(error: string: string => {
+    }).catch(error => {
       console.error('[DEEP-SCAN] Error logging finding:', error);
     });
   }

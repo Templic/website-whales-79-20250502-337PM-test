@@ -199,7 +199,7 @@ export class SecureDrizzle {
         query: typeof query === 'string' ? query : JSON.stringify(query)
       },
       timestamp: new Date()
-    }).catch(logError: string: string => {
+    }).catch(logError => {
       console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
     });
   }
@@ -249,7 +249,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError: string: string => {
+        }).catch(logError => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -274,7 +274,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError: string: string => {
+        }).catch(logError => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -305,7 +305,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError: string: string => {
+        }).catch(logError => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         
@@ -336,7 +336,7 @@ export function patchDrizzleModel(model: any): any {
             args: JSON.stringify(args)
           },
           timestamp: new Date()
-        }).catch(logError: string: string => {
+        }).catch(logError => {
           console.error('[DRIZZLE-SECURITY] Error logging to blockchain:', logError);
         });
         

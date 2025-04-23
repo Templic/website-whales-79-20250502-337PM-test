@@ -363,12 +363,12 @@ export async function analyzeIndexNeeds(
     ]);
     
     return {
-      missingIndexes: (missingResults as any[]).map(row: string: string => ({
+      missingIndexes: (missingResults as any[]).map(row => ({
         table: row.table,
         column: row.column,
         benefit: parseFloat(row.potentialbenefit),
       })),
-      unusedIndexes: (unusedResults as any[]).map(row: string: string => ({
+      unusedIndexes: (unusedResults as any[]).map(row => ({
         table: row.table,
         index: row.index,
         usage: parseInt(row.usage, 10),
@@ -410,7 +410,7 @@ export async function getTableSizes(
   try {
     const results = await db.execute(query);
     
-    return (results as any[]).map(row: string: string => ({
+    return (results as any[]).map(row => ({
       table: row.table,
       size: row.size,
       totalSize: row.total_size,
@@ -456,7 +456,7 @@ export async function getTransactionStats(
     let idleInTransactions = 0;
     let longestTransaction = 0;
     
-    (results as any[]).forEach(row: string: string => {
+    (results as any[]).forEach(row => {
       if (row.state === 'active') {
         activeTransactions = parseInt(row.count, 10);
       } else if (row.state === 'idle in transaction') {

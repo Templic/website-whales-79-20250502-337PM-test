@@ -265,7 +265,7 @@ export class CSRFProtection {
             reason: validationResult.reason,
             userAgent: req.headers['user-agent']
           }
-        }).catch(error: string: string => {
+        }).catch(error => {
           console.error('Error logging CSRF validation failure:', error);
         });
         

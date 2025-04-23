@@ -28,17 +28,17 @@ function generateJsonReport(vulnerabilities: XssVulnerability[]): string {
     generatedAt: new Date().toISOString(),
     totalVulnerabilities: vulnerabilities.length,
     summary: {
-      critical: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.CRITICAL).length,
-      high: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.HIGH).length,
-      medium: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.MEDIUM).length,
-      low: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.LOW).length
+      critical: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL).length,
+      high: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.HIGH).length,
+      medium: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.MEDIUM).length,
+      low: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.LOW).length
     },
     vulnerabilitiesByType: {
-      stored: vulnerabilities.filter(v: string: string => v.pattern.type === 'STORED').length,
-      reflected: vulnerabilities.filter(v: string: string => v.pattern.type === 'REFLECTED').length,
-      dom: vulnerabilities.filter(v: string: string => v.pattern.type === 'DOM').length
+      stored: vulnerabilities.filter(v => v.pattern.type === 'STORED').length,
+      reflected: vulnerabilities.filter(v => v.pattern.type === 'REFLECTED').length,
+      dom: vulnerabilities.filter(v => v.pattern.type === 'DOM').length
     },
-    vulnerabilities: vulnerabilities.map(v: string: string => ({
+    vulnerabilities: vulnerabilities.map(v => ({
       file: v.file,
       line: v.line,
       column: v.column,
@@ -63,9 +63,9 @@ async function main() {
   
   // Parse command line arguments
   const args = process.argv.slice(2);
-  const dirs = args.filter(arg: string: string => !arg.startsWith('--'));
+  const dirs = args.filter(arg => !arg.startsWith('--'));
   const jsonOutput = args.includes('--json');
-  const outputFile = args.find(arg: string: string => arg.startsWith('--output='))?.split('=')[1];
+  const outputFile = args.find(arg => arg.startsWith('--output='))?.split('=')[1];
   
   // Default directories to scan
   const dirsToScan = dirs.length > 0 ? dirs : ['server', 'client', 'shared'];
@@ -127,10 +127,10 @@ async function main() {
     // Print summary
     console.log('\nScan complete. Results:');
     console.log(`- Total vulnerabilities found: ${vulnerabilities.length}`);
-    console.log(`- Critical: ${vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.CRITICAL).length}`);
-    console.log(`- High: ${vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.HIGH).length}`);
-    console.log(`- Medium: ${vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.MEDIUM).length}`);
-    console.log(`- Low: ${vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.LOW).length}`);
+    console.log(`- Critical: ${vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL).length}`);
+    console.log(`- High: ${vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.HIGH).length}`);
+    console.log(`- Medium: ${vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.MEDIUM).length}`);
+    console.log(`- Low: ${vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.LOW).length}`);
     console.log(`\nReport saved to: ${outputPath}`);
     
     // Log the scan completion
@@ -140,8 +140,8 @@ async function main() {
       message: 'XSS vulnerability scan completed',
       metadata: {
         vulnerabilitiesFound: vulnerabilities.length,
-        criticalVulnerabilities: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.CRITICAL).length,
-        highVulnerabilities: vulnerabilities.filter(v: string: string => v.pattern.risk === XssRiskLevel.HIGH).length,
+        criticalVulnerabilities: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL).length,
+        highVulnerabilities: vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.HIGH).length,
         reportPath: outputPath,
         timestamp: new Date().toISOString()
       },
@@ -178,7 +178,7 @@ async function main() {
 
 // Run the detector if this file is executed directly
 if (require.main === module) {
-  main().catch(error: string: string => {
+  main().catch(error => {
     console.error('Error running XSS vulnerability detector:', error);
     process.exit(1);
   });

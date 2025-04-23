@@ -86,7 +86,7 @@ router.get('/api/search', async (req, res) => {
         )
         .limit(limitNumber);
       
-      results.products = productResults.map(item: string: string => ({
+      results.products = productResults.map(item => ({
         ...item,
         category: item.categoryName
       }));
@@ -291,7 +291,7 @@ router.get('/api/products/search', async (req, res) => {
     const productResults = await query;
     
     // Format results
-    const formattedResults = productResults.map(item: string: string => ({
+    const formattedResults = productResults.map(item => ({
       ...item,
       category: item.categoryName,
       // Convert price from cents to dollars

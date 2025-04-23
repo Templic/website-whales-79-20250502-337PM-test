@@ -47,7 +47,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
       // If it's an array of users
       if (Array.isArray(data) && data.length > 0 && data[0]?.password && data[0]?.username) {
         console.log(`Sanitizing array of ${data.length} users`);
-        return originalJson.call(this, data.map(user: string: string => createSafeUser(user)));
+        return originalJson.call(this, data.map(user => createSafeUser(user)));
       }
       
       // For other complex objects that might contain user data
@@ -57,7 +57,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
         
         // Sanitize user fields recursively in nested objects
         // Only scan the first level for performance
-        Object.keys(data).forEach(key: string: string => {
+        Object.keys(data).forEach(key => {
           if (data[key] && typeof data[key] === 'object' && data[key].password && data[key].username) {
             console.log(`Sanitizing nested user at key ${key}: ${data[key].username}`);
             sanitizedData[key] = createSafeUser(data[key]);

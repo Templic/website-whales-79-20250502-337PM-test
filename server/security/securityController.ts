@@ -275,10 +275,10 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
     
     // Read the log file
     const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
-    const logLines = logContent.split('\n').filter(line: string: string => line.trim() !== '');
+    const logLines = logContent.split('\n').filter(line => line.trim() !== '');
     
     // Parse and filter logs
-    let logs = logLines.map(line: string: string => {
+    let logs = logLines.map(line => {
       try {
         const timestampEndIndex = line.indexOf(' [');
         const timestamp = line.substring(0, timestampEndIndex);
@@ -288,25 +288,25 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
       } catch (error) {
         return null;
       }
-    }).filter(log: string: string => log !== null);
+    }).filter(log => log !== null);
     
     // Apply filters if provided
     if (severity) {
-      logs = logs.filter(log: string: string => log.severity === severity);
+      logs = logs.filter(log => log.severity === severity);
     }
     
     if (type) {
-      logs = logs.filter(log: string: string => log.type === type);
+      logs = logs.filter(log => log.type === type);
     }
     
     if (startDate) {
       const startDateTime = new Date(startDate as string).getTime();
-      logs = logs.filter(log: string: string => new Date(log.timestamp).getTime() >= startDateTime);
+      logs = logs.filter(log => new Date(log.timestamp).getTime() >= startDateTime);
     }
     
     if (endDate) {
       const endDateTime = new Date(endDate as string).getTime();
-      logs = logs.filter(log: string: string => new Date(log.timestamp).getTime() <= endDateTime);
+      logs = logs.filter(log => new Date(log.timestamp).getTime() <= endDateTime);
     }
     
     // Limit the number of logs returned
@@ -438,7 +438,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
     
     // Get list of scan result files
     const files = fs.readdirSync(SCAN_RESULTS_DIR)
-      .filter(file: string: string => file.startsWith('scan-') && file.endsWith('.json'))
+      .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
       .sort();
     
     if (files.length === 0) {
@@ -493,7 +493,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
     
     if (fs.existsSync(SECURITY_LOG_FILE)) {
       const logContent = fs.readFileSync(SECURITY_LOG_FILE, 'utf8');
-      const logLines = logContent.split('\n').filter(line: string: string => line.trim() !== '');
+      const logLines = logContent.split('\n').filter(line => line.trim() !== '');
       
       totalEvents = logLines.length;
       
@@ -512,7 +512,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
     
     if (fs.existsSync(SCAN_RESULTS_DIR)) {
       const files = fs.readdirSync(SCAN_RESULTS_DIR)
-        .filter(file: string: string => file.startsWith('scan-') && file.endsWith('.json'))
+        .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
         .sort();
       
       if (files.length > 0) {

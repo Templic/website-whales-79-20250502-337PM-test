@@ -80,7 +80,7 @@ export function validate(
     } catch (error) {
       // Handle Zod validation errors
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map(err: string: string => ({
+        const formattedErrors = error.errors.map(err => ({
           path: err.path.join('.'),
           code: err.code,
           message: err.message
@@ -178,7 +178,7 @@ export function validateRequest(
       } catch (error) {
         // Handle Zod validation errors
         if (error instanceof ZodError) {
-          const formattedErrors = error.errors.map(err: string: string => ({
+          const formattedErrors = error.errors.map(err => ({
             path: err.path.join('.'),
             code: err.code,
             message: err.message

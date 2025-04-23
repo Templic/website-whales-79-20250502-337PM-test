@@ -65,7 +65,7 @@ export const generateToken = (req: Request): string: string => {
 /**
  * Validate a CSRF token
  */
-export const validateToken = (req: Request, token: string): boolean: string: string => {
+export const validateToken = (req: Request, token: string): boolean => {
   // No token or session means invalid
   if (!token || !req.session) {
     return false;
@@ -95,7 +95,7 @@ export const validateToken = (req: Request, token: string): boolean: string: str
 /**
  * CSRF protection middleware
  */
-export const csrfProtection = (req: Request, res: Response, next: NextFunction): void: string: string => {
+export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
   // Skip CSRF protection for non-mutating methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     // Still set the CSRF token cookie for client-side usage

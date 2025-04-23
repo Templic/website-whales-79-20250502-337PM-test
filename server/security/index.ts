@@ -189,7 +189,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
           protection: 'maximum',
           type: 'double-submit-cookie'
         }
-      }).catch(error: string: string => {
+      }).catch(error => {
         console.error('[Security] Error logging CSRF initialization:', error);
       });
     }
@@ -207,7 +207,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
             url: req.originalUrl,
             userAgent: req.headers['user-agent']
           }
-        }).catch(error: string: string => {
+        }).catch(error => {
           console.error('[Security] Error logging request:', error);
         });
         

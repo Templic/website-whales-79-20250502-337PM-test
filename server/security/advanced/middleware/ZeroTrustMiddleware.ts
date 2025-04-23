@@ -90,8 +90,8 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           anomalyScore: anomalyResult.anomalyScore,
           confidence: anomalyResult.confidence,
           anomalies: anomalyResult.featureContributions
-            .filter(f: string: string => f.contribution > 0.5)
-            .map(f: string: string => f.feature),
+            .filter(f => f.contribution > 0.5)
+            .map(f => f.feature),
           patternMatchScore: 1 - anomalyResult.anomalyScore
         });
         
@@ -114,7 +114,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           indicators: threatResult.categories,
           ipReputation: 0, // Not implemented yet
           deviceReputation: 0, // Not implemented yet
-          maliciousPatterns: threatResult.matches.map(m: string: string => m.value)
+          maliciousPatterns: threatResult.matches.map(m => m.value)
         });
       }
       
@@ -153,7 +153,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const userRoles = (req.user as any)?.roles || [(req.user as any)?.role].filter(Boolean);
       
       const hasRequiredPermissions = requiredPermissions.length === 0 || 
-        requiredPermissions.every(perm: string: string => userPermissions.includes(perm));
+        requiredPermissions.every(perm => userPermissions.includes(perm));
       
       // Super admins bypass most checks
       if (Array.isArray(userRoles) && userRoles.includes('super_admin')) {

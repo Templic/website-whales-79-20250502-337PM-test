@@ -161,7 +161,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
             userAgent,
             timestamp: new Date().toISOString()
           }
-        }).catch(error: string: string => {
+        }).catch(error => {
           console.error('Error logging API request:', error);
         });
       }
@@ -173,7 +173,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   // Apply middleware to all API routes except excluded paths
   app.use('/api', (req, res, next) => {
     // Skip excluded paths
-    if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+    if (excludePaths.some(path => req.path.startsWith(path))) {
       return next();
     }
     
@@ -201,7 +201,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     // Apply RASP protection middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
-      if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
       }
       
@@ -246,7 +246,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     // Apply security policy enforcer middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
-      if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
       }
       
@@ -290,7 +290,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     // Apply input validation middleware to all API routes except excluded paths
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
-      if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
       }
       
@@ -336,11 +336,11 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     app.get('/api/security/quantum-key', (req, res, next) => {
       try {
         import('./advanced/quantum/QuantumResistantMiddleware')
-          .then(module: string: string => {
+          .then(module => {
             const middleware = module.createPublicKeyEndpointMiddleware();
             middleware(req, res, next);
           })
-          .catch(error: string: string => {
+          .catch(error => {
             console.error('Error loading quantum middleware:', error);
             res.status(500).json({
               error: 'Internal Server Error',
@@ -361,7 +361,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     // Apply sensitive procedures middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
-      if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
       }
       

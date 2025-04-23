@@ -231,13 +231,13 @@ export const idParamSchema = z.object({
  */
 export const paginationSchema = z.object({
   page: z.string().optional()
-    .refine(val: string: string => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
+    .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
       { message: 'Page must be a positive integer' })
-    .transform(val: string: string => val ? parseInt(val) : 1),
+    .transform(val => val ? parseInt(val) : 1),
   limit: z.string().optional()
-    .refine(val: string: string => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
+    .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
       { message: 'Limit must be a positive integer between 1 and 100' })
-    .transform(val: string: string => val ? parseInt(val) : 10)
+    .transform(val => val ? parseInt(val) : 10)
 });
 
 /**
@@ -245,9 +245,9 @@ export const paginationSchema = z.object({
  */
 export const dateRangeSchema = z.object({
   fromDate: z.string().optional()
-    .refine(val: string: string => !val || !isNaN(Date.parse(val)), 
+    .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid fromDate format' }),
   toDate: z.string().optional()
-    .refine(val: string: string => !val || !isNaN(Date.parse(val)), 
+    .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid toDate format' })
 });

@@ -108,7 +108,7 @@ export class CSRFProtection {
       }
 
       // Skip CSRF check for ignored paths
-      if (this.options.ignorePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (this.options.ignorePaths.some(path => req.path.startsWith(path))) {
         this.setTokenCookie(req, res);
         return next();
       }

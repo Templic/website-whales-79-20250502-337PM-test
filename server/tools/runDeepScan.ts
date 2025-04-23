@@ -151,7 +151,7 @@ runDeepScan()
   .then(() => {
     console.log('\n✅ Deep security scan completed successfully.');
   })
-  .catch(error: string: string => {
+  .catch(error => {
     console.error('\n❌ Deep security scan failed:', error);
   });
 

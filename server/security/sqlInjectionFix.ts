@@ -99,7 +99,7 @@ export class SQLInjectionFix {
     where: Record<string, any> = {}
   ): Promise<T[]> {
     const safeTable = this.escapeIdentifier(table);
-    const safeColumns = columns.map(col: string: string => 
+    const safeColumns = columns.map(col => 
       col === '*' ? '*' : this.escapeIdentifier(col)
     ).join(', ');
     

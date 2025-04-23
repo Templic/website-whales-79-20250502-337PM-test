@@ -47,7 +47,7 @@ const WebSocketMessageSchema = z.object({
     z.null()
   ]),
   timestamp: z.number().optional(),
-  id: z.string().optional().refine(val: string: string => !val || /^[a-zA-Z0-9-_]+$/.test(val), {
+  id: z.string().optional().refine(val => !val || /^[a-zA-Z0-9-_]+$/.test(val), {
     message: "ID must contain only alphanumeric characters, hyphens, and underscores"
   })
 });
@@ -129,7 +129,7 @@ function sanitizeMessage(data: any, depth: number = 0): any {
       .replace(/\//g, '&#47;');  // Forward slashes
   } else if (Array.isArray(data)) {
     // Handle arrays
-    return data.map(item: string: string => sanitizeMessage(item, depth + 1));
+    return data.map(item => sanitizeMessage(item, depth + 1));
   } else if (typeof data === 'object' && data !== null) {
     // Handle objects
     const sanitized: any = {};
@@ -356,7 +356,7 @@ export function setupWebSockets(httpServer: Server) {
   }>();
   
   // Track and limit connections
-  const trackConnection = (ip: string): boolean: string: string => {
+  const trackConnection = (ip: string): boolean => {
     const now = Date.now();
     const windowMs = 15 * 60 * 1000; // 15 minutes
     const maxConnections = 100;
@@ -446,7 +446,7 @@ export function setupWebSockets(httpServer: Server) {
       // Origin validation
       const origin = info.origin;
       if (!ALLOWED_ORIGINS.includes(origin) && 
-          !ALLOWED_ORIGINS.some(allowed: string: string => origin.startsWith(allowed))) {
+          !ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed))) {
         log(`Rejected WebSocket connection from unauthorized origin: ${origin}`, 'websocket');
         return false;
       }
@@ -612,7 +612,7 @@ export function setupWebSockets(httpServer: Server) {
       };
       
       // Capture important headers for fingerprinting
-      ['accept', 'accept-language', 'accept-encoding', 'user-agent'].forEach(header: string: string => {
+      ['accept', 'accept-language', 'accept-encoding', 'user-agent'].forEach(header => {
         if (req.headers[header] && clientProfile) {
           clientProfile.headers[header] = req.headers[header] as string;
         }

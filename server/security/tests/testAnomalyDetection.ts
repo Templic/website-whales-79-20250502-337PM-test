@@ -102,7 +102,7 @@ async function simulateRateLimitAttack() {
     results.push(result);
     
     // Small delay to simulate realistic timing
-    await new Promise(resolve: string: string => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
   
   // Get the last result, which should have the highest anomaly score
@@ -279,7 +279,7 @@ async function simulateUnusualUserBehavior() {
     
     await detectAnomaly(req);
     // Small delay between requests
-    await new Promise(resolve: string: string => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
   console.log('--- Now simulating unusual behavior for same user ---');
@@ -338,7 +338,7 @@ async function runAllTests() {
       
       await detectAnomaly(req);
       // Small delay to avoid rate limiting
-      await new Promise(resolve: string: string => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     console.log('\n=== BASELINE ESTABLISHED, STARTING ATTACK TESTS ===');

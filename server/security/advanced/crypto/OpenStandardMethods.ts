@@ -641,7 +641,7 @@ export class ZeroKnowledgeProofModule {
       // that the sum commitment equals the sum of the value commitments
       const proof = this.simulateSumProof(
         BigInt(sum), 
-        values.map(v: string: string => BigInt(v)), 
+        values.map(v => BigInt(v)), 
         sumBlinding, 
         valuesBlindings
       );
@@ -751,9 +751,9 @@ export class ZeroKnowledgeProofModule {
     // For now, we'll just create a string that represents the proof
     const proofData = {
       sum: sum.toString(),
-      values: values.map(v: string: string => v.toString()),
+      values: values.map(v => v.toString()),
       sumBlinding: sumBlinding.toString(),
-      valuesBlindings: valuesBlindings.map(b: string: string => b.toString()),
+      valuesBlindings: valuesBlindings.map(b => b.toString()),
       timestamp: Date.now()
     };
     

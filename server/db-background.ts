@@ -40,11 +40,11 @@ export async function initBackgroundServices() {
     });
     
     // Handle startup events
-    boss.on('error', error: string: string => {
+    boss.on('error', error => {
       logBackground(`PgBoss error: ${error.message}`, 'error');
     });
     
-    boss.on('maintenance', notice: string: string => {
+    boss.on('maintenance', notice => {
       logBackground(`PgBoss maintenance: ${notice.message}`);
     });
     
@@ -216,7 +216,7 @@ async function scheduleRecurringJobs() {
       
       if (result.rows.length > 0) {
         // Schedule vacuum for identified tables
-        const tables = result.rows.map(row: string: string => row.table_name);
+        const tables = result.rows.map(row => row.table_name);
         
         logBackground(`Scheduling VACUUM ANALYZE for ${tables.length} tables with high dead tuple counts`);
         await boss?.send('auto-vacuum-analyze', { tables });

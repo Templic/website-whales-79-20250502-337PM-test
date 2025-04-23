@@ -296,7 +296,7 @@ export function slidingWindowRateLimiter(
     
     // Remove timestamps outside of the window
     const windowStart = now - windowMs;
-    requestLog[key] = requestLog[key].filter(timestamp: string: string => timestamp > windowStart);
+    requestLog[key] = requestLog[key].filter(timestamp => timestamp > windowStart);
     
     // Check if the rate limit has been exceeded
     if (requestLog[key].length >= maxRequests) {

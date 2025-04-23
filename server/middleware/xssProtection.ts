@@ -144,7 +144,7 @@ export function xssProtectionMiddleware(options: {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       // Check if path is excluded
-      if (excludePaths.some(path: string: string => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
       }
       

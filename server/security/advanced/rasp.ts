@@ -145,7 +145,7 @@ class RASPManager {
   public createMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip excluded paths
-      if (this.options.excludePaths?.some(path: string: string => req.path.startsWith(path))) {
+      if (this.options.excludePaths?.some(path => req.path.startsWith(path))) {
         return next();
       }
       

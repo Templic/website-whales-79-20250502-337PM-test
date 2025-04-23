@@ -30,7 +30,7 @@ function logSecurityEvent(event: any): void {
     ipAddress: event.details?.ip || 'unknown',
     metadata: event.details || {},
     timestamp: new Date()
-  }).catch(error: string: string => {
+  }).catch(error => {
     console.error('[API-SECURITY] Error logging security event:', error);
   });
 }
@@ -108,7 +108,7 @@ export function validate<T extends AnyZodObject>(
         res.status(errorStatus).json({
           success: false,
           message: 'Validation failed',
-          errors: error.errors.map(err: string: string => ({
+          errors: error.errors.map(err => ({
             path: err.path.join('.'),
             message: err.message
           }))
@@ -235,7 +235,7 @@ export const commonSchemas = {
     email: validationPatterns.email,
     password: validationPatterns.password,
     confirmPassword: z.string()
-  }).refine(data: string: string => data.password === data.confirmPassword, {
+  }).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
   }),
@@ -276,7 +276,7 @@ export function securityValidation() {
     const headerInjectionRegex = /[\r\n]/;
     
     // Check request parameters for SQL injection attempts
-    const checkForSQLInjection = (obj: any): boolean: string: string => {
+    const checkForSQLInjection = (obj: any): boolean => {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
@@ -285,17 +285,17 @@ export function securityValidation() {
       
       if (typeof obj === 'object' && obj !== null) {
         if (Array.isArray(obj)) {
-          return obj.some(item: string: string => checkForSQLInjection(item));
+          return obj.some(item => checkForSQLInjection(item));
         }
         
-        return Object.values(obj).some(value: string: string => checkForSQLInjection(value));
+        return Object.values(obj).some(value => checkForSQLInjection(value));
       }
       
       return false;
     };
     
     // Check for XSS attempts
-    const checkForXSS = (obj: any): boolean: string: string => {
+    const checkForXSS = (obj: any): boolean => {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
@@ -304,17 +304,17 @@ export function securityValidation() {
       
       if (typeof obj === 'object' && obj !== null) {
         if (Array.isArray(obj)) {
-          return obj.some(item: string: string => checkForXSS(item));
+          return obj.some(item => checkForXSS(item));
         }
         
-        return Object.values(obj).some(value: string: string => checkForXSS(value));
+        return Object.values(obj).some(value => checkForXSS(value));
       }
       
       return false;
     };
     
     // Check for NoSQL injection attempts
-    const checkForNoSQLInjection = (obj: any): boolean: string: string => {
+    const checkForNoSQLInjection = (obj: any): boolean => {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
@@ -324,26 +324,26 @@ export function securityValidation() {
       if (typeof obj === 'object' && obj !== null) {
         // Check keys for NoSQL operators
         if (!Array.isArray(obj)) {
-          if (Object.keys(obj).some(key: string: string => noSqlInjectionRegex.test(key))) {
+          if (Object.keys(obj).some(key => noSqlInjectionRegex.test(key))) {
             return true;
           }
         }
         
         if (Array.isArray(obj)) {
-          return obj.some(item: string: string => checkForNoSQLInjection(item));
+          return obj.some(item => checkForNoSQLInjection(item));
         }
         
-        return Object.values(obj).some(value: string: string => checkForNoSQLInjection(value));
+        return Object.values(obj).some(value => checkForNoSQLInjection(value));
       }
       
       return false;
     };
     
     // Check for header injection attempts
-    const checkForHeaderInjection = (headers: any): boolean: string: string => {
+    const checkForHeaderInjection = (headers: any): boolean => {
       if (!headers) return false;
       
-      return Object.values(headers).some(value: string: string => {
+      return Object.values(headers).some(value => {
         if (typeof value === 'string') {
           return headerInjectionRegex.test(value);
         }
@@ -352,22 +352,22 @@ export function securityValidation() {
     };
     
     // Check for prototype pollution attempts
-    const checkForPrototypePollution = (obj: any): boolean: string: string => {
+    const checkForPrototypePollution = (obj: any): boolean => {
       if (!obj || typeof obj !== 'object') return false;
       
       const dangerousProps = ['__proto__', 'constructor', 'prototype'];
       
       if (!Array.isArray(obj)) {
-        if (Object.keys(obj).some(key: string: string => dangerousProps.includes(key))) {
+        if (Object.keys(obj).some(key => dangerousProps.includes(key))) {
           return true;
         }
       }
       
       if (Array.isArray(obj)) {
-        return obj.some(item: string: string => checkForPrototypePollution(item));
+        return obj.some(item => checkForPrototypePollution(item));
       }
       
-      return Object.values(obj).some(value: string: string => {
+      return Object.values(obj).some(value => {
         if (typeof value === 'object' && value !== null) {
           return checkForPrototypePollution(value);
         }
