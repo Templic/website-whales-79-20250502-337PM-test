@@ -58,7 +58,7 @@ export async function scanProject(): Promise<SecurityScanResult> {
     await checkInputValidation(vulnerabilities);
     
     // Count issues by severity
-    vulnerabilities.forEach(vuln: string: string => {
+    vulnerabilities.forEach(vuln => {
       switch (vuln.severity) {
         case 'critical':
           criticalIssues++;
@@ -133,7 +133,7 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
       
       // Check for vulnerable dependencies
       Object.entries(dependencies).forEach(([depName, depInfo]: [string, any]) => {
-        const vulnInfo = vulnerableDependencies.find(v: string: string => v.name === depName);
+        const vulnInfo = vulnerableDependencies.find(v => v.name === depName);
         if (vulnInfo) {
           const version = depInfo.version || '';
           
@@ -173,7 +173,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
     );
     
     if (stdout.trim()) {
-      const results = stdout.split('\n').filter(line: string: string => line.trim() !== '');
+      const results = stdout.split('\n').filter(line => line.trim() !== '');
       
       // Create a vulnerability for each detected secret
       for (const result of results) {

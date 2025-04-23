@@ -100,10 +100,10 @@ class PCIComplianceChecker {
     log(`PCI DSS compliance scan completed in ${elapsedMs}ms`, 'security');
     
     // Log results summary
-    const passedChecks = allResults.filter(result: string: string => result.passed).length;
+    const passedChecks = allResults.filter(result => result.passed).length;
     const totalChecks = allResults.length;
-    const criticalIssues = allResults.filter(result: string: string => !result.passed && result.critical).length;
-    const highIssues = allResults.filter(result: string: string => !result.passed && !result.critical).length;
+    const criticalIssues = allResults.filter(result => !result.passed && result.critical).length;
+    const highIssues = allResults.filter(result => !result.passed && !result.critical).length;
     
     log(`Results: ${passedChecks}/${totalChecks} checks passed (${totalChecks - passedChecks} failed)`, 'security');
     log(`Critical issues: ${criticalIssues}, High issues: ${highIssues}`, 'security');
@@ -146,7 +146,7 @@ class PCIComplianceChecker {
     log(`Network Security check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Network Security results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;
@@ -192,7 +192,7 @@ class PCIComplianceChecker {
     log(`Data Protection check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Data Protection results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;
@@ -238,7 +238,7 @@ class PCIComplianceChecker {
     log(`Vulnerability Management check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Vulnerability Management results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;
@@ -284,7 +284,7 @@ class PCIComplianceChecker {
     log(`Access Control check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Access Control results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;
@@ -330,7 +330,7 @@ class PCIComplianceChecker {
     log(`Secure Implementation check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Secure Implementation results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;
@@ -387,7 +387,7 @@ class PCIComplianceChecker {
     log(`Logging and Monitoring check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
-    const passedChecks = results.filter(result: string: string => result.passed).length;
+    const passedChecks = results.filter(result => result.passed).length;
     log(`Logging and Monitoring results: ${passedChecks}/${results.length} checks passed`, 'security');
     
     return results;

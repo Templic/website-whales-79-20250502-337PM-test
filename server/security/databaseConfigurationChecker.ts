@@ -111,7 +111,7 @@ export class DatabaseConfigurationChecker {
             report.recommendations = [];
           }
           
-          const unusedIndexes = unusedIndexesResult.rows.map(row: string: string => row.index).join(', ');
+          const unusedIndexes = unusedIndexesResult.rows.map(row => row.index).join(', ');
           report.recommendations.push(
             `Consider removing unused indexes to improve performance: ${unusedIndexes}`
           );

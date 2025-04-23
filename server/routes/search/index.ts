@@ -62,7 +62,7 @@ router.get('/', async (req: Request, res: Response) => {
     const searchParams: Record<string, any> = {};
     
     // Extract category-specific filters from query parameters
-    Object.keys(req.query).forEach(key: string: string => {
+    Object.keys(req.query).forEach(key => {
       if (
         !['q', 'type', 'limit', '_'].includes(key) && 
         req.query[key] !== undefined
@@ -154,7 +154,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
     const tracks = await storage.getAllTracks();
     
     // Filter tracks by search terms
-    let filteredTracks = tracks.filter(track: string: string => {
+    let filteredTracks = tracks.filter(track => {
       // Check if track matches search terms
       const title = (track.title || '').toLowerCase();
       const artist = (track.artist || '').toLowerCase();
@@ -162,7 +162,7 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
       const frequency = String(track.frequency || '').toLowerCase();
       
       // Match any term against track data
-      return searchTerms.some(term: string: string => 
+      return searchTerms.some(term => 
         title.includes(term) || 
         artist.includes(term) || 
         description.includes(term) ||
@@ -172,19 +172,19 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
     
     // Apply additional filters from searchParams
     if (params.frequency) {
-      filteredTracks = filteredTracks.filter(track: string: string => 
+      filteredTracks = filteredTracks.filter(track => 
         track.frequency && track.frequency.toString().includes(params.frequency)
       );
     }
     
     if (params.artist) {
-      filteredTracks = filteredTracks.filter(track: string: string => 
+      filteredTracks = filteredTracks.filter(track => 
         track.artist && track.artist.toLowerCase().includes(params.artist.toLowerCase())
       );
     }
     
     if (params.year) {
-      filteredTracks = filteredTracks.filter(track: string: string => {
+      filteredTracks = filteredTracks.filter(track => {
         const releaseDate = track.releaseDate || track.createdAt || '';
         return releaseDate.toString().includes(params.year);
       });
@@ -210,14 +210,14 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     const products = await storage.getAllProducts();
     
     // Filter products by search terms
-    let filteredProducts = products.filter(product: string: string => {
+    let filteredProducts = products.filter(product => {
       // Check if product matches search terms
       const name = (product.name || '').toLowerCase();
       const description = (product.description || '').toLowerCase();
       const category = (product.category || '').toLowerCase();
       
       // Match any term against product data
-      return searchTerms.some(term: string: string => 
+      return searchTerms.some(term => 
         name.includes(term) || 
         description.includes(term) || 
         category.includes(term)
@@ -226,7 +226,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
-      filteredProducts = filteredProducts.filter(product: string: string => 
+      filteredProducts = filteredProducts.filter(product => 
         product.category && product.category.toLowerCase() === params.category.toLowerCase()
       );
     }
@@ -234,7 +234,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     if (params.minPrice !== undefined) {
       const minPrice = parseFloat(params.minPrice);
       if (!isNaN(minPrice)) {
-        filteredProducts = filteredProducts.filter(product: string: string => 
+        filteredProducts = filteredProducts.filter(product => 
           product.price >= minPrice
         );
       }
@@ -243,7 +243,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     if (params.maxPrice !== undefined) {
       const maxPrice = parseFloat(params.maxPrice);
       if (!isNaN(maxPrice)) {
-        filteredProducts = filteredProducts.filter(product: string: string => 
+        filteredProducts = filteredProducts.filter(product => 
           product.price <= maxPrice
         );
       }
@@ -251,7 +251,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     if (params.inStock !== undefined) {
       const inStock = params.inStock === 'true';
-      filteredProducts = filteredProducts.filter(product: string: string => 
+      filteredProducts = filteredProducts.filter(product => 
         product.inStock === inStock
       );
     }
@@ -276,7 +276,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     const posts = await storage.getAllPosts();
     
     // Filter posts by search terms
-    let filteredPosts = posts.filter(post: string: string => {
+    let filteredPosts = posts.filter(post => {
       // Check if post matches search terms
       const title = (post.title || '').toLowerCase();
       const content = (post.content || '').toLowerCase();
@@ -286,7 +286,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
         : '';
       
       // Match any term against post data
-      return searchTerms.some(term: string: string => 
+      return searchTerms.some(term => 
         title.includes(term) || 
         content.includes(term) || 
         excerpt.includes(term) ||
@@ -297,16 +297,16 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     // Apply additional filters from searchParams
     if (params.tags) {
       const searchTags = params.tags.split(',').map((tag: string) => tag.trim().toLowerCase());
-      filteredPosts = filteredPosts.filter(post: string: string => {
+      filteredPosts = filteredPosts.filter(post => {
         const postTags = (post.tags || []).map((tag: string) => tag.toLowerCase());
-        return searchTags.some(tag: string: string => postTags.includes(tag));
+        return searchTags.some(tag => postTags.includes(tag));
       });
     }
     
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
-        filteredPosts = filteredPosts.filter(post: string: string => {
+        filteredPosts = filteredPosts.filter(post => {
           const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate >= fromDate;
         });
@@ -316,7 +316,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
-        filteredPosts = filteredPosts.filter(post: string: string => {
+        filteredPosts = filteredPosts.filter(post => {
           const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate <= toDate;
         });
@@ -344,7 +344,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     
     // Filter and sanitize user data (never include sensitive information like passwords)
     const filteredUsers = users
-      .filter(user: string: string => {
+      .filter(user => {
         // Check if user matches search terms
         const name = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
         const username = (user.username || '').toLowerCase();
@@ -352,14 +352,14 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
         const bio = (user.bio || '').toLowerCase();
         
         // Match any term against user data
-        return searchTerms.some(term: string: string => 
+        return searchTerms.some(term => 
           name.includes(term) || 
           username.includes(term) || 
           email.includes(term) ||
           bio.includes(term)
         );
       })
-      .map(user: string: string => ({
+      .map(user => ({
         id: user.id,
         username: user.username,
         displayName: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
@@ -389,14 +389,14 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     const newsletters = await storage.getAllNewsletters();
     
     // Filter newsletters by search terms
-    let filteredNewsletters = newsletters.filter(newsletter: string: string => {
+    let filteredNewsletters = newsletters.filter(newsletter => {
       // Check if newsletter matches search terms
       const subject = (newsletter.subject || '').toLowerCase();
       const content = (newsletter.content || '').toLowerCase();
       const category = (newsletter.category || '').toLowerCase();
       
       // Match any term against newsletter data
-      return searchTerms.some(term: string: string => 
+      return searchTerms.some(term => 
         subject.includes(term) || 
         content.includes(term) || 
         category.includes(term)
@@ -405,14 +405,14 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
-      filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => 
+      filteredNewsletters = filteredNewsletters.filter(newsletter => 
         newsletter.category && newsletter.category.toLowerCase() === params.category.toLowerCase()
       );
     }
     
     if (params.sent !== undefined) {
       const isSent = params.sent === 'sent' || params.sent === 'true';
-      filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => 
+      filteredNewsletters = filteredNewsletters.filter(newsletter => 
         isSent ? !!newsletter.sentAt : !newsletter.sentAt
       );
     }
@@ -420,7 +420,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
-        filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => {
+        filteredNewsletters = filteredNewsletters.filter(newsletter => {
           const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate >= fromDate;
         });
@@ -430,7 +430,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
-        filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => {
+        filteredNewsletters = filteredNewsletters.filter(newsletter => {
           const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate <= toDate;
         });
@@ -440,7 +440,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.minOpenRate !== undefined) {
       const minOpenRate = parseInt(params.minOpenRate);
       if (!isNaN(minOpenRate)) {
-        filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => 
+        filteredNewsletters = filteredNewsletters.filter(newsletter => 
           (newsletter.openRate || 0) >= minOpenRate
         );
       }
@@ -449,7 +449,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.maxOpenRate !== undefined) {
       const maxOpenRate = parseInt(params.maxOpenRate);
       if (!isNaN(maxOpenRate)) {
-        filteredNewsletters = filteredNewsletters.filter(newsletter: string: string => 
+        filteredNewsletters = filteredNewsletters.filter(newsletter => 
           (newsletter.openRate || 0) <= maxOpenRate
         );
       }
@@ -459,22 +459,22 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.sort) {
       switch (params.sort) {
         case 'newest':
-          filteredNewsletters.sort((a, b) => 
+          filteredNewsletters.sort((a: any, b: any) => 
             new Date(b.sentAt || b.createdAt || 0).getTime() - 
             new Date(a.sentAt || a.createdAt || 0).getTime()
           );
           break;
         case 'oldest':
-          filteredNewsletters.sort((a, b) => 
+          filteredNewsletters.sort((a: any, b: any) => 
             new Date(a.sentAt || a.createdAt || 0).getTime() - 
             new Date(b.sentAt || b.createdAt || 0).getTime()
           );
           break;
         case 'most-opened':
-          filteredNewsletters.sort((a, b) => (b.openRate || 0) - (a.openRate || 0));
+          filteredNewsletters.sort((a: any, b: any) => (b.openRate || 0) - (a.openRate || 0));
           break;
         case 'most-clicked':
-          filteredNewsletters.sort((a, b) => (b.clickRate || 0) - (a.clickRate || 0));
+          filteredNewsletters.sort((a: any, b: any) => (b.clickRate || 0) - (a.clickRate || 0));
           break;
         default:
           break;
@@ -501,7 +501,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     const suggestions = await storage.getAllCommunitySuggestions();
     
     // Filter suggestions by search terms
-    let filteredSuggestions = suggestions.filter(suggestion: string: string => {
+    let filteredSuggestions = suggestions.filter(suggestion => {
       // Check if suggestion matches search terms
       const title = (suggestion.title || '').toLowerCase();
       const description = (suggestion.description || '').toLowerCase();
@@ -509,7 +509,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
       const status = (suggestion.status || '').toLowerCase();
       
       // Match any term against suggestion data
-      return searchTerms.some(term: string: string => 
+      return searchTerms.some(term => 
         title.includes(term) || 
         description.includes(term) || 
         category.includes(term) ||
@@ -519,13 +519,13 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
-      filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => 
+      filteredSuggestions = filteredSuggestions.filter(suggestion => 
         suggestion.category && suggestion.category.toLowerCase() === params.category.toLowerCase()
       );
     }
     
     if (params.status && params.status !== 'all') {
-      filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => 
+      filteredSuggestions = filteredSuggestions.filter(suggestion => 
         suggestion.status && suggestion.status.toLowerCase() === params.status.toLowerCase()
       );
     }
@@ -533,7 +533,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
-        filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => {
+        filteredSuggestions = filteredSuggestions.filter(suggestion => {
           const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate >= fromDate;
         });
@@ -543,7 +543,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
-        filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => {
+        filteredSuggestions = filteredSuggestions.filter(suggestion => {
           const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate <= toDate;
         });
@@ -551,13 +551,13 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     }
     
     if (params.hideImplemented === 'true') {
-      filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => 
+      filteredSuggestions = filteredSuggestions.filter(suggestion => 
         suggestion.status !== 'completed'
       );
     }
     
     if (params.hideDeclined === 'true') {
-      filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => 
+      filteredSuggestions = filteredSuggestions.filter(suggestion => 
         suggestion.status !== 'declined'
       );
     }
@@ -565,7 +565,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     if (params.minVotes !== undefined) {
       const minVotes = parseInt(params.minVotes);
       if (!isNaN(minVotes)) {
-        filteredSuggestions = filteredSuggestions.filter(suggestion: string: string => 
+        filteredSuggestions = filteredSuggestions.filter(suggestion => 
           (suggestion.votesCount || 0) >= minVotes
         );
       }

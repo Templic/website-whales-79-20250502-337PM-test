@@ -76,7 +76,7 @@ function trackActiveSession(
   const userSessions = activeSessions.get(userId.toString()) || [];
   
   // Update or add this session
-  const existingSessionIndex = userSessions.findIndex(s: string: string => s.sessionId === sessionId);
+  const existingSessionIndex = userSessions.findIndex(s => s.sessionId === sessionId);
   
   if (existingSessionIndex >= 0) {
     userSessions[existingSessionIndex] = session;
@@ -85,7 +85,7 @@ function trackActiveSession(
   }
   
   // Remove expired sessions (inactive for more than 30 minutes)
-  const activeUserSessions = userSessions.filter(s: string: string => {
+  const activeUserSessions = userSessions.filter(s => {
     return (now - s.lastActivity) < 30 * 60 * 1000;
   });
   
@@ -106,7 +106,7 @@ function checkSuspiciousActivity(
   const userSessions = activeSessions.get(userId.toString()) || [];
   
   // Check for multiple concurrent sessions from different locations
-  const distinctIPs = new Set(userSessions.map(s: string: string => s.ip));
+  const distinctIPs = new Set(userSessions.map(s => s.ip));
   
   if (distinctIPs.size > 2) {
     logSecurityEvent({
@@ -120,7 +120,7 @@ function checkSuspiciousActivity(
   }
   
   // Check for rapid IP changes (session hijacking indicator)
-  const previousSessions = userSessions.filter(s: string: string => s.sessionId === sessionId && s.ip !== ip);
+  const previousSessions = userSessions.filter(s => s.sessionId === sessionId && s.ip !== ip);
   
   if (previousSessions.length > 0) {
     logSecurityEvent({
@@ -138,7 +138,7 @@ function checkSuspiciousActivity(
   
   // Check for unusual user agent changes
   const previousUserAgentSessions = userSessions.filter(
-    s: string: string => s.sessionId === sessionId && s.userAgent !== userAgent
+    s => s.sessionId === sessionId && s.userAgent !== userAgent
   );
   
   if (previousUserAgentSessions.length > 0) {
@@ -164,7 +164,7 @@ export function invalidateOtherSessions(userId: number, currentSessionId: string
   
   // For our in-memory implementation, we'll just remove other sessions from tracking
   const userSessions = activeSessions.get(userId.toString()) || [];
-  const currentSession = userSessions.find(s: string: string => s.sessionId === currentSessionId);
+  const currentSession = userSessions.find(s => s.sessionId === currentSessionId);
   
   if (currentSession) {
     activeSessions.set(userId.toString(), [currentSession]);

@@ -35,7 +35,7 @@ const COOKIE_OPTIONS = {
 function cleanupExpiredTokens() {
   const now = new Date();
   
-  Object.keys(tokenStore).forEach(key: string: string => {
+  Object.keys(tokenStore).forEach(key => {
     if (tokenStore[key].expires < now) {
       delete tokenStore[key];
     }

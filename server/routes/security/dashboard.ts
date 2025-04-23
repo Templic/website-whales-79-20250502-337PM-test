@@ -156,7 +156,7 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
     
     // Event counts by category
     const categoryCounts: Record<string, number> = {};
-    Object.values(SecurityEventCategory).forEach(category: string: string => {
+    Object.values(SecurityEventCategory).forEach(category => {
       categoryCounts[category] = securityBlockchain.queryEvents({
         category: category as SecurityEventCategory
       }).length;
@@ -229,7 +229,7 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
     });
     
     // Start the scan in the background
-    securityScanner.startScan(scanId).catch(error: string: string => {
+    securityScanner.startScan(scanId).catch(error => {
       console.error(`Error running security scan ${scanId}:`, error);
     });
     

@@ -294,7 +294,7 @@ export function updateSecurityScores(scores: Partial<SecurityMetrics['score']>):
   };
   
   // Recalculate overall score
-  const scoreValues = Object.values(latestMetrics.score).filter(value: string: string => typeof value === 'number' && value !== latestMetrics.score.overall);
+  const scoreValues = Object.values(latestMetrics.score).filter(value => typeof value === 'number' && value !== latestMetrics.score.overall);
   const average = scoreValues.reduce((sum, value) => sum + value, 0) / scoreValues.length;
   
   latestMetrics.score.overall = Math.round(average);

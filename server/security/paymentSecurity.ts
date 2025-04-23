@@ -222,8 +222,8 @@ class PaymentSecurityService {
       const results = pciComplianceChecker.runComplianceChecks();
       
       const totalChecks = results.length;
-      const passedChecks = results.filter(check: string: string => check.passed).length;
-      const criticalIssues = results.filter(check: string: string => !check.passed && check.critical).length;
+      const passedChecks = results.filter(check => check.passed).length;
+      const criticalIssues = results.filter(check => !check.passed && check.critical).length;
       
       log(`PCI Compliance scan completed: ${passedChecks}/${totalChecks} checks passed`, 'security');
       
