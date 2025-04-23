@@ -22,7 +22,7 @@ export function applySecurityMiddleware(app: Express) {
     category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
     severity: SecurityEventSeverity.INFO,
     message: 'Security middleware initialization started',
-    timestamp: new Date(),
+    timestamp: Date.now(),
     metadata: {
       component: 'securityMiddleware',
       timestamp: new Date().toISOString()
@@ -91,7 +91,7 @@ export function applySecurityMiddleware(app: Express) {
       category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
       severity: SecurityEventSeverity.INFO,
       message: 'Security middleware initialization completed successfully',
-      timestamp: new Date(),
+      timestamp: Date.now(),
       metadata: {
         component: 'securityMiddleware',
         appliedMiddleware: [
@@ -112,7 +112,7 @@ export function applySecurityMiddleware(app: Express) {
       category: SecurityEventCategory.SECURITY_ERROR as any,
       severity: SecurityEventSeverity.ERROR,
       message: 'Security middleware initialization failed',
-      timestamp: new Date(),
+      timestamp: Date.now(),
       metadata: {
         component: 'securityMiddleware',
         error: error.message,
