@@ -33,7 +33,7 @@ export interface FeatureContribution {
   contribution: number;
   
   /**
-   * Feature z-score (standard deviations from mean: any)
+   * Feature z-score (standard deviations from mean)
    */
   zScore: number;
 }
@@ -83,7 +83,7 @@ export interface AnomalyResult {
  */
 export interface AnomalyDetectionOptions {
   /**
-   * Detection mode (determines sensitivity: any)
+   * Detection mode (determines sensitivity)
    */
   mode?: 'standard' | 'enhanced' | 'maximum';
   
@@ -218,7 +218,7 @@ export const defaultRequestFeatureExtractor: FeatureExtractor = (req: Request) =
   features.body_size = req.body ? JSON.stringify(req.body).length : 0;
   
   // Authentication
-  features.is_authenticated = (req as any: any).user ? 1 : 0;
+  features.is_authenticated = (req as any).user ? 1 : 0;
   
   // Request timing
   const hour = new Date().getHours();
@@ -236,25 +236,25 @@ export const userBehaviorFeatureExtractor: FeatureExtractor = (req: Request, con
   const features: Record<string, number> = {};
   
   // User ID
-  const user = (req as any: any).user;
+  const user = (req as any).user;
   const userId = user?.id || 'anonymous';
   features.is_anonymous = userId === 'anonymous' ? 1 : 0;
   
   // Time since last activity
-  features.time_since_last_activity = (req as any: any).timeSinceLastActivity || 0;
+  features.time_since_last_activity = (req as any).timeSinceLastActivity || 0;
   
   // Session features
-  features.session_age = (req as any: any).sessionAge || 0;
-  features.requests_in_session = (req as any: any).requestsInSession || 0;
+  features.session_age = (req as any).sessionAge || 0;
+  features.requests_in_session = (req as any).requestsInSession || 0;
   
   // IP change
-  features.ip_changed = (req as any: any).ipChanged ? 1 : 0;
+  features.ip_changed = (req as any).ipChanged ? 1 : 0;
   
   // User agent change
-  features.ua_changed = (req as any: any).uaChanged ? 1 : 0;
+  features.ua_changed = (req as any).uaChanged ? 1 : 0;
   
   // Location change
-  features.location_changed = (req as any: any).locationChanged ? 1 : 0;
+  features.location_changed = (req as any).locationChanged ? 1 : 0;
   
   // Authentication strength
   if (context?.getAuthentication()) {
@@ -295,16 +295,16 @@ export const networkPatternFeatureExtractor: FeatureExtractor = (req: Request) =
     ip.startsWith('172.31.') || 
     ip.startsWith('192.168.') ? 1 : 0;
   
-  // Request rate features (if available: any)
-  features.requests_per_minute = (req as any: any).requestsPerMinute || 0;
-  features.requests_per_hour = (req as any: any).requestsPerHour || 0;
-  features.api_requests_per_minute = (req as any: any).apiRequestsPerMinute || 0;
+  // Request rate features (if available)
+  features.requests_per_minute = (req as any).requestsPerMinute || 0;
+  features.requests_per_hour = (req as any).requestsPerHour || 0;
+  features.api_requests_per_minute = (req as any).apiRequestsPerMinute || 0;
   
   // Error rate
-  features.error_rate = (req as any: any).errorRate || 0;
+  features.error_rate = (req as any).errorRate || 0;
   
   // Concurrent sessions
-  features.concurrent_sessions = (req as any: any).concurrentSessions || 0;
+  features.concurrent_sessions = (req as any).concurrentSessions || 0;
   
   return features;
 };
@@ -325,15 +325,15 @@ export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) =
     
     // SQL keywords
     features.contains_sql_keywords = 
-      /\b(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|DROP|ALTER|CREATE|TABLE|JOIN)\b/i.test(bodyStr: any) ? 1 : 0;
+      /\b(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE|DROP|ALTER|CREATE|TABLE|JOIN)\b/i.test(bodyStr) ? 1 : 0;
     
     // Command injection patterns
     features.contains_command_injection = 
-      /\b(?:exec|eval|system|passthru|shell_exec|popen|proc_open|pcntl_exec)\b/i.test(bodyStr: any) ? 1 : 0;
+      /\b(?:exec|eval|system|passthru|shell_exec|popen|proc_open|pcntl_exec)\b/i.test(bodyStr) ? 1 : 0;
     
     // Path traversal patterns
     features.contains_path_traversal = 
-      /(?:\.\.\/|\.\.\$|\.\.\\)/i.test(bodyStr: any) ? 1 : 0;
+      /(?:\.\.\/|\.\.\$|\.\.\\)/i.test(bodyStr) ? 1 : 0;
     
     // JSON depth
     features.json_max_depth = getJsonMaxDepth(req.body);
@@ -343,10 +343,10 @@ export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) =
     
     // Base64 content
     features.contains_base64 = 
-      /[A-Za-z0-9+/]{30,}={0,2}/i.test(bodyStr: any) ? 1 : 0;
+      /[A-Za-z0-9+/]{30,}={0,2}/i.test(bodyStr) ? 1 : 0;
     
     // Entropy of content
-    features.content_entropy = calculateEntropy(bodyStr: any);
+    features.content_entropy = calculateEntropy(bodyStr);
   } else {
     // Initialize with default values
     features.contains_script_tag = 0;
@@ -365,16 +365,16 @@ export const contentPatternFeatureExtractor: FeatureExtractor = (req: Request) =
 /**
  * Get maximum depth of a JSON object
  */
-function getJsonMaxDepth(obj: any, currentDepth: number = 0): number {
+function getJsonMaxDepth(obj, currentDepth: number = 0): number {
   if (!obj || typeof obj !== 'object') {
     return currentDepth;
   }
   
   let maxDepth = currentDepth;
-  for (const key in obj: any) {
-    if (obj.hasOwnProperty(key: any)) {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
       const depth = getJsonMaxDepth(obj[key], currentDepth + 1);
-      maxDepth = Math.max(maxDepth: any, depth: any);
+      maxDepth = Math.max(maxDepth, depth);
     }
   }
   
@@ -384,14 +384,14 @@ function getJsonMaxDepth(obj: any, currentDepth: number = 0): number {
 /**
  * Count fields in a JSON object
  */
-function countFields(obj: any): number {
+function countFields(obj): number {
   if (!obj || typeof obj !== 'object') {
     return 0;
   }
   
   let count = 0;
-  for (const key in obj: any) {
-    if (obj.hasOwnProperty(key: any)) {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
       count++;
       if (typeof obj[key] === 'object' && obj[key] !== null) {
         count += countFields(obj[key]);
@@ -421,9 +421,9 @@ function calculateEntropy(str: string): number {
   
   // Calculate entropy
   let entropy = 0;
-  for (const char in frequencies: any) {
+  for (const char in frequencies) {
     const p = frequencies[char] / len;
-    entropy -= p * Math.log2(p: any);
+    entropy -= p * Math.log2(p);
   }
   
   return entropy;
@@ -502,7 +502,7 @@ export class AnomalyDetection {
       } else if (this.options.mode === 'maximum') {
         this.options.anomalyThreshold = 0.6; // More sensitive
       } else {
-        this.options.anomalyThreshold = 0.7; // Default (enhanced: any)
+        this.options.anomalyThreshold = 0.7; // Default (enhanced)
       }
     }
   }
@@ -546,13 +546,13 @@ export class AnomalyDetection {
     }
     
     // Extract features from request
-    const features = this.extractFeatures(req: any, context: any);
+    const features = this.extractFeatures(req, context);
     
     // Store request for baseline
-    this.storeRequest(features: any);
+    this.storeRequest(features);
     
     // Calculate anomaly score
-    const result = this.calculateAnomalyScore(features: any);
+    const result = this.calculateAnomalyScore(features);
     
     // Update counters
     this.requestCount++;
@@ -574,8 +574,8 @@ export class AnomalyDetection {
     
     // Apply all feature extractors
     for (const extractor of this.options.featureExtractors!) {
-      const extractedFeatures = extractor(req: any, context: any);
-      for (const [key, value] of Object.entries(extractedFeatures: any)) {
+      const extractedFeatures = extractor(req, context);
+      for (const [key, value] of Object.entries(extractedFeatures)) {
         features[key] = value;
       }
     }
@@ -599,7 +599,7 @@ export class AnomalyDetection {
     }
     
     // Update feature statistics
-    for (const [feature, value] of Object.entries(features: any)) {
+    for (const [feature, value] of Object.entries(features)) {
       if (!this.featureStats[feature]) {
         // Initialize stats for new feature
         this.featureStats[feature] = {
@@ -630,7 +630,7 @@ export class AnomalyDetection {
       stats.stdDev = Math.sqrt((stats.sumSquared / stats.count) - (stats.mean * stats.mean));
       
       // Add to recent values
-      stats.recent.push(value: any);
+      stats.recent.push(value);
       if (stats.recent.length > 100) {
         stats.recent.shift();
       }
@@ -648,7 +648,7 @@ export class AnomalyDetection {
       features,
       featureContributions: [],
       timestamp: new Date(),
-      requestId: Math.random().toString(36: any).substring(2: any, 15: any)
+      requestId: Math.random().toString(36).substring(2, 15)
     };
     
     // If we don't have enough baseline data, return low anomaly score
@@ -663,7 +663,7 @@ export class AnomalyDetection {
     let totalWeight = 0;
     let weightedScoreSum = 0;
     
-    for (const [feature, value] of Object.entries(features: any)) {
+    for (const [feature, value] of Object.entries(features)) {
       // Skip if we don't have stats for this feature
       if (!this.featureStats[feature]) {
         continue;
@@ -676,11 +676,11 @@ export class AnomalyDetection {
         continue;
       }
       
-      // Calculate z-score (standard deviations from mean: any)
+      // Calculate z-score (standard deviations from mean)
       const zScore = Math.abs((value - stats.mean) / stats.stdDev);
       
       // Convert z-score to anomaly contribution (0-1)
-      // Using a sigmoid function centered around z=2 (2 standard deviations: any)
+      // Using a sigmoid function centered around z=2 (2 standard deviations)
       const contribution = 1 / (1 + Math.exp(-1 * (zScore - 2)));
       
       // Get feature weight
@@ -699,10 +699,10 @@ export class AnomalyDetection {
       });
     }
     
-    // Sort feature contributions by contribution (descending: any)
-    featureScores.sort((a: any, b: any) => b.contribution - a.contribution);
+    // Sort feature contributions by contribution (descending)
+    featureScores.sort((a, b) => b.contribution - a.contribution);
     
-    // Calculate final anomaly score (weighted average: any)
+    // Calculate final anomaly score (weighted average)
     result.anomalyScore = totalWeight > 0 ? weightedScoreSum / totalWeight : 0;
     
     // Set feature contributions
@@ -713,7 +713,7 @@ export class AnomalyDetection {
     
     // Calculate confidence based on amount of data and feature counts
     const dataConfidence = Math.min(1, this.recentRequests.length / 50);
-    const featureConfidence = Math.min(1, Object.keys(features: any).length / 10);
+    const featureConfidence = Math.min(1, Object.keys(features).length / 10);
     result.confidence = dataConfidence * featureConfidence;
     
     // Only consider high-confidence anomalies
@@ -741,7 +741,7 @@ export class AnomalyDetection {
       if (anomalyRate > 0.1) {
         // High anomaly rate - reduce adaptation to avoid learning attacks
         this.adaptationFactor = 0.05;
-        console.log(`[AnomalyDetection] High anomaly rate (${(anomalyRate * 100).toFixed(2: any)}%), reducing adaptation factor`);
+        console.log(`[AnomalyDetection] High anomaly rate (${(anomalyRate * 100).toFixed(2)}%), reducing adaptation factor`);
       } else {
         // Normal anomaly rate - standard adaptation
         this.adaptationFactor = 0.1;
@@ -841,13 +841,13 @@ export class AnomalyDetection {
     }
     
     try {
-      // Extract path only (remove query: any)
+      // Extract path only (remove query)
       const pathOnly = url.split('?')[0];
       
       // Normalize numeric IDs and UUIDs in URL segments
       return pathOnly.replace(/\/[0-9]+\/?/g, '/ID/')
                      .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/?/gi, '/UUID/');
-    } catch (error: any) {
+    } catch (error) {
       console.error('[AnomalyDetection] Error normalizing URL:', error);
       return url;
     }
@@ -862,8 +862,8 @@ export class AnomalyDetection {
     // Normalize URL for pattern matching
     const normalizedPath = this.normalizeUrlPath(req.originalUrl || req.url);
     
-    // Calculate request frequency patterns (if available: any)
-    const requestsPerMinute = (req as any: any).requestsPerMinute || 0;
+    // Calculate request frequency patterns (if available)
+    const requestsPerMinute = (req as any).requestsPerMinute || 0;
     
     // Detect high-frequency API requests
     patterns.high_frequency_requests = requestsPerMinute > 30;
@@ -872,16 +872,16 @@ export class AnomalyDetection {
     patterns.potential_scraping = requestsPerMinute > 20 && req.method === 'GET';
     
     // Detect API enumeration/scanning
-    patterns.potential_enumeration = (req as any: any).distinctEndpointsPerMinute > 10;
+    patterns.potential_enumeration = (req as any).distinctEndpointsPerMinute > 10;
     
     // Detect distributed requests 
-    patterns.distributed_requests = (req as any: any).distinctIpsPerMinute > 3;
+    patterns.distributed_requests = (req as any).distinctIpsPerMinute > 3;
     
     // Detect sequential ID access
-    patterns.sequential_id_access = (req as any: any).sequentialIdAccess || false;
+    patterns.sequential_id_access = (req as any).sequentialIdAccess || false;
     
     // Detect credential stuffing
-    patterns.credential_stuffing = (req as any: any).failedLoginsPerMinute > 5;
+    patterns.credential_stuffing = (req as any).failedLoginsPerMinute > 5;
     
     return patterns;
   }

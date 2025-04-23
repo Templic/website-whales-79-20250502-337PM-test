@@ -131,7 +131,7 @@ export interface PredictionResult {
   modelVersion: string;
   
   /**
-   * Explanation of prediction (if available: any)
+   * Explanation of prediction (if available)
    */
   explanation?: string;
 }
@@ -151,7 +151,7 @@ export interface ModelConfig {
   hyperparameters: Record<string, any>;
   
   /**
-   * Learning rate (for applicable models: any)
+   * Learning rate (for applicable models)
    */
   learningRate?: number;
   
@@ -181,7 +181,7 @@ export interface ModelConfig {
   featureColumns?: string[];
   
   /**
-   * Target column (for supervised learning: any)
+   * Target column (for supervised learning)
    */
   targetColumn?: string;
   
@@ -206,7 +206,7 @@ interface TrainingSample {
   features: Record<string, number>;
   
   /**
-   * Label (for supervised learning: any)
+   * Label (for supervised learning)
    */
   label?: any;
   
@@ -248,8 +248,8 @@ abstract class MLModel {
     trainingTimeMs: 0,
     inferenceTimeMs: 0,
     trainingDatasetSize: 0,
-    lastTrainingDate: new Date(0: any),
-    lastEvaluationDate: new Date(0: any)
+    lastTrainingDate: new Date(0),
+    lastEvaluationDate: new Date(0)
   };
   
   /**
@@ -362,8 +362,8 @@ class IsolationForestModel extends MLModel {
         // For simulation, we'll just create placeholder trees
         this.trees.push({
           treeId: i,
-          height: Math.floor(Math.log2(maxSamples: any)),
-          featureMap: this.createRandomFeatureMap(maxFeatures: any)
+          height: Math.floor(Math.log2(maxSamples)),
+          featureMap: this.createRandomFeatureMap(maxFeatures)
         });
       }
       
@@ -380,7 +380,7 @@ class IsolationForestModel extends MLModel {
       
       // Mark as ready
       this.status = ModelStatus.READY;
-    } catch (error: any) {
+    } catch (error) {
       console.error('[IsolationForestModel] Error training model:', error);
       this.status = ModelStatus.FAILED;
       throw error;
@@ -398,7 +398,7 @@ class IsolationForestModel extends MLModel {
     const startTime = Date.now();
     
     // Normalize features
-    const normalizedFeatures = this.normalizeFeatures(features: any);
+    const normalizedFeatures = this.normalizeFeatures(features);
     
     // Compute anomaly score
     let totalPathLength = 0;
@@ -407,7 +407,7 @@ class IsolationForestModel extends MLModel {
     for (const tree of this.trees) {
       // In a real implementation, we would traverse the tree
       // For simulation, we'll compute a random path length
-      const pathLength = this.simulatePathLength(tree: any, normalizedFeatures: any);
+      const pathLength = this.simulatePathLength(tree, normalizedFeatures);
       totalPathLength += pathLength;
       treeScores[tree.treeId] = pathLength;
     }
@@ -416,17 +416,17 @@ class IsolationForestModel extends MLModel {
     
     // Compute feature importance by analyzing which features most influenced the path length
     const featureImportances: Record<string, number> = {};
-    const featureKeys = Object.keys(features: any);
+    const featureKeys = Object.keys(features);
     
-    for (const feature of featureKeys: any) {
+    for (const feature of featureKeys) {
       // In a real implementation, we would compute actual feature importances
       // For simulation, we'll generate random importances
       featureImportances[feature] = Math.random();
     }
     
     // Normalize feature importances
-    const totalImportance = Object.values(featureImportances: any).reduce((sum: any, val: any) => sum + val, 0);
-    for (const feature of featureKeys: any) {
+    const totalImportance = Object.values(featureImportances).reduce((sum, val) => sum + val, 0);
+    for (const feature of featureKeys) {
       featureImportances[feature] /= totalImportance;
     }
     
@@ -445,7 +445,7 @@ class IsolationForestModel extends MLModel {
       timestamp: new Date(),
       modelType: ModelType.ISOLATION_FOREST,
       modelVersion: this.config.version,
-      explanation: `Anomaly score of ${anomalyScore.toFixed(4: any)} based on average path length of ${avgPathLength.toFixed(2: any)}`
+      explanation: `Anomaly score of ${anomalyScore.toFixed(4)} based on average path length of ${avgPathLength.toFixed(2)}`
     };
   }
   
@@ -468,7 +468,7 @@ class IsolationForestModel extends MLModel {
       this.performance.lastEvaluationDate = new Date();
       
       return { ...this.performance };
-    } catch (error: any) {
+    } catch (error) {
       console.error('[IsolationForestModel] Error evaluating model:', error);
       throw error;
     } finally {
@@ -493,14 +493,14 @@ class IsolationForestModel extends MLModel {
     const sums: Record<string, number> = {};
     const sumSquares: Record<string, number> = {};
     
-    for (const key of featureKeys: any) {
+    for (const key of featureKeys) {
       sums[key] = 0;
       sumSquares[key] = 0;
     }
     
     // Compute sums and sum squares
     for (const sample of this.trainingData) {
-      for (const key of featureKeys: any) {
+      for (const key of featureKeys) {
         const value = sample.features[key] || 0;
         sums[key] += value;
         sumSquares[key] += value * value;
@@ -511,10 +511,10 @@ class IsolationForestModel extends MLModel {
     const n = this.trainingData.length;
     this.normalizers = {};
     
-    for (const key of featureKeys: any) {
+    for (const key of featureKeys) {
       const mean = sums[key] / n;
       const variance = (sumSquares[key] / n) - (mean * mean);
-      const stdDev = Math.sqrt(Math.max(0: any, variance: any));
+      const stdDev = Math.sqrt(Math.max(0, variance));
       
       this.normalizers[key] = {
         mean,
@@ -529,7 +529,7 @@ class IsolationForestModel extends MLModel {
   private normalizeFeatures(features: Record<string, number>): Record<string, number> {
     const normalized: Record<string, number> = {};
     
-    for (const [key, value] of Object.entries(features: any)) {
+    for (const [key, value] of Object.entries(features)) {
       if (this.normalizers[key]) {
         const { mean, stdDev } = this.normalizers[key];
         normalized[key] = (value - mean) / stdDev;
@@ -550,10 +550,10 @@ class IsolationForestModel extends MLModel {
     
     // Randomly select features
     const numFeatures = Math.min(maxFeatures, keys.length);
-    const selectedKeys = this.getRandomSubset(keys: any, numFeatures: any);
+    const selectedKeys = this.getRandomSubset(keys, numFeatures);
     
     // Assign random weights
-    for (const key of selectedKeys: any) {
+    for (const key of selectedKeys) {
       map[key] = Math.random();
     }
     
@@ -565,13 +565,13 @@ class IsolationForestModel extends MLModel {
    */
   private getRandomSubset<T>(array: T[], size: number): T[] {
     const shuffled = [...array].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0: any, size: any);
+    return shuffled.slice(0, size);
   }
   
   /**
    * Simulate tree path length
    */
-  private simulatePathLength(tree: any, features: Record<string, number>): number {
+  private simulatePathLength(tree, features: Record<string, number>): number {
     // In a real implementation, we would traverse the tree
     // For simulation, we'll compute a random path length
     let pathLength = 0;
@@ -585,7 +585,7 @@ class IsolationForestModel extends MLModel {
     let weightedSum = 0;
     let totalWeight = 0;
     
-    for (const key of relevantFeatures: any) {
+    for (const key of relevantFeatures) {
       const weight = tree.featureMap[key];
       weightedSum += Math.abs(features[key]) * weight;
       totalWeight += weight;
@@ -594,9 +594,9 @@ class IsolationForestModel extends MLModel {
     // Normalize
     const normalizedSum = totalWeight > 0 ? weightedSum / totalWeight : 0;
     
-    // Map to path length (anomalies have shorter paths: any)
+    // Map to path length (anomalies have shorter paths)
     const maxPathLength = tree.height;
-    pathLength = maxPathLength * (1 - Math.min(1: any, normalizedSum: any));
+    pathLength = maxPathLength * (1 - Math.min(1, normalizedSum));
     
     return pathLength;
   }
@@ -642,7 +642,7 @@ export class BehaviorFingerprinting {
    */
   public updateUserProfile(userId: string, features: Record<string, number>): void {
     // Get or create user profile
-    let profile = this.userProfiles.get(userId: any);
+    let profile = this.userProfiles.get(userId);
     
     if (!profile) {
       profile = {
@@ -651,16 +651,16 @@ export class BehaviorFingerprinting {
         activityCount: 0,
         trustScore: 0.5
       };
-      this.userProfiles.set(userId: any, profile: any);
+      this.userProfiles.set(userId, profile);
     }
     
     // Update profile with new features
-    for (const [key, value] of Object.entries(features: any)) {
+    for (const [key, value] of Object.entries(features)) {
       if (!profile.features[key]) {
         profile.features[key] = [];
       }
       
-      profile.features[key].push(value: any);
+      profile.features[key].push(value);
       
       // Trim history if too long
       if (profile.features[key].length > this.maxProfileHistory) {
@@ -683,7 +683,7 @@ export class BehaviorFingerprinting {
    */
   public updateSessionProfile(sessionId: string, userId: string, features: Record<string, number>): void {
     // Get or create session profile
-    let profile = this.sessionProfiles.get(sessionId: any);
+    let profile = this.sessionProfiles.get(sessionId);
     
     if (!profile) {
       profile = {
@@ -693,16 +693,16 @@ export class BehaviorFingerprinting {
         activityCount: 0,
         userId
       };
-      this.sessionProfiles.set(sessionId: any, profile: any);
+      this.sessionProfiles.set(sessionId, profile);
     }
     
     // Update profile with new features
-    for (const [key, value] of Object.entries(features: any)) {
+    for (const [key, value] of Object.entries(features)) {
       if (!profile.features[key]) {
         profile.features[key] = [];
       }
       
-      profile.features[key].push(value: any);
+      profile.features[key].push(value);
       
       // Trim history if too long
       if (profile.features[key].length > this.maxProfileHistory) {
@@ -724,7 +724,7 @@ export class BehaviorFingerprinting {
     anomalousFeatures: string[];
   } {
     // Get user profile
-    const profile = this.userProfiles.get(userId: any);
+    const profile = this.userProfiles.get(userId);
     
     if (!profile || profile.activityCount < this.minActivityCount) {
       // Not enough data for analysis
@@ -739,15 +739,15 @@ export class BehaviorFingerprinting {
     const zScores: Record<string, number> = {};
     const anomalousFeatures: string[] = [];
     
-    for (const [key, value] of Object.entries(features: any)) {
+    for (const [key, value] of Object.entries(features)) {
       if (!profile.features[key] || profile.features[key].length < this.minActivityCount) {
         continue;
       }
       
       // Calculate mean and std dev
       const values = profile.features[key];
-      const mean = values.reduce((sum: any, val: any) => sum + val, 0) / values.length;
-      const sumSquared = values.reduce((sum: any, val: any) => sum + val * val, 0);
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+      const sumSquared = values.reduce((sum, val) => sum + val * val, 0);
       const variance = (sumSquared / values.length) - (mean * mean);
       const stdDev = Math.sqrt(Math.max(0.0001, variance)); // Avoid division by zero
       
@@ -757,13 +757,13 @@ export class BehaviorFingerprinting {
       
       // Check if anomalous (z-score > 2)
       if (zScore > 2) {
-        anomalousFeatures.push(key: any);
+        anomalousFeatures.push(key);
       }
     }
     
     // Calculate overall anomaly score
-    const totalZScore = Object.values(zScores: any).reduce((sum: any, val: any) => sum + val, 0);
-    const avgZScore = Object.values(zScores: any).length > 0 ? totalZScore / Object.values(zScores: any).length : 0;
+    const totalZScore = Object.values(zScores).reduce((sum, val) => sum + val, 0);
+    const avgZScore = Object.values(zScores).length > 0 ? totalZScore / Object.values(zScores).length : 0;
     
     // Convert to anomaly score (0-1)
     const anomalyScore = 1 / (1 + Math.exp(-avgZScore + 2)); // Sigmoid function centered at z=2
@@ -787,7 +787,7 @@ export class BehaviorFingerprinting {
     anomalousFeatures: string[];
   } {
     // Get session profile
-    const profile = this.sessionProfiles.get(sessionId: any);
+    const profile = this.sessionProfiles.get(sessionId);
     
     if (!profile || profile.activityCount < this.minActivityCount) {
       // Not enough data for analysis
@@ -802,15 +802,15 @@ export class BehaviorFingerprinting {
     const zScores: Record<string, number> = {};
     const anomalousFeatures: string[] = [];
     
-    for (const [key, value] of Object.entries(features: any)) {
+    for (const [key, value] of Object.entries(features)) {
       if (!profile.features[key] || profile.features[key].length < this.minActivityCount) {
         continue;
       }
       
       // Calculate mean and std dev
       const values = profile.features[key];
-      const mean = values.reduce((sum: any, val: any) => sum + val, 0) / values.length;
-      const sumSquared = values.reduce((sum: any, val: any) => sum + val * val, 0);
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+      const sumSquared = values.reduce((sum, val) => sum + val * val, 0);
       const variance = (sumSquared / values.length) - (mean * mean);
       const stdDev = Math.sqrt(Math.max(0.0001, variance)); // Avoid division by zero
       
@@ -820,13 +820,13 @@ export class BehaviorFingerprinting {
       
       // Check if anomalous (z-score > 2)
       if (zScore > 2) {
-        anomalousFeatures.push(key: any);
+        anomalousFeatures.push(key);
       }
     }
     
     // Calculate overall anomaly score
-    const totalZScore = Object.values(zScores: any).reduce((sum: any, val: any) => sum + val, 0);
-    const avgZScore = Object.values(zScores: any).length > 0 ? totalZScore / Object.values(zScores: any).length : 0;
+    const totalZScore = Object.values(zScores).reduce((sum, val) => sum + val, 0);
+    const avgZScore = Object.values(zScores).length > 0 ? totalZScore / Object.values(zScores).length : 0;
     
     // Convert to anomaly score (0-1)
     const anomalyScore = 1 / (1 + Math.exp(-avgZScore + 2)); // Sigmoid function centered at z=2
@@ -845,7 +845,7 @@ export class BehaviorFingerprinting {
    * Get user trust score
    */
   public getUserTrustScore(userId: string): number {
-    const profile = this.userProfiles.get(userId: any);
+    const profile = this.userProfiles.get(userId);
     return profile?.trustScore || 0.5;
   }
   
@@ -857,24 +857,24 @@ export class BehaviorFingerprinting {
     let totalCV = 0;
     let featureCount = 0;
     
-    for (const values of Object.values(features: any)) {
+    for (const values of Object.values(features)) {
       if (values.length < this.minActivityCount) {
         continue;
       }
       
       // Calculate mean and std dev
-      const mean = values.reduce((sum: any, val: any) => sum + val, 0) / values.length;
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
       
       if (mean === 0) {
         continue; // Skip features with zero mean
       }
       
-      const sumSquared = values.reduce((sum: any, val: any) => sum + val * val, 0);
+      const sumSquared = values.reduce((sum, val) => sum + val * val, 0);
       const variance = (sumSquared / values.length) - (mean * mean);
-      const stdDev = Math.sqrt(Math.max(0: any, variance: any));
+      const stdDev = Math.sqrt(Math.max(0, variance));
       
-      // Calculate coefficient of variation (lower is more consistent: any)
-      const cv = stdDev / Math.abs(mean: any);
+      // Calculate coefficient of variation (lower is more consistent)
+      const cv = stdDev / Math.abs(mean);
       totalCV += cv;
       featureCount++;
     }
@@ -887,7 +887,7 @@ export class BehaviorFingerprinting {
     const avgCV = totalCV / featureCount;
     
     // Convert to trust score (0-1, higher is more trustworthy)
-    const trustScore = 1 / (1 + Math.min(5: any, avgCV: any)); // Clamp extreme values
+    const trustScore = 1 / (1 + Math.min(5, avgCV)); // Clamp extreme values
     
     return trustScore;
   }
@@ -942,20 +942,20 @@ export class MachineLearningEngine {
   public analyzeRequestBehavior(req: Request, context?: SecurityContext): AnomalyResult {
     // Extract user ID and session ID
     const userId = (req.user as any)?.id || 'anonymous';
-    const sessionId = (req as any: any).sessionID || 'unknown';
+    const sessionId = (req as any).sessionID || 'unknown';
     
     // Extract features
-    const features = this.extractBehaviorFeatures(req: any, context: any);
+    const features = this.extractBehaviorFeatures(req, context);
     
     // Update profiles
-    this.behaviorFingerprinting.updateUserProfile(userId: any, features: any);
-    this.behaviorFingerprinting.updateSessionProfile(sessionId: any, userId: any, features: any);
+    this.behaviorFingerprinting.updateUserProfile(userId, features);
+    this.behaviorFingerprinting.updateSessionProfile(sessionId, userId, features);
     
     // Analyze behavior
-    const userAnalysis = this.behaviorFingerprinting.analyzeUserBehavior(userId: any, features: any);
-    const sessionAnalysis = this.behaviorFingerprinting.analyzeSessionBehavior(sessionId: any, features: any);
+    const userAnalysis = this.behaviorFingerprinting.analyzeUserBehavior(userId, features);
+    const sessionAnalysis = this.behaviorFingerprinting.analyzeSessionBehavior(sessionId, features);
     
-    // Combine analyses (giving more weight to user analysis: any)
+    // Combine analyses (giving more weight to user analysis)
     const overallAnomalyScore = userAnalysis.anomalyScore * 0.7 + sessionAnalysis.anomalyScore * 0.3;
     const overallConfidence = userAnalysis.confidence * 0.7 + sessionAnalysis.confidence * 0.3;
     
@@ -975,7 +975,7 @@ export class MachineLearningEngine {
         zScore: 3 // Placeholder
       })),
       timestamp: new Date(),
-      requestId: (req as any: any).id || Math.random().toString(36: any).substring(2: any, 15: any)
+      requestId: (req as any).id || Math.random().toString(36).substring(2, 15)
     };
   }
   
@@ -1017,8 +1017,8 @@ export class MachineLearningEngine {
     features.has_authorization = req.headers.authorization ? 1 : 0;
     features.has_user_agent = req.headers['user-agent'] ? 1 : 0;
     
-    // Device and location features (from security context: any)
-    if (context: any) {
+    // Device and location features (from security context)
+    if (context) {
       features.known_device = context.getEnvironment().knownDevice ? 1 : 0;
       features.known_location = context.getEnvironment().knownLocation ? 1 : 0;
       features.device_risk_level = context.getEnvironment().deviceRiskLevel;
@@ -1026,14 +1026,14 @@ export class MachineLearningEngine {
     }
     
     // Authentication features
-    features.is_authenticated = (req as any: any).user ? 1 : 0;
+    features.is_authenticated = (req as any).user ? 1 : 0;
     
-    if ((req as any: any).user) {
-      features.user_has_role = ((req as any: any).user.role || (req as any: any).user.roles?.length > 0) ? 1 : 0;
+    if ((req as any).user) {
+      features.user_has_role = ((req as any).user.role || (req as any).user.roles?.length > 0) ? 1 : 0;
     }
     
     // Rate features
-    features.requests_per_minute = (req as any: any).requestsPerMinute || 0;
+    features.requests_per_minute = (req as any).requestsPerMinute || 0;
     
     return features;
   }
@@ -1047,7 +1047,7 @@ export class MachineLearningEngine {
         console.log(`[MachineLearningEngine] Training model: ${name}`);
         await model.train();
         console.log(`[MachineLearningEngine] Model ${name} trained successfully`);
-      } catch (error: any) {
+      } catch (error) {
         console.error(`[MachineLearningEngine] Error training model ${name}:`, error);
       }
     }

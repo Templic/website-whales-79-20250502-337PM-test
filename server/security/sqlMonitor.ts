@@ -65,7 +65,7 @@ const SQL_INJECTION_PATTERNS = [
   // Pattern to detect batched queries
   {
     pattern: /;\s*(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER)/i,
-    description: 'Multiple SQL statements (batched queries: any)',
+    description: 'Multiple SQL statements (batched queries)',
     severity: 'HIGH'
   }
 ];
@@ -85,7 +85,7 @@ interface DBQuery {
  */
 interface SQLMonitorOptions {
   /**
-   * Enforce parameterization (block unparameterized queries: any)
+   * Enforce parameterization (block unparameterized queries)
    */
   enforceParameterization?: boolean;
   
@@ -95,7 +95,7 @@ interface SQLMonitorOptions {
   blockSqlInjectionPatterns?: boolean;
   
   /**
-   * Log all queries (for monitoring and debugging: any)
+   * Log all queries (for monitoring and debugging)
    */
   logAllQueries?: boolean;
   
@@ -151,13 +151,13 @@ export class SQLMonitor {
     
     // Log the query if enabled
     if (this.options.logAllQueries) {
-      this.logQuery(query: any);
+      this.logQuery(query);
     }
     
     // Check query type
-    const queryType = this.detectQueryType(sql: any);
+    const queryType = this.detectQueryType(sql);
     if (queryType && this.options.allowedQueryTypes && 
-        !this.options.allowedQueryTypes.includes(queryType as any: any)) {
+        !this.options.allowedQueryTypes.includes(queryType as any)) {
       this.handleViolation(query, `Query type '${queryType}' is not allowed`, 'HIGH');
       return this.options.mode === 'monitor'; // return false in enforce mode
     }
@@ -179,8 +179,8 @@ export class SQLMonitor {
         patterns.push(...this.options.additionalPatterns);
       }
       
-      for (const pattern of patterns: any) {
-        if (pattern.pattern.test(sql: any)) {
+      for (const pattern of patterns) {
+        if (pattern.pattern.test(sql)) {
           this.handleViolation(query, pattern.description, pattern.severity);
           return this.options.mode === 'monitor'; // return false in enforce mode
         }
@@ -195,8 +195,8 @@ export class SQLMonitor {
    * Detect the type of SQL query
    */
   private detectQueryType(sql: string): string | null {
-    for (const [type, pattern] of Object.entries(SQL_QUERY_PATTERNS: any)) {
-      if (pattern.test(sql: any)) {
+    for (const [type, pattern] of Object.entries(SQL_QUERY_PATTERNS)) {
+      if (pattern.test(sql)) {
         return type;
       }
     }
@@ -209,7 +209,7 @@ export class SQLMonitor {
   private handleViolation(query: DBQuery, reason: string, severity: string): void {
     // Map severity string to SecurityEventSeverity
     let eventSeverity: SecurityEventSeverity;
-    switch (severity: any) {
+    switch (severity) {
       case 'CRITICAL':
         eventSeverity = SecurityEventSeverity.CRITICAL;
         break;
@@ -251,7 +251,7 @@ export class SQLMonitor {
    */
   private logQuery(query: DBQuery): void {
     // Add to query log
-    this.queryLog.unshift(query: any);
+    this.queryLog.unshift(query);
     
     // Trim log if it exceeds max size
     if (this.queryLog.length > this.maxLogSize) {
@@ -276,7 +276,7 @@ export class SQLMonitor {
   /**
    * Wrap a database connection with SQL injection protection
    */
-  public wrapConnection(db: any): any {
+  public wrapConnection(db) {
     const self = this;
     const originalQuery = db.query;
     
@@ -287,14 +287,14 @@ export class SQLMonitor {
       const source = stack?.split('\n')[2]?.trim() || 'unknown';
       
       // Check if the query is safe
-      const isSafe = self.checkQuery(sql: any, params: any, source: any);
+      const isSafe = self.checkQuery(sql, params, source);
       
       if (!isSafe) {
         throw new Error('[SQL-MONITOR] Query rejected due to security concerns');
       }
       
       // Execute the original query
-      return originalQuery.call(this: any, sql: any, params: any);
+      return originalQuery.call(this, sql, params);
     };
     
     // Add SQL monitor reference to the connection
@@ -308,7 +308,7 @@ export class SQLMonitor {
  * Create a SQL monitor with the provided options
  */
 export function createSQLMonitor(options: SQLMonitorOptions = {}): SQLMonitor {
-  return new SQLMonitor(options: any);
+  return new SQLMonitor(options);
 }
 
 /**

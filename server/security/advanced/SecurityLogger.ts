@@ -10,7 +10,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { securityFabric, SecurityEventCategory, SecurityEventSeverity, SecurityEvent } from './SecurityFabric';
 
-// Security log level (may be different from event severity: any)
+// Security log level (may be different from event severity)
 export enum LogLevel {
   DEBUG = 'debug',
   INFO = 'info',
@@ -64,7 +64,7 @@ class SecurityLogger {
     // Create logs directory if it doesn't exist and file logging is enabled
     if (this.config.targets.includes(LogTarget.FILE) && this.config.logFilePath) {
       const logDir = path.dirname(this.config.logFilePath);
-      if (!fs.existsSync(logDir: any)) {
+      if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
       }
     }
@@ -74,7 +74,7 @@ class SecurityLogger {
       try {
         // Just set to null for now, we'll initialize it properly later
         this.blockchainLogger = null;
-      } catch (error: any) {
+      } catch (error) {
         console.error('[SecurityLogger] Failed to initialize blockchain logger:', error);
       }
     }
@@ -85,10 +85,10 @@ class SecurityLogger {
    */
   public static getInstance(config?: Partial<LoggerConfig>): SecurityLogger {
     if (!SecurityLogger.instance) {
-      SecurityLogger.instance = new SecurityLogger(config: any);
-    } else if (config: any) {
+      SecurityLogger.instance = new SecurityLogger(config);
+    } else if (config) {
       // Update config if provided
-      SecurityLogger.instance.updateConfig(config: any);
+      SecurityLogger.instance.updateConfig(config);
     }
     
     return SecurityLogger.instance;
@@ -106,7 +106,7 @@ class SecurityLogger {
         // Placeholder for actual blockchain init code
         // In a real implementation, this would initialize or get the blockchain logger
         this.blockchainLogger = null;
-      } catch (error: any) {
+      } catch (error) {
         console.error('[SecurityLogger] Failed to initialize blockchain logger:', error);
       }
     }
@@ -120,59 +120,59 @@ class SecurityLogger {
     const level = this.severityToLogLevel(event.severity);
     
     // Skip logging if event level is below minimum level
-    if (this.getLogLevelValue(level: any) < this.getLogLevelValue(this.config.minLevel)) {
+    if (this.getLogLevelValue(level) < this.getLogLevelValue(this.config.minLevel)) {
       return;
     }
     
     // Prepare log data
-    const logData = this.prepareLogData(event: any);
+    const logData = this.prepareLogData(event);
     
     // Log to each target
     for (const target of this.config.targets) {
       try {
-        switch (target: any) {
+        switch (target) {
           case LogTarget.CONSOLE:
-            this.logToConsole(level: any, logData: any);
+            this.logToConsole(level, logData);
             break;
           case LogTarget.FILE:
-            this.logToFile(logData: any);
+            this.logToFile(logData);
             break;
           case LogTarget.BLOCKCHAIN:
-            this.logToBlockchain(logData: any);
+            this.logToBlockchain(logData);
             break;
           case LogTarget.DATABASE:
             // Database logging would be implemented here
             break;
         }
-      } catch (error: any) {
+      } catch (error) {
         // Fallback to console if target logging fails
         console.error(`[SecurityLogger] Failed to log to ${target}:`, error);
-        this.logToConsole(level: any, logData: any);
+        this.logToConsole(level, logData);
       }
     }
     
     // Emit the event to the security fabric for other components
-    securityFabric.emitEvent(event: any);
+    securityFabric.emitEvent(event);
   }
   
   /**
    * Log to console
    */
-  private logToConsole(level: LogLevel, logData: any): void {
-    const logMethod = this.getConsoleMethod(level: any);
+  private logToConsole(level: LogLevel, logData): void {
+    const logMethod = this.getConsoleMethod(level);
     const logMessage = `[SECURITY] ${level.toUpperCase()} - ${logData.message}`;
     
     if (typeof logData.data === 'object' && Object.keys(logData.data).length > 0) {
       logMethod(logMessage, logData.data);
     } else {
-      logMethod(logMessage: any);
+      logMethod(logMessage);
     }
   }
   
   /**
    * Log to file
    */
-  private logToFile(logData: any): void {
+  private logToFile(logData): void {
     if (!this.config.logFilePath) {
       return;
     }
@@ -184,7 +184,7 @@ class SecurityLogger {
     
     try {
       fs.appendFileSync(this.config.logFilePath, logEntry);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SecurityLogger] Failed to write to log file:', error);
     }
   }
@@ -192,7 +192,7 @@ class SecurityLogger {
   /**
    * Log to blockchain
    */
-  private logToBlockchain(logData: any): void {
+  private logToBlockchain(logData): void {
     if (!this.config.useBlockchain || !this.blockchainLogger) {
       return;
     }
@@ -202,7 +202,7 @@ class SecurityLogger {
     try {
       // Add hash to logData
       const logHash = crypto.createHash('sha256')
-        .update(JSON.stringify(logData: any))
+        .update(JSON.stringify(logData))
         .digest('hex');
         
       const logWithHash = {
@@ -212,7 +212,7 @@ class SecurityLogger {
       
       // Log to blockchain would happen here
       console.debug('[SecurityLogger] Log added to blockchain:', logWithHash.hash);
-    } catch (error: any) {
+    } catch (error) {
       console.error('[SecurityLogger] Failed to log to blockchain:', error);
     }
   }
@@ -221,7 +221,7 @@ class SecurityLogger {
    * Convert security event severity to log level
    */
   private severityToLogLevel(severity: SecurityEventSeverity): LogLevel {
-    switch (severity: any) {
+    switch (severity) {
       case SecurityEventSeverity.DEBUG:
         return LogLevel.DEBUG;
       case SecurityEventSeverity.INFO:
@@ -247,7 +247,7 @@ class SecurityLogger {
    * Get console method for log level
    */
   private getConsoleMethod(level: LogLevel): any {
-    switch (level: any) {
+    switch (level) {
       case LogLevel.DEBUG:
         return console.debug;
       case LogLevel.INFO:
@@ -263,10 +263,10 @@ class SecurityLogger {
   }
   
   /**
-   * Get numeric value for log level (for comparisons: any)
+   * Get numeric value for log level (for comparisons)
    */
   private getLogLevelValue(level: LogLevel): number {
-    switch (level: any) {
+    switch (level) {
       case LogLevel.DEBUG:
         return 0;
       case LogLevel.INFO:
@@ -305,12 +305,12 @@ class SecurityLogger {
   /**
    * Mask sensitive fields in log data
    */
-  private maskSensitiveFields(data: any, prefix: string = ''): void {
+  private maskSensitiveFields(data, prefix: string = ''): void {
     if (!data || typeof data !== 'object') {
       return;
     }
     
-    for (const key in data: any) {
+    for (const key in data) {
       const fullKey = prefix ? `${prefix}.${key}` : key;
       
       if (typeof data[key] === 'object' && data[key] !== null) {
@@ -340,5 +340,5 @@ export const securityLogger = SecurityLogger.getInstance();
  * Utility function to log a security event
  */
 export function logSecurityEvent(event: SecurityEvent): void {
-  securityLogger.log(event: any);
+  securityLogger.log(event);
 }

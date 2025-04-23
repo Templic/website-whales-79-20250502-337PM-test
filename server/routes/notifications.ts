@@ -7,11 +7,11 @@ import { isAdmin, isAuthenticated } from '../middleware/auth';
 const router = express.Router();
 
 // Get all workflow notifications
-router.get('/workflow', isAuthenticated, async (req: any, res: any) => {
+router.get('/workflow', isAuthenticated, async (req, res) => {
   try {
     const userId = req.session.user?.id;
     if (!userId) {
-      return res.status(401: any).json({ error: 'User not authenticated' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
     
     // Get notifications for the current user
@@ -22,21 +22,21 @@ router.get('/workflow', isAuthenticated, async (req: any, res: any) => {
     });
     
     // @ts-ignore - Response type issue
-  return res.json(notifications: any);
-  } catch (error: any) {
+  return res.json(notifications);
+  } catch (error) {
     console.error('Error fetching workflow notifications:', error);
-    return res.status(500: any).json({ error: 'Failed to fetch notifications' });
+    return res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
 
 // Mark notification as read
-router.post('/workflow/:id/read', isAuthenticated, async (req: any, res: any) => {
+router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
   try {
     const notificationId = parseInt(req.params.id, 10);
     const userId = req.session.user?.id;
     
     if (!userId) {
-      return res.status(401: any).json({ error: 'User not authenticated' });
+      return res.status(401).json({ error: 'User not authenticated' });
     }
     
     // Find notification
@@ -45,37 +45,37 @@ router.post('/workflow/:id/read', isAuthenticated, async (req: any, res: any) =>
     });
     
     if (!notification) {
-      return res.status(404: any).json({ error: 'Notification not found' });
+      return res.status(404).json({ error: 'Notification not found' });
     }
     
     // Check if notification belongs to user
     if (notification.userId !== userId) {
-      return res.status(403: any).json({ error: 'Not authorized to modify this notification' });
+      return res.status(403).json({ error: 'Not authorized to modify this notification' });
     }
     
     // Mark as read
-    await db.update(workflowNotifications: any)
+    await db.update(workflowNotifications)
       .set({ isRead: true })
       .where(eq(workflowNotifications.id, notificationId));
       
     // @ts-ignore - Response type issue
   return res.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error marking notification as read:', error);
-    return res.status(500: any).json({ error: 'Failed to update notification' });
+    return res.status(500).json({ error: 'Failed to update notification' });
   }
 });
 
-// Create a new notification (admin only: any)
-router.post('/workflow', isAdmin, async (req: any, res: any) => {
+// Create a new notification (admin only)
+router.post('/workflow', isAdmin, async (req, res) => {
   try {
     const { title, message, type, contentId, contentTitle, userId } = req.body;
     
     if (!title || !message || !type || !userId) {
-      return res.status(400: any).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    const notification = await db.insert(workflowNotifications: any)
+    const notification = await db.insert(workflowNotifications)
       .values({
         title,
         message,
@@ -87,10 +87,10 @@ router.post('/workflow', isAdmin, async (req: any, res: any) => {
       })
       .returning();
       
-    return res.status(201: any).json(notification[0]);
-  } catch (error: any) {
+    return res.status(201).json(notification[0]);
+  } catch (error) {
     console.error('Error creating workflow notification:', error);
-    return res.status(500: any).json({ error: 'Failed to create notification' });
+    return res.status(500).json({ error: 'Failed to create notification' });
   }
 });
 

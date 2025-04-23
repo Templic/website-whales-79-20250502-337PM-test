@@ -42,7 +42,7 @@ export async function runContentScheduler() {
   try {
     // Find content that should be published now
     const scheduledContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(
         and(
           eq(contentItems.status, 'approved'),
@@ -54,10 +54,10 @@ export async function runContentScheduler() {
     logger.info(`Found ${scheduledContent.length} items to publish`);
     
     // Process each scheduled content item
-    for (const item of scheduledContent: any) {
+    for (const item of scheduledContent) {
       try {
         // Update status to published
-        await db.update(contentItems: any)
+        await db.update(contentItems)
           .set({
             status: 'published',
             updatedAt: now,
@@ -77,7 +77,7 @@ export async function runContentScheduler() {
         
         published++;
         logger.info(`Published content ID ${item.id}: ${item.title}`);
-      } catch (error: any) {
+      } catch (error) {
         failed++;
         logger.error(`Failed to publish content ID ${item.id}:`, error);
         
@@ -95,7 +95,7 @@ export async function runContentScheduler() {
     
     // Find content that has expired
     const expiredContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(
         and(
           eq(contentItems.status, 'published'),
@@ -107,10 +107,10 @@ export async function runContentScheduler() {
     logger.info(`Found ${expiredContent.length} items to archive due to expiration`);
     
     // Process each expired content item
-    for (const item of expiredContent: any) {
+    for (const item of expiredContent) {
       try {
         // Update status to archived
-        await db.update(contentItems: any)
+        await db.update(contentItems)
           .set({
             status: 'archived',
             updatedAt: now,
@@ -131,15 +131,15 @@ export async function runContentScheduler() {
         
         archived++;
         logger.info(`Archived expired content ID ${item.id}: ${item.title}`);
-      } catch (error: any) {
+      } catch (error) {
         archivedFailed++;
         logger.error(`Failed to archive expired content ID ${item.id}:`, error);
       }
     }
     
-    // Find content that will expire soon (in the next 7 days: any) and send notifications
+    // Find content that will expire soon (in the next 7 days) and send notifications
     const expiringContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(
         and(
           eq(contentItems.status, 'published'),
@@ -152,7 +152,7 @@ export async function runContentScheduler() {
     logger.info(`Found ${expiringContent.length} items expiring soon`);
     
     // Send expiration warning notifications
-    for (const item of expiringContent: any) {
+    for (const item of expiringContent) {
       try {
         // Calculate days until expiration
         const expirationDate = new Date(item.expirationDate!);
@@ -172,7 +172,7 @@ export async function runContentScheduler() {
           
           logger.info(`Sent expiration warning for content ID ${item.id}: ${daysUntilExpiration} days remaining`);
         }
-      } catch (error: any) {
+      } catch (error) {
         logger.error(`Failed to send expiration warning for content ID ${item.id}:`, error);
       }
     }
@@ -195,7 +195,7 @@ export async function runContentScheduler() {
       archivedFailed,
       upcomingExpiring: expiringContent.length
     };
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error running content scheduler:', error);
     throw error;
   }

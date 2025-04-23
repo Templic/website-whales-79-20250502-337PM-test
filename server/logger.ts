@@ -29,14 +29,14 @@ function formatMessage(level: string, message: string, context?: any): string {
   const timestamp = getTimestamp();
   const baseMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
   
-  if (context: any) {
+  if (context) {
     try {
       // Format context appropriately
       const contextStr = typeof context === 'object' 
-        ? JSON.stringify(context: any)
+        ? JSON.stringify(context)
         : context.toString();
       return `${baseMessage} - ${contextStr}`;
-    } catch (err: any) {
+    } catch (err) {
       return `${baseMessage} - [Context serialization failed]`;
     }
   }
@@ -83,7 +83,7 @@ export const logger = {
   },
   
   /**
-   * Log a debug message (only in development: any)
+   * Log a debug message (only in development)
    */
   debug(message: string, context?: any): void {
     if (shouldLog('debug')) {
@@ -95,8 +95,8 @@ export const logger = {
    * Log a message with a specific level
    */
   log(level: keyof typeof levels, message: string, context?: any): void {
-    if (shouldLog(level: any)) {
-      console.log(formatMessage(level: any, message: any, context: any));
+    if (shouldLog(level)) {
+      console.log(formatMessage(level, message, context));
     }
   }
 };

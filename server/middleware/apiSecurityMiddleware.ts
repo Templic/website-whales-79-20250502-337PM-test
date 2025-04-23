@@ -81,7 +81,7 @@ export function apiSecurityMiddleware() {
     // Apply RASP for runtime protection
     (req: Request, res: Response, next: NextFunction) => {
       // Use RASP to detect anomalies during the request
-      const raspContext = raspManager.protectApiRequest(req: any);
+      const raspContext = raspManager.protectApiRequest(req);
       
       // If RASP detects a security issue, block the request
       if (raspContext.detected) {
@@ -97,7 +97,7 @@ export function apiSecurityMiddleware() {
           timestamp: new Date().toISOString()
         });
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           success: false,
           message: 'Request blocked by security system',
           // Do not expose detailed security information to client
@@ -142,7 +142,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
                    target === 'query' ? req.query : req.params;
       
       // Validate data against schema
-      const validatedData = schema.parse(data: any);
+      const validatedData = schema.parse(data);
       
       // Replace data with validated data
       if (target === 'body') {
@@ -154,7 +154,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
       }
       
       next();
-    } catch (error: any) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
         // Log validation failure
         logSecurityEvent({
@@ -170,7 +170,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
         });
         
         // Return validation error
-        return res.status(400: any).json({
+        return res.status(400).json({
           success: false,
           message: 'Validation failed',
           errors: error.errors.map(err => ({
@@ -180,7 +180,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
         });
       }
       
-      next(error: any);
+      next(error);
     }
   };
 }
@@ -188,18 +188,18 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
 /**
  * Helper function to validate an API request directly
  */
-export function validateApiRequest<T extends AnyZodObject>(data: any, schema: T): {
+export function validateApiRequest<T extends AnyZodObject>(data, schema: T): {
   success: boolean;
   data?: z.infer<T>;
   errors?: { path: string; message: string }[];
 } {
   try {
-    const validatedData = schema.parse(data: any);
+    const validatedData = schema.parse(data);
     return {
       success: true,
       data: validatedData
     };
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return {
         success: false,

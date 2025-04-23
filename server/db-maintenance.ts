@@ -98,7 +98,7 @@ export async function runIntelligentMaintenance(): Promise<void> {
     }
     
     return;
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during database maintenance: ${error}`, 'db-maintenance');
     console.error('Database maintenance error:', error);
   }
@@ -142,7 +142,7 @@ async function getTableStatistics(): Promise<TableStats[]> {
       lastAutoVacuum: row.last_autovacuum,
       lastAutoAnalyze: row.last_autoanalyze
     }));
-  } catch (error: any) {
+  } catch (error) {
     log(`Error fetching table statistics: ${error}`, 'db-maintenance');
     return [];
   }
@@ -214,7 +214,7 @@ function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
 function isValidTableName(tableName: string): boolean {
   // Only allow alphanumeric characters, underscores, and hyphens
   // This is a strict validation for table names to prevent SQL injection
-  return /^[a-zA-Z0-9_-]+$/.test(tableName: any);
+  return /^[a-zA-Z0-9_-]+$/.test(tableName);
 }
 
 async function runVacuum(tables: string[]): Promise<void> {
@@ -223,9 +223,9 @@ async function runVacuum(tables: string[]): Promise<void> {
   try {
     const client = await pgPool.connect();
 
-    for (const table of tables: any) {
+    for (const table of tables) {
       // Security: Validate table name before running operation
-      if (!isValidTableName(table: any)) {
+      if (!isValidTableName(table)) {
         log(`Security warning: Invalid table name '${table}' - skipping VACUUM`, 'db-maintenance');
         continue;
       }
@@ -236,15 +236,15 @@ async function runVacuum(tables: string[]): Promise<void> {
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
       // we need to validate the table name and then use template literals
-      const query = `VACUUM (ANALYZE: any, VERBOSE: any) "${table}"`;
-      await client.query(query: any);
+      const query = `VACUUM (ANALYZE, VERBOSE) "${table}"`;
+      await client.query(query);
       
       const duration = Date.now() - startTime;
       log(`VACUUM on '${table}' completed in ${duration}ms`, 'db-maintenance');
     }
 
     client.release();
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during VACUUM: ${error}`, 'db-maintenance');
   }
 }
@@ -258,9 +258,9 @@ async function runAnalyze(tables: string[]): Promise<void> {
   try {
     const client = await pgPool.connect();
 
-    for (const table of tables: any) {
+    for (const table of tables) {
       // Security: Validate table name before running operation
-      if (!isValidTableName(table: any)) {
+      if (!isValidTableName(table)) {
         log(`Security warning: Invalid table name '${table}' - skipping ANALYZE`, 'db-maintenance');
         continue;
       }
@@ -272,14 +272,14 @@ async function runAnalyze(tables: string[]): Promise<void> {
       // Since parameterized queries don't directly support identifier substitution,
       // we need to validate the table name and then use template literals
       const query = `ANALYZE VERBOSE "${table}"`;
-      await client.query(query: any);
+      await client.query(query);
       
       const duration = Date.now() - startTime;
       log(`ANALYZE on '${table}' completed in ${duration}ms`, 'db-maintenance');
     }
 
     client.release();
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during ANALYZE: ${error}`, 'db-maintenance');
   }
 }
@@ -291,7 +291,7 @@ async function runAnalyze(tables: string[]): Promise<void> {
 export async function forceFullMaintenance(): Promise<void> {
   try {
     const startTime = Date.now();
-    log('Starting full database maintenance (VACUUM ANALYZE on all tables: any)...', 'db-maintenance');
+    log('Starting full database maintenance (VACUUM ANALYZE on all tables)...', 'db-maintenance');
 
     const client = await pgPool.connect();
     
@@ -308,14 +308,14 @@ export async function forceFullMaintenance(): Promise<void> {
     
     // Filter out excluded tables
     const { excludeTables } = config.database;
-    const tablesToMaintain = allTables.filter(table => !excludeTables.includes(table: any));
+    const tablesToMaintain = allTables.filter(table => !excludeTables.includes(table));
     
     log(`Running full maintenance on ${tablesToMaintain.length} tables`, 'db-maintenance');
     
     // Run vacuum analyze on each table
-    for (const table of tablesToMaintain: any) {
+    for (const table of tablesToMaintain) {
       // Security: Validate table name before running operation
-      if (!isValidTableName(table: any)) {
+      if (!isValidTableName(table)) {
         log(`Security warning: Invalid table name '${table}' - skipping maintenance`, 'db-maintenance');
         continue;
       }
@@ -326,8 +326,8 @@ export async function forceFullMaintenance(): Promise<void> {
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
       // we need to validate the table name and then use template literals
-      const query = `VACUUM (ANALYZE: any, VERBOSE: any) "${table}"`;
-      await client.query(query: any);
+      const query = `VACUUM (ANALYZE, VERBOSE) "${table}"`;
+      await client.query(query);
       
       const tableDuration = Date.now() - tableStartTime;
       log(`Maintenance on '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
@@ -340,7 +340,7 @@ export async function forceFullMaintenance(): Promise<void> {
     const duration = lastMaintenanceRun - startTime;
     
     log(`Full database maintenance completed in ${duration}ms`, 'db-maintenance');
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during full database maintenance: ${error}`, 'db-maintenance');
     console.error('Full database maintenance error:', error);
   }

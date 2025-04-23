@@ -161,7 +161,7 @@ export const productValidation = {
     body('price')
       .isNumeric()
       .withMessage('Price must be a valid number')
-      .custom((value: any) => {
+      .custom((value) => {
         if (value <= 0) {
           throw new Error('Price must be greater than 0');
         }
@@ -199,7 +199,7 @@ export const productValidation = {
       .optional()
       .isNumeric()
       .withMessage('Price must be a valid number')
-      .custom((value: any) => {
+      .custom((value) => {
         if (value <= 0) {
           throw new Error('Price must be greater than 0');
         }
@@ -539,7 +539,7 @@ export const orderValidation = {
  * Utility function to validate ID parameters
  */
 export const validateId = (paramName: string = 'id'): ValidationChain[] => [
-  param(paramName: any)
+  param(paramName)
     .isInt({ min: 1 })
     .withMessage(`${paramName} must be a positive integer`)
 ];

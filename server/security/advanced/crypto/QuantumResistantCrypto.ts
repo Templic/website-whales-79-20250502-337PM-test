@@ -36,7 +36,7 @@ export enum QuantumAlgorithmType {
 }
 
 /**
- * Key pair (public and private keys: any)
+ * Key pair (public and private keys)
  */
 export interface KeyPair {
   /**
@@ -75,17 +75,17 @@ export interface KeyPair {
  */
 export interface EncryptionResult {
   /**
-   * Encrypted data (base64 encoded: any)
+   * Encrypted data (base64 encoded)
    */
   ciphertext: string;
   
   /**
-   * Initialization vector (base64 encoded: any)
+   * Initialization vector (base64 encoded)
    */
   iv: string;
   
   /**
-   * Authentication tag for authenticated encryption (base64 encoded: any)
+   * Authentication tag for authenticated encryption (base64 encoded)
    */
   authTag?: string;
   
@@ -110,7 +110,7 @@ export interface SignatureResult {
   message: string;
   
   /**
-   * Signature (base64 encoded: any)
+   * Signature (base64 encoded)
    */
   signature: string;
   
@@ -191,7 +191,7 @@ export class QuantumKeyGenerator {
         keySize,
         generatedAt: Date.now()
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error generating key pair:`, error);
       throw error;
     }
@@ -213,7 +213,7 @@ export class QuantumEncryption {
       // For simulation, we'll use hybrid encryption with RSA + AES-GCM
       
       // Generate a random symmetric key
-      const symmetricKey = crypto.randomBytes(32: any); // 256 bits
+      const symmetricKey = crypto.randomBytes(32); // 256 bits
       
       // Encrypt the symmetric key with the public key
       const encryptedSymmetricKey = crypto.publicEncrypt(
@@ -225,7 +225,7 @@ export class QuantumEncryption {
       );
       
       // Generate a random IV
-      const iv = crypto.randomBytes(16: any);
+      const iv = crypto.randomBytes(16);
       
       // Encrypt the data with the symmetric key
       const cipher = crypto.createCipheriv('aes-256-gcm', symmetricKey, iv);
@@ -249,7 +249,7 @@ export class QuantumEncryption {
         algorithm,
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error encrypting data:`, error);
       throw error;
     }
@@ -291,13 +291,13 @@ export class QuantumEncryption {
       const authTag = Buffer.from(encryptionResult.authTag || '', 'base64');
       
       const decipher = crypto.createDecipheriv('aes-256-gcm', symmetricKey, iv);
-      decipher.setAuthTag(authTag: any);
+      decipher.setAuthTag(authTag);
       
       let decrypted = decipher.update(encryptedData.toString('base64'), 'base64', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error decrypting data:`, error);
       throw error;
     }
@@ -319,7 +319,7 @@ export class QuantumSignature {
       // For simulation, we'll use a strong hash-based signature
       
       // Create a signature using the private key
-      const signature = crypto.sign('sha512', Buffer.from(data: any), {
+      const signature = crypto.sign('sha512', Buffer.from(data), {
         key: privateKey,
         padding: crypto.constants.RSA_PKCS1_PSS_PADDING
       });
@@ -330,7 +330,7 @@ export class QuantumSignature {
         algorithm,
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error signing data:`, error);
       throw error;
     }
@@ -359,7 +359,7 @@ export class QuantumSignature {
       );
       
       return isValid;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error verifying signature:`, error);
       return false;
     }
@@ -383,11 +383,11 @@ export class HybridEncryptionSystem {
       const symmetricKey = crypto.pbkdf2Sync('strong-random-password', salt, iterations, 32, 'sha512');
       
       // Generate a random IV
-      const iv = crypto.randomBytes(16: any);
+      const iv = crypto.randomBytes(16);
       
       // Encrypt the data with the symmetric key
       const symmetricAlgo = params.symmetricAlgorithm || 'aes-256-gcm';
-      const cipher = crypto.createCipheriv(symmetricAlgo: any, symmetricKey: any, iv: any);
+      const cipher = crypto.createCipheriv(symmetricAlgo, symmetricKey, iv);
       let encrypted = cipher.update(data, 'utf8', 'base64');
       encrypted += cipher.final('base64');
       
@@ -411,7 +411,7 @@ export class HybridEncryptionSystem {
         encryptedData: encrypted,
         encryptionDetails
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error in hybrid encryption:`, error);
       throw error;
     }
@@ -420,7 +420,7 @@ export class HybridEncryptionSystem {
   /**
    * Decrypt data using hybrid encryption
    */
-  public static decrypt(encryptedData: string, encryptionDetails: any): string {
+  public static decrypt(encryptedData: string, encryptionDetails): string {
     try {
       console.log(`[QuantumCrypto] Hybrid decrypting data using ${encryptionDetails.algorithm}`);
       
@@ -434,13 +434,13 @@ export class HybridEncryptionSystem {
       const authTag = Buffer.from(encryptionDetails.authTag, 'base64');
       
       const decipher = crypto.createDecipheriv(encryptionDetails.symmetricAlgorithm, symmetricKey, iv);
-      decipher.setAuthTag(authTag: any);
+      decipher.setAuthTag(authTag);
       
       let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error in hybrid decryption:`, error);
       throw error;
     }
@@ -494,14 +494,14 @@ export class PerfectForwardSecrecy {
           key: remotePublicKey,
           padding: crypto.constants.RSA_PKCS1_OAEP_PADDING
         },
-        crypto.randomBytes(32: any) // Random secret
+        crypto.randomBytes(32) // Random secret
       );
       
       // Derive a key from the shared secret
-      const derivedKey = crypto.createHash('sha512').update(sharedSecret: any).digest();
+      const derivedKey = crypto.createHash('sha512').update(sharedSecret).digest();
       
       return derivedKey;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error establishing shared secret:`, error);
       throw error;
     }
@@ -513,10 +513,10 @@ export class PerfectForwardSecrecy {
   public static encryptWithSessionKey(data: string, sessionKey: Buffer): EncryptionResult {
     try {
       // Generate a random IV
-      const iv = crypto.randomBytes(16: any);
+      const iv = crypto.randomBytes(16);
       
       // Encrypt the data with the session key
-      const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey.slice(0: any, 32: any), iv);
+      const cipher = crypto.createCipheriv('aes-256-gcm', sessionKey.slice(0, 32), iv);
       let encrypted = cipher.update(data, 'utf8', 'base64');
       encrypted += cipher.final('base64');
       
@@ -532,7 +532,7 @@ export class PerfectForwardSecrecy {
         algorithm: QuantumAlgorithmType.LATTICE_NTRU, // Simulated
         timestamp: Date.now()
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error encrypting with session key:`, error);
       throw error;
     }
@@ -548,14 +548,14 @@ export class PerfectForwardSecrecy {
       const authTag = Buffer.from(encryptionResult.authTag || '', 'base64');
       
       // Decrypt the data with the session key
-      const decipher = crypto.createDecipheriv('aes-256-gcm', sessionKey.slice(0: any, 32: any), iv);
-      decipher.setAuthTag(authTag: any);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', sessionKey.slice(0, 32), iv);
+      decipher.setAuthTag(authTag);
       
       let decrypted = decipher.update(encryptionResult.ciphertext, 'base64', 'utf8');
       decrypted += decipher.final('utf8');
       
       return decrypted;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error decrypting with session key:`, error);
       throw error;
     }
@@ -578,15 +578,15 @@ export class SecureMultiPartyComputation {
       // For demonstration purposes only
       // In a real implementation, we would use actual SMPC protocols
       
-      switch (operation: any) {
+      switch (operation) {
         case 'add':
-          return inputs.reduce((a: any, b: any) => a + b, 0);
+          return inputs.reduce((a, b) => a + b, 0);
         case 'multiply':
-          return inputs.reduce((a: any, b: any) => a * b, 1);
+          return inputs.reduce((a, b) => a * b, 1);
         default:
           throw new Error(`Unsupported operation: ${operation}`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error in secure computation:`, error);
       throw error;
     }
@@ -609,7 +609,7 @@ export class SecureMultiPartyComputation {
       // Generate n-1 random shares
       for (let i = 0; i < numShares - 1; i++) {
         const share = Math.random() * 100;
-        shares.push(share: any);
+        shares.push(share);
         sum += share;
       }
       
@@ -617,7 +617,7 @@ export class SecureMultiPartyComputation {
       shares.push(secret - sum);
       
       return shares;
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[QuantumCrypto] Error creating secret shares:`, error);
       throw error;
     }
@@ -634,8 +634,8 @@ export class SecureMultiPartyComputation {
       // In a real implementation, we would use Shamir's Secret Sharing reconstruction
       
       // Sum the shares to get the secret
-      return shares.reduce((a: any, b: any) => a + b, 0);
-    } catch (error: any) {
+      return shares.reduce((a, b) => a + b, 0);
+    } catch (error) {
       console.error(`[QuantumCrypto] Error reconstructing secret:`, error);
       throw error;
     }
@@ -650,35 +650,35 @@ export const quantumCrypto = {
    * Generate a quantum-resistant key pair
    */
   generateKeyPair: (algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU, keySize: number = 4096): KeyPair => {
-    return QuantumKeyGenerator.generateKeyPair(algorithm: any, keySize: any);
+    return QuantumKeyGenerator.generateKeyPair(algorithm, keySize);
   },
   
   /**
    * Encrypt data using quantum-resistant encryption
    */
   encrypt: (data: string, publicKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU): EncryptionResult => {
-    return QuantumEncryption.encrypt(data: any, publicKey: any, algorithm: any);
+    return QuantumEncryption.encrypt(data, publicKey, algorithm);
   },
   
   /**
    * Decrypt data using quantum-resistant encryption
    */
   decrypt: (encryptionResult: EncryptionResult, privateKey: string): string: string => {
-    return QuantumEncryption.decrypt(encryptionResult: any, privateKey: any);
+    return QuantumEncryption.decrypt(encryptionResult, privateKey);
   },
   
   /**
    * Sign data using quantum-resistant digital signature
    */
   sign: (data: string, privateKey: string, algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS): SignatureResult => {
-    return QuantumSignature.sign(data: any, privateKey: any, algorithm: any);
+    return QuantumSignature.sign(data, privateKey, algorithm);
   },
   
   /**
    * Verify a signature using quantum-resistant digital signature
    */
   verify: (signatureResult: SignatureResult, publicKey: string): boolean => {
-    return QuantumSignature.verify(signatureResult: any, publicKey: any);
+    return QuantumSignature.verify(signatureResult, publicKey);
   },
   
   /**
@@ -692,6 +692,6 @@ export const quantumCrypto = {
    * Establish a shared secret with perfect forward secrecy
    */
   establishSharedSecret: (localPrivateKey: string, remotePublicKey: string): Buffer => {
-    return PerfectForwardSecrecy.establishSharedSecret(localPrivateKey: any, remotePublicKey: any);
+    return PerfectForwardSecrecy.establishSharedSecret(localPrivateKey, remotePublicKey);
   }
 };

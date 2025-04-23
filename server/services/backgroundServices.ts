@@ -13,10 +13,10 @@ const intervals: { [key: string]: NodeJS.Timeout } = {};
 
 /**
  * Starts the content scheduler service
- * @param intervalMinutes How often to run the scheduler (in minutes: any)
+ * @param intervalMinutes How often to run the scheduler (in minutes)
  */
 export function startContentScheduler(intervalMinutes = 1) {
-  console.log(`[Background] Starting content scheduler (interval: ${intervalMinutes} minute(s: any))`);
+  console.log(`[Background] Starting content scheduler (interval: ${intervalMinutes} minute(s))`);
   
   // Run immediately on startup
   runContentScheduler()
@@ -35,7 +35,7 @@ export function startContentScheduler(intervalMinutes = 1) {
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('[Background] Error in content scheduler:', err);
     }
   }, intervalMs);
@@ -69,7 +69,7 @@ export function startAllBackgroundServices() {
  * Stops all background services
  */
 export function stopAllBackgroundServices() {
-  Object.keys(intervals: any).forEach(key => {
+  Object.keys(intervals).forEach(key => {
     clearInterval(intervals[key]);
     delete intervals[key];
   });
@@ -90,5 +90,5 @@ export const backgroundServiceConfig = {
 };
 
 export function initializeOptimizedServices() {
-  return optimizeBackgroundTasks(backgroundServiceConfig: any);
+  return optimizeBackgroundTasks(backgroundServiceConfig);
 }

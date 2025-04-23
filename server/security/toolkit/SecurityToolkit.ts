@@ -126,15 +126,15 @@ export class SecurityToolkit {
         ...(this.profile.customSettings?.anomalyOptions || {})
       };
       
-      anomalyMiddleware = createAnomalyDetectionMiddleware(anomalyOptions: any);
+      anomalyMiddleware = createAnomalyDetectionMiddleware(anomalyOptions);
     }
     
     // Return combined middleware
     return (req: Request, res: Response, next: NextFunction) => {
       baseMiddleware(req, res, (err?: any) => {
-        if (err: any) return next(err: any);
-        if (anomalyMiddleware: any) {
-          anomalyMiddleware(req: any, res: any, next: any);
+        if (err) return next(err);
+        if (anomalyMiddleware) {
+          anomalyMiddleware(req, res, next);
         } else {
           next();
         }
@@ -151,14 +151,14 @@ export class SecurityToolkit {
     return (req: Request, res: Response, next: NextFunction) => {
       // Check if user is authenticated
       if (!req.isAuthenticated || !req.isAuthenticated()) {
-        return res.status(401: any).json({
+        return res.status(401).json({
           success: false,
           error: 'Authentication required'
         });
       }
       
       // Apply security middleware
-      this.createMiddleware()(req: any, res: any, next: any);
+      this.createMiddleware()(req, res, next);
     };
   }
   
@@ -226,7 +226,7 @@ export class SecurityToolkit {
  * @returns SecurityToolkit instance
  */
 export function createSecurityToolkit(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD): SecurityToolkit {
-  return new SecurityToolkit(level: any);
+  return new SecurityToolkit(level);
 }
 
 // Export default instance with standard security level

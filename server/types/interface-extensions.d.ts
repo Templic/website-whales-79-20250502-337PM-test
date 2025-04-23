@@ -13,12 +13,12 @@ interface DatabaseSecurityManager {
 
 // Fix for other common interfaces with missing properties
 interface RASPManager {
-  protectRequest(req: any, res: any): void;
+  protectRequest(req, res): void;
 }
 
 // Fix for SecurityFabric interface
 interface SecurityFabric {
-  emit(event: string, data: any): void;
+  emit(event: string, data): void;
 }
 
 // Common type for security events

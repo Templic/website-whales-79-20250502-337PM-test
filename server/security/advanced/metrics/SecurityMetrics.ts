@@ -13,22 +13,22 @@ import * as os from 'os';
  */
 interface SystemMetrics {
   /**
-   * CPU usage (percentage: any)
+   * CPU usage (percentage)
    */
   cpuUsage: number;
   
   /**
-   * Memory usage (percentage: any)
+   * Memory usage (percentage)
    */
   memoryUsage: number;
   
   /**
-   * Memory used (bytes: any)
+   * Memory used (bytes)
    */
   memoryUsedBytes: number;
   
   /**
-   * Total memory available (bytes: any)
+   * Total memory available (bytes)
    */
   memoryTotalBytes: number;
   
@@ -38,7 +38,7 @@ interface SystemMetrics {
   loadAverage: number[];
   
   /**
-   * System uptime (seconds: any)
+   * System uptime (seconds)
    */
   uptime: number;
   
@@ -93,7 +93,7 @@ interface AuthMetrics {
   timestamp: Date;
   
   /**
-   * Time period of collection (seconds: any)
+   * Time period of collection (seconds)
    */
   period: number;
 }
@@ -138,7 +138,7 @@ interface AccessControlMetrics {
   timestamp: Date;
   
   /**
-   * Time period of collection (seconds: any)
+   * Time period of collection (seconds)
    */
   period: number;
 }
@@ -174,7 +174,7 @@ interface RateLimitMetrics {
   timestamp: Date;
   
   /**
-   * Time period of collection (seconds: any)
+   * Time period of collection (seconds)
    */
   period: number;
 }
@@ -212,7 +212,7 @@ interface ThreatMetrics {
   };
   
   /**
-   * Threat level trend (positive means increasing threat level: any)
+   * Threat level trend (positive means increasing threat level)
    */
   threatLevelTrend: number;
   
@@ -222,7 +222,7 @@ interface ThreatMetrics {
   timestamp: Date;
   
   /**
-   * Time period of collection (seconds: any)
+   * Time period of collection (seconds)
    */
   period: number;
 }
@@ -302,19 +302,19 @@ export class SecurityMetrics extends EventEmitter {
     const systemMetrics = this.collectSystemMetrics();
     
     // Calculate authentication metrics
-    const authMetrics = this.calculateAuthMetrics(collectionPeriod: any);
+    const authMetrics = this.calculateAuthMetrics(collectionPeriod);
     
     // Calculate access control metrics
-    const accessControlMetrics = this.calculateAccessControlMetrics(collectionPeriod: any);
+    const accessControlMetrics = this.calculateAccessControlMetrics(collectionPeriod);
     
     // Calculate rate limit metrics
-    const rateLimitMetrics = this.calculateRateLimitMetrics(collectionPeriod: any);
+    const rateLimitMetrics = this.calculateRateLimitMetrics(collectionPeriod);
     
     // Calculate threat metrics
-    const threatMetrics = this.calculateThreatMetrics(collectionPeriod: any);
+    const threatMetrics = this.calculateThreatMetrics(collectionPeriod);
     
     // Calculate overall security score
-    const overallSecurityScore = this.calculateOverallSecurityScore(systemMetrics: any, authMetrics: any, accessControlMetrics: any, rateLimitMetrics: any, threatMetrics: any);
+    const overallSecurityScore = this.calculateOverallSecurityScore(systemMetrics, authMetrics, accessControlMetrics, rateLimitMetrics, threatMetrics);
     
     // Create consolidated metrics
     const consolidatedMetrics: ConsolidatedSecurityMetrics = {
@@ -328,7 +328,7 @@ export class SecurityMetrics extends EventEmitter {
     };
     
     // Store in history
-    this.addToHistory(consolidatedMetrics: any);
+    this.addToHistory(consolidatedMetrics);
     
     // Update last collection time
     this.lastCollectionTime = now;
@@ -375,7 +375,7 @@ export class SecurityMetrics extends EventEmitter {
    */
   public recordEvent(category: string, type: string, value: number = 1): void {
     const key = `${category}:${type}`;
-    const currentValue = this.counters.get(key: any) || 0;
+    const currentValue = this.counters.get(key) || 0;
     this.counters.set(key, currentValue + value);
   }
   
@@ -384,7 +384,7 @@ export class SecurityMetrics extends EventEmitter {
    */
   public getEventCount(category: string, type: string): number {
     const key = `${category}:${type}`;
-    return this.counters.get(key: any) || 0;
+    return this.counters.get(key) || 0;
   }
   
   /**
@@ -436,7 +436,7 @@ export class SecurityMetrics extends EventEmitter {
     let totalIdle = 0;
     let totalTick = 0;
     
-    for (const cpu of cpus: any) {
+    for (const cpu of cpus) {
       for (const type in cpu.times) {
         totalTick += cpu.times[type as keyof typeof cpu.times];
       }
@@ -500,10 +500,10 @@ export class SecurityMetrics extends EventEmitter {
     return {
       rateLimitEvents,
       topRateLimitedIps: [
-        { ip: '(unknown: any)', count: rateLimitEvents }
+        { ip: '(unknown)', count: rateLimitEvents }
       ],
       topRateLimitedEndpoints: [
-        { endpoint: '(unknown: any)', count: rateLimitEvents }
+        { endpoint: '(unknown)', count: rateLimitEvents }
       ],
       timestamp: new Date(),
       period
@@ -520,7 +520,7 @@ export class SecurityMetrics extends EventEmitter {
     const mediumThreats = this.getEventCount('threat', 'medium') || 0;
     const lowThreats = this.getEventCount('threat', 'low') || 0;
     
-    // Calculate global threat level (simplified: any)
+    // Calculate global threat level (simplified)
     const threatCoefficients = {
       critical: 1.0,
       high: 0.7,
@@ -608,14 +608,14 @@ export class SecurityMetrics extends EventEmitter {
       threatPosture
     );
     
-    return Math.max(0, Math.min(100: any, overallScore: any));
+    return Math.max(0, Math.min(100, overallScore));
   }
   
   /**
    * Add metrics to history
    */
   private addToHistory(metrics: ConsolidatedSecurityMetrics): void {
-    this.metricsHistory.push(metrics: any);
+    this.metricsHistory.push(metrics);
     
     // Trim history if needed
     if (this.metricsHistory.length > this.maxHistoryItems) {

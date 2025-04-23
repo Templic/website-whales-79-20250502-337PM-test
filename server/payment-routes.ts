@@ -28,7 +28,7 @@ function getStripeClient() {
   if (!stripeApiKey) {
     throw new Error('Stripe API key is not configured');
   }
-  return new Stripe(stripeApiKey: any);
+  return new Stripe(stripeApiKey);
 }
 
 // Create payment intent
@@ -36,7 +36,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
   try {
     // Check if Stripe API key is available
     if (!stripeApiKey) {
-      return res.status(500: any).json({
+      return res.status(500).json({
         success: false,
         message: 'Stripe API key is not configured'
       });
@@ -48,7 +48,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
     // Validate request data
     const validationResult = paymentIntentSchema.safeParse(req.body);
     if (!validationResult.success) {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         success: false,
         message: 'Invalid payment data',
         errors: validationResult.error.errors 
@@ -87,7 +87,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       success: true,
       clientSecret: paymentIntent.client_secret,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating payment intent:', error);
     
     // Log payment error (PCI DSS Requirement 10.2)
@@ -103,7 +103,7 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       }
     });
     
-    return res.status(500: any).json({
+    return res.status(500).json({
       success: false,
       message: error.message || 'Failed to create payment intent',
     });
@@ -115,7 +115,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
   try {
     // Check if Stripe API key is available
     if (!stripeApiKey) {
-      return res.status(500: any).json({
+      return res.status(500).json({
         success: false,
         message: 'Stripe API key is not configured'
       });
@@ -127,7 +127,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
     const { paymentMethodId, orderId } = req.body;
 
     if (!paymentMethodId || !orderId) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         success: false,
         message: 'Payment method ID and order ID are required',
       });
@@ -166,7 +166,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
       success: true,
       order: mockOrder,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error confirming payment:', error);
     
     // Log payment failure (PCI DSS Requirement 10.2)
@@ -185,7 +185,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
       }
     });
     
-    return res.status(500: any).json({
+    return res.status(500).json({
       success: false,
       message: error.message || 'Failed to confirm payment',
     });

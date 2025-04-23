@@ -15,10 +15,10 @@ import { logSecurityEvent } from '../security/security';
  * with application-specific properties
  */
 export interface JwtPayload {
-  sub: string; // Subject (usually user ID: any)
+  sub: string; // Subject (usually user ID)
   iat: number; // Issued at
   exp: number; // Expiry time
-  jti?: string; // JWT ID (for token revocation: any)
+  jti?: string; // JWT ID (for token revocation)
   role?: string; // User role
   [key: string]: any; // Allow additional claims
 }
@@ -39,16 +39,16 @@ declare global {
 export function authenticateJwt(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   try {
     const authHeader = req.headers.authorization;
-    const token = extractTokenFromHeader(authHeader: any);
+    const token = extractTokenFromHeader(authHeader);
     
     if (!token) {
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Authentication token is missing'
       });
     }
     
-    const payload = verifyAccessToken(token: any);
+    const payload = verifyAccessToken(token);
     
     if (!payload) {
       const userAgent = req.headers['user-agent'] || 'unknown';
@@ -60,7 +60,7 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
         severity: 'medium'
       });
       
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Invalid or expired token'
       });
@@ -77,10 +77,10 @@ export function authenticateJwt(req: Request, res: Response, next: NextFunction)
     };
     
     next();
-  } catch (error: any) {
+  } catch (error) {
     console.error('JWT authentication error:', error);
     
-    return res.status(401: any).json({
+    return res.status(401).json({
       success: false,
       message: 'Authentication failed'
     });
@@ -95,7 +95,7 @@ export function authorizeJwtRole(roles: string[]) {
   return async (req: Request, res: Response, next: NextFunction): Promise<void | Response<any, Record<string, any>>> => {
     try {
       if (!req.jwtPayload) {
-        return res.status(401: any).json({
+        return res.status(401).json({
           success: false,
           message: 'Authentication required'
         });
@@ -114,14 +114,14 @@ export function authorizeJwtRole(roles: string[]) {
           severity: 'medium'
         });
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           success: false,
           message: 'Access denied: role required'
         });
       }
       
       // Check if user's role is included in the allowed roles
-      if (!roles.includes(userRole: any)) {
+      if (!roles.includes(userRole)) {
         logSecurityEvent({
           type: 'AUTHORIZATION_FAILURE',
           ip: req.ip,
@@ -130,17 +130,17 @@ export function authorizeJwtRole(roles: string[]) {
           severity: 'medium'
         });
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           success: false,
           message: 'Access denied: insufficient privileges'
         });
       }
       
       next();
-    } catch (error: any) {
+    } catch (error) {
       console.error('JWT role authorization error:', error);
       
-      return res.status(500: any).json({
+      return res.status(500).json({
         success: false,
         message: 'Authorization process failed'
       });
@@ -156,7 +156,7 @@ export function preventAlgorithmConfusionAttack(req: Request, res: Response, nex
   const authHeader = req.headers.authorization;
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7: any);
+    const token = authHeader.substring(7);
     
     try {
       // Check if the token is in JWT format
@@ -164,12 +164,12 @@ export function preventAlgorithmConfusionAttack(req: Request, res: Response, nex
       
       if (parts.length === 3 && parts[0]) {
         try {
-          // Decode the header (first part: any)
+          // Decode the header (first part)
           const headerPart = parts[0];
           // Use a safe buffer conversion method
           const headerBuffer = Buffer.from(headerPart, 'base64');
           const headerString = headerBuffer.toString();
-          const parsedHeader = JSON.parse(headerString: any);
+          const parsedHeader = JSON.parse(headerString);
           
           // Check if 'none' algorithm is being used
           if (parsedHeader && parsedHeader.alg === 'none') {
@@ -182,16 +182,16 @@ export function preventAlgorithmConfusionAttack(req: Request, res: Response, nex
               severity: 'critical'
             });
             
-            return res.status(403: any).json({
+            return res.status(403).json({
               success: false,
               message: 'Invalid token algorithm'
             });
           }
-        } catch (e: any) {
+        } catch (e) {
           // If we can't parse the header, just continue
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       // If there's an error, just continue to the next middleware
     }
   }

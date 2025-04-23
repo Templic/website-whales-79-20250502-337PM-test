@@ -65,7 +65,7 @@ router.get('/', async (req: Request, res: Response) => {
     // Extract category-specific filters from query parameters
     Object.keys(req.query).forEach(key => {
       if (
-        !['q', 'type', 'limit', '_'].includes(key: any) && 
+        !['q', 'type', 'limit', '_'].includes(key) && 
         req.query[key] !== undefined
       ) {
         searchParams[key] = req.query[key];
@@ -76,31 +76,31 @@ router.get('/', async (req: Request, res: Response) => {
     const promises: Promise<any>[] = [];
     
     if (type === 'all' || type === 'music') {
-      promises.push(searchMusic(query: any, limit: any, searchParams: any));
+      promises.push(searchMusic(query, limit, searchParams));
     }
     
     if (type === 'all' || type === 'products') {
-      promises.push(searchProducts(query: any, limit: any, searchParams: any));
+      promises.push(searchProducts(query, limit, searchParams));
     }
     
     if (type === 'all' || type === 'posts') {
-      promises.push(searchPosts(query: any, limit: any, searchParams: any));
+      promises.push(searchPosts(query, limit, searchParams));
     }
     
     if (type === 'all' || type === 'users') {
-      promises.push(searchUsers(query: any, limit: any, searchParams: any));
+      promises.push(searchUsers(query, limit, searchParams));
     }
     
     if (type === 'all' || type === 'newsletters') {
-      promises.push(searchNewsletters(query: any, limit: any, searchParams: any));
+      promises.push(searchNewsletters(query, limit, searchParams));
     }
     
     if (type === 'all' || type === 'suggestions') {
-      promises.push(searchCommunitySuggestions(query: any, limit: any, searchParams: any));
+      promises.push(searchCommunitySuggestions(query, limit, searchParams));
     }
     
     // Execute all search queries in parallel
-    const results_array = await Promise.all(promises: any);
+    const results_array = await Promise.all(promises);
     
     // Determine the index of each result type based on the order of promises
     let musicIndex = -1, productsIndex = -1, postsIndex = -1, usersIndex = -1, 
@@ -133,14 +133,14 @@ router.get('/', async (req: Request, res: Response) => {
       users: results.users?.length || 0,
       newsletters: results.newsletters?.length || 0,
       suggestions: results.suggestions?.length || 0
-    })}, duration=${duration.toFixed(2: any)}ms`);
+    })}, duration=${duration.toFixed(2)}ms`);
     
     // Return the search results
     // @ts-ignore - Response type issue
-  return res.json(results: any);
-  } catch (error: any) {
+  return res.json(results);
+  } catch (error) {
     logger.error('Search error:', error);
-    return res.status(500: any).json({ error: 'An error occurred while searching' });
+    return res.status(500).json({ error: 'An error occurred while searching' });
   }
 });
 
@@ -165,10 +165,10 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
       
       // Match any term against track data
       return searchTerms.some(term => 
-        title.includes(term: any) || 
-        artist.includes(term: any) || 
-        description.includes(term: any) ||
-        frequency.includes(term: any)
+        title.includes(term) || 
+        artist.includes(term) || 
+        description.includes(term) ||
+        frequency.includes(term)
       );
     });
     
@@ -193,8 +193,8 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
     }
     
     // Return limited results
-    return filteredTracks.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredTracks.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching music:', error);
     return [];
   }
@@ -220,9 +220,9 @@ async function searchProducts(query: string, limit: number, params: Record<strin
       
       // Match any term against product data
       return searchTerms.some(term => 
-        name.includes(term: any) || 
-        description.includes(term: any) || 
-        category.includes(term: any)
+        name.includes(term) || 
+        description.includes(term) || 
+        category.includes(term)
       );
     });
     
@@ -235,7 +235,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     if (params.minPrice !== undefined) {
       const minPrice = parseFloat(params.minPrice);
-      if (!isNaN(minPrice: any)) {
+      if (!isNaN(minPrice)) {
         filteredProducts = filteredProducts.filter(product => 
           product.price >= minPrice
         );
@@ -244,7 +244,7 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     
     if (params.maxPrice !== undefined) {
       const maxPrice = parseFloat(params.maxPrice);
-      if (!isNaN(maxPrice: any)) {
+      if (!isNaN(maxPrice)) {
         filteredProducts = filteredProducts.filter(product => 
           product.price <= maxPrice
         );
@@ -259,8 +259,8 @@ async function searchProducts(query: string, limit: number, params: Record<strin
     }
     
     // Return limited results
-    return filteredProducts.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredProducts.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching products:', error);
     return [];
   }
@@ -289,10 +289,10 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
       
       // Match any term against post data
       return searchTerms.some(term => 
-        title.includes(term: any) || 
-        content.includes(term: any) || 
-        excerpt.includes(term: any) ||
-        tagsString.includes(term: any)
+        title.includes(term) || 
+        content.includes(term) || 
+        excerpt.includes(term) ||
+        tagsString.includes(term)
       );
     });
     
@@ -301,13 +301,13 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
       const searchTags = params.tags.split(',').map((tag: string) => tag.trim().toLowerCase());
       filteredPosts = filteredPosts.filter(post => {
         const postTags = (post.tags || []).map((tag: string) => tag.toLowerCase());
-        return searchTags.some(tag => postTags.includes(tag: any));
+        return searchTags.some(tag => postTags.includes(tag));
       });
     }
     
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
-      if (!isNaN(fromDate: any)) {
+      if (!isNaN(fromDate)) {
         filteredPosts = filteredPosts.filter(post => {
           const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate >= fromDate;
@@ -317,7 +317,7 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
-      if (!isNaN(toDate: any)) {
+      if (!isNaN(toDate)) {
         filteredPosts = filteredPosts.filter(post => {
           const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate <= toDate;
@@ -326,8 +326,8 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
     }
     
     // Return limited results
-    return filteredPosts.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredPosts.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching posts:', error);
     return [];
   }
@@ -344,7 +344,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     // Get all users from storage
     const users = await storage.getAllUsers();
     
-    // Filter and sanitize user data (never include sensitive information like passwords: any)
+    // Filter and sanitize user data (never include sensitive information like passwords)
     const filteredUsers = users
       .filter(user => {
         // Check if user matches search terms
@@ -355,10 +355,10 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
         
         // Match any term against user data
         return searchTerms.some(term => 
-          name.includes(term: any) || 
-          username.includes(term: any) || 
-          email.includes(term: any) ||
-          bio.includes(term: any)
+          name.includes(term) || 
+          username.includes(term) || 
+          email.includes(term) ||
+          bio.includes(term)
         );
       })
       .map(user => ({
@@ -372,8 +372,8 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
       }));
     
     // Return limited results
-    return filteredUsers.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredUsers.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching users:', error);
     return [];
   }
@@ -399,9 +399,9 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
       
       // Match any term against newsletter data
       return searchTerms.some(term => 
-        subject.includes(term: any) || 
-        content.includes(term: any) || 
-        category.includes(term: any)
+        subject.includes(term) || 
+        content.includes(term) || 
+        category.includes(term)
       );
     });
     
@@ -421,7 +421,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
-      if (!isNaN(fromDate: any)) {
+      if (!isNaN(fromDate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => {
           const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate >= fromDate;
@@ -431,7 +431,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
-      if (!isNaN(toDate: any)) {
+      if (!isNaN(toDate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => {
           const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate <= toDate;
@@ -441,7 +441,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     if (params.minOpenRate !== undefined) {
       const minOpenRate = parseInt(params.minOpenRate);
-      if (!isNaN(minOpenRate: any)) {
+      if (!isNaN(minOpenRate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => 
           (newsletter.openRate || 0) >= minOpenRate
         );
@@ -450,7 +450,7 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     
     if (params.maxOpenRate !== undefined) {
       const maxOpenRate = parseInt(params.maxOpenRate);
-      if (!isNaN(maxOpenRate: any)) {
+      if (!isNaN(maxOpenRate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => 
           (newsletter.openRate || 0) <= maxOpenRate
         );
@@ -461,22 +461,22 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     if (params.sort) {
       switch (params.sort) {
         case 'newest':
-          filteredNewsletters.sort((a: any, b: any) => 
+          filteredNewsletters.sort((a, b) => 
             new Date(b.sentAt || b.createdAt || 0).getTime() - 
             new Date(a.sentAt || a.createdAt || 0).getTime()
           );
           break;
         case 'oldest':
-          filteredNewsletters.sort((a: any, b: any) => 
+          filteredNewsletters.sort((a, b) => 
             new Date(a.sentAt || a.createdAt || 0).getTime() - 
             new Date(b.sentAt || b.createdAt || 0).getTime()
           );
           break;
         case 'most-opened':
-          filteredNewsletters.sort((a: any, b: any) => (b.openRate || 0) - (a.openRate || 0));
+          filteredNewsletters.sort((a, b) => (b.openRate || 0) - (a.openRate || 0));
           break;
         case 'most-clicked':
-          filteredNewsletters.sort((a: any, b: any) => (b.clickRate || 0) - (a.clickRate || 0));
+          filteredNewsletters.sort((a, b) => (b.clickRate || 0) - (a.clickRate || 0));
           break;
         default:
           break;
@@ -484,8 +484,8 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
     }
     
     // Return limited results
-    return filteredNewsletters.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredNewsletters.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching newsletters:', error);
     return [];
   }
@@ -512,10 +512,10 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
       
       // Match any term against suggestion data
       return searchTerms.some(term => 
-        title.includes(term: any) || 
-        description.includes(term: any) || 
-        category.includes(term: any) ||
-        status.includes(term: any)
+        title.includes(term) || 
+        description.includes(term) || 
+        category.includes(term) ||
+        status.includes(term)
       );
     });
     
@@ -534,7 +534,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     if (params.dateFrom) {
       const fromDate = new Date(params.dateFrom).getTime();
-      if (!isNaN(fromDate: any)) {
+      if (!isNaN(fromDate)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => {
           const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate >= fromDate;
@@ -544,7 +544,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     if (params.dateTo) {
       const toDate = new Date(params.dateTo).getTime();
-      if (!isNaN(toDate: any)) {
+      if (!isNaN(toDate)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => {
           const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate <= toDate;
@@ -566,7 +566,7 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     
     if (params.minVotes !== undefined) {
       const minVotes = parseInt(params.minVotes);
-      if (!isNaN(minVotes: any)) {
+      if (!isNaN(minVotes)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => 
           (suggestion.votesCount || 0) >= minVotes
         );
@@ -577,22 +577,22 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     if (params.sort) {
       switch (params.sort) {
         case 'most-votes':
-          filteredSuggestions.sort((a: any, b: any) => (b.votesCount || 0) - (a.votesCount || 0));
+          filteredSuggestions.sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
           break;
         case 'newest':
-          filteredSuggestions.sort((a: any, b: any) => 
+          filteredSuggestions.sort((a, b) => 
             new Date(b.createdAt || 0).getTime() - 
             new Date(a.createdAt || 0).getTime()
           );
           break;
         case 'oldest':
-          filteredSuggestions.sort((a: any, b: any) => 
+          filteredSuggestions.sort((a, b) => 
             new Date(a.createdAt || 0).getTime() - 
             new Date(b.createdAt || 0).getTime()
           );
           break;
         case 'most-comments':
-          filteredSuggestions.sort((a: any, b: any) => (b.commentsCount || 0) - (a.commentsCount || 0));
+          filteredSuggestions.sort((a, b) => (b.commentsCount || 0) - (a.commentsCount || 0));
           break;
         default:
           break;
@@ -600,8 +600,8 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
     }
     
     // Return limited results
-    return filteredSuggestions.slice(0: any, limit: any);
-  } catch (error: any) {
+    return filteredSuggestions.slice(0, limit);
+  } catch (error) {
     logger.error('Error searching community suggestions:', error);
     return [];
   }

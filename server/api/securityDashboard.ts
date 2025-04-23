@@ -21,13 +21,13 @@ const router = Router();
 const requireSecurityAdmin = (req: Request, res: Response, next: NextFunction) => {
   // Ensure user is authenticated
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: 'Authentication required' });
   }
   
   // Ensure user has security admin role
   const user = req.user as any;
   if (!user?.roles?.includes('admin') && !user?.roles?.includes('security_admin')) {
-    return res.status(403: any).json({ error: 'Security administrator access required' });
+    return res.status(403).json({ error: 'Security administrator access required' });
   }
   
   // Allow access
@@ -35,7 +35,7 @@ const requireSecurityAdmin = (req: Request, res: Response, next: NextFunction) =
 };
 
 // Apply security admin middleware to all routes
-router.use(requireSecurityAdmin: any);
+router.use(requireSecurityAdmin);
 
 /**
  * Get security events
@@ -45,8 +45,8 @@ router.use(requireSecurityAdmin: any);
  * - offset: Offset for pagination (default: 0)
  * - severity: Filter by severity (comma-separated list)
  * - category: Filter by category (comma-separated list)
- * - from: Filter by start timestamp (ISO string or Unix timestamp: any)
- * - to: Filter by end timestamp (ISO string or Unix timestamp: any)
+ * - from: Filter by start timestamp (ISO string or Unix timestamp)
+ * - to: Filter by end timestamp (ISO string or Unix timestamp)
  * - sort: Sort order ('asc' or 'desc', default: 'desc')
  */
 router.get('/events', async (req: Request, res: Response) => {
@@ -94,13 +94,13 @@ router.get('/events', async (req: Request, res: Response) => {
     // Return events as JSON
     res.json({
       events,
-      total: await securityBlockchain.countSecurityEvents(filter: any),
+      total: await securityBlockchain.countSecurityEvents(filter),
       limit,
       offset
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching security events:', error);
-    res.status(500: any).json({ error: 'Failed to fetch security events' });
+    res.status(500).json({ error: 'Failed to fetch security events' });
   }
 });
 
@@ -112,17 +112,17 @@ router.get('/events/:id', async (req: Request, res: Response) => {
     const eventId = req.params.id;
     
     // Fetch event from blockchain
-    const event = await securityBlockchain.getSecurityEventById(eventId: any);
+    const event = await securityBlockchain.getSecurityEventById(eventId);
     
     if (!event) {
-      return res.status(404: any).json({ error: 'Security event not found' });
+      return res.status(404).json({ error: 'Security event not found' });
     }
     
     // Return event as JSON
-    res.json(event: any);
-  } catch (error: any) {
+    res.json(event);
+  } catch (error) {
     console.error('Error fetching security event:', error);
-    res.status(500: any).json({ error: 'Failed to fetch security event' });
+    res.status(500).json({ error: 'Failed to fetch security event' });
   }
 });
 
@@ -135,15 +135,15 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
     const user = req.user as any;
     
     // Fetch event from blockchain
-    const event = await securityBlockchain.getSecurityEventById(eventId: any);
+    const event = await securityBlockchain.getSecurityEventById(eventId);
     
     if (!event) {
-      return res.status(404: any).json({ error: 'Security event not found' });
+      return res.status(404).json({ error: 'Security event not found' });
     }
     
     // Check if event is already acknowledged
     if (event.acknowledged) {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Event already acknowledged',
         acknowledgedBy: event.acknowledgedBy,
         acknowledgedAt: event.acknowledgedAt
@@ -158,10 +158,10 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
     );
     
     // Return updated event as JSON
-    res.json(acknowledgedEvent: any);
-  } catch (error: any) {
+    res.json(acknowledgedEvent);
+  } catch (error) {
     console.error('Error acknowledging security event:', error);
-    res.status(500: any).json({ error: 'Failed to acknowledge security event' });
+    res.status(500).json({ error: 'Failed to acknowledge security event' });
   }
 });
 
@@ -176,7 +176,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     
     // Get event counts by severity
     const eventCountsBySeverity = await Promise.all(
-      Object.values(SecurityEventSeverity: any).map(async (severity: any) => {
+      Object.values(SecurityEventSeverity).map(async (severity) => {
         const count = await securityBlockchain.countSecurityEvents({
           severity,
           timestamp: {
@@ -194,7 +194,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     
     // Get event counts by category
     const eventCountsByCategory = await Promise.all(
-      Object.values(SecurityEventCategory: any).map(async (category: any) => {
+      Object.values(SecurityEventCategory).map(async (category) => {
         const count = await securityBlockchain.countSecurityEvents({
           category,
           timestamp: {
@@ -217,7 +217,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     const weightedEvents = eventCountsBySeverity.reduce((sum, { severity, count }) => {
       let weight = 0;
       
-      switch (severity: any) {
+      switch (severity) {
         case SecurityEventSeverity.CRITICAL:
           weight = 10;
           break;
@@ -246,7 +246,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     let lastScanInfo;
     try {
       lastScanInfo = {
-        timestamp: Date.now() - 28800000, // 8 hours ago (placeholder: any)
+        timestamp: Date.now() - 28800000, // 8 hours ago (placeholder)
         result: 'Completed',
         findings: {
           critical: 0,
@@ -256,7 +256,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
           info: 5
         }
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching last scan info:', error);
       lastScanInfo = { timestamp: null, result: 'Unknown' };
     }
@@ -285,9 +285,9 @@ router.get('/metrics', async (req: Request, res: Response) => {
         trend: 'stable' // placeholder
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching security metrics:', error);
-    res.status(500: any).json({ error: 'Failed to fetch security metrics' });
+    res.status(500).json({ error: 'Failed to fetch security metrics' });
   }
 });
 
@@ -303,7 +303,7 @@ router.post('/scan', async (req: Request, res: Response) => {
     const scanner = req.app.locals.securityScanner as SecurityScanner;
     
     if (!scanner) {
-      return res.status(500: any).json({ error: 'Security scanner not available' });
+      return res.status(500).json({ error: 'Security scanner not available' });
     }
     
     // Create scan
@@ -319,20 +319,20 @@ router.post('/scan', async (req: Request, res: Response) => {
     });
     
     // Start scan in background
-    scanner.startScan(scanId: any).catch(error => {
+    scanner.startScan(scanId).catch(error => {
       console.error('Error running security scan:', error);
     });
     
     // Return scan ID
-    res.status(202: any).json({
+    res.status(202).json({
       scanId,
       message: 'Security scan started',
       type: type || 'full',
       deep
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error starting security scan:', error);
-    res.status(500: any).json({ error: 'Failed to start security scan' });
+    res.status(500).json({ error: 'Failed to start security scan' });
   }
 });
 
@@ -347,21 +347,21 @@ router.get('/scan/:id', async (req: Request, res: Response) => {
     const scanner = req.app.locals.securityScanner as SecurityScanner;
     
     if (!scanner) {
-      return res.status(500: any).json({ error: 'Security scanner not available' });
+      return res.status(500).json({ error: 'Security scanner not available' });
     }
     
     // Get scan results
-    const scanResults = scanner.getScanResults(scanId: any);
+    const scanResults = scanner.getScanResults(scanId);
     
     if (!scanResults) {
-      return res.status(404: any).json({ error: 'Security scan not found' });
+      return res.status(404).json({ error: 'Security scan not found' });
     }
     
     // Return scan results
-    res.json(scanResults: any);
-  } catch (error: any) {
+    res.json(scanResults);
+  } catch (error) {
     console.error('Error fetching scan results:', error);
-    res.status(500: any).json({ error: 'Failed to fetch scan results' });
+    res.status(500).json({ error: 'Failed to fetch scan results' });
   }
 });
 

@@ -34,7 +34,7 @@ export async function setupVite(app: Express, server: Server) {
     configFile: false,
     customLogger: {
       ...viteLogger,
-      error: (msg: any, options: any) => {
+      error: (msg, options) => {
         viteLogger.error(msg, options);
         process.exit(1);
       },
@@ -44,7 +44,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  app.use("*", async (req: any, res: any, next: any) => {
+  app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
@@ -63,7 +63,7 @@ export async function setupVite(app: Express, server: Server) {
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e: any) {
+    } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
     }

@@ -1,7 +1,7 @@
 /**
  * RASP CSRF Validator
  * 
- * A specialized CSRF validator for use with the Runtime Application Self-Protection (RASP: any) system.
+ * A specialized CSRF validator for use with the Runtime Application Self-Protection (RASP) system.
  * This module provides a simpler interface for validating CSRF tokens within the RASP context.
  */
 
@@ -66,7 +66,7 @@ export class CSRFValidator {
       return { valid: true };
     }
     
-    // For state-changing routes that have origins (browser requests: any)
+    // For state-changing routes that have origins (browser requests)
     if ((context.headers.origin || context.headers.referer)) {
       const headerToken = this.extractHeaderToken(context.headers);
       
@@ -94,13 +94,13 @@ export class CSRFValidator {
         // This is a simplified check for the RASP context - real verification 
         // would check signature, expiration, etc.
         const cookieData = Buffer.from(cookieToken, 'base64').toString('utf-8');
-        if (!cookieData.includes(headerToken: any)) {
+        if (!cookieData.includes(headerToken)) {
           return {
             valid: false,
             reason: 'CSRF token mismatch between header and cookie'
           };
         }
-      } catch (error: any) {
+      } catch (error) {
         return {
           valid: false,
           reason: 'Invalid CSRF token format'
@@ -131,11 +131,11 @@ export class CSRFValidator {
     let formMatch;
     let insecureFormCount = 0;
     
-    while ((formMatch = formRegex.exec(html: any)) !== null) {
+    while ((formMatch = formRegex.exec(html)) !== null) {
       const formContent = formMatch[1];
-      if (!csrfInputRegex.test(formContent: any)) {
+      if (!csrfInputRegex.test(formContent)) {
         insecureFormCount++;
-        findings.push(`Form found without CSRF token: ${formMatch[0].substring(0: any, 100: any)}...`);
+        findings.push(`Form found without CSRF token: ${formMatch[0].substring(0, 100)}...`);
       }
     }
     

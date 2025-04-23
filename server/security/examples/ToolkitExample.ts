@@ -120,9 +120,9 @@ class UserController {
 const userController = new UserController();
 
 // Register controller routes
-app.get('/api/users', userController.getUsers.bind(userController: any));
-app.put('/api/users/:id', userController.updateUser.bind(userController: any));
-app.delete('/api/users/:id', userController.deleteUser.bind(userController: any));
+app.get('/api/users', userController.getUsers.bind(userController));
+app.put('/api/users/:id', userController.updateUser.bind(userController));
+app.delete('/api/users/:id', userController.deleteUser.bind(userController));
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -142,7 +142,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   ).catch(console.error);
   
   // Return error response
-  res.status(500: any).json({
+  res.status(500).json({
     success: false,
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'production' ? undefined : err.message

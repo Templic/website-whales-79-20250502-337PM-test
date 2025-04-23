@@ -60,13 +60,13 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
       });
     }
     
-    return res.status(429: any).json(optionsUsed.message);
+    return res.status(429).json(optionsUsed.message);
   };
   
   // Dynamic max function that can vary the rate limit based on the request
   const dynamicMax = (req: Request): number => {
     if (options.getLimitByRequest) {
-      return options.getLimitByRequest(req: any);
+      return options.getLimitByRequest(req);
     }
     
     // Default different limits based on user role
@@ -74,7 +74,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
       const role = (req.user as any).role;
       
       // Allow higher limits for admin and super_admin roles
-      switch (role: any) {
+      switch (role) {
         case 'super_admin':
           return 500;
         case 'admin':
@@ -102,7 +102,7 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
     max: dynamicMax
   } as Options;
   
-  return rateLimit(mergedOptions: any);
+  return rateLimit(mergedOptions);
 };
 
 /**
@@ -163,7 +163,7 @@ export const protectedApiRateLimit = createRateLimit({
   getLimitByRequest: (req: Request) => {
     const role = (req.user as any)?.role;
     
-    switch (role: any) {
+    switch (role) {
       case 'super_admin':
         return 500;
       case 'admin':
@@ -193,7 +193,7 @@ export const securityLimiter = createRateLimit({
   getLimitByRequest: (req: Request) => {
     const role = (req.user as any)?.role;
     
-    switch (role: any) {
+    switch (role) {
       case 'super_admin':
         return 100; // Super admins get higher limits
       case 'admin':

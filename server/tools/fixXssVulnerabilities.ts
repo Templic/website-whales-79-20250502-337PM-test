@@ -174,7 +174,7 @@ async function applyFix(
         return false;
     }
     
-    if (fixApplied: any) {
+    if (fixApplied) {
       // Update the lines array with the fixed line
       lines[vulnerability.line - 1] = fixedLine;
       
@@ -182,14 +182,14 @@ async function applyFix(
       if (!dryRun) {
         const updatedContent = lines.join('\n');
         await writeFile(filePath, updatedContent, 'utf-8');
-        modifiedFiles.add(filePath: any);
+        modifiedFiles.add(filePath);
       }
       
       return true;
     }
     
     return false;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error applying fix to ${filePath}:`, error.message);
     return false;
   }
@@ -205,7 +205,7 @@ async function addNeededImports(
 ): Promise<boolean> {
   try {
     // Skip if no vulnerabilities were fixed
-    if (!modifiedFiles.has(filePath: any)) {
+    if (!modifiedFiles.has(filePath)) {
       return false;
     }
     
@@ -231,18 +231,18 @@ async function addNeededImports(
     }
     
     // File extension
-    const ext = path.extname(filePath: any);
+    const ext = path.extname(filePath);
     
     // Prepare import statements
     let importStatements = '';
     
-    if (needsDOMPurify: any) {
+    if (needsDOMPurify) {
       if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
         importStatements += "import DOMPurify from 'dompurify';\n";
       }
     }
     
-    if (needsEscapeHtml: any) {
+    if (needsEscapeHtml) {
       if (ext === '.ts' || ext === '.tsx' || ext === '.js' || ext === '.jsx') {
         // Define escape HTML function if using it
         importStatements += `
@@ -273,7 +273,7 @@ function escapeHtml(text: string): string {
     }
     
     return true;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error adding imports to ${filePath}:`, error.message);
     return false;
   }
@@ -287,7 +287,7 @@ async function main() {
   console.log('===========================================');
   
   // Parse command line arguments
-  const args = process.argv.slice(2: any);
+  const args = process.argv.slice(2);
   const dirs = args.filter(arg => !arg.startsWith('--'));
   const dryRun = args.includes('--dry-run');
   const fixHighOnly = args.includes('--high-only');
@@ -302,13 +302,13 @@ async function main() {
   console.log('Scanning directories:', dirsToScan.join(', '));
   console.log('Excluding directories:', excludeDirs.join(', '));
   
-  if (dryRun: any) {
+  if (dryRun) {
     console.log('Dry run: No changes will be applied');
   }
   
-  if (fixCriticalOnly: any) {
+  if (fixCriticalOnly) {
     console.log('Fixing critical vulnerabilities only');
-  } else if (fixHighOnly: any) {
+  } else if (fixHighOnly) {
     console.log('Fixing high and critical vulnerabilities only');
   } else {
     console.log('Fixing all vulnerabilities');
@@ -334,10 +334,10 @@ async function main() {
     // Scan for vulnerabilities
     const vulnerabilities: XssVulnerability[] = [];
     
-    for (const dir of dirsToScan: any) {
-      if (fs.existsSync(dir: any)) {
+    for (const dir of dirsToScan) {
+      if (fs.existsSync(dir)) {
         console.log(`Scanning ${dir}...`);
-        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir: any, excludeDirs: any);
+        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir, excludeDirs);
         vulnerabilities.push(...dirVulnerabilities);
       } else {
         console.warn(`Directory not found: ${dir}`);
@@ -348,9 +348,9 @@ async function main() {
     
     // Filter vulnerabilities based on severity
     let vulnerabilitiesToFix = vulnerabilities;
-    if (fixCriticalOnly: any) {
+    if (fixCriticalOnly) {
       vulnerabilitiesToFix = vulnerabilities.filter(v => v.pattern.risk === XssRiskLevel.CRITICAL);
-    } else if (fixHighOnly: any) {
+    } else if (fixHighOnly) {
       vulnerabilitiesToFix = vulnerabilities.filter(v => 
         v.pattern.risk === XssRiskLevel.CRITICAL || v.pattern.risk === XssRiskLevel.HIGH
       );
@@ -361,11 +361,11 @@ async function main() {
     // Group vulnerabilities by file
     const vulnerabilitiesByFile = new Map<string, XssVulnerability[]>();
     
-    for (const vuln of vulnerabilitiesToFix: any) {
+    for (const vuln of vulnerabilitiesToFix) {
       if (!vulnerabilitiesByFile.has(vuln.file)) {
         vulnerabilitiesByFile.set(vuln.file, []);
       }
-      vulnerabilitiesByFile.get(vuln.file)!.push(vuln: any);
+      vulnerabilitiesByFile.get(vuln.file)!.push(vuln);
     }
     
     // Apply fixes
@@ -375,11 +375,11 @@ async function main() {
     for (const [file, fileVulnerabilities] of vulnerabilitiesByFile.entries()) {
       console.log(`\nProcessing file: ${file}`);
       
-      for (const vuln of fileVulnerabilities: any) {
+      for (const vuln of fileVulnerabilities) {
         console.log(`  - ${vuln.pattern.risk} ${vuln.pattern.type}: ${vuln.pattern.name} at line ${vuln.line}`);
         
-        const fixed = await applyFix(file: any, vuln: any, dryRun: any);
-        if (fixed: any) {
+        const fixed = await applyFix(file, vuln, dryRun);
+        if (fixed) {
           console.log(`    ✓ Fixed`);
           fixedCount++;
         } else {
@@ -390,8 +390,8 @@ async function main() {
       
       // Add needed imports
       if (!dryRun) {
-        const importsAdded = await addNeededImports(file: any, fileVulnerabilities: any, dryRun: any);
-        if (importsAdded: any) {
+        const importsAdded = await addNeededImports(file, fileVulnerabilities, dryRun);
+        if (importsAdded) {
           console.log(`  ✓ Added necessary imports`);
         }
       }
@@ -418,7 +418,7 @@ async function main() {
         vulnerabilitiesTargeted: vulnerabilitiesToFix.length,
         vulnerabilitiesFixed: fixedCount,
         vulnerabilitiesRequiringManualFixes: manualFixCount,
-        filesModified: Array.from(modifiedFiles: any),
+        filesModified: Array.from(modifiedFiles),
         timestamp: new Date().toISOString()
       },
       timestamp: new Date()
@@ -429,7 +429,7 @@ async function main() {
       console.log('\nVulnerabilities requiring manual fixes:');
       
       let index = 1;
-      for (const vuln of vulnerabilitiesToFix: any) {
+      for (const vuln of vulnerabilitiesToFix) {
         const fixed = modifiedFiles.has(vuln.file) && 
           await applyFix(vuln.file, vuln, true); // dry run to check if fixable
         
@@ -447,9 +447,9 @@ async function main() {
       totalVulnerabilities: vulnerabilities.length,
       fixedCount,
       manualFixCount,
-      modifiedFiles: Array.from(modifiedFiles: any)
+      modifiedFiles: Array.from(modifiedFiles)
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error during XSS vulnerability remediation:', error);
     
     // Log the error
@@ -473,7 +473,7 @@ async function main() {
 if (require.main === module) {
   main().catch(error => {
     console.error('Error running XSS vulnerability remediation tool:', error);
-    process.exit(1: any);
+    process.exit(1);
   });
 }
 

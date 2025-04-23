@@ -1,5 +1,5 @@
 /**
- * Runtime Application Self-Protection (RASP: any) Manager
+ * Runtime Application Self-Protection (RASP) Manager
  * 
  * Provides real-time monitoring and protection against security threats at runtime
  * by integrating directly into the application's execution environment.
@@ -159,14 +159,14 @@ export class RASPManager {
     // Add additional categories
     if (options.enableCategories) {
       options.enableCategories.forEach(category => {
-        this.enabledCategories.add(category: any);
+        this.enabledCategories.add(category);
       });
     }
     
     // Remove disabled categories
     if (options.disableCategories) {
       options.disableCategories.forEach(category => {
-        this.enabledCategories.delete(category: any);
+        this.enabledCategories.delete(category);
       });
     }
   }
@@ -194,14 +194,14 @@ export class RASPManager {
    * Check if a protection category is enabled
    */
   private isProtectionCategoryEnabled(category: RASPProtectionCategory): boolean {
-    return this.enabledCategories.has(category: any);
+    return this.enabledCategories.has(category);
   }
   
   /**
    * Create a RASP middleware instance
    */
   public createMiddleware(): express.RequestHandler {
-    return (req: any, res: any, next: any) => {
+    return (req, res, next) => {
       // Skip excluded paths
       if (this.isExcludedPath(req.path)) {
         return next();
@@ -228,7 +228,7 @@ export class RASPManager {
       };
       
       // Apply protections
-      this.applyProtections(protectionContext: any);
+      this.applyProtections(protectionContext);
       
       // If detection occurred and block is enabled
       if (protectionContext.detected && this.blockRequests) {
@@ -260,7 +260,7 @@ export class RASPManager {
         }
         
         // Return error response
-        return res.status(403: any).json({
+        return res.status(403).json({
           error: 'Forbidden',
           message: 'Request blocked by security protection'
         });
@@ -274,37 +274,37 @@ export class RASPManager {
   /**
    * Apply all protection mechanisms
    */
-  private applyProtections(context: any): void {
+  private applyProtections(context): void {
     // Apply input validation protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.INPUT_VALIDATION)) {
-      this.applyInputValidationProtection(context: any);
+      this.applyInputValidationProtection(context);
     }
     
     // Apply command injection protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.COMMAND_INJECTION)) {
-      this.applyCommandInjectionProtection(context: any);
+      this.applyCommandInjectionProtection(context);
     }
     
     // Apply path traversal protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.PATH_TRAVERSAL)) {
-      this.applyPathTraversalProtection(context: any);
+      this.applyPathTraversalProtection(context);
     }
     
     // Apply API security protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.API_SECURITY)) {
-      this.applyApiSecurityProtection(context: any);
+      this.applyApiSecurityProtection(context);
     }
     
     // Apply malicious payload protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.MALICIOUS_PAYLOAD)) {
-      this.applyMaliciousPayloadProtection(context: any);
+      this.applyMaliciousPayloadProtection(context);
     }
   }
   
   /**
    * Apply input validation protection
    */
-  private applyInputValidationProtection(context: any): void {
+  private applyInputValidationProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
@@ -331,14 +331,14 @@ export class RASPManager {
     ];
     
     // Function to check object recursively for patterns
-    const checkObjectForPatterns = (obj: any, patterns: RegExp[]): { found: boolean, value?: string } => {
+    const checkObjectForPatterns = (obj, patterns: RegExp[]): { found: boolean, value?: string } => {
       if (!obj) {
         return { found: false };
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns: any) {
-          if (pattern.test(obj: any)) {
+        for (const pattern of patterns) {
+          if (pattern.test(obj)) {
             return { found: true, value: obj };
           }
         }
@@ -346,7 +346,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj: any) {
+        for (const key in obj) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -358,7 +358,7 @@ export class RASPManager {
     };
     
     // Check body for SQL injection
-    const sqlBodyCheck = checkObjectForPatterns(body: any, sqlInjectionPatterns: any);
+    const sqlBodyCheck = checkObjectForPatterns(body, sqlInjectionPatterns);
     if (sqlBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -371,7 +371,7 @@ export class RASPManager {
     }
     
     // Check query for SQL injection
-    const sqlQueryCheck = checkObjectForPatterns(query: any, sqlInjectionPatterns: any);
+    const sqlQueryCheck = checkObjectForPatterns(query, sqlInjectionPatterns);
     if (sqlQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -384,7 +384,7 @@ export class RASPManager {
     }
     
     // Check body for XSS
-    const xssBodyCheck = checkObjectForPatterns(body: any, xssPatterns: any);
+    const xssBodyCheck = checkObjectForPatterns(body, xssPatterns);
     if (xssBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -397,7 +397,7 @@ export class RASPManager {
     }
     
     // Check query for XSS
-    const xssQueryCheck = checkObjectForPatterns(query: any, xssPatterns: any);
+    const xssQueryCheck = checkObjectForPatterns(query, xssPatterns);
     if (xssQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -413,7 +413,7 @@ export class RASPManager {
   /**
    * Apply command injection protection
    */
-  private applyCommandInjectionProtection(context: any): void {
+  private applyCommandInjectionProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
@@ -434,14 +434,14 @@ export class RASPManager {
     ];
     
     // Function to check object recursively for patterns
-    const checkObjectForPatterns = (obj: any, patterns: RegExp[]): { found: boolean, value?: string } => {
+    const checkObjectForPatterns = (obj, patterns: RegExp[]): { found: boolean, value?: string } => {
       if (!obj) {
         return { found: false };
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns: any) {
-          if (pattern.test(obj: any)) {
+        for (const pattern of patterns) {
+          if (pattern.test(obj)) {
             return { found: true, value: obj };
           }
         }
@@ -449,7 +449,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj: any) {
+        for (const key in obj) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -461,7 +461,7 @@ export class RASPManager {
     };
     
     // Check body for command injection
-    const commandBodyCheck = checkObjectForPatterns(body: any, commandInjectionPatterns: any);
+    const commandBodyCheck = checkObjectForPatterns(body, commandInjectionPatterns);
     if (commandBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
@@ -474,7 +474,7 @@ export class RASPManager {
     }
     
     // Check query for command injection
-    const commandQueryCheck = checkObjectForPatterns(query: any, commandInjectionPatterns: any);
+    const commandQueryCheck = checkObjectForPatterns(query, commandInjectionPatterns);
     if (commandQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
@@ -490,7 +490,7 @@ export class RASPManager {
   /**
    * Apply path traversal protection
    */
-  private applyPathTraversalProtection(context: any): void {
+  private applyPathTraversalProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
@@ -514,8 +514,8 @@ export class RASPManager {
     ];
     
     // Check path for traversal
-    for (const pattern of pathTraversalPatterns: any) {
-      if (pattern.test(path: any)) {
+    for (const pattern of pathTraversalPatterns) {
+      if (pattern.test(path)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
         context.detectionDetails = {
@@ -528,14 +528,14 @@ export class RASPManager {
     }
     
     // Function to check object recursively for patterns
-    const checkObjectForPatterns = (obj: any, patterns: RegExp[]): { found: boolean, value?: string } => {
+    const checkObjectForPatterns = (obj, patterns: RegExp[]): { found: boolean, value?: string } => {
       if (!obj) {
         return { found: false };
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns: any) {
-          if (pattern.test(obj: any)) {
+        for (const pattern of patterns) {
+          if (pattern.test(obj)) {
             return { found: true, value: obj };
           }
         }
@@ -543,7 +543,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj: any) {
+        for (const key in obj) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -555,7 +555,7 @@ export class RASPManager {
     };
     
     // Check body for path traversal
-    const traversalBodyCheck = checkObjectForPatterns(body: any, pathTraversalPatterns: any);
+    const traversalBodyCheck = checkObjectForPatterns(body, pathTraversalPatterns);
     if (traversalBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
@@ -568,7 +568,7 @@ export class RASPManager {
     }
     
     // Check query for path traversal
-    const traversalQueryCheck = checkObjectForPatterns(query: any, pathTraversalPatterns: any);
+    const traversalQueryCheck = checkObjectForPatterns(query, pathTraversalPatterns);
     if (traversalQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
@@ -584,7 +584,7 @@ export class RASPManager {
   /**
    * Apply API security protection
    */
-  private applyApiSecurityProtection(context: any): void {
+  private applyApiSecurityProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
@@ -669,8 +669,8 @@ export class RASPManager {
       }
       
       // Check for suspicious combinations of headers or parameters
-      const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers: any, method: any, path: any);
-      if (suspiciousPatterns: any) {
+      const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers, method, path);
+      if (suspiciousPatterns) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.API_SECURITY;
         context.detectionDetails = suspiciousPatterns;
@@ -690,7 +690,7 @@ export class RASPManager {
   /**
    * Detect suspicious API usage patterns
    */
-  private detectSuspiciousAPIPatterns(headers: any, method: string, path: string): any | null {
+  private detectSuspiciousAPIPatterns(headers, method: string, path: string): any | null {
     // Check for inconsistent content types
     if (
       headers['content-type'] && 
@@ -706,7 +706,7 @@ export class RASPManager {
       };
     }
     
-    // Check for API version skipping (potential security bypass: any)
+    // Check for API version skipping (potential security bypass)
     if (path.match(/\/api\/v\d+/) && !path.match(/\/api\/v[1-9]/)) {
       return {
         type: 'api-version-bypass',
@@ -730,7 +730,7 @@ export class RASPManager {
   /**
    * Apply malicious payload protection
    */
-  private applyMaliciousPayloadProtection(context: any): void {
+  private applyMaliciousPayloadProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
@@ -752,7 +752,7 @@ export class RASPManager {
     }
     
     // Check for excessively large payloads
-    const jsonSize = JSON.stringify(body: any).length;
+    const jsonSize = JSON.stringify(body).length;
     if (jsonSize > 1024 * 1024) { // > 1MB
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -772,8 +772,8 @@ export class RASPManager {
       return;
     }
     
-    // Check for suspicious JSON structure (deeply nested: any)
-    const checkObjectDepth = (obj: any, currentDepth = 0): number => {
+    // Check for suspicious JSON structure (deeply nested)
+    const checkObjectDepth = (obj, currentDepth = 0): number => {
       if (currentDepth > 20) { // Too deep, early exit
         return currentDepth;
       }
@@ -784,15 +784,15 @@ export class RASPManager {
       
       let maxDepth = currentDepth;
       
-      for (const key in obj: any) {
+      for (const key in obj) {
         const depth = checkObjectDepth(obj[key], currentDepth + 1);
-        maxDepth = Math.max(maxDepth: any, depth: any);
+        maxDepth = Math.max(maxDepth, depth);
       }
       
       return maxDepth;
     };
     
-    const depth = checkObjectDepth(body: any);
+    const depth = checkObjectDepth(body);
     if (depth > 10) { // > 10 levels deep
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -835,9 +835,9 @@ export class RASPManager {
     ];
     
     // Check for JSON pattern in stringified body
-    const bodyStr = JSON.stringify(body: any);
-    for (const pattern of suspiciousJsonPatterns: any) {
-      if (pattern.test(bodyStr: any)) {
+    const bodyStr = JSON.stringify(body);
+    for (const pattern of suspiciousJsonPatterns) {
+      if (pattern.test(bodyStr)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
@@ -857,12 +857,12 @@ export class RASPManager {
     }
     
     // Check for suspicious field names
-    const checkForSuspiciousKeys = (obj: any, path: string = ''): boolean => {
+    const checkForSuspiciousKeys = (obj, path: string = ''): boolean => {
       if (!obj || typeof obj !== 'object') {
         return false;
       }
       
-      if (Array.isArray(obj: any)) {
+      if (Array.isArray(obj)) {
         for (let i = 0; i < obj.length; i++) {
           if (checkForSuspiciousKeys(obj[i], `${path}[${i}]`)) {
             return true;
@@ -871,8 +871,8 @@ export class RASPManager {
         return false;
       }
       
-      for (const key in obj: any) {
-        if (suspiciousFieldNames.includes(key: any)) {
+      for (const key in obj) {
+        if (suspiciousFieldNames.includes(key)) {
           context.detected = true;
           context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
           context.detectionDetails = {
@@ -899,7 +899,7 @@ export class RASPManager {
             /\bwindow\.\s*location/, /\bnavigator\.\s*/, /\bexec\s*\(/
           ];
           
-          for (const pattern of codeInjectionPatterns: any) {
+          for (const pattern of codeInjectionPatterns) {
             if (pattern.test(obj[key])) {
               context.detected = true;
               context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -932,11 +932,11 @@ export class RASPManager {
       return false;
     };
     
-    // Check for circular references (potential DoS vector: any)
-    const checkForCircular = (obj: any, seen = new WeakSet()): boolean => {
+    // Check for circular references (potential DoS vector)
+    const checkForCircular = (obj, seen = new WeakSet()): boolean => {
       if (obj === null || typeof obj !== 'object') return false;
       
-      if (seen.has(obj: any)) {
+      if (seen.has(obj)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
@@ -954,16 +954,16 @@ export class RASPManager {
         return true;
       }
       
-      seen.add(obj: any);
+      seen.add(obj);
       
-      if (Array.isArray(obj: any)) {
-        for (const item of obj: any) {
+      if (Array.isArray(obj)) {
+        for (const item of obj) {
           if (typeof item === 'object' && item !== null) {
-            if (checkForCircular(item: any, seen: any)) return true;
+            if (checkForCircular(item, seen)) return true;
           }
         }
       } else {
-        for (const key in obj: any) {
+        for (const key in obj) {
           if (typeof obj[key] === 'object' && obj[key] !== null) {
             if (checkForCircular(obj[key], seen)) return true;
           }
@@ -974,28 +974,28 @@ export class RASPManager {
     };
     
     // Run checks
-    checkForSuspiciousKeys(body: any);
-    checkForCircular(body: any);
+    checkForSuspiciousKeys(body);
+    checkForCircular(body);
   }
   
   /**
    * Log security events for future analysis
    */
-  private logSecurityEvent(event: any): void {
+  private logSecurityEvent(event): void {
     // This could be extended to send events to a centralized monitoring system
-    console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event: any)}`);
+    console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event)}`);
     
     // Store events for pattern analysis
     if (!global.raspSecurityEvents) {
       global.raspSecurityEvents = [];
     }
     
-    // Keep a limited history of events (last 1000: any)
+    // Keep a limited history of events (last 1000)
     if (global.raspSecurityEvents.length >= 1000) {
       global.raspSecurityEvents.shift();
     }
     
-    global.raspSecurityEvents.push(event: any);
+    global.raspSecurityEvents.push(event);
     
     // Emit event to security fabric
     securityFabric.emit('security:rasp:event', event);
@@ -1011,12 +1011,12 @@ const raspManager = new RASPManager();
  * Create a RASP middleware with custom options
  */
 export function createRASPMiddleware(options: RASPMiddlewareOptions = {}): express.RequestHandler {
-  const manager = new RASPManager(options: any);
+  const manager = new RASPManager(options);
   return manager.createMiddleware();
 }
 
 /**
- * Default RASP middleware (maximum protection: any)
+ * Default RASP middleware (maximum protection)
  */
 export const raspMiddleware = raspManager.createMiddleware();
 

@@ -8,7 +8,7 @@
  * @param value The value to assert
  * @returns The value with the asserted type
  */
-export function assertType<T>(value: any): T {
+export function assertType<T>(value): T {
   return value as T;
 }
 

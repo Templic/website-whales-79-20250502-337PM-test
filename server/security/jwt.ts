@@ -21,12 +21,12 @@ let JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || '';
 export function initJwtSecrets(): void {
   if (!JWT_SECRET) {
     console.warn('JWT_SECRET not found in environment, generating a random one for this session');
-    JWT_SECRET = randomBytes(64: any).toString('hex');
+    JWT_SECRET = randomBytes(64).toString('hex');
   }
 
   if (!JWT_REFRESH_SECRET) {
     console.warn('JWT_REFRESH_SECRET not found in environment, generating a random one for this session');
-    JWT_REFRESH_SECRET = randomBytes(64: any).toString('hex');
+    JWT_REFRESH_SECRET = randomBytes(64).toString('hex');
   }
   
   console.log('JWT secrets initialized');
@@ -54,8 +54,8 @@ const DEFAULT_ALGORITHM = 'HS256';         // HMAC with SHA-256
  * @param additionalClaims Additional claims to include in the token
  * @returns JWT access token
  */
-export function generateAccessToken(user: any, additionalClaims = {}): string {
-  const jti = randomBytes(16: any).toString('hex');
+export function generateAccessToken(user, additionalClaims = {}): string {
+  const jti = randomBytes(16).toString('hex');
   
   // Extract user ID and role from user object if provided
   const userId = typeof user === 'object' ? user.id : user;
@@ -84,7 +84,7 @@ export function generateAccessToken(user: any, additionalClaims = {}): string {
  * Generate a JWT refresh token for a user
  */
 export function generateRefreshToken(userId: string | number): string {
-  const jti = randomBytes(16: any).toString('hex');
+  const jti = randomBytes(16).toString('hex');
   
   return jwt.sign(
     {
@@ -123,7 +123,7 @@ export function verifyAccessToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error: any) {
+  } catch (error) {
     // Log verification errors
     console.error('JWT verification error:', error);
     return null;
@@ -163,7 +163,7 @@ export function verifyRefreshToken(token: string): jwt.JwtPayload | null {
     }
     
     return null;
-  } catch (error: any) {
+  } catch (error) {
     // Log verification errors
     console.error('Refresh token verification error:', error);
     return null;
@@ -179,8 +179,8 @@ export function revokeToken(token: string): boolean {
     let decoded: any;
     
     try {
-      decoded = jwt.decode(token: any);
-    } catch (e: any) {
+      decoded = jwt.decode(token);
+    } catch (e) {
       return false;
     }
     
@@ -191,7 +191,7 @@ export function revokeToken(token: string): boolean {
     // Add the JTI to the revoked tokens set
     revokedTokens.add(decoded.jti);
     return true;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error revoking token:', error);
     return false;
   }
@@ -201,7 +201,7 @@ export function revokeToken(token: string): boolean {
  * Check if a token has been revoked
  */
 export function isTokenRevoked(jti: string): boolean {
-  return revokedTokens.has(jti: any);
+  return revokedTokens.has(jti);
 }
 
 /**
@@ -212,11 +212,11 @@ export function extractTokenFromHeader(authHeader?: string): string | null {
     return null;
   }
   
-  return authHeader.substring(7: any);
+  return authHeader.substring(7);
 }
 
 /**
- * Rotate JWT secrets (useful for handling compromised keys: any)
+ * Rotate JWT secrets (useful for handling compromised keys)
  * In a production app, this would need to be synchronized across all instances
  */
 export function rotateSecrets(): void {
@@ -224,8 +224,8 @@ export function rotateSecrets(): void {
   const oldRefreshSecret = JWT_REFRESH_SECRET;
   
   // Generate new secrets
-  JWT_SECRET = randomBytes(64: any).toString('hex');
-  JWT_REFRESH_SECRET = randomBytes(64: any).toString('hex');
+  JWT_SECRET = randomBytes(64).toString('hex');
+  JWT_REFRESH_SECRET = randomBytes(64).toString('hex');
   
   // In a real app, we might keep old secrets for a brief period
   // to allow for a transition, but for simplicity we'll invalidate

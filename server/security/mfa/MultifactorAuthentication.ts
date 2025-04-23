@@ -1,5 +1,5 @@
 /**
- * Multifactor Authentication (MFA: any) Module
+ * Multifactor Authentication (MFA) Module
  * 
  * This module provides comprehensive MFA functionality including:
  * - TOTP (Time-based One-Time Password)
@@ -125,7 +125,7 @@ class MFAManager {
   async generateTOTPSecret(userId: number, options: TOTPOptions): Promise<{ secret: string; qrCode: string }> {
     try {
       // Generate random secret
-      const secret = crypto.randomBytes(20: any).toString('base64');
+      const secret = crypto.randomBytes(20).toString('base64');
       
       // Set default options
       const algorithm = options.algorithm || 'SHA1';
@@ -146,12 +146,12 @@ class MFAManager {
       });
       
       return { secret, qrCode };
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating TOTP secret',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -169,8 +169,8 @@ class MFAManager {
     
     try {
       // Convert token to number and validate format
-      const tokenNumber = parseInt(token: any, 10: any);
-      if (isNaN(tokenNumber: any) || token.length !== 6) {
+      const tokenNumber = parseInt(token, 10);
+      if (isNaN(tokenNumber) || token.length !== 6) {
         return MFAVerificationStatus.FAILED;
       }
       
@@ -180,7 +180,7 @@ class MFAManager {
       // Check current and adjacent time periods
       for (let i = -this.totpWindowSize; i <= this.totpWindowSize; i++) {
         const counter = Math.floor((now + (i * 30)) / 30);
-        const expectedToken = this.generateTOTPCode(secret: any, counter: any);
+        const expectedToken = this.generateTOTPCode(secret, counter);
         
         if (tokenNumber === expectedToken) {
           logSecurityEvent({
@@ -202,12 +202,12 @@ class MFAManager {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error verifying TOTP',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       return MFAVerificationStatus.FAILED;
@@ -220,14 +220,14 @@ class MFAManager {
   private generateTOTPCode(secret: string, counter: number): number {
     try {
       // Convert counter to buffer
-      const buffer = Buffer.alloc(8: any);
-      buffer.writeBigInt64BE(BigInt(counter: any), 0);
+      const buffer = Buffer.alloc(8);
+      buffer.writeBigInt64BE(BigInt(counter), 0);
       
       // Generate HMAC
       const hmac = crypto.createHmac('sha1', Buffer.from(secret, 'base64'));
-      const hmacResult = hmac.update(buffer: any).digest();
+      const hmacResult = hmac.update(buffer).digest();
       
-      // Get offset (use last 4 bits of the last byte: any)
+      // Get offset (use last 4 bits of the last byte)
       const offset = hmacResult[hmacResult.length - 1] & 0xf;
       
       // Get 4 bytes starting at offset
@@ -238,12 +238,12 @@ class MFAManager {
       
       // Get 6 digits
       return code % 1000000;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating TOTP code',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -273,12 +273,12 @@ class MFAManager {
       });
       
       return code;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating SMS code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -296,7 +296,7 @@ class MFAManager {
     
     try {
       // Generate 8-character alphanumeric code
-      const code = crypto.randomBytes(4: any).toString('hex').toUpperCase();
+      const code = crypto.randomBytes(4).toString('hex').toUpperCase();
       
       // In a real application, send the code via email
       
@@ -308,12 +308,12 @@ class MFAManager {
       });
       
       return code;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating email code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       throw error;
@@ -329,14 +329,14 @@ class MFAManager {
       
       // Generate recovery codes
       for (let i = 0; i < count; i++) {
-        // Format: XXXX-XXXX-XXXX (12 alphanumeric characters with dashes: any)
+        // Format: XXXX-XXXX-XXXX (12 alphanumeric characters with dashes)
         const code = [
-          crypto.randomBytes(2: any).toString('hex').toUpperCase(),
-          crypto.randomBytes(2: any).toString('hex').toUpperCase(),
-          crypto.randomBytes(2: any).toString('hex').toUpperCase()
+          crypto.randomBytes(2).toString('hex').toUpperCase(),
+          crypto.randomBytes(2).toString('hex').toUpperCase(),
+          crypto.randomBytes(2).toString('hex').toUpperCase()
         ].join('-');
         
-        codes.push(code: any);
+        codes.push(code);
       }
       
       logSecurityEvent({
@@ -347,12 +347,12 @@ class MFAManager {
       });
       
       return codes;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error generating recovery codes',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -367,19 +367,19 @@ class MFAManager {
       const hashedCodes: string[] = [];
       
       // Hash each code
-      for (const code of codes: any) {
-        const salt = crypto.randomBytes(16: any).toString('hex');
-        const hash = crypto.createHmac('sha256', salt).update(code: any).digest('hex');
+      for (const code of codes) {
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.createHmac('sha256', salt).update(code).digest('hex');
         hashedCodes.push(`${hash}.${salt}`);
       }
       
       return hashedCodes;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error hashing recovery codes',
-        data: { error: (error as Error: any).message }
+        data: { error: (error as Error).message }
       });
       
       throw error;
@@ -397,9 +397,9 @@ class MFAManager {
     
     try {
       // Check each hashed code
-      for (const hashedCode of hashedCodes: any) {
+      for (const hashedCode of hashedCodes) {
         const [hash, salt] = hashedCode.split('.');
-        const testHash = crypto.createHmac('sha256', salt).update(code: any).digest('hex');
+        const testHash = crypto.createHmac('sha256', salt).update(code).digest('hex');
         
         if (testHash === hash) {
           logSecurityEvent({
@@ -421,12 +421,12 @@ class MFAManager {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: any) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
         message: 'Error verifying recovery code',
-        data: { error: (error as Error: any).message, userId }
+        data: { error: (error as Error).message, userId }
       });
       
       return MFAVerificationStatus.FAILED;

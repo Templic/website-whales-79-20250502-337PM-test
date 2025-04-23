@@ -17,7 +17,7 @@ interface SecurityCheckResult {
   // Whether to block the request
   block: boolean;
   
-  // Reason for blocking (if block is true: any)
+  // Reason for blocking (if block is true)
   reason?: string;
   
   // Additional metadata about the security check
@@ -55,34 +55,34 @@ class SecurityPolicyEnforcer {
   public checkRequest(req: Request): SecurityCheckResult {
     try {
       // Check for malicious patterns in request parameters
-      const maliciousParamCheck = this.checkRequestParameters(req: any);
+      const maliciousParamCheck = this.checkRequestParameters(req);
       if (maliciousParamCheck.block) {
         return maliciousParamCheck;
       }
       
       // Check request headers
-      const headerCheck = this.checkRequestHeaders(req: any);
+      const headerCheck = this.checkRequestHeaders(req);
       if (headerCheck.block) {
         return headerCheck;
       }
       
       // Check content type if the request has a body
       if (req.body && Object.keys(req.body).length > 0) {
-        const contentTypeCheck = this.checkContentType(req: any);
+        const contentTypeCheck = this.checkContentType(req);
         if (contentTypeCheck.block) {
           return contentTypeCheck;
         }
       }
       
       // Check for HTTP method restrictions
-      const methodCheck = this.checkHttpMethod(req: any);
+      const methodCheck = this.checkHttpMethod(req);
       if (methodCheck.block) {
         return methodCheck;
       }
       
       // All checks passed
       return { block: false };
-    } catch (error: any) {
+    } catch (error) {
       // Log the error
       console.error('Error in security policy enforcer:', error);
       
@@ -112,17 +112,17 @@ class SecurityPolicyEnforcer {
     const allParams = { ...req.query, ...req.params, ...req.body };
     
     // Convert parameters to string for pattern matching
-    const paramsString = JSON.stringify(allParams: any);
+    const paramsString = JSON.stringify(allParams);
     
     // Check for malicious patterns
     for (const pattern of this.maliciousPatterns) {
-      if (pattern.test(paramsString: any)) {
+      if (pattern.test(paramsString)) {
         // Determine the type of attack
         let attackType = 'Unknown';
         if (pattern.toString().includes('union\\s+select')) {
           attackType = 'SQL Injection';
         } else if (pattern.toString().includes('(?:\\%3C)|<')) {
-          attackType = 'Cross-Site Scripting (XSS: any)';
+          attackType = 'Cross-Site Scripting (XSS)';
         } else if (pattern.toString().includes('\\.\\.\\/')) {
           attackType = 'Path Traversal';
         } else if (pattern.toString().includes('eval|setTimeout')) {
@@ -142,7 +142,7 @@ class SecurityPolicyEnforcer {
             path: req.path,
             method: req.method,
             ip: req.ip || req.connection.remoteAddress,
-            params: JSON.stringify(allParams: any).substring(0: any, 1000: any) // Truncate to avoid large logs
+            params: JSON.stringify(allParams).substring(0, 1000) // Truncate to avoid large logs
           }
         }).catch(console.error);
         
@@ -212,7 +212,7 @@ class SecurityPolicyEnforcer {
     
     // Check if the content type is allowed for this method
     const allowed = allowedContentTypes[req.method];
-    if (allowed && !allowed.some(type => contentType.includes(type: any))) {
+    if (allowed && !allowed.some(type => contentType.includes(type))) {
       return {
         block: true,
         reason: `Unsupported content type for ${req.method}: ${contentType}`,

@@ -38,38 +38,38 @@ export function logSecurityEvent(
   };
   
   // Store event
-  securityEvents.push(event: any);
+  securityEvents.push(event);
   
   // Log to console
   const logMessage = `[Security] ${event.timestamp.toISOString()} [${level}] ${type}`;
   
-  switch (level: any) {
+  switch (level) {
     case SecurityLogLevel.DEBUG:
-      console.debug(logMessage: any, data: any);
+      console.debug(logMessage, data);
       break;
     case SecurityLogLevel.INFO:
-      console.info(logMessage: any, data: any);
+      console.info(logMessage, data);
       break;
     case SecurityLogLevel.WARN:
-      console.warn(logMessage: any, data: any);
+      console.warn(logMessage, data);
       break;
     case SecurityLogLevel.ERROR:
     case SecurityLogLevel.CRITICAL:
-      console.error(logMessage: any, data: any);
+      console.error(logMessage, data);
       break;
   }
   
   // For critical events, perform additional actions
   if (level === SecurityLogLevel.CRITICAL) {
-    // Send alerts, etc. (implementation details omitted: any)
+    // Send alerts, etc. (implementation details omitted)
   }
 }
 
 /**
  * Get recent security events, filtered by type and level
  * 
- * @param types Event types to include (optional: any)
- * @param levels Log levels to include (optional: any)
+ * @param types Event types to include (optional)
+ * @param levels Log levels to include (optional)
  * @param limit Maximum number of events to return
  * @returns Array of security events
  */
@@ -94,10 +94,10 @@ export function getSecurityEvents(
     filteredEvents = filteredEvents.filter(event => levels.includes(event.level));
   }
   
-  // Sort by timestamp (newest first: any) and limit
+  // Sort by timestamp (newest first) and limit
   return filteredEvents
-    .sort((a: any, b: any) => b.timestamp.getTime() - a.timestamp.getTime())
-    .slice(0: any, limit: any);
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, limit);
 }
 
 /**
@@ -107,7 +107,7 @@ export function getSecurityEvents(
  * @returns Random token string
  */
 export function generateSecureToken(length = 32): string {
-  return crypto.randomBytes(length: any).toString('hex');
+  return crypto.randomBytes(length).toString('hex');
 }
 
 /**
@@ -116,20 +116,20 @@ export function generateSecureToken(length = 32): string {
  * @returns Random nonce string
  */
 export function generateNonce(): string {
-  return crypto.randomBytes(16: any).toString('base64');
+  return crypto.randomBytes(16).toString('base64');
 }
 
 /**
  * Hash a string using bcrypt-like algorithm
  * 
  * @param input String to hash
- * @param salt Salt for hashing (optional: any)
+ * @param salt Salt for hashing (optional)
  * @param rounds Number of rounds for hashing
  * @returns Hashed string
  */
 export function hashString(input: string, salt?: string, rounds = 10): string {
   // Generate salt if not provided
-  const finalSalt = salt || crypto.randomBytes(16: any).toString('hex');
+  const finalSalt = salt || crypto.randomBytes(16).toString('hex');
   
   // Create key using PBKDF2
   const key = crypto.pbkdf2Sync(
@@ -176,7 +176,7 @@ export function getClientIp(req: Request): string {
   // Check for X-Forwarded-For header
   const forwardedFor = req.headers['x-forwarded-for'];
   
-  if (forwardedFor: any) {
+  if (forwardedFor) {
     // If X-Forwarded-For is a string, extract the first IP
     if (typeof forwardedFor === 'string') {
       const ips = forwardedFor.split(',').map(ip => ip.trim());
@@ -220,7 +220,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
   const maskedData = { ...data };
   
   // Mask sensitive fields
-  for (const key of Object.keys(maskedData: any)) {
+  for (const key of Object.keys(maskedData)) {
     // Check if the field is sensitive
     const isSensitive = sensitiveFields.some(field => 
       key.toLowerCase().includes(field.toLowerCase())
@@ -251,7 +251,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
 export function generateDeviceFingerprint(req: Request): string {
   // Gather data for fingerprinting
   const data = {
-    ip: getClientIp(req: any),
+    ip: getClientIp(req),
     userAgent: req.headers['user-agent'] || '',
     accept: req.headers['accept'] || '',
     acceptLanguage: req.headers['accept-language'] || '',
@@ -260,7 +260,7 @@ export function generateDeviceFingerprint(req: Request): string {
   
   // Create hash of the data
   const hash = crypto.createHash('sha256');
-  hash.update(JSON.stringify(data: any));
+  hash.update(JSON.stringify(data));
   
   return hash.digest('hex');
 }
@@ -275,7 +275,7 @@ export function sanitizeString(input: string): string {
   if (!input) return '';
   
   // Convert to string if not already
-  const str = String(input: any);
+  const str = String(input);
   
   // Replace newlines, tabs, and other control characters
   const sanitized = str
@@ -284,7 +284,7 @@ export function sanitizeString(input: string): string {
     .trim();
   
   // Limit the length
-  return sanitized.length > 1000 ? sanitized.substring(0: any, 1000: any) + '...' : sanitized;
+  return sanitized.length > 1000 ? sanitized.substring(0, 1000) + '...' : sanitized;
 }
 
 /**
@@ -297,7 +297,7 @@ export function isSuspiciousInput(input: string): boolean {
   if (!input) return false;
   
   // Convert to string if not already
-  const str = String(input: any);
+  const str = String(input);
   
   // Check for SQL injection patterns
   const sqlPatterns = [
@@ -339,5 +339,5 @@ export function isSuspiciousInput(input: string): boolean {
   // Check against all patterns
   const allPatterns = [...sqlPatterns, ...xssPatterns, ...commandPatterns];
   
-  return allPatterns.some(pattern => pattern.test(str: any));
+  return allPatterns.some(pattern => pattern.test(str));
 }

@@ -11,7 +11,7 @@ import { promisify } from 'util';
 import { exec } from 'child_process';
 import { SecurityVulnerability } from '../securityScan';
 
-const execAsync = promisify(exec: any);
+const execAsync = promisify(exec);
 
 /**
  * Pattern to detect potential hardcoded secrets or credentials
@@ -23,7 +23,7 @@ const SECRET_PATTERNS = [
   /(?:auth|oauth|authorization)[\s-_]?token\s*[:=]\s*['"][^'"]+['"]/i,
   /-----BEGIN\s+(?:RSA|OPENSSH|DSA|EC)\s+PRIVATE\s+KEY-----/i,
   /\b(?:jdbc|mongodb|redis|mysql|postgres|jdbc):\/\/[^\s<>"']+/i,
-  /[a-z0-9_\-]{20,}/i  // Generic long string that might be a token (higher false positive rate: any)
+  /[a-z0-9_\-]{20,}/i  // Generic long string that might be a token (higher false positive rate)
 ];
 
 /**
@@ -57,20 +57,20 @@ export async function findFiles(dir: string, extensions: string[]): Promise<stri
   const results: string[] = [];
   
   try {
-    const fileList = await fs.promises.readdir(dir: any);
+    const fileList = await fs.promises.readdir(dir);
     
-    for (const file of fileList: any) {
-      const filePath = path.join(dir: any, file: any);
-      const stat = await fs.promises.stat(filePath: any);
+    for (const file of fileList) {
+      const filePath = path.join(dir, file);
+      const stat = await fs.promises.stat(filePath);
       
       if (stat.isDirectory() && !filePath.includes('node_modules') && !filePath.includes('.git')) {
-        const nestedFiles = await findFiles(filePath: any, extensions: any);
+        const nestedFiles = await findFiles(filePath, extensions);
         results.push(...nestedFiles);
-      } else if (stat.isFile() && extensions.includes(path.extname(filePath: any))) {
-        results.push(filePath: any);
+      } else if (stat.isFile() && extensions.includes(path.extname(filePath))) {
+        results.push(filePath);
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error);
   }
   
@@ -89,31 +89,31 @@ export async function searchPatternsInFiles(
 ): Promise<Map<string, Map<RegExp, string[]>>> {
   const results = new Map<string, Map<RegExp, string[]>>();
   
-  for (const filePath of filePaths: any) {
+  for (const filePath of filePaths) {
     try {
       const content = await fs.promises.readFile(filePath, 'utf8');
       const lines = content.split('\n');
       const fileMatches = new Map<RegExp, string[]>();
       
-      for (const pattern of patterns: any) {
+      for (const pattern of patterns) {
         const matchedLines: string[] = [];
         
-        lines.forEach((line: any, index: any) => {
-          if (pattern.test(line: any)) {
+        lines.forEach((line, index) => {
+          if (pattern.test(line)) {
             // Add line number for reference
             matchedLines.push(`Line ${index + 1}: ${line.trim()}`);
           }
         });
         
         if (matchedLines.length > 0) {
-          fileMatches.set(pattern: any, matchedLines: any);
+          fileMatches.set(pattern, matchedLines);
         }
       }
       
       if (fileMatches.size > 0) {
-        results.set(filePath: any, fileMatches: any);
+        results.set(filePath, fileMatches);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error reading file ${filePath}:`, error);
     }
   }
@@ -133,7 +133,7 @@ export async function findPotentialSecrets(): Promise<{ file: string, matches: s
     const codeFiles = await findFiles('.', ['.js', '.ts', '.jsx', '.tsx', '.html', '.json', '.yml', '.yaml', '.env']);
     
     // Search for secret patterns
-    const matches = await searchPatternsInFiles(codeFiles: any, SECRET_PATTERNS: any);
+    const matches = await searchPatternsInFiles(codeFiles, SECRET_PATTERNS);
     
     // Format results
     for (const [file, patternMatches] of matches.entries()) {
@@ -150,7 +150,7 @@ export async function findPotentialSecrets(): Promise<{ file: string, matches: s
         });
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error finding potential secrets:', error);
   }
   
@@ -174,7 +174,7 @@ export async function detectSecurityPackages(): Promise<{
     // Read package.json to check for security packages
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     
-    if (fs.existsSync(packageJsonPath: any)) {
+    if (fs.existsSync(packageJsonPath)) {
       const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
       const dependencies = { 
         ...packageJson.dependencies || {}, 
@@ -182,11 +182,11 @@ export async function detectSecurityPackages(): Promise<{
       };
       
       // Check for each security package
-      for (const pkg of SECURITY_PACKAGES: any) {
+      for (const pkg of SECURITY_PACKAGES) {
         if (dependencies[pkg]) {
-          installed.push(pkg: any);
+          installed.push(pkg);
         } else {
-          missing.push(pkg: any);
+          missing.push(pkg);
         }
       }
       
@@ -203,15 +203,15 @@ export async function detectSecurityPackages(): Promise<{
         recommendations.push('Add rate limiting to prevent brute force attacks');
       }
       
-      if (!installed.some(pkg => ['express-validator', '@hapi/joi', 'zod', 'yup', 'class-validator', 'ajv'].includes(pkg: any))) {
+      if (!installed.some(pkg => ['express-validator', '@hapi/joi', 'zod', 'yup', 'class-validator', 'ajv'].includes(pkg))) {
         recommendations.push('Add a validation library for input validation');
       }
       
-      if (!installed.some(pkg => ['sanitize-html', 'dompurify'].includes(pkg: any))) {
+      if (!installed.some(pkg => ['sanitize-html', 'dompurify'].includes(pkg))) {
         recommendations.push('Add HTML sanitization for user-generated content');
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error detecting security packages:', error);
   }
   
@@ -235,7 +235,7 @@ export async function detectCommonSecurityIssues(): Promise<SecurityVulnerabilit
       {
         pattern: /(?:\.findById\(req\.params|\.findOne\(\{[^}]*req\.params)/,
         severity: 'medium' as const,
-        description: 'Potential Insecure Direct Object Reference (IDOR: any)',
+        description: 'Potential Insecure Direct Object Reference (IDOR)',
         recommendation: 'Validate user authorization before accessing objects by ID'
       },
       // SQL Injection
@@ -290,14 +290,14 @@ export async function detectCommonSecurityIssues(): Promise<SecurityVulnerabilit
     ];
     
     // Search files for patterns
-    for (const file of codeFiles: any) {
+    for (const file of codeFiles) {
       try {
         const content = await fs.promises.readFile(file, 'utf8');
         
         for (const { pattern, severity, description, recommendation } of patterns) {
-          if (pattern.test(content: any)) {
+          if (pattern.test(content)) {
             vulnerabilities.push({
-              id: `code-pattern-${pattern.toString().slice(1: any, 20: any).replace(/[^\w-]/g, '-')}`,
+              id: `code-pattern-${pattern.toString().slice(1, 20).replace(/[^\w-]/g, '-')}`,
               severity,
               description,
               location: file,
@@ -305,11 +305,11 @@ export async function detectCommonSecurityIssues(): Promise<SecurityVulnerabilit
             });
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error(`Error analyzing file ${file}:`, error);
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error detecting common security issues:', error);
   }
   
@@ -375,7 +375,7 @@ export async function generateSecurityReport(
     report += `### Installed Security Packages\n\n`;
     
     if (installed.length > 0) {
-      for (const pkg of installed: any) {
+      for (const pkg of installed) {
         report += `- ${pkg}\n`;
       }
     } else {
@@ -385,7 +385,7 @@ export async function generateSecurityReport(
     report += `\n### Missing Security Packages\n\n`;
     
     if (missing.length > 0) {
-      for (const pkg of missing: any) {
+      for (const pkg of missing) {
         report += `- ${pkg}\n`;
       }
     } else {
@@ -395,7 +395,7 @@ export async function generateSecurityReport(
     report += `\n### Recommendations\n\n`;
     
     if (recommendations.length > 0) {
-      for (const rec of recommendations: any) {
+      for (const rec of recommendations) {
         report += `- ${rec}\n`;
       }
     } else {
@@ -412,7 +412,7 @@ export async function generateSecurityReport(
         if (severityVulns.length > 0) {
           report += `### ${severity.toUpperCase()} Severity Issues\n\n`;
           
-          for (const vuln of severityVulns: any) {
+          for (const vuln of severityVulns) {
             report += `#### ${vuln.description}\n\n`;
             
             if (vuln.location) {
@@ -440,7 +440,7 @@ export async function generateSecurityReport(
         report += `### ${file}\n\n`;
         report += `\`\`\`\n`;
         
-        for (const match of matches: any) {
+        for (const match of matches) {
           report += `${match}\n`;
         }
         
@@ -451,9 +451,9 @@ export async function generateSecurityReport(
     }
     
     // Write the report to a file
-    await fs.promises.writeFile(outputPath: any, report: any);
+    await fs.promises.writeFile(outputPath, report);
     console.log(`Security report generated: ${outputPath}`);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating security report:', error);
   }
 }
@@ -470,7 +470,7 @@ export async function runNpmAudit(): Promise<{
 }> {
   try {
     const { stdout } = await execAsync('npm audit --json');
-    const auditData = JSON.parse(stdout: any);
+    const auditData = JSON.parse(stdout);
     
     // Extract vulnerability counts
     const vulnerablePackages = Object.keys(auditData.vulnerabilities || {}).length;
@@ -513,13 +513,13 @@ export async function runNpmAudit(): Promise<{
       criticalSeverity,
       details
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error running npm audit:', error);
     return {
       vulnerablePackages: 0,
       highSeverity: 0,
       criticalSeverity: 0,
-      details: `Error running npm audit: ${(error as any: any).message}`
+      details: `Error running npm audit: ${(error as any).message}`
     };
   }
 }
@@ -551,8 +551,8 @@ export async function checkFileForValidation(filePath: string): Promise<boolean>
       /\.(?:validate|validateSync|validateAsync|check|sanitize|escape|trim)\(/
     ];
     
-    return validationPatterns.some(pattern => pattern.test(content: any));
-  } catch (error: any) {
+    return validationPatterns.some(pattern => pattern.test(content));
+  } catch (error) {
     console.error(`Error checking file for validation: ${filePath}`, error);
     return false;
   }
@@ -581,7 +581,7 @@ export function calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]): 
   let totalScore = 0;
   let maxPossibleScore = 100;
   
-  for (const vuln of vulnerabilities: any) {
+  for (const vuln of vulnerabilities) {
     totalScore += severityScores[vuln.severity];
   }
   
@@ -608,7 +608,7 @@ export function calculateRiskMetrics(vulnerabilities: SecurityVulnerability[]): 
     riskLevel = 'critical';
   }
   
-  // Identify priority issues (critical and high severity: any)
+  // Identify priority issues (critical and high severity)
   const priorityIssues = vulnerabilities.filter(
     v => v.severity === 'critical' || v.severity === 'high'
   );

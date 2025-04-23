@@ -15,7 +15,7 @@ const keyPairCache: Record<string, {
   timestamp: number;
 }> = {};
 
-// Key cache expiration time (24 hours: any)
+// Key cache expiration time (24 hours)
 const KEY_CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
 
 /**
@@ -76,7 +76,7 @@ export async function secureData(
   
   try {
     // Convert data to string if it's an object
-    const dataStr = typeof data === 'string' ? data : JSON.stringify(data: any);
+    const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
     
     // Encrypt the data
     const encryptedData = await qrc.encrypt(dataStr, recipientPublicKey, { algorithm, strength, encoding });
@@ -85,9 +85,9 @@ export async function secureData(
     let signature;
     let publicKey;
     
-    if (sign: any) {
+    if (sign) {
       // Get a key pair for signing
-      const keyPair = await getKeyPair(algorithm: any, strength: any);
+      const keyPair = await getKeyPair(algorithm, strength);
       
       // Sign the data
       const signResult = await qrc.sign(dataStr, keyPair.privateKey, { algorithm, strength, encoding });
@@ -115,7 +115,7 @@ export async function secureData(
       signature,
       publicKey
     };
-  } catch (error: any) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -137,7 +137,7 @@ export async function secureData(
 
 /**
  * Process secured data
- * This verifies the signature (if present: any) and decrypts the data
+ * This verifies the signature (if present) and decrypts the data
  * 
  * @param encryptedData Encrypted data
  * @param privateKey Private key for decryption
@@ -174,7 +174,7 @@ export async function processSecuredData(
     const decryptedData = await qrc.decrypt(encryptedData, privateKey, { algorithm, strength, encoding });
     
     // Convert to string if it's a buffer
-    const dataStr = Buffer.isBuffer(decryptedData: any) ? decryptedData.toString() : decryptedData;
+    const dataStr = Buffer.isBuffer(decryptedData) ? decryptedData.toString() : decryptedData;
     
     // Verify signature if provided
     let verified = false;
@@ -189,7 +189,7 @@ export async function processSecuredData(
       if (requireSignature && !verified) {
         throw new Error(`Signature verification failed: ${verificationReason}`);
       }
-    } else if (requireSignature: any) {
+    } else if (requireSignature) {
       throw new Error('Signature required but not provided');
     }
     
@@ -213,7 +213,7 @@ export async function processSecuredData(
       verified,
       verificationReason
     };
-  } catch (error: any) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -253,8 +253,8 @@ export async function secureHash(
   try {
     // Convert data to appropriate format
     const dataToHash = typeof data === 'string' ? data :
-                       Buffer.isBuffer(data: any) ? data :
-                       JSON.stringify(data: any);
+                       Buffer.isBuffer(data) ? data :
+                       JSON.stringify(data);
     
     // Create hash
     const hash = await qrc.hash(dataToHash, { algorithm, strength, encoding });
@@ -273,7 +273,7 @@ export async function secureHash(
     });
     
     return hash;
-  } catch (error: any) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -327,14 +327,14 @@ export async function createSecureToken(
     };
     
     // Convert payload to string
-    const payloadStr = JSON.stringify(tokenPayload: any);
+    const payloadStr = JSON.stringify(tokenPayload);
     
     // Sign the payload
     const signResult = await qrc.sign(payloadStr, privateKey, { algorithm, strength, encoding });
     
     // Create token (payload + signature)
     const token = Buffer.from(JSON.stringify({
-      payload: Buffer.from(payloadStr: any).toString('base64'),
+      payload: Buffer.from(payloadStr).toString('base64'),
       signature: signResult.signature,
       publicKey: signResult.publicKey,
       algorithm,
@@ -356,7 +356,7 @@ export async function createSecureToken(
     });
     
     return token;
-  } catch (error: any) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -413,7 +413,7 @@ export async function verifySecureToken(
     
     // Decode payload
     const payloadStr = Buffer.from(encodedPayload, 'base64').toString();
-    const payload = JSON.parse(payloadStr: any);
+    const payload = JSON.parse(payloadStr);
     
     // Verify token hasn't been tampered with
     const verificationResult = await qrc.verify(payloadStr, signature, publicKey, { 
@@ -450,7 +450,7 @@ export async function verifySecureToken(
       expired,
       reason: expired ? 'Token expired' : verificationResult.reason
     };
-  } catch (error: any) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,

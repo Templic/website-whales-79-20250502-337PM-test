@@ -51,12 +51,12 @@ export class SQLInjectionPrevention {
     offset?: number,
     caller?: string
   ): Promise<any[]> {
-    // Sanitize table and column names (these cannot be parameterized: any)
-    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table: any);
+    // Sanitize table and column names (these cannot be parameterized)
+    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     const sanitizedColumns = columns.map(col => {
       // Handle special case for '*'
       if (col === '*') return '*';
-      return databaseSecurity.sanitizeIdentifier(col: any);
+      return databaseSecurity.sanitizeIdentifier(col);
     });
     
     // Build the SELECT part of the query
@@ -64,22 +64,22 @@ export class SQLInjectionPrevention {
     
     // Build the WHERE clause with parameterized values
     const params: any[] = [];
-    if (Object.keys(whereConditions: any).length > 0) {
+    if (Object.keys(whereConditions).length > 0) {
       const whereClauses: string[] = [];
       
-      Object.entries(whereConditions: any).forEach(([key, value]) => {
-        const sanitizedKey = databaseSecurity.sanitizeIdentifier(key: any);
+      Object.entries(whereConditions).forEach(([key, value]) => {
+        const sanitizedKey = databaseSecurity.sanitizeIdentifier(key);
         
         if (value === null) {
           whereClauses.push(`${sanitizedKey} IS NULL`);
-        } else if (Array.isArray(value: any)) {
+        } else if (Array.isArray(value)) {
           // Handle IN clauses
-          const inClause = databaseSecurity.createInClause(value: any);
+          const inClause = databaseSecurity.createInClause(value);
           whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
           params.push(...inClause.params);
         } else {
           whereClauses.push(`${sanitizedKey} = $${params.length + 1}`);
-          params.push(value: any);
+          params.push(value);
         }
       });
       
@@ -89,13 +89,13 @@ export class SQLInjectionPrevention {
     }
     
     // Add ORDER BY if specified
-    if (orderBy: any) {
+    if (orderBy) {
       // Simple sanitization for order by
       const sanitizedOrderBy = orderBy
         .split(',')
         .map(part => {
           const [field, direction] = part.trim().split(/\s+/);
-          const sanitizedField = databaseSecurity.sanitizeIdentifier(field: any);
+          const sanitizedField = databaseSecurity.sanitizeIdentifier(field);
           const sanitizedDirection = direction && 
             (direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
           
@@ -109,14 +109,14 @@ export class SQLInjectionPrevention {
     }
     
     // Add LIMIT if specified
-    if (limit !== undefined && Number.isInteger(limit: any) && limit >= 0) {
+    if (limit !== undefined && Number.isInteger(limit) && limit >= 0) {
       sql += ` LIMIT $${params.length + 1}`;
-      params.push(limit: any);
+      params.push(limit);
       
       // Add OFFSET if specified
-      if (offset !== undefined && Number.isInteger(offset: any) && offset >= 0) {
+      if (offset !== undefined && Number.isInteger(offset) && offset >= 0) {
         sql += ` OFFSET $${params.length + 1}`;
-        params.push(offset: any);
+        params.push(offset);
       }
     }
     
@@ -138,29 +138,29 @@ export class SQLInjectionPrevention {
     returningColumns: string[] = ['*'],
     caller?: string
   ): Promise<any> {
-    if (!data || Object.keys(data: any).length === 0) {
+    if (!data || Object.keys(data).length === 0) {
       throw new Error('No data provided for insert operation');
     }
     
     // Sanitize table and column names
-    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table: any);
+    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     const columns: string[] = [];
     const placeholders: string[] = [];
     const values: any[] = [];
     
     // Process each column and value
-    Object.entries(data: any).forEach(([column, value], index) => {
-      const sanitizedColumn = databaseSecurity.sanitizeIdentifier(column: any);
-      columns.push(sanitizedColumn: any);
+    Object.entries(data).forEach(([column, value], index) => {
+      const sanitizedColumn = databaseSecurity.sanitizeIdentifier(column);
+      columns.push(sanitizedColumn);
       placeholders.push(`$${index + 1}`);
-      values.push(value: any);
+      values.push(value);
     });
     
     // Sanitize returning columns
     const sanitizedReturning = returningColumns.map(col => {
       // Handle special case for '*'
       if (col === '*') return '*';
-      return databaseSecurity.sanitizeIdentifier(col: any);
+      return databaseSecurity.sanitizeIdentifier(col);
     });
     
     // Build the INSERT query
@@ -189,39 +189,39 @@ export class SQLInjectionPrevention {
     returningColumns: string[] = ['*'],
     caller?: string
   ): Promise<any> {
-    if (!data || Object.keys(data: any).length === 0) {
+    if (!data || Object.keys(data).length === 0) {
       throw new Error('No data provided for update operation');
     }
     
     // Sanitize table name
-    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table: any);
+    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     
     // Build the SET clause
     const setClauses: string[] = [];
     const values: any[] = [];
     
-    Object.entries(data: any).forEach(([column, value]) => {
-      const sanitizedColumn = databaseSecurity.sanitizeIdentifier(column: any);
+    Object.entries(data).forEach(([column, value]) => {
+      const sanitizedColumn = databaseSecurity.sanitizeIdentifier(column);
       setClauses.push(`${sanitizedColumn} = $${values.length + 1}`);
-      values.push(value: any);
+      values.push(value);
     });
     
     // Build the WHERE clause
     const whereClauses: string[] = [];
     
-    Object.entries(whereConditions: any).forEach(([key, value]) => {
-      const sanitizedKey = databaseSecurity.sanitizeIdentifier(key: any);
+    Object.entries(whereConditions).forEach(([key, value]) => {
+      const sanitizedKey = databaseSecurity.sanitizeIdentifier(key);
       
       if (value === null) {
         whereClauses.push(`${sanitizedKey} IS NULL`);
-      } else if (Array.isArray(value: any)) {
+      } else if (Array.isArray(value)) {
         // Handle IN clauses
-        const inClause = databaseSecurity.createInClause(value: any);
+        const inClause = databaseSecurity.createInClause(value);
         whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
         values.push(...inClause.params);
       } else {
         whereClauses.push(`${sanitizedKey} = $${values.length + 1}`);
-        values.push(value: any);
+        values.push(value);
       }
     });
     
@@ -248,7 +248,7 @@ export class SQLInjectionPrevention {
     const sanitizedReturning = returningColumns.map(col => {
       // Handle special case for '*'
       if (col === '*') return '*';
-      return databaseSecurity.sanitizeIdentifier(col: any);
+      return databaseSecurity.sanitizeIdentifier(col);
     });
     
     // Build the UPDATE query
@@ -278,25 +278,25 @@ export class SQLInjectionPrevention {
     caller?: string
   ): Promise<any> {
     // Sanitize table name
-    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table: any);
+    const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     
     // Build the WHERE clause
     const whereClauses: string[] = [];
     const values: any[] = [];
     
-    Object.entries(whereConditions: any).forEach(([key, value]) => {
-      const sanitizedKey = databaseSecurity.sanitizeIdentifier(key: any);
+    Object.entries(whereConditions).forEach(([key, value]) => {
+      const sanitizedKey = databaseSecurity.sanitizeIdentifier(key);
       
       if (value === null) {
         whereClauses.push(`${sanitizedKey} IS NULL`);
-      } else if (Array.isArray(value: any)) {
+      } else if (Array.isArray(value)) {
         // Handle IN clauses
-        const inClause = databaseSecurity.createInClause(value: any);
+        const inClause = databaseSecurity.createInClause(value);
         whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
         values.push(...inClause.params);
       } else {
         whereClauses.push(`${sanitizedKey} = $${values.length + 1}`);
-        values.push(value: any);
+        values.push(value);
       }
     });
     
@@ -323,7 +323,7 @@ export class SQLInjectionPrevention {
     const sanitizedReturning = returningColumns.map(col => {
       // Handle special case for '*'
       if (col === '*') return '*';
-      return databaseSecurity.sanitizeIdentifier(col: any);
+      return databaseSecurity.sanitizeIdentifier(col);
     });
     
     // Build the DELETE query
@@ -379,7 +379,7 @@ export class SQLInjectionPrevention {
  * Create an SQL injection prevention instance with the provided database connection
  */
 export function createSQLInjectionPrevention(dbConnection: DatabaseConnection): SQLInjectionPrevention {
-  return new SQLInjectionPrevention(dbConnection: any);
+  return new SQLInjectionPrevention(dbConnection);
 }
 
 /**
@@ -387,7 +387,7 @@ export function createSQLInjectionPrevention(dbConnection: DatabaseConnection): 
  */
 /*
 // Example 1: Creating a secure instance
-const db = createSQLInjectionPrevention(pool: any);
+const db = createSQLInjectionPrevention(pool);
 
 // Example 2: Performing a safe SELECT query
 const users = await db.select(

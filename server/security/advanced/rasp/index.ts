@@ -1,5 +1,5 @@
 /**
- * Runtime Application Self-Protection (RASP: any) Module
+ * Runtime Application Self-Protection (RASP) Module
  * 
  * This module provides runtime protection against security threats by
  * integrating into the application's execution environment.
@@ -37,5 +37,5 @@ export const raspMiddleware = (req: Request, res: Response, next: NextFunction) 
   const middleware = raspManager.createMiddleware();
   
   // Apply RASP middleware
-  middleware(req: any, res: any, next: any);
+  middleware(req, res, next);
 };

@@ -65,10 +65,10 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Create security context for this request
-      const securityContext = securityFabric.createSecurityContext(req: any, res: any);
+      const securityContext = securityFabric.createSecurityContext(req, res);
       
       // Attach context to request for later use
-      (req as any: any).securityContext = securityContext;
+      (req as any).securityContext = securityContext;
       
       // Set resource information
       securityContext.setResource({
@@ -82,8 +82,8 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const anomalyDetection = securityFabric.getComponent<AnomalyDetection>('anomalyDetection');
       
       // Perform behavioral analysis if anomaly detection is available
-      if (anomalyDetection: any) {
-        const anomalyResult = anomalyDetection.analyzeRequest(req: any, securityContext: any);
+      if (anomalyDetection) {
+        const anomalyResult = anomalyDetection.analyzeRequest(req, securityContext);
         
         // Add behavioral analysis to security context
         securityContext.setBehavioralAnalysis({
@@ -105,8 +105,8 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const threatIntelligence = securityFabric.getComponent('threatIntelligence');
       
       // Perform threat assessment if threat intelligence is available
-      if (threatIntelligence: any) {
-        const threatResult = threatIntelligence.evaluateRequest(req: any);
+      if (threatIntelligence) {
+        const threatResult = threatIntelligence.evaluateRequest(req);
         
         // Add threat assessment to security context
         securityContext.setThreatAssessment({
@@ -128,7 +128,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       let adjustedMaxRiskScore = mergedOptions.maxRiskScore || DEFAULT_OPTIONS.maxRiskScore!;
       
       // Adjust thresholds based on security posture
-      switch (currentPosture: any) {
+      switch (currentPosture) {
         case 'maximum':
           adjustedMinTrustScore += 0.2; // Much stricter trust requirement
           adjustedMaxRiskScore -= 0.1; // Much lower risk tolerance
@@ -150,13 +150,13 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       // Check required permissions first
       const requiredPermissions = mergedOptions.requiredPermissions || [];
       const userPermissions = (req.user as any)?.permissions || [];
-      const userRoles = (req.user as any)?.roles || [(req.user as any)?.role].filter(Boolean: any);
+      const userRoles = (req.user as any)?.roles || [(req.user as any)?.role].filter(Boolean);
       
       const hasRequiredPermissions = requiredPermissions.length === 0 || 
-        requiredPermissions.every(perm => userPermissions.includes(perm: any));
+        requiredPermissions.every(perm => userPermissions.includes(perm));
       
       // Super admins bypass most checks
-      if (Array.isArray(userRoles: any) && userRoles.includes('super_admin')) {
+      if (Array.isArray(userRoles) && userRoles.includes('super_admin')) {
         accessDecision = 'allow';
         decisionReason = 'Super admin access';
       }
@@ -200,7 +200,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       
       // Log the decision
       if (accessDecision === 'deny') {
-        console.warn(`[ZeroTrust] Access denied to ${req.originalUrl} from ${req.ip}: ${decisionReason} (trust: ${trustScore.toFixed(2: any)}, risk: ${riskScore.toFixed(2: any)})`);
+        console.warn(`[ZeroTrust] Access denied to ${req.originalUrl} from ${req.ip}: ${decisionReason} (trust: ${trustScore.toFixed(2)}, risk: ${riskScore.toFixed(2)})`);
       }
       
       // Implement the access decision
@@ -211,7 +211,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       else if (accessDecision === 'challenge') {
         // Implement step-up authentication or verification
         // For now, we'll just deny access with a special status code
-        res.status(403: any).json({
+        res.status(403).json({
           success: false,
           message: 'Additional verification required',
           code: 'VERIFICATION_REQUIRED',
@@ -220,17 +220,17 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       }
       else {
         // Deny access
-        res.status(403: any).json({
+        res.status(403).json({
           success: false,
           message: 'Access denied',
           reason: decisionReason
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('[ZeroTrust] Error in zero-trust middleware:', error);
       
       // In case of internal error, deny access
-      res.status(500: any).json({
+      res.status(500).json({
         success: false,
         message: 'Security verification error'
       });

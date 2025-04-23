@@ -96,7 +96,7 @@ const DEFAULT_CONFIG: QuantumResistantMiddlewareConfig = {
   signatureAlgorithm: QuantumResistantAlgorithm.DILITHIUM
 };
 
-// Store key pairs for the middleware (in a real system: any, these would be stored securely: any)
+// Store key pairs for the middleware (in a real system, these would be stored securely)
 let serverKeyPair: {
   publicKey: string;
   privateKey: string;
@@ -134,7 +134,7 @@ async function generateServerKeyPair(): Promise<{
     });
     
     return serverKeyPair;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating quantum-resistant key pair:', error);
     // Create a fallback key pair for development purposes
     const fallbackKeyPair = {
@@ -170,10 +170,10 @@ export function createQuantumResistantMiddleware(
     ...config
   };
   
-  // Ensure server key pair is generated (async: any)
+  // Ensure server key pair is generated (async)
   generateServerKeyPair().catch(console.error);
   
-  // Log initialization (async: any)
+  // Log initialization (async)
   securityBlockchain.addSecurityEvent({
     category: SecurityEventCategory.CRYPTOGRAPHY,
     severity: SecurityEventSeverity.INFO,
@@ -196,14 +196,14 @@ export function createQuantumResistantMiddleware(
     
     // Check if the path is exempt
     const path = req.path;
-    if (mergedConfig.exemptPaths.some(exemptPath => path.startsWith(exemptPath: any))) {
+    if (mergedConfig.exemptPaths.some(exemptPath => path.startsWith(exemptPath))) {
       next();
       return;
     }
     
     // Check if the path should be protected
     const shouldProtect = mergedConfig.protectedPaths.some(protectedPath => 
-      path.startsWith(protectedPath: any)
+      path.startsWith(protectedPath)
     );
     
     if (!shouldProtect) {
@@ -224,7 +224,7 @@ export function createQuantumResistantMiddleware(
         
         try {
           // Verify the signature
-          const verificationResult = await qrc.verify(dataToVerify: any, signatureHeader: any, clientPublicKey: any);
+          const verificationResult = await qrc.verify(dataToVerify, signatureHeader, clientPublicKey);
           
           if (!verificationResult.valid) {
             // Log invalid signature
@@ -241,7 +241,7 @@ export function createQuantumResistantMiddleware(
               }
             });
             
-            return res.status(403: any).json({
+            return res.status(403).json({
               error: 'Invalid signature',
               message: 'The request signature failed validation'
             });
@@ -259,7 +259,7 @@ export function createQuantumResistantMiddleware(
               timestamp: new Date().toISOString()
             }
           });
-        } catch (verifyError: any) {
+        } catch (verifyError) {
           // Log verification error
           await securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -274,7 +274,7 @@ export function createQuantumResistantMiddleware(
             }
           });
           
-          return res.status(400: any).json({
+          return res.status(400).json({
             error: 'Signature verification error',
             message: 'An error occurred while verifying the request signature'
           });
@@ -285,7 +285,7 @@ export function createQuantumResistantMiddleware(
       if (mergedConfig.encryptResponses && clientPublicKey) {
         const originalJson = res.json;
         
-        res.json = function(body: any) {
+        res.json = function(body) {
           // Process the response body to encrypt sensitive fields
           processResponseBody(
             body,
@@ -294,12 +294,12 @@ export function createQuantumResistantMiddleware(
             mergedConfig.encryptionAlgorithm
           ).then(processedBody => {
             // Add the server's public key to the response headers
-            if (serverKeyPair: any) {
+            if (serverKeyPair) {
               res.setHeader('X-Quantum-Public-Key', serverKeyPair.publicKey);
             }
             
             // Call the original json method with the processed body
-            return originalJson.call(this: any, processedBody: any);
+            return originalJson.call(this, processedBody);
           }).catch(error => {
             // Log encryption error but still send unencrypted response
             console.error('Error encrypting response:', error);
@@ -317,7 +317,7 @@ export function createQuantumResistantMiddleware(
             }).catch(console.error);
             
             // Send original unencrypted body
-            return originalJson.call(this: any, body: any);
+            return originalJson.call(this, body);
           });
           
           // Return res for chaining
@@ -327,7 +327,7 @@ export function createQuantumResistantMiddleware(
       
       // Continue to the next middleware
       next();
-    } catch (error: any) {
+    } catch (error) {
       // Log the error
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -344,7 +344,7 @@ export function createQuantumResistantMiddleware(
       }).catch(console.error);
       
       // Pass the error to the next middleware
-      next(error: any);
+      next(error);
     }
   };
 }
@@ -353,7 +353,7 @@ export function createQuantumResistantMiddleware(
  * Process a response body to encrypt sensitive fields
  */
 async function processResponseBody(
-  body: any,
+  body,
   clientPublicKey: string,
   sensitiveFields: string[],
   algorithm: QuantumResistantAlgorithm
@@ -364,15 +364,15 @@ async function processResponseBody(
   }
   
   // Create a copy of the body
-  const result = Array.isArray(body: any) ? [...body] : { ...body };
+  const result = Array.isArray(body) ? [...body] : { ...body };
   
   // Process each key in the body
-  for (const key in body: any) {
-    if (Object.prototype.hasOwnProperty.call(body: any, key: any)) {
+  for (const key in body) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
       const value = body[key];
       
       // If the key is a sensitive field and the value is a string, encrypt it
-      if (sensitiveFields.includes(key: any) && typeof value === 'string') {
+      if (sensitiveFields.includes(key) && typeof value === 'string') {
         try {
           // Encrypt the value
           const encryptionResult = await qrc.encrypt(value, clientPublicKey, {
@@ -380,8 +380,8 @@ async function processResponseBody(
           });
           
           // Replace the original value with the encrypted one
-          if (Array.isArray(result: any)) {
-            result[parseInt(key: any)] = {
+          if (Array.isArray(result)) {
+            result[parseInt(key)] = {
               __encrypted: true,
               algorithm,
               value: encryptionResult
@@ -393,17 +393,17 @@ async function processResponseBody(
               value: encryptionResult
             };
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Error encrypting field '${key}':`, error);
           // Keep the original value if encryption fails
         }
       }
       // If the value is an object or array, recursively process it
       else if (typeof value === 'object' && value !== null) {
-        if (Array.isArray(result: any)) {
-          result[parseInt(key: any)] = await processResponseBody(value: any, clientPublicKey: any, sensitiveFields: any, algorithm: any);
+        if (Array.isArray(result)) {
+          result[parseInt(key)] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
         } else {
-          result[key] = await processResponseBody(value: any, clientPublicKey: any, sensitiveFields: any, algorithm: any);
+          result[key] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
         }
       }
     }
@@ -429,9 +429,9 @@ export function createPublicKeyEndpointMiddleware(): RequestHandler {
         algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
         signatureAlgorithm: DEFAULT_CONFIG.signatureAlgorithm
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error in public key endpoint:', error);
-      res.status(500: any).json({
+      res.status(500).json({
         error: 'Internal Server Error',
         message: 'An error occurred while retrieving the server public key'
       });

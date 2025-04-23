@@ -52,19 +52,19 @@ export function cache(duration = DEFAULT_CACHE_DURATION) {
     const cacheKey = `${req.originalUrl || req.url}`;
     
     // Check if we have a cached response
-    const cachedResponse = apiCache.get(cacheKey: any);
-    if (cachedResponse: any) {
+    const cachedResponse = apiCache.get(cacheKey);
+    if (cachedResponse) {
       // Add cache header
       res.setHeader('X-Cache', 'HIT');
       // @ts-ignore - Response type issue
-  return res.json(cachedResponse: any);
+  return res.json(cachedResponse);
     }
     
     // Store the original json method
     const originalJson = res.json;
     
     // Override the json method to cache the response
-    res.json = function(body: any) {
+    res.json = function(body) {
       // Store in cache
       apiCache.set(cacheKey, body, {
         ttl: duration * 1000, // Convert to milliseconds
@@ -74,7 +74,7 @@ export function cache(duration = DEFAULT_CACHE_DURATION) {
       res.setHeader('X-Cache', 'MISS');
       
       // Call the original method
-      return originalJson.call(this: any, body: any);
+      return originalJson.call(this, body);
     };
     
     next();
@@ -95,11 +95,11 @@ export function clearCache(pattern?: string): number {
   
   // Clear specific entries that match the pattern
   let count = 0;
-  const regex = new RegExp(pattern: any);
+  const regex = new RegExp(pattern);
   
-  apiCache.forEach((value: any, key: any) => {
-    if (regex.test(key: any)) {
-      apiCache.delete(key: any);
+  apiCache.forEach((value, key) => {
+    if (regex.test(key)) {
+      apiCache.delete(key);
       count++;
     }
   });
@@ -115,7 +115,7 @@ export function optimizedCompression() {
   return compression({
     level: DEFAULT_COMPRESSION_LEVEL,
     threshold: 1024, // Only compress responses larger than 1KB
-    filter: (req: any, res: any) => {
+    filter: (req, res) => {
       // Don't compress responses for older browsers without proper support
       if (req.headers['user-agent'] && 
           (/MSIE [1-6]\./.test(req.headers['user-agent'] as string))) {
@@ -123,7 +123,7 @@ export function optimizedCompression() {
       }
       
       // Use standard compression filter
-      return compression.filter(req: any, res: any);
+      return compression.filter(req, res);
     },
   });
 }
@@ -138,11 +138,11 @@ export function responseTime() {
     
     // Function to finish timing when response is complete
     const finishTiming = () => {
-      const diff = process.hrtime(start: any);
+      const diff = process.hrtime(start);
       const time = diff[0] * 1e3 + diff[1] * 1e-6; // Convert to milliseconds
       
       // Store metrics
-      metrics.responseTimes.push(time: any);
+      metrics.responseTimes.push(time);
       metrics.totalRequests++;
       
       // Keep only the last 100 response times
@@ -151,7 +151,7 @@ export function responseTime() {
       }
       
       // Calculate average
-      const sum = metrics.responseTimes.reduce((total: any, t: any) => total + t, 0);
+      const sum = metrics.responseTimes.reduce((total, t) => total + t, 0);
       metrics.averageResponseTime = sum / metrics.responseTimes.length;
       
       // Track slowest request
@@ -163,7 +163,7 @@ export function responseTime() {
       }
       
       // Add response time header
-      res.setHeader('X-Response-Time', `${time.toFixed(2: any)}ms`);
+      res.setHeader('X-Response-Time', `${time.toFixed(2)}ms`);
       
       // Emit metrics event
       ServerEvents.emit('performance.response', {
@@ -175,7 +175,7 @@ export function responseTime() {
       
       // Log slow responses
       if (time > 1000) {
-        console.warn(`[Performance] Slow response (${time.toFixed(2: any)}ms): ${req.method} ${req.originalUrl || req.url}`);
+        console.warn(`[Performance] Slow response (${time.toFixed(2)}ms): ${req.method} ${req.originalUrl || req.url}`);
       }
     };
     
@@ -198,16 +198,16 @@ export function payloadSizeLimit(limit = DEFAULT_PAYLOAD_LIMIT) {
     // This is a simplified implementation
     
     // Parse the limit to bytes
-    const maxSize = typeof limit === 'string' ? bytes.parse(limit: any) : limit;
+    const maxSize = typeof limit === 'string' ? bytes.parse(limit) : limit;
     
     // Check content length if available
     const contentLength = req.headers['content-length'];
-    if (contentLength: any) {
-      const size = parseInt(contentLength: any, 10: any);
+    if (contentLength) {
+      const size = parseInt(contentLength, 10);
       if (size > maxSize) {
         const err = new Error(`Request body too large: ${size} bytes (max: ${maxSize} bytes)`);
         err.name = 'PayloadTooLargeError';
-        return next(err: any);
+        return next(err);
       }
     }
     
@@ -263,7 +263,7 @@ export function dbQueryOptimization() {
  */
 export function performanceHeaders() {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Add Server-Timing header (supports Chrome: any, Firefox: any, Edge: any)
+    // Add Server-Timing header (supports Chrome, Firefox, Edge)
     res.setHeader('Server-Timing', 'app;desc="Application Server"');
     
     // Add performance-related security headers
@@ -278,7 +278,7 @@ export function performanceHeaders() {
  * @param app Express application
  * @param config Server configuration
  */
-export function initializePerformanceMiddleware(app: any, config: ServerConfig) {
+export function initializePerformanceMiddleware(app, config: ServerConfig) {
   // Apply optimized compression
   app.use(optimizedCompression());
   

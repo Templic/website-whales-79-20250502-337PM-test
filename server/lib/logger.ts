@@ -52,14 +52,14 @@ class Logger {
   }
 
   /**
-   * Debug level logging (verbose information for debugging: any)
+   * Debug level logging (verbose information for debugging)
    */
   debug(message: string, ...args: any[]): void {
     console.debug(this.formatMessage('debug', message), ...args);
   }
 
   /**
-   * Info level logging (general information about application operation: any)
+   * Info level logging (general information about application operation)
    */
   info(message: string, ...args: any[]): void {
     console.info(this.formatMessage('info', message), ...args);
@@ -73,7 +73,7 @@ class Logger {
   }
 
   /**
-   * Error level logging (errors that may prevent proper operation: any)
+   * Error level logging (errors that may prevent proper operation)
    */
   error(message: string, ...args: any[]): void {
     console.error(this.formatMessage('error', message), ...args);

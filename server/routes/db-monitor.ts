@@ -5,7 +5,7 @@ import { triggerDatabaseMaintenance } from '../db-optimize';
 
 class MonitoringError extends Error {
     constructor(message: string, options?: { cause?: any }) {
-        super(message: any);
+        super(message);
         this.name = 'MonitoringError';
         if (options && options.cause) {
             this.cause = options.cause;
@@ -19,12 +19,12 @@ const router = express.Router();
 const formatSize = (bytes: number): string => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   if (bytes === 0) return '0 Bytes';
-  const i = Math.floor(Math.log(bytes: any) / Math.log(1024: any));
-  return parseFloat((bytes / Math.pow(1024: any, i: any)).toFixed(2: any)) + ' ' + sizes[i];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 // GET /api/admin/db-monitor/status - Get database status information
-router.get('/status', async (req: any, res) => {
+router.get('/status', async (req, res) => {
   try {
     const client = await pool.connect();
     try {
@@ -94,7 +94,7 @@ router.get('/status', async (req: any, res) => {
         status: 'connected',
         time: new Date().toISOString(),
         database_size: {
-          size: formatSize(databaseSize: any),
+          size: formatSize(databaseSize),
           size_bytes: databaseSize
         },
         pool_stats: poolStats,
@@ -104,9 +104,9 @@ router.get('/status', async (req: any, res) => {
     } finally {
       client.release();
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Database monitor status error:', error);
-    res.status(500: any).json({ 
+    res.status(500).json({ 
       status: 'error', 
       message: 'Failed to retrieve database status',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -115,16 +115,16 @@ router.get('/status', async (req: any, res) => {
 });
 
 // POST /api/admin/db-monitor/maintenance/:task - Trigger maintenance task
-router.post('/maintenance/:task', async (req: any, res) => {
+router.post('/maintenance/:task', async (req, res) => {
   try {
     if (req.user?.role !== 'super_admin') {
-      return res.status(403: any).json({ status: 'error', message: 'Unauthorized. Super admin access required.' });
+      return res.status(403).json({ status: 'error', message: 'Unauthorized. Super admin access required.' });
     }
 
     const { task } = req.params;
 
-    if (!['vacuum', 'reindex', 'analyze'].includes(task: any)) {
-      return res.status(400: any).json({ 
+    if (!['vacuum', 'reindex', 'analyze'].includes(task)) {
+      return res.status(400).json({ 
         status: 'error', 
         message: 'Invalid task. Must be one of: vacuum, reindex, analyze' 
       });
@@ -139,9 +139,9 @@ router.post('/maintenance/:task', async (req: any, res) => {
       taskType: task,
       jobId: jobId
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Maintenance task error:', error);
-    res.status(500: any).json({ 
+    res.status(500).json({ 
       status: 'error', 
       message: 'Failed to schedule maintenance task',
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -150,7 +150,7 @@ router.post('/maintenance/:task', async (req: any, res) => {
 });
 
 // GET /api/admin/db-monitor/query-stats - Get statistics on database queries
-router.get('/query-stats', async (req: any, res: any) => {
+router.get('/query-stats', async (req, res) => {
   try {
     const client = await pool.connect();
 
@@ -193,7 +193,7 @@ router.get('/query-stats', async (req: any, res: any) => {
         status: 'success',
         query_stats: statsResult.rows
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Query stats error:', error);
 
       if (error instanceof Error && error.message && error.message.includes('pg_stat_statements')) {
@@ -203,7 +203,7 @@ router.get('/query-stats', async (req: any, res: any) => {
           query_stats: []
         });
       } else {
-        res.status(500: any).json({
+        res.status(500).json({
           status: 'error',
           message: 'Failed to retrieve query statistics',
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -213,9 +213,9 @@ router.get('/query-stats', async (req: any, res: any) => {
     } finally {
       client.release();
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Database connection error:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       status: 'connection_error',
       message: 'Failed to connect to the database',
       error: error instanceof Error ? error.message : 'Unknown error',

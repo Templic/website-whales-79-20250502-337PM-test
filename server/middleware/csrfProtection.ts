@@ -1,7 +1,7 @@
 /**
  * CSRF Protection Middleware
  * 
- * This module provides middleware for protecting against Cross-Site Request Forgery (CSRF: any) attacks.
+ * This module provides middleware for protecting against Cross-Site Request Forgery (CSRF) attacks.
  * It implements a token-based approach with double submit cookies.
  */
 
@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 
-// Token expiration time (2 hours: any)
+// Token expiration time (2 hours)
 const TOKEN_EXPIRATION = 2 * 60 * 60 * 1000;
 
 // Token size in bytes
@@ -30,7 +30,7 @@ const DEBUG_MODE = process.env.NODE_ENV !== 'production';
  */
 export const generateToken = (req: Request): string: string => {
   // Create a random token
-  const token = crypto.randomBytes(TOKEN_SIZE: any).toString('hex');
+  const token = crypto.randomBytes(TOKEN_SIZE).toString('hex');
   
   // Generate an expiration date
   const expires = new Date(Date.now() + TOKEN_EXPIRATION);
@@ -49,8 +49,8 @@ export const generateToken = (req: Request): string: string => {
     used: false
   };
   
-  // Log token generation (only in debug mode: any)
-  if (DEBUG_MODE: any) {
+  // Log token generation (only in debug mode)
+  if (DEBUG_MODE) {
     console.log('[SECURITY] DEBUG - CSRF_TOKEN_GENERATED:', {
       sessionId,
       expires,
@@ -80,7 +80,7 @@ export const validateToken = (req: Request, token: string): boolean => {
     return false;
   }
   
-  // Check if token has already been used (if strict mode is enabled: any)
+  // Check if token has already been used (if strict mode is enabled)
   if (tokenData.used) {
     return false;
   }
@@ -99,7 +99,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   // Skip CSRF protection for non-mutating methods
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     // Still set the CSRF token cookie for client-side usage
-    const token = generateToken(req: any);
+    const token = generateToken(req);
     res.cookie(CSRF_COOKIE_NAME, token, {
       httpOnly: false, // Allow JavaScript access
       secure: process.env.NODE_ENV === 'production', // Secure in production
@@ -115,7 +115,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
     req.body._csrf;
   
   // Check if token is valid
-  if (!token || !validateToken(req: any, token: any)) {
+  if (!token || !validateToken(req, token)) {
     // Log CSRF failure
     securityBlockchain.recordEvent({
       severity: SecurityEventSeverity.HIGH,
@@ -132,7 +132,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
       timestamp: new Date()
     });
     
-    res.status(403: any).json({
+    res.status(403).json({
       error: 'Invalid CSRF token',
       message: 'Failed to validate CSRF token. Please try again.'
     });
@@ -140,7 +140,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   }
   
   // Generate a new token for the next request
-  const newToken = generateToken(req: any);
+  const newToken = generateToken(req);
   res.cookie(CSRF_COOKIE_NAME, newToken, {
     httpOnly: false, // Allow JavaScript access
     secure: process.env.NODE_ENV === 'production', // Secure in production

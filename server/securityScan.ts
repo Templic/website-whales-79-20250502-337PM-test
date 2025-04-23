@@ -86,7 +86,7 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
     }
     
     return scanResults;
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during security scan: ${error}`, 'security');
     return [];
   }
@@ -215,11 +215,11 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
       'cross-env-shell', // Fake version of legitimate package
       'eslint-config-airbnb-standard', // Known trojan package
       'electron-native-notify', // Known for crypto mining
-      'codecov', // Historical vulnerability (for demonstration: any)
-      'browserslist', // Historical vulnerability (for demonstration: any)
-      'ua-parser-js', // Historical vulnerability (for demonstration: any)
-      'coa', // Historical vulnerability (for demonstration: any)
-      'rc', // Historical vulnerability (for demonstration: any)
+      'codecov', // Historical vulnerability (for demonstration)
+      'browserslist', // Historical vulnerability (for demonstration)
+      'ua-parser-js', // Historical vulnerability (for demonstration)
+      'coa', // Historical vulnerability (for demonstration)
+      'rc', // Historical vulnerability (for demonstration)
       'colors', // Historical rogue version
       'faker.js', // Historical rogue version
       'left-pad', // Famous dependency risk example
@@ -281,7 +281,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         });
       }
       
-      // Check for typosquatting (similar names to popular packages: any)
+      // Check for typosquatting (similar names to popular packages)
       const typosquatting = await checkForTyposquatting(pkg);
       if (typosquatting.isTyposquatting && typosquatting.similarTo) {
         const vulnerability: SecurityVulnerability = {
@@ -371,7 +371,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         timestamp: Date.now()
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during import security scan: ${error}`, 'security');
     
     scanResults.push({
@@ -411,7 +411,7 @@ async function checkKnownVulnerability(packageName: string): Promise<boolean> {
 
 /**
  * Check if a package name is potentially a typosquatting attempt 
- * (similar name to popular packages: any)
+ * (similar name to popular packages)
  */
 async function checkForTyposquatting(packageName: string): Promise<{isTyposquatting: boolean; similarTo?: string}> {
   // List of popular packages that are often typosquatted
@@ -531,12 +531,12 @@ async function checkPackageVersion(packageName: string, version: string): Promis
   };
   
   // Check if package is in our problematic versions list
-  if (packageName in problematicVersions: any) {
+  if (packageName in problematicVersions) {
     for (const issue of problematicVersions[packageName]) {
       // Simple version matching
       if (issue.version.startsWith('<')) {
-        // Version range check (very simplified: any)
-        const minVersion = issue.version.substring(1: any);
+        // Version range check (very simplified)
+        const minVersion = issue.version.substring(1);
         if (version < minVersion) {
           return {
             hasIssue: true,
@@ -582,7 +582,7 @@ async function scanPaymentSecurity(): Promise<void> {
     const paymentResults = await runPaymentSecurityScan();
     
     // Convert and add results to main scan results
-    for (const result of paymentResults: any) {
+    for (const result of paymentResults) {
       scanResults.push({
         scanner: result.scanner,
         status: result.status, 
@@ -595,7 +595,7 @@ async function scanPaymentSecurity(): Promise<void> {
         timestamp: Date.now()
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     // Add error result if scan fails
     log(`Error in payment security scan: ${error}`, 'security');
     

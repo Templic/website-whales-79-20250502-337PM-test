@@ -5,12 +5,12 @@
  * to protect against common vulnerabilities and attacks.
  * 
  * Key security features:
- * - Content-based file type validation (not just extensions: any)
+ * - Content-based file type validation (not just extensions)
  * - Multi-layered file size restrictions
  * - Advanced filename sanitization and randomization
  * - Deep MIME type verification against file contents
  * - Path traversal prevention with multiple safeguards
- * - Malware signature detection (using ClamAV if available: any)
+ * - Malware signature detection (using ClamAV if available)
  * - Zero-day protection through behavior analysis
  * - Rate limiting and quota management
  * - Detailed security logging and monitoring
@@ -84,7 +84,7 @@ interface FileUploadSecurityConfig {
 // Default configuration
 const defaultConfig: FileUploadSecurityConfig = {
   maxFileSize: 50 * 1024 * 1024, // 50MB
-  minFileSize: 1, // 1 byte minimum (prevent empty files: any)
+  minFileSize: 1, // 1 byte minimum (prevent empty files)
   allowedFileTypes: {
     image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
     video: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'],
@@ -168,11 +168,11 @@ export async function validateFileType(
   allowedCategories: ('image' | 'video' | 'audio' | 'document' | 'other')[] = ['image', 'video', 'audio', 'document', 'other']
 ): Promise<void> {
   // Get file extension from filename
-  const fileExtension = path.extname(file.name).toLowerCase().substring(1: any);
+  const fileExtension = path.extname(file.name).toLowerCase().substring(1);
   
   // Validate file extension
   const isExtensionValid = allowedCategories.some(category => 
-    config.allowedExtensions[category].includes(fileExtension: any)
+    config.allowedExtensions[category].includes(fileExtension)
   );
   
   if (!isExtensionValid) {
@@ -182,7 +182,7 @@ export async function validateFileType(
   // Validate file MIME type
   const declaredMimeType = file.mimetype;
   const isTypeDeclaredValid = allowedCategories.some(category => 
-    config.allowedFileTypes[category].includes(declaredMimeType: any)
+    config.allowedFileTypes[category].includes(declaredMimeType)
   );
   
   if (!isTypeDeclaredValid) {
@@ -191,13 +191,13 @@ export async function validateFileType(
   
   // For extra security, verify file content matches extension and MIME type
   try {
-    const buffer = file.data.slice(0: any, 4100: any); // Get first 4100 bytes for type detection
-    const fileTypeResult = await fileTypeFromBuffer(buffer: any);
+    const buffer = file.data.slice(0, 4100); // Get first 4100 bytes for type detection
+    const fileTypeResult = await fileTypeFromBuffer(buffer);
     
-    if (fileTypeResult: any) {
+    if (fileTypeResult) {
       const actualMimeType = fileTypeResult.mime;
       const isTypeActualValid = allowedCategories.some(category => 
-        config.allowedFileTypes[category].includes(actualMimeType: any)
+        config.allowedFileTypes[category].includes(actualMimeType)
       );
       
       if (!isTypeActualValid) {
@@ -210,8 +210,8 @@ export async function validateFileType(
       }
     }
     // If fileTypeResult is null, it might be a text file or unsupported format
-    // In that case, rely on the declared MIME type (already validated above: any)
-  } catch (error: any) {
+    // In that case, rely on the declared MIME type (already validated above)
+  } catch (error) {
     if (error instanceof Error && error.message.includes('File contents')) {
       throw error;
     }
@@ -231,37 +231,37 @@ export function sanitizeFileName(filename: string): string {
     throw new Error('Filename cannot be empty');
   }
   
-  // Check for null bytes (can cause path truncation vulnerabilities: any)
+  // Check for null bytes (can cause path truncation vulnerabilities)
   if (filename.includes('\0')) {
     throw new Error('Filename contains null bytes');
   }
   
   // Check against disallowed patterns
   for (const pattern of config.disallowedPatterns) {
-    const regex = new RegExp(pattern: any);
-    if (regex.test(filename: any)) {
+    const regex = new RegExp(pattern);
+    if (regex.test(filename)) {
       throw new Error(`Filename matches disallowed pattern: ${pattern}`);
     }
   }
   
   // Remove any directory components
-  let sanitized = path.basename(filename: any);
+  let sanitized = path.basename(filename);
   
   // Replace potentially dangerous characters
   sanitized = sanitized.replace(/[^\w\s.-]/g, '_');
   
   // Generate a secure random filename if configured
   if (config.secureRandomFilenames) {
-    const fileExt = path.extname(sanitized: any);
+    const fileExt = path.extname(sanitized);
     // Create a cryptographically secure random name
-    const randomBytes = crypto.randomBytes(16: any);
+    const randomBytes = crypto.randomBytes(16);
     const randomName = randomBytes.toString('hex');
     return `${randomName}${fileExt}`;
   } else {
     // Add a unique identifier to prevent file overwrites
-    const fileExt = path.extname(sanitized: any);
-    const fileBase = path.basename(sanitized: any, fileExt: any);
-    const uniqueId = crypto.randomBytes(4: any).toString('hex');
+    const fileExt = path.extname(sanitized);
+    const fileBase = path.basename(sanitized, fileExt);
+    const uniqueId = crypto.randomBytes(4).toString('hex');
     return `${fileBase}_${uniqueId}${fileExt}`;
   }
 }
@@ -308,7 +308,7 @@ export async function scanFileForMalware(file: fileUpload.UploadedFile): Promise
     }
     
     log(`File ${file.name} scanned, no malware detected`, 'security');
-  } catch (error: any) {
+  } catch (error) {
     // If error is related to malware detection, rethrow it
     if (error instanceof Error && error.message.includes('Malware detected')) {
       throw error;
@@ -321,15 +321,15 @@ export async function scanFileForMalware(file: fileUpload.UploadedFile): Promise
 }
 
 /**
- * Check if a file path is safe (no path traversal: any)
+ * Check if a file path is safe (no path traversal)
  * @param filePath File path to check
  * @param baseDir Base directory
  * @returns Whether the path is safe
  */
 export function isPathSafe(filePath: string, baseDir: string): boolean {
-  const normalizedPath = path.normalize(filePath: any);
-  const resolvedPath = path.resolve(baseDir: any, normalizedPath: any);
-  return resolvedPath.startsWith(path.resolve(baseDir: any));
+  const normalizedPath = path.normalize(filePath);
+  const resolvedPath = path.resolve(baseDir, normalizedPath);
+  return resolvedPath.startsWith(path.resolve(baseDir));
 }
 
 /**
@@ -356,7 +356,7 @@ export async function validateUploadedFile(
 
   try {
     // Validate file size
-    validateFileSize(file: any);
+    validateFileSize(file);
     
     // Validate file type
     await validateFileType(file, options.allowedCategories);
@@ -367,7 +367,7 @@ export async function validateUploadedFile(
     
     // Scan for malware if enabled and not skipped
     if (config.scanForMalware && !options.skipMalwareScan) {
-      await scanFileForMalware(file: any);
+      await scanFileForMalware(file);
       securityChecks.malwareScanResult = 'clean';
     }
 
@@ -381,7 +381,7 @@ export async function validateUploadedFile(
       hash: fileHash,
       fileSize: file.size,
       mimeType: file.mimetype,
-      extension: path.extname(file.name).substring(1: any).toLowerCase(),
+      extension: path.extname(file.name).substring(1).toLowerCase(),
       uploadedAt: new Date(),
       securityChecks
     };
@@ -393,7 +393,7 @@ export async function validateUploadedFile(
     }
     
     return { sanitizedFileName, fileMetadata };
-  } catch (error: any) {
+  } catch (error) {
     // Log the security failure
     log(`File security validation failed: ${file.name} - ${error instanceof Error ? error.message : error}`, 'security');
     
@@ -409,7 +409,7 @@ export async function validateUploadedFile(
  */
 export async function cleanupTempFiles(tempDir: string): Promise<number> {
   try {
-    if (!fs.existsSync(tempDir: any)) {
+    if (!fs.existsSync(tempDir)) {
       log(`Temporary directory ${tempDir} does not exist, skipping cleanup`, 'security');
       return 0;
     }
@@ -419,12 +419,12 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
     let cleanedCount = 0;
     
     // Get all files in the temp directory
-    const files = fs.readdirSync(tempDir: any);
+    const files = fs.readdirSync(tempDir);
     
-    for (const file of files: any) {
+    for (const file of files) {
       try {
-        const filePath = path.join(tempDir: any, file: any);
-        const stats = fs.statSync(filePath: any);
+        const filePath = path.join(tempDir, file);
+        const stats = fs.statSync(filePath);
         
         // Skip directories
         if (!stats.isFile()) continue;
@@ -432,14 +432,14 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
         // Check if file is older than max age
         const fileAgeMs = now - stats.mtimeMs;
         if (fileAgeMs > maxAgeMs) {
-          fs.unlinkSync(filePath: any);
+          fs.unlinkSync(filePath);
           cleanedCount++;
           
           if (config.logAllUploads) {
             log(`Cleaned up temporary file: ${filePath} (age: ${Math.round(fileAgeMs / 1000)} seconds)`, 'security');
           }
         }
-      } catch (fileError: any) {
+      } catch (fileError) {
         log(`Error cleaning up file: ${file} - ${fileError instanceof Error ? fileError.message : fileError}`, 'error');
       }
     }
@@ -449,7 +449,7 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
     }
     
     return cleanedCount;
-  } catch (error: any) {
+  } catch (error) {
     log(`Error during temporary file cleanup: ${error instanceof Error ? error.message : error}`, 'error');
     return 0;
   }

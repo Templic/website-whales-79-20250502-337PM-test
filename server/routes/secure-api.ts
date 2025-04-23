@@ -47,9 +47,9 @@ router.get('/status', async (req: Request, res: Response) => {
         apiSecurity: 'active'
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in security status endpoint:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve security status'
     });
@@ -69,7 +69,7 @@ router.get('/info', async (req: Request, res: Response) => {
         'Quantum-resistant cryptography',
         'Blockchain-based immutable audit logging',
         'Machine learning-based anomaly detection',
-        'Runtime Application Self-Protection (RASP: any)',
+        'Runtime Application Self-Protection (RASP)',
         'API security and input validation',
         'Security fabric for inter-component communication'
       ],
@@ -87,9 +87,9 @@ router.get('/info', async (req: Request, res: Response) => {
         'Tamper-evident logging'
       ]
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in security info endpoint:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve security information'
     });
@@ -130,9 +130,9 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
       publicKey: keyPair.publicKey,
       privateKey: keyPair.privateKey
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating quantum-resistant key pair:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to generate quantum-resistant key pair'
     });
@@ -149,7 +149,7 @@ router.post('/encrypt', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!data || !publicKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data and publicKey'
       });
@@ -170,7 +170,7 @@ router.post('/encrypt', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data: any).length,
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
         timestamp: new Date().toISOString()
       }
     });
@@ -180,9 +180,9 @@ router.post('/encrypt', async (req: Request, res: Response) => {
       encrypted,
       algorithm
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error encrypting data:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt data'
     });
@@ -199,7 +199,7 @@ router.post('/decrypt', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!encrypted || !privateKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: encrypted and privateKey'
       });
@@ -229,9 +229,9 @@ router.post('/decrypt', async (req: Request, res: Response) => {
       decrypted,
       algorithm
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error decrypting data:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt data'
     });
@@ -248,7 +248,7 @@ router.post('/sign', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!data || !privateKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data and privateKey'
       });
@@ -269,7 +269,7 @@ router.post('/sign', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data: any).length,
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
         timestamp: new Date().toISOString()
       }
     });
@@ -279,9 +279,9 @@ router.post('/sign', async (req: Request, res: Response) => {
       signature,
       algorithm
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error signing data:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to sign data'
     });
@@ -298,7 +298,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!data || !signature || !publicKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data, signature, and publicKey'
       });
@@ -321,7 +321,7 @@ router.post('/verify', async (req: Request, res: Response) => {
         reason: result.reason,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data: any).length,
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
         timestamp: new Date().toISOString()
       }
     });
@@ -332,9 +332,9 @@ router.post('/verify', async (req: Request, res: Response) => {
       reason: result.reason,
       algorithm
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error verifying signature:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to verify signature'
     });

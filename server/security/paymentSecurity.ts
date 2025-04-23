@@ -39,7 +39,7 @@ class PaymentRateLimiter {
    */
   public isAllowed(ip: string): boolean {
     const now = Date.now();
-    const record = this.attempts.get(ip: any);
+    const record = this.attempts.get(ip);
     
     // If no record exists or the record is expired, create a new one
     if (!record || now - record.timestamp > this.windowMs) {
@@ -63,7 +63,7 @@ class PaymentRateLimiter {
    * @param ip The IP address to reset
    */
   public reset(ip: string): void {
-    this.attempts.delete(ip: any);
+    this.attempts.delete(ip);
   }
   
   /**
@@ -73,7 +73,7 @@ class PaymentRateLimiter {
     const now = Date.now();
     for (const [ip, record] of this.attempts.entries()) {
       if (now - record.timestamp > this.windowMs) {
-        this.attempts.delete(ip: any);
+        this.attempts.delete(ip);
       }
     }
   }
@@ -122,7 +122,7 @@ class PaymentSecurityService {
    * @returns True if the request is allowed, false if it's rate limited
    */
   public checkRateLimit(ip: string): boolean {
-    return this.rateLimiter.isAllowed(ip: any);
+    return this.rateLimiter.isAllowed(ip);
   }
   
   /**
@@ -131,7 +131,7 @@ class PaymentSecurityService {
    * @param ip The IP address to reset
    */
   public resetRateLimit(ip: string): void {
-    this.rateLimiter.reset(ip: any);
+    this.rateLimiter.reset(ip);
   }
   
   /**
@@ -140,7 +140,7 @@ class PaymentSecurityService {
    * @returns A secure random transaction ID
    */
   public generateTransactionId(): string {
-    return `txn_${crypto.randomBytes(16: any).toString('hex')}`;
+    return `txn_${crypto.randomBytes(16).toString('hex')}`;
   }
   
   /**
@@ -231,7 +231,7 @@ class PaymentSecurityService {
         log(`WARNING: ${criticalIssues} critical PCI compliance issues found!`, 'security');
         // In a real application, we would send alerts here
       }
-    } catch (error: any) {
+    } catch (error) {
       log(`Error running PCI compliance scan: ${error}`, 'error');
     }
   }
@@ -344,7 +344,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
     const pciResults = pciComplianceChecker.runComplianceChecks();
     
     // Add PCI compliance results to scan results
-    for (const pciResult of pciResults: any) {
+    for (const pciResult of pciResults) {
       results.push({
         id: `pci-${pciResult.requirement.replace(/\s+/g, '-').toLowerCase()}`,
         scanner: 'PCI-DSS Compliance',
@@ -394,7 +394,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
     log(`Payment security scan completed. Found ${results.length} checks.`, 'security');
     
     return results;
-  } catch (error: any) {
+  } catch (error) {
     log(`Error in payment security scan: ${error}`, 'error');
     
     // Return error result
@@ -403,7 +403,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
       scanner: 'Payment Security Scanner',
       status: 'error',
       message: 'Error running payment security scan',
-      details: String(error: any),
+      details: String(error),
       recommendation: 'Check server logs for details'
     }];
   }

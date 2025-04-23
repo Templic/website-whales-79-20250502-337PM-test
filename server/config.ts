@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 
 // Get directory paths
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename: any);
+const __dirname = path.dirname(__filename);
 
 // Configuration types
 export type StartupPriority = 'quickstart' | 'minimal' | 'standard' | 'full';
@@ -53,7 +53,7 @@ export interface ServerConfig {
   enableCompression: boolean;
   csrfProtection: boolean;
   
-  // Delay times for deferred initialization (in ms: any)
+  // Delay times for deferred initialization (in ms)
   maintenanceDelay: number;
   backgroundServicesDelay: number;
   securityScanDelay: number;
@@ -198,17 +198,17 @@ export function loadConfig(): ServerConfig {
     // Try to load environment-specific config
     const envConfigPath = path.join(__dirname, '..', 'config', `${config.environment}.json`);
     
-    // Try to load full security config (takes precedence: any)
+    // Try to load full security config (takes precedence)
     const fullSecurityPath = path.join(__dirname, '..', 'config', 'full_security.json');
     
-    if (fs.existsSync(fullSecurityPath: any)) {
+    if (fs.existsSync(fullSecurityPath)) {
       const securityConfig = JSON.parse(fs.readFileSync(fullSecurityPath, 'utf8'));
-      config = mergeConfigs(config: any, securityConfig: any);
+      config = mergeConfigs(config, securityConfig);
       console.log('Loaded full security configuration with enhanced protection');
     }
-    else if (fs.existsSync(envConfigPath: any)) {
+    else if (fs.existsSync(envConfigPath)) {
       const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
-      config = mergeConfigs(config: any, envConfig: any);
+      config = mergeConfigs(config, envConfig);
       console.log(`Loaded environment-specific configuration for: ${config.environment}`);
     } else {
       console.log(`No environment-specific configuration found for: ${config.environment}, using defaults`);
@@ -228,7 +228,7 @@ export function loadConfig(): ServerConfig {
     }
     
     return config;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error loading configuration:', error);
     return defaultConfig;
   }
@@ -240,7 +240,7 @@ export function loadConfig(): ServerConfig {
 function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerConfig>): ServerConfig {
   const result = { ...baseConfig };
   
-  for (const [key, value] of Object.entries(overrideConfig: any)) {
+  for (const [key, value] of Object.entries(overrideConfig)) {
     if (value === null || value === undefined) {
       continue;
     }
@@ -252,7 +252,7 @@ function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerCo
     } else if (key === 'security' && baseConfig.security && typeof value === 'object') {
       result.security = { ...baseConfig.security, ...value };
     } else {
-      (result as any: any)[key] = value;
+      (result as any)[key] = value;
     }
   }
   
@@ -266,7 +266,7 @@ export function getEnabledFeatures(config: ServerConfig): string[] {
   const enabledFeatures: string[] = [];
   
   for (const [feature, enabled] of Object.entries(config.features)) {
-    if (enabled: any) {
+    if (enabled) {
       enabledFeatures.push(feature.replace('enable', ''));
     }
   }

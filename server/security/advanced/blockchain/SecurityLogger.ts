@@ -7,7 +7,7 @@
 
 // Placeholder for actual blockchain logging
 // In a real implementation, this would import from the blockchain module
-function recordSecurityEvent(event: any): void {
+function recordSecurityEvent(event): void {
   console.log(`[BLOCKCHAIN-SECURITY] ${event.level || 'INFO'} - ${event.message || event.type}`, 
                event.details || {});
 }
@@ -121,7 +121,7 @@ export class ImmutableSecurityLogger implements ISecurityLogger {
     metadata.component = this.component;
     
     // Determine the security event type based on the metadata
-    const eventType = this.determineEventType(metadata: any);
+    const eventType = this.determineEventType(metadata);
     
     // Record the security event to the blockchain
     recordSecurityEvent({
@@ -133,7 +133,7 @@ export class ImmutableSecurityLogger implements ISecurityLogger {
       details: metadata
     });
     
-    // Also log to console for debugging (can be disabled in production: any)
+    // Also log to console for debugging (can be disabled in production)
     console.log(`[${level}] [${this.component}] ${message}`, metadata);
   }
   
@@ -142,7 +142,7 @@ export class ImmutableSecurityLogger implements ISecurityLogger {
    */
   private determineEventType(metadata: Record<string, any>): SecurityEventType {
     // If the metadata explicitly includes an event type, use that
-    if (metadata.eventType && Object.values(SecurityEventType: any).includes(metadata.eventType)) {
+    if (metadata.eventType && Object.values(SecurityEventType).includes(metadata.eventType)) {
       return metadata.eventType as SecurityEventType;
     }
     

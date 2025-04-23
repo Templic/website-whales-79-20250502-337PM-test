@@ -43,7 +43,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
 
   // Security middleware
   app.use(helmet());
-  app.use((req: any, res: any, next: any) => {
+  app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
@@ -65,7 +65,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     credentials: true
   }));
 
-  // Optimized compression middleware (if enabled: any)
+  // Optimized compression middleware (if enabled)
   if (config.enableCompression) {
     // Use optimized compression with threshold and content-type filtering
     app.use(optimizedCompression());
@@ -83,28 +83,28 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     }
   };
 
-  app.use(expressSession.default(sessionConfig: any));
+  app.use(expressSession.default(sessionConfig));
 
-  // Rate limiting (if enabled: any)
+  // Rate limiting (if enabled)
   if (config.features.enableRateLimiting) {
-    app.use(defaultLimiter: any);
+    app.use(defaultLimiter);
   }
 
-  // CSRF protection (if enabled: any)
+  // CSRF protection (if enabled)
   if (config.csrfProtection) {
     app.use(csurf({ cookie: true }));
 
     // Add CSRF token to all responses
-    app.use((req: any, res: any, next: any) => {
+    app.use((req, res, next) => {
       res.locals.csrfToken = req.csrfToken?.();
       next();
     });
   }
 
   // Auth middleware
-  app.use(checkAuth: any);
-  app.use(safeUserMiddleware: any);
+  app.use(checkAuth);
+  app.use(safeUserMiddleware);
 
-  // Error handling middleware (should be last: any)
-  app.use(errorHandler: any);
+  // Error handling middleware (should be last)
+  app.use(errorHandler);
 }

@@ -112,9 +112,9 @@ function shouldCompress(req: Request, res: Response, options: CompressionOptions
     const matched = options.contentTypes.some(type => {
       if (type.endsWith('*')) {
         const prefix = type.slice(0, -1);
-        return contentType.startsWith(prefix: any);
+        return contentType.startsWith(prefix);
       }
-      return contentType.includes(type: any);
+      return contentType.includes(type);
     });
     
     if (!matched) {
@@ -156,7 +156,7 @@ function getBestCompressionMethod(req: Request, options: CompressionOptions): 'b
   const userAgent = req.headers['user-agent'] || '';
   
   // Check cache for user-agent capabilities
-  let capabilities = userAgentCache.get(userAgent: any);
+  let capabilities = userAgentCache.get(userAgent);
   
   if (!capabilities) {
     capabilities = {
@@ -166,8 +166,8 @@ function getBestCompressionMethod(req: Request, options: CompressionOptions): 'b
     };
     
     // Cache user-agent capabilities
-    if (userAgent: any) {
-      userAgentCache.set(userAgent: any, capabilities: any);
+    if (userAgent) {
+      userAgentCache.set(userAgent, capabilities);
       
       // Limit cache size
       if (userAgentCache.size > 1000) {
@@ -211,11 +211,11 @@ export function createCompressionMiddleware(options: CompressionOptions = {}) {
     threshold,
     level: config.level,
     memLevel: config.memLevel,
-    filter: (req: any, res: any) => {
+    filter: (req, res) => {
       if (config.forceCompression) {
         return true;
       }
-      return shouldCompress(req: any, res: any, config: any);
+      return shouldCompress(req, res, config);
     }
   });
   
@@ -232,7 +232,7 @@ export function createCompressionMiddleware(options: CompressionOptions = {}) {
     }
     
     // Apply compression
-    compressionMiddleware(req: any, res: any, next: any);
+    compressionMiddleware(req, res, next);
   };
 }
 
@@ -242,5 +242,5 @@ export function createCompressionMiddleware(options: CompressionOptions = {}) {
  * @returns Middleware for response compression
  */
 export default function setupResponseCompression(options: CompressionOptions = {}) {
-  return createCompressionMiddleware(options: any);
+  return createCompressionMiddleware(options);
 }

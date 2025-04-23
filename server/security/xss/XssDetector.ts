@@ -1,7 +1,7 @@
 /**
  * XSS Vulnerability Detector
  * 
- * This module provides tools to detect potential Cross-Site Scripting (XSS: any)
+ * This module provides tools to detect potential Cross-Site Scripting (XSS)
  * vulnerabilities in source code.
  */
 
@@ -203,11 +203,11 @@ export async function scanFileForXssVulnerabilities(filePath: string): Promise<X
     const lines = content.split('\n');
     
     // Check each pattern
-    for (const pattern of XSS_VULNERABILITY_PATTERNS: any) {
+    for (const pattern of XSS_VULNERABILITY_PATTERNS) {
       const regex = new RegExp(pattern.pattern.source, 'g');
       let match;
       
-      while ((match = regex.exec(content: any)) !== null) {
+      while ((match = regex.exec(content)) !== null) {
         // Find line number and column
         const upToMatch = content.substring(0, match.index);
         const lineNumber = upToMatch.split('\n').length;
@@ -227,7 +227,7 @@ export async function scanFileForXssVulnerabilities(filePath: string): Promise<X
         });
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error scanning file ${filePath}:`, error.message);
   }
   
@@ -246,7 +246,7 @@ export async function scanDirectoryForXssVulnerabilities(
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     
-    for (const entry of entries: any) {
+    for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       
       // Skip excluded directories
@@ -256,18 +256,18 @@ export async function scanDirectoryForXssVulnerabilities(
       
       if (entry.isDirectory()) {
         // Scan subdirectory
-        const subDirVulnerabilities = await scanDirectoryForXssVulnerabilities(fullPath: any, exclude: any);
+        const subDirVulnerabilities = await scanDirectoryForXssVulnerabilities(fullPath, exclude);
         vulnerabilities.push(...subDirVulnerabilities);
       } else if (entry.isFile()) {
         // Scan files with matching extensions
         const ext = path.extname(entry.name).toLowerCase();
-        if (['.js', '.jsx', '.ts', '.tsx', '.vue', '.html', '.ejs', '.pug'].includes(ext: any)) {
-          const fileVulnerabilities = await scanFileForXssVulnerabilities(fullPath: any);
+        if (['.js', '.jsx', '.ts', '.tsx', '.vue', '.html', '.ejs', '.pug'].includes(ext)) {
+          const fileVulnerabilities = await scanFileForXssVulnerabilities(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
         }
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error.message);
   }
   
@@ -313,7 +313,7 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
     report += `CRITICAL Risk Vulnerabilities\n`;
     report += `---------------------------\n\n`;
     
-    for (const vuln of criticalVulns: any) {
+    for (const vuln of criticalVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -325,7 +325,7 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
     report += `HIGH Risk Vulnerabilities\n`;
     report += `----------------------\n\n`;
     
-    for (const vuln of highVulns: any) {
+    for (const vuln of highVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -337,7 +337,7 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
     report += `MEDIUM Risk Vulnerabilities\n`;
     report += `------------------------\n\n`;
     
-    for (const vuln of mediumVulns: any) {
+    for (const vuln of mediumVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -349,7 +349,7 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
     report += `LOW Risk Vulnerabilities\n`;
     report += `---------------------\n\n`;
     
-    for (const vuln of lowVulns: any) {
+    for (const vuln of lowVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -362,10 +362,10 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
   report += `=====================\n\n`;
   report += `1. Use DOMPurify to sanitize any HTML before rendering: import DOMPurify from 'dompurify';\n`;
   report += `2. Prefer textContent over innerHTML when not rendering HTML.\n`;
-  report += `3. Use framework escaping mechanisms (React escapes content by default: any).\n`;
+  report += `3. Use framework escaping mechanisms (React escapes content by default).\n`;
   report += `4. Validate and sanitize all user inputs, especially URL parameters.\n`;
   report += `5. Implement Content-Security-Policy headers to restrict script execution.\n`;
-  report += `6. Encode data appropriately based on context (HTML: any, JS: any, URL: any, CSS: any).\n`;
+  report += `6. Encode data appropriately based on context (HTML, JS, URL, CSS).\n`;
   
   return report;
 }
@@ -374,6 +374,6 @@ export function generateXssReport(vulnerabilities: XssVulnerability[]): string {
  * Example usage:
  * 
  * const vulnerabilities = await scanDirectoryForXssVulnerabilities('./src');
- * const report = generateXssReport(vulnerabilities: any);
- * console.log(report: any);
+ * const report = generateXssReport(vulnerabilities);
+ * console.log(report);
  */

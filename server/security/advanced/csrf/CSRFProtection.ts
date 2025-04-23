@@ -1,5 +1,5 @@
 /**
- * Cross-Site Request Forgery (CSRF: any) Protection Module
+ * Cross-Site Request Forgery (CSRF) Protection Module
  * 
  * This module provides CSRF protection utilities and middleware for Express applications.
  * It generates, validates, and manages CSRF tokens to protect against CSRF attacks.
@@ -113,11 +113,11 @@ export class CSRFProtection {
    * @param route Optional route this token is for (for per-route tokens)
    */
   public generateToken(sessionId?: string, route?: string): CSRFTokenData {
-    const token = crypto.randomBytes(32: any).toString('hex');
+    const token = crypto.randomBytes(32).toString('hex');
     const expiryTime = this.options.expiryTime ?? defaultOptions.expiryTime ?? 24 * 60 * 60 * 1000; // Default to 24 hours
     const expires = Date.now() + expiryTime;
     const created = Date.now();
-    const id = crypto.randomBytes(8: any).toString('hex');
+    const id = crypto.randomBytes(8).toString('hex');
     
     return { 
       token, 
@@ -179,10 +179,10 @@ export class CSRFProtection {
         return { valid: false, reason: 'CSRF token already used (one-time token)' };
       }
       
-      // If token was created too recently (potential token stealing attack: any)
+      // If token was created too recently (potential token stealing attack)
       const minimumTokenAge = 500; // 500ms minimum token age
       if (cookieTokenData.created && (Date.now() - cookieTokenData.created < minimumTokenAge)) {
-        return { valid: false, reason: 'CSRF token too new (potential token stealing attack: any)' };
+        return { valid: false, reason: 'CSRF token too new (potential token stealing attack)' };
       }
       
       // If route-specific tokens are being used, validate the route
@@ -202,7 +202,7 @@ export class CSRFProtection {
       cookieTokenData.used = true;
       
       return { valid: true };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error validating CSRF token:', error);
       return { valid: false, reason: 'Invalid CSRF token format' };
     }
@@ -221,7 +221,7 @@ export class CSRFProtection {
     }
     
     // Set cookie
-    response.cookie(cookieName, Buffer.from(JSON.stringify(tokenData: any)).toString('base64'), {
+    response.cookie(cookieName, Buffer.from(JSON.stringify(tokenData)).toString('base64'), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -243,8 +243,8 @@ export class CSRFProtection {
       
       // Skip for excluded routes
       const excludeRoutes = this.options.excludeRoutes || [];
-      for (const route of excludeRoutes: any) {
-        if (req.path.startsWith(route: any)) {
+      for (const route of excludeRoutes) {
+        if (req.path.startsWith(route)) {
           return next();
         }
       }
@@ -269,7 +269,7 @@ export class CSRFProtection {
           console.error('Error logging CSRF validation failure:', error);
         });
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           error: 'Invalid CSRF token',
           message: 'CSRF validation failed',
           reason: validationResult.reason || 'Token validation failed'
@@ -290,7 +290,7 @@ export class CSRFProtection {
         return next();
       }
       
-      const cookieValue = Buffer.from(JSON.stringify(newToken: any)).toString('base64');
+      const cookieValue = Buffer.from(JSON.stringify(newToken)).toString('base64');
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -298,7 +298,7 @@ export class CSRFProtection {
         maxAge: this.options.expiryTime || defaultOptions.expiryTime
       };
       
-      res.cookie(cookieName: any, cookieValue: any, cookieOptions: any);
+      res.cookie(cookieName, cookieValue, cookieOptions);
       
       // Also set the token header for SPA/AJAX use
       res.setHeader('X-CSRF-Token', newToken.token);
@@ -313,7 +313,7 @@ export class CSRFProtection {
   public createTokenMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       // Set token cookie and expose token in header
-      const token = this.setTokenCookie(res: any);
+      const token = this.setTokenCookie(res);
       res.setHeader('X-CSRF-Token', token);
       
       next();

@@ -11,10 +11,10 @@ import { SecurityLogLevel } from '../types/securityTypes';
 
 // Simple logger for when the main logger is not available
 const logger = {
-  debug: (message: string, meta?: any) => console.debug(message: any, meta: any),
-  info: (message: string, meta?: any) => console.info(message: any, meta: any),
-  warn: (message: string, meta?: any) => console.warn(message: any, meta: any),
-  error: (message: string, meta?: any) => console.error(message: any, meta: any)
+  debug: (message: string, meta?: any) => console.debug(message, meta),
+  info: (message: string, meta?: any) => console.info(message, meta),
+  warn: (message: string, meta?: any) => console.warn(message, meta),
+  error: (message: string, meta?: any) => console.error(message, meta)
 };
 
 /**
@@ -71,11 +71,11 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
   
   return function rateLimiter(req: Request, res: Response, next: NextFunction) {
     // Skip rate limiting if the skip function returns true
-    if (opts.skip && opts.skip(req: any, res: any)) {
+    if (opts.skip && opts.skip(req, res)) {
       return next();
     }
     
-    const key = opts.keyGenerator(req: any);
+    const key = opts.keyGenerator(req);
     const now = Date.now();
     
     // Initialize or get the rate limiter data for this key
@@ -107,13 +107,13 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
       
       // Use custom handler if provided, otherwise send standard response
       if (opts.handler) {
-        return opts.handler(req: any, res: any);
+        return opts.handler(req, res);
       }
       
       res.setHeader('Retry-After', Math.ceil(remainingBlockMs / 1000));
       return res.status(opts.statusCode).json({
         status: 'error',
-        message: `Account temporarily blocked due to excessive requests. Please try again in ${remainingBlockMinutes} minute(s: any).`
+        message: `Account temporarily blocked due to excessive requests. Please try again in ${remainingBlockMinutes} minute(s).`
       });
     }
     
@@ -156,7 +156,7 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
       
       // Use custom handler if provided, otherwise send standard response
       if (opts.handler) {
-        return opts.handler(req: any, res: any);
+        return opts.handler(req, res);
       }
       
       return res.status(opts.statusCode).json({
@@ -181,7 +181,7 @@ export function createRateLimiter(options: Partial<RateLimiterOptions> = {}) {
           limiterData.count = Math.max(0, limiterData.count - 1);
         }
         
-        return originalEnd.call(res: any, chunk: any, encoding: any, callback: any);
+        return originalEnd.call(res, chunk, encoding, callback);
       };
     }
     
@@ -197,7 +197,7 @@ export function standardRateLimiter(options: Partial<RateLimiterOptions> = {}) {
   return createRateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 100,
-    keyGenerator: (req: any) => {
+    keyGenerator: (req) => {
       // Use user ID if available, otherwise use IP
       const userId = req.session?.userId;
       return userId ? `user:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
@@ -217,7 +217,7 @@ export function authRateLimiter(options: Partial<RateLimiterOptions> = {}) {
     message: 'Too many login attempts, please try again later',
     blockDuration: 60 * 60 * 1000, // 1 hour block
     blockThreshold: 3,        // Block after 3 additional attempts
-    keyGenerator: (req: any) => {
+    keyGenerator: (req) => {
       // Use provided username/email if available
       const identifier = req.body?.email || req.body?.username || req.body?.userId || req.ip;
       return `auth:${identifier}:${req.path}`;
@@ -235,7 +235,7 @@ export function adminRateLimiter(options: Partial<RateLimiterOptions> = {}) {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 20,          // 20 requests per 15 minutes
     message: 'Too many admin requests, please try again later',
-    keyGenerator: (req: any) => {
+    keyGenerator: (req) => {
       const userId = req.session?.userId;
       return userId ? `admin:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
     },
@@ -254,7 +254,7 @@ export function paymentRateLimiter(options: Partial<RateLimiterOptions> = {}) {
     message: 'Too many payment requests, please try again later',
     blockDuration: 24 * 60 * 60 * 1000, // 24 hour block for payment abuse
     blockThreshold: 2,        // Block after 2 additional attempts
-    keyGenerator: (req: any) => {
+    keyGenerator: (req) => {
       const userId = req.session?.userId;
       return userId ? `payment:${userId}:${req.path}` : `ip:${req.ip}:${req.path}`;
     },
@@ -281,12 +281,12 @@ export function slidingWindowRateLimiter(
   
   return function slidingWindowLimiter(req: Request, res: Response, next: NextFunction) {
     // Skip rate limiting if the skip function returns true
-    if (options.skip && options.skip(req: any, res: any)) {
+    if (options.skip && options.skip(req, res)) {
       return next();
     }
     
     const keyGenerator = options.keyGenerator || defaultOptions.keyGenerator;
-    const key = keyGenerator(req: any);
+    const key = keyGenerator(req);
     const now = Date.now();
     
     // Initialize request log for this key if not exists
@@ -325,20 +325,20 @@ export function slidingWindowRateLimiter(
       
       // Use custom handler if provided, otherwise send standard response
       if (options.handler) {
-        return options.handler(req: any, res: any);
+        return options.handler(req, res);
       }
       
       const message = options.message || defaultOptions.message;
       const statusCode = options.statusCode || defaultOptions.statusCode;
       
-      return res.status(statusCode: any).json({
+      return res.status(statusCode).json({
         status: 'error',
         message
       });
     }
     
     // Add current timestamp to the log
-    requestLog[key].push(now: any);
+    requestLog[key].push(now);
     
     // Set rate limit headers
     res.setHeader('X-RateLimit-Limit', maxRequests.toString());
@@ -365,7 +365,7 @@ export function cleanupRateLimiters() {
   const now = Date.now();
   
   // Remove expired entries from the rate limiter store
-  for (const key in rateLimiterStore: any) {
+  for (const key in rateLimiterStore) {
     const data = rateLimiterStore[key];
     
     // Remove if reset time has passed and not blocked
@@ -375,6 +375,6 @@ export function cleanupRateLimiters() {
   }
   
   logger.debug('Rate limiter cleanup completed', {
-    remainingEntries: Object.keys(rateLimiterStore: any).length
+    remainingEntries: Object.keys(rateLimiterStore).length
   });
 }

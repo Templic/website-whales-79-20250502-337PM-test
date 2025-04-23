@@ -32,7 +32,7 @@ console.log('ML-Based Anomaly Detection System Tester');
 console.log('=======================================');
 
 async function main() {
-  const args = process.argv.slice(2: any);
+  const args = process.argv.slice(2);
   
   if (args.length === 0) {
     printUsage();
@@ -42,7 +42,7 @@ async function main() {
   const option = args[0].toLowerCase();
   
   try {
-    switch(option: any) {
+    switch(option) {
       case '--all':
         await runAllTests();
         break;
@@ -75,7 +75,7 @@ async function main() {
         printUsage();
         break;
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error running test:', error);
   }
 }

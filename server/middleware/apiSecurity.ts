@@ -47,7 +47,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
   const securityVerifications: APISecurityVerification[] = [];
   
   // First check if auth is via API key
-  if (apiKey: any) {
+  if (apiKey) {
     // API key validation would go here
     // For this implementation we're focusing on JWT tokens
     securityVerifications.push({
@@ -56,7 +56,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
       message: 'API key authentication not implemented'
     });
     
-    return res.status(401: any).json({
+    return res.status(401).json({
       success: false,
       message: 'API key authentication method not implemented'
     });
@@ -72,14 +72,14 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     
     logApiSecurityEvent(req, 'MISSING_AUTH_TOKEN', securityVerifications);
     
-    return res.status(401: any).json({
+    return res.status(401).json({
       success: false,
       message: 'Authentication token required'
     });
   }
   
   try {
-    const token = extractTokenFromHeader(authHeader: any);
+    const token = extractTokenFromHeader(authHeader);
     
     if (!token) {
       securityVerifications.push({
@@ -90,14 +90,14 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
       
       logApiSecurityEvent(req, 'INVALID_TOKEN_FORMAT', securityVerifications);
       
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Invalid authentication token format'
       });
     }
     
     // Verify token with additional checks
-    const payload = verifyAccessToken(token: any);
+    const payload = verifyAccessToken(token);
     
     if (!payload) {
       securityVerifications.push({
@@ -108,7 +108,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
       
       logApiSecurityEvent(req, 'TOKEN_VERIFICATION_FAILED', securityVerifications);
       
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Invalid or expired token'
       });
@@ -125,7 +125,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
       
       logApiSecurityEvent(req, 'EXPIRED_TOKEN', securityVerifications);
       
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Token has expired'
       });
@@ -152,7 +152,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     logApiSecurityEvent(req, 'AUTHENTICATION_SUCCESS', securityVerifications);
     
     next();
-  } catch (error: any) {
+  } catch (error) {
     console.error('API authentication error:', error);
     
     securityVerifications.push({
@@ -164,7 +164,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
     
     logApiSecurityEvent(req, 'AUTHENTICATION_ERROR', securityVerifications);
     
-    return res.status(401: any).json({
+    return res.status(401).json({
       success: false,
       message: 'Authentication failed'
     });
@@ -178,7 +178,7 @@ export function verifyApiAuthentication(req: Request, res: Response, next: NextF
 export function enforceApiRateLimit(limitType: 'default' | 'auth' | 'security' | 'admin' | 'public' = 'default') {
   // Select the appropriate rate limiter based on the limitType
   let limiter;
-  switch (limitType: any) {
+  switch (limitType) {
     case 'auth':
       limiter = authRateLimit;
       break;
@@ -223,7 +223,7 @@ export function enforceApiRateLimit(limitType: 'default' | 'auth' | 'security' |
     };
 
     // Apply the rate limiter, using our custom callback for success
-    limiter(req: any, res: any, afterRateLimit: any);
+    limiter(req, res, afterRateLimit);
   };
 }
 
@@ -245,7 +245,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
       verification.message = 'No authentication data found';
       logApiSecurityEvent(req, 'MISSING_AUTH_DATA', [verification]);
       
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         message: 'Authentication required'
       });
@@ -267,17 +267,17 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
       verification.message = 'User role not found in token';
       logApiSecurityEvent(req, 'MISSING_ROLE', [verification]);
       
-      return res.status(403: any).json({
+      return res.status(403).json({
         success: false,
         message: 'Access denied: role information not found'
       });
     }
     
-    if (!requiredRoles.includes(userRole: any)) {
+    if (!requiredRoles.includes(userRole)) {
       verification.message = `User role '${userRole}' not in required roles: ${requiredRoles.join(', ')}`;
       logApiSecurityEvent(req, 'INSUFFICIENT_ROLE', [verification]);
       
-      return res.status(403: any).json({
+      return res.status(403).json({
         success: false,
         message: 'Access denied: insufficient privileges'
       });
@@ -296,7 +296,7 @@ export function verifyApiAuthorization(requiredRoles: string[] = []) {
  * Middleware that conducts API request validation
  * Ensures that the request contains the expected data
  */
-export function validateApiRequest(schema: any) {
+export function validateApiRequest(schema) {
   return (req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> => {
     try {
       // Validation using provided schema
@@ -314,7 +314,7 @@ export function validateApiRequest(schema: any) {
       if (!validationResult.success) {
         logApiSecurityEvent(req, 'INPUT_VALIDATION_FAILED', [verification]);
         
-        return res.status(400: any).json({
+        return res.status(400).json({
           success: false,
           message: 'Invalid request data',
           errors: validationResult.error.format ? validationResult.error.format() : validationResult.error.errors
@@ -328,7 +328,7 @@ export function validateApiRequest(schema: any) {
       req.body = validationResult.data;
       
       next();
-    } catch (error: any) {
+    } catch (error) {
       console.error('API validation error:', error);
       
       const verification: APISecurityVerification = {
@@ -340,7 +340,7 @@ export function validateApiRequest(schema: any) {
       
       logApiSecurityEvent(req, 'INPUT_VALIDATION_ERROR', [verification]);
       
-      return res.status(400: any).json({
+      return res.status(400).json({
         success: false,
         message: 'Error during request validation'
       });
@@ -365,14 +365,14 @@ function logApiSecurityEvent(req: Request, eventType: string, verifications: API
     path: req.path,
     method: req.method,
     details: detailsString,
-    severity: determineSeverity(eventType: any, verifications: any)
+    severity: determineSeverity(eventType, verifications)
   });
 }
 
 /**
  * Filter sensitive information from request headers for logging
  */
-function filterSensitiveHeaders(headers: any) {
+function filterSensitiveHeaders(headers) {
   const filtered = { ...headers };
   
   // Remove sensitive headers
@@ -423,6 +423,6 @@ function determineSeverity(eventType: string, verifications: APISecurityVerifica
     return 'medium';
   }
   
-  // Low severity events (default: any)
+  // Low severity events (default)
   return 'low';
 }

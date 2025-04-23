@@ -73,7 +73,7 @@ export class SecurityFabric {
     this.eventEmitter = new EventEmitter();
     
     // Set max listeners to avoid Node.js warning
-    this.eventEmitter.setMaxListeners(100: any);
+    this.eventEmitter.setMaxListeners(100);
   }
   
   /**
@@ -114,11 +114,11 @@ export class SecurityFabric {
    * Unregister a security component
    */
   public unregisterComponent(componentName: string): void {
-    if (!this.components.has(componentName: any)) {
+    if (!this.components.has(componentName)) {
       throw new Error(`Security component '${componentName}' is not registered`);
     }
     
-    this.components.delete(componentName: any);
+    this.components.delete(componentName);
     
     // Log unregistration
     this.emitEvent({
@@ -132,7 +132,7 @@ export class SecurityFabric {
    * Get a registered security component
    */
   public getComponent(componentName: string): SecurityComponent | undefined {
-    return this.components.get(componentName: any);
+    return this.components.get(componentName);
   }
   
   /**
@@ -176,7 +176,7 @@ export class SecurityFabric {
       }
       
       // Call the callback
-      callback(event: any);
+      callback(event);
     };
     
     // Register event handler
@@ -215,12 +215,12 @@ export class SecurityFabric {
           severity: SecurityEventSeverity.INFO,
           message: `Security component initialized: ${name}`
         });
-      } catch (error: any) {
+      } catch (error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: `Error initializing security component: ${name}`,
-          data: { error: (error as Error: any).message }
+          data: { error: (error as Error).message }
         });
         
         throw error;
@@ -244,12 +244,12 @@ export class SecurityFabric {
           severity: SecurityEventSeverity.INFO,
           message: `Security component shutdown: ${name}`
         });
-      } catch (error: any) {
+      } catch (error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: `Error shutting down security component: ${name}`,
-          data: { error: (error as Error: any).message }
+          data: { error: (error as Error).message }
         });
         
         // Continue shutting down other components
@@ -284,5 +284,5 @@ export const securityFabric = SecurityFabric.getInstance();
  * Utility function to log a security event
  */
 export function logSecurityEvent(event: SecurityEvent): void {
-  securityFabric.emitEvent(event: any);
+  securityFabric.emitEvent(event);
 }

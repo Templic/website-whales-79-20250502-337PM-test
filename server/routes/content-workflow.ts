@@ -19,7 +19,7 @@ import { format, parseISO, startOfDay, endOfDay, subDays } from 'date-fns';
 const router = express.Router();
 
 // Get all content with pagination, filtering and sorting
-router.get('/content', requireAuth, async (req: any, res: any) => {
+router.get('/content', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user?.id;
     const isAdmin = req.session.user?.role === 'admin' || req.session.user?.role === 'super_admin';
@@ -34,16 +34,16 @@ router.get('/content', requireAuth, async (req: any, res: any) => {
     
     // Build the query based on filters
     let query = db.select()
-      .from(contentItems: any)
-      .limit(limit: any)
-      .offset(offset: any);
+      .from(contentItems)
+      .limit(limit)
+      .offset(offset);
     
     // Add filtering conditions
-    if (status: any) {
+    if (status) {
       query = query.where(eq(contentItems.status, status));
     }
     
-    if (search: any) {
+    if (search) {
       query = query.where(like(contentItems.title, `%${search}%`));
     }
     
@@ -68,7 +68,7 @@ router.get('/content', requireAuth, async (req: any, res: any) => {
     
     // Get total count for pagination
     const countResult = await db.select({ count: db.fn.count() })
-      .from(contentItems: any)
+      .from(contentItems)
       .where(isAdmin ? undefined : eq(contentItems.createdBy, userId))
       .where(status ? eq(contentItems.status, status) : undefined)
       .where(search ? like(contentItems.title, `%${search}%`) : undefined);
@@ -84,14 +84,14 @@ router.get('/content', requireAuth, async (req: any, res: any) => {
         totalPages: Math.ceil(totalCount / limit)
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error getting content list:', error);
-    res.status(500: any).json({ error: 'Failed to get content list' });
+    res.status(500).json({ error: 'Failed to get content list' });
   }
 });
 
 // Get content details by ID
-router.get('/content/:id', requireAuth, async (req: any, res: any) => {
+router.get('/content/:id', requireAuth, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -99,28 +99,28 @@ router.get('/content/:id', requireAuth, async (req: any, res: any) => {
     
     // Get content item
     const content = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!content.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check permission
     if (!isAdmin && content[0].createdBy !== userId) {
-      return res.status(403: any).json({ error: 'You do not have permission to view this content' });
+      return res.status(403).json({ error: 'You do not have permission to view this content' });
     }
     
     // Get content versions
     const versions = await db.select()
-      .from(contentVersions: any)
+      .from(contentVersions)
       .where(eq(contentVersions.contentId, contentId))
       .orderBy(desc(contentVersions.version));
     
     // Get workflow history
     const workflowHistory = await db.select()
-      .from(contentWorkflowHistory: any)
+      .from(contentWorkflowHistory)
       .where(eq(contentWorkflowHistory.contentId, contentId))
       .orderBy(desc(contentWorkflowHistory.createdAt));
     
@@ -129,14 +129,14 @@ router.get('/content/:id', requireAuth, async (req: any, res: any) => {
       versions,
       workflowHistory
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error getting content details:', error);
-    res.status(500: any).json({ error: 'Failed to get content details' });
+    res.status(500).json({ error: 'Failed to get content details' });
   }
 });
 
 // Create new content
-router.post('/content', requireAuth, async (req: any, res: any) => {
+router.post('/content', requireAuth, async (req, res) => {
   try {
     const userId = req.session.user?.id;
     const {
@@ -150,15 +150,15 @@ router.post('/content', requireAuth, async (req: any, res: any) => {
     
     // Validate required fields
     if (!title || !content || !section || !type) {
-      return res.status(400: any).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields' });
     }
     
     // Convert date strings to Date objects if provided
-    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt: any) : null;
-    const expirationDateObj = expirationDate ? new Date(expirationDate: any) : null;
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
     
     // Create new content item
-    const [newContent] = await db.insert(contentItems: any)
+    const [newContent] = await db.insert(contentItems)
       .values({
         title,
         content,
@@ -176,7 +176,7 @@ router.post('/content', requireAuth, async (req: any, res: any) => {
       .returning();
     
     // Create initial version
-    await db.insert(contentVersions: any)
+    await db.insert(contentVersions)
       .values({
         contentId: newContent.id,
         version: 1,
@@ -186,7 +186,7 @@ router.post('/content', requireAuth, async (req: any, res: any) => {
       });
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: newContent.id,
         userId: userId,
@@ -196,15 +196,15 @@ router.post('/content', requireAuth, async (req: any, res: any) => {
       });
     
     logger.info(`New content created: ${newContent.id} by user ${userId}`);
-    res.status(201: any).json(newContent: any);
-  } catch (error: any) {
+    res.status(201).json(newContent);
+  } catch (error) {
     logger.error('Error creating content:', error);
-    res.status(500: any).json({ error: 'Failed to create content' });
+    res.status(500).json({ error: 'Failed to create content' });
   }
 });
 
 // Update content
-router.put('/content/:id', requireAuth, async (req: any, res: any) => {
+router.put('/content/:id', requireAuth, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -212,23 +212,23 @@ router.put('/content/:id', requireAuth, async (req: any, res: any) => {
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check permission
     if (!isAdmin && existingContent[0].createdBy !== userId) {
-      return res.status(403: any).json({ error: 'You do not have permission to update this content' });
+      return res.status(403).json({ error: 'You do not have permission to update this content' });
     }
     
     // Check if content is in a state that allows updates
     const allowUpdateStates = ['draft', 'changes_requested'];
     if (!allowUpdateStates.includes(existingContent[0].status)) {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Cannot update content in its current state. Content must be in draft or changes_requested state.' 
       });
     }
@@ -243,14 +243,14 @@ router.put('/content/:id', requireAuth, async (req: any, res: any) => {
     } = req.body;
     
     // Convert date strings to Date objects if provided
-    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt: any) : null;
-    const expirationDateObj = expirationDate ? new Date(expirationDate: any) : null;
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
     
     // Increment version number
     const newVersion = existingContent[0].version + 1;
     
     // Update content
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         title: title || existingContent[0].title,
         content: content || existingContent[0].content,
@@ -267,7 +267,7 @@ router.put('/content/:id', requireAuth, async (req: any, res: any) => {
       .returning();
     
     // Create new version
-    await db.insert(contentVersions: any)
+    await db.insert(contentVersions)
       .values({
         contentId: contentId,
         version: newVersion,
@@ -277,7 +277,7 @@ router.put('/content/:id', requireAuth, async (req: any, res: any) => {
       });
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -287,15 +287,15 @@ router.put('/content/:id', requireAuth, async (req: any, res: any) => {
       });
     
     logger.info(`Content updated: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error updating content:', error);
-    res.status(500: any).json({ error: 'Failed to update content' });
+    res.status(500).json({ error: 'Failed to update content' });
   }
 });
 
 // Submit content for review
-router.post('/submit/:id', requireAuth, async (req: any, res: any) => {
+router.post('/submit/:id', requireAuth, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -303,29 +303,29 @@ router.post('/submit/:id', requireAuth, async (req: any, res: any) => {
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check permission
     if (!isAdmin && existingContent[0].createdBy !== userId) {
-      return res.status(403: any).json({ error: 'You do not have permission to submit this content for review' });
+      return res.status(403).json({ error: 'You do not have permission to submit this content for review' });
     }
     
     // Check if content is in a state that allows submission
     const allowSubmitStates = ['draft', 'changes_requested'];
     if (!allowSubmitStates.includes(existingContent[0].status)) {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Cannot submit content in its current state. Content must be in draft or changes_requested state.' 
       });
     }
     
     // Update content status
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'review',
         updatedAt: new Date(),
@@ -335,7 +335,7 @@ router.post('/submit/:id', requireAuth, async (req: any, res: any) => {
       .returning();
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -345,32 +345,32 @@ router.post('/submit/:id', requireAuth, async (req: any, res: any) => {
       });
     
     logger.info(`Content submitted for review: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error submitting content for review:', error);
-    res.status(500: any).json({ error: 'Failed to submit content for review' });
+    res.status(500).json({ error: 'Failed to submit content for review' });
   }
 });
 
 // Approve content
-router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check if content is in a state that allows approval
     if (existingContent[0].status !== 'review') {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Cannot approve content in its current state. Content must be in review state.' 
       });
     }
@@ -380,7 +380,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
       || new Date(existingContent[0].scheduledPublishAt) <= new Date();
     
     // Update content status
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: shouldPublishNow ? 'published' : 'approved',
         updatedAt: new Date(),
@@ -392,7 +392,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
       .returning();
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -402,38 +402,38 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
       });
     
     logger.info(`Content ${shouldPublishNow ? 'published' : 'approved'}: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error approving content:', error);
-    res.status(500: any).json({ error: 'Failed to approve content' });
+    res.status(500).json({ error: 'Failed to approve content' });
   }
 });
 
 // Reject content
-router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check if content is in a state that allows rejection
     if (existingContent[0].status !== 'review') {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Cannot reject content in its current state. Content must be in review state.' 
       });
     }
     
     // Update content status
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'draft', // Reset to draft when rejected
         updatedAt: new Date(),
@@ -443,7 +443,7 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
       .returning();
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -453,43 +453,43 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
       });
     
     logger.info(`Content rejected: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error rejecting content:', error);
-    res.status(500: any).json({ error: 'Failed to reject content' });
+    res.status(500).json({ error: 'Failed to reject content' });
   }
 });
 
 // Request changes
-router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
     
     // Make sure comments are provided
     if (!req.body.comments) {
-      return res.status(400: any).json({ error: 'Comments are required when requesting changes' });
+      return res.status(400).json({ error: 'Comments are required when requesting changes' });
     }
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check if content is in a state that allows requesting changes
     if (existingContent[0].status !== 'review') {
-      return res.status(400: any).json({ 
+      return res.status(400).json({ 
         error: 'Cannot request changes in its current state. Content must be in review state.' 
       });
     }
     
     // Update content status
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'changes_requested',
         updatedAt: new Date(),
@@ -499,7 +499,7 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
       .returning();
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -509,15 +509,15 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
       });
     
     logger.info(`Changes requested for content: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error requesting changes:', error);
-    res.status(500: any).json({ error: 'Failed to request changes' });
+    res.status(500).json({ error: 'Failed to request changes' });
   }
 });
 
 // Get content review history
-router.get('/review-history/:id', requireAuth, async (req: any, res: any) => {
+router.get('/review-history/:id', requireAuth, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -525,17 +525,17 @@ router.get('/review-history/:id', requireAuth, async (req: any, res: any) => {
     
     // Get content item to check permissions
     const content = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!content.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check permission
     if (!isAdmin && content[0].createdBy !== userId) {
-      return res.status(403: any).json({ error: 'You do not have permission to view this content history' });
+      return res.status(403).json({ error: 'You do not have permission to view this content history' });
     }
     
     // Get workflow history with user details using Drizzle ORM instead of raw SQL
@@ -551,22 +551,22 @@ router.get('/review-history/:id', requireAuth, async (req: any, res: any) => {
         comments: contentWorkflowHistory.comments,
         timestamp: contentWorkflowHistory.createdAt
       })
-      .from(contentWorkflowHistory: any)
+      .from(contentWorkflowHistory)
       .where(eq(contentWorkflowHistory.contentId, contentId))
       .orderBy(desc(contentWorkflowHistory.createdAt));
     
     // Then, for each entry, fetch the associated username
     const result = await Promise.all(
-      workflowHistoryEntries.map(async (entry: any) => {
+      workflowHistoryEntries.map(async (entry) => {
         if (!entry.userId) {
           return { ...entry, username: null };
         }
         
         const user = await db
           .select({ username: users.username })
-          .from(users: any)
+          .from(users)
           .where(eq(users.id, entry.userId))
-          .limit(1: any);
+          .limit(1);
           
         return {
           ...entry,
@@ -576,15 +576,15 @@ router.get('/review-history/:id', requireAuth, async (req: any, res: any) => {
     );
     
     // Return the array of workflow history entries with usernames
-    res.json(result: any);
-  } catch (error: any) {
+    res.json(result);
+  } catch (error) {
     logger.error('Error getting review history:', error);
-    res.status(500: any).json({ error: 'Failed to get review history' });
+    res.status(500).json({ error: 'Failed to get review history' });
   }
 });
 
 // Archive content
-router.post('/archive/:id', requireAuth, async (req: any, res: any) => {
+router.post('/archive/:id', requireAuth, async (req, res) => {
   try {
     const contentId = parseInt(req.params.id);
     const userId = req.session.user?.id;
@@ -592,21 +592,21 @@ router.post('/archive/:id', requireAuth, async (req: any, res: any) => {
     
     // Get existing content
     const existingContent = await db.select()
-      .from(contentItems: any)
+      .from(contentItems)
       .where(eq(contentItems.id, contentId))
-      .limit(1: any);
+      .limit(1);
     
     if (!existingContent.length) {
-      return res.status(404: any).json({ error: 'Content not found' });
+      return res.status(404).json({ error: 'Content not found' });
     }
     
     // Check permission
     if (!isAdmin && existingContent[0].createdBy !== userId) {
-      return res.status(403: any).json({ error: 'You do not have permission to archive this content' });
+      return res.status(403).json({ error: 'You do not have permission to archive this content' });
     }
     
     // Update content status
-    const [updatedContent] = await db.update(contentItems: any)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'archived',
         updatedAt: new Date(),
@@ -618,7 +618,7 @@ router.post('/archive/:id', requireAuth, async (req: any, res: any) => {
       .returning();
     
     // Create workflow history entry
-    await db.insert(contentWorkflowHistory: any)
+    await db.insert(contentWorkflowHistory)
       .values({
         contentId: contentId,
         userId: userId,
@@ -628,15 +628,15 @@ router.post('/archive/:id', requireAuth, async (req: any, res: any) => {
       });
     
     logger.info(`Content archived: ${contentId} by user ${userId}`);
-    res.json(updatedContent: any);
-  } catch (error: any) {
+    res.json(updatedContent);
+  } catch (error) {
     logger.error('Error archiving content:', error);
-    res.status(500: any).json({ error: 'Failed to archive content' });
+    res.status(500).json({ error: 'Failed to archive content' });
   }
 });
 
-// Run content scheduler manually (admin only: any)
-router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+// Run content scheduler manually (admin only)
+router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     // Run the scheduler
     await runContentScheduler();
@@ -649,61 +649,61 @@ router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin'])
       message: 'Content scheduler executed successfully',
       metrics
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error running content scheduler:', error);
-    res.status(500: any).json({ error: 'Failed to run content scheduler' });
+    res.status(500).json({ error: 'Failed to run content scheduler' });
   }
 });
 
-// Get content scheduler metrics (admin only: any)
-router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+// Get content scheduler metrics (admin only)
+router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const metrics = getSchedulingMetrics();
-    res.json(metrics: any);
-  } catch (error: any) {
+    res.json(metrics);
+  } catch (error) {
     logger.error('Error getting scheduler metrics:', error);
-    res.status(500: any).json({ error: 'Failed to get scheduler metrics' });
+    res.status(500).json({ error: 'Failed to get scheduler metrics' });
   }
 });
 
-// Reset content scheduler metrics (admin only: any)
-router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+// Reset content scheduler metrics (admin only)
+router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     resetSchedulingMetrics();
     res.json({
       success: true,
       message: 'Scheduler metrics reset successfully'
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error resetting scheduler metrics:', error);
-    res.status(500: any).json({ error: 'Failed to reset scheduler metrics' });
+    res.status(500).json({ error: 'Failed to reset scheduler metrics' });
   }
 });
 
 // Get upcoming scheduled content
-router.get('/upcoming', requireAuth, async (req: any, res: any) => {
+router.get('/upcoming', requireAuth, async (req, res) => {
   try {
     const scheduledContent = await getUpcomingScheduledContent();
-    res.json(scheduledContent: any);
-  } catch (error: any) {
+    res.json(scheduledContent);
+  } catch (error) {
     logger.error('Error getting upcoming scheduled content:', error);
-    res.status(500: any).json({ error: 'Failed to get upcoming scheduled content' });
+    res.status(500).json({ error: 'Failed to get upcoming scheduled content' });
   }
 });
 
 // Get expiring content
-router.get('/expiring', requireAuth, async (req: any, res: any) => {
+router.get('/expiring', requireAuth, async (req, res) => {
   try {
     const expiringContent = await getExpiringContent();
-    res.json(expiringContent: any);
-  } catch (error: any) {
+    res.json(expiringContent);
+  } catch (error) {
     logger.error('Error getting expiring content:', error);
-    res.status(500: any).json({ error: 'Failed to get expiring content' });
+    res.status(500).json({ error: 'Failed to get expiring content' });
   }
 });
 
 // Get content analytics
-router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), async (req: any, res: any) => {
+router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), async (req, res) => {
   try {
     const startDateStr = req.query.start as string;
     const endDateStr = req.query.end as string;
@@ -712,18 +712,18 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
     let startDate, endDate;
     
     if (startDateStr && endDateStr) {
-      startDate = startOfDay(parseISO(startDateStr: any));
-      endDate = endOfDay(parseISO(endDateStr: any));
+      startDate = startOfDay(parseISO(startDateStr));
+      endDate = endOfDay(parseISO(endDateStr));
     } else {
       endDate = endOfDay(new Date());
-      startDate = startOfDay(subDays(endDate: any, 30: any));
+      startDate = startOfDay(subDays(endDate, 30));
     }
     
     const analytics = await getAllContentAnalytics();
-    res.json(analytics: any);
-  } catch (error: any) {
+    res.json(analytics);
+  } catch (error) {
     logger.error('Error getting content analytics:', error);
-    res.status(500: any).json({ error: 'Failed to get content analytics' });
+    res.status(500).json({ error: 'Failed to get content analytics' });
   }
 });
 

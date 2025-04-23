@@ -11,10 +11,10 @@ import { createSecureRouter, createAdminRouter } from '../middleware/securityMid
 
 // Define validation schemas
 const createItemSchema = z.object({
-  name: z.string().min(3: any).max(100: any),
-  description: z.string().min(10: any).max(1000: any).optional(),
+  name: z.string().min(3).max(100),
+  description: z.string().min(10).max(1000).optional(),
   price: z.number().positive(),
-  category: z.string().min(3: any).max(50: any),
+  category: z.string().min(3).max(50),
   tags: z.array(z.string()).optional()
 });
 
@@ -25,18 +25,18 @@ const idParamSchema = z.object({
 });
 
 const searchQuerySchema = z.object({
-  q: z.string().min(2: any).max(50: any).optional(),
-  category: z.string().min(3: any).max(50: any).optional(),
-  minPrice: z.number().min(0: any).optional(),
+  q: z.string().min(2).max(50).optional(),
+  category: z.string().min(3).max(50).optional(),
+  minPrice: z.number().min(0).optional(),
   maxPrice: z.number().positive().optional(),
-  page: z.number().int().min(1: any).default(1: any),
-  limit: z.number().int().min(1: any).max(100: any).default(20: any)
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20)
 });
 
-// Create a public router (no authentication required by default: any)
+// Create a public router (no authentication required by default)
 const publicRouter = createSecureRouter();
 
-// Create an authenticated router (authentication required by default: any)
+// Create an authenticated router (authentication required by default)
 const authenticatedRouter = createSecureRouter({
   authenticate: true,
   rateLimit: 'default'

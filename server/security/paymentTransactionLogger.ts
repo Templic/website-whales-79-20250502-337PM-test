@@ -87,7 +87,7 @@ class PaymentTransactionLogger {
    * @param data The data to sanitize
    * @returns Sanitized data without sensitive information
    */
-  private sanitizeData(data: any): any {
+  private sanitizeData(data) {
     // Handle null or undefined
     if (data == null) {
       return data;
@@ -99,30 +99,30 @@ class PaymentTransactionLogger {
     }
     
     // Handle arrays
-    if (Array.isArray(data: any)) {
-      return data.map(item => this.sanitizeData(item: any));
+    if (Array.isArray(data)) {
+      return data.map(item => this.sanitizeData(item));
     }
     
     // Handle objects
     const sanitized: Record<string, any> = {};
     
-    for (const [key, value] of Object.entries(data: any)) {
+    for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields
-      if (this.sensitivePaths.includes(key: any)) {
+      if (this.sensitivePaths.includes(key)) {
         sanitized[key] = '[REDACTED]';
         continue;
       }
       
       // Handle nested objects
       if (typeof value === 'object' && value !== null) {
-        sanitized[key] = this.sanitizeData(value: any);
+        sanitized[key] = this.sanitizeData(value);
       } else {
         // Check if this might be a credit card number
         if (
           typeof value === 'string' && 
-          this.isPossibleCardData(key: any, value: any)
+          this.isPossibleCardData(key, value)
         ) {
-          sanitized[key] = this.maskSensitiveValue(value: any, key: any);
+          sanitized[key] = this.maskSensitiveValue(value, key);
         } else {
           sanitized[key] = value;
         }
@@ -172,7 +172,7 @@ class PaymentTransactionLogger {
       key.toLowerCase().includes('exp')
     ) {
       // Expiry dates are often in formats like MM/YY or MM/YYYY
-      if (/^\d{1,2}\/\d{2,4}$/.test(value: any)) {
+      if (/^\d{1,2}\/\d{2,4}$/.test(value)) {
         return true;
       }
     }
@@ -184,14 +184,14 @@ class PaymentTransactionLogger {
    * Mask sensitive data for logging
    * 
    * @param value The value to mask
-   * @param key The field name (used to determine masking strategy: any)
+   * @param key The field name (used to determine masking strategy)
    * @returns Masked value
    */
   private maskSensitiveValue(value: string, key: string): string {
     // Remove spaces and dashes for consistent formatting
     const cleaned = value.replace(/[\s-]/g, '');
     
-    // Handle card numbers (show only last 4 digits: any)
+    // Handle card numbers (show only last 4 digits)
     if (
       key.toLowerCase().includes('card') ||
       key.toLowerCase().includes('number') ||
@@ -202,7 +202,7 @@ class PaymentTransactionLogger {
       }
     }
     
-    // Handle CVV/CVC (complete redaction: any)
+    // Handle CVV/CVC (complete redaction)
     if (
       key.toLowerCase().includes('cvv') ||
       key.toLowerCase().includes('cvc') ||
@@ -212,7 +212,7 @@ class PaymentTransactionLogger {
       return '[REDACTED]';
     }
     
-    // Handle expiry dates (show only the month: any, mask the year: any)
+    // Handle expiry dates (show only the month, mask the year)
     if (
       key.toLowerCase().includes('expiry') ||
       key.toLowerCase().includes('expiration') ||
@@ -239,7 +239,7 @@ class PaymentTransactionLogger {
     try {
       // Validate required fields
       if (!transaction.transaction_id) {
-        transaction.transaction_id = `txn_${crypto.randomBytes(8: any).toString('hex')}`;
+        transaction.transaction_id = `txn_${crypto.randomBytes(8).toString('hex')}`;
       }
       
       if (!transaction.timestamp) {
@@ -247,7 +247,7 @@ class PaymentTransactionLogger {
       }
       
       // Sanitize any sensitive data
-      const sanitizedTransaction = this.sanitizeData(transaction: any);
+      const sanitizedTransaction = this.sanitizeData(transaction);
       
       // Format as JSON log entry
       const logEntry = JSON.stringify({
@@ -260,8 +260,8 @@ class PaymentTransactionLogger {
       
       // Also log to console for development
       log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
-    } catch (error: any) {
-      // Log error to console, but don't throw (to avoid disrupting payment flow: any)
+    } catch (error) {
+      // Log error to console, but don't throw (to avoid disrupting payment flow)
       log(`Error logging payment transaction: ${error}`, 'error');
     }
   }
@@ -292,8 +292,8 @@ class PaymentTransactionLogger {
         .filter(line => line.trim() !== '')
         .map(line => {
           try {
-            return JSON.parse(line: any);
-          } catch (e: any) {
+            return JSON.parse(line);
+          } catch (e) {
             log(`Error parsing transaction log line: ${e}`, 'error');
             return null;
           }
@@ -318,14 +318,14 @@ class PaymentTransactionLogger {
       }
       
       return transactions;
-    } catch (error: any) {
+    } catch (error) {
       log(`Error getting transaction logs: ${error}`, 'error');
       return [];
     }
   }
   
   /**
-   * Rotate transaction logs (useful for maintenance: any)
+   * Rotate transaction logs (useful for maintenance)
    * 
    * @param maxSizeInMB Maximum log file size before rotation (default: 10)
    */
@@ -356,7 +356,7 @@ class PaymentTransactionLogger {
         
         log(`Rotated transaction logs to ${rotatedLogFile}`, 'security');
       }
-    } catch (error: any) {
+    } catch (error) {
       log(`Error rotating transaction logs: ${error}`, 'error');
     }
   }

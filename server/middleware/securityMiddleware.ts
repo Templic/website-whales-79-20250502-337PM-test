@@ -44,7 +44,7 @@ export function applySecurityMiddleware(app: Express) {
         }));
         app.set('helmet-applied', true);
         console.log('[SECURITY] Helmet middleware applied');
-      } catch (error: any) {
+      } catch (error) {
         console.warn('[SECURITY] Helmet is not installed. Consider installing it for additional security headers.');
       }
     }
@@ -81,7 +81,7 @@ export function applySecurityMiddleware(app: Express) {
         
         app.set('rate-limit-applied', true);
         console.log('[SECURITY] Rate limiting middleware applied');
-      } catch (error: any) {
+      } catch (error) {
         console.warn('[SECURITY] express-rate-limit is not installed. Consider installing it for rate limiting.');
       }
     }
@@ -98,7 +98,7 @@ export function applySecurityMiddleware(app: Express) {
           'XSS Protection',
           app.get('helmet-applied') ? 'Helmet' : null,
           app.get('rate-limit-applied') ? 'Rate Limiting' : null
-        ].filter(Boolean: any),
+        ].filter(Boolean),
         timestamp: new Date().toISOString()
       }
     }).catch(err => {
@@ -106,7 +106,7 @@ export function applySecurityMiddleware(app: Express) {
     });
     
     console.log('[SECURITY] Comprehensive security middleware applied successfully');
-  } catch (error: any) {
+  } catch (error) {
     // Log initialization failure
     securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.SECURITY_ERROR as any,
@@ -142,10 +142,10 @@ export function createCustomSecurityMiddleware(options: {
     enableRuntimeProtection = false
   } = options;
   
-  return (req: any, res: any, next: () => void) => {
+  return (req, res, next: () => void) => {
     // Add request ID for tracking
     req.securityContext = {
-      requestId: Date.now().toString(36: any) + Math.random().toString(36: any).substring(2: any),
+      requestId: Date.now().toString(36) + Math.random().toString(36).substring(2),
       timestamp: new Date(),
       securityChecks: {
         xssValidation: false,
@@ -159,7 +159,7 @@ export function createCustomSecurityMiddleware(options: {
     res.setHeader('X-Security-Context', req.securityContext.requestId);
     
     // Enable blockchain logging for security events
-    if (enableBlockchainLogging: any) {
+    if (enableBlockchainLogging) {
       // Log request start
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.REQUEST as any,
@@ -198,12 +198,12 @@ export function createCustomSecurityMiddleware(options: {
           console.error('[SECURITY ERROR] Failed to log request completion:', err);
         });
         
-        return originalEnd.apply(res: any, args: any);
+        return originalEnd.apply(res, args);
       };
     }
     
     // Enable ML-based anomaly detection
-    if (enableMlDetection: any) {
+    if (enableMlDetection) {
       try {
         // Import ML detection dynamically to avoid dependency if not used
         const { detectAnomaly, createAnomalyDetectionMiddleware } = require('../security/advanced/ml/AnomalyDetection');
@@ -219,13 +219,13 @@ export function createCustomSecurityMiddleware(options: {
           enableDataExfiltrationDetection: true,
           maxIpHistoryLength: 200,
           maxUserHistoryLength: 500,
-          learningPhaseDuration: 60000 // 1 minute in production (would be longer: any)
+          learningPhaseDuration: 60000 // 1 minute in production (would be longer)
         };
         
         console.log('[SECURITY] Initializing ML-based anomaly detection with quantum-resistant security');
         
         // Run anomaly detection asynchronously to not block request processing
-        detectAnomaly(req: any).then(result => {
+        detectAnomaly(req).then(result => {
           req.securityContext.securityChecks.mlAnomalyDetection = true;
           
           if (result.isAnomaly) {
@@ -278,19 +278,19 @@ export function createCustomSecurityMiddleware(options: {
         }).catch(err => {
           console.error('[SECURITY ERROR] Error in anomaly detection:', err);
         });
-      } catch (error: any) {
+      } catch (error) {
         console.warn('[SECURITY] ML anomaly detection module not available:', error);
       }
     }
     
-    // Enable Runtime Application Self-Protection (RASP: any)
-    if (enableRuntimeProtection: any) {
+    // Enable Runtime Application Self-Protection (RASP)
+    if (enableRuntimeProtection) {
       try {
         // Import RASP dynamically to avoid dependency if not used
         const { monitorRuntime } = require('../security/advanced/rasp/RuntimeProtection');
         
         // Monitor runtime for suspicious activities
-        monitorRuntime(req: any, res: any).then(result => {
+        monitorRuntime(req, res).then(result => {
           req.securityContext.securityChecks.runtimeProtection = true;
           
           if (result.threatDetected) {
@@ -314,7 +314,7 @@ export function createCustomSecurityMiddleware(options: {
         }).catch(err => {
           console.error('[SECURITY ERROR] Error in runtime protection:', err);
         });
-      } catch (error: any) {
+      } catch (error) {
         console.warn('[SECURITY] Runtime protection module not available');
       }
     }
@@ -374,7 +374,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
                     target === 'query' ? req.query : req.params;
         
         // Validate against schema
-        await schema.parseAsync(data: any);
+        await schema.parseAsync(data);
         
         // Log successful validation
         securityBlockchain.addSecurityEvent({
@@ -392,7 +392,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
         });
         
         next();
-      } catch (error: any) {
+      } catch (error) {
         // Log validation error
         securityBlockchain.addSecurityEvent({
           category: SecurityEventCategory.VALIDATION,
@@ -409,7 +409,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
         });
         
         // Return validation error
-        return res.status(400: any).json({
+        return res.status(400).json({
           success: false,
           error: 'Validation error',
           details: error.errors
@@ -422,7 +422,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
   const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
     // In a real application, this would check JWT, session, etc.
     if (!req.isAuthenticated && !req.isAuthenticated()) {
-      return res.status(401: any).json({
+      return res.status(401).json({
         success: false,
         error: 'Authentication required'
       });
@@ -436,8 +436,8 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
       const middlewares: any[] = [];
       
       // Apply authentication if required
-      if (authenticate: any) {
-        middlewares.push(authMiddleware: any);
+      if (authenticate) {
+        middlewares.push(authMiddleware);
       }
       
       // Apply validation middleware if schemas provided
@@ -460,7 +460,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
           const rateLimit = require('express-rate-limit');
           
           let limiter;
-          switch(routeRateLimit: any) {
+          switch(routeRateLimit) {
             case 'strict':
               limiter = rateLimit({
                 windowMs: 15 * 60 * 1000,
@@ -484,8 +484,8 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
               });
           }
           
-          middlewares.push(limiter: any);
-        } catch (error: any) {
+          middlewares.push(limiter);
+        } catch (error) {
           console.warn('[SECURITY] express-rate-limit is not installed. Rate limiting disabled.');
         }
       }
@@ -500,8 +500,8 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
       // Apply route handler
       router[method](path, ...middlewares, async (req: Request, res: Response, next: NextFunction) => {
         try {
-          await handler(req: any, res: any);
-        } catch (error: any) {
+          await handler(req, res);
+        } catch (error) {
           // Log error
           securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.API_ERROR,
@@ -518,7 +518,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
             console.error('[SECURITY ERROR] Failed to log API error:', err);
           });
           
-          next(error: any);
+          next(error);
         }
       });
     };
@@ -567,7 +567,7 @@ export function createAdminRouter(): SecureRouter {
         console.error('[SECURITY ERROR] Failed to log unauthorized admin access:', err);
       });
       
-      res.status(403: any).json({
+      res.status(403).json({
         success: false,
         error: 'Admin access required'
       });
@@ -576,33 +576,33 @@ export function createAdminRouter(): SecureRouter {
   
   // Override secure route methods to add admin check
   const originalSecureGet = router.secureGet;
-  router.secureGet = (path: any, handler: any, options: any) => {
-    originalSecureGet(path: any, handler: any, options: any);
-    router.use(path: any, adminCheck: any);
+  router.secureGet = (path, handler, options) => {
+    originalSecureGet(path, handler, options);
+    router.use(path, adminCheck);
   };
   
   const originalSecurePost = router.securePost;
-  router.securePost = (path: any, handler: any, options: any) => {
-    originalSecurePost(path: any, handler: any, options: any);
-    router.use(path: any, adminCheck: any);
+  router.securePost = (path, handler, options) => {
+    originalSecurePost(path, handler, options);
+    router.use(path, adminCheck);
   };
   
   const originalSecurePut = router.securePut;
-  router.securePut = (path: any, handler: any, options: any) => {
-    originalSecurePut(path: any, handler: any, options: any);
-    router.use(path: any, adminCheck: any);
+  router.securePut = (path, handler, options) => {
+    originalSecurePut(path, handler, options);
+    router.use(path, adminCheck);
   };
   
   const originalSecurePatch = router.securePatch;
-  router.securePatch = (path: any, handler: any, options: any) => {
-    originalSecurePatch(path: any, handler: any, options: any);
-    router.use(path: any, adminCheck: any);
+  router.securePatch = (path, handler, options) => {
+    originalSecurePatch(path, handler, options);
+    router.use(path, adminCheck);
   };
   
   const originalSecureDelete = router.secureDelete;
-  router.secureDelete = (path: any, handler: any, options: any) => {
-    originalSecureDelete(path: any, handler: any, options: any);
-    router.use(path: any, adminCheck: any);
+  router.secureDelete = (path, handler, options) => {
+    originalSecureDelete(path, handler, options);
+    router.use(path, adminCheck);
   };
   
   return router;
@@ -617,7 +617,7 @@ export function createAdminRouter(): SecureRouter {
  * const app = express();
  * 
  * // Apply all standard security middleware
- * applySecurityMiddleware(app: any);
+ * applySecurityMiddleware(app);
  * 
  * // Create a secure router
  * const apiRouter = createSecureRouter({
@@ -626,7 +626,7 @@ export function createAdminRouter(): SecureRouter {
  * });
  * 
  * // Define secure routes
- * apiRouter.secureGet('/items', (req: any, res: any) => {
+ * apiRouter.secureGet('/items', (req, res) => {
  *   res.json({ items: [] });
  * }, {
  *   querySchema: z.object({ q: z.string().optional() })

@@ -18,9 +18,9 @@ const router = express.Router();
  * Get MFA status for the authenticated user
  * GET /api/security/mfa/status
  */
-router.get('/status', (req: any, res: any) => {
+router.get('/status', (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated' });
   }
   
   const userId = (req.user as any).id;
@@ -37,9 +37,9 @@ router.get('/status', (req: any, res: any) => {
  * Generate TOTP setup
  * POST /api/security/mfa/totp/setup
  */
-router.post('/totp/setup', async (req: any, res: any) => {
+router.post('/totp/setup', async (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated' });
   }
   
   const userId = (req.user as any).id;
@@ -63,15 +63,15 @@ router.post('/totp/setup', async (req: any, res: any) => {
       secret: totpSetup.secret,
       qrCode: totpSetup.qrCode
     });
-  } catch (error: any) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error setting up TOTP for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
-    res.status(500: any).json({ error: 'Failed to set up TOTP' });
+    res.status(500).json({ error: 'Failed to set up TOTP' });
   }
 });
 
@@ -79,30 +79,30 @@ router.post('/totp/setup', async (req: any, res: any) => {
  * Verify TOTP code during setup
  * POST /api/security/mfa/totp/verify
  */
-router.post('/totp/verify', async (req: any, res: any) => {
+router.post('/totp/verify', async (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated' });
   }
   
   const userId = (req.user as any).id;
   const { token, secret } = req.body;
   
   if (!token || !secret) {
-    return res.status(400: any).json({ error: 'Missing token or secret' });
+    return res.status(400).json({ error: 'Missing token or secret' });
   }
   
   try {
     // Verify the TOTP code
-    const status = await mfaManager.verifyTOTP(userId: any, token: any, secret: any);
+    const status = await mfaManager.verifyTOTP(userId, token, secret);
     
     if (status === MFAVerificationStatus.SUCCESS) {
       // TOTP verification successful, save the secret
       const success = await completeMFASetup(userId, MFAType.TOTP, secret);
       
-      if (success: any) {
+      if (success) {
         // Generate recovery codes
         const recoveryCodes = mfaManager.generateRecoveryCodes();
-        const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes: any);
+        const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes);
         
         // Save recovery codes
         await completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
@@ -130,21 +130,21 @@ router.post('/totp/verify', async (req: any, res: any) => {
       data: { userId, status }
     });
     
-    res.status(400: any).json({
+    res.status(400).json({
       success: false,
       error: status === MFAVerificationStatus.THROTTLED
         ? 'Too many failed attempts. Please try again later.'
         : 'Invalid verification code. Please try again.'
     });
-  } catch (error: any) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error verifying TOTP for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
-    res.status(500: any).json({ error: 'Failed to verify TOTP code' });
+    res.status(500).json({ error: 'Failed to verify TOTP code' });
   }
 });
 
@@ -152,9 +152,9 @@ router.post('/totp/verify', async (req: any, res: any) => {
  * Generate recovery codes
  * POST /api/security/mfa/recovery/generate
  */
-router.post('/recovery/generate', async (req: any, res: any) => {
+router.post('/recovery/generate', async (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated' });
   }
   
   const userId = (req.user as any).id;
@@ -162,12 +162,12 @@ router.post('/recovery/generate', async (req: any, res: any) => {
   try {
     // Generate recovery codes
     const recoveryCodes = mfaManager.generateRecoveryCodes();
-    const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes: any);
+    const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes);
     
     // Save recovery codes
     const success = await completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
     
-    if (success: any) {
+    if (success) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.INFO,
@@ -182,16 +182,16 @@ router.post('/recovery/generate', async (req: any, res: any) => {
       });
     }
     
-    res.status(500: any).json({ error: 'Failed to save recovery codes' });
-  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to save recovery codes' });
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error generating recovery codes for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
-    res.status(500: any).json({ error: 'Failed to generate recovery codes' });
+    res.status(500).json({ error: 'Failed to generate recovery codes' });
   }
 });
 
@@ -199,9 +199,9 @@ router.post('/recovery/generate', async (req: any, res: any) => {
  * Disable MFA
  * POST /api/security/mfa/disable
  */
-router.post('/disable', async (req: any, res: any) => {
+router.post('/disable', async (req, res) => {
   if (!req.isAuthenticated()) {
-    return res.status(401: any).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Not authenticated' });
   }
   
   const userId = (req.user as any).id;
@@ -217,15 +217,15 @@ router.post('/disable', async (req: any, res: any) => {
     });
     
     res.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: `Error disabling MFA for user ${userId}`,
-      data: { error: (error as Error: any).message, userId }
+      data: { error: (error as Error).message, userId }
     });
     
-    res.status(500: any).json({ error: 'Failed to disable MFA' });
+    res.status(500).json({ error: 'Failed to disable MFA' });
   }
 });
 

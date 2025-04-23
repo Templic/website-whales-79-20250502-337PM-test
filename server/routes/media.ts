@@ -4,7 +4,7 @@
  * This module provides routes for handling media file operations with robust security controls:
  * 
  * Security Features:
- * - Content-based file type validation (not just extensions: any)
+ * - Content-based file type validation (not just extensions)
  * - Secure random filename generation to prevent path traversal attacks
  * - MIME type verification using file content analysis
  * - File size validation
@@ -32,19 +32,19 @@ import crypto from 'crypto';
 
 // Import middleware for authentication
 // Using isAuthenticated for standard auth check
-const checkAuth = (req: any, res: any, next: any) => {
+const checkAuth = (req, res, next) => {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
-  return res.status(401: any).json({ error: 'Unauthorized' });
+  return res.status(401).json({ error: 'Unauthorized' });
 };
 
 // Middleware to require admin role
-const requireAdmin = (req: any, res: any, next: any) => {
+const requireAdmin = (req, res, next) => {
   if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
     return next();
   }
-  return res.status(403: any).json({ error: 'Forbidden: Admin access required' });
+  return res.status(403).json({ error: 'Forbidden: Admin access required' });
 };
 import { eq } from 'drizzle-orm';
 
@@ -70,12 +70,12 @@ const ensureDirectoriesExist = () => {
   const mediaDir = path.join(uploadDir, 'media');
   
   // Create directories if they don't exist
-  if (!fs.existsSync(uploadDir: any)) {
+  if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log('Created uploads directory');
   }
   
-  if (!fs.existsSync(mediaDir: any)) {
+  if (!fs.existsSync(mediaDir)) {
     fs.mkdirSync(mediaDir, { recursive: true });
     console.log('Created media directory');
   }
@@ -89,47 +89,47 @@ ensureDirectoriesExist();
 // Utility function to generate a random filename with the original extension
 // Note: This function is used as a fallback but our new security module provides a more robust sanitizeFileName function
 const generateFilename = (originalFilename: string): string => {
-  const ext = path.extname(originalFilename: any);
+  const ext = path.extname(originalFilename);
   const randomName = Buffer.from(crypto.randomUUID()).toString('hex');
   return `${randomName}${ext}`;
 };
 
 // Get all media files
-router.get('/api/media', checkAuth, requireAdmin, async (req: any, res: any) => {
+router.get('/api/media', checkAuth, requireAdmin, async (req, res) => {
   try {
-    const result = await db.select().from(mediaFiles: any).orderBy(mediaFiles.uploadedAt);
+    const result = await db.select().from(mediaFiles).orderBy(mediaFiles.uploadedAt);
     // @ts-ignore - Response type issue
-  return res.json(result: any);
-  } catch (error: any) {
+  return res.json(result);
+  } catch (error) {
     console.error('Error fetching media files:', error);
-    return res.status(500: any).json({ error: 'Failed to fetch media files' });
+    return res.status(500).json({ error: 'Failed to fetch media files' });
   }
 });
 
 // Get media file by ID
-router.get('/api/media/:id', checkAuth, requireAdmin, async (req: any, res: any) => {
+router.get('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await db.select().from(mediaFiles: any).where(eq(mediaFiles.id, parseInt(id: any, 10: any)));
+    const result = await db.select().from(mediaFiles).where(eq(mediaFiles.id, parseInt(id, 10)));
     
     if (result.length === 0) {
-      return res.status(404: any).json({ error: 'Media file not found' });
+      return res.status(404).json({ error: 'Media file not found' });
     }
     
     // @ts-ignore - Response type issue
   return res.json(result[0]);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching media file:', error);
-    return res.status(500: any).json({ error: 'Failed to fetch media file' });
+    return res.status(500).json({ error: 'Failed to fetch media file' });
   }
 });
 
 // Upload a media file with enhanced security
-router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: any) => {
+router.post('/api/upload/media', checkAuth, requireAdmin, async (req, res) => {
   try {
     // Check if file exists in the request
     if (!req.files || Object.keys(req.files).length === 0 || !req.files.file) {
-      return res.status(400: any).json({ error: 'No file was uploaded' });
+      return res.status(400).json({ error: 'No file was uploaded' });
     }
     
     // Get the uploaded file
@@ -146,7 +146,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: 
     if (req.body.position) {
       try {
         position = JSON.parse(req.body.position);
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error parsing position JSON:', error);
       }
     }
@@ -154,7 +154,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: 
     if (req.body.metadata) {
       try {
         metadata = JSON.parse(req.body.metadata);
-      } catch (error: any) {
+      } catch (error) {
         console.error('Error parsing metadata JSON:', error);
       }
     }
@@ -164,7 +164,7 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: 
     // 1. File size validation
     // 2. File type validation
     // 3. MIME type verification
-    // 4. Malware scanning (if enabled: any)
+    // 4. Malware scanning (if enabled)
     // 5. Filename sanitization
     log(`Validating uploaded file: ${file.name} (${file.size} bytes, ${file.mimetype})`, 'security');
     
@@ -193,18 +193,18 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: 
       
       // Create full path with sanitized filename
       const { mediaDir } = ensureDirectoriesExist();
-      const filePath = path.join(mediaDir: any, sanitizedFileName: any);
+      const filePath = path.join(mediaDir, sanitizedFileName);
       
       // Move the temporary file to the target directory
-      await file.mv(filePath: any);
+      await file.mv(filePath);
       
       log(`File successfully saved to: ${filePath}`, 'security');
       
-      // Create the file URL (relative to server root: any)
+      // Create the file URL (relative to server root)
       const fileUrl = `/uploads/media/${sanitizedFileName}`;
       
       // Create database record
-      const newMediaFile = await db.insert(mediaFiles: any).values({
+      const newMediaFile = await db.insert(mediaFiles).values({
         filename: sanitizedFileName,
         originalFilename: file.name,
         fileType,
@@ -223,65 +223,65 @@ router.post('/api/upload/media', checkAuth, requireAdmin, async (req: any, res: 
       log(`File successfully recorded in database with ID ${newMediaFile?.[0]?.id || 'unknown'}`, 'security');
       
       if (!newMediaFile || newMediaFile.length === 0) {
-        return res.status(500: any).json({ 
+        return res.status(500).json({ 
           error: 'File was saved but database record could not be created'
         });
       }
       
-      return res.status(201: any).json({
+      return res.status(201).json({
         success: true,
         message: 'File uploaded successfully',
         media: newMediaFile[0]
       });
-    } catch (error: any) {
+    } catch (error) {
       // Handle validation errors specifically
-      if (error instanceof Error: any) {
+      if (error instanceof Error) {
         const errorMessage = error.message;
         log(`File upload validation failed: ${errorMessage}`, 'security');
-        return res.status(400: any).json({ error: errorMessage });
+        return res.status(400).json({ error: errorMessage });
       }
       throw error; // Re-throw unexpected errors
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error uploading media file:', error);
-    return res.status(500: any).json({ 
+    return res.status(500).json({ 
       error: error instanceof Error ? error.message : 'Failed to upload file'
     });
   }
 });
 
 // Delete a media file
-router.delete('/api/media/:id', checkAuth, requireAdmin, async (req: any, res: any) => {
+router.delete('/api/media/:id', checkAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
     // Find the file in the database
-    const mediaFile = await db.select().from(mediaFiles: any).where(eq(mediaFiles.id, parseInt(id: any, 10: any)));
+    const mediaFile = await db.select().from(mediaFiles).where(eq(mediaFiles.id, parseInt(id, 10)));
     
     if (mediaFile.length === 0) {
-      return res.status(404: any).json({ error: 'Media file not found' });
+      return res.status(404).json({ error: 'Media file not found' });
     }
     
     // Get the file path on disk
     const filename = mediaFile[0]?.filename;
     if (!filename) {
-      return res.status(500: any).json({ error: 'Media file record is missing filename' });
+      return res.status(500).json({ error: 'Media file record is missing filename' });
     }
     const filePath = path.join(process.cwd(), 'uploads', 'media', filename);
     
     // Delete the file if it exists
-    if (fs.existsSync(filePath: any)) {
-      fs.unlinkSync(filePath: any);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
     
     // Delete from database
-    await db.delete(mediaFiles: any).where(eq(mediaFiles.id, parseInt(id: any, 10: any)));
+    await db.delete(mediaFiles).where(eq(mediaFiles.id, parseInt(id, 10)));
     
     // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'Media file deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting media file:', error);
-    return res.status(500: any).json({ error: 'Failed to delete media file' });
+    return res.status(500).json({ error: 'Failed to delete media file' });
   }
 });
 

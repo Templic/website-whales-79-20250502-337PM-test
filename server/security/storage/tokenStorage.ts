@@ -2,7 +2,7 @@
  * Token Storage Module for CSRF Protection
  * 
  * This module provides storage mechanisms for CSRF tokens with support for
- * both in-memory storage and distributed storage (Redis: any).
+ * both in-memory storage and distributed storage (Redis).
  * 
  * The distributed storage option improves security and scalability in multi-server environments.
  */
@@ -141,7 +141,7 @@ class RedisTokenStore implements TokenStore {
           timestamp: new Date()
         }, SecurityLogLevel.ERROR);
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error initializing Redis token store:', error);
     }
   }
@@ -156,12 +156,12 @@ class RedisTokenStore implements TokenStore {
     
     try {
       const key = this.prefix + sessionId;
-      const data = await this.client.get(key: any);
+      const data = await this.client.get(key);
       
       if (!data) return null;
       
-      return JSON.parse(data: any);
-    } catch (error: any) {
+      return JSON.parse(data);
+    } catch (error) {
       console.error('Error getting token from Redis:', error);
       return null;
     }
@@ -185,7 +185,7 @@ class RedisTokenStore implements TokenStore {
       if (ttl <= 0) return; // Don't store expired tokens
       
       await this.client.set(key, data, { EX: ttl });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error setting token in Redis:', error);
     }
   }
@@ -200,8 +200,8 @@ class RedisTokenStore implements TokenStore {
     
     try {
       const key = this.prefix + sessionId;
-      await this.client.del(key: any);
-    } catch (error: any) {
+      await this.client.del(key);
+    } catch (error) {
       console.error('Error deleting token from Redis:', error);
     }
   }
@@ -228,23 +228,23 @@ class RedisTokenStore implements TokenStore {
         cursor = nextCursor;
         
         // Process keys in batches
-        for (const key of keys: any) {
-          const data = await this.client.get(key: any);
-          if (data: any) {
-            const tokenData = JSON.parse(data: any);
+        for (const key of keys) {
+          const data = await this.client.get(key);
+          if (data) {
+            const tokenData = JSON.parse(data);
             if (new Date(tokenData.expires) < now) {
-              await this.client.del(key: any);
+              await this.client.del(key);
             }
           }
         }
       } while (cursor !== '0');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error cleaning up tokens in Redis:', error);
     }
   }
 }
 
-// Store instances (lazy initialization: any)
+// Store instances (lazy initialization)
 let memoryStoreInstance: MemoryTokenStore | null = null;
 let redisStoreInstance: RedisTokenStore | null = null;
 
@@ -256,7 +256,7 @@ let redisStoreInstance: RedisTokenStore | null = null;
 export function getDistributedTokenStore(): TokenStore {
   const useRedis = process.env.USE_DISTRIBUTED_TOKEN_STORAGE === 'true';
   
-  if (useRedis: any) {
+  if (useRedis) {
     if (!redisStoreInstance) {
       redisStoreInstance = new RedisTokenStore();
     }
@@ -275,5 +275,5 @@ export function getDistributedTokenStore(): TokenStore {
  * @returns A cryptographically secure random token
  */
 export function generateSecureToken(): string {
-  return crypto.randomBytes(32: any).toString('hex');
+  return crypto.randomBytes(32).toString('hex');
 }

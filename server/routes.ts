@@ -111,7 +111,7 @@ const transporter = createTransport({
 
 export async function registerRoutes(app: express.Application): Promise<Server> {
   // Apply enhanced CSRF protection to all routes
-  // Exempt certain routes that should not require CSRF (like webhooks and health checks: any)
+  // Exempt certain routes that should not require CSRF (like webhooks and health checks)
   const csrfExemptRoutes = [
     '/api/health',
     '/api/webhooks',
@@ -131,7 +131,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   }));
   
   // Simple health check endpoint
-  app.get('/api/health', (req: any, res: any) => {
+  app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
@@ -156,7 +156,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/api/secure/admin', adminRouter);
   
   // Register API security verification endpoint (admin only)
-  app.get('/api/security/verify-api', async (req: any, res: any) => {
+  app.get('/api/security/verify-api', async (req, res) => {
     // Only allow admins to run the verification
     if (!req.isAuthenticated || !req.isAuthenticated() || 
         (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -175,7 +175,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         results: results,
         timestamp: new Date().toISOString()
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error running API security verification:', error);
       res.status(500).json({ 
         success: false, 
@@ -185,7 +185,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get current user endpoint
-  app.get('/api/user', (req: any, res: any) => {
+  app.get('/api/user', (req, res) => {
     if (req.isAuthenticated && req.isAuthenticated()) {
       // Use the safe user creator to return only non-sensitive fields
       const safeUser = createSafeUser(req.user);
@@ -195,8 +195,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
   
-  // Direct login endpoint for testing (in addition to the auth routes: any)
-  app.post('/api/login', async (req: any, res: any) => {
+  // Direct login endpoint for testing (in addition to the auth routes)
+  app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     
     try {
@@ -214,7 +214,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         if (userRows.length > 0) {
           fullUserRecord = userRows[0];
         }
-      } catch (dbError: any) {
+      } catch (dbError) {
         console.error("Database query error:", dbError);
       }
       
@@ -316,7 +316,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       
       // Incorrect credentials
       res.status(401).json({ message: 'Invalid username or password' });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'An error occurred during login' });
     }
@@ -329,7 +329,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.use('/images', express.static(path.join(process.cwd(), 'public/images')));
 
   // Get subscribers list
-  app.get("/api/subscribers", async (req: any, res: any) => {
+  app.get("/api/subscribers", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -338,14 +338,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const subscribers = await storage.getAllSubscribers();
       console.log("Found subscribers:", subscribers);
       res.json(subscribers);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching subscribers:", error);
       res.status(500).json({ message: "Error fetching subscribers" });
     }
   });
 
   // Admin Stats API
-  app.get("/api/admin/stats", async (req: any, res: any) => {
+  app.get("/api/admin/stats", async (req, res) => {
     // Allow development bypass for testing
     const bypassAuth = process.env.NODE_ENV !== 'production';
 
@@ -389,7 +389,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Get total pending reviews (comments + posts)
       const pendingReviews = pendingComments.length + pendingPosts.length;
 
-      // Calculate approval rate (if any reviews have been done: any)
+      // Calculate approval rate (if any reviews have been done)
       const approvedComments = await db.select({ count: sql`count(*)` })
         .from(comments)
         .where(eq(comments.approved, true));
@@ -413,15 +413,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         systemHealth = "Warning";
       }
 
-      // Generate recent activities (placeholder for now: any)
+      // Generate recent activities (placeholder for now)
       const recentActivities = [];
       
       // Simulating recent activities by taking newest users and generating activities
       const newestUsers = [...users]
-        .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
         .slice(0, 5);
         
-      newestUsers.forEach((user: any, index: any) => {
+      newestUsers.forEach((user, index) => {
         recentActivities.push({
           id: index + 1,
           action: 'User Registration',
@@ -447,14 +447,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
       
       console.log('Admin stats successfully retrieved');
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Error fetching admin stats" });
     }
   });
 
   // User management routes
-  app.get("/api/users", async (req: any, res: any) => {
+  app.get("/api/users", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -463,13 +463,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Map each user to a safe user object without sensitive fields
       const safeUsers = users.map(user => createSafeUser(user));
       res.json(safeUsers);
-    } catch (error: any) {
+    } catch (error) {
       res.status(500).json({ message: "Error fetching users" });
     }
   });
 
   // User update endpoint
-  app.patch("/api/users/:userId", async (req: any, res: any) => {
+  app.patch("/api/users/:userId", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -563,14 +563,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         default:
           return res.status(400).json({ message: "Invalid action" });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
     }
   });
 
   // Existing subscriber route with added validation
-  app.post("/api/subscribe", newsletterValidation, validate, async (req: any, res: any) => {
+  app.post("/api/subscribe", newsletterValidation, validate, async (req, res) => {
     try {
       console.log("Received subscription request:", req.body);
       // Input validation performed by express-validator middleware
@@ -604,7 +604,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
               </div>
             `
           });
-        } catch (emailError: any) {
+        } catch (emailError) {
           console.error("Failed to send welcome email:", emailError);
         }
       }
@@ -614,7 +614,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         subscriber 
       });
 
-    } catch (error: any) {
+    } catch (error) {
       if (error.code === '23505') { // PostgreSQL unique violation
         res.status(400).json({ message: "This email is already subscribed" });
       } else if (error.errors) { // Zod validation error
@@ -627,23 +627,23 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Check if email exists in subscribers - with validation
-  app.get("/api/subscribers/check/:email", async (req: any, res: any) => {
+  app.get("/api/subscribers/check/:email", async (req, res) => {
     try {
       // Validate email format
       const email = req.params.email;
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       
-      if (!emailRegex.test(email: any)) {
-        return res.status(400: any).json({ 
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
           message: "Invalid email format",
           exists: false
         });
       }
       
       // Use the ORM's parameterized query to prevent SQL injection
-      const subscriber = await storage.findSubscriberByEmail(email: any);
+      const subscriber = await storage.findSubscriberByEmail(email);
       res.json({ exists: !!subscriber });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error checking subscriber:", error);
       res.status(500).json({ message: "Error checking subscriber" });
     }
@@ -652,7 +652,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Content management endpoints for Admin
 
   // Get unapproved posts
-  app.get("/api/admin/posts/unapproved", async (req: any, res: any) => {
+  app.get("/api/admin/posts/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -661,12 +661,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const posts = await storage.getUnapprovedPosts();
 
       // Enhance posts with author usernames
-      const enhancedPosts = await Promise.all(posts.map(async (post: any) => {
+      const enhancedPosts = await Promise.all(posts.map(async (post) => {
         let authorName = 'Unknown';
         try {
           const author = await storage.getUser(post.authorId);
           authorName = author?.username || 'Unknown';
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Error fetching author for post ${post.id}:`, error);
         }
 
@@ -676,8 +676,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         };
       }));
 
-      res.json(enhancedPosts: any);
-    } catch (error: any) {
+      res.json(enhancedPosts);
+    } catch (error) {
       console.error("Error fetching unapproved posts:", error);
       res.status(500).json({ message: "Error fetching unapproved posts" });
     }
@@ -685,33 +685,33 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
   // Newsletter management endpoints
   // Get all newsletters
-  app.get("/api/newsletters", async (req: any, res: any) => {
+  app.get("/api/newsletters", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const newsletters = await storage.getAllNewsletters();
-      res.json(newsletters: any);
-    } catch (error: any) {
+      res.json(newsletters);
+    } catch (error) {
       console.error("Error fetching newsletters:", error);
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
 
-  // Test endpoint - public API for newsletters (for testing purposes only: any)
-  app.get("/api/test/newsletters", async (req: any, res: any) => {
+  // Test endpoint - public API for newsletters (for testing purposes only)
+  app.get("/api/test/newsletters", async (req, res) => {
     try {
       const newsletters = await storage.getAllNewsletters();
-      res.json(newsletters: any);
-    } catch (error: any) {
+      res.json(newsletters);
+    } catch (error) {
       console.error("Error fetching newsletters:", error);
       res.status(500).json({ message: "Error fetching newsletters" });
     }
   });
   
-  // Test endpoint for safe user data (for testing purposes only: any)
-  app.get("/api/test/safe-user", async (req: any, res: any) => {
+  // Test endpoint for safe user data (for testing purposes only)
+  app.get("/api/test/safe-user", async (req, res) => {
     try {
       const user = await storage.getUserByUsername('admin');
       
@@ -730,45 +730,45 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         createdAt: user.createdAt
       };
       
-      // Return both the full user (for debugging: any) and safe user
+      // Return both the full user (for debugging) and safe user
       res.json({
         fullUser: user,
         safeUser
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching safe user:", error);
       res.status(500).json({ message: "Error fetching safe user" });
     }
   });
 
-  // Test endpoint - initialize security settings (for testing purposes only: any)
-  app.get("/api/test/security/init", (req: any, res: any) => {
+  // Test endpoint - initialize security settings (for testing purposes only)
+  app.get("/api/test/security/init", (req, res) => {
     try {
       const settings = getSecuritySettings();
       res.json({ 
         message: "Security settings initialized successfully",
         settings
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error initializing security settings:", error);
       res.status(500).json({ message: "Error initializing security settings" });
     }
   });
 
-  // Test endpoint - update security settings (for testing purposes only: any)
-  app.post("/api/test/security/settings", (req: any, res: any) => {
+  // Test endpoint - update security settings (for testing purposes only)
+  app.post("/api/test/security/settings", (req, res) => {
     try {
       const { setting, enabled } = req.body;
 
       // Validate inputs
       if (!setting || typeof enabled !== 'boolean') {
-        return res.status(400: any).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
+        return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
       }
 
       // Check if setting is valid
       const validSettings = Object.keys(getSecuritySettings());
-      if (!validSettings.includes(setting: any)) {
-        return res.status(400: any).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
+      if (!validSettings.includes(setting)) {
+        return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
       }
 
       // Update the setting
@@ -789,21 +789,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         enabled,
         settings: getSecuritySettings()
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
 
-  // Test endpoint - view security settings (for testing purposes only: any)
-  app.get("/api/test/security/settings", (req: any, res: any) => {
+  // Test endpoint - view security settings (for testing purposes only)
+  app.get("/api/test/security/settings", (req, res) => {
     try {
       const settings = getSecuritySettings();
       res.json({
         message: 'Security settings retrieved successfully',
         settings
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving security settings:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security settings', 
@@ -812,8 +812,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Test endpoint - simulate unauthorized access (for testing purposes only: any)
-  app.get("/api/test/security/simulate-unauthorized", (req: any, res: any) => {
+  // Test endpoint - simulate unauthorized access (for testing purposes only)
+  app.get("/api/test/security/simulate-unauthorized", (req, res) => {
     try {
       // Log the unauthorized access attempt
       logSecurityEvent({
@@ -830,7 +830,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         message: 'Unauthorized access attempt logged successfully',
         details: 'This endpoint simulates an unauthorized access attempt to test security logging'
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error simulating unauthorized access:', error);
       res.status(500).json({ 
         message: 'Failed to simulate unauthorized access', 
@@ -839,12 +839,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Test endpoint - get security statistics (for testing purposes only: any)
-  app.get("/api/test/security/stats", (req: any, res: any) => {
+  // Test endpoint - get security statistics (for testing purposes only)
+  app.get("/api/test/security/stats", (req, res) => {
     try {
       // Create the logs directory structure if it doesn't exist
       const logsDir = path.join(process.cwd(), 'logs', 'security');
-      if (!fs.existsSync(logsDir: any)) {
+      if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(logsDir, { recursive: true });
         // @ts-ignore - Response type issue
   return res.json({ 
@@ -861,7 +861,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const logFilePath = path.join(logsDir, 'security.log');
 
       // Check if the file exists, and create it if it doesn't
-      if (!fs.existsSync(logFilePath: any)) {
+      if (!fs.existsSync(logFilePath)) {
         fs.writeFileSync(logFilePath, '', 'utf8');
         // @ts-ignore - Response type issue
   return res.json({ 
@@ -898,8 +898,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .filter(line => line.trim() !== '')
         .map(line => {
           try {
-            return JSON.parse(line: any);
-          } catch (err: any) {
+            return JSON.parse(line);
+          } catch (err) {
             return { rawLog: line, parseError: true };
           }
         });
@@ -937,7 +937,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         message: 'Security statistics retrieved successfully',
         stats
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving security statistics:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security statistics', 
@@ -946,19 +946,19 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Test endpoint - view security logs (for testing purposes only: any)
-  app.get("/api/test/security/logs", (req: any, res: any) => {
+  // Test endpoint - view security logs (for testing purposes only)
+  app.get("/api/test/security/logs", (req, res) => {
     try {
       // Create the logs directory structure if it doesn't exist
       const logsDir = path.join(process.cwd(), 'logs', 'security');
-      if (!fs.existsSync(logsDir: any)) {
+      if (!fs.existsSync(logsDir)) {
         fs.mkdirSync(logsDir, { recursive: true });
       }
 
       const logFilePath = path.join(logsDir, 'security.log');
 
       // Check if the file exists, and create it if it doesn't
-      if (!fs.existsSync(logFilePath: any)) {
+      if (!fs.existsSync(logFilePath)) {
         // Create an empty log file
         fs.writeFileSync(logFilePath, '', 'utf8');
         // @ts-ignore - Response type issue
@@ -988,8 +988,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .filter(line => line.trim() !== '')
         .map(line => {
           try {
-            return JSON.parse(line: any);
-          } catch (err: any) {
+            return JSON.parse(line);
+          } catch (err) {
             return { rawLog: line, parseError: true };
           }
         });
@@ -999,7 +999,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         logs: logEntries,
         count: logEntries.length
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving security logs:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security logs', 
@@ -1009,7 +1009,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // General security scan endpoint
-  app.get("/api/security/scan", async (req: any, res: any) => {
+  app.get("/api/security/scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
@@ -1038,7 +1038,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         },
         vulnerabilities: scanResults.vulnerabilities
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error running security scan:', error);
       res.status(500).json({
         message: 'Failed to run security scan',
@@ -1048,7 +1048,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
   
   // Authentication security scan endpoint
-  app.get("/api/security/auth-scan", async (req: any, res: any) => {
+  app.get("/api/security/auth-scan", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
@@ -1079,7 +1079,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         securityRating: authScanResults.criticalIssues === 0 ? 
           (authScanResults.highIssues === 0 ? 'A' : 'B') : 'C'
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error running authentication security scan:', error);
       res.status(500).json({
         message: 'Failed to run authentication security scan',
@@ -1088,8 +1088,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  // Test security scan endpoint (for testing purposes: any)
-  app.get("/api/test/security/scan", async (req: any, res: any) => {
+  // Test security scan endpoint (for testing purposes)
+  app.get("/api/test/security/scan", async (req, res) => {
     try {
       const scanResults = await runSecurityScan();
 
@@ -1105,7 +1105,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         },
         vulnerabilities: scanResults.vulnerabilities
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error running security scan:', error);
       res.status(500).json({
         message: 'Failed to run security scan',
@@ -1115,21 +1115,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   });
 
   // Get a single newsletter by ID
-  app.get("/api/newsletters/:id", async (req: any, res: any) => {
+  app.get("/api/newsletters/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const id = parseInt(req.params.id);
-      const newsletter = await storage.getNewsletterById(id: any);
+      const newsletter = await storage.getNewsletterById(id);
 
       if (!newsletter) {
-        return res.status(404: any).json({ message: "Newsletter not found" });
+        return res.status(404).json({ message: "Newsletter not found" });
       }
 
-      res.json(newsletter: any);
-    } catch (error: any) {
+      res.json(newsletter);
+    } catch (error) {
       console.error(`Error fetching newsletter:`, error);
       res.status(500).json({ message: "Error fetching newsletter" });
     }
@@ -1138,7 +1138,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Create a new newsletter with validation
   app.post("/api/newsletters", [
     // Authentication check
-    (req: any, res: any, next: any) => {
+    (req, res, next) => {
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
         return res.status(403).json({ message: "Unauthorized" });
       }
@@ -1149,25 +1149,25 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     body('content').trim().notEmpty().withMessage('Content is required').isLength({ min: 50 }).withMessage('Content must be at least 50 characters'),
     body('subject').trim().notEmpty().withMessage('Subject is required').isLength({ min: 3, max: 100 }).withMessage('Subject must be between 3 and 100 characters').escape(),
     validate
-  ], async (req: any, res: any) => {
+  ], async (req, res) => {
     try {
       // After passing validation middleware, parse schema
       const data = insertNewsletterSchema.parse(req.body);
-      const newsletter = await storage.createNewsletter(data: any);
+      const newsletter = await storage.createNewsletter(data);
 
-      res.status(201: any).json(newsletter: any);
-    } catch (error: any) {
+      res.status(201).json(newsletter);
+    } catch (error) {
       console.error("Error creating newsletter:", error);
-      if (error instanceof Error: any) {
-        res.status(400: any).json({ message: "Invalid newsletter data", details: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid newsletter data", details: error.message });
       } else {
-        res.status(400: any).json({ message: "Invalid newsletter data" });
+        res.status(400).json({ message: "Invalid newsletter data" });
       }
     }
   });
 
   // Update an existing newsletter
-  app.patch("/api/newsletters/:id", async (req: any, res: any) => {
+  app.patch("/api/newsletters/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1177,29 +1177,29 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const data = req.body;
 
       // Prevent updating sent newsletters
-      const existingNewsletter = await storage.getNewsletterById(id: any);
+      const existingNewsletter = await storage.getNewsletterById(id);
       if (!existingNewsletter) {
-        return res.status(404: any).json({ message: "Newsletter not found" });
+        return res.status(404).json({ message: "Newsletter not found" });
       }
 
       if (existingNewsletter.status === 'sent') {
-        return res.status(400: any).json({ message: "Cannot update a newsletter that has already been sent" });
+        return res.status(400).json({ message: "Cannot update a newsletter that has already been sent" });
       }
 
-      const updatedNewsletter = await storage.updateNewsletter(id: any, data: any);
-      res.json(updatedNewsletter: any);
-    } catch (error: any) {
+      const updatedNewsletter = await storage.updateNewsletter(id, data);
+      res.json(updatedNewsletter);
+    } catch (error) {
       console.error("Error updating newsletter:", error);
-      if (error instanceof Error: any) {
-        res.status(400: any).json({ message: "Invalid newsletter data", details: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid newsletter data", details: error.message });
       } else {
-        res.status(400: any).json({ message: "Invalid newsletter data" });
+        res.status(400).json({ message: "Invalid newsletter data" });
       }
     }
   });
 
   // Send a newsletter
-  app.post("/api/newsletters/:id/send", async (req: any, res: any) => {
+  app.post("/api/newsletters/:id/send", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1208,13 +1208,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const id = parseInt(req.params.id);
 
       // Check if newsletter exists and is not already sent
-      const newsletter = await storage.getNewsletterById(id: any);
+      const newsletter = await storage.getNewsletterById(id);
       if (!newsletter) {
-        return res.status(404: any).json({ message: "Newsletter not found" });
+        return res.status(404).json({ message: "Newsletter not found" });
       }
 
       if (newsletter.status === 'sent') {
-        return res.status(400: any).json({ message: "Newsletter has already been sent" });
+        return res.status(400).json({ message: "Newsletter has already been sent" });
       }
 
       // Get all active subscribers
@@ -1222,36 +1222,36 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const activeSubscribers = subscribers.filter(sub => sub.active);
 
       if (activeSubscribers.length === 0) {
-        return res.status(400: any).json({ message: "No active subscribers to send to" });
+        return res.status(400).json({ message: "No active subscribers to send to" });
       }
 
-      // Send newsletter to all active subscribers (in a real app: any, this would use a queue: any)
+      // Send newsletter to all active subscribers (in a real app, this would use a queue)
       if (transporter) {
         try {
-          // Send newsletter (just to the first subscriber for demo purposes: any)
+          // Send newsletter (just to the first subscriber for demo purposes)
           await transporter.sendMail({
             from: process.env.SMTP_FROM || 'noreply@example.com',
             to: activeSubscribers[0].email, // In production, use BCC for all subscribers
             subject: newsletter.title,
             html: newsletter.content
           });
-        } catch (emailError: any) {
+        } catch (emailError) {
           console.error("Failed to send newsletter:", emailError);
           return res.status(500).json({ message: "Failed to send newsletter email" });
         }
       }
 
       // Update newsletter status to sent
-      const sentNewsletter = await storage.sendNewsletter(id: any);
+      const sentNewsletter = await storage.sendNewsletter(id);
       res.json({ message: "Newsletter sent successfully", newsletter: sentNewsletter });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error sending newsletter:", error);
       res.status(500).json({ message: "Error sending newsletter" });
     }
   });
 
   // Get unapproved comments
-  app.get("/api/admin/comments/unapproved", async (req: any, res: any) => {
+  app.get("/api/admin/comments/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1260,21 +1260,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const comments = await storage.getUnapprovedComments();
 
       // Enhance comments with author names and post titles
-      const enhancedComments = await Promise.all(comments.map(async (comment: any) => {
+      const enhancedComments = await Promise.all(comments.map(async (comment) => {
         let authorName = 'Unknown';
         let postTitle = 'Unknown Post';
 
         try {
           const author = await storage.getUser(comment.authorId);
           authorName = author?.username || 'Unknown';
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Error fetching author for comment ${comment.id}:`, error);
         }
 
         try {
           const post = await storage.getPostById(comment.postId);
           postTitle = post?.title || 'Unknown Post';
-        } catch (error: any) {
+        } catch (error) {
           console.error(`Error fetching post for comment ${comment.id}:`, error);
         }
 
@@ -1285,15 +1285,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         };
       }));
 
-      res.json(enhancedComments: any);
-    } catch (error: any) {
+      res.json(enhancedComments);
+    } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
 
   // Get recent tracks for review
-  app.get("/api/admin/tracks/recent", async (req: any, res: any) => {
+  app.get("/api/admin/tracks/recent", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1301,20 +1301,20 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const tracks = await storage.getTracks();
 
-      // Sort tracks by creation date (newest first: any) and take the most recent 10
+      // Sort tracks by creation date (newest first) and take the most recent 10
       const recentTracks = [...tracks]
-        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0: any, 10: any);
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10);
 
       // Add uploader information if available
-      const enhancedTracks = await Promise.all(recentTracks.map(async (track: any) => {
+      const enhancedTracks = await Promise.all(recentTracks.map(async (track) => {
         let uploadedByName = 'Unknown';
 
         if (track.uploadedById) {
           try {
             const uploader = await storage.getUser(track.uploadedById);
             uploadedByName = uploader?.username || 'Unknown';
-          } catch (error: any) {
+          } catch (error) {
             console.error(`Error fetching uploader for track ${track.id}:`, error);
           }
         }
@@ -1325,63 +1325,63 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         };
       }));
 
-      res.json(enhancedTracks: any);
-    } catch (error: any) {
+      res.json(enhancedTracks);
+    } catch (error) {
       console.error("Error fetching recent tracks:", error);
       res.status(500).json({ message: "Error fetching recent tracks" });
     }
   });
 
   // Approve a post
-  app.post("/api/admin/posts/:postId/approve", async (req: any, res: any) => {
+  app.post("/api/admin/posts/:postId/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const postId = parseInt(req.params.postId);
-      const approvedPost = await storage.approvePost(postId: any);
-      res.json(approvedPost: any);
-    } catch (error: any) {
+      const approvedPost = await storage.approvePost(postId);
+      res.json(approvedPost);
+    } catch (error) {
       console.error(`Error approving post:`, error);
       res.status(500).json({ message: "Error approving post" });
     }
   });
 
   // Approve a comment
-  app.post("/api/admin/comments/:commentId/approve", async (req: any, res: any) => {
+  app.post("/api/admin/comments/:commentId/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const commentId = parseInt(req.params.commentId);
-      const approvedComment = await storage.approveComment(commentId: any);
-      res.json(approvedComment: any);
-    } catch (error: any) {
+      const approvedComment = await storage.approveComment(commentId);
+      res.json(approvedComment);
+    } catch (error) {
       console.error(`Error approving comment:`, error);
       res.status(500).json({ message: "Error approving comment" });
     }
   });
 
   // Reject a comment
-  app.post("/api/admin/comments/:commentId/reject", async (req: any, res: any) => {
+  app.post("/api/admin/comments/:commentId/reject", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const commentId = parseInt(req.params.commentId);
-      const rejectedComment = await storage.rejectComment(commentId: any);
-      res.json(rejectedComment: any);
-    } catch (error: any) {
+      const rejectedComment = await storage.rejectComment(commentId);
+      res.json(rejectedComment);
+    } catch (error) {
       console.error(`Error rejecting comment:`, error);
       res.status(500).json({ message: "Error rejecting comment" });
     }
   });
 
   // Delete a track
-  app.delete("/api/admin/tracks/:trackId", async (req: any, res: any) => {
+  app.delete("/api/admin/tracks/:trackId", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1390,14 +1390,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const trackId = parseInt(req.params.trackId);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ success: true, message: "Track deleted successfully" });
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error deleting track:`, error);
       res.status(500).json({ message: "Error deleting track" });
     }
   });
 
   // Blog post routes
-  app.get("/api/posts", async (req: any, res: any) => {
+  app.get("/api/posts", async (req, res) => {
     try {
       console.log("Fetching all posts...");
       const posts = await storage.getPosts();
@@ -1416,8 +1416,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         ? posts.filter(post => post.approved)
         : posts;
 
-      res.json(filteredPosts: any);
-    } catch (error: any) {
+      res.json(filteredPosts);
+    } catch (error) {
       console.error("Error fetching posts:", error);
       res.status(500).json({ 
         message: "Error fetching posts",
@@ -1426,7 +1426,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
   });
 
-  app.get("/api/posts/unapproved", async (req: any, res: any) => {
+  app.get("/api/posts/unapproved", async (req, res) => {
     // Check if authentication function exists
     const isAuthenticated = typeof req.isAuthenticated === 'function' 
       ? req.isAuthenticated() 
@@ -1441,57 +1441,57 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     
     try {
       const posts = await storage.getUnapprovedPosts();
-      res.json(posts: any);
-    } catch (error: any) {
+      res.json(posts);
+    } catch (error) {
       res.status(500).json({ message: "Error fetching unapproved posts" });
     }
   });
 
-  app.post("/api/posts/:id/approve", async (req: any, res: any) => {
+  app.post("/api/posts/:id/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
     try {
       const post = await storage.approvePost(Number(req.params.id));
-      res.json(post: any);
-    } catch (error: any) {
+      res.json(post);
+    } catch (error) {
       res.status(500).json({ message: "Error approving post" });
     }
   });
 
-  app.get("/api/posts/:id", async (req: any, res: any) => {
+  app.get("/api/posts/:id", async (req, res) => {
     try {
       const post = await storage.getPostById(Number(req.params.id));
       if (!post) {
-        return res.status(404: any).json({ message: "Post not found" });
+        return res.status(404).json({ message: "Post not found" });
       }
       // Only allow viewing unapproved posts if user is admin
       if (!post.approved && (!req.isAuthenticated() || req.user?.role === 'user')) {
-        return res.status(404: any).json({ message: "Post not found" });
+        return res.status(404).json({ message: "Post not found" });
       }
-      res.json(post: any);
-    } catch (error: any) {
+      res.json(post);
+    } catch (error) {
       res.status(500).json({ message: "Error fetching post" });
     }
   });
 
-  app.post("/api/posts", postValidation.create, validate, async (req: any, res: any) => {
+  app.post("/api/posts", postValidation.create, validate, async (req, res) => {
     try {
       // Input is already validated by express-validator middleware
       const data = insertPostSchema.parse(req.body);
-      const post = await storage.createPost(data: any);
-      res.json(post: any);
-    } catch (error: any) {
+      const post = await storage.createPost(data);
+      res.json(post);
+    } catch (error) {
       console.error("Error creating post:", error);
-      if (error instanceof Error: any) {
-        res.status(400: any).json({ message: "Invalid post data", details: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid post data", details: error.message });
       } else {
-        res.status(400: any).json({ message: "Invalid post data" });
+        res.status(400).json({ message: "Invalid post data" });
       }
     }
   });
   
-  app.patch("/api/posts/:id", async (req: any, res: any) => {
+  app.patch("/api/posts/:id", async (req, res) => {
     // Check authentication and authorization
     if (!req.isAuthenticated()) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -1499,10 +1499,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     
     try {
       const postId = parseInt(req.params.id);
-      const existingPost = await storage.getPostById(postId: any);
+      const existingPost = await storage.getPostById(postId);
       
       if (!existingPost) {
-        return res.status(404: any).json({ message: "Post not found" });
+        return res.status(404).json({ message: "Post not found" });
       }
       
       // Check if user is authorized to edit this post
@@ -1515,15 +1515,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       
       // Update the post
       const updatedData = req.body;
-      const updatedPost = await storage.updatePost(postId: any, updatedData: any);
-      res.json(updatedPost: any);
-    } catch (error: any) {
+      const updatedPost = await storage.updatePost(postId, updatedData);
+      res.json(updatedPost);
+    } catch (error) {
       console.error("Error updating post:", error);
       res.status(500).json({ message: "Error updating post" });
     }
   });
   
-  app.delete("/api/posts/:id", async (req: any, res: any) => {
+  app.delete("/api/posts/:id", async (req, res) => {
     // Check authentication
     if (!req.isAuthenticated()) {
       return res.status(403).json({ message: "Unauthorized" });
@@ -1531,10 +1531,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     
     try {
       const postId = parseInt(req.params.id);
-      const existingPost = await storage.getPostById(postId: any);
+      const existingPost = await storage.getPostById(postId);
       
       if (!existingPost) {
-        return res.status(404: any).json({ message: "Post not found" });
+        return res.status(404).json({ message: "Post not found" });
       }
       
       // Check if user is authorized to delete this post
@@ -1546,42 +1546,42 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
       
       // Delete the post
-      await storage.deletePost(postId: any);
+      await storage.deletePost(postId);
       res.json({ success: true, message: "Post deleted successfully" });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting post:", error);
       res.status(500).json({ message: "Error deleting post" });
     }
   });
 
   // Category routes
-  app.get("/api/categories", async (req: any, res: any) => {
+  app.get("/api/categories", async (req, res) => {
     try {
       const categories = await storage.getCategories();
-      res.json(categories: any);
-    } catch (error: any) {
+      res.json(categories);
+    } catch (error) {
       res.status(500).json({ message: "Error fetching categories" });
     }
   });
 
-  app.post("/api/categories", categoryValidation, validate, async (req: any, res: any) => {
+  app.post("/api/categories", categoryValidation, validate, async (req, res) => {
     try {
       // Input is already validated by express-validator middleware
       const data = insertCategorySchema.parse(req.body);
-      const category = await storage.createCategory(data: any);
-      res.json(category: any);
-    } catch (error: any) {
+      const category = await storage.createCategory(data);
+      res.json(category);
+    } catch (error) {
       console.error("Error creating category:", error);
-      if (error instanceof Error: any) {
-        res.status(400: any).json({ message: "Invalid category data", details: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: "Invalid category data", details: error.message });
       } else {
-        res.status(400: any).json({ message: "Invalid category data" });
+        res.status(400).json({ message: "Invalid category data" });
       }
     }
   });
 
   // Comment routes
-  app.post("/api/posts/:postId/comments", commentValidation, validate, async (req: any, res: any) => {
+  app.post("/api/posts/:postId/comments", commentValidation, validate, async (req, res) => {
     try {
       // Auto-approve comments from admin users
       const isAdmin = req.isAuthenticated() && (req.user?.role === 'admin' || req.user?.role === 'super_admin');
@@ -1594,39 +1594,39 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       });
 
       console.log("Creating comment with data:", data);
-      const comment = await storage.createComment(data: any);
+      const comment = await storage.createComment(data);
       console.log("Created comment:", comment);
-      res.json(comment: any);
-    } catch (error: any) {
+      res.json(comment);
+    } catch (error) {
       console.error("Error creating comment:", error);
-      if (error instanceof Error: any) {
-        res.status(400: any).json({ 
+      if (error instanceof Error) {
+        res.status(400).json({ 
           message: "Invalid comment data", 
           details: error.message 
         });
       } else {
-        res.status(400: any).json({ message: "Invalid comment data" });
+        res.status(400).json({ message: "Invalid comment data" });
       }
     }
   });
 
-  app.get("/api/posts/:postId/comments", async (req: any, res: any) => {
+  app.get("/api/posts/:postId/comments", async (req, res) => {
     try {
       const postId = Number(req.params.postId);
       // Only show approved comments to non-admin users
       const onlyApproved = !req.isAuthenticated() || req.user?.role === 'user';
       console.log(`Fetching comments for post ${postId}, onlyApproved: ${onlyApproved}, user: ${req.user?.username || 'guest'}`);
 
-      const comments = await storage.getCommentsByPostId(postId: any, onlyApproved: any);
+      const comments = await storage.getCommentsByPostId(postId, onlyApproved);
       console.log(`Returning ${comments.length} comments for post ${postId}`);
-      res.json(comments: any);
-    } catch (error: any) {
+      res.json(comments);
+    } catch (error) {
       console.error("Error fetching comments:", error);
       res.status(500).json({ message: "Error fetching comments" });
     }
   });
 
-  app.get("/api/posts/comments/unapproved", async (req: any, res: any) => {
+  app.get("/api/posts/comments/unapproved", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       console.log('Unauthorized access attempt to unapproved comments');
       return res.status(403).json({ message: "Unauthorized" });
@@ -1635,72 +1635,72 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log("Fetching unapproved comments");
       const comments = await storage.getUnapprovedComments();
       console.log("Found unapproved comments:", comments);
-      res.json(comments: any);
-    } catch (error: any) {
+      res.json(comments);
+    } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
   });
 
-  app.post("/api/posts/comments/:id/approve", async (req: any, res: any) => {
+  app.post("/api/posts/comments/:id/approve", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
     try {
       const comment = await storage.approveComment(Number(req.params.id));
-      res.json(comment: any);
-    } catch (error: any) {
+      res.json(comment);
+    } catch (error) {
       res.status(500).json({ message: "Error approving comment" });
     }
   });
 
-  app.post("/api/contact", contactValidation, validate, async (req: any, res: any) => {
+  app.post("/api/contact", contactValidation, validate, async (req, res) => {
   try {
     // Input is already validated by our middleware
     const { insertContactSchema } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
 
     // Create database entry
-    const message = await db.insert(contactMessages: any).values(data: any).returning();
+    const message = await db.insert(contactMessages).values(data).returning();
 
     // Send success response
     res.json({ 
       message: "Message sent successfully!", 
       data: message[0] 
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Contact form error:", error);
-    if (error instanceof Error: any) {
-      res.status(400: any).json({ 
+    if (error instanceof Error) {
+      res.status(400).json({ 
         message: error.message || "Failed to send message" 
       });
     } else {
-      res.status(400: any).json({ 
+      res.status(400).json({ 
         message: "Failed to send message" 
       });
     }
   }
 });
 
-app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
+app.post("/api/posts/comments/:id/reject", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
     try {
       const comment = await storage.rejectComment(Number(req.params.id));
-      res.json(comment: any);
-    } catch (error: any) {
+      res.json(comment);
+    } catch (error) {
       console.error("Error rejecting comment:", error);
       res.status(500).json({ message: "Error rejecting comment" });
     }
   });
 
   // Password recovery routes
-  app.post("/api/recover-password", passwordRecoveryValidation, validate, async (req: any, res: any) => {
+  app.post("/api/recover-password", passwordRecoveryValidation, validate, async (req, res) => {
     try {
       // Email is already validated by our middleware
       const { email } = req.body;
-      const user = await storage.getUserByEmail(email: any);
+      const user = await storage.getUserByEmail(email);
 
       if (!user) {
         // Don't reveal if email exists or not for security
@@ -1724,29 +1724,29 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       });
 
       res.json({ message: "If an account exists with this email, you will receive a recovery link." });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password recovery error:", error);
       res.status(500).json({ message: "Failed to process recovery request" });
     }
   });
 
-  app.post("/api/reset-password", passwordResetValidation, validate, async (req: any, res: any) => {
+  app.post("/api/reset-password", passwordResetValidation, validate, async (req, res) => {
     try {
       // Input is already validated by our middleware
       const { token, newPassword } = req.body;
-      const user = await storage.validatePasswordResetToken(token: any);
+      const user = await storage.validatePasswordResetToken(token);
 
       if (!user) {
-        return res.status(400: any).json({ message: "Invalid or expired reset token" });
+        return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
-      const hashedPassword = await hashPassword(newPassword: any);
+      const hashedPassword = await hashPassword(newPassword);
       await storage.updateUserPassword(user.id, hashedPassword);
 
       res.json({ message: "Password updated successfully" });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Password reset error:", error);
-      if (error instanceof Error: any) {
+      if (error instanceof Error) {
         res.status(500).json({ 
           message: "Failed to reset password",
           details: error.message 
@@ -1758,13 +1758,13 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   });
 
   // Music upload route
-  app.post("/api/upload/music", async (req: any, res: any) => {
+  app.post("/api/upload/music", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     if (!req.files || !req.files.file) {
-      return res.status(400: any).json({ message: "No file uploaded" });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
     const file = req.files.file;
@@ -1772,20 +1772,20 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
     const allowedPages = ['new_music', 'music_archive', 'blog', 'home', 'about', 'newsletter'];
     const allowedTypes = ['mp3', 'mp4', 'aac', 'flac', 'wav', 'aiff', 'avi', 'wmv', 'mov'];
 
-    if (!allowedPages.includes(targetPage: any)) {
-      return res.status(400: any).json({ message: "Invalid target page" });
+    if (!allowedPages.includes(targetPage)) {
+      return res.status(400).json({ message: "Invalid target page" });
     }
 
     // Enhanced file validation
     const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExt || !allowedTypes.includes(fileExt: any)) {
-      return res.status(400: any).json({ message: "Invalid file type. Allowed types: " + allowedTypes.join(', ') });
+    if (!fileExt || !allowedTypes.includes(fileExt)) {
+      return res.status(400).json({ message: "Invalid file type. Allowed types: " + allowedTypes.join(', ') });
     }
 
-    // Validate file size (50MB limit: any)
+    // Validate file size (50MB limit)
     const maxSize = 50 * 1024 * 1024; // 50MB in bytes
     if (file.size > maxSize) {
-      return res.status(400: any).json({ message: "File too large. Maximum size: 50MB" });
+      return res.status(400).json({ message: "File too large. Maximum size: 50MB" });
     }
 
     // Validate MIME type
@@ -1795,7 +1795,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       'video/quicktime', 'video/mp4'
     ];
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      return res.status(400: any).json({ message: "Invalid file MIME type. Allowed types: " + allowedMimeTypes.join(', ') });
+      return res.status(400).json({ message: "Invalid file MIME type. Allowed types: " + allowedMimeTypes.join(', ') });
     }
 
     try {
@@ -1805,19 +1805,19 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         uploadedBy: req.user.id,
         userRole: req.user.role as 'admin' | 'super_admin'
       });
-      res.json(result: any);
-    } catch (error: any) {
+      res.json(result);
+    } catch (error) {
       console.error("Error uploading music file:", error);
       res.status(500).json({ message: "Failed to upload file" });
     }
   });
 
   // Music routes 
-  app.get("/api/tracks", async (req: any, res: any) => {
+  app.get("/api/tracks", async (req, res) => {
     try {
       const tracks = await storage.getTracks();
-      res.json(tracks: any);
-    } catch (error: any) {
+      res.json(tracks);
+    } catch (error) {
       console.error("Error fetching tracks:", error);
       res.status(500).json({ 
         message: "Error fetching tracks",
@@ -1826,11 +1826,11 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
     }
   });
 
-  app.get("/api/albums", async (req: any, res: any) => {
+  app.get("/api/albums", async (req, res) => {
     try {
       const albums = await storage.getAlbums();
-      res.json(albums: any);
-    } catch (error: any) {
+      res.json(albums);
+    } catch (error) {
       console.error("Error fetching albums:", error);
       res.status(500).json({ 
         message: "Error fetching albums",
@@ -1840,7 +1840,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   });
 
   // Delete music endpoint
-  app.delete("/api/tracks/:id", async (req: any, res: any) => {
+  app.delete("/api/tracks/:id", async (req, res) => {
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -1849,7 +1849,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       const trackId = Number(req.params.id);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ message: "Track deleted successfully" });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting track:", error);
       res.status(error.message === 'Track not found' ? 404 : 500)
         .json({ message: error.message || "Failed to delete track" });
@@ -1859,7 +1859,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   //This route was duplicated in the original code.  Removing the duplicate.
 
     // Admin analytics endpoint
-  app.get("/api/admin/analytics/detailed", async (req: any, res: any) => {
+  app.get("/api/admin/analytics/detailed", async (req, res) => {
     // Check for BYPASS_AUTHENTICATION variable from protected-route.tsx
     const bypassAuth = process.env.NODE_ENV !== 'production';
 
@@ -1881,9 +1881,9 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       // Get analytics data from storage interface with error handling
       let analyticsData;
       try {
-        analyticsData = await storage.getAdminAnalytics(fromDate: any, toDate: any);
+        analyticsData = await storage.getAdminAnalytics(fromDate, toDate);
         console.log('Base analytics data retrieved:', analyticsData);
-      } catch (analyticError: any) {
+      } catch (analyticError) {
         console.error('Error retrieving base analytics:', analyticError);
         analyticsData = {
           activeUsers: 0,
@@ -1942,7 +1942,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
             userRolesDistribution[user.role as keyof typeof userRolesDistribution]++;
           }
         });
-      } catch (userError: any) {
+      } catch (userError) {
         console.error('Error retrieving user data:', userError);
       }
 
@@ -1958,7 +1958,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         const posts = await storage.getPosts();
         contentDistribution.posts = posts.length;
         console.log(`Retrieved ${posts.length} posts`);
-      } catch (postsError: any) {
+      } catch (postsError) {
         console.error('Error retrieving posts:', postsError);
       }
 
@@ -1966,7 +1966,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         const comments = await storage.getUnapprovedComments();
         contentDistribution.comments = comments.length;
         console.log(`Retrieved ${comments.length} comments`);
-      } catch (commentsError: any) {
+      } catch (commentsError) {
         console.error('Error retrieving comments:', commentsError);
       }
 
@@ -1974,7 +1974,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         const tracks = await storage.getTracks();
         contentDistribution.tracks = tracks.length;
         console.log(`Retrieved ${tracks.length} tracks`);
-      } catch (tracksError: any) {
+      } catch (tracksError) {
         console.error('Error retrieving tracks:', tracksError);
       }
 
@@ -1987,9 +1987,9 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         userRolesDistribution
       };
 
-      console.log('Sending analytics response:', JSON.stringify(response: any));
-      res.json(response: any);
-    } catch (error: any) {
+      console.log('Sending analytics response:', JSON.stringify(response));
+      res.json(response);
+    } catch (error) {
       console.error("Error fetching analytics data:", error);
       res.status(500).json({ 
         message: "Error fetching analytics data",
@@ -1999,7 +1999,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   });
 
   // Database monitoring routes
-  app.use('/api/admin/db-monitor', (req: any, res: any, next: any) => {
+  app.use('/api/admin/db-monitor', (req, res, next) => {
     // Check authentication and admin role
     if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized: Admin access required" });
@@ -2008,8 +2008,8 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   }, dbMonitorRoutes);
   
   // Database security routes
-  // Main database security routes (authenticated: any)
-  app.use('/api/admin/database-security', (req: any, res: any, next: any) => {
+  // Main database security routes (authenticated)
+  app.use('/api/admin/database-security', (req, res, next) => {
     // Check authentication and admin role
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized: Admin access required" });
@@ -2021,18 +2021,18 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   app.use('/api/test/database-security', databaseSecurityRoutes);
   
   // Apply database security middleware globally
-  app.use(validateDatabaseQuery: any);
-  app.use(sanitizeDatabaseParams: any);
+  app.use(validateDatabaseQuery);
+  app.use(sanitizeDatabaseParams);
 
   // Shop routes
   const router = express.Router();
   // Forward /api/products to /api/shop/products for compatibility
-  app.get('/api/products', (req: any, res: any, next: any) => {
+  app.get('/api/products', (req, res, next) => {
     res.redirect('/api/shop/products');
   });
   
   // Test page route
-  app.get('/test-shop', (req: any, res: any) => {
+  app.get('/test-shop', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'test-page.html'));
   });
 
@@ -2049,7 +2049,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
   
-  // Import test API routes (these bypass CSRF protection for testing: any)
+  // Import test API routes (these bypass CSRF protection for testing)
   // These routes are explicitly mounted WITHOUT any CSRF protection
   import('./routes/test-api').then(module => {
     const testApiRoutes = module.default;
@@ -2062,7 +2062,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       console.log('[SECURITY] WARNING: Test API routes enabled - these bypass CSRF protection');
       
       // This is our top-level CSRF exemption setting
-      app.use('/api/test-only', (req: any, res: any, next: any) => {
+      app.use('/api/test-only', (req, res, next) => {
         // Mark the route as exempt from CSRF checks
         req.csrfToken = () => 'test-only-csrf-bypass-token';
         next();
@@ -2100,34 +2100,34 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
   console.log('[API-PROTECTION] Advanced API protection temporarily disabled due to missing modules');
 
   // Create HTTP server with the Express app
-  const httpServer = createServer(app: any);
+  const httpServer = createServer(app);
   // Contact form submission
-  // Import contactValidation & validate from our new modules (added at the top of the file: any)
-  app.post('/api/contact/submit', contactValidation, validate, async (req: any, res: any) => {
+  // Import contactValidation & validate from our new modules (added at the top of the file)
+  app.post('/api/contact/submit', contactValidation, validate, async (req, res) => {
     try {
       const { name, email, message } = req.body;
 
       // Input has been validated by our middleware
-      await db.insert(contactMessages: any).values({
+      await db.insert(contactMessages).values({
         name,
         email, 
         message
       });
 
       res.json({ success: true });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to save contact form:', error);
       res.status(500).json({ error: 'Failed to save contact form' });
     }
   });
 
   // Security log endpoint
-  app.post('/api/security/log', (req: any, res: any) => {
+  app.post('/api/security/log', (req, res) => {
     try {
       // Log the security event from the request body
       logSecurityEvent(req.body);
       res.json({ success: true, message: 'Security event logged successfully' });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error logging security event:', error);
       res.status(500).json({ 
         success: false, 
@@ -2137,23 +2137,23 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
     }
   });
 
-  // Get security settings (admin only: any)
-  app.get('/api/security/settings', (req: any, res: any) => {
+  // Get security settings (admin only)
+  app.get('/api/security/settings', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
     try {
       const settings = getSecuritySettings();
-      res.json(settings: any);
-    } catch (error: any) {
+      res.json(settings);
+    } catch (error) {
       console.error('Error fetching security settings:', error);
       res.status(500).json({ message: 'Failed to fetch security settings' });
     }
   });
 
-  // Update a security setting (admin only: any)
-  app.post('/api/security/settings', (req: any, res: any) => {
+  // Update a security setting (admin only)
+  app.post('/api/security/settings', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -2163,13 +2163,13 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
 
       // Validate inputs
       if (!setting || typeof enabled !== 'boolean') {
-        return res.status(400: any).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
+        return res.status(400).json({ message: 'Invalid input. Requires setting name and boolean enabled value' });
       }
 
       // Check if setting is valid
       const validSettings = Object.keys(getSecuritySettings());
-      if (!validSettings.includes(setting: any)) {
-        return res.status(400: any).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
+      if (!validSettings.includes(setting)) {
+        return res.status(400).json({ message: `Invalid setting: ${setting}. Valid options are: ${validSettings.join(', ')}` });
       }
 
       // Update the setting
@@ -2189,15 +2189,15 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         setting,
         enabled
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
     }
   });
 
-  // Get security logs (admin only: any)
+  // Get security logs (admin only)
   // Enhanced Admin Content Management API
-  app.get("/api/admin/content", async (req: any, res: any) => {
+  app.get("/api/admin/content", async (req, res) => {
     try {
       // Check if user is authenticated and has admin privileges
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -2228,15 +2228,15 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         };
       });
       
-      res.json(enhancedItems: any);
-    } catch (error: any) {
+      res.json(enhancedItems);
+    } catch (error) {
       console.error("Error fetching admin content items:", error);
       res.status(500).json({ message: "Error fetching content items" });
     }
   });
 
   // Get workflow history for a content item
-  app.get("/api/admin/content/:id/history", async (req: any, res: any) => {
+  app.get("/api/admin/content/:id/history", async (req, res) => {
     try {
       // Check if user is authenticated and has admin privileges
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -2246,7 +2246,7 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       const contentId = parseInt(req.params.id);
       
       // Fetch workflow history
-      const history = await storage.getContentWorkflowHistory(contentId: any);
+      const history = await storage.getContentWorkflowHistory(contentId);
       
       // Enhance history with user information
       const users = await storage.getAllUsers();
@@ -2259,15 +2259,15 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         };
       });
       
-      res.json(enhancedHistory: any);
-    } catch (error: any) {
+      res.json(enhancedHistory);
+    } catch (error) {
       console.error("Error fetching content workflow history:", error);
       res.status(500).json({ message: "Error fetching workflow history" });
     }
   });
 
   // Update content workflow status
-  app.patch("/api/admin/content/:id/status", async (req: any, res: any) => {
+  app.patch("/api/admin/content/:id/status", async (req, res) => {
     try {
       // Check if user is authenticated and has admin privileges
       if (!req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
@@ -2278,9 +2278,9 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       const { status, reviewNotes, scheduledPublishAt, expirationDate } = req.body;
       
       // Get current content status
-      const currentContent = await storage.getContentItemById(contentId: any);
+      const currentContent = await storage.getContentItemById(contentId);
       if (!currentContent) {
-        return res.status(404: any).json({ message: "Content not found" });
+        return res.status(404).json({ message: "Content not found" });
       }
       
       // Update content item status
@@ -2290,19 +2290,19 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
         req.user.id, 
         { 
           reviewNotes,
-          scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt: any) : undefined,
-          expirationDate: expirationDate ? new Date(expirationDate: any) : undefined
+          scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : undefined,
+          expirationDate: expirationDate ? new Date(expirationDate) : undefined
         }
       );
       
-      res.json(updatedContent: any);
-    } catch (error: any) {
+      res.json(updatedContent);
+    } catch (error) {
       console.error("Error updating content status:", error);
       res.status(500).json({ message: "Error updating content status" });
     }
   });
 
-  app.get('/api/security/logs', (req: any, res: any) => {
+  app.get('/api/security/logs', (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated() || (req.user?.role !== 'admin' && req.user?.role !== 'super_admin')) {
       return res.status(403).json({ message: "Unauthorized" });
     }
@@ -2311,49 +2311,49 @@ app.post("/api/posts/comments/:id/reject", async (req: any, res: any) => {
       const securityLogsDir = path.join(process.cwd(), 'logs', 'security');
       const securityLogFile = path.join(securityLogsDir, 'security.log');
 
-      if (!fs.existsSync(securityLogFile: any)) {
+      if (!fs.existsSync(securityLogFile)) {
         // @ts-ignore - Response type issue
   return res.json({ logs: [] });
       }
 
-      // Read the log file (in a production app: any, you might want to paginate this: any)
+      // Read the log file (in a production app, you might want to paginate this)
       const logContent = fs.readFileSync(securityLogFile, 'utf8');
       const logs = logContent
         .split('\n')
         .filter(line => line.trim())
         .map(line => {
           try {
-            return JSON.parse(line: any);
-          } catch (e: any) {
+            return JSON.parse(line);
+          } catch (e) {
             return { raw: line, error: 'Failed to parse log entry' };
           }
         });
 
       res.json({ logs });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching security logs:', error);
       res.status(500).json({ message: 'Failed to fetch security logs' });
     }
   });
 
-  // Schedule periodic security log rotation (every 24 hours: any)
+  // Schedule periodic security log rotation (every 24 hours)
   setInterval(() => {
     try {
       // Temporary implementation until proper security logs module is fixed
-      console.log('Security logs rotation scheduled (temporarily disabled: any)');
+      console.log('Security logs rotation scheduled (temporarily disabled)');
       // TODO: Re-implement rotateSecurityLogs() from security module
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error rotating security logs:', error);
     }
   }, 24 * 60 * 60 * 1000);
 
   // Let Vite handle frontend routes in development mode
   if (process.env.NODE_ENV === 'production') {
-    app.get('/*', (req: any, res: any) => {
-      const indexPath = path.resolve(path.dirname(__dirname: any), 'client/index.html');
+    app.get('/*', (req, res) => {
+      const indexPath = path.resolve(path.dirname(__dirname), 'client/index.html');
       res.sendFile(indexPath, err => {
-        if (err: any) {
-          res.status(500: any).send(err: any);
+        if (err) {
+          res.status(500).send(err);
         }
       });
     });

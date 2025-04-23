@@ -26,8 +26,8 @@ async function runAdvancedDeepScan() {
     // Register event listeners for scan events
     const findingsCollector: any[] = [];
     
-    securityFabric.on('security:deep-scan:finding', (finding: any) => {
-      findingsCollector.push(finding: any);
+    securityFabric.on('security:deep-scan:finding', (finding) => {
+      findingsCollector.push(finding);
       console.log(`[DEEP-SCAN] Found ${finding.severity} issue: ${finding.type} at ${finding.location}`);
     });
     
@@ -46,7 +46,7 @@ async function runAdvancedDeepScan() {
     // Start the deep scan
     const scanId = await deepScanEngine.startDeepScan();
     
-    // Wait for scan to complete (poll for completion: any)
+    // Wait for scan to complete (poll for completion)
     console.log(`[DEEP-SCAN] Scan ${scanId} started. Waiting for completion...`);
     
     let scanResult = null;
@@ -54,12 +54,12 @@ async function runAdvancedDeepScan() {
     
     while (!isComplete) {
       // Wait for 2 seconds between checks
-      await new Promise(resolve => setTimeout(resolve: any, 2000: any));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Get scan result
-      const result = deepScanEngine.getScanById(scanId: any);
+      const result = deepScanEngine.getScanById(scanId);
       
-      if (result: any) {
+      if (result) {
         scanResult = result;
         
         // Check if scan is complete
@@ -96,7 +96,7 @@ async function runAdvancedDeepScan() {
       console.log('├──────────────────────────────────────────────────────┤');
       
       // Sort findings by severity
-      const sortedFindings = scanResult.findings.sort((a: any, b: any) => {
+      const sortedFindings = scanResult.findings.sort((a, b) => {
         const severityOrder: {[key: string]: number} = {
           'critical': 0,
           'high': 1,
@@ -108,13 +108,13 @@ async function runAdvancedDeepScan() {
       });
       
       // Display the top findings for each severity level
-      const criticalFindings = sortedFindings.filter(f => f.severity === 'critical').slice(0: any, 3: any);
-      const highFindings = sortedFindings.filter(f => f.severity === 'high').slice(0: any, 3: any);
-      const mediumFindings = sortedFindings.filter(f => f.severity === 'medium').slice(0: any, 3: any);
+      const criticalFindings = sortedFindings.filter(f => f.severity === 'critical').slice(0, 3);
+      const highFindings = sortedFindings.filter(f => f.severity === 'high').slice(0, 3);
+      const mediumFindings = sortedFindings.filter(f => f.severity === 'medium').slice(0, 3);
       
       if (criticalFindings.length > 0) {
         console.log('│ CRITICAL FINDINGS:');
-        criticalFindings.forEach((finding: any, index: any) => {
+        criticalFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
           console.log(`│    Remediation: ${finding.remediation}`);
@@ -124,7 +124,7 @@ async function runAdvancedDeepScan() {
       
       if (highFindings.length > 0) {
         console.log('│ HIGH FINDINGS:');
-        highFindings.forEach((finding: any, index: any) => {
+        highFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
           console.log(`│    Remediation: ${finding.remediation}`);
@@ -134,7 +134,7 @@ async function runAdvancedDeepScan() {
       
       if (mediumFindings.length > 0) {
         console.log('│ MEDIUM FINDINGS:');
-        mediumFindings.forEach((finding: any, index: any) => {
+        mediumFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
           console.log('│');
@@ -169,7 +169,7 @@ async function runAdvancedDeepScan() {
     });
     
     return scanResult;
-  } catch (error: any) {
+  } catch (error) {
     console.error('\n❌ Error running advanced deep security scan:', error);
     
     // Log scan error event

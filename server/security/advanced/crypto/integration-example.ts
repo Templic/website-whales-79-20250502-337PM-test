@@ -27,7 +27,7 @@ async function distributeQuantumKey() {
     logger.info('Generating quantum-resistant key pair');
     const keyPair = quantumCrypto.generateKeyPair(QuantumAlgorithmType.LATTICE_NTRU);
     
-    // Extract the private key (in a real scenario: any, this would be a key that needs protection: any)
+    // Extract the private key (in a real scenario, this would be a key that needs protection)
     const privateKey = keyPair.privateKey;
     
     // Create a verifiable secret sharing scheme for the private key
@@ -35,7 +35,7 @@ async function distributeQuantumKey() {
     const totalShares = 5;  // 5 key custodians
     const threshold = 3;    // Any 3 can reconstruct the key
     
-    const vss = verifiableSecretSharing.createShares(privateKey: any, totalShares: any, threshold: any);
+    const vss = verifiableSecretSharing.createShares(privateKey, totalShares, threshold);
     
     // Verify each share is valid before distribution
     logger.info('Verifying shares before distribution');
@@ -49,7 +49,7 @@ async function distributeQuantumKey() {
       }
     }
     
-    if (allSharesValid: any) {
+    if (allSharesValid) {
       logger.info('All shares verified successfully');
       
       // In a real implementation, each share would be securely distributed to a key custodian
@@ -58,7 +58,7 @@ async function distributeQuantumKey() {
       
       // Select 3 random shares to reconstruct the key
       const sharesToUse = [vss.shares[0], vss.shares[2], vss.shares[4]];
-      const reconstructedKey = verifiableSecretSharing.reconstructSecret(sharesToUse: any, threshold: any);
+      const reconstructedKey = verifiableSecretSharing.reconstructSecret(sharesToUse, threshold);
       
       // Verify the reconstructed key matches the original
       const keysMatch = reconstructedKey === privateKey;
@@ -75,15 +75,15 @@ async function distributeQuantumKey() {
         message: 'Share verification failed'
       };
     }
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Key distribution failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Key distribution error: ${(error as Error: any).message}`
+      message: `Key distribution error: ${(error as Error).message}`
     };
   }
 }
@@ -98,7 +98,7 @@ async function signDocumentWithDualMethods(document: string) {
   try {
     // Generate forward-secure key pair for 365 periods (e.g., days in a year)
     logger.info('Generating forward-secure key pair');
-    const forwardSecureKeys = forwardSecureSignature.generateKeyPair(365: any);
+    const forwardSecureKeys = forwardSecureSignature.generateKeyPair(365);
     
     // Generate quantum-resistant key pair
     logger.info('Generating quantum-resistant key pair');
@@ -134,7 +134,7 @@ async function signDocumentWithDualMethods(document: string) {
     
     // Verify both signatures
     logger.info('Verifying both signature types');
-    const fsVerified = forwardSecureSignature.verify(fsSignature: any);
+    const fsVerified = forwardSecureSignature.verify(fsSignature);
     const quantumVerified = quantumCrypto.verify(quantumSignature, quantumKeys.publicKey);
     
     // Evolve the forward-secure key to the next period
@@ -146,7 +146,7 @@ async function signDocumentWithDualMethods(document: string) {
     
     // After evolution, signatures remain valid but we can no longer sign for the past period
     logger.info('Verification after key evolution');
-    const fsVerifiedAfterUpdate = forwardSecureSignature.verify(fsSignature: any);
+    const fsVerifiedAfterUpdate = forwardSecureSignature.verify(fsSignature);
     
     return {
       success: fsVerified && quantumVerified,
@@ -158,15 +158,15 @@ async function signDocumentWithDualMethods(document: string) {
         afterKeyEvolution: fsVerifiedAfterUpdate
       }
     };
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Document signing failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Document signing error: ${(error as Error: any).message}`
+      message: `Document signing error: ${(error as Error).message}`
     };
   }
 }
@@ -185,21 +185,21 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
     
     // Create a zero-knowledge range proof
     logger.info('Creating zero-knowledge range proof for transaction amount');
-    const rangeProof = zeroKnowledgeProof.createRangeProof(transactionAmount: any, minimumAmount: any, maximumAmount: any);
+    const rangeProof = zeroKnowledgeProof.createRangeProof(transactionAmount, minimumAmount, maximumAmount);
     
     // In a real system, only the proof would be transmitted, not the actual amount
     logger.info('Verifying transaction amount is within allowed range');
-    const isValidAmount = zeroKnowledgeProof.verifyRangeProof(rangeProof: any, minimumAmount: any, maximumAmount: any);
+    const isValidAmount = zeroKnowledgeProof.verifyRangeProof(rangeProof, minimumAmount, maximumAmount);
     
     // Generate a quantum-resistant key pair for transaction signing
     logger.info('Generating quantum-resistant key pair for transaction');
     const keyPair = quantumCrypto.generateKeyPair();
     
     // If the amount is valid, process the transaction with quantum-resistant encryption
-    if (isValidAmount: any) {
+    if (isValidAmount) {
       logger.info('Amount verified, encrypting transaction details');
       
-      // Create a transaction object (simplified: any)
+      // Create a transaction object (simplified)
       const transaction = {
         id: crypto.randomUUID(),
         amount: transactionAmount,
@@ -208,7 +208,7 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
       
       // Encrypt the transaction details
       const encryptedTransaction = quantumCrypto.encrypt(
-        JSON.stringify(transaction: any),
+        JSON.stringify(transaction),
         keyPair.publicKey,
         QuantumAlgorithmType.LATTICE_NTRU
       );
@@ -239,15 +239,15 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
         message: 'Transaction amount outside allowed range'
       };
     }
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Transaction processing failed', {
-      error: (error as Error: any).message,
+      error: (error as Error).message,
       timestamp: Date.now()
     });
     
     return {
       success: false,
-      message: `Transaction error: ${(error as Error: any).message}`
+      message: `Transaction error: ${(error as Error).message}`
     };
   }
 }

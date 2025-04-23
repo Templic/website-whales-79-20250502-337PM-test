@@ -24,7 +24,7 @@ export interface SecurityFeatures {
   deepScanning: boolean;
 }
 
-// Default security features (moderate mode: any)
+// Default security features (moderate mode)
 export const DEFAULT_SECURITY_FEATURES: SecurityFeatures = {
   quantumResistance: false,
   mlAnomalyDetection: false,
@@ -39,7 +39,7 @@ export const DEFAULT_SECURITY_FEATURES: SecurityFeatures = {
   deepScanning: false
 };
 
-// Maximum security features (all enabled: any)
+// Maximum security features (all enabled)
 export const MAXIMUM_SECURITY_FEATURES: SecurityFeatures = {
   quantumResistance: true,
   mlAnomalyDetection: true,
@@ -99,7 +99,7 @@ export function enableMaximumSecurity(): void {
     // Initialize events collector
     initializeEventsCollector();
     
-    // Initialize all security components (if any: any)
+    // Initialize all security components (if any)
     const components = securityFabric.getAllComponents();
     if (components.length > 0) {
       securityFabric.initializeAll()
@@ -111,7 +111,7 @@ export function enableMaximumSecurity(): void {
             data: { componentsCount: components.length }
           });
         })
-        .catch((error: any) => {
+        .catch((error) => {
           logSecurityEvent({
             category: SecurityEventCategory.SYSTEM,
             severity: SecurityEventSeverity.ERROR,
@@ -128,7 +128,7 @@ export function enableMaximumSecurity(): void {
       message: 'Maximum security mode activated',
       data: { features: activeSecurityFeatures }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
     // Log the error

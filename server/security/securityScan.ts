@@ -9,7 +9,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { v4 as uuidv4 } from 'uuid';
 
-const execPromise = promisify(exec: any);
+const execPromise = promisify(exec);
 
 interface SecurityVulnerability {
   id: string;
@@ -42,20 +42,20 @@ export async function scanProject(): Promise<SecurityScanResult> {
   let lowIssues = 0;
   
   try {
-    // 1. Check for outdated dependencies (this is a simplified mock check: any)
-    await checkDependencies(vulnerabilities: any);
+    // 1. Check for outdated dependencies (this is a simplified mock check)
+    await checkDependencies(vulnerabilities);
     
     // 2. Check for secrets in code
-    await checkForSecrets(vulnerabilities: any);
+    await checkForSecrets(vulnerabilities);
     
     // 3. Check for security headers in responses
-    await checkSecurityHeaders(vulnerabilities: any);
+    await checkSecurityHeaders(vulnerabilities);
     
     // 4. Check for proper CSRF protection
-    await checkCSRFProtection(vulnerabilities: any);
+    await checkCSRFProtection(vulnerabilities);
     
     // 5. Check for input validation
-    await checkInputValidation(vulnerabilities: any);
+    await checkInputValidation(vulnerabilities);
     
     // Count issues by severity
     vulnerabilities.forEach(vuln => {
@@ -85,7 +85,7 @@ export async function scanProject(): Promise<SecurityScanResult> {
       lowIssues,
       vulnerabilities
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error during security scan:', error);
     
     // Add an error about the scan itself
@@ -115,10 +115,10 @@ export async function scanProject(): Promise<SecurityScanResult> {
 async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const packageLockPath = path.join(process.cwd(), 'package-lock.json');
   
-  if (fs.existsSync(packageLockPath: any)) {
+  if (fs.existsSync(packageLockPath)) {
     try {
       const packageLockContent = fs.readFileSync(packageLockPath, 'utf8');
-      const packageLock = JSON.parse(packageLockContent: any);
+      const packageLock = JSON.parse(packageLockContent);
       
       // This is a simplistic check - in a real implementation you would use a service like npm audit
       const dependencies = packageLock.dependencies || {};
@@ -132,9 +132,9 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
       ];
       
       // Check for vulnerable dependencies
-      Object.entries(dependencies: any).forEach(([depName, depInfo]: [string, any]) => {
+      Object.entries(dependencies).forEach(([depName, depInfo]: [string, any]) => {
         const vulnInfo = vulnerableDependencies.find(v => v.name === depName);
-        if (vulnInfo: any) {
+        if (vulnInfo) {
           const version = depInfo.version || '';
           
           // Very simple version check - would need a proper semver check in production
@@ -149,7 +149,7 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
           }
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error checking dependencies:', error);
       vulnerabilities.push({
         id: uuidv4(),
@@ -176,7 +176,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
       const results = stdout.split('\n').filter(line => line.trim() !== '');
       
       // Create a vulnerability for each detected secret
-      for (const result of results: any) {
+      for (const result of results) {
         const [file, ...contentParts] = result.split(':');
         const content = contentParts.join(':');
         
@@ -194,7 +194,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
         }
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error checking for secrets:', error);
   }
 }
@@ -214,8 +214,8 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
   let foundXContentTypeOptions = false;
   let foundHSTS = false;
   
-  for (const file of securityHeaderFiles: any) {
-    if (fs.existsSync(file: any)) {
+  for (const file of securityHeaderFiles) {
+    if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
       
       // Check for Content-Security-Policy header
@@ -290,8 +290,8 @@ async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Pr
   
   let foundCSRFProtection = false;
   
-  for (const file of serverFiles: any) {
-    if (fs.existsSync(file: any)) {
+  for (const file of serverFiles) {
+    if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
       
       // Check for CSRF protection
@@ -328,8 +328,8 @@ async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): P
   
   let foundInputValidation = false;
   
-  for (const file of serverFiles: any) {
-    if (fs.existsSync(file: any)) {
+  for (const file of serverFiles) {
+    if (fs.existsSync(file)) {
       const content = fs.readFileSync(file, 'utf8');
       
       // Check for input validation

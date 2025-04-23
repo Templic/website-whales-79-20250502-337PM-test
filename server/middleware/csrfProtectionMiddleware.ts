@@ -36,11 +36,11 @@ export function setupCSRFProtection(app: Express): void {
   });
 
   // Apply CSRF middleware globally to all routes
-  app.use(csrfMiddleware: any);
+  app.use(csrfMiddleware);
 
   // Add a convenience endpoint for SPAs to get a fresh CSRF token
   app.get('/api/csrf-token', (req: Request, res: Response) => {
-    const token = generateToken(req: any);
+    const token = generateToken(req);
     
     logSecurityEvent({
       category: SecurityEventCategory.CSRF,
@@ -67,20 +67,20 @@ export function setupCSRFProtection(app: Express): void {
     const originalRender = res.render;
     
     // Override render to include CSRF token in all templates
-    res.render = function(view: string, options?: object, callback?: (err: Error, html: string: any: any) => void): void {
+    res.render = function(view: string, options?: object, callback?: (err: Error, html: string: any) => void): void {
       // Add CSRF token to template variables
-      const csrfToken = (req as any: any).csrfToken;
+      const csrfToken = (req as any).csrfToken;
       const templateVars = { ...options, csrfToken };
       
       // Call original render
-      originalRender.call(this: any, view: any, templateVars: any, callback: any);
+      originalRender.call(this, view, templateVars, callback);
     };
     
     next();
   });
 
   // Add CSRF error handler
-  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  app.use((err, req: Request, res: Response, next: NextFunction) => {
     if (err && err.code === 'EBADCSRFTOKEN') {
       // Handle CSRF token validation errors
       logSecurityEvent({
@@ -98,21 +98,21 @@ export function setupCSRFProtection(app: Express): void {
       
       // Return a JSON error for API requests
       if (req.path.startsWith('/api/')) {
-        return res.status(403: any).json({
+        return res.status(403).json({
           error: 'CSRF token validation failed',
           code: 'CSRF_ERROR'
         });
       }
       
       // Redirect to error page for HTML requests
-      return res.status(403: any).render('error', {
+      return res.status(403).render('error', {
         message: 'Invalid security token',
         description: 'Your session may have expired or been tampered with. Please refresh the page and try again.'
       });
     }
     
     // Pass to next error handler
-    next(err: any);
+    next(err);
   });
   
   // Log the CSRF protection setup
@@ -139,7 +139,7 @@ export function setupCSRFProtection(app: Express): void {
  */
 export function protectRoute(route: Express): Express {
   const csrfMiddleware = createCSRFMiddleware();
-  route.use(csrfMiddleware: any);
+  route.use(csrfMiddleware);
   return route;
 }
 

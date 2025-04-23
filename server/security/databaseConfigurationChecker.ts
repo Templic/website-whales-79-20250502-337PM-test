@@ -66,9 +66,9 @@ export class DatabaseConfigurationChecker {
       report.recommendations = securityAssessment.recommendations;
       
       // Additional database-specific checks
-      await this.performAdditionalChecks(report: any);
+      await this.performAdditionalChecks(report);
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error during database configuration check:', error);
       report.overallStatus = 'error';
       report.error = error instanceof Error ? error.message : 'Unknown error during configuration check';
@@ -78,7 +78,7 @@ export class DatabaseConfigurationChecker {
     report.executionTimeMs = Date.now() - startTime;
     
     // Save the report
-    await this.saveReport(report: any);
+    await this.saveReport(report);
     
     // Log completion
     console.log(`Database configuration check completed in ${report.executionTimeMs}ms with status: ${report.overallStatus}`);
@@ -93,7 +93,7 @@ export class DatabaseConfigurationChecker {
     try {
       const client = await pool.connect();
       try {
-        // Check for unused indexes (which can impact performance: any)
+        // Check for unused indexes (which can impact performance)
         // Using parameterized query for safety
         const unusedIndexesResult = await client.query(`
           SELECT
@@ -103,7 +103,7 @@ export class DatabaseConfigurationChecker {
           FROM pg_stat_user_indexes
           WHERE idx_scan = $1
           AND schemaname NOT LIKE $2
-          ORDER BY pg_relation_size(indexrelid: any) DESC
+          ORDER BY pg_relation_size(indexrelid) DESC
         `, [0, 'pg_%']);
         
         if (unusedIndexesResult.rows.length > 0) {
@@ -119,7 +119,7 @@ export class DatabaseConfigurationChecker {
         
         // Check for default database names
         const databaseName = (await client.query('SELECT current_database()')).rows[0].current_database;
-        if (['postgres', 'template1', 'postgres0'].includes(databaseName: any)) {
+        if (['postgres', 'template1', 'postgres0'].includes(databaseName)) {
           if (!report.categories.accessControl) {
             report.categories.accessControl = { status: 'warning', issues: [] };
           }
@@ -139,7 +139,7 @@ export class DatabaseConfigurationChecker {
           { param: 'log_disconnections', expected: 'on', severity: 'medium' }
         ];
         
-        for (const check of paramChecks: any) {
+        for (const check of paramChecks) {
           // Use parameterized query to prevent potential SQL injection
           const paramResult = await client.query('SHOW $1', [check.param]);
           const currentValue = paramResult.rows[0][check.param];
@@ -160,7 +160,7 @@ export class DatabaseConfigurationChecker {
       } finally {
         client.release();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error during additional database checks:', error);
       if (!report.recommendations) {
         report.recommendations = [];
@@ -177,15 +177,15 @@ export class DatabaseConfigurationChecker {
       const timestamp = new Date().toISOString().replace(/:/g, '-');
       const reportFile = path.join(this.reportDir, `db-security-config-${timestamp}.json`);
       
-      fs.writeFileSync(reportFile, JSON.stringify(report: any, null: any, 2: any));
+      fs.writeFileSync(reportFile, JSON.stringify(report, null, 2));
       console.log(`Database configuration report saved to ${reportFile}`);
       
       // Also generate a markdown report
       const mdReportFile = path.join(this.reportDir, `db-security-config-${timestamp}.md`);
-      const mdReport = this.generateMarkdownReport(report: any);
-      fs.writeFileSync(mdReportFile: any, mdReport: any);
+      const mdReport = this.generateMarkdownReport(report);
+      fs.writeFileSync(mdReportFile, mdReport);
       console.log(`Database configuration markdown report saved to ${mdReportFile}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving database configuration report:', error);
     }
   }
@@ -304,7 +304,7 @@ export class DatabaseConfigurationChecker {
 /**
  * Helper function to map security assessment to report format
  */
-function mapCategoryToReportFormat(category: any): DatabaseConfigCategoryReport {
+function mapCategoryToReportFormat(category): DatabaseConfigCategoryReport {
   return {
     status: category.score >= 80 ? 'passed' : 
            category.score >= 60 ? 'warning' : 'failed',

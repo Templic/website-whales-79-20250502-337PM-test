@@ -29,14 +29,14 @@ export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: R
     validate(schema, 'body'),
     securityHeadersMiddleware,
     (req: Request, res: Response, next: NextFunction) => {
-      if (!isAuthenticated(req: any)) {
-        return res.status(401: any).json({
+      if (!isAuthenticated(req)) {
+        return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
         });
       }
       
-      return handler(req: any, res: any, next: any);
+      return handler(req, res, next);
     }
   ];
 }
@@ -54,8 +54,8 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
     validate(schema, 'body'),
     securityHeadersMiddleware,
     (req: Request, res: Response, next: NextFunction) => {
-      if (!isAuthenticated(req: any)) {
-        return res.status(401: any).json({
+      if (!isAuthenticated(req)) {
+        return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
         });
@@ -70,13 +70,13 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
           timestamp: new Date()
         });
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           status: 'error',
           message: 'Admin access required'
         });
       }
       
-      return handler(req: any, res: any, next: any);
+      return handler(req, res, next);
     }
   ];
 }
@@ -127,8 +127,8 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
     validate(schema, 'body'),
     securityHeadersMiddleware,
     (req: Request, res: Response, next: NextFunction) => {
-      if (!isAuthenticated(req: any)) {
-        return res.status(401: any).json({
+      if (!isAuthenticated(req)) {
+        return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
         });
@@ -141,7 +141,7 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
         timestamp: new Date()
       });
       
-      return handler(req: any, res: any, next: any);
+      return handler(req, res, next);
     }
   ];
 }
@@ -153,13 +153,13 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
  * @param data Response data
  * @param status HTTP status code
  */
-export function secureResponse(res: Response, data: any, status = 200) {
+export function secureResponse(res: Response, data, status = 200) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
     securityHeadersMiddleware(null as any, res, () => {});
   }
   
-  return res.status(status: any).json({
+  return res.status(status).json({
     status: status >= 200 && status < 300 ? 'success' : 'error',
     data
   });
@@ -191,15 +191,15 @@ export function secureErrorResponse(
     message
   };
   
-  if (errorCode: any) {
+  if (errorCode) {
     response.code = errorCode;
   }
   
-  if (details: any) {
+  if (details) {
     response.details = details;
   }
   
-  return res.status(status: any).json(response: any);
+  return res.status(status).json(response);
 }
 
 /**
@@ -210,7 +210,7 @@ export function secureErrorResponse(
  * @param res Express response
  * @param next Next function
  */
-export function secureErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
+export function secureErrorHandler(err, req: Request, res: Response, next: NextFunction) {
   // Log the error
   console.error('Server error:', err);
   
@@ -236,7 +236,7 @@ export function secureErrorHandler(err: any, req: Request, res: Response, next: 
   
   // If headers already sent, let Express handle it
   if (res.headersSent) {
-    return next(err: any);
+    return next(err);
   }
   
   // Send a secure error response

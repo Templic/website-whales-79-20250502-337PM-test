@@ -14,42 +14,42 @@ import { Pool } from 'pg';
 const app = express();
 app.use(express.json());
 
-// Create a database connection (example: any)
+// Create a database connection (example)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
 // Secure the database connection
-const db = secureDatabase(pool: any);
+const db = secureDatabase(pool);
 
 // -------------- SECURE EXAMPLES ----------------
 
 // Example 1: Simple user retrieval
-app.get('/api/users/:id', async (req: any, res: any) => {
+app.get('/api/users/:id', async (req, res) => {
   try {
     // SECURE: Using the select method with parameters
     const userId = parseInt(req.params.id, 10);
     const users = await db.select('users', ['id', 'username', 'email'], { id: userId });
     
     if (users.length === 0) {
-      return res.status(404: any).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
     
     // @ts-ignore - Response type issue
   return res.json(users[0]);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching user:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 2: Search with LIKE
-app.get('/api/users/search', async (req: any, res: any) => {
+app.get('/api/users/search', async (req, res) => {
   try {
     const search = req.query.q as string;
     
     if (!search) {
-      return res.status(400: any).json({ error: 'Search query is required' });
+      return res.status(400).json({ error: 'Search query is required' });
     }
     
     // SECURE: Using parameterized query for LIKE pattern
@@ -59,40 +59,40 @@ app.get('/api/users/search', async (req: any, res: any) => {
     );
     
     // @ts-ignore - Response type issue
-  return res.json(users: any);
-  } catch (error: any) {
+  return res.json(users);
+  } catch (error) {
     console.error('Error searching users:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 3: Create a new user
-app.post('/api/users', async (req: any, res: any) => {
+app.post('/api/users', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     
     // Validate input
     if (!username || !email || !password) {
-      return res.status(400: any).json({ error: 'Username, email, and password are required' });
+      return res.status(400).json({ error: 'Username, email, and password are required' });
     }
     
     // SECURE: Using the insert method
     const newUser = await db.insert('users', {
       username,
       email,
-      password_hash: hashPassword(password: any), // Assume this function exists
+      password_hash: hashPassword(password), // Assume this function exists
       created_at: new Date()
     });
     
-    return res.status(201: any).json(newUser: any);
-  } catch (error: any) {
+    return res.status(201).json(newUser);
+  } catch (error) {
     console.error('Error creating user:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 4: Update a user
-app.put('/api/users/:id', async (req: any, res: any) => {
+app.put('/api/users/:id', async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     const { email, active } = req.body;
@@ -105,19 +105,19 @@ app.put('/api/users/:id', async (req: any, res: any) => {
     );
     
     if (updatedUsers.length === 0) {
-      return res.status(404: any).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
     
     // @ts-ignore - Response type issue
   return res.json(updatedUsers[0]);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating user:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 5: Delete a user
-app.delete('/api/users/:id', async (req: any, res: any) => {
+app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
     
@@ -125,28 +125,28 @@ app.delete('/api/users/:id', async (req: any, res: any) => {
     const deletedUsers = await db.delete('users', { id: userId });
     
     if (deletedUsers.length === 0) {
-      return res.status(404: any).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
     
     // @ts-ignore - Response type issue
   return res.json({ message: 'User deleted successfully' });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error deleting user:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 6: Transaction example
-app.post('/api/orders', async (req: any, res: any) => {
+app.post('/api/orders', async (req, res) => {
   try {
     const { userId, items } = req.body;
     
-    if (!userId || !items || !Array.isArray(items: any) || items.length === 0) {
-      return res.status(400: any).json({ error: 'Invalid order data' });
+    if (!userId || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Invalid order data' });
     }
     
     // SECURE: Using transaction for atomic operations
-    const result = await db.transaction(async (txDb: any) => {
+    const result = await db.transaction(async (txDb) => {
       // Create the order
       const order = await txDb.insert('orders', {
         user_id: userId,
@@ -155,7 +155,7 @@ app.post('/api/orders', async (req: any, res: any) => {
       });
       
       // Create order items
-      for (const item of items: any) {
+      for (const item of items) {
         await txDb.insert('order_items', {
           order_id: order.id,
           product_id: item.productId,
@@ -167,15 +167,15 @@ app.post('/api/orders', async (req: any, res: any) => {
       return order;
     });
     
-    return res.status(201: any).json(result: any);
-  } catch (error: any) {
+    return res.status(201).json(result);
+  } catch (error) {
     console.error('Error creating order:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 7: Advanced query with join
-app.get('/api/orders/:id/details', async (req: any, res: any) => {
+app.get('/api/orders/:id/details', async (req, res) => {
   try {
     const orderId = parseInt(req.params.id, 10);
     
@@ -191,78 +191,78 @@ app.get('/api/orders/:id/details', async (req: any, res: any) => {
     `, [orderId]);
     
     if (orderDetails.length === 0) {
-      return res.status(404: any).json({ error: 'Order not found' });
+      return res.status(404).json({ error: 'Order not found' });
     }
     
     // @ts-ignore - Response type issue
-  return res.json(orderDetails: any);
-  } catch (error: any) {
+  return res.json(orderDetails);
+  } catch (error) {
     console.error('Error fetching order details:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
 // Example 8: Using the SQL monitor for security reporting
-app.get('/api/admin/database-security', async (req: any, res: any) => {
+app.get('/api/admin/database-security', async (req, res) => {
   try {
     // Generate a security report
     const report = sqlInjectionPrevention.generateSecurityReport();
     
     // @ts-ignore - Response type issue
   return res.json({ report });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error generating security report:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// -------------- INSECURE EXAMPLES (DO NOT USE: any) ----------------
+// -------------- INSECURE EXAMPLES (DO NOT USE) ----------------
 
-// INSECURE: Using string concatenation (vulnerable to SQL injection: any)
-app.get('/api/insecure/users/:id', async (req: any, res: any) => {
+// INSECURE: Using string concatenation (vulnerable to SQL injection)
+app.get('/api/insecure/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     
     // INSECURE: Using string concatenation
     const query = `SELECT id, username, email FROM users WHERE id = ${userId}`;
-    const users = await pool.query(query: any); // This would be blocked by our security system
+    const users = await pool.query(query); // This would be blocked by our security system
     
     if (users.length === 0) {
-      return res.status(404: any).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
     
     // @ts-ignore - Response type issue
   return res.json(users[0]);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching user:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// INSECURE: Using template literals (vulnerable to SQL injection: any)
-app.get('/api/insecure/users/search', async (req: any, res: any) => {
+// INSECURE: Using template literals (vulnerable to SQL injection)
+app.get('/api/insecure/users/search', async (req, res) => {
   try {
     const search = req.query.q as string;
     
     // INSECURE: Using template literals
     const query = `SELECT id, username, email FROM users WHERE username LIKE '%${search}%'`;
-    const users = await pool.query(query: any); // This would be blocked by our security system
+    const users = await pool.query(query); // This would be blocked by our security system
     
     // @ts-ignore - Response type issue
-  return res.json(users: any);
-  } catch (error: any) {
+  return res.json(users);
+  } catch (error) {
     console.error('Error searching users:', error);
-    return res.status(500: any).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
-// Helper function for password hashing (example: any)
+// Helper function for password hashing (example)
 function hashPassword(password: string): string {
   // This is just an example. In a real application, use a proper password hashing library
   return `hashed_${password}`;
 }
 
-// Start the server (example: any)
+// Start the server (example)
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);

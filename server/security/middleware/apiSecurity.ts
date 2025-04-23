@@ -85,15 +85,15 @@ export function createApiSecurityMiddleware(options: ApiSecurityOptions = defaul
       }
       
       middlewareChain[index](req, res, (err?: any) => {
-        if (err: any) {
-          return next(err: any);
+        if (err) {
+          return next(err);
         }
         
         runMiddlewareChain(index + 1);
       });
     }
     
-    runMiddlewareChain(0: any);
+    runMiddlewareChain(0);
   };
 }
 
@@ -152,7 +152,7 @@ export function apiRequestLogger(req: Request, res: Response, next: NextFunction
     }
     
     // Call the original end method
-    return originalEnd.call(res: any, chunk: any, encoding: any, callback: any);
+    return originalEnd.call(res, chunk, encoding, callback);
   };
   
   next();

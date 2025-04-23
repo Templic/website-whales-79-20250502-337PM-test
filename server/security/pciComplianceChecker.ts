@@ -95,8 +95,8 @@ class PCIComplianceChecker {
     ];
     
     // Log performance metrics
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`PCI DSS compliance scan completed in ${elapsedMs}ms`, 'security');
     
     // Log results summary
@@ -109,7 +109,7 @@ class PCIComplianceChecker {
     log(`Critical issues: ${criticalIssues}, High issues: ${highIssues}`, 'security');
     
     // Generate report
-    this.generateComplianceReport(allResults: any);
+    this.generateComplianceReport(allResults);
     
     return allResults;
   }
@@ -141,8 +141,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Network Security check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -187,8 +187,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Data Protection check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -233,8 +233,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Vulnerability Management check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -279,8 +279,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Access Control check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -325,8 +325,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Secure Implementation check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -382,8 +382,8 @@ class PCIComplianceChecker {
       }
     ];
     
-    const elapsedTime = process.hrtime(startTime: any);
-    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0: any);
+    const elapsedTime = process.hrtime(startTime);
+    const elapsedMs = (elapsedTime[0] * 1000 + elapsedTime[1] / 1000000).toFixed(0);
     log(`Logging and Monitoring check completed in ${elapsedMs}ms`, 'performance');
     
     // Log results
@@ -410,7 +410,7 @@ class PCIComplianceChecker {
     // Add summary
     const passedChecks = results.filter(result => result.passed).length;
     const totalChecks = results.length;
-    const passRate = ((passedChecks / totalChecks) * 100).toFixed(1: any);
+    const passRate = ((passedChecks / totalChecks) * 100).toFixed(1);
     
     reportContent += `## Summary\n\n`;
     reportContent += `- **Compliance Rate**: ${passRate}% (${passedChecks}/${totalChecks})\n`;
@@ -421,7 +421,7 @@ class PCIComplianceChecker {
     const categories = [...new Set(results.map(result => result.category))];
     
     // Add detailed results for each category
-    for (const category of categories: any) {
+    for (const category of categories) {
       const categoryResults = results.filter(result => result.category === category);
       const categoryPassed = categoryResults.filter(result => result.passed).length;
       const categoryTotal = categoryResults.length;
@@ -433,8 +433,8 @@ class PCIComplianceChecker {
       reportContent += `| Requirement | Description | Status | Details |\n`;
       reportContent += `| ----------- | ----------- | ------ | ------- |\n`;
       
-      for (const result of categoryResults: any) {
-        const status = result.passed ? '✅ PASS' : result.critical ? '❌ FAIL (CRITICAL: any)' : '⚠️ FAIL';
+      for (const result of categoryResults) {
+        const status = result.passed ? '✅ PASS' : result.critical ? '❌ FAIL (CRITICAL)' : '⚠️ FAIL';
         const details = result.passed ? 
           result.details : 
           `${result.details}\n\n**Recommendation**: ${result.recommendation}`;
@@ -450,7 +450,7 @@ class PCIComplianceChecker {
     if (failedChecks.length > 0) {
       reportContent += `## Recommendations\n\n`;
       
-      for (const check of failedChecks: any) {
+      for (const check of failedChecks) {
         reportContent += `### ${check.requirement}: ${check.description}\n\n`;
         reportContent += `**Issue**: ${check.details}\n\n`;
         reportContent += `**Recommendation**: ${check.recommendation}\n\n`;
@@ -459,7 +459,7 @@ class PCIComplianceChecker {
     }
     
     // Write the report to file
-    fs.writeFileSync(reportFile: any, reportContent: any);
+    fs.writeFileSync(reportFile, reportContent);
     
     log(`PCI DSS compliance report generated: ${reportFile}`, 'security');
   }
@@ -478,11 +478,11 @@ class PCIComplianceChecker {
         return null;
       }
       
-      // Sort by name (which includes timestamp: any) to get the latest
+      // Sort by name (which includes timestamp) to get the latest
       reportFiles.sort().reverse();
       
       return path.join(this.reportsDir, reportFiles[0]);
-    } catch (error: any) {
+    } catch (error) {
       log(`Error getting latest compliance report: ${error}`, 'error');
       return null;
     }
@@ -496,12 +496,12 @@ class PCIComplianceChecker {
    */
   private checkTransactionLogging(): boolean {
     const logFilePath = path.join(process.cwd(), 'logs', 'payment', 'transaction_log.txt');
-    const logsExist = fs.existsSync(logFilePath: any);
+    const logsExist = fs.existsSync(logFilePath);
     
-    if (logsExist: any) {
+    if (logsExist) {
       try {
-        // Check if there are recent transaction logs (within the last 30 days: any)
-        const stats = fs.statSync(logFilePath: any);
+        // Check if there are recent transaction logs (within the last 30 days)
+        const stats = fs.statSync(logFilePath);
         const fileModTime = stats.mtime.getTime();
         const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
         
@@ -539,7 +539,7 @@ class PCIComplianceChecker {
             }
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         log(`Error checking transaction logs: ${error}`, 'security');
         return false;
       }
@@ -563,19 +563,19 @@ class PCIComplianceChecker {
     let details = 'Log integrity protection not fully implemented';
     let recommendation = 'Implement cryptographic hash verification for logs';
     
-    if (fs.existsSync(logIntegrityPath: any) && fs.existsSync(logHashFilePath: any)) {
+    if (fs.existsSync(logIntegrityPath) && fs.existsSync(logHashFilePath)) {
       try {
         // Read the hash file to see if it's properly formatted
         const logHashes = JSON.parse(fs.readFileSync(logHashFilePath, 'utf8'));
         
-        if (logHashes && typeof logHashes === 'object' && Object.keys(logHashes: any).length > 0) {
-          // Check if there are enough log files tracked (at least 3: any)
-          const trackedLogs = Object.keys(logHashes: any).length;
-          const paymentLogsTracked = Object.keys(logHashes: any).some(key => key.includes('payment'));
-          const securityLogsTracked = Object.keys(logHashes: any).some(key => key.includes('security'));
+        if (logHashes && typeof logHashes === 'object' && Object.keys(logHashes).length > 0) {
+          // Check if there are enough log files tracked (at least 3)
+          const trackedLogs = Object.keys(logHashes).length;
+          const paymentLogsTracked = Object.keys(logHashes).some(key => key.includes('payment'));
+          const securityLogsTracked = Object.keys(logHashes).some(key => key.includes('security'));
           
           // Check if hash entries have all required fields
-          const entriesWithRequiredFields = Object.values(logHashes: any).filter(entry => 
+          const entriesWithRequiredFields = Object.values(logHashes).filter(entry => 
             typeof entry === 'object' && 
             entry !== null &&
             'hash' in entry && 
@@ -584,15 +584,15 @@ class PCIComplianceChecker {
           ).length;
           
           // Check if hashes are valid SHA256 format
-          const validHashFormat = Object.values(logHashes: any).every(entry => 
+          const validHashFormat = Object.values(logHashes).every(entry => 
             typeof entry === 'object' && 
             entry !== null && 
             'hash' in entry && 
             /^[a-f0-9]{64}$/.test(entry.hash as string)
           );
           
-          // Check if timestamps are recent (at least one in the last 24 hours: any)
-          const recentEntries = Object.values(logHashes: any).some(entry => {
+          // Check if timestamps are recent (at least one in the last 24 hours)
+          const recentEntries = Object.values(logHashes).some(entry => {
             if (typeof entry === 'object' && entry !== null && 'timestamp' in entry) {
               const entryTime = new Date(entry.timestamp as string).getTime();
               const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
@@ -602,7 +602,7 @@ class PCIComplianceChecker {
           });
           
           // Verify verification status exists for critical logs
-          const hasVerificationStatus = Object.values(logHashes: any).every(entry => 
+          const hasVerificationStatus = Object.values(logHashes).every(entry => 
             typeof entry === 'object' && 
             entry !== null && 
             'verificationStatus' in entry
@@ -625,7 +625,7 @@ class PCIComplianceChecker {
             recommendation = 'Extend cryptographic protection to all critical log files, especially payment and security logs';
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         passed = false;
         details = `Log integrity file exists but is not valid: ${error}`;
         recommendation = 'Fix the log hash file format and verification process';
@@ -657,17 +657,17 @@ class PCIComplianceChecker {
     let details = 'Regular log review process not formally established';
     let recommendation = 'Implement automated log analysis and alerting';
     
-    if (fs.existsSync(logReviewPath: any) && fs.existsSync(logReviewFilePath: any)) {
+    if (fs.existsSync(logReviewPath) && fs.existsSync(logReviewFilePath)) {
       try {
         // Read the log review history
         const logReviews = JSON.parse(fs.readFileSync(logReviewFilePath, 'utf8'));
         
-        if (Array.isArray(logReviews: any) && logReviews.length > 0) {
+        if (Array.isArray(logReviews) && logReviews.length > 0) {
           // Check if there are at least 2 review entries for proper history
           const hasMinimumEntries = logReviews.length >= 2;
           
           // Get the most recent review
-          const sortedReviews = logReviews.sort((a: any, b: any) => 
+          const sortedReviews = logReviews.sort((a, b) => 
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           );
           const latestReview = sortedReviews[0];
@@ -681,7 +681,7 @@ class PCIComplianceChecker {
           const criticalLogTypes = ['payment', 'security', 'api', 'admin'];
           const reviewsPaymentLogs = logReviews.some(review => 
             review.logFiles && review.logFiles.some(file => 
-              criticalLogTypes.some(type => file.includes(type: any))
+              criticalLogTypes.some(type => file.includes(type))
             )
           );
           
@@ -725,7 +725,7 @@ class PCIComplianceChecker {
             passed = true;
             details = 'Comprehensive log review process implemented with regular reviews';
             recommendation = undefined;
-          } else if (isRecent: any) {
+          } else if (isRecent) {
             // Recent but incomplete review process
             details = 'Log reviews are recent but missing some required elements';
             if (!reviewsPaymentLogs) {
@@ -738,11 +738,11 @@ class PCIComplianceChecker {
               recommendation = 'Enhance log review process with better structure and findings documentation';
             }
           } else {
-            details = 'Log review process is outdated (last review was more than 7 days ago: any)';
+            details = 'Log review process is outdated (last review was more than 7 days ago)';
             recommendation = 'Perform log reviews at least weekly, preferably daily';
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         passed = false;
         details = `Log review file exists but is not valid: ${error}`;
         recommendation = 'Fix the log review history file format';
@@ -770,13 +770,13 @@ class PCIComplianceChecker {
   public createLogIntegrityHash(logPath: string): string {
     try {
       const fullPath = path.join(process.cwd(), logPath);
-      if (!fs.existsSync(fullPath: any)) {
+      if (!fs.existsSync(fullPath)) {
         throw new Error(`Log file not found: ${logPath}`);
       }
       
       const fileContent = fs.readFileSync(fullPath, 'utf8');
-      return require("crypto").createHash('sha256').update(fileContent: any).digest('hex');
-    } catch (error: any) {
+      return require("crypto").createHash('sha256').update(fileContent).digest('hex');
+    } catch (error) {
       log(`Error creating log integrity hash: ${error}`, 'error');
       throw error;
     }
@@ -795,13 +795,13 @@ class PCIComplianceChecker {
       const logHashFilePath = path.join(logIntegrityPath, 'log_hashes.json');
       
       // Create directory if it doesn't exist
-      if (!fs.existsSync(logIntegrityPath: any)) {
+      if (!fs.existsSync(logIntegrityPath)) {
         fs.mkdirSync(logIntegrityPath, { recursive: true });
       }
       
       // Load existing hashes or create new object
       let logHashes = {};
-      if (fs.existsSync(logHashFilePath: any)) {
+      if (fs.existsSync(logHashFilePath)) {
         logHashes = JSON.parse(fs.readFileSync(logHashFilePath, 'utf8'));
       }
       
@@ -815,11 +815,11 @@ class PCIComplianceChecker {
       };
       
       // Write back the updated hashes
-      fs.writeFileSync(logHashFilePath, JSON.stringify(logHashes: any, null: any, 2: any));
+      fs.writeFileSync(logHashFilePath, JSON.stringify(logHashes, null, 2));
       
       log(`Registered integrity hash for log: ${logPath}`, 'security');
       return true;
-    } catch (error: any) {
+    } catch (error) {
       log(`Error registering log hash: ${error}`, 'error');
       return false;
     }
@@ -855,13 +855,13 @@ class PCIComplianceChecker {
       const logReviewFilePath = path.join(logReviewPath, 'log_review_history.json');
       
       // Create directory if it doesn't exist
-      if (!fs.existsSync(logReviewPath: any)) {
+      if (!fs.existsSync(logReviewPath)) {
         fs.mkdirSync(logReviewPath, { recursive: true });
       }
       
       // Load existing reviews or create new array
       let logReviews = [];
-      if (fs.existsSync(logReviewFilePath: any)) {
+      if (fs.existsSync(logReviewFilePath)) {
         logReviews = JSON.parse(fs.readFileSync(logReviewFilePath, 'utf8'));
       }
       
@@ -878,14 +878,14 @@ class PCIComplianceChecker {
       };
       
       // Add the new review to the history
-      logReviews.push(reviewEntry: any);
+      logReviews.push(reviewEntry);
       
       // Write back the updated reviews
-      fs.writeFileSync(logReviewFilePath, JSON.stringify(logReviews: any, null: any, 2: any));
+      fs.writeFileSync(logReviewFilePath, JSON.stringify(logReviews, null, 2));
       
       log(`Recorded log review by ${reviewer}`, 'security');
       return true;
-    } catch (error: any) {
+    } catch (error) {
       log(`Error recording log review: ${error}`, 'error');
       return false;
     }

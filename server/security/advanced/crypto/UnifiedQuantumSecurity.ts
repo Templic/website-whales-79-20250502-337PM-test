@@ -61,7 +61,7 @@ export class UnifiedQuantumSecurity {
       const startTime = performance.now();
       
       // Generate the key pair
-      const keyPair = quantumCrypto.generateKeyPair(algorithm: any, keySize: any);
+      const keyPair = quantumCrypto.generateKeyPair(algorithm, keySize);
       
       // Calculate performance metrics for anomaly detection
       const endTime = performance.now();
@@ -85,11 +85,11 @@ export class UnifiedQuantumSecurity {
       }
       
       return keyPair;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Key generation failed', {
         algorithm,
         keySize,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -120,12 +120,12 @@ export class UnifiedQuantumSecurity {
       );
       
       return vss;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Key distribution failed', {
         algorithm: keyPair.algorithm,
         totalShares,
         threshold,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -147,14 +147,14 @@ export class UnifiedQuantumSecurity {
       });
       
       // Reconstruct the private key
-      const privateKey = verifiableSecretSharing.reconstructSecret(shares: any, threshold: any);
+      const privateKey = verifiableSecretSharing.reconstructSecret(shares, threshold);
       
       return privateKey;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Key reconstruction failed', {
         sharesProvided: shares.length,
         threshold,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -180,7 +180,7 @@ export class UnifiedQuantumSecurity {
       const startTime = performance.now();
       
       // Encrypt the data
-      const encryptionResult = quantumCrypto.encrypt(data: any, publicKey: any, algorithm: any);
+      const encryptionResult = quantumCrypto.encrypt(data, publicKey, algorithm);
       
       // Calculate performance metrics for anomaly detection
       const endTime = performance.now();
@@ -205,11 +205,11 @@ export class UnifiedQuantumSecurity {
       }
       
       return encryptionResult;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Encryption failed', {
         algorithm,
         dataLength: data?.length || 0,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -234,7 +234,7 @@ export class UnifiedQuantumSecurity {
       const startTime = performance.now();
       
       // Decrypt the data
-      const decryptedData = quantumCrypto.decrypt(encryptionResult: any, privateKey: any);
+      const decryptedData = quantumCrypto.decrypt(encryptionResult, privateKey);
       
       // Calculate performance metrics for anomaly detection
       const endTime = performance.now();
@@ -259,11 +259,11 @@ export class UnifiedQuantumSecurity {
       }
       
       return decryptedData;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Decryption failed', {
         algorithm: encryptionResult?.algorithm,
         ciphertextLength: encryptionResult?.ciphertext?.length || 0,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -288,12 +288,12 @@ export class UnifiedQuantumSecurity {
       });
       
       // Create a quantum-resistant signature
-      const quantumSignature = quantumCrypto.sign(data: any, privateKey: any, algorithm: any);
+      const quantumSignature = quantumCrypto.sign(data, privateKey, algorithm);
       
       // Create a forward-secure signature if keys are provided
       let forwardSecureSignature: ForwardSecureSignature | undefined;
       
-      if (forwardSecureKey: any) {
+      if (forwardSecureKey) {
         forwardSecureSignature = forwardSecureSignature.sign(
           data,
           forwardSecureKey.privateKey,
@@ -306,12 +306,12 @@ export class UnifiedQuantumSecurity {
         quantumSignature,
         forwardSecureSignature
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Signing failed', {
         algorithm,
         dataLength: data?.length || 0,
         useForwardSecure: !!forwardSecureKey,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -335,13 +335,13 @@ export class UnifiedQuantumSecurity {
       });
       
       // Verify the quantum-resistant signature
-      const isQuantumValid = quantumCrypto.verify(signatureResult: any, publicKey: any);
+      const isQuantumValid = quantumCrypto.verify(signatureResult, publicKey);
       
       // Verify the forward-secure signature if provided
       let isForwardSecureValid: boolean | undefined;
       
-      if (forwardSecureSignature: any) {
-        isForwardSecureValid = forwardSecureSignature.verify(forwardSecureSignature: any);
+      if (forwardSecureSignature) {
+        isForwardSecureValid = forwardSecureSignature.verify(forwardSecureSignature);
       }
       
       // Check for anomalies in verification results
@@ -366,12 +366,12 @@ export class UnifiedQuantumSecurity {
         isQuantumValid,
         isForwardSecureValid
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Verification failed', {
         algorithm: signatureResult?.algorithm,
         messageLength: signatureResult?.message?.length || 0,
         hasForwardSecure: !!forwardSecureSignature,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -393,13 +393,13 @@ export class UnifiedQuantumSecurity {
       });
       
       // Create the range proof
-      const proof = zeroKnowledgeProof.createRangeProof(value: any, min: any, max: any);
+      const proof = zeroKnowledgeProof.createRangeProof(value, min, max);
       
       return proof;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Range proof creation failed', {
         range: `[${min}, ${max}]`,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -421,13 +421,13 @@ export class UnifiedQuantumSecurity {
       });
       
       // Verify the range proof
-      const isValid = zeroKnowledgeProof.verifyRangeProof(proof: any, min: any, max: any);
+      const isValid = zeroKnowledgeProof.verifyRangeProof(proof, min, max);
       
       return isValid;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Range proof verification failed', {
         range: `[${min}, ${max}]`,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -447,13 +447,13 @@ export class UnifiedQuantumSecurity {
       });
       
       // Generate the forward-secure key pair
-      const keyPair = forwardSecureSignature.generateKeyPair(periods: any);
+      const keyPair = forwardSecureSignature.generateKeyPair(periods);
       
       return keyPair;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Forward-secure key generation failed', {
         periods,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -474,13 +474,13 @@ export class UnifiedQuantumSecurity {
       });
       
       // Update the key to the next period
-      const updatedKeys = forwardSecureSignature.updateKey(privateKeys: any, currentPeriod: any);
+      const updatedKeys = forwardSecureSignature.updateKey(privateKeys, currentPeriod);
       
       return updatedKeys;
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Forward-secure key update failed', {
         currentPeriod,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       throw error;
@@ -549,7 +549,7 @@ export class UnifiedQuantumSecurity {
       }
       
       // 3. Encrypt the transaction details
-      const transactionJson = JSON.stringify(transaction: any);
+      const transactionJson = JSON.stringify(transaction);
       const encryptedTransaction = this.encrypt(
         transactionJson,
         keys.quantumKeyPair.publicKey,
@@ -591,10 +591,10 @@ export class UnifiedQuantumSecurity {
         },
         rangeProof
       };
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Transaction processing failed', {
         transactionId: transaction.id,
-        error: (error as Error: any).message,
+        error: (error as Error).message,
         timestamp: Date.now()
       });
       

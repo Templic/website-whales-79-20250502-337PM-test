@@ -26,7 +26,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<nu
   try {
     logger.info(`Sending notification of type ${payload.type}`);
     
-    // Handle system notifications (to all admins: any)
+    // Handle system notifications (to all admins)
     if (payload.userId === null) {
       // Get all admin users
       const adminUsers = await db.execute(
@@ -39,7 +39,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<nu
       if (adminUsers && Array.isArray(adminUsers.rows)) {
         for (const user of adminUsers.rows) {
           const [notification] = await db.execute(
-            sql`INSERT INTO notifications (type: any, user_id: any, content_id: any, content_title: any, message: any, created_at: any, is_read: any, action_required: any, due_date: any) VALUES (
+            sql`INSERT INTO notifications (type, user_id, content_id, content_title, message, created_at, is_read, action_required, due_date) VALUES (
               ${payload.type}, 
               ${user.id}, 
               ${payload.contentId || null}, 
@@ -63,7 +63,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<nu
     } else {
       // Send to specific user
       const [notification] = await db.execute(
-        sql`INSERT INTO notifications (type: any, user_id: any, content_id: any, content_title: any, message: any, created_at: any, is_read: any, action_required: any, due_date: any) VALUES (
+        sql`INSERT INTO notifications (type, user_id, content_id, content_title, message, created_at, is_read, action_required, due_date) VALUES (
           ${payload.type}, 
           ${payload.userId}, 
           ${payload.contentId || null}, 
@@ -79,7 +79,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<nu
       logger.info(`Sent notification to user ${payload.userId}`);
       return notification?.id;
     }
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Error sending notification:', error);
     return undefined;
   }
@@ -98,7 +98,7 @@ export async function markNotificationAsRead(id: number): Promise<boolean> {
     
     logger.info(`Marked notification ${id} as read`);
     return true;
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`Error marking notification ${id} as read:`, error);
     return false;
   }
@@ -117,7 +117,7 @@ export async function markAllNotificationsAsRead(userId: number): Promise<boolea
     
     logger.info(`Marked all notifications for user ${userId} as read`);
     return true;
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`Error marking all notifications as read for user ${userId}:`, error);
     return false;
   }
@@ -139,7 +139,7 @@ export async function getUnreadNotificationCount(userId: number): Promise<number
     }
     
     return 0;
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`Error getting unread notification count for user ${userId}:`, error);
     return 0;
   }
@@ -160,7 +160,7 @@ export async function purgeOldNotifications(olderThan: number = 30): Promise<num
     logger.info(`Purged ${count} notifications older than ${olderThan} days`);
     
     return count;
-  } catch (error: any) {
+  } catch (error) {
     logger.error(`Error purging old notifications:`, error);
     return 0;
   }

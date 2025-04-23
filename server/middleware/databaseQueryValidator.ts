@@ -12,7 +12,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
       const query = req.body.sqlQuery;
       
       // Validate the query using our security module
-      const validationResult = databaseSecurity.validateQuery(query: any);
+      const validationResult = databaseSecurity.validateQuery(query);
       
       if (!validationResult.valid) {
         // Log the security event
@@ -28,7 +28,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
           }
         );
         
-        return res.status(403: any).json({
+        return res.status(403).json({
           status: 'error',
           message: 'The requested query contains potentially unsafe operations',
           details: validationResult.risks
@@ -39,13 +39,13 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
     // Check for query parameters that could be used to construct a query
     const queryParams = ['queryPart', 'orderBy', 'filter', 'where', 'columnList'];
     
-    for (const param of queryParams: any) {
+    for (const param of queryParams) {
       if (typeof req.body[param] === 'string') {
         const paramValue = req.body[param];
         // Check if this parameter contains SQL-like pattern
-        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue: any)) {
+        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue)) {
           // Validate it as if it were a query fragment
-          const validationResult = databaseSecurity.validateQuery(paramValue: any);
+          const validationResult = databaseSecurity.validateQuery(paramValue);
           
           if (!validationResult.valid) {
             databaseSecurity.logDatabaseActivity(
@@ -61,7 +61,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               }
             );
             
-            return res.status(403: any).json({
+            return res.status(403).json({
               status: 'error',
               message: `Query parameter contains potentially unsafe SQL operations`,
               parameter: param,
@@ -77,13 +77,13 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
   if (req.query) {
     const queryParams = ['q', 'query', 'sql', 'filter', 'orderBy', 'where'];
     
-    for (const param of queryParams: any) {
+    for (const param of queryParams) {
       if (typeof req.query[param] === 'string') {
         const paramValue = req.query[param] as string;
         // Check if this parameter contains SQL-like pattern
-        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue: any)) {
+        if (/SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|UNION|JOIN/i.test(paramValue)) {
           // Validate it as if it were a query fragment
-          const validationResult = databaseSecurity.validateQuery(paramValue: any);
+          const validationResult = databaseSecurity.validateQuery(paramValue);
           
           if (!validationResult.valid) {
             databaseSecurity.logDatabaseActivity(
@@ -99,7 +99,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               }
             );
             
-            return res.status(403: any).json({
+            return res.status(403).json({
               status: 'error',
               message: `Query string parameter contains potentially unsafe SQL operations`,
               parameter: param,
@@ -126,7 +126,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
       'email', 'username', 'query', 'sqlQuery'
     ];
     
-    for (const field of fieldsToSanitize: any) {
+    for (const field of fieldsToSanitize) {
       if (req.body[field] !== undefined) {
         req.body[field] = databaseSecurity.sanitizeParameter(req.body[field]);
       }
@@ -134,7 +134,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
     
     // Also sanitize query parameters
     if (req.query) {
-      for (const field of fieldsToSanitize: any) {
+      for (const field of fieldsToSanitize) {
         if (typeof req.query[field] === 'string') {
           req.query[field] = databaseSecurity.sanitizeParameter(req.query[field] as string);
         }
@@ -154,7 +154,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
     if (!req.user || !req.user.id) {
       // Only allow read access for public routes
       if (action !== 'read') {
-        return res.status(401: any).json({
+        return res.status(401).json({
           status: 'error',
           message: 'Authentication required for this operation'
         });
@@ -183,7 +183,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
         }
       );
       
-      return res.status(403: any).json({
+      return res.status(403).json({
         status: 'error',
         message: `You don't have permission to ${action} the ${resource} resource`
       });

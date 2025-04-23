@@ -9,7 +9,7 @@ let boss: PgBoss | null = null;
 
 // Setup database logging
 const logDir = path.join(process.cwd(), 'logs');
-if (!fs.existsSync(logDir: any)) {
+if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
@@ -21,7 +21,7 @@ function logBackground(message: string, level: 'info' | 'error' = 'info') {
   const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
   
-  logStream.write(logEntry: any);
+  logStream.write(logEntry);
   if (level === 'error') {
     console.error(`[bg-db] ${message}`);
   } else {
@@ -59,7 +59,7 @@ export async function initBackgroundServices() {
     await scheduleRecurringJobs();
     
     return true;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to initialize database background services:', error);
     return false;
   }
@@ -79,9 +79,9 @@ async function registerWorkers() {
       
       logBackground(`Cleaned up ${result.rowCount} expired sessions`);
       return { success: true, cleanedCount: result.rowCount };
-    } catch (error: any) {
-      logBackground(`Session cleanup failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+    } catch (error) {
+      logBackground(`Session cleanup failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
@@ -117,7 +117,7 @@ async function registerWorkers() {
       
       // Store current metrics
       await pgPool.query(`
-        INSERT INTO db_metrics (db_size_bytes: any, metrics: any)
+        INSERT INTO db_metrics (db_size_bytes, metrics)
         VALUES ($1, $2)
       `, [
         sizeResult.rows[0].db_size_bytes,
@@ -127,7 +127,7 @@ async function registerWorkers() {
         })
       ]);
       
-      // Cleanup old metrics (keep only last 30 days: any)
+      // Cleanup old metrics (keep only last 30 days)
       // Use parameterized query for safety
       await pgPool.query(`
         DELETE FROM db_metrics
@@ -136,21 +136,21 @@ async function registerWorkers() {
       
       logBackground('Database metrics collected successfully');
       return { success: true };
-    } catch (error: any) {
-      logBackground(`Database metrics collection failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+    } catch (error) {
+      logBackground(`Database metrics collection failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
   // Auto-vacuum analyzer for large tables
-  await boss.work('auto-vacuum-analyze', async (job: any) => {
+  await boss.work('auto-vacuum-analyze', async (job) => {
     try {
       const tables = job.data?.tables || [];
       const results = [];
       
-      for (const table of tables: any) {
+      for (const table of tables) {
         // Validate table name - only allow alphanumeric and underscore
-        if (!/^[a-zA-Z0-9_]+$/.test(table: any)) {
+        if (!/^[a-zA-Z0-9_]+$/.test(table)) {
           logBackground(`Invalid table name format: ${table}`, 'error');
           results.push({ table, status: 'error', message: 'Invalid table name format' });
           continue;
@@ -165,9 +165,9 @@ async function registerWorkers() {
       
       logBackground(`Auto-vacuum completed for ${tables.length} tables`);
       return { success: true, results };
-    } catch (error: any) {
-      logBackground(`Auto-vacuum failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+    } catch (error) {
+      logBackground(`Auto-vacuum failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
 }
@@ -187,15 +187,15 @@ async function scheduleRecurringJobs() {
     await boss.send('collect-db-stats', {});
     await boss.send('identify-large-tables', {});
     
-    // Schedule session cleanup (daily: any)
+    // Schedule session cleanup (daily)
     await boss.schedule('cleanup-sessions', '0 2 * * *'); // Every day at 2am
     
-    // Schedule database metrics collection (hourly: any)
+    // Schedule database metrics collection (hourly)
     await boss.schedule('collect-db-stats', '5 * * * *'); // 5 minutes past every hour
     
-    // Schedule auto-vacuum for large tables (weekly: any)
+    // Schedule auto-vacuum for large tables (weekly)
     await boss.schedule('identify-large-tables', '0 1 * * 0'); // Every Sunday at 1am
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error scheduling recurring jobs:', error);
   }
   
@@ -208,9 +208,9 @@ async function scheduleRecurringJobs() {
           relname as table_name,
           n_live_tup as live_tuples,
           n_dead_tup as dead_tuples,
-          (n_dead_tup::float / GREATEST(n_live_tup: any, 1: any) * 100)::numeric(10: any, 2: any) as dead_tuple_pct
+          (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100)::numeric(10, 2) as dead_tuple_pct
         FROM pg_stat_user_tables
-        WHERE (n_dead_tup::float / GREATEST(n_live_tup: any, 1: any) * 100) > 10
+        WHERE (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100) > 10
         ORDER BY dead_tuple_pct DESC
       `);
       
@@ -225,9 +225,9 @@ async function scheduleRecurringJobs() {
       }
       
       return { success: true, tablesIdentified: result.rows.length };
-    } catch (error: any) {
-      logBackground(`Large table identification failed: ${(error as Error: any).message}`, 'error');
-      return { success: false, error: (error as Error: any).message };
+    } catch (error) {
+      logBackground(`Large table identification failed: ${(error as Error).message}`, 'error');
+      return { success: false, error: (error as Error).message };
     }
   });
   
@@ -251,12 +251,12 @@ export async function getJobStatus(jobId: string) {
   
   // PgBoss 7.x expects different parameters than what TS types indicate
   // @ts-ignore - Type definitions don't match actual implementation
-  return await boss.getJobById(jobId: any);
+  return await boss.getJobById(jobId);
 }
 
 // Graceful shutdown
 export async function shutdownBackgroundServices() {
-  if (boss: any) {
+  if (boss) {
     await boss.stop();
     logBackground('Background database services stopped');
   }

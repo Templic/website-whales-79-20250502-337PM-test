@@ -1,5 +1,5 @@
 /**
- * Runtime Application Self-Protection (RASP: any) Manager
+ * Runtime Application Self-Protection (RASP) Manager
  * 
  * This module provides runtime protection against various attacks
  * by monitoring and analyzing application behavior at runtime.
@@ -145,7 +145,7 @@ class RASPManager {
   public createMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip excluded paths
-      if (this.options.excludePaths?.some(path => req.path.startsWith(path: any))) {
+      if (this.options.excludePaths?.some(path => req.path.startsWith(path))) {
         return next();
       }
       
@@ -160,7 +160,7 @@ class RASPManager {
    * Enable a RASP feature
    */
   public enableFeature(feature: RASPFeature): void {
-    switch (feature: any) {
+    switch (feature) {
       case RASPFeature.SQL_INJECTION:
         this.options.enableSQLInjectionProtection = true;
         break;
@@ -206,7 +206,7 @@ class RASPManager {
    * Disable a RASP feature
    */
   public disableFeature(feature: RASPFeature): void {
-    switch (feature: any) {
+    switch (feature) {
       case RASPFeature.SQL_INJECTION:
         this.options.enableSQLInjectionProtection = false;
         break;

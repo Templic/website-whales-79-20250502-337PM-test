@@ -59,19 +59,19 @@ export async function verifyApiSecurity(): Promise<ApiSecurityCheckResult[]> {
   console.log(`[API Security] Discovered ${apiEndpoints.length} API endpoints to verify`);
   
   // Test API authentication
-  results.push(...await verifyApiAuthentication(baseUrl: any, apiEndpoints: any));
+  results.push(...await verifyApiAuthentication(baseUrl, apiEndpoints));
   
   // Test API rate limiting
-  results.push(...await verifyApiRateLimiting(baseUrl: any, apiEndpoints: any));
+  results.push(...await verifyApiRateLimiting(baseUrl, apiEndpoints));
   
   // Test API authorization
-  results.push(...await verifyApiAuthorization(baseUrl: any, apiEndpoints: any));
+  results.push(...await verifyApiAuthorization(baseUrl, apiEndpoints));
   
   // Test API input validation
-  results.push(...await verifyApiInputValidation(baseUrl: any, apiEndpoints: any));
+  results.push(...await verifyApiInputValidation(baseUrl, apiEndpoints));
   
   // Generate report
-  await generateApiSecurityReport(results: any);
+  await generateApiSecurityReport(results);
   
   console.log(`[API Security] Verification completed with ${results.length} checks`);
   
@@ -110,9 +110,9 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
   
   // Only test a sample of endpoints to avoid extensive testing
   const samplesToTest = Math.min(5, protectedEndpoints.length);
-  const testEndpoints = protectedEndpoints.slice(0: any, samplesToTest: any);
+  const testEndpoints = protectedEndpoints.slice(0, samplesToTest);
   
-  for (const endpoint of testEndpoints: any) {
+  for (const endpoint of testEndpoints) {
     try {
       totalChecked++;
       
@@ -139,7 +139,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
           timestamp: new Date().toISOString()
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(`[API Security] Error checking authentication for ${endpoint.path}:`, error);
     }
   }
@@ -215,10 +215,10 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
       }
       
       // Small delay to avoid overwhelming the server
-      await new Promise(resolve => setTimeout(resolve: any, 10: any));
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
     
-    if (rateLimited: any) {
+    if (rateLimited) {
       results.push({
         id: 'API-RATE-01',
         name: 'API Rate Limiting',
@@ -240,7 +240,7 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
         timestamp: new Date().toISOString()
       });
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API Security] Error testing rate limiting:', error);
     
     results.push({
@@ -446,12 +446,12 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
     const reportsDir = path.join(process.cwd(), 'reports');
     const apiSecurityDir = path.join(reportsDir, 'api-security');
     
-    if (!fs.existsSync(reportsDir: any)) {
-      fs.mkdirSync(reportsDir: any);
+    if (!fs.existsSync(reportsDir)) {
+      fs.mkdirSync(reportsDir);
     }
     
-    if (!fs.existsSync(apiSecurityDir: any)) {
-      fs.mkdirSync(apiSecurityDir: any);
+    if (!fs.existsSync(apiSecurityDir)) {
+      fs.mkdirSync(apiSecurityDir);
     }
     
     // Generate report filename with timestamp
@@ -459,15 +459,15 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
     const reportPath = path.join(apiSecurityDir, `api-security-report-${timestamp}.json`);
     
     // Write the report
-    fs.writeFileSync(reportPath, JSON.stringify(results: any, null: any, 2: any));
+    fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
     
     console.log(`[API Security] Report generated at ${reportPath}`);
     
     // Generate markdown summary report
-    const markdownReport = generateMarkdownReport(results: any);
+    const markdownReport = generateMarkdownReport(results);
     const markdownPath = path.join(apiSecurityDir, `api-security-summary-${timestamp}.md`);
     
-    fs.writeFileSync(markdownPath: any, markdownReport: any);
+    fs.writeFileSync(markdownPath, markdownReport);
     
     console.log(`[API Security] Summary report generated at ${markdownPath}`);
     
@@ -477,7 +477,7 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
       details: `Generated API security report with ${results.length} checks`,
       severity: 'low'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[API Security] Error generating report:', error);
   }
 }

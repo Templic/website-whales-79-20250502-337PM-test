@@ -62,8 +62,8 @@ export async function memoizedQuery<T = any>(
   
   // Check cache unless bypassing
   if (!options?.bypassCache) {
-    const cachedResult = queryCache.get<T>(cacheKey: any);
-    if (cachedResult: any) {
+    const cachedResult = queryCache.get<T>(cacheKey);
+    if (cachedResult) {
       dbMetrics.cachedQueryHits++;
       return cachedResult;
     }
@@ -78,11 +78,11 @@ export async function memoizedQuery<T = any>(
   // Execute query
   let result: T;
   try {
-    if (params: any) {
+    if (params) {
       // This is a simplified version - would need proper parameter binding
-      result = await db.execute(query: any) as T;
+      result = await db.execute(query) as T;
     } else {
-      result = await db.execute(query: any) as T;
+      result = await db.execute(query) as T;
     }
     
     // Calculate duration
@@ -97,7 +97,7 @@ export async function memoizedQuery<T = any>(
     }
     
     return result;
-  } catch (error: any) {
+  } catch (error) {
     // Log error and rethrow
     console.error(`[DB Optimization] Query error:`, error);
     throw error;
@@ -112,7 +112,7 @@ export async function memoizedQuery<T = any>(
  */
 function trackQueryPerformance(query: string, duration: number, params?: any[]): void {
   // Add to query times
-  dbMetrics.queryTimes.push(duration: any);
+  dbMetrics.queryTimes.push(duration);
   
   // Keep only the last 100 query times
   if (dbMetrics.queryTimes.length > 100) {
@@ -120,7 +120,7 @@ function trackQueryPerformance(query: string, duration: number, params?: any[]):
   }
   
   // Calculate average
-  const sum = dbMetrics.queryTimes.reduce((total: any, time: any) => total + time, 0);
+  const sum = dbMetrics.queryTimes.reduce((total, time) => total + time, 0);
   dbMetrics.averageQueryTime = sum / dbMetrics.queryTimes.length;
   
   // Track slow queries
@@ -138,7 +138,7 @@ function trackQueryPerformance(query: string, duration: number, params?: any[]):
     }
     
     // Log slow query
-    console.warn(`[DB Optimization] Slow query (${duration.toFixed(2: any)}ms): ${query.slice(0: any, 100: any)}${query.length > 100 ? '...' : ''}`);
+    console.warn(`[DB Optimization] Slow query (${duration.toFixed(2)}ms): ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
   }
 }
 
@@ -165,7 +165,7 @@ export async function processBatches<T, R>(
   // Process in batches
   for (let i = 0; i < total; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-    const batchResults = await processFn(batch: any);
+    const batchResults = await processFn(batch);
     
     results.push(...batchResults);
     
@@ -173,7 +173,7 @@ export async function processBatches<T, R>(
     
     // Report progress
     if (options?.onProgress) {
-      options.onProgress(processed: any, total: any);
+      options.onProgress(processed, total);
     }
   }
   
@@ -194,12 +194,12 @@ export function clearQueryCache(pattern?: string): number {
   
   // Clear specific entries that match the pattern
   let count = 0;
-  const regex = new RegExp(pattern: any);
+  const regex = new RegExp(pattern);
   
   // Iterate through cache using forEach
-  queryCache.forEach((value: any, key: any) => {
-    if (regex.test(key: any)) {
-      queryCache.delete(key: any);
+  queryCache.forEach((value, key) => {
+    if (regex.test(key)) {
+      queryCache.delete(key);
       count++;
     }
   });
@@ -244,9 +244,9 @@ export async function analyzeDb(
   try {
     if (tables && tables.length > 0) {
       // Analyze specific tables
-      for (const table of tables: any) {
-        await db.execute(sql`ANALYZE ${sql.raw(table: any)}`);
-        analyzed.push(table: any);
+      for (const table of tables) {
+        await db.execute(sql`ANALYZE ${sql.raw(table)}`);
+        analyzed.push(table);
       }
     } else {
       // Analyze all tables
@@ -256,7 +256,7 @@ export async function analyzeDb(
     
     dbMetrics.lastAnalyze = new Date();
     return { analyzed, skipped };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[DB Optimization] Error during ANALYZE:', error);
     return { analyzed, skipped, error: error as Error };
   }
@@ -266,7 +266,7 @@ export async function analyzeDb(
  * Execute VACUUM on tables to reclaim space
  * @param db Drizzle database instance
  * @param tables Optional array of table names to vacuum
- * @param full Whether to run VACUUM FULL (locks tables: any)
+ * @param full Whether to run VACUUM FULL (locks tables)
  * @returns Results of the operation
  */
 export async function vacuumDb(
@@ -280,17 +280,17 @@ export async function vacuumDb(
   try {
     if (tables && tables.length > 0) {
       // Vacuum specific tables
-      for (const table of tables: any) {
-        if (full: any) {
-          await db.execute(sql`VACUUM FULL ${sql.raw(table: any)}`);
+      for (const table of tables) {
+        if (full) {
+          await db.execute(sql`VACUUM FULL ${sql.raw(table)}`);
         } else {
-          await db.execute(sql`VACUUM ${sql.raw(table: any)}`);
+          await db.execute(sql`VACUUM ${sql.raw(table)}`);
         }
-        vacuumed.push(table: any);
+        vacuumed.push(table);
       }
     } else {
       // Vacuum all tables
-      if (full: any) {
+      if (full) {
         await db.execute(sql`VACUUM FULL`);
       } else {
         await db.execute(sql`VACUUM`);
@@ -300,7 +300,7 @@ export async function vacuumDb(
     
     dbMetrics.lastVacuum = new Date();
     return { vacuumed, skipped };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[DB Optimization] Error during VACUUM:', error);
     return { vacuumed, skipped, error: error as Error };
   }
@@ -317,7 +317,7 @@ export async function analyzeIndexNeeds(
   missingIndexes: Array<{ table: string; column: string; benefit: number }>;
   unusedIndexes: Array<{ table: string; index: string; usage: number }>;
 }> {
-  // Find missing indexes (simplified example: any)
+  // Find missing indexes (simplified example)
   const missingIndexesQuery = sql`
     SELECT
       s.relname AS table,
@@ -358,8 +358,8 @@ export async function analyzeIndexNeeds(
   
   try {
     const [missingResults, unusedResults] = await Promise.all([
-      db.execute(missingIndexesQuery: any),
-      db.execute(unusedIndexesQuery: any),
+      db.execute(missingIndexesQuery),
+      db.execute(unusedIndexesQuery),
     ]);
     
     return {
@@ -374,7 +374,7 @@ export async function analyzeIndexNeeds(
         usage: parseInt(row.usage, 10),
       })),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[DB Optimization] Error analyzing index needs:', error);
     return { missingIndexes: [], unusedIndexes: [] };
   }
@@ -408,7 +408,7 @@ export async function getTableSizes(
   `;
   
   try {
-    const results = await db.execute(query: any);
+    const results = await db.execute(query);
     
     return (results as any[]).map(row => ({
       table: row.table,
@@ -416,7 +416,7 @@ export async function getTableSizes(
       totalSize: row.total_size,
       indexSize: row.index_size,
     }));
-  } catch (error: any) {
+  } catch (error) {
     console.error('[DB Optimization] Error getting table sizes:', error);
     return [];
   }
@@ -449,7 +449,7 @@ export async function getTransactionStats(
   `;
   
   try {
-    const results = await db.execute(query: any);
+    const results = await db.execute(query);
     
     // Process results
     let activeTransactions = 0;
@@ -475,7 +475,7 @@ export async function getTransactionStats(
       idleInTransactions,
       longestTransaction,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[DB Optimization] Error getting transaction stats:', error);
     return {
       activeTransactions: 0,

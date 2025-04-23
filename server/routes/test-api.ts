@@ -35,7 +35,7 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY,
       severity: SecurityEventSeverity.INFO,
-      message: 'Quantum-resistant key pair generated (TEST: any)',
+      message: 'Quantum-resistant key pair generated (TEST)',
       timestamp: Date.now(),
       metadata: {
         algorithm,
@@ -53,9 +53,9 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
       privateKey: keyPair.privateKey,
       isTestEndpoint: true
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in test quantum key generation endpoint:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to generate quantum-resistant key pair',
       isTestEndpoint: true
@@ -73,7 +73,7 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!data || !publicKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data and publicKey',
         isTestEndpoint: true
@@ -89,13 +89,13 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY,
       severity: SecurityEventSeverity.INFO,
-      message: 'Data encrypted with quantum-resistant algorithm (TEST: any)',
+      message: 'Data encrypted with quantum-resistant algorithm (TEST)',
       timestamp: Date.now(),
       metadata: {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data: any).length,
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
         timestamp: new Date().toISOString(),
         isTestEndpoint: true
       }
@@ -107,9 +107,9 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
       algorithm,
       isTestEndpoint: true
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in test quantum encryption endpoint:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt data',
       isTestEndpoint: true
@@ -127,7 +127,7 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
     
     // Validate parameters
     if (!encrypted || !privateKey) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: encrypted and privateKey',
         isTestEndpoint: true
@@ -143,7 +143,7 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY,
       severity: SecurityEventSeverity.INFO,
-      message: 'Data decrypted with quantum-resistant algorithm (TEST: any)',
+      message: 'Data decrypted with quantum-resistant algorithm (TEST)',
       timestamp: Date.now(),
       metadata: {
         algorithm,
@@ -160,9 +160,9 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
       algorithm,
       isTestEndpoint: true
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in test quantum decryption endpoint:', error);
-    res.status(500: any).json({
+    res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt data',
       isTestEndpoint: true

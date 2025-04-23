@@ -3,7 +3,7 @@ declare module 'csurf' {
   import { RequestHandler } from 'express';
 
   interface CsurfOptions {
-    value?: (req: any) => string;
+    value?: (req) => string;
     cookie?: boolean | {
       key?: string;
       path?: string;
@@ -35,7 +35,7 @@ declare module 'csurf' {
     cookie?: boolean | Object;
     ignoreMethods?: string[];
     sessionKey?: string;
-    value?: (req: any) => string;
+    value?: (req) => string;
   }): RequestHandler;
   
   export = csurf;

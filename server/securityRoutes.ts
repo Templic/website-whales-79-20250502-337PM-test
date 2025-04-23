@@ -15,7 +15,7 @@ declare module 'express-session' {
 }
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename: any);
+const __dirname = path.dirname(__filename);
 
 // Define user roles and permissions
 enum UserRole {
@@ -65,13 +65,13 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
         severity: 'medium'
       });
       
-      return res.status(401: any).json({ message: 'Authentication required' });
+      return res.status(401).json({ message: 'Authentication required' });
     }
     
     const userRole = req.user.role as UserRole;
     
     // Check if user has required permission
-    const hasPermission = rolePermissions[userRole]?.includes(requiredPermission: any);
+    const hasPermission = rolePermissions[userRole]?.includes(requiredPermission);
     
     if (!hasPermission) {
       logSecurityEvent({
@@ -86,7 +86,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
         severity: 'high'
       });
       
-      return res.status(403: any).json({ message: 'Insufficient permissions' });
+      return res.status(403).json({ message: 'Insufficient permissions' });
     }
     
     // User has required permission, proceed
@@ -98,14 +98,14 @@ const SECURITY_SETTINGS_FILE = path.join(__dirname, '../config/security_settings
 const SECURITY_LOG_FILE = path.join(__dirname, '../logs/security/security.log');
 
 // Create directories if they don't exist
-const securityConfigDir = path.dirname(SECURITY_SETTINGS_FILE: any);
-const securityLogDir = path.dirname(SECURITY_LOG_FILE: any);
+const securityConfigDir = path.dirname(SECURITY_SETTINGS_FILE);
+const securityLogDir = path.dirname(SECURITY_LOG_FILE);
 
-if (!fs.existsSync(securityConfigDir: any)) {
+if (!fs.existsSync(securityConfigDir)) {
   fs.mkdirSync(securityConfigDir, { recursive: true });
 }
 
-if (!fs.existsSync(securityLogDir: any)) {
+if (!fs.existsSync(securityLogDir)) {
   fs.mkdirSync(securityLogDir, { recursive: true });
 }
 
@@ -121,16 +121,16 @@ const defaultSecuritySettings = {
 // Initialize or load security settings
 const initializeSecuritySettings = () => {
   try {
-    if (!fs.existsSync(SECURITY_SETTINGS_FILE: any)) {
+    if (!fs.existsSync(SECURITY_SETTINGS_FILE)) {
       fs.writeFileSync(
         SECURITY_SETTINGS_FILE,
-        JSON.stringify(defaultSecuritySettings: any, null: any, 2: any),
+        JSON.stringify(defaultSecuritySettings, null, 2),
         'utf8'
       );
       console.log(`Security settings file created at ${SECURITY_SETTINGS_FILE}`);
     }
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to initialize security settings:', error);
     return defaultSecuritySettings;
   }
@@ -140,24 +140,24 @@ const initializeSecuritySettings = () => {
 const getSecuritySettings = () => {
   try {
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to read security settings:', error);
     return defaultSecuritySettings;
   }
 };
 
 // Update security settings
-const updateSecuritySettings = (newSettings: any) => {
+const updateSecuritySettings = (newSettings) => {
   try {
     const currentSettings = getSecuritySettings();
     const updatedSettings = { ...currentSettings, ...newSettings };
     fs.writeFileSync(
       SECURITY_SETTINGS_FILE,
-      JSON.stringify(updatedSettings: any, null: any, 2: any),
+      JSON.stringify(updatedSettings, null, 2),
       'utf8'
     );
     return updatedSettings;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to update security settings:', error);
     throw error;
   }
@@ -166,7 +166,7 @@ const updateSecuritySettings = (newSettings: any) => {
 // Parse and get security events from log file
 const getSecurityStats = () => {
   try {
-    if (!fs.existsSync(SECURITY_LOG_FILE: any)) {
+    if (!fs.existsSync(SECURITY_LOG_FILE)) {
       return { 
         total: 0,
         byType: {},
@@ -182,9 +182,9 @@ const getSecurityStats = () => {
       try {
         // Skip the timestamp prefix (e.g., "[SECURITY] 2023-01-01T00:00:00.000Z - ")
         const jsonStart = line.indexOf('- ') + 2;
-        const jsonContent = line.substring(jsonStart: any);
-        return JSON.parse(jsonContent: any);
-      } catch (e: any) {
+        const jsonContent = line.substring(jsonStart);
+        return JSON.parse(jsonContent);
+      } catch (e) {
         console.error('Failed to parse security log line:', e);
         return null;
       }
@@ -209,7 +209,7 @@ const getSecurityStats = () => {
       bySetting,
       recentEvents: events.slice(-50).reverse() // Get last 50 events in reverse chronological order
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to get security stats:', error);
     return { 
       total: 0,
@@ -225,7 +225,7 @@ import { securityLimiter } from './middleware/rateLimit';
 
 // Setup security routes with rate limiting
 const securityRouter = Router();
-securityRouter.use(securityLimiter: any); // Apply rate limiting to all security routes
+securityRouter.use(securityLimiter); // Apply rate limiting to all security routes
 
 let latestScanResult: any = null;
 
@@ -247,9 +247,9 @@ securityRouter.get(
       });
       
       res.json({ message: 'Security settings retrieved successfully', settings });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving security settings:', error);
-      res.status(500: any).json({ message: 'Failed to retrieve security settings' });
+      res.status(500).json({ message: 'Failed to retrieve security settings' });
     }
   }
 );
@@ -269,7 +269,7 @@ securityRouter.post(
           .min(3, 'Setting name must be at least 3 characters')
           .max(100, 'Setting name must be at most 100 characters')
           .refine(
-            (val: any) => Object.keys(defaultSecuritySettings: any).includes(val: any),
+            (val) => Object.keys(defaultSecuritySettings).includes(val),
             { message: 'Invalid security setting name' }
           ),
         value: z.boolean({ 
@@ -294,7 +294,7 @@ securityRouter.post(
           severity: 'medium'
         });
         
-        return res.status(400: any).json({ 
+        return res.status(400).json({ 
           message: 'Invalid input', 
           errors: validationResult.error.errors 
         });
@@ -304,7 +304,7 @@ securityRouter.post(
       
       // Update setting
       const newSettings = { [setting]: value };
-      const updatedSettings = updateSecuritySettings(newSettings: any);
+      const updatedSettings = updateSecuritySettings(newSettings);
       
       // Log the change
       logSecurityEvent({
@@ -321,7 +321,7 @@ securityRouter.post(
         message: 'Security setting updated successfully',
         settings: updatedSettings
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating security setting:', error);
       
       // Log the error
@@ -333,7 +333,7 @@ securityRouter.post(
         severity: 'high'
       });
       
-      res.status(500: any).json({ message: 'Failed to update security setting' });
+      res.status(500).json({ message: 'Failed to update security setting' });
     }
   }
 );
@@ -356,9 +356,9 @@ securityRouter.get(
       });
       
       res.json({ message: 'Security statistics retrieved successfully', stats });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving security stats:', error);
-      res.status(500: any).json({ message: 'Failed to retrieve security statistics' });
+      res.status(500).json({ message: 'Failed to retrieve security statistics' });
     }
   }
 );
@@ -379,8 +379,8 @@ securityRouter.post(
       if (now - lastScanTime < SCAN_COOLDOWN_MS) {
         const remainingMinutes = Math.ceil((SCAN_COOLDOWN_MS - (now - lastScanTime)) / 60000);
         
-        return res.status(429: any).json({ 
-          message: `Security scan rate limit exceeded. Please try again in ${remainingMinutes} minute(s: any).` 
+        return res.status(429).json({ 
+          message: `Security scan rate limit exceeded. Please try again in ${remainingMinutes} minute(s).` 
         });
       }
       
@@ -402,7 +402,7 @@ securityRouter.post(
         message: 'Security scan completed successfully',
         result: scanResult
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error running security scan:', error);
       
       // Log error
@@ -414,7 +414,7 @@ securityRouter.post(
         severity: 'high'
       });
       
-      res.status(500: any).json({ message: 'Failed to run security scan' });
+      res.status(500).json({ message: 'Failed to run security scan' });
     }
   }
 );
@@ -450,7 +450,7 @@ securityRouter.get(
                     latestScanResult.mediumIssues > 0 ? 'medium' : 'low'
           });
         } else {
-          return res.status(404: any).json({ message: 'No scan results available. Please request a scan first.' });
+          return res.status(404).json({ message: 'No scan results available. Please request a scan first.' });
         }
       }
       
@@ -458,14 +458,14 @@ securityRouter.get(
         message: 'Latest security scan results retrieved successfully',
         result: latestScanResult
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error retrieving latest security scan results:', error);
-      res.status(500: any).json({ message: 'Failed to retrieve latest security scan results' });
+      res.status(500).json({ message: 'Failed to retrieve latest security scan results' });
     }
   }
 );
 
-// Test endpoints for development (these should be removed in production: any)
+// Test endpoints for development (these should be removed in production)
 const testSecurityRouter = Router();
 
 // Security status endpoint - public access with varying detail levels
@@ -504,7 +504,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
     ];
     
     // Add more detailed measures for admins
-    if (isAdmin: any) {
+    if (isAdmin) {
       securityMeasures.push(
         {
           name: 'Security Scanning',
@@ -576,26 +576,26 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         ]
       })
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error getting security status:', error);
-    res.status(500: any).json({ error: 'Failed to get security status' });
+    res.status(500).json({ error: 'Failed to get security status' });
   }
 });
 
 // Test endpoint to get security settings without authentication
-testSecurityRouter.get('/security/settings', (req: any, res: any) => {
+testSecurityRouter.get('/security/settings', (req, res) => {
   const settings = getSecuritySettings();
   res.json({ message: 'Security settings retrieved successfully', settings });
 });
 
 // Test endpoint to get security stats without authentication
-testSecurityRouter.get('/security/stats', (req: any, res: any) => {
+testSecurityRouter.get('/security/stats', (req, res) => {
   const stats = getSecurityStats();
   res.json({ message: 'Security statistics retrieved successfully', stats });
 });
 
 // Test endpoint to run a security scan without authentication
-testSecurityRouter.get('/security/scan', async (req: any, res: any) => {
+testSecurityRouter.get('/security/scan', async (req, res) => {
   try {
     const scanResult = await scanProject();
     latestScanResult = scanResult;
@@ -618,14 +618,14 @@ testSecurityRouter.get('/security/scan', async (req: any, res: any) => {
       },
       vulnerabilities: scanResult.vulnerabilities
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error running security scan:', error);
-    res.status(500: any).json({ message: 'Failed to run security scan' });
+    res.status(500).json({ message: 'Failed to run security scan' });
   }
 });
 
 // Test endpoint to simulate an unauthorized access event for testing
-testSecurityRouter.get('/security/simulate-unauthorized', (req: any, res: any) => {
+testSecurityRouter.get('/security/simulate-unauthorized', (req, res) => {
   logSecurityEvent({
     type: 'UNAUTHORIZED_ATTEMPT',
     setting: 'API_ACCESS',

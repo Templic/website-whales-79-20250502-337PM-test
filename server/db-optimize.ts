@@ -13,7 +13,7 @@ let logStream: fs.WriteStream | null = null;
 function setupLogging() {
   if (process.env.NODE_ENV === 'production' && !logStream) {
     const logDir = path.join(process.cwd(), 'logs');
-    if (!fs.existsSync(logDir: any)) {
+    if (!fs.existsSync(logDir)) {
       fs.mkdirSync(logDir, { recursive: true });
     }
     
@@ -35,11 +35,11 @@ async function setupMonitoring() {
   // Set pg-monitor log destination to file in production
   if (process.env.NODE_ENV === 'production') {
     const stream = setupLogging();
-    if (stream: any) {
-      pgMonitor.setLog((msg: any, info: any) => {
+    if (stream) {
+      pgMonitor.setLog((msg, info) => {
         // Log query performance metrics to file
         const logEntry = `[${new Date().toISOString()}] ${info.event}: ${msg}\n`;
-        stream.write(logEntry: any);
+        stream.write(logEntry);
       });
     }
   }
@@ -77,14 +77,14 @@ export async function initDatabaseOptimization() {
     setTimeout(async () => {
       try {
         await setupMaintenanceTasks();
-      } catch (err: any) {
+      } catch (err) {
         console.error('Error during delayed maintenance setup:', err);
       }
     }, 3000); // 3 second delay
     
     log('Database optimization initialized', 'db-optimize');
     return true;
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to initialize database optimization:', error);
     return false;
   }
@@ -112,7 +112,7 @@ async function setupMaintenanceTasks() {
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
         return { success: true };
-      } catch (error: any) {
+      } catch (error) {
         console.error('VACUUM ANALYZE failed:', error);
         return { success: false, error };
       }
@@ -138,7 +138,7 @@ async function setupMaintenanceTasks() {
         function isValidTableName(name: string): boolean {
           // Only allow alphanumeric characters, underscores and hyphens
           const tableNamePattern = /^[a-zA-Z0-9_-]+$/;
-          return tableNamePattern.test(name: any);
+          return tableNamePattern.test(name);
         }
 
         for (const row of tablesResult.rows) {
@@ -157,10 +157,10 @@ async function setupMaintenanceTasks() {
             const reindexQuery = `REINDEX TABLE "${row.tablename}"`;
             
             // Analyze the query using our SQL injection prevention
-            const analysisResult = sqlInjectionPrevention.analyzeQuery(reindexQuery: any);
+            const analysisResult = sqlInjectionPrevention.analyzeQuery(reindexQuery);
             
             if (analysisResult.isSafe) {
-              await pgPool.query(reindexQuery: any);
+              await pgPool.query(reindexQuery);
               log(`Reindexed table ${row.tablename}`, 'db-maintenance');
             } else {
               log(`Skipping potentially unsafe reindex operation for table: ${row.tablename}`, 'security');
@@ -172,7 +172,7 @@ async function setupMaintenanceTasks() {
         
         log('Database reindexing completed', 'db-maintenance');
         return { success: true, tablesReindexed: tablesResult.rows.length };
-      } catch (error: any) {
+      } catch (error) {
         console.error('Database reindexing failed:', error);
         return { success: false, error };
       }
@@ -218,12 +218,12 @@ async function setupMaintenanceTasks() {
           log('Basic query stats analysis completed', 'db-performance');
           return { success: true, basicQueryStats: result.rows };
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('Slow query analysis failed:', error);
         return { success: false, error };
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error setting up maintenance tasks:', error);
   }
 }
@@ -233,7 +233,7 @@ import { sqlInjectionPrevention } from './security/advanced/database/SQLInjectio
 
 // Maximum number of retry attempts for database queries
 const MAX_RETRY_ATTEMPTS = 3;
-// Base delay in milliseconds before retrying (will be multiplied by attempt number: any)
+// Base delay in milliseconds before retrying (will be multiplied by attempt number)
 const BASE_RETRY_DELAY = 300;
 
 // Utility function to execute query with detailed performance metrics, SQL injection protection, and robust error handling
@@ -247,22 +247,22 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     if (!analysisResult.isSafe) {
       const errorMessage = `Potentially dangerous query blocked: ${analysisResult.detectedPatterns.map(p => p.pattern.name).join(', ')}`;
       log(errorMessage, 'security');
-      console.error(errorMessage: any);
+      console.error(errorMessage);
       throw new Error('Query blocked due to security concerns');
     }
     
     // Execute the query if it's safe
-    const result = await pgPool.query(query: any, params: any);
+    const result = await pgPool.query(query, params);
     const duration = Date.now() - start;
     
     // Log performance details only if query takes more than 100ms
     if (duration > 100) {
       // Truncate query for logging to avoid exposing sensitive details
-      log(`Slow query (${duration}ms): ${query.substring(0: any, 100: any)}...`, 'db-performance');
+      log(`Slow query (${duration}ms): ${query.substring(0, 100)}...`, 'db-performance');
     }
     
     return result;
-  } catch (error: any) {
+  } catch (error) {
     const duration = Date.now() - start;
     
     // Check if this is a connection error that we should retry
@@ -276,12 +276,12 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     
     if (isConnectionError && retryCount < MAX_RETRY_ATTEMPTS) {
       // Calculate exponential backoff delay
-      const retryDelay = BASE_RETRY_DELAY * Math.pow(2: any, retryCount: any);
+      const retryDelay = BASE_RETRY_DELAY * Math.pow(2, retryCount);
       
       log(`Database connection error (${error.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
       
       // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve: any, retryDelay: any));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
       
       // Retry the query with incremented retry count
       return executeOptimizedQuery(query, params, retryCount + 1);
@@ -304,7 +304,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
              count(*) FILTER (WHERE state = $1) as active,
              count(*) FILTER (WHERE state = $2) as idle,
              count(*) FILTER (WHERE state = $3) as idle_in_transaction,
-             count(*) FILTER (WHERE wait_event IS NOT NULL: any) as waiting
+             count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
       FROM pg_stat_activity 
       WHERE datname = current_database()
         AND pid <> pg_backend_pid();
@@ -313,10 +313,10 @@ export async function getConnectionPoolStats(retryCount = 0) {
     const stats = result.rows[0] || {};
     
     // Safely parse integer values with validation
-    function safeParseInt(value: any, defaultValue: number = 0): number {
+    function safeParseInt(value, defaultValue: number = 0): number {
       if (value === undefined || value === null) return defaultValue;
-      const parsed = parseInt(value: any);
-      return isNaN(parsed: any) ? defaultValue : parsed;
+      const parsed = parseInt(value);
+      return isNaN(parsed) ? defaultValue : parsed;
     }
     
     return {
@@ -325,7 +325,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
       idle: safeParseInt(stats.idle),
       waiting: safeParseInt(stats.waiting),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to get connection pool stats:', error);
     
     // Return default values instead of error to prevent frontend from crashing
@@ -334,7 +334,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
       active: 0,
       idle: 0,
       waiting: 0,
-      error: error instanceof Error ? error.message : String(error: any)
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 }
@@ -342,7 +342,7 @@ export async function getConnectionPoolStats(retryCount = 0) {
 // API to trigger manual optimization tasks
 export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'analyze') {
   try {
-    switch (task: any) {
+    switch (task) {
       case 'vacuum':
         return boss.send('vacuum-analyze', {});
       case 'reindex':
@@ -352,7 +352,7 @@ export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'a
       default:
         throw new Error(`Unknown maintenance task: ${task}`);
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Failed to trigger ${task} task:`, error);
     throw error;
   }

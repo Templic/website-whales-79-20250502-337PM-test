@@ -42,7 +42,7 @@ router.use('/api/security', securityApiRouter);
 const authRouter = express.Router();
 
 // MFA setup page
-authRouter.get('/setup-mfa', (req: any, res: any) => {
+authRouter.get('/setup-mfa', (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
@@ -54,7 +54,7 @@ authRouter.get('/setup-mfa', (req: any, res: any) => {
 });
 
 // MFA verification page
-authRouter.get('/mfa', (req: any, res: any) => {
+authRouter.get('/mfa', (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
@@ -77,7 +77,7 @@ authRouter.get('/mfa', (req: any, res: any) => {
 });
 
 // MFA verification POST endpoint
-authRouter.post('/mfa/verify', async (req: any, res: any) => {
+authRouter.post('/mfa/verify', async (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
@@ -87,29 +87,29 @@ authRouter.post('/mfa/verify', async (req: any, res: any) => {
   
   // Generate challenge if method is provided
   if (method && !code) {
-    const success = await generateMFAChallenge(req: any, res: any, method: any);
+    const success = await generateMFAChallenge(req, res, method);
     
-    if (success: any) {
+    if (success) {
       // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'Challenge generated' });
     } else {
-      return res.status(400: any).json({ success: false, message: 'Failed to generate challenge' });
+      return res.status(400).json({ success: false, message: 'Failed to generate challenge' });
     }
   }
   
   // Verify MFA response
-  if (code: any) {
-    const success = await verifyMFAResponse(req: any, res: any, code: any);
+  if (code) {
+    const success = await verifyMFAResponse(req, res, code);
     
-    if (success: any) {
+    if (success) {
       // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'MFA verified successfully' });
     } else {
-      return res.status(400: any).json({ success: false, message: 'Invalid verification code' });
+      return res.status(400).json({ success: false, message: 'Invalid verification code' });
     }
   }
   
-  res.status(400: any).json({ success: false, message: 'Missing verification code' });
+  res.status(400).json({ success: false, message: 'Missing verification code' });
 });
 
 // Register auth routes
@@ -120,7 +120,7 @@ router.use('/auth', authRouter);
  */
 export function initializeSecurity(app: express.Express, server: http.Server): void {
   // Register security routes
-  app.use(router: any);
+  app.use(router);
   
   // Start security metrics collection
   startMetricsCollection();
@@ -129,7 +129,7 @@ export function initializeSecurity(app: express.Express, server: http.Server): v
   initializeEventsCollector();
   
   // Setup WebSocket server for real-time security updates
-  setupSecurityWebSockets(server: any);
+  setupSecurityWebSockets(server);
   
   logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,

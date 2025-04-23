@@ -6,13 +6,13 @@ export class AnomalyDetectionService {
   private model: ML.Sequential;
   private threshold: number = 0.8;
 
-  async analyzeBehavior(request: any): Promise<boolean> {
-    const features = this.extractFeatures(request: any);
-    const prediction = await this.model.predict(features: any);
-    return this.isAnomaly(prediction: any);
+  async analyzeBehavior(request): Promise<boolean> {
+    const features = this.extractFeatures(request);
+    const prediction = await this.model.predict(features);
+    return this.isAnomaly(prediction);
   }
 
-  private extractFeatures(request: any): number[] {
+  private extractFeatures(request): number[] {
     return [
       request.frequency,
       request.timeOfDay,

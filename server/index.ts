@@ -43,13 +43,13 @@ if (config.csrfProtection) {
   app.use(csrfProtection);
   
   // CSRF token endpoint
-  app.get('/api/csrf-token', (req: any, res: any) => {
+  app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
   });
 } else {
   // Add a placeholder CSRF token endpoint for compatibility
   log('CSRF protection disabled for faster startup', 'server');
-  app.get('/api/csrf-token', (req: any, res: any) => {
+  app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: 'csrf-disabled-for-startup-optimization' });
   });
   
@@ -61,7 +61,7 @@ if (config.csrfProtection) {
       app.use(csrfProtection);
       
       // Update the CSRF endpoint to use the real token
-      app.get('/api/csrf-token', (req: any, res: any) => {
+      app.get('/api/csrf-token', (req, res) => {
         res.json({ csrfToken: req.csrfToken() });
       });
     }, 60000); // Enable after 1 minute
@@ -70,7 +70,7 @@ if (config.csrfProtection) {
 
 /**
  * Initialize the server in stages
- * - First stage: Essential services (database: any)
+ * - First stage: Essential services (database)
  * - Second stage: Core server components
  * - Third stage: Deferred non-critical services
  */
@@ -82,7 +82,7 @@ async function initializeServer() {
 
   try {
     // === STAGE 1: Essential Services ===
-    // Connect to database (critical: any)
+    // Connect to database (critical)
     const dbStartTime = Date.now();
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
@@ -194,7 +194,7 @@ async function initializeServer() {
         app.use(compression({
           level: 1, // Use lowest compression level for fastest processing
           threshold: '10kb', // Only compress responses larger than 10KB
-          filter: (req: any, res: any) => {
+          filter: (req, res) => {
             // Skip compression for images and audio/video which are already compressed
             const contentType = res.getHeader('Content-Type') as string || '';
             if (contentType.includes('image/') || 
@@ -209,7 +209,7 @@ async function initializeServer() {
         // Enable full compression after delay
         setTimeout(() => {
           log('Upgrading to full compression settings', 'server');
-          // Replace the middleware (this is for the next requests: any, not existing ones: any)
+          // Replace the middleware (this is for the next requests, not existing ones)
           app.use(setupResponseCompression({
             threshold: '1kb',
             level: 6,
@@ -318,7 +318,7 @@ async function initializeServer() {
       await initializeAllServices();
     }
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Failed to initialize server:', error);
     process.exit(1);
   }
@@ -328,7 +328,7 @@ async function initializeServer() {
  * Initialize all non-critical services with deferred timing
  */
 function initializeNonCriticalServices() {
-  // Initialize database optimization (if enabled: any)
+  // Initialize database optimization (if enabled)
   if (config.features.enableDatabaseOptimization) {
     setTimeout(() => {
       log('Starting deferred database optimization...', 'server');
@@ -336,7 +336,7 @@ function initializeNonCriticalServices() {
     }, config.maintenanceDelay);
   }
 
-  // Initialize background services (if enabled: any)
+  // Initialize background services (if enabled)
   if (config.features.enableBackgroundTasks) {
     setTimeout(() => {
       log('Starting deferred background services...', 'server');
@@ -344,7 +344,7 @@ function initializeNonCriticalServices() {
     }, config.backgroundServicesDelay);
   }
 
-  // Initialize security scans (if enabled: any)
+  // Initialize security scans (if enabled)
   if (config.features.enableSecurityScans) {
     setTimeout(() => {
       // Check if full security mode is enabled
@@ -407,7 +407,7 @@ function logStartupPerformance(initTime: number) {
   
   console.log(`Security scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
   if (config.features.enableSecurityScans && maximumSecurity) {
-    console.log(`Security mode: MAXIMUM (All shields up: any)`);
+    console.log(`Security mode: MAXIMUM (All shields up)`);
   }
   console.log(`Non-critical services deferred: ${config.deferBackgroundServices ? 'yes' : 'no'}`);
   console.log('=================================');
@@ -420,7 +420,7 @@ function setupGracefulShutdown() {
   // Handle process termination signals
   const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT'];
 
-  signals.forEach((signal: any) => {
+  signals.forEach((signal) => {
     process.on(signal, async () => {
       console.log(`\nReceived ${signal} signal, shutting down gracefully...`);
 
@@ -446,11 +446,11 @@ function setupGracefulShutdown() {
   });
 
   // Handle unhandled rejections and exceptions
-  process.on('unhandledRejection', (reason: any, promise: any) => {
+  process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   });
 
-  process.on('uncaughtException', (err: any) => {
+  process.on('uncaughtException', (err) => {
     console.error('Uncaught Exception:', err);
     process.exit(1);
   });

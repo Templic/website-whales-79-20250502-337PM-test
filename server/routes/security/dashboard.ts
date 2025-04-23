@@ -55,9 +55,9 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
         pages: Math.ceil(total / limit)
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching security events:', error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security events'
     });
@@ -82,9 +82,9 @@ securityDashboardRoutes.get('/events/:id', async (req: Request, res: Response) =
       description: 'This is a mock security event',
       timestamp: new Date()
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error fetching security event ${req.params.id}:`, error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security event'
     });
@@ -102,7 +102,7 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
     const { acknowledgedBy } = req.body;
     
     if (!acknowledgedBy) {
-      return res.status(400: any).json({
+      return res.status(400).json({
         error: 'Bad request',
         message: 'acknowledgedBy is required'
       });
@@ -114,9 +114,9 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
       success: true,
       message: `Security event ${id} acknowledged by ${acknowledgedBy}`
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error acknowledging security event ${req.params.id}:`, error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to acknowledge security event'
     });
@@ -157,7 +157,7 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
     
     // Event counts by category
     const categoryCounts: Record<string, number> = {};
-    Object.values(SecurityEventCategory: any).forEach(category => {
+    Object.values(SecurityEventCategory).forEach(category => {
       categoryCounts[category] = securityBlockchain.queryEvents({
         category: category as SecurityEventCategory
       }).length;
@@ -167,13 +167,13 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
     const dailyEventCounts: Record<string, number> = {};
     const today = new Date();
     for (let i = 0; i < 30; i++) {
-      const date = new Date(today: any);
+      const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateString = date.toISOString().split('T')[0];
       
-      const startOfDay = new Date(dateString as string: any);
-      const endOfDay = new Date(dateString as string: any);
-      endOfDay.setHours(23: any, 59: any, 59: any, 999: any);
+      const startOfDay = new Date(dateString as string);
+      const endOfDay = new Date(dateString as string);
+      endOfDay.setHours(23, 59, 59, 999);
       
       dailyEventCounts[dateString] = securityBlockchain.queryEvents({
         fromDate: startOfDay,
@@ -203,9 +203,9 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
       dailyEventCounts,
       blockchainStats
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching security metrics:', error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security metrics'
     });
@@ -230,7 +230,7 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
     });
     
     // Start the scan in the background
-    securityScanner.startScan(scanId: any).catch(error => {
+    securityScanner.startScan(scanId).catch(error => {
       console.error(`Error running security scan ${scanId}:`, error);
     });
     
@@ -240,9 +240,9 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
       message: `Security scan of type ${scanType} started`,
       status: 'started'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error starting security scan:', error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to start security scan'
     });
@@ -259,9 +259,9 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
     const scans = securityScanner.getAllScans();
     // @ts-ignore - Response type issue
   return res.json({ scans });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching security scans:', error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security scans'
     });
@@ -276,10 +276,10 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
 securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) => {
   try {
     const scanId = req.params.id as string;
-    const scan = securityScanner.getScan(scanId: any);
+    const scan = securityScanner.getScan(scanId);
     
     if (!scan) {
-      return res.status(404: any).json({
+      return res.status(404).json({
         error: 'Not found',
         message: `Security scan ${scanId} not found`
       });
@@ -287,9 +287,9 @@ securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) =>
     
     // @ts-ignore - Response type issue
   return res.json({ scan });
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error fetching security scan ${req.params.id}:`, error);
-    return res.status(500: any).json({
+    return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security scan'
     });

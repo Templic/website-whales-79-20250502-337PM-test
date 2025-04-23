@@ -37,7 +37,7 @@ export function recordSecurityEvent(event: Omit<SecurityEvent, 'id'>): SecurityE
   };
   
   // Add to events array
-  securityEvents.unshift(newEvent: any);
+  securityEvents.unshift(newEvent);
   
   // Trim array if it exceeds maximum size
   if (securityEvents.length > MAX_EVENTS) {
@@ -62,7 +62,7 @@ export async function getSecurityEventsHistory(
   const now = Date.now();
   let timeRangeMs = 24 * 60 * 60 * 1000; // Default: 24 hours
   
-  switch (timeRange: any) {
+  switch (timeRange) {
     case '1h':
       timeRangeMs = 1 * 60 * 60 * 1000;
       break;
@@ -94,7 +94,7 @@ export async function getSecurityEventsHistory(
   
   // Apply limit
   if (limit > 0 && events.length > limit) {
-    events = events.slice(0: any, limit: any);
+    events = events.slice(0, limit);
   }
   
   try {
@@ -108,22 +108,22 @@ export async function getSecurityEventsHistory(
       );
       
       // Merge and sort events
-      events = [...events, ...blockchainEvents].sort((a: any, b: any) => 
+      events = [...events, ...blockchainEvents].sort((a, b) => 
         b.timestamp.getTime() - a.timestamp.getTime()
       );
       
       // Apply limit again after merging
       if (limit > 0 && events.length > limit) {
-        events = events.slice(0: any, limit: any);
+        events = events.slice(0, limit);
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     // Log error but continue with in-memory events
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.WARNING,
       message: 'Failed to retrieve blockchain security events',
-      data: { error: (error as Error: any).message }
+      data: { error: (error as Error).message }
     });
   }
   
@@ -145,8 +145,8 @@ async function getBlockchainEvents(
     // Simulate retrieving events from blockchain
     // In a real implementation, this would call the blockchain logger
     return [];
-  } catch (error: any) {
-    throw new Error(`Failed to retrieve blockchain events: ${(error as Error: any).message}`);
+  } catch (error) {
+    throw new Error(`Failed to retrieve blockchain events: ${(error as Error).message}`);
   }
 }
 
@@ -233,7 +233,7 @@ export function initializeEventsCollector(): void {
   ];
   
   // Record initial events
-  initialEvents.forEach(recordSecurityEvent: any);
+  initialEvents.forEach(recordSecurityEvent);
   
   logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,

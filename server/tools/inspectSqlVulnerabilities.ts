@@ -174,12 +174,12 @@ async function scanFile(filePath: string): Promise<Vulnerability[]> {
     const lines = content.split('\n');
     
     // Check for each vulnerability pattern
-    for (const pattern of SQL_INJECTION_PATTERNS: any) {
+    for (const pattern of SQL_INJECTION_PATTERNS) {
       // Search the whole file
       const regex = new RegExp(pattern.pattern.source, 'g');
       let match;
       
-      while ((match = regex.exec(content: any)) !== null) {
+      while ((match = regex.exec(content)) !== null) {
         // Determine line and column number
         const upToMatch = content.substring(0, match.index);
         const matchedLine = upToMatch.split('\n').length;
@@ -199,7 +199,7 @@ async function scanFile(filePath: string): Promise<Vulnerability[]> {
         });
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error scanning file ${filePath}:`, error.message);
   }
   
@@ -215,7 +215,7 @@ async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulne
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     
-    for (const entry of entries: any) {
+    for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       
       // Skip excluded directories
@@ -229,18 +229,18 @@ async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulne
       
       if (entry.isDirectory()) {
         // Recursively scan subdirectory
-        const subDirVulnerabilities = await scanDirectory(fullPath: any, exclude: any);
+        const subDirVulnerabilities = await scanDirectory(fullPath, exclude);
         vulnerabilities.push(...subDirVulnerabilities);
       } else if (entry.isFile()) {
         // Only scan JavaScript/TypeScript files
         const ext = path.extname(entry.name).toLowerCase();
-        if (['.js', '.ts', '.jsx', '.tsx'].includes(ext: any)) {
-          const fileVulnerabilities = await scanFile(fullPath: any);
+        if (['.js', '.ts', '.jsx', '.tsx'].includes(ext)) {
+          const fileVulnerabilities = await scanFile(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
         }
       }
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Error scanning directory ${dir}:`, error.message);
   }
   
@@ -274,9 +274,9 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   
   // Summarize vulnerabilities by category
   const categories = new Map<string, number>();
-  for (const vuln of vulnerabilities: any) {
+  for (const vuln of vulnerabilities) {
     const category = vuln.pattern.category;
-    categories.set(category, (categories.get(category: any) || 0) + 1);
+    categories.set(category, (categories.get(category) || 0) + 1);
   }
   
   report += `Vulnerability Categories:\n`;
@@ -285,8 +285,8 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   }
   report += '\n';
   
-  // Sort vulnerabilities by risk level (critical first: any)
-  const sortedVulnerabilities = [...vulnerabilities].sort((a: any, b: any) => {
+  // Sort vulnerabilities by risk level (critical first)
+  const sortedVulnerabilities = [...vulnerabilities].sort((a, b) => {
     const riskOrder = {
       [RiskLevel.CRITICAL]: 0,
       [RiskLevel.HIGH]: 1,
@@ -303,7 +303,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   if (criticalVulns.length > 0) {
     report += `CRITICAL Risk Vulnerabilities\n`;
     report += `---------------------------\n\n`;
-    for (const vuln of criticalVulns: any) {
+    for (const vuln of criticalVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -314,7 +314,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   if (highVulns.length > 0) {
     report += `HIGH Risk Vulnerabilities\n`;
     report += `----------------------\n\n`;
-    for (const vuln of highVulns: any) {
+    for (const vuln of highVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -325,7 +325,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   if (mediumVulns.length > 0) {
     report += `MEDIUM Risk Vulnerabilities\n`;
     report += `------------------------\n\n`;
-    for (const vuln of mediumVulns: any) {
+    for (const vuln of mediumVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -336,7 +336,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   if (lowVulns.length > 0) {
     report += `LOW Risk Vulnerabilities\n`;
     report += `---------------------\n\n`;
-    for (const vuln of lowVulns: any) {
+    for (const vuln of lowVulns) {
       report += `[${vuln.pattern.name}] in ${vuln.file}:${vuln.line}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Description: ${vuln.pattern.description}\n`;
@@ -396,12 +396,12 @@ function generateJsonReport(vulnerabilities: Vulnerability[]): string {
   };
   
   // Build categories count
-  for (const vuln of vulnerabilities: any) {
+  for (const vuln of vulnerabilities) {
     const category = vuln.pattern.category;
     report.categories[category] = (report.categories[category] || 0) + 1;
   }
   
-  return JSON.stringify(report: any, null: any, 2: any);
+  return JSON.stringify(report, null, 2);
 }
 
 /**
@@ -412,7 +412,7 @@ async function main() {
   console.log('====================================');
   
   // Parse command line arguments
-  const args = process.argv.slice(2: any);
+  const args = process.argv.slice(2);
   const dirs = args.filter(arg => !arg.startsWith('--') && !arg.startsWith('-'));
   const jsonOutput = args.includes('--json') || args.includes('-j');
   const outputFile = args.find(arg => arg.startsWith('--output=') || arg.startsWith('-o='))?.split('=')[1];
@@ -429,10 +429,10 @@ async function main() {
   // Scan for vulnerabilities
   const vulnerabilities: Vulnerability[] = [];
   
-  for (const dir of dirsToScan: any) {
-    if (fs.existsSync(dir: any)) {
+  for (const dir of dirsToScan) {
+    if (fs.existsSync(dir)) {
       console.log(`Scanning ${dir}...`);
-      const dirVulnerabilities = await scanDirectory(dir: any, excludeDirs: any);
+      const dirVulnerabilities = await scanDirectory(dir, excludeDirs);
       vulnerabilities.push(...dirVulnerabilities);
     } else {
       console.warn(`Directory not found: ${dir}`);
@@ -447,21 +447,21 @@ async function main() {
   
   // Generate report
   const report = jsonOutput ? 
-    generateJsonReport(vulnerabilities: any) : 
-    generateReport(vulnerabilities: any);
+    generateJsonReport(vulnerabilities) : 
+    generateReport(vulnerabilities);
   
   // Save report to file if outputFile is specified
-  if (outputFile: any) {
+  if (outputFile) {
     try {
       // Ensure directory exists
-      const outputDir = path.dirname(outputFile: any);
-      if (!fs.existsSync(outputDir: any)) {
+      const outputDir = path.dirname(outputFile);
+      if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
       
-      await writeFile(outputFile: any, report: any);
+      await writeFile(outputFile, report);
       console.log(`\nReport saved to ${outputFile}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error(`\nError saving report to ${outputFile}:`, error.message);
     }
   } else {
@@ -476,9 +476,9 @@ async function main() {
         `sql_injection_report_${Date.now()}.${jsonOutput ? 'json' : 'txt'}`
       );
       
-      await writeFile(defaultOutput: any, report: any);
+      await writeFile(defaultOutput, report);
       console.log(`\nReport saved to ${defaultOutput}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('\nError saving report:', error.message);
     }
   }
@@ -490,7 +490,7 @@ async function main() {
 if (require.main === module) {
   main().catch(error => {
     console.error('Error running SQL injection vulnerability inspector:', error);
-    process.exit(1: any);
+    process.exit(1);
   });
 }
 

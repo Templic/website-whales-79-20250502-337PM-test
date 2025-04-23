@@ -18,7 +18,7 @@ function sanitizeSearchTerm(term: string): string {
 }
 
 // Generic search endpoint that can search across multiple entity types
-router.get('/api/search', async (req: any, res: any) => {
+router.get('/api/search', async (req, res) => {
   try {
     const { q, type, limit } = req.query;
     
@@ -35,7 +35,7 @@ router.get('/api/search', async (req: any, res: any) => {
     }
     
     const searchTerm = sanitizeSearchTerm(q.trim());
-    const limitNumber = limit ? parseInt(limit as string: any) : 20;
+    const limitNumber = limit ? parseInt(limit as string) : 20;
     
     // Prepare results object
     const results: any = {
@@ -52,7 +52,7 @@ router.get('/api/search', async (req: any, res: any) => {
     if (fetchAll || type === 'music') {
       // Search tracks
       const musicResults = await db.select()
-        .from(tracks: any)
+        .from(tracks)
         .where(
           or(
             like(tracks.title, `%${searchTerm}%`),
@@ -61,7 +61,7 @@ router.get('/api/search', async (req: any, res: any) => {
             like(tracks.description || '', `%${searchTerm}%`)
           )
         )
-        .limit(limitNumber: any);
+        .limit(limitNumber);
       
       results.music = musicResults;
     }
@@ -72,7 +72,7 @@ router.get('/api/search', async (req: any, res: any) => {
         ...products,
         categoryName: productCategories.name
       })
-        .from(products: any)
+        .from(products)
         .leftJoin(productCategories, eq(products.categoryId, productCategories.id))
         .where(
           and(
@@ -85,7 +85,7 @@ router.get('/api/search', async (req: any, res: any) => {
             )
           )
         )
-        .limit(limitNumber: any);
+        .limit(limitNumber);
       
       results.products = productResults.map(item => ({
         ...item,
@@ -96,7 +96,7 @@ router.get('/api/search', async (req: any, res: any) => {
     // Search posts if requested
     if (fetchAll || type === 'posts') {
       const postResults = await db.select()
-        .from(posts: any)
+        .from(posts)
         .where(
           and(
             eq(posts.published, true),
@@ -108,12 +108,12 @@ router.get('/api/search', async (req: any, res: any) => {
           )
         )
         .orderBy(desc(posts.createdAt))
-        .limit(limitNumber: any);
+        .limit(limitNumber);
       
       results.posts = postResults;
     }
     
-    // Search users if requested (admin only: any)
+    // Search users if requested (admin only)
     if ((fetchAll || type === 'users') && req.isAuthenticated && req.isAuthenticated() && 
         req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
       const userResults = await db.select({
@@ -125,14 +125,14 @@ router.get('/api/search', async (req: any, res: any) => {
         createdAt: users.createdAt,
         lastLogin: users.lastLogin
       })
-        .from(users: any)
+        .from(users)
         .where(
           or(
             like(users.username, `%${searchTerm}%`),
             like(users.email, `%${searchTerm}%`)
           )
         )
-        .limit(limitNumber: any);
+        .limit(limitNumber);
       
       results.users = userResults;
     } else {
@@ -143,15 +143,15 @@ router.get('/api/search', async (req: any, res: any) => {
     // Events search disabled - events table not defined
     
     // Return combined results
-    res.json(results: any);
-  } catch (error: any) {
+    res.json(results);
+  } catch (error) {
     console.error('Search error:', error);
-    res.status(500: any).json({ error: 'Failed to perform search' });
+    res.status(500).json({ error: 'Failed to perform search' });
   }
 });
 
 // Specialized music search endpoint
-router.get('/api/music/search', async (req: any, res: any) => {
+router.get('/api/music/search', async (req, res) => {
   try {
     const { q, frequency, artist, filter } = req.query;
     
@@ -198,21 +198,21 @@ router.get('/api/music/search', async (req: any, res: any) => {
     
     // Execute the search
     const musicResults = await db.select()
-      .from(tracks: any)
+      .from(tracks)
       .where(and(...conditions))
       .orderBy(desc(tracks.createdAt))
-      .limit(100: any);
+      .limit(100);
     
     // Return results
-    res.json(musicResults: any);
-  } catch (error: any) {
+    res.json(musicResults);
+  } catch (error) {
     console.error('Music search error:', error);
-    res.status(500: any).json({ error: 'Failed to perform music search' });
+    res.status(500).json({ error: 'Failed to perform music search' });
   }
 });
 
 // Specialized product search endpoint
-router.get('/api/products/search', async (req: any, res: any) => {
+router.get('/api/products/search', async (req, res) => {
   try {
     const { q, category, minPrice, maxPrice, sortBy } = req.query;
     
@@ -229,7 +229,7 @@ router.get('/api/products/search', async (req: any, res: any) => {
       ...products,
       categoryName: productCategories.name
     })
-      .from(products: any)
+      .from(products)
       .leftJoin(productCategories, eq(products.categoryId, productCategories.id))
       .where(
         and(
@@ -251,19 +251,19 @@ router.get('/api/products/search', async (req: any, res: any) => {
     if (minPrice && maxPrice) {
       query = query.where(
         and(
-          sql`${products.price} >= ${parseInt(minPrice as string: any) * 100}`,
-          sql`${products.price} <= ${parseInt(maxPrice as string: any) * 100}`
+          sql`${products.price} >= ${parseInt(minPrice as string) * 100}`,
+          sql`${products.price} <= ${parseInt(maxPrice as string) * 100}`
         )
       );
-    } else if (minPrice: any) {
-      query = query.where(sql`${products.price} >= ${parseInt(minPrice as string: any) * 100}`);
-    } else if (maxPrice: any) {
-      query = query.where(sql`${products.price} <= ${parseInt(maxPrice as string: any) * 100}`);
+    } else if (minPrice) {
+      query = query.where(sql`${products.price} >= ${parseInt(minPrice as string) * 100}`);
+    } else if (maxPrice) {
+      query = query.where(sql`${products.price} <= ${parseInt(maxPrice as string) * 100}`);
     }
     
     // Apply sorting
-    if (sortBy: any) {
-      switch (sortBy: any) {
+    if (sortBy) {
+      switch (sortBy) {
         case 'price-low-high':
           query = query.orderBy(sql`${products.price} asc`);
           break;
@@ -288,7 +288,7 @@ router.get('/api/products/search', async (req: any, res: any) => {
     }
     
     // Limit results
-    query = query.limit(100: any);
+    query = query.limit(100);
     
     // Execute query
     const productResults = await query;
@@ -303,10 +303,10 @@ router.get('/api/products/search', async (req: any, res: any) => {
     }));
     
     // Return results
-    res.json(formattedResults: any);
-  } catch (error: any) {
+    res.json(formattedResults);
+  } catch (error) {
     console.error('Product search error:', error);
-    res.status(500: any).json({ error: 'Failed to perform product search' });
+    res.status(500).json({ error: 'Failed to perform product search' });
   }
 });
 
