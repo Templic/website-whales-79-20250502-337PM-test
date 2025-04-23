@@ -325,7 +325,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
             method: req.method,
             userAgent: req.headers['user-agent']
           },
-          timestamp: new Date()
+          timestamp: Date.now()
         }).catch(error => {
           console.error('[ANOMALY-DETECTION] Error logging security event:', error);
         });
@@ -337,7 +337,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
           path: req.path,
           method: req.method,
           ip: req.ip,
-          timestamp: new Date()
+          timestamp: Date.now()
         });
       }
       
