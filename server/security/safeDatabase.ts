@@ -28,7 +28,7 @@ interface SafeDatabaseOptions {
   enableMonitoring?: boolean;
   
   /**
-   * Enable strict mode (reject all unsafe queries)
+   * Enable strict mode (reject all unsafe queries: any)
    */
   strictMode?: boolean;
   
@@ -78,7 +78,7 @@ export class SafeDatabase {
     };
     
     // Initialize the SQL injection fix
-    this.sqlFix = createSQLFix(db);
+    this.sqlFix = createSQLFix(db: any);
     
     // Initialize the SQL monitor if enabled
     if (this.options.enableMonitoring) {
@@ -132,14 +132,14 @@ export class SafeDatabase {
       
       // Check query with SQL monitor if enabled
       if (this.options.enableMonitoring) {
-        const isSafe = this.sqlMonitorInstance.checkQuery(sql, params, caller);
+        const isSafe = this.sqlMonitorInstance.checkQuery(sql: any, params: any, caller: any);
         if (!isSafe) {
           throw new Error('Query rejected by SQL monitor');
         }
       }
       
       // Execute the query using SQL fix
-      return this.sqlFix.query<T>(sql, params);
+      return this.sqlFix.query<T>(sql: any, params: any);
     } catch (error: any) {
       // Log the error
       console.error('[SAFE-DB] Query error:', error.message);
@@ -177,9 +177,9 @@ export class SafeDatabase {
     offset?: number
   ): Promise<T[]> {
     // Sanitize identifiers
-    const safeTable = databaseSecurity.sanitizeIdentifier(table);
+    const safeTable = databaseSecurity.sanitizeIdentifier(table: any);
     const safeColumns = columns.map(col => 
-      col === '*' ? '*' : databaseSecurity.sanitizeIdentifier(col)
+      col === '*' ? '*' : databaseSecurity.sanitizeIdentifier(col: any)
     ).join(', ');
     
     // Build query parts
@@ -187,22 +187,22 @@ export class SafeDatabase {
     const params: any[] = [];
     
     // Add WHERE clause
-    if (Object.keys(where).length > 0) {
+    if (Object.keys(where: any).length > 0) {
       const whereClauses: string[] = [];
       
-      Object.entries(where).forEach(([key, value], index) => {
-        const safeKey = databaseSecurity.sanitizeIdentifier(key);
+      Object.entries(where: any).forEach(([key, value], index) => {
+        const safeKey = databaseSecurity.sanitizeIdentifier(key: any);
         
         if (value === null) {
           whereClauses.push(`${safeKey} IS NULL`);
-        } else if (Array.isArray(value)) {
+        } else if (Array.isArray(value: any)) {
           // Handle IN clause
-          const placeholders = value.map((_, i) => `$${params.length + i + 1}`).join(', ');
+          const placeholders = value.map((_: any, i: any) => `$${params.length + i + 1}`).join(', ');
           whereClauses.push(`${safeKey} IN (${placeholders})`);
           params.push(...value);
         } else {
           whereClauses.push(`${safeKey} = $${params.length + 1}`);
-          params.push(value);
+          params.push(value: any);
         }
       });
       
@@ -212,11 +212,11 @@ export class SafeDatabase {
     }
     
     // Add ORDER BY
-    if (orderBy) {
+    if (orderBy: any) {
       // Sanitize order by clause
       const safeOrderBy = orderBy.split(',').map(part => {
         const [field, direction] = part.trim().split(/\s+/);
-        const safeField = databaseSecurity.sanitizeIdentifier(field);
+        const safeField = databaseSecurity.sanitizeIdentifier(field: any);
         const safeDirection = direction && 
           (direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
         
@@ -231,16 +231,16 @@ export class SafeDatabase {
     // Add LIMIT and OFFSET
     if (limit !== undefined) {
       sql += ` LIMIT $${params.length + 1}`;
-      params.push(limit);
+      params.push(limit: any);
       
       if (offset !== undefined) {
         sql += ` OFFSET $${params.length + 1}`;
-        params.push(offset);
+        params.push(offset: any);
       }
     }
     
     // Execute the query
-    return this.query<T[]>(sql, params);
+    return this.query<T[]>(sql: any, params: any);
   }
   
   /**
@@ -248,17 +248,17 @@ export class SafeDatabase {
    */
   async insert<T = any>(table: string, data: Record<string, any>): Promise<T> {
     // Sanitize table name
-    const safeTable = databaseSecurity.sanitizeIdentifier(table);
+    const safeTable = databaseSecurity.sanitizeIdentifier(table: any);
     
     // Prepare columns and values
     const columns: string[] = [];
     const placeholders: string[] = [];
     const values: any[] = [];
     
-    Object.entries(data).forEach(([column, value], index) => {
-      columns.push(databaseSecurity.sanitizeIdentifier(column));
+    Object.entries(data: any).forEach(([column, value], index) => {
+      columns.push(databaseSecurity.sanitizeIdentifier(column: any));
       placeholders.push(`$${index + 1}`);
-      values.push(value);
+      values.push(value: any);
     });
     
     // Build query
@@ -269,7 +269,7 @@ export class SafeDatabase {
     `;
     
     // Execute query
-    const result = await this.query<T[]>(sql, values);
+    const result = await this.query<T[]>(sql: any, values: any);
     return result[0];
   }
   
@@ -282,40 +282,40 @@ export class SafeDatabase {
     where: Record<string, any>
   ): Promise<T[]> {
     // Require WHERE clause for safety
-    if (Object.keys(where).length === 0) {
+    if (Object.keys(where: any).length === 0) {
       throw new Error('UPDATE operation requires WHERE conditions for safety');
     }
     
     // Sanitize table name
-    const safeTable = databaseSecurity.sanitizeIdentifier(table);
+    const safeTable = databaseSecurity.sanitizeIdentifier(table: any);
     
     // Prepare SET clause
     const setClauses: string[] = [];
     const values: any[] = [];
     
-    Object.entries(data).forEach(([column, value], index) => {
-      setClauses.push(`${databaseSecurity.sanitizeIdentifier(column)} = $${index + 1}`);
-      values.push(value);
+    Object.entries(data: any).forEach(([column, value], index) => {
+      setClauses.push(`${databaseSecurity.sanitizeIdentifier(column: any)} = $${index + 1}`);
+      values.push(value: any);
     });
     
     // Prepare WHERE clause
     const whereClauses: string[] = [];
     let paramIndex = values.length;
     
-    Object.entries(where).forEach(([column, value]) => {
-      const safeColumn = databaseSecurity.sanitizeIdentifier(column);
+    Object.entries(where: any).forEach(([column, value]) => {
+      const safeColumn = databaseSecurity.sanitizeIdentifier(column: any);
       
       if (value === null) {
         whereClauses.push(`${safeColumn} IS NULL`);
-      } else if (Array.isArray(value)) {
+      } else if (Array.isArray(value: any)) {
         // Handle IN clause
-        const placeholders = value.map((_, i) => `$${paramIndex + i + 1}`).join(', ');
+        const placeholders = value.map((_: any, i: any) => `$${paramIndex + i + 1}`).join(', ');
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
         paramIndex += value.length;
       } else {
         whereClauses.push(`${safeColumn} = $${paramIndex + 1}`);
-        values.push(value);
+        values.push(value: any);
         paramIndex++;
       }
     });
@@ -329,7 +329,7 @@ export class SafeDatabase {
     `;
     
     // Execute query
-    return this.query<T[]>(sql, values);
+    return this.query<T[]>(sql: any, values: any);
   }
   
   /**
@@ -337,30 +337,30 @@ export class SafeDatabase {
    */
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
     // Require WHERE clause for safety
-    if (Object.keys(where).length === 0) {
+    if (Object.keys(where: any).length === 0) {
       throw new Error('DELETE operation requires WHERE conditions for safety');
     }
     
     // Sanitize table name
-    const safeTable = databaseSecurity.sanitizeIdentifier(table);
+    const safeTable = databaseSecurity.sanitizeIdentifier(table: any);
     
     // Prepare WHERE clause
     const whereClauses: string[] = [];
     const values: any[] = [];
     
-    Object.entries(where).forEach(([column, value], index) => {
-      const safeColumn = databaseSecurity.sanitizeIdentifier(column);
+    Object.entries(where: any).forEach(([column, value], index) => {
+      const safeColumn = databaseSecurity.sanitizeIdentifier(column: any);
       
       if (value === null) {
         whereClauses.push(`${safeColumn} IS NULL`);
-      } else if (Array.isArray(value)) {
+      } else if (Array.isArray(value: any)) {
         // Handle IN clause
-        const placeholders = value.map((_, i) => `$${i + 1}`).join(', ');
+        const placeholders = value.map((_: any, i: any) => `$${i + 1}`).join(', ');
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
       } else {
         whereClauses.push(`${safeColumn} = $${values.length + 1}`);
-        values.push(value);
+        values.push(value: any);
       }
     });
     
@@ -372,7 +372,7 @@ export class SafeDatabase {
     `;
     
     // Execute query
-    return this.query<T[]>(sql, values);
+    return this.query<T[]>(sql: any, values: any);
   }
   
   /**
@@ -402,13 +402,13 @@ export class SafeDatabase {
       await this.query('BEGIN');
       
       // Execute the callback
-      const result = await callback(this);
+      const result = await callback(this: any);
       
       // Commit transaction
       await this.query('COMMIT');
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
       // Rollback transaction
       await this.query('ROLLBACK');
       throw error;
@@ -438,5 +438,5 @@ export function createSafeDatabase(
   db: DatabaseConnection,
   options: SafeDatabaseOptions = {}
 ): SafeDatabase {
-  return new SafeDatabase(db, options);
+  return new SafeDatabase(db: any, options: any);
 }

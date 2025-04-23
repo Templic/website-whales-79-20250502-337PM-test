@@ -7,10 +7,10 @@ export class ThreatPreventionService {
   private raspManager: RASPManager;
 
   async analyzeQuery(query: string): Promise<boolean> {
-    return this.queryAnalyzer.isSafe(query);
+    return this.queryAnalyzer.isSafe(query: any);
   }
 
   async protect(req: Request): Promise<void> {
-    await this.raspManager.monitor(req);
+    await this.raspManager.monitor(req: any);
   }
 }

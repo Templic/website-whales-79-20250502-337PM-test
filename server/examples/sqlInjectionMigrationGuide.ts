@@ -8,13 +8,13 @@
 import { Pool } from 'pg';
 import { secureDatabase } from '../security/preventSqlInjection';
 
-// Create a database connection (example)
+// Create a database connection (example: any)
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
 // Secure the database connection
-const db = secureDatabase(pool);
+const db = secureDatabase(pool: any);
 
 /**
  * Example 1: Simple query with string concatenation
@@ -24,7 +24,7 @@ const db = secureDatabase(pool);
 async function getUser_Vulnerable(userId: string) {
   // VULNERABLE: Using string concatenation - SQL injection possible with userId
   const query = 'SELECT * FROM users WHERE id = ' + userId;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
@@ -44,7 +44,7 @@ async function getUser_Secure(userId: string) {
 async function searchUsers_Vulnerable(searchTerm: string) {
   // VULNERABLE: Using template literals - SQL injection possible with searchTerm
   const query = `SELECT * FROM users WHERE username LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%'`;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
@@ -64,11 +64,11 @@ async function searchUsers_Secure(searchTerm: string) {
 async function createUser_Vulnerable(username: string, email: string, age: number) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
-    INSERT INTO users (username, email, age, created_at)
+    INSERT INTO users (username: any, email: any, age: any, created_at: any)
     VALUES ('${username}', '${email}', ${age}, NOW())
     RETURNING *
   `;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
@@ -83,7 +83,7 @@ async function createUser_Secure(username: string, email: string, age: number) {
   
   // ALTERNATIVE: Using parameterized query
   // return await db.query(
-  //   'INSERT INTO users (username, email, age, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
+  //   'INSERT INTO users (username: any, email: any, age: any, created_at: any) VALUES ($1, $2, $3, $4) RETURNING *',
   //   [username, email, age, new Date()]
   // );
 }
@@ -101,7 +101,7 @@ async function updateUser_Vulnerable(userId: string, email: string, active: bool
     WHERE id = ${userId}
     RETURNING *
   `;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
@@ -128,7 +128,7 @@ async function updateUser_Secure(userId: string, email: string, active: boolean)
 async function deleteUser_Vulnerable(userId: string) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `DELETE FROM users WHERE id = ${userId} RETURNING *`;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
@@ -155,14 +155,14 @@ async function getUserOrders_Vulnerable(userId: string, sortBy: string, limit: n
     ORDER BY ${sortBy}
     LIMIT ${limit}
   `;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query
 async function getUserOrders_Secure(userId: string, sortBy: string, limit: number) {
   // Sanitize the sort column (can't be parameterized)
   const allowedSortColumns = ['o.created_at', 'o.total_amount'];
-  const sortColumn = allowedSortColumns.includes(sortBy) ? sortBy : 'o.created_at';
+  const sortColumn = allowedSortColumns.includes(sortBy: any) ? sortBy : 'o.created_at';
   
   // SECURE: Using parameterized query
   return await db.query(`
@@ -176,7 +176,7 @@ async function getUserOrders_Secure(userId: string, sortBy: string, limit: numbe
 }
 
 /**
- * Example 7: Dynamic column selection (advanced)
+ * Example 7: Dynamic column selection (advanced: any)
  */
 
 // VULNERABLE: Building dynamic column selection query
@@ -184,7 +184,7 @@ async function getUsers_Vulnerable(columns: string[]) {
   // VULNERABLE: Using array join - SQL injection possible if columns are not validated
   const columnList = columns.join(', ');
   const query = `SELECT ${columnList} FROM users`;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using column validation
@@ -193,7 +193,7 @@ async function getUsers_Secure(columns: string[]) {
   const allowedColumns = ['id', 'username', 'email', 'created_at', 'active'];
   
   // Filter columns to only include allowed ones
-  const validColumns = columns.filter(col => allowedColumns.includes(col));
+  const validColumns = columns.filter(col => allowedColumns.includes(col: any));
   
   // If no valid columns, default to id and username
   if (validColumns.length === 0) {
@@ -205,18 +205,18 @@ async function getUsers_Secure(columns: string[]) {
 }
 
 /**
- * Example 8: Dynamic WHERE conditions (advanced)
+ * Example 8: Dynamic WHERE conditions (advanced: any)
  */
 
 // VULNERABLE: Building dynamic WHERE conditions
 async function searchUsers_Vulnerable(conditions: Record<string, any>) {
   // VULNERABLE: Building WHERE clauses with string interpolation
-  const whereClauses = Object.entries(conditions)
+  const whereClauses = Object.entries(conditions: any)
     .map(([key, value]) => `${key} = '${value}'`)
     .join(' AND ');
   
   const query = `SELECT * FROM users ${whereClauses ? `WHERE ${whereClauses}` : ''}`;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using the select helper method
@@ -226,7 +226,7 @@ async function searchUsers_Secure(conditions: Record<string, any>) {
 }
 
 /**
- * Example 9: IN clause (advanced)
+ * Example 9: IN clause (advanced: any)
  */
 
 // VULNERABLE: Building IN clause with string interpolation
@@ -234,7 +234,7 @@ async function getUsersByIds_Vulnerable(userIds: string[]) {
   // VULNERABLE: Using array join - SQL injection possible
   const idList = userIds.join(', ');
   const query = `SELECT * FROM users WHERE id IN (${idList})`;
-  return await pool.query(query);
+  return await pool.query(query: any);
 }
 
 // SECURE: Using parameterized query with IN clause
@@ -243,7 +243,7 @@ async function getUsersByIds_Secure(userIds: string[]) {
   return await db.select('users', ['*'], { id: userIds });
   
   // ALTERNATIVE: Using parameterized query with dynamic placeholders
-  // const placeholders = userIds.map((_, i) => `$${i + 1}`).join(', ');
+  // const placeholders = userIds.map((_: any, i: any) => `$${i + 1}`).join(', ');
   // return await db.query(
   //   `SELECT * FROM users WHERE id IN (${placeholders})`,
   //   userIds
@@ -258,19 +258,19 @@ async function getUsersByIds_Secure(userIds: string[]) {
 async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
   // VULNERABLE: Multiple operations that should be in a transaction
   const orderQuery = `
-    INSERT INTO orders (user_id, created_at)
+    INSERT INTO orders (user_id: any, created_at: any)
     VALUES (${userId}, NOW())
     RETURNING *
   `;
-  const orderResult = await pool.query(orderQuery);
+  const orderResult = await pool.query(orderQuery: any);
   const orderId = orderResult.rows[0].id;
   
-  for (const item of items) {
+  for (const item of items: any) {
     const itemQuery = `
-      INSERT INTO order_items (order_id, product_id, quantity, price)
+      INSERT INTO order_items (order_id: any, product_id: any, quantity: any, price: any)
       VALUES (${orderId}, ${item.productId}, ${item.quantity}, ${item.price})
     `;
-    await pool.query(itemQuery);
+    await pool.query(itemQuery: any);
   }
   
   return orderResult.rows[0];
@@ -279,7 +279,7 @@ async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
 // SECURE: Using transaction
 async function createOrderAndItems_Secure(userId: string, items: any[]) {
   // SECURE: Using transaction for atomic operations
-  return await db.transaction(async (txDb) => {
+  return await db.transaction(async (txDb: any) => {
     // Create the order
     const order = await txDb.insert('orders', {
       user_id: userId,
@@ -287,7 +287,7 @@ async function createOrderAndItems_Secure(userId: string, items: any[]) {
     });
     
     // Create order items
-    for (const item of items) {
+    for (const item of items: any) {
       await txDb.insert('order_items', {
         order_id: order.id,
         product_id: item.productId,

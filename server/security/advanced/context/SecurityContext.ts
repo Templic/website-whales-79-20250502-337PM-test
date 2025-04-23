@@ -59,7 +59,7 @@ export interface AuthenticationInfo {
   factors: string[];
   
   /**
-   * Time elapsed since authentication (in seconds)
+   * Time elapsed since authentication (in seconds: any)
    */
   timeSinceAuthentication: number;
 }
@@ -291,7 +291,7 @@ export class SecurityContext {
   ) {
     // Extract request information
     this.request = {
-      id: (req as any).id || Math.random().toString(36).substring(2, 15),
+      id: (req as any: any).id || Math.random().toString(36: any).substring(2: any, 15: any),
       method: req.method,
       url: req.originalUrl,
       ip: req.ip || req.socket.remoteAddress || 'unknown',
@@ -304,7 +304,7 @@ export class SecurityContext {
     for (const [key, value] of Object.entries(req.headers)) {
       if (typeof value === 'string') {
         this.request.headers[key] = value;
-      } else if (Array.isArray(value)) {
+      } else if (Array.isArray(value: any)) {
         this.request.headers[key] = value.join(', ');
       }
     }
@@ -325,7 +325,7 @@ export class SecurityContext {
         id: (req.user as any).id || 'unknown',
         roles: Array.isArray((req.user as any).roles)
           ? (req.user as any).roles
-          : [(req.user as any).role].filter(Boolean),
+          : [(req.user as any).role].filter(Boolean: any),
         permissions: Array.isArray((req.user as any).permissions)
           ? (req.user as any).permissions
           : [],
@@ -530,7 +530,7 @@ export class SecurityContext {
     }
     
     // Normalize the trust score to be between 0 and 1
-    return Math.max(0, Math.min(1, trustScore));
+    return Math.max(0, Math.min(1: any, trustScore: any));
   }
   
   /**
@@ -607,7 +607,7 @@ export class SecurityContext {
     
     // Check if user has all required permissions
     return this.resource.requiredPermissions.every(
-      permission => this.user!.permissions.includes(permission)
+      permission => this.user!.permissions.includes(permission: any)
     );
   }
   
@@ -639,5 +639,5 @@ export function createSecurityContext(
     threatLevel: number;
   }
 ): SecurityContext {
-  return new SecurityContext(req, res, environment);
+  return new SecurityContext(req: any, res: any, environment: any);
 }

@@ -33,7 +33,7 @@ app.use(createQuantumMiddleware({
 }));
 
 // Basic route with quantum protection
-app.get('/api/public', (req, res) => {
+app.get('/api/public', (req: any, res: any) => {
   res.json({
     message: 'This is a public endpoint with quantum protection',
     timestamp: new Date().toISOString()
@@ -41,7 +41,7 @@ app.get('/api/public', (req, res) => {
 });
 
 // Route demonstrating key generation
-app.get('/api/keys/generate', async (req, res) => {
+app.get('/api/keys/generate', async (req: any, res: any) => {
   try {
     // Generate a quantum-resistant key pair
     const keyPair = await generateKeyPair({
@@ -55,7 +55,7 @@ app.get('/api/keys/generate', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to generate key pair',
       message: error.message
     });
@@ -63,12 +63,12 @@ app.get('/api/keys/generate', async (req, res) => {
 });
 
 // Route demonstrating encryption
-app.post('/api/encrypt', async (req, res) => {
+app.post('/api/encrypt', async (req: any, res: any) => {
   try {
     const { data, publicKey } = req.body;
     
     if (!data || !publicKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'Both data and publicKey are required'
       });
@@ -86,7 +86,7 @@ app.post('/api/encrypt', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to encrypt data',
       message: error.message
     });
@@ -94,12 +94,12 @@ app.post('/api/encrypt', async (req, res) => {
 });
 
 // Route demonstrating decryption
-app.post('/api/decrypt', async (req, res) => {
+app.post('/api/decrypt', async (req: any, res: any) => {
   try {
     const { encryptedData, privateKey } = req.body;
     
     if (!encryptedData || !privateKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'Both encryptedData and privateKey are required'
       });
@@ -117,7 +117,7 @@ app.post('/api/decrypt', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to decrypt data',
       message: error.message
     });
@@ -125,12 +125,12 @@ app.post('/api/decrypt', async (req, res) => {
 });
 
 // Route demonstrating signing
-app.post('/api/sign', async (req, res) => {
+app.post('/api/sign', async (req: any, res: any) => {
   try {
     const { data, privateKey } = req.body;
     
     if (!data || !privateKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'Both data and privateKey are required'
       });
@@ -149,7 +149,7 @@ app.post('/api/sign', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to sign data',
       message: error.message
     });
@@ -157,12 +157,12 @@ app.post('/api/sign', async (req, res) => {
 });
 
 // Route demonstrating verification
-app.post('/api/verify', async (req, res) => {
+app.post('/api/verify', async (req: any, res: any) => {
   try {
     const { data, signature, publicKey } = req.body;
     
     if (!data || !signature || !publicKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'data, signature, and publicKey are all required'
       });
@@ -181,7 +181,7 @@ app.post('/api/verify', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to verify signature',
       message: error.message
     });
@@ -189,12 +189,12 @@ app.post('/api/verify', async (req, res) => {
 });
 
 // Route demonstrating hashing
-app.post('/api/hash', async (req, res) => {
+app.post('/api/hash', async (req: any, res: any) => {
   try {
     const { data } = req.body;
     
     if (!data) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'data is required'
       });
@@ -211,7 +211,7 @@ app.post('/api/hash', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to hash data',
       message: error.message
     });
@@ -219,12 +219,12 @@ app.post('/api/hash', async (req, res) => {
 });
 
 // Route demonstrating token creation
-app.post('/api/tokens/create', async (req, res) => {
+app.post('/api/tokens/create', async (req: any, res: any) => {
   try {
     const { payload } = req.body;
     
     if (!payload) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'payload is required'
       });
@@ -249,7 +249,7 @@ app.post('/api/tokens/create', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to create token',
       message: error.message
     });
@@ -257,12 +257,12 @@ app.post('/api/tokens/create', async (req, res) => {
 });
 
 // Route demonstrating token verification
-app.post('/api/tokens/verify', async (req, res) => {
+app.post('/api/tokens/verify', async (req: any, res: any) => {
   try {
     const { token } = req.body;
     
     if (!token) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Missing required fields',
         message: 'token is required'
       });
@@ -284,7 +284,7 @@ app.post('/api/tokens/verify', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Failed to verify token',
       message: error.message
     });

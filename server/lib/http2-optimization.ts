@@ -2,7 +2,7 @@
  * HTTP/2 Optimization Utilities
  * 
  * Provides tools for optimizing HTTP/2 connections, including:
- * - Resource hint management (preload, prefetch, preconnect)
+ * - Resource hint management (preload: any, prefetch: any, preconnect: any)
  * - Server Push optimization
  * - Connection and stream prioritization
  * - HPACK header compression optimization
@@ -122,31 +122,31 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
     
     // Add global hints
     config.globalPreloads?.forEach(hint => {
-      addResourceHint(res, hint, addedHints);
+      addResourceHint(res: any, hint: any, addedHints: any);
     });
     
     config.globalPrefetch?.forEach(hint => {
-      addResourceHint(res, hint, addedHints);
+      addResourceHint(res: any, hint: any, addedHints: any);
     });
     
     config.globalPreconnect?.forEach(hint => {
-      addResourceHint(res, hint, addedHints);
+      addResourceHint(res: any, hint: any, addedHints: any);
     });
     
     // Override send to add resource hints to HTML responses
     res.send = function(body: any) {
       // Only modify HTML responses
-      if (typeof body === 'string' && isHtmlResponse(res)) {
+      if (typeof body === 'string' && isHtmlResponse(res: any)) {
         // Add resource hints as <link> tags
-        body = addResourceHintsToHtml(body, res);
+        body = addResourceHintsToHtml(body: any, res: any);
         
         // Add server push headers if HTTP/2 is available
-        if (config.enablePush && isHttp2(req)) {
-          pushResources(req, res, body);
+        if (config.enablePush && isHttp2(req: any)) {
+          pushResources(req: any, res: any, body: any);
         }
       }
       
-      return originalSend.call(this, body);
+      return originalSend.call(this: any, body: any);
     };
     
     next();
@@ -170,7 +170,7 @@ function isHtmlResponse(res: Response): boolean {
  */
 function isHttp2(req: Request): boolean {
   // Check if HTTP/2 is available (using Express or Node.js HTTP/2 APIs)
-  return !!(req.httpVersion === '2.0' || (req as any).socket?.alpnProtocol === 'h2');
+  return !!(req.httpVersion === '2.0' || (req as any: any).socket?.alpnProtocol === 'h2');
 }
 
 /**
@@ -183,12 +183,12 @@ function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<str
   const hintKey = `${hint.type}:${hint.url}:${hint.as || ''}`;
   
   // Skip duplicates
-  if (addedHints?.has(hintKey)) {
+  if (addedHints?.has(hintKey: any)) {
     return;
   }
   
   // Track added hints
-  addedHints?.add(hintKey);
+  addedHints?.add(hintKey: any);
   
   // Get existing Link header
   let linkHeader = res.get('Link') || '';
@@ -210,7 +210,7 @@ function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<str
   }
   
   // Append to existing Link header if present
-  if (linkHeader) {
+  if (linkHeader: any) {
     linkHeader += ', ' + linkValue;
   } else {
     linkHeader = linkValue;
@@ -224,7 +224,7 @@ function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<str
     res.locals.resourceHints = [];
   }
   
-  res.locals.resourceHints.push(hint);
+  res.locals.resourceHints.push(hint: any);
 }
 
 /**
@@ -241,11 +241,11 @@ function addResourceHintsToHtml(html: string, res: Response): string {
   }
   
   // Create unique cache key based on the URL and hints
-  const cacheKey = res.locals.requestUrl + ':' + JSON.stringify(hints);
+  const cacheKey = res.locals.requestUrl + ':' + JSON.stringify(hints: any);
   
   // Try to get from cache
-  const cachedHtml = resourceHintsCache.get(cacheKey);
-  if (cachedHtml) {
+  const cachedHtml = resourceHintsCache.get(cacheKey: any);
+  if (cachedHtml: any) {
     return cachedHtml;
   }
   
@@ -273,7 +273,7 @@ function addResourceHintsToHtml(html: string, res: Response): string {
   const modifiedHtml = html.replace(/<head>/i, '<head>\n' + hintTags);
   
   // Cache the result
-  resourceHintsCache.set(cacheKey, modifiedHtml);
+  resourceHintsCache.set(cacheKey: any, modifiedHtml: any);
   
   return modifiedHtml;
 }
@@ -286,7 +286,7 @@ function addResourceHintsToHtml(html: string, res: Response): string {
  */
 function pushResources(req: Request, res: Response, html: string) {
   // Extract resources to push from HTML
-  const resourcesToPush = extractResourcesToPush(html);
+  const resourcesToPush = extractResourcesToPush(html: any);
   
   // Skip if no resources to push
   if (resourcesToPush.length === 0) {
@@ -312,10 +312,10 @@ function pushResources(req: Request, res: Response, html: string) {
       });
       
       // Serve the resource
-      if (pushStream) {
+      if (pushStream: any) {
         serveResource(pushStream, resource.path);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error pushing resource ${resource.path}:`, error);
     }
   });
@@ -328,13 +328,13 @@ function pushResources(req: Request, res: Response, html: string) {
  * @returns Content type string
  */
 function getContentType(filePath: string, defaultType?: string): string {
-  if (defaultType) {
+  if (defaultType: any) {
     return defaultType;
   }
   
-  const ext = path.extname(filePath).toLowerCase();
+  const ext = path.extname(filePath: any).toLowerCase();
   
-  switch(ext) {
+  switch(ext: any) {
     case '.js':
       return 'application/javascript';
     case '.css':
@@ -367,13 +367,13 @@ function serveResource(stream: any, resourcePath: string) {
   const filePath = path.resolve(process.cwd(), 'public', resourcePath.replace(/^\//, ''));
   
   // Create read stream
-  const fileStream = fs.createReadStream(filePath);
+  const fileStream = fs.createReadStream(filePath: any);
   
   // Pipe to push stream
-  fileStream.pipe(stream);
+  fileStream.pipe(stream: any);
   
   // Handle errors
-  fileStream.on('error', (error) => {
+  fileStream.on('error', (error: any) => {
     console.error(`Error serving pushed resource ${resourcePath}:`, error);
     stream.end();
   });
@@ -391,9 +391,9 @@ function extractResourcesToPush(html: string): PushResource[] {
   const linkRegex = /<link[^>]+href="([^"]+)"[^>]*>/g;
   let linkMatch;
   
-  while (linkMatch = linkRegex.exec(html)) {
+  while (linkMatch = linkRegex.exec(html: any)) {
     const href = linkMatch[1];
-    if (isLocalResource(href)) {
+    if (isLocalResource(href: any)) {
       const asMatch = linkMatch[0].match(/as="([^"]+)"/);
       const as = asMatch ? asMatch[1] as ResourceAsType : 'style';
       
@@ -407,9 +407,9 @@ function extractResourcesToPush(html: string): PushResource[] {
   const scriptRegex = /<script[^>]+src="([^"]+)"[^>]*>/g;
   let scriptMatch;
   
-  while (scriptMatch = scriptRegex.exec(html)) {
+  while (scriptMatch = scriptRegex.exec(html: any)) {
     const src = scriptMatch[1];
-    if (isLocalResource(src)) {
+    if (isLocalResource(src: any)) {
       resources.push({ path: src, as: 'script' });
     }
   }
@@ -418,9 +418,9 @@ function extractResourcesToPush(html: string): PushResource[] {
   const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
   let imgMatch;
   
-  while (imgMatch = imgRegex.exec(html)) {
+  while (imgMatch = imgRegex.exec(html: any)) {
     const src = imgMatch[1];
-    if (isLocalResource(src)) {
+    if (isLocalResource(src: any)) {
       resources.push({ path: src, as: 'image' });
     }
   }
@@ -429,7 +429,7 @@ function extractResourcesToPush(html: string): PushResource[] {
 }
 
 /**
- * Check if a resource is local (not an external URL)
+ * Check if a resource is local (not an external URL: any)
  * @param url Resource URL
  * @returns Whether the resource is local
  */

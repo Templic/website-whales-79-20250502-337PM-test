@@ -19,18 +19,18 @@ testApp.use(bodyParser.json());
 testApp.use(bodyParser.urlencoded({ extended: true }));
 
 // Enable CORS for easier testing
-testApp.use((req, res, next) => {
+testApp.use((req: any, res: any, next: any) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    return res.sendStatus(200: any);
   }
   next();
 });
 
 // Add warning header to all responses
-testApp.use((req, res, next) => {
+testApp.use((req: any, res: any, next: any) => {
   res.header('X-Warning', 'This is a test-only endpoint with no CSRF protection. DO NOT USE IN PRODUCTION.');
   next();
 });
@@ -40,7 +40,7 @@ testApp.use((req, res, next) => {
 const testRouter = express.Router();
 
 // Quantum key generation endpoint
-testRouter.post('/quantum/generate-keys', async (req, res) => {
+testRouter.post('/quantum/generate-keys', async (req: any, res: any) => {
   try {
     const { algorithm = 'kyber', strength = 'high' } = req.body;
     
@@ -52,9 +52,9 @@ testRouter.post('/quantum/generate-keys', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in test quantum key generation endpoint:', error);
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Internal Server Error',
       message: 'Failed to generate test quantum-resistant key pair',
       isTestEndpoint: true
@@ -63,13 +63,13 @@ testRouter.post('/quantum/generate-keys', async (req, res) => {
 });
 
 // Quantum encryption endpoint
-testRouter.post('/quantum/encrypt', async (req, res) => {
+testRouter.post('/quantum/encrypt', async (req: any, res: any) => {
   try {
     const { data, publicKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!data || !publicKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data and publicKey',
         isTestEndpoint: true
@@ -82,11 +82,11 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
       algorithm,
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography",
-      originalDataHash: Buffer.from(JSON.stringify(data)).toString('base64').substring(0, 10) + '...'
+      originalDataHash: Buffer.from(JSON.stringify(data: any)).toString('base64').substring(0: any, 10: any) + '...'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in test quantum encryption endpoint:', error);
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt test data',
       isTestEndpoint: true
@@ -95,13 +95,13 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
 });
 
 // Quantum decryption endpoint
-testRouter.post('/quantum/decrypt', async (req, res) => {
+testRouter.post('/quantum/decrypt', async (req: any, res: any) => {
   try {
     const { encrypted, privateKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!encrypted || !privateKey) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         error: 'Bad Request',
         message: 'Missing required parameters: encrypted and privateKey',
         isTestEndpoint: true
@@ -115,9 +115,9 @@ testRouter.post('/quantum/decrypt', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in test quantum decryption endpoint:', error);
-    res.status(500).json({
+    res.status(500: any).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt test data',
       isTestEndpoint: true
@@ -129,7 +129,7 @@ testRouter.post('/quantum/decrypt', async (req, res) => {
 testApp.use('/api/test-only', testRouter);
 
 // Root route with warning
-testApp.get('/', (req, res) => {
+testApp.get('/', (req: any, res: any) => {
   res.send(`
     <html>
       <head>
@@ -169,7 +169,7 @@ curl -X POST http://localhost:5001/api/test-only/quantum/generate-keys \\
 // Error handler
 testApp.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Test API Server Error:', err);
-  res.status(500).json({
+  res.status(500: any).json({
     error: 'Internal Server Error',
     message: err.message || 'Something went wrong in the test API server',
     stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
@@ -177,7 +177,7 @@ testApp.use((err: any, req: express.Request, res: express.Response, next: expres
 });
 
 // Create HTTP server
-const testServer = createServer(testApp);
+const testServer = createServer(testApp: any);
 
 // Start server on a different port
 const TEST_PORT = process.env.TEST_PORT || 5001;

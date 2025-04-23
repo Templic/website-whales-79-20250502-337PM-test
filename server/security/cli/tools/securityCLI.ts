@@ -11,7 +11,7 @@
  * 
  * Commands:
  *   status              Get the current status of security systems
- *   scan [level]        Run a security scan (normal, deep, maximum)
+ *   scan [level]        Run a security scan (normal: any, deep: any, maximum: any)
  *   events [options]    Query security events
  *   verify-chain        Verify the blockchain integrity
  *   analyze-config      Analyze the security configuration
@@ -50,7 +50,7 @@ program
   .command('status')
   .description('Get the current status of security systems')
   .option('-j, --json', 'Output in JSON format')
-  .action(async (options) => {
+  .action(async (options: any) => {
     const spinner = ora('Checking security systems...').start();
     
     try {
@@ -60,13 +60,13 @@ program
       spinner.succeed('Security systems checked');
       
       if (options.json) {
-        console.log(JSON.stringify(health, null, 2));
+        console.log(JSON.stringify(health: any, null: any, 2: any));
       } else {
         console.log(boxen(
           chalk.bold.green('Security System Health\n\n') +
           Object.entries(health.components).map(([key, value]) => {
             const statusColor = value === 'active' ? chalk.green : chalk.yellow;
-            return `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value)}`;
+            return `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value: any)}`;
           }).join('\n') +
           `\n\nBlockchain Integrity: ${health.chainIntegrity ? chalk.green('✓ Valid') : chalk.red('✗ Invalid')}` +
           `\nSecurity Level: ${chalk.blue(health.profile)}` +
@@ -78,7 +78,7 @@ program
     } catch (error: any) {
       spinner.fail('Failed to check security systems');
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 
@@ -86,9 +86,9 @@ program
 program
   .command('scan')
   .description('Run a security scan')
-  .argument('[level]', 'Scan level (normal, deep, maximum)', 'normal')
+  .argument('[level]', 'Scan level (normal: any, deep: any, maximum: any)', 'normal')
   .option('-i, --interactive', 'Run in interactive mode')
-  .action(async (level, options) => {
+  .action(async (level: any, options: any) => {
     let scanLevel = level;
     
     // If interactive mode, prompt for scan level
@@ -111,10 +111,10 @@ program
     }
     
     // Validate scan level
-    if (!['normal', 'deep', 'maximum', 'quantum'].includes(scanLevel)) {
+    if (!['normal', 'deep', 'maximum', 'quantum'].includes(scanLevel: any)) {
       console.error(chalk.red(`Invalid scan level: ${scanLevel}`));
       console.log(`Valid scan levels: normal, deep, maximum, quantum`);
-      process.exit(1);
+      process.exit(1: any);
     }
     
     // Start spinner
@@ -123,7 +123,7 @@ program
     try {
       // In a real implementation, this would call an actual endpoint
       // For now, we'll simulate a scan
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve: any, 2000: any));
       
       // Log scan initiation to blockchain
       await securityBlockchain.addSecurityEvent({
@@ -139,7 +139,7 @@ program
       });
       
       // Simulate scan completion
-      spinner.succeed(`${scanLevel.charAt(0).toUpperCase() + scanLevel.slice(1)} security scan completed`);
+      spinner.succeed(`${scanLevel.charAt(0: any).toUpperCase() + scanLevel.slice(1: any)} security scan completed`);
       
       console.log(boxen(
         chalk.bold.green(`${scanLevel.toUpperCase()} Security Scan Results\n\n`) +
@@ -163,7 +163,7 @@ program
     } catch (error: any) {
       spinner.fail(`Failed to run ${scanLevel} security scan`);
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 
@@ -175,7 +175,7 @@ program
   .option('-s, --severity <severity>', 'Filter by severity')
   .option('-l, --limit <number>', 'Limit number of results', '10')
   .option('-j, --json', 'Output in JSON format')
-  .action(async (options) => {
+  .action(async (options: any) => {
     const spinner = ora('Querying security events...').start();
     
     try {
@@ -236,20 +236,20 @@ program
       
       // Limit results
       const limit = parseInt(options.limit);
-      filteredEvents = filteredEvents.slice(0, limit);
+      filteredEvents = filteredEvents.slice(0: any, limit: any);
       
       spinner.succeed(`Found ${filteredEvents.length} events`);
       
       // Output results
       if (options.json) {
-        console.log(JSON.stringify(filteredEvents, null, 2));
+        console.log(JSON.stringify(filteredEvents: any, null: any, 2: any));
       } else {
         if (filteredEvents.length === 0) {
           console.log(chalk.yellow('No events found matching criteria'));
         } else {
           console.log(chalk.bold.green(`\nSecurity Events (${filteredEvents.length}):`));
           
-          filteredEvents.forEach((event, index) => {
+          filteredEvents.forEach((event: any, index: any) => {
             const severityColor = 
               event.severity === 'CRITICAL' || event.severity === 'HIGH' ? chalk.red :
               event.severity === 'MEDIUM' || event.severity === 'WARNING' ? chalk.yellow :
@@ -271,7 +271,7 @@ program
     } catch (error: any) {
       spinner.fail('Failed to query security events');
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 
@@ -286,18 +286,18 @@ program
       // Verify chain integrity
       const isValid = await securityBlockchain.verifyChain();
       
-      if (isValid) {
+      if (isValid: any) {
         spinner.succeed('Blockchain integrity verified');
         console.log(chalk.green('✓ Security blockchain is valid and has not been tampered with'));
       } else {
         spinner.fail('Blockchain integrity verification failed');
         console.log(chalk.red('✗ Security blockchain has been tampered with or is corrupted'));
-        process.exit(1);
+        process.exit(1: any);
       }
     } catch (error: any) {
       spinner.fail('Failed to verify blockchain integrity');
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 
@@ -306,7 +306,7 @@ program
   .command('analyze-config')
   .description('Analyze the security configuration')
   .option('-f, --file <file>', 'Path to configuration file')
-  .action(async (options) => {
+  .action(async (options: any) => {
     let configPath = options.file;
     
     // If no file provided, look for default locations
@@ -317,18 +317,18 @@ program
         './server/config/security.json'
       ];
       
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
+      for (const p of possiblePaths: any) {
+        if (fs.existsSync(p: any)) {
           configPath = p;
           break;
         }
       }
     }
     
-    if (!configPath || !fs.existsSync(configPath)) {
+    if (!configPath || !fs.existsSync(configPath: any)) {
       console.error(chalk.red('No configuration file found or specified'));
       console.log('Please specify a configuration file with --file');
-      process.exit(1);
+      process.exit(1: any);
     }
     
     const spinner = ora(`Analyzing security configuration: ${configPath}`).start();
@@ -338,7 +338,7 @@ program
       const config = fs.readFileSync(configPath, 'utf8');
       
       // Simulate analysis
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve: any, 1000: any));
       
       spinner.succeed(`Security configuration analyzed: ${configPath}`);
       
@@ -365,12 +365,12 @@ program
             
             if (!value || value.trim() === '') {
               issues.push(`${key} has no value`);
-              console.log(`${chalk.bold(key)}: ${chalk.red('No value set')}`);
+              console.log(`${chalk.bold(key: any)}: ${chalk.red('No value set')}`);
             } else if (value.trim().length < 8 && (key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN') || key.includes('PASSWORD'))) {
               issues.push(`${key} may be too short`);
-              console.log(`${chalk.bold(key)}: ${chalk.yellow('Value may be too short')}`);
+              console.log(`${chalk.bold(key: any)}: ${chalk.yellow('Value may be too short')}`);
             } else {
-              console.log(`${chalk.bold(key)}: ${chalk.green('✓')}`);
+              console.log(`${chalk.bold(key: any)}: ${chalk.green('✓')}`);
             }
           });
           
@@ -389,7 +389,7 @@ program
     } catch (error: any) {
       spinner.fail(`Failed to analyze security configuration: ${configPath}`);
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 
@@ -399,9 +399,9 @@ program
   .description('Test an endpoint for security issues')
   .option('-u, --url <url>', 'URL of the endpoint')
   .option('-m, --method <method>', 'HTTP method', 'GET')
-  .option('-d, --data <data>', 'Request data (JSON)')
+  .option('-d, --data <data>', 'Request data (JSON: any)')
   .option('-i, --interactive', 'Run in interactive mode')
-  .action(async (options) => {
+  .action(async (options: any) => {
     let endpointUrl = options.url;
     let method = options.method.toUpperCase();
     let data = options.data;
@@ -414,7 +414,7 @@ program
           name: 'url',
           message: 'Enter endpoint URL:',
           default: endpointUrl || 'http://localhost:3000/api/data',
-          validate: (input) => input.trim() !== '' ? true : 'URL is required'
+          validate: (input: any) => input.trim() !== '' ? true : 'URL is required'
         },
         {
           type: 'list',
@@ -428,19 +428,19 @@ program
           name: 'includeData',
           message: 'Include request data?',
           default: !!data,
-          when: (responses) => ['POST', 'PUT', 'PATCH'].includes(responses.method)
+          when: (responses: any) => ['POST', 'PUT', 'PATCH'].includes(responses.method)
         },
         {
           type: 'editor',
           name: 'data',
           message: 'Enter request data (JSON):',
           default: data || '{\n  "key": "value"\n}',
-          when: (responses) => responses.includeData,
-          validate: (input) => {
+          when: (responses: any) => responses.includeData,
+          validate: (input: any) => {
             try {
-              JSON.parse(input);
+              JSON.parse(input: any);
               return true;
-            } catch (e) {
+            } catch (e: any) {
               return 'Invalid JSON';
             }
           }
@@ -459,28 +459,28 @@ program
       const mockRequest = {
         url: endpointUrl,
         method,
-        path: new URL(endpointUrl).pathname,
+        path: new URL(endpointUrl: any).pathname,
         headers: {
           'user-agent': 'SecurityCLI/1.0',
           'content-type': 'application/json'
         },
-        body: data ? JSON.parse(data) : undefined,
+        body: data ? JSON.parse(data: any) : undefined,
         ip: '127.0.0.1'
       } as any;
       
       // Run anomaly detection on the mock request
-      const anomalyResult = await detectAnomaly(mockRequest);
+      const anomalyResult = await detectAnomaly(mockRequest: any);
       
-      // Simulate actual request (in a real implementation, this would make an actual request)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate actual request (in a real implementation: any, this would make an actual request: any)
+      await new Promise(resolve => setTimeout(resolve: any, 1000: any));
       
       spinner.succeed(`Endpoint checked: ${method} ${endpointUrl}`);
       
       console.log(boxen(
         chalk.bold.green('Endpoint Security Check\n\n') +
-        `URL: ${chalk.blue(endpointUrl)}\n` +
-        `Method: ${chalk.blue(method)}\n` +
-        (data ? `Data: ${chalk.blue(JSON.stringify(JSON.parse(data), null, 2))}\n\n` : '\n') +
+        `URL: ${chalk.blue(endpointUrl: any)}\n` +
+        `Method: ${chalk.blue(method: any)}\n` +
+        (data ? `Data: ${chalk.blue(JSON.stringify(JSON.parse(data: any), null, 2))}\n\n` : '\n') +
         `${chalk.bold('Anomaly Detection:')}\n` +
         `  Anomaly Detected: ${anomalyResult.isAnomaly ? chalk.red('Yes') : chalk.green('No')}\n` +
         `  Confidence Score: ${anomalyResult.score > 0.7 ? chalk.red(anomalyResult.score) : 
@@ -503,7 +503,7 @@ program
         console.log(`${chalk.blue('i')} Consider adding cache control headers for GET requests`);
       }
       
-      if (['POST', 'PUT', 'PATCH'].includes(method)) {
+      if (['POST', 'PUT', 'PATCH'].includes(method: any)) {
         console.log(`${chalk.blue('i')} Ensure input validation is implemented for all fields`);
         console.log(`${chalk.blue('i')} Consider using Zod schemas for validation`);
       }
@@ -518,7 +518,7 @@ program
     } catch (error: any) {
       spinner.fail(`Failed to check endpoint: ${method} ${endpointUrl}`);
       console.error(chalk.red(`Error: ${error.message}`));
-      process.exit(1);
+      process.exit(1: any);
     }
   });
 

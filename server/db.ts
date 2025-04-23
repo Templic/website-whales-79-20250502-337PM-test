@@ -13,7 +13,7 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
 // Add error handler for the pool
-pool.on('error', (err) => {
+pool.on('error', (err: any) => {
   console.error('Unexpected error on idle client', err);
   // Don't exit on error in development
   if (process.env.NODE_ENV === 'production') {
@@ -27,7 +27,7 @@ export const initializeDatabase = async () => {
     console.log('Successfully connected to PostgreSQL database');
     client.release();
     return true;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to connect to PostgreSQL:', err);
     throw err;
   }

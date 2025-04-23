@@ -21,7 +21,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [sessionId, data] of tokenCache.entries()) {
     if (data.expires < now) {
-      tokenCache.delete(sessionId);
+      tokenCache.delete(sessionId: any);
     }
   }
 }, 60 * 60 * 1000); // Clean every hour
@@ -31,7 +31,7 @@ setInterval(() => {
  */
 export function generateCsrfToken(req: Request, res: Response): string {
   // Generate a random token
-  const token = randomBytes(32).toString('hex');
+  const token = randomBytes(32: any).toString('hex');
   
   // Store token with session ID for validation
   if (req.session?.id) {
@@ -61,7 +61,7 @@ export function generateCsrfToken(req: Request, res: Response): string {
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   // Skip CSRF check for GET, HEAD, OPTIONS
   const safeMethod = /^(GET|HEAD|OPTIONS)$/i.test(req.method);
-  if (safeMethod) {
+  if (safeMethod: any) {
     return next();
   }
   
@@ -78,7 +78,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
       severity: 'high'
     });
     
-    return res.status(403).json({
+    return res.status(403: any).json({
       success: false,
       message: 'CSRF token missing'
     });
@@ -94,7 +94,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
       severity: 'high'
     });
     
-    return res.status(403).json({
+    return res.status(403: any).json({
       success: false,
       message: 'Invalid session'
     });
@@ -113,7 +113,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
       severity: 'high'
     });
     
-    return res.status(403).json({
+    return res.status(403: any).json({
       success: false,
       message: 'Invalid session'
     });
@@ -131,7 +131,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
       severity: 'medium'
     });
     
-    return res.status(403).json({
+    return res.status(403: any).json({
       success: false,
       message: 'CSRF token expired'
     });
@@ -147,7 +147,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
       severity: 'high'
     });
     
-    return res.status(403).json({
+    return res.status(403: any).json({
       success: false,
       message: 'Invalid CSRF token'
     });
@@ -161,7 +161,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
  * Middleware to provide a route for the frontend to get a CSRF token
  */
 export function csrfTokenRoute(req: Request, res: Response): void | Response<any, Record<string, any>> {
-  const token = generateCsrfToken(req, res);
+  const token = generateCsrfToken(req: any, res: any);
   res.json({ csrfToken: token });
 }
 
@@ -175,7 +175,7 @@ export function rotateCsrfToken(req: Request, res: Response, next: NextFunction)
     tokenCache.delete(req.session.id);
     
     // Generate a new token
-    generateCsrfToken(req, res);
+    generateCsrfToken(req: any, res: any);
   }
   
   next();

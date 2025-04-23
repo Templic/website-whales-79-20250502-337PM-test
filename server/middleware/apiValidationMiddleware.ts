@@ -30,7 +30,7 @@ export function validateRoute(category: keyof typeof apiSchemas, name: string) {
     securityValidation(),
     
     // Then apply schema validation
-    validateBody(schema)
+    validateBody(schema: any)
   ];
 }
 
@@ -50,7 +50,7 @@ export function validateQueryParams(category: keyof typeof apiSchemas, name: str
   
   return [
     securityValidation(),
-    validateQuery(schema)
+    validateQuery(schema: any)
   ];
 }
 
@@ -70,7 +70,7 @@ export function validateRouteParams(category: keyof typeof apiSchemas, name: str
   
   return [
     securityValidation(),
-    validateParams(schema)
+    validateParams(schema: any)
   ];
 }
 
@@ -82,7 +82,7 @@ export function validateRouteParams(category: keyof typeof apiSchemas, name: str
 export function validateWithSchema(schema: AnyZodObject) {
   return [
     securityValidation(),
-    validateBody(schema)
+    validateBody(schema: any)
   ];
 }
 
@@ -104,16 +104,16 @@ export function validateComplex({
 }) {
   const middlewares = [securityValidation()];
   
-  if (bodySchema) {
-    middlewares.push(validateBody(bodySchema));
+  if (bodySchema: any) {
+    middlewares.push(validateBody(bodySchema: any));
   }
   
-  if (querySchema) {
-    middlewares.push(validateQuery(querySchema));
+  if (querySchema: any) {
+    middlewares.push(validateQuery(querySchema: any));
   }
   
-  if (paramsSchema) {
-    middlewares.push(validateParams(paramsSchema));
+  if (paramsSchema: any) {
+    middlewares.push(validateParams(paramsSchema: any));
   }
   
   return middlewares;
@@ -135,6 +135,6 @@ export function defaultApiValidation() {
     });
     
     // Apply default security validation
-    securityValidation()(req, res, next);
+    securityValidation()(req: any, res: any, next: any);
   };
 }

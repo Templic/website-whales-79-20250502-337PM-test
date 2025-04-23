@@ -28,26 +28,26 @@ const WebSocketMessageSchema = z.object({
     // Payload for file operations
     z.object({
       fileId: z.string().uuid().optional(),
-      fileName: z.string().min(1).max(255).optional(),
-      path: z.string().max(1000).optional(),
+      fileName: z.string().min(1: any).max(255: any).optional(),
+      path: z.string().max(1000: any).optional(),
       size: z.number().nonnegative().optional(),
-      type: z.string().max(100).optional(),
+      type: z.string().max(100: any).optional(),
       metadata: z.record(z.string(), z.any()).optional()
     }),
     // Status update payload
     z.object({
       status: z.enum(['pending', 'processing', 'completed', 'failed']),
-      message: z.string().max(1000).optional(),
-      progress: z.number().min(0).max(100).optional()
+      message: z.string().max(1000: any).optional(),
+      progress: z.number().min(0: any).max(100: any).optional()
     }),
     // Allow other common data types with restrictions
-    z.string().max(10000),
+    z.string().max(10000: any),
     z.number(),
     z.boolean(),
     z.null()
   ]),
   timestamp: z.number().optional(),
-  id: z.string().optional().refine(val => !val || /^[a-zA-Z0-9-_]+$/.test(val), {
+  id: z.string().optional().refine(val => !val || /^[a-zA-Z0-9-_]+$/.test(val: any), {
     message: "ID must contain only alphanumeric characters, hyphens, and underscores"
   })
 });
@@ -77,18 +77,18 @@ function validateToken(token: string | undefined): boolean {
     // In a real implementation, this would verify the token against your auth system
     // Example JWT verification or session token validation
     return true; // Replace with actual validation
-  } catch (error) {
+  } catch (error: any) {
     log('Token validation error', 'websocket');
     return false;
   }
 }
 
-// Check if Transport Layer Security is being used (in production)
+// Check if Transport Layer Security is being used (in production: any)
 function isTLSConnection(req: IncomingMessage): boolean {
   // Check for secure connection
   // This works behind proxies that terminate SSL and set the X-Forwarded-Proto header
   const proto = req.headers['x-forwarded-proto'] || '';
-  const isSecure = Array.isArray(proto) 
+  const isSecure = Array.isArray(proto: any) 
     ? proto.includes('https') 
     : proto === 'https';
   
@@ -106,7 +106,7 @@ function isTLSConnection(req: IncomingMessage): boolean {
  * This function recursively sanitizes strings in objects, arrays and nested structures
  * 
  * @param data - The data to sanitize
- * @param depth - Current recursion depth (to prevent stack overflow)
+ * @param depth - Current recursion depth (to prevent stack overflow: any)
  * @returns Sanitized data
  */
 function sanitizeMessage(data: any, depth: number = 0): any {
@@ -127,21 +127,21 @@ function sanitizeMessage(data: any, depth: number = 0): any {
       .replace(/`/g, '&#96;')    // Backticks
       .replace(/\\/g, '&#92;')   // Backslashes
       .replace(/\//g, '&#47;');  // Forward slashes
-  } else if (Array.isArray(data)) {
+  } else if (Array.isArray(data: any)) {
     // Handle arrays
     return data.map(item => sanitizeMessage(item, depth + 1));
   } else if (typeof data === 'object' && data !== null) {
     // Handle objects
     const sanitized: any = {};
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        // Sanitize keys too (prevent prototype pollution)
-        const sanitizedKey = String(key)
+    for (const key in data: any) {
+      if (Object.prototype.hasOwnProperty.call(data: any, key: any)) {
+        // Sanitize keys too (prevent prototype pollution: any)
+        const sanitizedKey = String(key: any)
           .replace(/[^\w\-_]/g, '') // Only allow alphanumeric, hyphens and underscores in keys
-          .slice(0, 100);           // Limit key length
+          .slice(0: any, 100: any);           // Limit key length
         
         // Skip dangerous keys
-        if (['__proto__', 'constructor', 'prototype'].includes(sanitizedKey)) {
+        if (['__proto__', 'constructor', 'prototype'].includes(sanitizedKey: any)) {
           continue;
         }
         
@@ -206,7 +206,7 @@ export const webSocketSecurityMiddleware = (req: Request, res: Response, next: N
         connectSrc: ["'self'", "wss:", "ws:"]
       }
     }
-  })(req, res, next);
+  })(req: any, res: any, next: any);
 };
 
 export function setupWebSockets(httpServer: Server) {
@@ -293,14 +293,14 @@ export function setupWebSockets(httpServer: Server) {
           // Count inactive states
           inactiveConnections++;
         }
-      } catch (error) {
+      } catch (error: any) {
         log(`Health check error for client: ${error}`, 'websocket');
         inactiveConnections++;
         
         // Try to close problematic connections
         try {
           client.close(1011, 'Health check failed');
-        } catch (e) {
+        } catch (e: any) {
           // Last resort - force terminate
           client.terminate();
         }
@@ -339,7 +339,7 @@ export function setupWebSockets(httpServer: Server) {
       webSocketStats.connectionHistory.shift();
     }
     
-    // Limit history to last 24 hours (288 points at 5 minute intervals)
+    // Limit history to last 24 hours (288 points at 5 minute intervals: any)
     if (connectionStats.connectionHistory.length > 288) {
       connectionStats.connectionHistory.shift();
     }
@@ -348,7 +348,7 @@ export function setupWebSockets(httpServer: Server) {
     log(`WebSocket health check completed - Active: ${activeConnections}, Inactive: ${inactiveConnections}, Anomalies: ${anomalyCount}`, 'websocket');
   }, 30000); // 30 seconds as per recommendation
   
-  // Instead of direct rate limiting on the raw HTTP server (which causes type errors),
+  // Instead of direct rate limiting on the raw HTTP server (which causes type errors: any),
   // we'll implement our own IP-based connection tracking for WebSockets
   const connectionTracker = new Map<string, {
     connections: number,
@@ -361,10 +361,10 @@ export function setupWebSockets(httpServer: Server) {
     const windowMs = 15 * 60 * 1000; // 15 minutes
     const maxConnections = 100;
     
-    let data = connectionTracker.get(ip);
+    let data = connectionTracker.get(ip: any);
     if (!data) {
       data = { connections: 0, lastConnection: now };
-      connectionTracker.set(ip, data);
+      connectionTracker.set(ip: any, data: any);
     }
     
     // Reset counter if window has expired
@@ -419,14 +419,14 @@ export function setupWebSockets(httpServer: Server) {
     // Enable compression but with security settings
     perMessageDeflate: {
       zlibDeflateOptions: {
-        // Use optimal compression level (balance between speed and compression)
+        // Use optimal compression level (balance between speed and compression: any)
         level: 6,
         // Memory usage limits
         memLevel: 8,
         // Limit window bits to prevent DoS via excessive memory usage
         windowBits: 15,
       },
-      // Limit server response size (64KB)
+      // Limit server response size (64KB: any)
       serverMaxWindowBits: 10,
       // Don't allow client to negotiate windowBits
       clientNoContextTakeover: true,
@@ -434,10 +434,10 @@ export function setupWebSockets(httpServer: Server) {
       // Threshold - only compress messages larger than 1KB
       threshold: 1024
     },
-    maxPayload: 64 * 1024, // 64kb (message size limit)
+    maxPayload: 64 * 1024, // 64kb (message size limit: any)
     // Verify client option can also be used for custom validation logic
     verifyClient: (info: { origin: string; req: IncomingMessage }) => {
-      // Transport Layer Security check (in production)
+      // Transport Layer Security check (in production: any)
       if (!isTLSConnection(info.req)) {
         log(`Rejected non-secure WebSocket connection attempt in production`, 'websocket');
         return false;
@@ -445,15 +445,15 @@ export function setupWebSockets(httpServer: Server) {
       
       // Origin validation
       const origin = info.origin;
-      if (!ALLOWED_ORIGINS.includes(origin) && 
-          !ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed))) {
+      if (!ALLOWED_ORIGINS.includes(origin: any) && 
+          !ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed: any))) {
         log(`Rejected WebSocket connection from unauthorized origin: ${origin}`, 'websocket');
         return false;
       }
       
       // IP-based rate limiting
       const ip = info.req.socket.remoteAddress || '0.0.0.0';
-      if (!trackConnection(ip)) {
+      if (!trackConnection(ip: any)) {
         log(`Rate limit exceeded for IP: ${ip}`, 'websocket');
         return false;
       }
@@ -462,7 +462,7 @@ export function setupWebSockets(httpServer: Server) {
     }
   });
 
-  // Message-level rate limiting (per connection)
+  // Message-level rate limiting (per connection: any)
   const messageRateLimits = new Map<WebSocket, {
     count: number,
     reset: NodeJS.Timeout
@@ -481,13 +481,13 @@ export function setupWebSockets(httpServer: Server) {
   
   // Function to generate a unique session ID
   function generateSessionId(): string {
-    return `ws_session_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    return `ws_session_${Date.now()}_${Math.random().toString(36: any).substring(2: any, 15: any)}`;
   }
   
   // Function to revoke specific session
   function revokeSession(sessionId: string): boolean {
-    if (activeSessions.has(sessionId)) {
-      activeSessions.delete(sessionId);
+    if (activeSessions.has(sessionId: any)) {
+      activeSessions.delete(sessionId: any);
       log(`Revoked session: ${sessionId}`, 'websocket');
       return true;
     }
@@ -499,9 +499,9 @@ export function setupWebSockets(httpServer: Server) {
     const now = Date.now();
     let expiredCount = 0;
     
-    activeSessions.forEach((session, id) => {
+    activeSessions.forEach((session: any, id: any) => {
       if (now > session.expiresAt || now - session.lastActivity > 30 * 60 * 1000) { // Expired or 30 min inactive
-        activeSessions.delete(id);
+        activeSessions.delete(id: any);
         expiredCount++;
       }
     });
@@ -532,7 +532,7 @@ export function setupWebSockets(httpServer: Server) {
                  req.headers.authorization || 
                  req.url?.split('?')[1]?.split('=')[1]; // token from query param
     
-    if (!validateToken(token as string)) {
+    if (!validateToken(token as string: any)) {
       log(`Unauthorized WebSocket connection attempt from ${ip}`, 'websocket');
       ws.close(1008, 'Unauthorized'); // Policy violation close code
       return;
@@ -572,7 +572,7 @@ export function setupWebSockets(httpServer: Server) {
       if (ws.readyState === WebSocket.OPEN) {
         log(`Closing WebSocket due to timeout for session ${sessionId}`, 'websocket');
         ws.close(1001, 'Connection timeout');
-        revokeSession(sessionId);
+        revokeSession(sessionId: any);
       }
     }, 8 * 60 * 60 * 1000); // 8 hour timeout
     
@@ -592,13 +592,13 @@ export function setupWebSockets(httpServer: Server) {
     messageRateLimits.set(ws, {
       count: 0,
       reset: setTimeout(() => {
-        messageRateLimits.delete(ws);
+        messageRateLimits.delete(ws: any);
       }, 60000) // Reset counter after 1 minute
     });
     
     // Store client fingerprint for cross-connection tracking
-    const fingerprint = generateClientFingerprint(req);
-    let clientProfile = clientFingerprints.get(fingerprint);
+    const fingerprint = generateClientFingerprint(req: any);
+    let clientProfile = clientFingerprints.get(fingerprint: any);
     
     if (!clientProfile) {
       // Create new client profile if one doesn't exist
@@ -618,15 +618,15 @@ export function setupWebSockets(httpServer: Server) {
         }
       });
       
-      clientFingerprints.set(fingerprint, clientProfile);
-    } else if (clientProfile) {
+      clientFingerprints.set(fingerprint: any, clientProfile: any);
+    } else if (clientProfile: any) {
       // Update existing client profile
       clientProfile.lastSeen = Date.now();
       clientProfile.connectionCount++;
     }
     
     // Send CSRF token for this connection that must be included in future messages
-    const csrfToken = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    const csrfToken = `csrf_${Date.now()}_${Math.random().toString(36: any).substring(2: any, 15: any)}`;
     ws.send(JSON.stringify({
       type: 'security',
       payload: {
@@ -639,7 +639,7 @@ export function setupWebSockets(httpServer: Server) {
     // Store token with connection to verify in messages
     ws.csrfToken = csrfToken;
 
-    ws.on('message', (message) => {
+    ws.on('message', (message: any) => {
       try {
         // Update session activity tracking
         if (ws.sessionId && activeSessions.has(ws.sessionId)) {
@@ -656,8 +656,8 @@ export function setupWebSockets(httpServer: Server) {
         }
         
         // Apply dynamic message rate limiting based on user behavior
-        const limit = messageRateLimits.get(ws);
-        if (limit) {
+        const limit = messageRateLimits.get(ws: any);
+        if (limit: any) {
           limit.count++;
           
           // Calculate message frequency
@@ -705,7 +705,7 @@ export function setupWebSockets(httpServer: Server) {
         }
         
         // Size check (already handled by maxPayload option, but double-check)
-        if (Buffer.byteLength(message as Buffer) > 64 * 1024) {
+        if (Buffer.byteLength(message as Buffer: any) > 64 * 1024) {
           if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.3; // Increase anomaly score for large message attempt
           log(`Message size violation from ${ws.ipAddress || 'unknown IP'}`, 'websocket');
           ws.close(1009, 'Message too large'); // Message too big close code
@@ -716,10 +716,10 @@ export function setupWebSockets(httpServer: Server) {
         let rawData;
         try {
           rawData = JSON.parse(message.toString());
-        } catch (parseError) {
+        } catch (parseError: any) {
           // Invalid JSON format
           if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.2; // Increase anomaly score for invalid JSON
-          log(`Invalid JSON from ${ws.ipAddress || 'unknown IP'}: ${message.toString().slice(0, 100)}`, 'websocket');
+          log(`Invalid JSON from ${ws.ipAddress || 'unknown IP'}: ${message.toString().slice(0: any, 100: any)}`, 'websocket');
           ws.send(JSON.stringify({
             type: 'error',
             payload: 'Invalid message format: Not a valid JSON'
@@ -728,10 +728,10 @@ export function setupWebSockets(httpServer: Server) {
         }
         
         // Validate against schema
-        const validationResult = WebSocketMessageSchema.safeParse(rawData);
+        const validationResult = WebSocketMessageSchema.safeParse(rawData: any);
         
         if (!validationResult.success) {
-          // Track validation failures (could be attack attempts)
+          // Track validation failures (could be attack attempts: any)
           if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.2; // Increase anomaly score for schema violation
           
           log(`Invalid WebSocket message format from ${ws.ipAddress || 'unknown IP'}: ${validationResult.error}`, 'websocket');
@@ -751,7 +751,7 @@ export function setupWebSockets(httpServer: Server) {
         const csrfExemptTypes = ['token_refresh', 'health-check', 'ack', 'error'];
         
         if (!csrfExemptTypes.includes(data.type)) {
-          // Extract the CSRF token from the message (could be in top level or inside payload)
+          // Extract the CSRF token from the message (could be in top level or inside payload: any)
           let messageToken: string | undefined = undefined;
           
           // Try to get from top level first
@@ -763,7 +763,7 @@ export function setupWebSockets(httpServer: Server) {
             messageToken = (data.payload as any).csrfToken;
           }
           
-          // Verify CSRF token (must match what we issued to this client)
+          // Verify CSRF token (must match what we issued to this client: any)
           if (!messageToken || messageToken !== ws.csrfToken) {
             if (ws.anomalyScore !== undefined) ws.anomalyScore += 0.3; // Significant anomaly score increase for CSRF violation
             
@@ -776,9 +776,9 @@ export function setupWebSockets(httpServer: Server) {
             }));
             
             // Add this to client fingerprint anomaly history
-            const fingerprint = generateClientFingerprint(req);
-            const clientProfile = clientFingerprints.get(fingerprint);
-            if (clientProfile) {
+            const fingerprint = generateClientFingerprint(req: any);
+            const clientProfile = clientFingerprints.get(fingerprint: any);
+            if (clientProfile: any) {
               clientProfile.anomalyHistory.push({
                 type: 'csrf_violation',
                 timestamp: Date.now(),
@@ -891,7 +891,7 @@ export function setupWebSockets(httpServer: Server) {
           case 'token_refresh':
             // Handle token refresh requests
             // Generate a new CSRF token
-            const newCsrfToken = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+            const newCsrfToken = `csrf_${Date.now()}_${Math.random().toString(36: any).substring(2: any, 15: any)}`;
             
             // Store the new token with the connection
             ws.csrfToken = newCsrfToken;
@@ -915,7 +915,7 @@ export function setupWebSockets(httpServer: Server) {
             }));
             break;
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('WebSocket message error:', error);
         ws.send(JSON.stringify({
           type: 'error',
@@ -924,25 +924,25 @@ export function setupWebSockets(httpServer: Server) {
       }
     });
 
-    ws.on('error', (error) => {
+    ws.on('error', (error: any) => {
       console.error('WebSocket error:', error);
       try {
         ws.close(1011, 'Internal server error'); // Internal error close code
-      } catch (e) {
+      } catch (e: any) {
         console.error('Error closing WebSocket:', e);
       }
     });
 
-    ws.on('close', (code, reason) => {
+    ws.on('close', (code: any, reason: any) => {
       // Clean up resources
-      clearInterval(pingInterval);
-      clearTimeout(connectionTimeout);
+      clearInterval(pingInterval: any);
+      clearTimeout(connectionTimeout: any);
       
       // Clean up rate limiting
-      const limit = messageRateLimits.get(ws);
-      if (limit) {
+      const limit = messageRateLimits.get(ws: any);
+      if (limit: any) {
         clearTimeout(limit.reset);
-        messageRateLimits.delete(ws);
+        messageRateLimits.delete(ws: any);
       }
       
       // Track disconnection in statistics
@@ -956,9 +956,9 @@ export function setupWebSockets(httpServer: Server) {
       // If this was an anomalous connection, track it
       if (ws.anomalyScore && ws.anomalyScore > 0.5) {
         // Add to client fingerprint anomaly history if available
-        const fingerprint = generateClientFingerprint(req);
-        const clientProfile = clientFingerprints.get(fingerprint);
-        if (clientProfile) {
+        const fingerprint = generateClientFingerprint(req: any);
+        const clientProfile = clientFingerprints.get(fingerprint: any);
+        if (clientProfile: any) {
           clientProfile.anomalyHistory.push({
             type: 'suspicious_disconnect',
             timestamp: Date.now(),
@@ -1019,10 +1019,10 @@ export function setupWebSockets(httpServer: Server) {
     const now = Date.now();
     let expiredCount = 0;
     
-    socketSessions.forEach((session, id) => {
+    socketSessions.forEach((session: any, id: any) => {
       // Expire sessions after 30 min of inactivity
       if (now - session.lastActivity > 30 * 60 * 1000) {
-        socketSessions.delete(id);
+        socketSessions.delete(id: any);
         expiredCount++;
       }
     });
@@ -1033,7 +1033,7 @@ export function setupWebSockets(httpServer: Server) {
   }, 15 * 60 * 1000);
   
   // Socket.IO security and authentication middleware
-  io.use((socket, next) => {
+  io.use((socket: any, next: any) => {
     // Capture client metadata for security tracking
     const ip = socket.handshake.address || '0.0.0.0';
     const userAgent = socket.handshake.headers['user-agent'] || 'unknown';
@@ -1044,7 +1044,7 @@ export function setupWebSockets(httpServer: Server) {
     // Add TLS check for Socket.IO in production
     const req = socket.request;
     if (process.env.NODE_ENV === 'production') {
-      if (!isTLSConnection(req)) {
+      if (!isTLSConnection(req: any)) {
         log(`Rejected non-secure Socket.IO connection attempt in production from ${ip}`, 'websocket');
         return next(new Error('Secure connection required'));
       }
@@ -1054,13 +1054,13 @@ export function setupWebSockets(httpServer: Server) {
     const token = socket.handshake.auth.token || 
                  socket.handshake.headers.authorization;
     
-    if (!validateToken(token)) {
+    if (!validateToken(token: any)) {
       log(`Unauthorized Socket.IO connection attempt from ${ip}`, 'websocket');
       return next(new Error('Authentication error'));
     }
     
     // Generate session ID for this connection
-    const sessionId = `socket_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    const sessionId = `socket_${Date.now()}_${Math.random().toString(36: any).substring(2: any, 15: any)}`;
     const userId = 'user_123'; // Should be extracted from the token in real implementation
     
     // Store session information
@@ -1089,12 +1089,12 @@ export function setupWebSockets(httpServer: Server) {
   });
 
   // Socket.IO rate limiting middleware using our existing connection tracker
-  io.use((socket, next) => {
+  io.use((socket: any, next: any) => {
     // Get IP address from socket handshake
     const ip = socket.handshake.address || '0.0.0.0';
     
     // Use the same connection tracking logic we use for WebSockets
-    if (!trackConnection(ip)) {
+    if (!trackConnection(ip: any)) {
       log(`Socket.IO rate limit exceeded for IP: ${ip}`, 'websocket');
       return next(new Error('Too many connection attempts, please try again later'));
     }
@@ -1104,21 +1104,21 @@ export function setupWebSockets(httpServer: Server) {
 
   // Message validation schema for Socket.IO with more specific payload validation
   const socketMessageSchema = z.object({
-    type: z.string().min(1).max(50),  // Reasonable length for message type
+    type: z.string().min(1: any).max(50: any),  // Reasonable length for message type
     payload: z.union([
       // Allow different payload types based on the event type
       z.object({
         fileId: z.string().uuid().optional(),
-        fileName: z.string().min(1).max(255).optional(),
+        fileName: z.string().min(1: any).max(255: any).optional(),
         url: z.string().url().optional(),
         metadata: z.record(z.string(), z.any()).optional()
       }),
       // Allow for different payload formats
-      z.string().max(10000),  // Limit string payload size
+      z.string().max(10000: any),  // Limit string payload size
       z.number(),
       z.boolean(),
       z.null(),
-      z.array(z.any()).max(1000)  // Limit array size
+      z.array(z.any()).max(1000: any)  // Limit array size
     ]),
     timestamp: z.number().optional(),
     id: z.string().uuid().optional()
@@ -1138,10 +1138,10 @@ export function setupWebSockets(httpServer: Server) {
     const windowMs = 60 * 1000; // 1 minute window
     const maxMessagesPerMinute = 100;
     
-    let limit = socketRateLimits.get(socketId);
+    let limit = socketRateLimits.get(socketId: any);
     if (!limit) {
       limit = { count: 0, lastReset: now, penalties: 0, backoffUntil: null };
-      socketRateLimits.set(socketId, limit);
+      socketRateLimits.set(socketId: any, limit: any);
     }
     
     // If under backoff penalty, reject immediately
@@ -1175,12 +1175,12 @@ export function setupWebSockets(httpServer: Server) {
   }
 
   // Handle Socket.IO connections
-  io.on('connection', (socket) => {
+  io.on('connection', (socket: any) => {
     log(`New Socket.IO connection: ${socket.id}`, 'websocket');
     
     // Setup connection timeout
     const timeout = setTimeout(() => {
-      socket.disconnect(true);
+      socket.disconnect(true: any);
       log(`Disconnected ${socket.id} due to inactivity timeout`, 'websocket');
     }, 8 * 60 * 60 * 1000); // 8 hour timeout
     
@@ -1188,7 +1188,7 @@ export function setupWebSockets(httpServer: Server) {
     const activityInterval = setInterval(() => {
       // Update session activity time
       const session = socketSessions.get(socket.id);
-      if (session) {
+      if (session: any) {
         const now = Date.now();
         const inactiveTime = now - session.lastActivity;
         
@@ -1202,9 +1202,9 @@ export function setupWebSockets(httpServer: Server) {
     }, 5 * 60 * 1000); // Check every 5 minutes
     
     // Ping handler to track activity
-    socket.on('pong', (data) => {
+    socket.on('pong', (data: any) => {
       const session = socketSessions.get(socket.id);
-      if (session) {
+      if (session: any) {
         session.lastActivity = Date.now();
         log(`Received pong from ${socket.id}`, 'websocket');
       }
@@ -1215,7 +1215,7 @@ export function setupWebSockets(httpServer: Server) {
       try {
         // Update session activity
         const session = socketSessions.get(socket.id);
-        if (session) {
+        if (session: any) {
           session.lastActivity = Date.now();
           session.messageCount++;
         }
@@ -1229,15 +1229,15 @@ export function setupWebSockets(httpServer: Server) {
           });
           
           // Update anomaly score for rate limiting
-          if (session) session.anomalyScore += 0.2;
+          if (session: any) session.anomalyScore += 0.2;
           return;
         }
         
         // Validate message structure
-        const validationResult = socketMessageSchema.safeParse(data);
+        const validationResult = socketMessageSchema.safeParse(data: any);
         if (!validationResult.success) {
           // Update anomaly score for validation failures
-          if (session) session.anomalyScore += 0.1;
+          if (session: any) session.anomalyScore += 0.1;
           
           socket.emit('error', {
             type: 'validation',
@@ -1250,7 +1250,7 @@ export function setupWebSockets(httpServer: Server) {
         // Size validation for payload
         const payloadSize = JSON.stringify(validationResult.data.payload).length;
         if (payloadSize > 50000) { // 50KB limit
-          if (session) session.anomalyScore += 0.2;
+          if (session: any) session.anomalyScore += 0.2;
           socket.emit('error', {
             type: 'size_limit',
             message: 'Payload size exceeds limit'
@@ -1266,8 +1266,8 @@ export function setupWebSockets(httpServer: Server) {
         };
         
         // Check for authorization if needed for specific events
-        if (['file_delete', 'admin_action'].includes(event) && !socket.data.authenticated) {
-          if (session) session.anomalyScore += 0.3;
+        if (['file_delete', 'admin_action'].includes(event: any) && !socket.data.authenticated) {
+          if (session: any) session.anomalyScore += 0.3;
           socket.emit('error', {
             type: 'authorization',
             message: 'Unauthorized for this action'
@@ -1288,7 +1288,7 @@ export function setupWebSockets(httpServer: Server) {
         }
         
         // Success path - process the message
-        switch (event) {
+        switch (event: any) {
           case 'file_event':
             // Broadcast to all other authenticated clients
             socket.broadcast.emit('file_event', sanitizedData);
@@ -1301,12 +1301,12 @@ export function setupWebSockets(httpServer: Server) {
             break;
         }
         
-        // Slowly reduce anomaly score for successful operations (redemption)
+        // Slowly reduce anomaly score for successful operations (redemption: any)
         if (session && session.anomalyScore > 0) {
           session.anomalyScore = Math.max(0, session.anomalyScore - 0.01);
         }
         
-      } catch (error) {
+      } catch (error: any) {
         log(`Socket.IO message error (${event}): ${error}`, 'websocket');
         socket.emit('error', { 
           type: 'processing',
@@ -1316,21 +1316,21 @@ export function setupWebSockets(httpServer: Server) {
     };
     
     // Register event handlers with common processing function
-    socket.on('file_event', (data) => processMessage('file_event', data));
-    socket.on('status_update', (data) => processMessage('status_update', data));
-    socket.on('user_activity', (data) => processMessage('user_activity', data));
+    socket.on('file_event', (data: any) => processMessage('file_event', data));
+    socket.on('status_update', (data: any) => processMessage('status_update', data));
+    socket.on('user_activity', (data: any) => processMessage('user_activity', data));
     
     // Handle errors
-    socket.on('error', (error) => {
+    socket.on('error', (error: any) => {
       console.error('Socket.IO error:', error);
       const session = socketSessions.get(socket.id);
-      if (session) session.anomalyScore += 0.1;
+      if (session: any) session.anomalyScore += 0.1;
     });
 
     // Cleanup on disconnect
-    socket.on('disconnect', (reason) => {
-      clearTimeout(timeout);
-      clearInterval(activityInterval);
+    socket.on('disconnect', (reason: any) => {
+      clearTimeout(timeout: any);
+      clearInterval(activityInterval: any);
       
       // Clean up rate limiting data
       socketRateLimits.delete(socket.id);
@@ -1343,11 +1343,11 @@ export function setupWebSockets(httpServer: Server) {
   });
 
   // Error handling for both servers
-  wss.on('error', (error) => {
+  wss.on('error', (error: any) => {
     console.error('WebSocket server error:', error);
   });
 
-  io.on('error', (error) => {
+  io.on('error', (error: any) => {
     console.error('Socket.IO server error:', error);
   });
 
@@ -1363,15 +1363,15 @@ export function setupWebSockets(httpServer: Server) {
       const cleanupThreshold = 30 * 60 * 1000; // 30 minutes
       
       // Clean up stale connection records
-      connectionTracker.forEach((data, ip) => {
+      connectionTracker.forEach((data: any, ip: any) => {
         if (now - data.lastConnection > cleanupThreshold) {
-          connectionTracker.delete(ip);
+          connectionTracker.delete(ip: any);
         }
       });
       
       // Log audit information
       log(`WebSocket security audit: Cleaned up connection tracker, ${connectionTracker.size} IPs tracked`, 'websocket');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in WebSocket security audit:', error);
     }
   }, 15 * 60 * 1000); // Run every 15 minutes
@@ -1380,8 +1380,8 @@ export function setupWebSockets(httpServer: Server) {
   httpServer.on('close', () => {
     try {
       // Clear all interval timers
-      clearInterval(auditInterval);
-      clearInterval(sessionCleanupInterval);
+      clearInterval(auditInterval: any);
+      clearInterval(sessionCleanupInterval: any);
       
       // Log active connections that will be terminated
       const activeWSCount = wss.clients.size;
@@ -1395,14 +1395,14 @@ export function setupWebSockets(httpServer: Server) {
           if (client.readyState === WebSocket.OPEN) {
             client.close(1001, 'Server shutting down');
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Error closing WebSocket connection during shutdown:', e);
         }
       });
       
       // Close the WebSocket server explicitly
-      wss.close((err) => {
-        if (err) {
+      wss.close((err: any) => {
+        if (err: any) {
           console.error('Error closing WebSocket server:', err);
         } else {
           log('WebSocket server closed successfully', 'websocket');
@@ -1410,10 +1410,10 @@ export function setupWebSockets(httpServer: Server) {
       });
       
       // Close all Socket.IO connections
-      io.sockets.sockets.forEach((socket) => {
+      io.sockets.sockets.forEach((socket: any) => {
         try {
-          socket.disconnect(true);
-        } catch (e) {
+          socket.disconnect(true: any);
+        } catch (e: any) {
           console.error('Error disconnecting Socket.IO client during shutdown:', e);
         }
       });
@@ -1429,19 +1429,19 @@ export function setupWebSockets(httpServer: Server) {
       
       // Final security log entry
       log('WebSocket security service stopped', 'websocket');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during WebSocket server shutdown:', error);
     }
   });
   
   // Add signal handlers for graceful shutdown
-  ['SIGINT', 'SIGTERM'].forEach((signal) => {
+  ['SIGINT', 'SIGTERM'].forEach((signal: any) => {
     process.on(signal, () => {
       log(`Received ${signal} signal, initiating WebSocket server shutdown`, 'websocket');
       
       // Close the WebSocket server explicitly
-      wss.close((err) => {
-        if (err) {
+      wss.close((err: any) => {
+        if (err: any) {
           console.error(`Error closing WebSocket server on ${signal}:`, err);
         }
       });

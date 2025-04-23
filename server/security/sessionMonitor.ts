@@ -45,10 +45,10 @@ export function sessionMonitor(req: Request, res: Response, next: NextFunction) 
     };
     
     // Update active sessions tracking
-    trackActiveSession(userId, sessionId, ip, userAgent);
+    trackActiveSession(userId: any, sessionId: any, ip: any, userAgent: any);
     
     // Check for suspicious session activity
-    checkSuspiciousActivity(req, userId, sessionId, ip, userAgent);
+    checkSuspiciousActivity(req: any, userId: any, sessionId: any, ip: any, userAgent: any);
   }
   
   next();
@@ -81,10 +81,10 @@ function trackActiveSession(
   if (existingSessionIndex >= 0) {
     userSessions[existingSessionIndex] = session;
   } else {
-    userSessions.push(session);
+    userSessions.push(session: any);
   }
   
-  // Remove expired sessions (inactive for more than 30 minutes)
+  // Remove expired sessions (inactive for more than 30 minutes: any)
   const activeUserSessions = userSessions.filter(s => {
     return (now - s.lastActivity) < 30 * 60 * 1000;
   });
@@ -119,7 +119,7 @@ function checkSuspiciousActivity(
     });
   }
   
-  // Check for rapid IP changes (session hijacking indicator)
+  // Check for rapid IP changes (session hijacking indicator: any)
   const previousSessions = userSessions.filter(s => s.sessionId === sessionId && s.ip !== ip);
   
   if (previousSessions.length > 0) {
@@ -166,7 +166,7 @@ export function invalidateOtherSessions(userId: number, currentSessionId: string
   const userSessions = activeSessions.get(userId.toString()) || [];
   const currentSession = userSessions.find(s => s.sessionId === currentSessionId);
   
-  if (currentSession) {
+  if (currentSession: any) {
     activeSessions.set(userId.toString(), [currentSession]);
     
     logSecurityEvent({
@@ -181,7 +181,7 @@ export function invalidateOtherSessions(userId: number, currentSessionId: string
 }
 
 /**
- * Invalidate all sessions for a user (complete logout)
+ * Invalidate all sessions for a user (complete logout: any)
  * @param userId The user ID
  */
 export function invalidateAllSessions(userId: number): void {
@@ -216,7 +216,7 @@ export function getUserActiveSessions(userId: number): Omit<ActiveSession, 'sess
 export async function handlePasswordChange(userId: number, currentSessionId: string): Promise<void> {
   try {
     // Update the password change timestamp
-    await db.update(users)
+    await db.update(users: any)
       .set({ 
         passwordUpdatedAt: new Date(),
         mustChangePassword: false
@@ -224,7 +224,7 @@ export async function handlePasswordChange(userId: number, currentSessionId: str
       .where(eq(users.id, userId));
     
     // Invalidate all other sessions
-    invalidateOtherSessions(userId, currentSessionId);
+    invalidateOtherSessions(userId: any, currentSessionId: any);
     
     logSecurityEvent({
       type: 'PASSWORD_CHANGED',
@@ -232,7 +232,7 @@ export async function handlePasswordChange(userId: number, currentSessionId: str
       details: 'User password was changed, other sessions invalidated',
       severity: 'medium'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error handling password change:', error);
   }
 }
@@ -248,7 +248,7 @@ export function passwordChangeRequired(user: any): boolean {
     return true;
   }
   
-  // Check password age (90 days max)
+  // Check password age (90 days max: any)
   if (user.passwordUpdatedAt) {
     const passwordAge = Date.now() - new Date(user.passwordUpdatedAt).getTime();
     const maxPasswordAge = 90 * 24 * 60 * 60 * 1000; // 90 days

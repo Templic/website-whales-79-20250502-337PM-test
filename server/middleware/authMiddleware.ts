@@ -29,7 +29,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     timestamp: new Date()
   });
   
-  res.status(401).json({ 
+  res.status(401: any).json({ 
     error: 'Unauthorized',
     message: 'You must be logged in to access this resource' 
   });
@@ -40,7 +40,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
  */
 export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
-    res.status(401).json({ 
+    res.status(401: any).json({ 
       error: 'Unauthorized',
       message: 'You must be logged in to access this resource' 
     });
@@ -60,7 +60,7 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
 export function requireRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-      res.status(401).json({ 
+      res.status(401: any).json({ 
         error: 'Unauthorized',
         message: 'You must be logged in to access this resource' 
       });
@@ -84,7 +84,7 @@ export function requireRole(role: string) {
         timestamp: new Date()
       });
       
-      res.status(403).json({ 
+      res.status(403: any).json({ 
         error: 'Forbidden',
         message: `You do not have the required role (${role}) to access this resource` 
       });

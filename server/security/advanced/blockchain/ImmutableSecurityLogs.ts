@@ -33,14 +33,14 @@ export class ImmutableSecurityLogs {
   private constructor() {
     this.chain = [];
     this.blockchainFile = './logs/security-blockchain.json';
-    this.difficulty = 2; // Mining difficulty (number of leading zeros in hash)
+    this.difficulty = 2; // Mining difficulty (number of leading zeros in hash: any)
     this.pendingLogs = [];
     this.autoSaveInterval = null;
     this.maxPendingLogs = 10;
     
     // Create directory for blockchain file if it doesn't exist
     const dir = path.dirname(this.blockchainFile);
-    if (!fs.existsSync(dir)) {
+    if (!fs.existsSync(dir: any)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     
@@ -86,7 +86,7 @@ export class ImmutableSecurityLogs {
     }
     
     const newBlock = this.createBlock(this.pendingLogs);
-    this.chain.push(newBlock);
+    this.chain.push(newBlock: any);
     this.pendingLogs = [];
     
     // Save the blockchain to file
@@ -104,7 +104,7 @@ export class ImmutableSecurityLogs {
       const previousBlock = this.chain[i - 1];
       
       // Check if the hash is valid
-      if (currentBlock.hash !== this.calculateHash(currentBlock)) {
+      if (currentBlock.hash !== this.calculateHash(currentBlock: any)) {
         return false;
       }
       
@@ -155,10 +155,10 @@ export class ImmutableSecurityLogs {
     
     // Search all blocks
     for (const block of this.chain) {
-      // Search data in the block (can be an array of logs or a single log)
+      // Search data in the block (can be an array of logs or a single log: any)
       const dataArray = Array.isArray(block.data) ? block.data : [block.data];
       
-      for (const log of dataArray) {
+      for (const log of dataArray: any) {
         const logDate = new Date(log.timestamp).getTime();
         
         // Skip if log is outside date range
@@ -201,11 +201,11 @@ export class ImmutableSecurityLogs {
     const term = keyword.toLowerCase();
     
     // Check in message
-    if (log.message && log.message.toLowerCase().includes(term)) {
+    if (log.message && log.message.toLowerCase().includes(term: any)) {
       return true;
     }
     
-    // Check in data (recursively)
+    // Check in data (recursively: any)
     if (log.data && typeof log.data === 'object') {
       return this.objectContainsKeyword(log.data, term);
     }
@@ -214,22 +214,22 @@ export class ImmutableSecurityLogs {
   }
   
   /**
-   * Check if an object contains a keyword (recursive)
+   * Check if an object contains a keyword (recursive: any)
    */
   private objectContainsKeyword(obj: any, keyword: string): boolean {
-    for (const key in obj) {
+    for (const key in obj: any) {
       const value = obj[key];
       
       // Check key
-      if (key.toLowerCase().includes(keyword)) {
+      if (key.toLowerCase().includes(keyword: any)) {
         return true;
       }
       
       // Check value based on type
-      if (typeof value === 'string' && value.toLowerCase().includes(keyword)) {
+      if (typeof value === 'string' && value.toLowerCase().includes(keyword: any)) {
         return true;
       } else if (typeof value === 'object' && value !== null) {
-        if (this.objectContainsKeyword(value, keyword)) {
+        if (this.objectContainsKeyword(value: any, keyword: any)) {
           return true;
         }
       }
@@ -257,20 +257,20 @@ export class ImmutableSecurityLogs {
       nonce: 0
     };
     
-    // Mine the block (find a valid hash)
-    this.mineBlockHash(block);
+    // Mine the block (find a valid hash: any)
+    this.mineBlockHash(block: any);
     
     return block;
   }
   
   /**
-   * Mine a block hash (find a hash with leading zeros)
+   * Mine a block hash (find a hash with leading zeros: any)
    */
   private mineBlockHash(block: SecurityBlock): void {
     const target = Array(this.difficulty + 1).join('0');
     
-    while (true) {
-      block.hash = this.calculateHash(block);
+    while (true: any) {
+      block.hash = this.calculateHash(block: any);
       
       if (block.hash.substring(0, this.difficulty) === target) {
         break;
@@ -287,7 +287,7 @@ export class ImmutableSecurityLogs {
     const { index, timestamp, data, previousHash, nonce } = block;
     const blockString = JSON.stringify({ index, timestamp, data, previousHash, nonce });
     
-    return crypto.createHash('sha256').update(blockString).digest('hex');
+    return crypto.createHash('sha256').update(blockString: any).digest('hex');
   }
   
   /**
@@ -297,7 +297,7 @@ export class ImmutableSecurityLogs {
     try {
       if (fs.existsSync(this.blockchainFile)) {
         const data = fs.readFileSync(this.blockchainFile, 'utf8');
-        this.chain = JSON.parse(data);
+        this.chain = JSON.parse(data: any);
         
         // Verify the loaded chain
         if (!this.verifyChain()) {
@@ -307,7 +307,7 @@ export class ImmutableSecurityLogs {
       } else {
         this.createGenesisBlock();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ImmutableSecurityLogs] Error loading blockchain:', error);
       this.createGenesisBlock();
     }
@@ -323,7 +323,7 @@ export class ImmutableSecurityLogs {
         JSON.stringify(this.chain, null, 2),
         'utf8'
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('[ImmutableSecurityLogs] Error saving blockchain:', error);
     }
   }
@@ -341,7 +341,7 @@ export class ImmutableSecurityLogs {
       nonce: 0
     };
     
-    this.mineBlockHash(genesisBlock);
+    this.mineBlockHash(genesisBlock: any);
     this.chain = [genesisBlock];
     this.saveChain();
   }

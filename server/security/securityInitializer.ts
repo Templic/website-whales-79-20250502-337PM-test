@@ -56,7 +56,7 @@ export function initializeSecurity(app: Application, options: SecurityInitialize
   }, SecurityLogLevel.INFO);
   
   // Apply global security middleware
-  applyGlobalSecurityMiddleware(app);
+  applyGlobalSecurityMiddleware(app: any);
   
   // Set up API routes
   const apiRouter = Router();
@@ -67,13 +67,13 @@ export function initializeSecurity(app: Application, options: SecurityInitialize
   app.use('/api/shop', shopRouter);
   
   // Enhance security routes
-  enhanceSecurityRoutes(apiRouter);
+  enhanceSecurityRoutes(apiRouter: any);
   
   // Enhance newsletter routes
-  enhanceNewsletterRoutes(apiRouter);
+  enhanceNewsletterRoutes(apiRouter: any);
   
   // Enhance order routes
-  enhanceOrderRoutes(shopRouter);
+  enhanceOrderRoutes(shopRouter: any);
   
   // Set up periodic cleanup for rate limiters
   setupPeriodicCleanup();

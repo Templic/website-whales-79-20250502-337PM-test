@@ -70,7 +70,7 @@ export interface SecurityEvent {
   // Event message
   message: string;
   
-  // Timestamp (milliseconds since epoch)
+  // Timestamp (milliseconds since epoch: any)
   timestamp: number;
   
   // Additional metadata

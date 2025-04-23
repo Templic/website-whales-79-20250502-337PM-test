@@ -63,12 +63,12 @@ export async function initBackgroundServices(): Promise<void> {
     await initMetricsCollection();
     
     // Log active services
-    const activeServices = Object.values(backgroundServices)
+    const activeServices = Object.values(backgroundServices: any)
       .filter(service => service.status === 'active')
       .map(service => service.name);
     
     log(`Active background services: ${activeServices.join(', ')}`, 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Error initializing background services: ${error}`, 'background');
     console.error('Background services initialization error:', error);
   }
@@ -93,12 +93,12 @@ async function initDatabaseMaintenance(): Promise<void> {
     };
     
     log('Database maintenance service initialized successfully', 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Failed to initialize database maintenance: ${error}`, 'background');
     backgroundServices.databaseMaintenance = {
       name: 'Database Maintenance',
       status: 'failed',
-      error: String(error),
+      error: String(error: any),
     };
   }
 }
@@ -126,12 +126,12 @@ async function initSecurityScanning(): Promise<void> {
     };
     
     log(`Security scanning service initialized with ${scanInterval / (1000 * 60 * 60)} hour interval`, 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Failed to initialize security scanning: ${error}`, 'background');
     backgroundServices.securityScans = {
       name: 'Security Scanning',
       status: 'failed',
-      error: String(error),
+      error: String(error: any),
     };
   }
 }
@@ -149,7 +149,7 @@ async function initMetricsCollection(): Promise<void> {
   try {
     log('Initializing metrics collection service...', 'background');
     
-    // Setup metrics collection interval (every 5 minutes)
+    // Setup metrics collection interval (every 5 minutes: any)
     const metricsInterval = 5 * 60 * 1000;
     setInterval(() => {
       collectPerformanceMetrics();
@@ -165,12 +165,12 @@ async function initMetricsCollection(): Promise<void> {
     };
     
     log('Metrics collection service initialized successfully', 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Failed to initialize metrics collection: ${error}`, 'background');
     backgroundServices.metricsCollection = {
       name: 'Metrics Collection',
       status: 'failed',
-      error: String(error),
+      error: String(error: any),
     };
   }
 }
@@ -182,7 +182,7 @@ async function initDataCleanupServices(): Promise<void> {
   try {
     log('Initializing data cleanup service...', 'background');
     
-    // Setup daily data cleanup (once per 24 hours)
+    // Setup daily data cleanup (once per 24 hours: any)
     const cleanupInterval = 24 * 60 * 60 * 1000;
     setInterval(() => {
       cleanupExpiredData();
@@ -198,12 +198,12 @@ async function initDataCleanupServices(): Promise<void> {
     };
     
     log('Data cleanup service initialized successfully', 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Failed to initialize data cleanup: ${error}`, 'background');
     backgroundServices.dataCleanup = {
       name: 'Data Cleanup',
       status: 'failed',
-      error: String(error),
+      error: String(error: any),
     };
   }
 }
@@ -261,7 +261,7 @@ async function initContentScheduler(): Promise<void> {
     log('Initializing content scheduler service...', 'background');
     
     // Start the content scheduler service (5-minute interval)
-    const intervalID = startContentScheduler(5);
+    const intervalID = startContentScheduler(5: any);
     
     // Update service status
     backgroundServices.contentScheduler = {
@@ -272,12 +272,12 @@ async function initContentScheduler(): Promise<void> {
     };
     
     log('Content scheduler service initialized with 5 minute interval', 'background');
-  } catch (error) {
+  } catch (error: any) {
     log(`Failed to initialize content scheduler: ${error}`, 'background');
     backgroundServices.contentScheduler = {
       name: 'Content Scheduler',
       status: 'failed',
-      error: String(error),
+      error: String(error: any),
     };
   }
 }
@@ -286,7 +286,7 @@ async function initContentScheduler(): Promise<void> {
  * Get the status of all background services
  */
 export function getServicesStatus(): ServiceStatus[] {
-  return Object.values(backgroundServices);
+  return Object.values(backgroundServices: any);
 }
 
 /**
@@ -302,7 +302,7 @@ export async function stopBackgroundServices(): Promise<void> {
       stopContentScheduler();
       backgroundServices.contentScheduler.status = 'inactive';
       log('Content scheduler stopped', 'background');
-    } catch (error) {
+    } catch (error: any) {
       log(`Error stopping content scheduler: ${error}`, 'background');
     }
   }
@@ -310,7 +310,7 @@ export async function stopBackgroundServices(): Promise<void> {
   // In a real implementation, you would stop each service gracefully
   // For example, by clearing intervals and completing any pending operations
   
-  for (const key of Object.keys(backgroundServices)) {
+  for (const key of Object.keys(backgroundServices: any)) {
     backgroundServices[key].status = 'inactive';
   }
   

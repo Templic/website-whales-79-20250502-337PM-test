@@ -7,7 +7,7 @@ const securityRouter = Router();
 /**
  * @route GET /api/security/status
  * @desc Get the current security status and configuration
- * @access Public (basic status) / Admin (detailed status)
+ * @access Public (basic status: any) / Admin (detailed status: any)
  */
 securityRouter.get('/status', async (req: Request, res: Response) => {
   try {
@@ -44,7 +44,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
     ];
     
     // Add more detailed measures for admins
-    if (isAdmin) {
+    if (isAdmin: any) {
       securityMeasures.push(
         {
           name: 'Security Scanning',
@@ -116,9 +116,9 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         ]
       })
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting security status:', error);
-    res.status(500).json({ error: 'Failed to get security status' });
+    res.status(500: any).json({ error: 'Failed to get security status' });
   }
 });
 
@@ -162,12 +162,12 @@ securityRouter.get('/logs', requireAuth, checkPermission('admin'), async (req: R
         });
       }
       
-      // Sort logs by timestamp (newest first)
-      return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      // Sort logs by timestamp (newest first: any)
+      return logs.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     };
     
-    const allLogs = generateLogs(50);
-    const paginatedLogs = allLogs.slice(startIndex, endIndex);
+    const allLogs = generateLogs(50: any);
+    const paginatedLogs = allLogs.slice(startIndex: any, endIndex: any);
     
     res.json({
       logs: paginatedLogs,
@@ -178,9 +178,9 @@ securityRouter.get('/logs', requireAuth, checkPermission('admin'), async (req: R
         pages: Math.ceil(allLogs.length / limit)
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting security logs:', error);
-    res.status(500).json({ error: 'Failed to get security logs' });
+    res.status(500: any).json({ error: 'Failed to get security logs' });
   }
 });
 
@@ -223,9 +223,9 @@ securityRouter.get('/scan/latest', requireAuth, checkPermission('admin'), async 
         total: 2
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting latest scan:', error);
-    res.status(500).json({ error: 'Failed to get latest scan' });
+    res.status(500: any).json({ error: 'Failed to get latest scan' });
   }
 });
 
@@ -243,9 +243,9 @@ securityRouter.post('/scan/start', requireAuth, checkPermission('admin'), async 
       timestamp: new Date().toISOString(),
       message: 'Security scan started successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error starting security scan:', error);
-    res.status(500).json({ error: 'Failed to start security scan' });
+    res.status(500: any).json({ error: 'Failed to start security scan' });
   }
 });
 

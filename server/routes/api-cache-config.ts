@@ -9,13 +9,13 @@ import { cache, clearCache } from '../middleware/performance';
 import { Router } from 'express';
 
 /**
- * Cache duration configurations (in milliseconds)
+ * Cache duration configurations (in milliseconds: any)
  */
 export const CACHE_DURATIONS = {
   SHORT: 30 * 1000,        // 30 seconds
   MEDIUM: 5 * 60 * 1000,   // 5 minutes
   LONG: 30 * 60 * 1000,    // 30 minutes
-  VERY_LONG: 24 * 60 * 60 * 1000  // 24 hours (for static content)
+  VERY_LONG: 24 * 60 * 60 * 1000  // 24 hours (for static content: any)
 };
 
 /**
@@ -44,7 +44,7 @@ export function applyCacheMiddleware(router: Router): void {
   router.use('/blog/posts/:id', cache(CACHE_DURATIONS.MEDIUM));
   router.use('/resources/static', cache(CACHE_DURATIONS.VERY_LONG));
   
-  // Search endpoints (shorter cache for fresh results)
+  // Search endpoints (shorter cache for fresh results: any)
   router.use('/search', cache(CACHE_DURATIONS.SHORT));
 }
 
@@ -57,20 +57,20 @@ export function applyCacheMiddleware(router: Router): void {
 export function invalidateContentCache(contentType: string, id?: string): void {
   const routesToClear: string[] = [];
   
-  switch (contentType) {
+  switch (contentType: any) {
     case 'track':
       routesToClear.push('/api/content/tracks');
-      if (id) routesToClear.push(`/api/content/track/${id}`);
+      if (id: any) routesToClear.push(`/api/content/track/${id}`);
       break;
     
     case 'product':
       routesToClear.push('/api/shop/products');
-      if (id) routesToClear.push(`/api/shop/products/${id}`);
+      if (id: any) routesToClear.push(`/api/shop/products/${id}`);
       break;
     
     case 'blog':
       routesToClear.push('/api/blog/posts');
-      if (id) routesToClear.push(`/api/blog/posts/${id}`);
+      if (id: any) routesToClear.push(`/api/blog/posts/${id}`);
       break;
     
     case 'category':
@@ -79,7 +79,7 @@ export function invalidateContentCache(contentType: string, id?: string): void {
       break;
     
     case 'user':
-      if (id) routesToClear.push(`/api/users/public-profile/${id}`);
+      if (id: any) routesToClear.push(`/api/users/public-profile/${id}`);
       break;
     
     case 'search':
@@ -87,13 +87,13 @@ export function invalidateContentCache(contentType: string, id?: string): void {
       break;
     
     case 'all':
-      // Completely clear the cache (use sparingly)
+      // Completely clear the cache (use sparingly: any)
       clearCache();
       return;
   }
   
   // Clear the affected routes
   if (routesToClear.length > 0) {
-    clearCache(routesToClear);
+    clearCache(routesToClear: any);
   }
 }

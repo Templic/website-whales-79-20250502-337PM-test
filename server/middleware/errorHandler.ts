@@ -16,7 +16,7 @@ export class ApiError extends Error {
   details?: any;
   
   constructor(message: string, statusCode: number = 500, details?: any) {
-    super(message);
+    super(message: any);
     this.statusCode = statusCode;
     this.details = details;
     this.name = 'ApiError';
@@ -28,7 +28,7 @@ export class ApiError extends Error {
  */
 export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+    Promise.resolve(fn(req: any, res: any, next: any)).catch(next: any);
   };
 };
 
@@ -42,7 +42,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   let details = undefined;
   
   // Check if this is a known API error
-  if (err instanceof ApiError) {
+  if (err instanceof ApiError: any) {
     statusCode = err.statusCode;
     message = err.message;
     details = err.details;
@@ -90,7 +90,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   }
   
   // Send the error response
-  res.status(statusCode).json({
+  res.status(statusCode: any).json({
     error: message,
     statusCode,
     ...(details && { details })

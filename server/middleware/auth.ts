@@ -29,7 +29,7 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
     timestamp: new Date()
   });
   
-  res.status(401).json({ 
+  res.status(401: any).json({ 
     error: 'Unauthorized',
     message: 'You must be logged in to access this resource' 
   });
@@ -45,7 +45,7 @@ export const requireAuth = isAuthenticated;
  */
 export function isAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
-    res.status(401).json({ 
+    res.status(401: any).json({ 
       error: 'Unauthorized',
       message: 'You must be logged in to access this resource' 
     });
@@ -65,7 +65,7 @@ export function isAdmin(req: Request, res: Response, next: NextFunction): void {
 export function requireSpecificRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
-      res.status(401).json({ 
+      res.status(401: any).json({ 
         error: 'Unauthorized',
         message: 'You must be logged in to access this resource' 
       });
@@ -89,7 +89,7 @@ export function requireSpecificRole(role: string) {
         timestamp: new Date()
       });
       
-      res.status(403).json({ 
+      res.status(403: any).json({ 
         error: 'Forbidden',
         message: `You do not have the required role (${role}) to access this resource` 
       });

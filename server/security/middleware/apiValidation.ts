@@ -12,10 +12,10 @@ import { SecurityLogLevel } from '../types/securityTypes';
 
 // Simple logger for when the main logger is not available
 const logger = {
-  debug: (message: string, meta?: any) => console.debug(message, meta),
-  info: (message: string, meta?: any) => console.info(message, meta),
-  warn: (message: string, meta?: any) => console.warn(message, meta),
-  error: (message: string, meta?: any) => console.error(message, meta)
+  debug: (message: string, meta?: any) => console.debug(message: any, meta: any),
+  info: (message: string, meta?: any) => console.info(message: any, meta: any),
+  warn: (message: string, meta?: any) => console.warn(message: any, meta: any),
+  error: (message: string, meta?: any) => console.error(message: any, meta: any)
 };
 
 /**
@@ -47,7 +47,7 @@ const defaultOptions: ValidationOptions = {
  * Middleware to validate a specific part of a request against a Zod schema
  * 
  * @param schema Zod schema to validate against
- * @param part Request part to validate (body, query, params, headers, cookies)
+ * @param part Request part to validate (body: any, query: any, params: any, headers: any, cookies: any)
  * @param options Validation options
  * @returns Express middleware
  */
@@ -62,14 +62,14 @@ export function validate(
       const requestData = req[part];
       
       if (!requestData) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: `Request ${part} is undefined or null`
         });
       }
       
       // Parse the data through the schema
-      const validatedData = await schema.parseAsync(requestData);
+      const validatedData = await schema.parseAsync(requestData: any);
       
       // If stripUnknown is true, replace the original request part with the validated data
       if (options.stripUnknown) {
@@ -77,9 +77,9 @@ export function validate(
       }
       
       next();
-    } catch (error) {
+    } catch (error: any) {
       // Handle Zod validation errors
-      if (error instanceof ZodError) {
+      if (error instanceof ZodError: any) {
         const formattedErrors = error.errors.map(err => ({
           path: err.path.join('.'),
           code: err.code,
@@ -130,7 +130,7 @@ export function validate(
         }
         
         // Send the validation error response
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'Validation failed',
           errors: options.detailed ? formattedErrors : undefined
@@ -139,7 +139,7 @@ export function validate(
       
       // Handle other errors
       logger.error('Unexpected error during API validation:', { error });
-      next(error);
+      next(error: any);
     }
   };
 }
@@ -157,27 +157,27 @@ export function validateRequest(
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Process each schema in sequence
-    for (const [part, schema] of Object.entries(schemas) as [RequestPart, AnyZodObject][]) {
+    for (const [part, schema] of Object.entries(schemas: any) as [RequestPart, AnyZodObject][]) {
       try {
         const requestData = req[part];
         
         if (!requestData) {
-          return res.status(400).json({
+          return res.status(400: any).json({
             status: 'error',
             message: `Request ${part} is undefined or null`
           });
         }
         
         // Parse the data through the schema
-        const validatedData = await schema.parseAsync(requestData);
+        const validatedData = await schema.parseAsync(requestData: any);
         
         // If stripUnknown is true, replace the original request part with the validated data
         if (options.stripUnknown) {
           req[part] = validatedData;
         }
-      } catch (error) {
+      } catch (error: any) {
         // Handle Zod validation errors
-        if (error instanceof ZodError) {
+        if (error instanceof ZodError: any) {
           const formattedErrors = error.errors.map(err => ({
             path: err.path.join('.'),
             code: err.code,
@@ -205,7 +205,7 @@ export function validateRequest(
           }
           
           // Send the validation error response
-          return res.status(400).json({
+          return res.status(400: any).json({
             status: 'error',
             message: `Validation failed for ${part}`,
             errors: options.detailed ? formattedErrors : undefined
@@ -214,7 +214,7 @@ export function validateRequest(
         
         // Handle other errors
         logger.error(`Unexpected error during API validation for ${part}:`, { error });
-        return next(error);
+        return next(error: any);
       }
     }
     
@@ -245,8 +245,8 @@ export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
       const schemaShape = schema.shape;
       
       // Only keep fields that are in the schema
-      for (const key in schemaShape) {
-        if (key in requestData) {
+      for (const key in schemaShape: any) {
+        if (key in requestData: any) {
           sanitizedData[key] = requestData[key];
         }
       }
@@ -255,7 +255,7 @@ export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
       req[part] = sanitizedData;
       
       next();
-    } catch (error) {
+    } catch (error: any) {
       // Log sanitization failures but don't block the request
       logger.warn(`API sanitization failed for ${req.method} ${req.path} on ${part}`, { error });
       next();

@@ -131,7 +131,7 @@ export interface SQLInjectionPreventionOptions {
    */
   queryWhitelist?: Array<{
     /**
-     * Query pattern (can be a regular expression)
+     * Query pattern (can be a regular expression: any)
      */
     pattern: string | RegExp;
     
@@ -252,7 +252,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
     type: SQLInjectionPatternType.TYPE_CONVERSION,
     name: 'type_conversion',
     regex: /\b(?:cast|convert)\s*?\(/i,
-    description: 'Type conversion usage (may be legitimate but common in injections)',
+    description: 'Type conversion usage (may be legitimate but common in injections: any)',
     riskLevel: 'medium'
   },
   
@@ -261,7 +261,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
     type: SQLInjectionPatternType.OBFUSCATION,
     name: 'hex_encoding',
     regex: /\b(?:0x[0-9a-f]{2,})/i,
-    description: 'Hexadecimal encoded string (may be legitimate but common in injections)',
+    description: 'Hexadecimal encoded string (may be legitimate but common in injections: any)',
     riskLevel: 'medium'
   },
   {
@@ -277,7 +277,7 @@ const SQL_INJECTION_PATTERNS: SQLInjectionPattern[] = [
     type: SQLInjectionPatternType.OPERATOR_ABUSE,
     name: 'conditional_operators',
     regex: /\bif\s*?\(\s*?.*?\s*?,\s*?.*?\s*?,\s*?.*?\s*?\)/i,
-    description: 'Conditional operator usage (may be legitimate but common in injections)',
+    description: 'Conditional operator usage (may be legitimate but common in injections: any)',
     riskLevel: 'medium'
   }
 ];
@@ -289,8 +289,8 @@ function calculateQueryHash(query: string, parameters: any[]): string {
   // In a real implementation, we would use a proper hash function
   // For simplicity, we'll use a basic string manipulation
   const normalized = query.replace(/\s+/g, ' ').trim().toLowerCase();
-  const paramString = parameters.map(p => String(p)).join(',');
-  return Buffer.from(`${normalized}|${paramString}`).toString('base64').substring(0, 16);
+  const paramString = parameters.map(p => String(p: any)).join(',');
+  return Buffer.from(`${normalized}|${paramString}`).toString('base64').substring(0: any, 16: any);
 }
 
 /**
@@ -326,7 +326,7 @@ export class SQLInjectionPrevention {
    */
   public analyzeQuery(query: string, parameters: any[] = []): SQLAnalysisResult {
     // Calculate query hash
-    const queryHash = calculateQueryHash(query, parameters);
+    const queryHash = calculateQueryHash(query: any, parameters: any);
     
     // Initialize result
     const result: SQLAnalysisResult = {
@@ -346,7 +346,7 @@ export class SQLInjectionPrevention {
     
     // Check if query matches whitelist
     for (const regex of this.queryWhitelistRegexes) {
-      if (regex.test(query)) {
+      if (regex.test(query: any)) {
         // Query is whitelisted, consider it safe
         if (this.options.logAllQueries) {
           console.log(`[SQLInjectionPrevention] Query matched whitelist: ${queryHash}`);
@@ -356,9 +356,9 @@ export class SQLInjectionPrevention {
     }
     
     // Check query against injection patterns
-    for (const pattern of SQL_INJECTION_PATTERNS) {
+    for (const pattern of SQL_INJECTION_PATTERNS: any) {
       const match = query.match(pattern.regex);
-      if (match) {
+      if (match: any) {
         const matchText = match[0];
         const position = match.index || 0;
         
@@ -417,7 +417,7 @@ export class SQLInjectionPrevention {
     if (typeof pattern === 'string') {
       this.queryWhitelistRegexes.push(new RegExp(`^${pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i'));
     } else {
-      this.queryWhitelistRegexes.push(pattern);
+      this.queryWhitelistRegexes.push(pattern: any);
     }
     
     console.log(`[SQLInjectionPrevention] Added pattern to whitelist: ${description}`);
@@ -452,10 +452,10 @@ export function createDatabaseProtectionMiddleware() {
    */
   return (query: string, parameters: any[] = [], context?: any) => {
     // Analyze the query
-    const analysisResult = sqlInjectionPrevention.analyzeQuery(query, parameters);
+    const analysisResult = sqlInjectionPrevention.analyzeQuery(query: any, parameters: any);
     
     // Check if query should be blocked
-    if (sqlInjectionPrevention.shouldBlockQuery(analysisResult)) {
+    if (sqlInjectionPrevention.shouldBlockQuery(analysisResult: any)) {
       // Log the blocked query
       console.error(`[Database] Blocked potentially malicious query: ${query}`);
       
@@ -472,7 +472,7 @@ export function createDatabaseProtectionMiddleware() {
       // Log with security fabric if available
       try {
         securityFabric.emit('security:sqlInjection:blocked', eventData);
-      } catch (error) {
+      } catch (error: any) {
         // Fall back to console logging
         console.error('[Database] SQL injection attempt:', eventData);
       }

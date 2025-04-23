@@ -22,7 +22,7 @@ import { SecurityLogLevel } from '../types/securityTypes';
  */
 export function applyGlobalSecurityMiddleware(app: Application): void {
   // Apply security headers to all responses
-  app.use(securityHeadersMiddleware);
+  app.use(securityHeadersMiddleware: any);
   
   // Log all API requests for security monitoring
   app.use('/api', (req: Request, res: Response, next: NextFunction) => {
@@ -53,7 +53,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
       timestamp: new Date()
     });
     
-    // Trigger security scan (implementation details omitted)
+    // Trigger security scan (implementation details omitted: any)
     
     res.json({
       status: 'success',
@@ -70,7 +70,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
       timestamp: new Date()
     });
     
-    // Trigger authentication scan (implementation details omitted)
+    // Trigger authentication scan (implementation details omitted: any)
     
     res.json({
       status: 'success',
@@ -81,13 +81,13 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
   // Password change route
   apiRouter.post('/security/change-password', authRateLimiter(), (req: Request, res: Response, next: NextFunction) => {
     if (!req.session || !req.session.userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         status: 'error',
         message: 'Authentication required'
       });
     }
     
-    // Change password logic (implementation details omitted)
+    // Change password logic (implementation details omitted: any)
     
     logSecurityEvent('PASSWORD_CHANGED', {
       ip: req.ip,
@@ -111,7 +111,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
       timestamp: new Date()
     });
     
-    // Fetch security logs (implementation details omitted)
+    // Fetch security logs (implementation details omitted: any)
     
     res.json({
       status: 'success',
@@ -124,13 +124,13 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
   // Account lockout route
   apiRouter.post('/security/lock-account', adminRateLimiter(), (req: Request, res: Response, next: NextFunction) => {
     if (!req.session || !req.session.userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         status: 'error',
         message: 'Authentication required'
       });
     }
     
-    // Lock account logic (implementation details omitted)
+    // Lock account logic (implementation details omitted: any)
     
     logSecurityEvent('ACCOUNT_LOCKED', {
       ip: req.ip,
@@ -154,7 +154,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void {
       timestamp: new Date()
     });
     
-    // Trigger test security scan (implementation details omitted)
+    // Trigger test security scan (implementation details omitted: any)
     
     res.json({
       status: 'success',
@@ -175,13 +175,13 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void {
     validate(newsletterSubscribeSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Newsletter subscription logic (implementation details omitted)
+      // Newsletter subscription logic (implementation details omitted: any)
       
       if (req.session?.userId) {
         logSecurityEvent('NEWSLETTER_SUBSCRIBED', {
@@ -206,13 +206,13 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void {
     validate(newsletterUnsubscribeSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Newsletter unsubscription logic (implementation details omitted)
+      // Newsletter unsubscription logic (implementation details omitted: any)
       
       res.json({
         status: 'success',
@@ -227,13 +227,13 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void {
     validate(newsletterStatusSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Newsletter status check logic (implementation details omitted)
+      // Newsletter status check logic (implementation details omitted: any)
       
       res.json({
         status: 'success',
@@ -258,13 +258,13 @@ export function enhanceOrderRoutes(shopRouter: Router): void {
     validate(createOrderSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Create order logic (implementation details omitted)
+      // Create order logic (implementation details omitted: any)
       
       if (req.session?.userId) {
         logSecurityEvent('ORDER_CREATED', {
@@ -293,13 +293,13 @@ export function enhanceOrderRoutes(shopRouter: Router): void {
     validate(updateOrderSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Update order logic (implementation details omitted)
+      // Update order logic (implementation details omitted: any)
       
       res.json({
         status: 'success',
@@ -314,13 +314,13 @@ export function enhanceOrderRoutes(shopRouter: Router): void {
     validate(processPaymentSchema, 'body'),
     (req: Request, res: Response, next: NextFunction) => {
       if (!req.body) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'No data provided'
         });
       }
       
-      // Process payment logic (implementation details omitted)
+      // Process payment logic (implementation details omitted: any)
       
       if (req.session?.userId) {
         logSecurityEvent('PAYMENT_PROCESSED', {
@@ -353,13 +353,13 @@ export function enhanceOrderRoutes(shopRouter: Router): void {
       const orderId = req.params.orderId;
       
       if (!orderId) {
-        return res.status(400).json({
+        return res.status(400: any).json({
           status: 'error',
           message: 'Order ID is required'
         });
       }
       
-      // Get order logic (implementation details omitted)
+      // Get order logic (implementation details omitted: any)
       
       res.json({
         status: 'success',
@@ -376,7 +376,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void {
   shopRouter.get('/orders', 
     standardRateLimiter(),
     (req: Request, res: Response, next: NextFunction) => {
-      // Query orders logic (implementation details omitted)
+      // Query orders logic (implementation details omitted: any)
       
       res.json({
         status: 'success',

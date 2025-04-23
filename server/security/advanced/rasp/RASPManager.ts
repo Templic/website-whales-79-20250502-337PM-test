@@ -1,5 +1,5 @@
 /**
- * Runtime Application Self-Protection (RASP) Manager
+ * Runtime Application Self-Protection (RASP: any) Manager
  * 
  * Provides real-time monitoring and protection against security threats at runtime
  * by integrating directly into the application's execution environment.
@@ -159,14 +159,14 @@ export class RASPManager {
     // Add additional categories
     if (options.enableCategories) {
       options.enableCategories.forEach(category => {
-        this.enabledCategories.add(category);
+        this.enabledCategories.add(category: any);
       });
     }
     
     // Remove disabled categories
     if (options.disableCategories) {
       options.disableCategories.forEach(category => {
-        this.enabledCategories.delete(category);
+        this.enabledCategories.delete(category: any);
       });
     }
   }
@@ -194,14 +194,14 @@ export class RASPManager {
    * Check if a protection category is enabled
    */
   private isProtectionCategoryEnabled(category: RASPProtectionCategory): boolean {
-    return this.enabledCategories.has(category);
+    return this.enabledCategories.has(category: any);
   }
   
   /**
    * Create a RASP middleware instance
    */
   public createMiddleware(): express.RequestHandler {
-    return (req, res, next) => {
+    return (req: any, res: any, next: any) => {
       // Skip excluded paths
       if (this.isExcludedPath(req.path)) {
         return next();
@@ -228,7 +228,7 @@ export class RASPManager {
       };
       
       // Apply protections
-      this.applyProtections(protectionContext);
+      this.applyProtections(protectionContext: any);
       
       // If detection occurred and block is enabled
       if (protectionContext.detected && this.blockRequests) {
@@ -260,7 +260,7 @@ export class RASPManager {
         }
         
         // Return error response
-        return res.status(403).json({
+        return res.status(403: any).json({
           error: 'Forbidden',
           message: 'Request blocked by security protection'
         });
@@ -277,27 +277,27 @@ export class RASPManager {
   private applyProtections(context: any): void {
     // Apply input validation protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.INPUT_VALIDATION)) {
-      this.applyInputValidationProtection(context);
+      this.applyInputValidationProtection(context: any);
     }
     
     // Apply command injection protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.COMMAND_INJECTION)) {
-      this.applyCommandInjectionProtection(context);
+      this.applyCommandInjectionProtection(context: any);
     }
     
     // Apply path traversal protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.PATH_TRAVERSAL)) {
-      this.applyPathTraversalProtection(context);
+      this.applyPathTraversalProtection(context: any);
     }
     
     // Apply API security protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.API_SECURITY)) {
-      this.applyApiSecurityProtection(context);
+      this.applyApiSecurityProtection(context: any);
     }
     
     // Apply malicious payload protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.MALICIOUS_PAYLOAD)) {
-      this.applyMaliciousPayloadProtection(context);
+      this.applyMaliciousPayloadProtection(context: any);
     }
   }
   
@@ -337,8 +337,8 @@ export class RASPManager {
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns) {
-          if (pattern.test(obj)) {
+        for (const pattern of patterns: any) {
+          if (pattern.test(obj: any)) {
             return { found: true, value: obj };
           }
         }
@@ -346,7 +346,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
+        for (const key in obj: any) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -358,7 +358,7 @@ export class RASPManager {
     };
     
     // Check body for SQL injection
-    const sqlBodyCheck = checkObjectForPatterns(body, sqlInjectionPatterns);
+    const sqlBodyCheck = checkObjectForPatterns(body: any, sqlInjectionPatterns: any);
     if (sqlBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -371,7 +371,7 @@ export class RASPManager {
     }
     
     // Check query for SQL injection
-    const sqlQueryCheck = checkObjectForPatterns(query, sqlInjectionPatterns);
+    const sqlQueryCheck = checkObjectForPatterns(query: any, sqlInjectionPatterns: any);
     if (sqlQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -384,7 +384,7 @@ export class RASPManager {
     }
     
     // Check body for XSS
-    const xssBodyCheck = checkObjectForPatterns(body, xssPatterns);
+    const xssBodyCheck = checkObjectForPatterns(body: any, xssPatterns: any);
     if (xssBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -397,7 +397,7 @@ export class RASPManager {
     }
     
     // Check query for XSS
-    const xssQueryCheck = checkObjectForPatterns(query, xssPatterns);
+    const xssQueryCheck = checkObjectForPatterns(query: any, xssPatterns: any);
     if (xssQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
@@ -440,8 +440,8 @@ export class RASPManager {
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns) {
-          if (pattern.test(obj)) {
+        for (const pattern of patterns: any) {
+          if (pattern.test(obj: any)) {
             return { found: true, value: obj };
           }
         }
@@ -449,7 +449,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
+        for (const key in obj: any) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -461,7 +461,7 @@ export class RASPManager {
     };
     
     // Check body for command injection
-    const commandBodyCheck = checkObjectForPatterns(body, commandInjectionPatterns);
+    const commandBodyCheck = checkObjectForPatterns(body: any, commandInjectionPatterns: any);
     if (commandBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
@@ -474,7 +474,7 @@ export class RASPManager {
     }
     
     // Check query for command injection
-    const commandQueryCheck = checkObjectForPatterns(query, commandInjectionPatterns);
+    const commandQueryCheck = checkObjectForPatterns(query: any, commandInjectionPatterns: any);
     if (commandQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
@@ -514,8 +514,8 @@ export class RASPManager {
     ];
     
     // Check path for traversal
-    for (const pattern of pathTraversalPatterns) {
-      if (pattern.test(path)) {
+    for (const pattern of pathTraversalPatterns: any) {
+      if (pattern.test(path: any)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
         context.detectionDetails = {
@@ -534,8 +534,8 @@ export class RASPManager {
       }
       
       if (typeof obj === 'string') {
-        for (const pattern of patterns) {
-          if (pattern.test(obj)) {
+        for (const pattern of patterns: any) {
+          if (pattern.test(obj: any)) {
             return { found: true, value: obj };
           }
         }
@@ -543,7 +543,7 @@ export class RASPManager {
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        for (const key in obj) {
+        for (const key in obj: any) {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
@@ -555,7 +555,7 @@ export class RASPManager {
     };
     
     // Check body for path traversal
-    const traversalBodyCheck = checkObjectForPatterns(body, pathTraversalPatterns);
+    const traversalBodyCheck = checkObjectForPatterns(body: any, pathTraversalPatterns: any);
     if (traversalBodyCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
@@ -568,7 +568,7 @@ export class RASPManager {
     }
     
     // Check query for path traversal
-    const traversalQueryCheck = checkObjectForPatterns(query, pathTraversalPatterns);
+    const traversalQueryCheck = checkObjectForPatterns(query: any, pathTraversalPatterns: any);
     if (traversalQueryCheck.found) {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
@@ -669,8 +669,8 @@ export class RASPManager {
       }
       
       // Check for suspicious combinations of headers or parameters
-      const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers, method, path);
-      if (suspiciousPatterns) {
+      const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers: any, method: any, path: any);
+      if (suspiciousPatterns: any) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.API_SECURITY;
         context.detectionDetails = suspiciousPatterns;
@@ -706,7 +706,7 @@ export class RASPManager {
       };
     }
     
-    // Check for API version skipping (potential security bypass)
+    // Check for API version skipping (potential security bypass: any)
     if (path.match(/\/api\/v\d+/) && !path.match(/\/api\/v[1-9]/)) {
       return {
         type: 'api-version-bypass',
@@ -752,7 +752,7 @@ export class RASPManager {
     }
     
     // Check for excessively large payloads
-    const jsonSize = JSON.stringify(body).length;
+    const jsonSize = JSON.stringify(body: any).length;
     if (jsonSize > 1024 * 1024) { // > 1MB
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -772,7 +772,7 @@ export class RASPManager {
       return;
     }
     
-    // Check for suspicious JSON structure (deeply nested)
+    // Check for suspicious JSON structure (deeply nested: any)
     const checkObjectDepth = (obj: any, currentDepth = 0): number => {
       if (currentDepth > 20) { // Too deep, early exit
         return currentDepth;
@@ -784,15 +784,15 @@ export class RASPManager {
       
       let maxDepth = currentDepth;
       
-      for (const key in obj) {
+      for (const key in obj: any) {
         const depth = checkObjectDepth(obj[key], currentDepth + 1);
-        maxDepth = Math.max(maxDepth, depth);
+        maxDepth = Math.max(maxDepth: any, depth: any);
       }
       
       return maxDepth;
     };
     
-    const depth = checkObjectDepth(body);
+    const depth = checkObjectDepth(body: any);
     if (depth > 10) { // > 10 levels deep
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -835,9 +835,9 @@ export class RASPManager {
     ];
     
     // Check for JSON pattern in stringified body
-    const bodyStr = JSON.stringify(body);
-    for (const pattern of suspiciousJsonPatterns) {
-      if (pattern.test(bodyStr)) {
+    const bodyStr = JSON.stringify(body: any);
+    for (const pattern of suspiciousJsonPatterns: any) {
+      if (pattern.test(bodyStr: any)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
@@ -862,7 +862,7 @@ export class RASPManager {
         return false;
       }
       
-      if (Array.isArray(obj)) {
+      if (Array.isArray(obj: any)) {
         for (let i = 0; i < obj.length; i++) {
           if (checkForSuspiciousKeys(obj[i], `${path}[${i}]`)) {
             return true;
@@ -871,8 +871,8 @@ export class RASPManager {
         return false;
       }
       
-      for (const key in obj) {
-        if (suspiciousFieldNames.includes(key)) {
+      for (const key in obj: any) {
+        if (suspiciousFieldNames.includes(key: any)) {
           context.detected = true;
           context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
           context.detectionDetails = {
@@ -899,7 +899,7 @@ export class RASPManager {
             /\bwindow\.\s*location/, /\bnavigator\.\s*/, /\bexec\s*\(/
           ];
           
-          for (const pattern of codeInjectionPatterns) {
+          for (const pattern of codeInjectionPatterns: any) {
             if (pattern.test(obj[key])) {
               context.detected = true;
               context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
@@ -932,11 +932,11 @@ export class RASPManager {
       return false;
     };
     
-    // Check for circular references (potential DoS vector)
+    // Check for circular references (potential DoS vector: any)
     const checkForCircular = (obj: any, seen = new WeakSet()): boolean => {
       if (obj === null || typeof obj !== 'object') return false;
       
-      if (seen.has(obj)) {
+      if (seen.has(obj: any)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
@@ -954,16 +954,16 @@ export class RASPManager {
         return true;
       }
       
-      seen.add(obj);
+      seen.add(obj: any);
       
-      if (Array.isArray(obj)) {
-        for (const item of obj) {
+      if (Array.isArray(obj: any)) {
+        for (const item of obj: any) {
           if (typeof item === 'object' && item !== null) {
-            if (checkForCircular(item, seen)) return true;
+            if (checkForCircular(item: any, seen: any)) return true;
           }
         }
       } else {
-        for (const key in obj) {
+        for (const key in obj: any) {
           if (typeof obj[key] === 'object' && obj[key] !== null) {
             if (checkForCircular(obj[key], seen)) return true;
           }
@@ -974,8 +974,8 @@ export class RASPManager {
     };
     
     // Run checks
-    checkForSuspiciousKeys(body);
-    checkForCircular(body);
+    checkForSuspiciousKeys(body: any);
+    checkForCircular(body: any);
   }
   
   /**
@@ -983,19 +983,19 @@ export class RASPManager {
    */
   private logSecurityEvent(event: any): void {
     // This could be extended to send events to a centralized monitoring system
-    console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event)}`);
+    console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event: any)}`);
     
     // Store events for pattern analysis
     if (!global.raspSecurityEvents) {
       global.raspSecurityEvents = [];
     }
     
-    // Keep a limited history of events (last 1000)
+    // Keep a limited history of events (last 1000: any)
     if (global.raspSecurityEvents.length >= 1000) {
       global.raspSecurityEvents.shift();
     }
     
-    global.raspSecurityEvents.push(event);
+    global.raspSecurityEvents.push(event: any);
     
     // Emit event to security fabric
     securityFabric.emit('security:rasp:event', event);
@@ -1011,12 +1011,12 @@ const raspManager = new RASPManager();
  * Create a RASP middleware with custom options
  */
 export function createRASPMiddleware(options: RASPMiddlewareOptions = {}): express.RequestHandler {
-  const manager = new RASPManager(options);
+  const manager = new RASPManager(options: any);
   return manager.createMiddleware();
 }
 
 /**
- * Default RASP middleware (maximum protection)
+ * Default RASP middleware (maximum protection: any)
  */
 export const raspMiddleware = raspManager.createMiddleware();
 

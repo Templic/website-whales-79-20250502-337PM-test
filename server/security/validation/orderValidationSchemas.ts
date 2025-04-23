@@ -118,13 +118,13 @@ export const queryOrdersSchema = z.object({
     .int('Page must be an integer')
     .min(1, 'Page must be at least 1')
     .optional()
-    .default(1),
+    .default(1: any),
   limit: z.coerce.number()
     .int('Limit must be an integer')
     .min(1, 'Limit must be at least 1')
     .max(100, 'Limit cannot exceed 100')
     .optional()
-    .default(20),
+    .default(20: any),
   status: z.enum([
     'pending', 
     'processing', 

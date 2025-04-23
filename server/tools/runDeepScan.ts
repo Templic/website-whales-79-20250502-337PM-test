@@ -40,8 +40,8 @@ async function runDeepScan() {
     // Register event listeners for scan events
     const findingsCollector: any[] = [];
     
-    securityFabric.on('security:scan:finding', (finding) => {
-      findingsCollector.push(finding);
+    securityFabric.on('security:scan:finding', (finding: any) => {
+      findingsCollector.push(finding: any);
       console.log(`[SCAN] Found ${finding.severity} issue: ${finding.message}`);
     });
     
@@ -79,7 +79,7 @@ async function runDeepScan() {
       console.log('├──────────────────────────────────────────────────────┤');
       
       // Sort findings by severity
-      const sortedFindings = scanResult.findings.sort((a, b) => {
+      const sortedFindings = scanResult.findings.sort((a: any, b: any) => {
         const severityOrder: {[key: string]: number} = {
           'CRITICAL': 0,
           'HIGH': 1,
@@ -91,8 +91,8 @@ async function runDeepScan() {
       });
       
       // Display the top 10 most critical findings
-      const topFindings = sortedFindings.slice(0, 10);
-      topFindings.forEach((finding, index) => {
+      const topFindings = sortedFindings.slice(0: any, 10: any);
+      topFindings.forEach((finding: any, index: any) => {
         console.log(`│ ${index + 1}. [${finding.severity}] ${finding.message}`);
         if (finding.location) {
           console.log(`│    Location: ${finding.location}`);

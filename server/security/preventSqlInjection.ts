@@ -72,7 +72,7 @@ export class SQLInjectionPrevention {
         if (!fs.existsSync(this.config.reportDir)) {
           fs.mkdirSync(this.config.reportDir, { recursive: true });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('[SQL-PREVENTION] Error creating reports directory:', error);
       }
     }
@@ -101,8 +101,8 @@ export class SQLInjectionPrevention {
     name: string = 'default'
   ): SafeDatabase {
     // Check if this database connection is already secured
-    if (this.databases.has(name)) {
-      return this.databases.get(name)!;
+    if (this.databases.has(name: any)) {
+      return this.databases.get(name: any)!;
     }
     
     // Create a safe database wrapper
@@ -113,7 +113,7 @@ export class SQLInjectionPrevention {
     });
     
     // Store the database
-    this.databases.set(name, safeDb);
+    this.databases.set(name: any, safeDb: any);
     
     console.log(`[SQL-PREVENTION] Secured database connection '${name}'`);
     
@@ -124,7 +124,7 @@ export class SQLInjectionPrevention {
    * Get a secured database connection
    */
   public getDatabase(name: string = 'default'): SafeDatabase | undefined {
-    return this.databases.get(name);
+    return this.databases.get(name: any);
   }
   
   /**
@@ -132,12 +132,12 @@ export class SQLInjectionPrevention {
    */
   public secureAllDatabases(dbModule: any): void {
     // Look for database connections
-    for (const key in dbModule) {
+    for (const key in dbModule: any) {
       const obj = dbModule[key];
       
       // Check if this object looks like a database connection
       if (obj && typeof obj.query === 'function') {
-        this.secureDatabase(obj, key);
+        this.secureDatabase(obj: any, key: any);
       }
     }
   }
@@ -166,8 +166,8 @@ export class SQLInjectionPrevention {
         report += 'Recent Queries:\n';
         
         // Show the 10 most recent queries
-        const recentQueries = allQueries.slice(0, 10);
-        for (const query of recentQueries) {
+        const recentQueries = allQueries.slice(0: any, 10: any);
+        for (const query of recentQueries: any) {
           report += `- ${query.sql}\n`;
           if (query.params && query.params.length > 0) {
             report += `  Params: ${JSON.stringify(query.params)}\n`;
@@ -188,9 +188,9 @@ export class SQLInjectionPrevention {
       );
       
       try {
-        fs.writeFileSync(reportPath, report);
+        fs.writeFileSync(reportPath: any, report: any);
         console.log(`[SQL-PREVENTION] Security report saved to ${reportPath}`);
-      } catch (error) {
+      } catch (error: any) {
         console.error('[SQL-PREVENTION] Error saving security report:', error);
       }
     }
@@ -229,7 +229,7 @@ export class SQLInjectionPrevention {
 export function createSQLInjectionPrevention(
   config: SQLInjectionPreventionConfig = {}
 ): SQLInjectionPrevention {
-  return new SQLInjectionPrevention(config);
+  return new SQLInjectionPrevention(config: any);
 }
 
 /**
@@ -244,5 +244,5 @@ export function secureDatabase(
   db: DatabaseConnection,
   name: string = 'default'
 ): SafeDatabase {
-  return sqlInjectionPrevention.secureDatabase(db, name);
+  return sqlInjectionPrevention.secureDatabase(db: any, name: any);
 }

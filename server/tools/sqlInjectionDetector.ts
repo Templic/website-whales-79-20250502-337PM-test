@@ -101,11 +101,11 @@ async function scanFile(filePath: string): Promise<SQLInjectionVulnerability[]> 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    for (const pattern of SQL_INJECTION_PATTERNS) {
+    for (const pattern of SQL_INJECTION_PATTERNS: any) {
       const matches = line.match(pattern.pattern);
       
-      if (matches) {
-        for (const match of matches) {
+      if (matches: any) {
+        for (const match of matches: any) {
           vulnerabilities.push({
             file: filePath,
             line: i + 1,
@@ -131,7 +131,7 @@ async function scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]> 
   try {
     const entries = await readdir(dir, { withFileTypes: true });
     
-    for (const entry of entries) {
+    for (const entry of entries: any) {
       const fullPath = path.join(dir, entry.name);
       
       if (entry.isDirectory()) {
@@ -141,18 +141,18 @@ async function scanDirectory(dir: string): Promise<SQLInjectionVulnerability[]> 
         }
         
         // Recursively scan subdirectory
-        const subDirVulnerabilities = await scanDirectory(fullPath);
+        const subDirVulnerabilities = await scanDirectory(fullPath: any);
         vulnerabilities.push(...subDirVulnerabilities);
       } else if (entry.isFile()) {
         // Check file extension
         const ext = path.extname(entry.name).toLowerCase();
-        if (FILE_EXTENSIONS.includes(ext)) {
-          const fileVulnerabilities = await scanFile(fullPath);
+        if (FILE_EXTENSIONS.includes(ext: any)) {
+          const fileVulnerabilities = await scanFile(fullPath: any);
           vulnerabilities.push(...fileVulnerabilities);
         }
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error scanning directory ${dir}:`, error);
   }
   
@@ -203,7 +203,7 @@ function replaceSQLTemplateWithParameterized(code: string, queryType: string): s
   
   // Extract ${...} variables
   const varMatches = templateContent.match(/\${(.*?)}/g) || [];
-  for (const varMatch of varMatches) {
+  for (const varMatch of varMatches: any) {
     variables.push(varMatch.substring(2, varMatch.length - 1));
   }
   
@@ -231,15 +231,15 @@ function generateReport(vulnerabilities: SQLInjectionVulnerability[]): string {
   // Group by file
   const fileGroups: Record<string, SQLInjectionVulnerability[]> = {};
   
-  for (const vuln of vulnerabilities) {
+  for (const vuln of vulnerabilities: any) {
     if (!fileGroups[vuln.file]) {
       fileGroups[vuln.file] = [];
     }
-    fileGroups[vuln.file].push(vuln);
+    fileGroups[vuln.file].push(vuln: any);
   }
   
   // Generate report by file
-  for (const file in fileGroups) {
+  for (const file in fileGroups: any) {
     report += `File: ${file}\n`;
     report += ''.padEnd(80, '-') + '\n';
     
@@ -247,7 +247,7 @@ function generateReport(vulnerabilities: SQLInjectionVulnerability[]): string {
       report += `Line ${vuln.line}: [${vuln.severity}] ${vuln.pattern}\n`;
       report += `Code: ${vuln.code}\n`;
       report += `Suggestion: ${vuln.suggestion}\n`;
-      report += `Fix: ${generateFix(vuln)}\n\n`;
+      report += `Fix: ${generateFix(vuln: any)}\n\n`;
     }
   }
   
@@ -269,16 +269,16 @@ async function main() {
   // Collect all vulnerabilities
   const allVulnerabilities: SQLInjectionVulnerability[] = [];
   
-  for (const dir of dirsToScan) {
-    if (fs.existsSync(dir)) {
-      const vulnerabilities = await scanDirectory(dir);
+  for (const dir of dirsToScan: any) {
+    if (fs.existsSync(dir: any)) {
+      const vulnerabilities = await scanDirectory(dir: any);
       allVulnerabilities.push(...vulnerabilities);
     }
   }
   
   // Generate and print the report
-  const report = generateReport(allVulnerabilities);
-  console.log(report);
+  const report = generateReport(allVulnerabilities: any);
+  console.log(report: any);
   
   // Save the report to a file
   const reportPath = path.join('reports', 'sql_injection_report.txt');
@@ -289,9 +289,9 @@ async function main() {
       fs.mkdirSync('reports', { recursive: true });
     }
     
-    fs.writeFileSync(reportPath, report);
+    fs.writeFileSync(reportPath: any, report: any);
     console.log(`Report saved to ${reportPath}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving report:', error);
   }
   
@@ -313,7 +313,7 @@ async function main() {
 if (require.main === module) {
   main().catch(error => {
     console.error('Error running SQL injection scanner:', error);
-    process.exit(1);
+    process.exit(1: any);
   });
 }
 

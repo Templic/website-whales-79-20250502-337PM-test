@@ -41,14 +41,14 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
   try {
     // Run various auth security checks
     await Promise.all([
-      checkPasswordHashing(vulnerabilities),
-      checkBruteForceProtection(vulnerabilities),
-      checkMultiFactorAuth(vulnerabilities),
-      checkPasswordPolicy(vulnerabilities),
-      checkSessionManagement(vulnerabilities),
-      checkBypassVulnerabilities(vulnerabilities),
-      checkLogout(vulnerabilities),
-      checkJwtSecurity(vulnerabilities)
+      checkPasswordHashing(vulnerabilities: any),
+      checkBruteForceProtection(vulnerabilities: any),
+      checkMultiFactorAuth(vulnerabilities: any),
+      checkPasswordPolicy(vulnerabilities: any),
+      checkSessionManagement(vulnerabilities: any),
+      checkBypassVulnerabilities(vulnerabilities: any),
+      checkLogout(vulnerabilities: any),
+      checkJwtSecurity(vulnerabilities: any)
     ]);
     
     // Count issues by severity
@@ -80,7 +80,7 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
       lowIssues,
       vulnerabilities
     };
-  } catch (error) {
+  } catch (error: any) {
     log(`Error during authentication security scan: ${error}`, 'error');
     
     // Return minimal result on error
@@ -114,8 +114,8 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
     let foundTimingSafeComparison = false;
     
     // Check each file for secure password hashing
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for secure hashing algorithms
@@ -157,7 +157,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
         recommendation: 'Use timingSafeEqual from crypto to prevent timing attacks'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking password hashing:', error);
   }
 }
@@ -180,8 +180,8 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
     let foundAccountLockout = false;
     
     // Check each file for brute force protections
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for rate limiting
@@ -222,7 +222,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
         recommendation: 'Implement temporary account lockout after multiple failed login attempts'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking brute force protection:', error);
   }
 }
@@ -245,8 +245,8 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
     let foundBackupCodes = false;
     
     // Check each file for MFA implementations
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for 2FA
@@ -284,7 +284,7 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
         recommendation: 'Implement backup codes for account recovery'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking multi-factor authentication:', error);
   }
 }
@@ -309,8 +309,8 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
     let foundPasswordHistoryCheck = false;
     
     // Check each file for password policy implementations
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for password complexity requirements
@@ -348,7 +348,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         id: uuidv4(),
         severity: 'medium',
         description: 'No password complexity requirements detected',
-        recommendation: 'Implement password complexity requirements (length, mixed case, special characters)'
+        recommendation: 'Implement password complexity requirements (length: any, mixed case: any, special characters: any)'
       });
     }
     
@@ -369,7 +369,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         recommendation: 'Implement password history to prevent reuse of previous passwords'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking password policy:', error);
   }
 }
@@ -393,8 +393,8 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
     let foundSessionInvalidation = false;
     
     // Check each file for session security implementations
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for secure cookies
@@ -453,7 +453,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
         recommendation: 'Implement proper session invalidation on logout and security events'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking session management:', error);
   }
 }
@@ -477,8 +477,8 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
     let foundCSRFProtection = false;
     
     // Check each file for authentication bypass protections
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for authentication middlewares
@@ -537,7 +537,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
         recommendation: 'Implement CSRF token verification for state-changing operations'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking authentication bypass vulnerabilities:', error);
   }
 }
@@ -559,8 +559,8 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
     let foundTokenRevocation = false;
     
     // Check each file for logout implementations
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for session destruction
@@ -599,7 +599,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
         recommendation: 'Implement token revocation/blacklisting for JWT-based authentication'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking logout implementation:', error);
   }
 }
@@ -622,8 +622,8 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
     let foundRevocationMechanism = false;
     
     // Check each file for JWT security implementations
-    for (const filePath of filesToCheck) {
-      if (fs.existsSync(filePath)) {
+    for (const filePath of filesToCheck: any) {
+      if (fs.existsSync(filePath: any)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
         // Check for strong algorithms
@@ -681,7 +681,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
         recommendation: 'Implement token blacklisting or revocation'
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error checking JWT security:', error);
   }
 }

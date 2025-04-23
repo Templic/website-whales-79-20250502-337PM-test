@@ -81,32 +81,32 @@ export interface ContentAnalytics {
 export async function getContentThroughputMetrics(): Promise<ContentThroughputMetrics> {
   try {
     const now = new Date();
-    const yesterday = new Date(now);
+    const yesterday = new Date(now: any);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    const lastWeek = new Date(now);
+    const lastWeek = new Date(now: any);
     lastWeek.setDate(lastWeek.getDate() - 7);
     
-    const lastMonth = new Date(now);
+    const lastMonth = new Date(now: any);
     lastMonth.setDate(lastMonth.getDate() - 30);
     
     // Get created counts
     const createdLast24Hours = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(gte(contentItems.createdAt, yesterday));
     
     const createdLast7Days = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(gte(contentItems.createdAt, lastWeek));
     
     const createdLast30Days = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(gte(contentItems.createdAt, lastMonth));
     
     // Get published counts
@@ -137,7 +137,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     const updatedLast24Hours = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(
       and(
         gte(contentItems.updatedAt, yesterday),
@@ -148,7 +148,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     const updatedLast7Days = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(
       and(
         gte(contentItems.updatedAt, lastWeek),
@@ -159,7 +159,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     const updatedLast30Days = await db.select({
       count: count()
     })
-    .from(contentItems)
+    .from(contentItems: any)
     .where(
       and(
         gte(contentItems.updatedAt, lastMonth),
@@ -209,7 +209,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
         totalArchived: parseInt(archivedLast30Days.rows[0]?.count?.toString() || '0', 10)
       }
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting content throughput metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -309,7 +309,7 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
       totalPublished: statusMap['published'] || 0,
       totalArchived: statusMap['archived'] || 0
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting workflow metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -337,7 +337,7 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
     // by using a specific relative path rather than user input
     const baseMetrics = require('./contentScheduler').getSchedulingMetrics();
     
-    // Count upcoming publications (scheduled in future) with parameterized query
+    // Count upcoming publications (scheduled in future: any) with parameterized query
     // Using approved status as parameter and current date
     const approvedStatus = 'approved';
     const upcomingPublications = await db.execute(sql`
@@ -366,7 +366,7 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
       upcomingPublications: parseInt(upcomingPublications.rows[0]?.count?.toString() || '0', 10),
       soonExpiring: parseInt(soonExpiring.rows[0]?.count?.toString() || '0', 10)
     };
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting scheduling metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -419,7 +419,7 @@ export async function getUpcomingScheduledContent() {
       createdBy: row.created_by ? Number(row.created_by) : null,
       createdAt: row.created_at instanceof Date ? row.created_at : null
     }));
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error getting upcoming scheduled content:', error);
     return [];
   }
@@ -465,7 +465,7 @@ export async function getExpiringContent() {
       publishedAt: row.published_at instanceof Date ? row.published_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null
     }));
-  } catch (error) {
+  } catch (error: any) {
     // Use detailed error logging but avoid exposing sensitive information
     // in error messages that could aid in crafting exploits
     logger.error('Error getting expiring content:', error);

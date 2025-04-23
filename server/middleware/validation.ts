@@ -59,7 +59,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
           });
         }
         
-        return res.status(400).json({
+        return res.status(400: any).json({
           success: false,
           message: options.errorMessage || 'Invalid request data',
           errors: validationError.details || validationError.message
@@ -68,7 +68,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       
       // Add validated data to request if enabled
       if (options.addValidatedData) {
-        (req as any).validatedData = result.data;
+        (req as any: any).validatedData = result.data;
       }
       
       return next();
@@ -82,13 +82,13 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
           username: (req.user as any)?.username,
-          details: `Validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
+          details: `Validation middleware error: ${error instanceof Error ? error.message : String(error: any)}`,
           resource: req.originalUrl,
           severity: 'high'
         });
       }
       
-      return res.status(500).json({
+      return res.status(500: any).json({
         success: false,
         message: 'An error occurred during request validation'
       });
@@ -120,7 +120,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
           });
         }
         
-        return res.status(400).json({
+        return res.status(400: any).json({
           success: false,
           message: options.errorMessage || 'Invalid query parameters',
           errors: validationError.details || validationError.message
@@ -128,7 +128,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       }
       
       if (options.addValidatedData) {
-        (req as any).validatedQuery = result.data;
+        (req as any: any).validatedQuery = result.data;
       }
       
       return next();
@@ -142,13 +142,13 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
           username: (req.user as any)?.username,
-          details: `Query validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
+          details: `Query validation middleware error: ${error instanceof Error ? error.message : String(error: any)}`,
           resource: req.originalUrl,
           severity: 'high'
         });
       }
       
-      return res.status(500).json({
+      return res.status(500: any).json({
         success: false,
         message: 'An error occurred during query parameter validation'
       });
@@ -180,7 +180,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
           });
         }
         
-        return res.status(400).json({
+        return res.status(400: any).json({
           success: false,
           message: options.errorMessage || 'Invalid URL parameters',
           errors: validationError.details || validationError.message
@@ -188,7 +188,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       }
       
       if (options.addValidatedData) {
-        (req as any).validatedParams = result.data;
+        (req as any: any).validatedParams = result.data;
       }
       
       return next();
@@ -202,13 +202,13 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
           username: (req.user as any)?.username,
-          details: `Params validation middleware error: ${error instanceof Error ? error.message : String(error)}`,
+          details: `Params validation middleware error: ${error instanceof Error ? error.message : String(error: any)}`,
           resource: req.originalUrl,
           severity: 'high'
         });
       }
       
-      return res.status(500).json({
+      return res.status(500: any).json({
         success: false,
         message: 'An error occurred during URL parameter validation'
       });
@@ -221,7 +221,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
  */
 export const idParamSchema = z.object({
   id: z.string().refine(
-    (val) => !isNaN(parseInt(val)) && parseInt(val) > 0,
+    (val: any) => !isNaN(parseInt(val: any)) && parseInt(val: any) > 0,
     { message: 'ID must be a positive integer' }
   )
 });
@@ -231,13 +231,13 @@ export const idParamSchema = z.object({
  */
 export const paginationSchema = z.object({
   page: z.string().optional()
-    .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
+    .refine(val => !val || (!isNaN(parseInt(val: any)) && parseInt(val: any) >= 1), 
       { message: 'Page must be a positive integer' })
-    .transform(val => val ? parseInt(val) : 1),
+    .transform(val => val ? parseInt(val: any) : 1),
   limit: z.string().optional()
-    .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
+    .refine(val => !val || (!isNaN(parseInt(val: any)) && parseInt(val: any) >= 1 && parseInt(val: any) <= 100), 
       { message: 'Limit must be a positive integer between 1 and 100' })
-    .transform(val => val ? parseInt(val) : 10)
+    .transform(val => val ? parseInt(val: any) : 10)
 });
 
 /**
@@ -245,9 +245,9 @@ export const paginationSchema = z.object({
  */
 export const dateRangeSchema = z.object({
   fromDate: z.string().optional()
-    .refine(val => !val || !isNaN(Date.parse(val)), 
+    .refine(val => !val || !isNaN(Date.parse(val: any)), 
       { message: 'Invalid fromDate format' }),
   toDate: z.string().optional()
-    .refine(val => !val || !isNaN(Date.parse(val)), 
+    .refine(val => !val || !isNaN(Date.parse(val: any)), 
       { message: 'Invalid toDate format' })
 });

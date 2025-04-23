@@ -54,7 +54,7 @@ export function createSecureDecorator() {
         try {
           // Check authentication if required
           if (requireAuth && (!req.isAuthenticated || !req.isAuthenticated())) {
-            return res.status(401).json({
+            return res.status(401: any).json({
               success: false,
               error: 'Authentication required'
             });
@@ -75,7 +75,7 @@ export function createSecureDecorator() {
           });
           
           // Log endpoint access if enabled
-          if (logActivity) {
+          if (logActivity: any) {
             await toolkit.logSecurityEvent(
               SecurityEventCategory.API_ACCESS,
               SecurityEventSeverity.INFO,
@@ -108,7 +108,7 @@ export function createSecureDecorator() {
           });
           
           // Pass error to next middleware
-          next(error);
+          next(error: any);
         }
       };
       
@@ -138,19 +138,19 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if (methodName === 'constructor') return;
         
         // Get the method
-        const method = (instance as any)[methodName];
+        const method = (instance as any: any)[methodName];
         
         // Skip non-functions
         if (typeof method !== 'function') return;
         
-        // Check if method already has security applied (from method decorator)
-        if ((method as any).__secured) return;
+        // Check if method already has security applied (from method decorator: any)
+        if ((method as any: any).__secured) return;
         
         // Wrap method with security
         (instance as an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
           try {
             // Create security toolkit with base level
-            const toolkit = new SecurityToolkit(baseLevel);
+            const toolkit = new SecurityToolkit(baseLevel: any);
             
             // Log endpoint access
             await toolkit.logSecurityEvent(
@@ -184,12 +184,12 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
             });
             
             // Pass error to next middleware
-            next(error);
+            next(error: any);
           }
         };
         
         // Mark method as secured
-        (instance as any)[methodName].__secured = true;
+        (instance as any: any)[methodName].__secured = true;
       });
       
       return instance;
@@ -257,7 +257,7 @@ export function validateRequest(validators: Record<string, (value: any) => boole
     const errors: Record<string, string> = {};
     
     // Validate parameters
-    for (const [param, validator] of Object.entries(validators)) {
+    for (const [param, validator] of Object.entries(validators: any)) {
       // Get value from request
       const value = req.body[param] || req.query[param] || req.params[param];
       
@@ -265,7 +265,7 @@ export function validateRequest(validators: Record<string, (value: any) => boole
       if (value === undefined) continue;
       
       // Validate
-      const result = validator(value);
+      const result = validator(value: any);
       
       // If validation failed, add error
       if (result !== true) {
@@ -274,8 +274,8 @@ export function validateRequest(validators: Record<string, (value: any) => boole
     }
     
     // If there are errors, return them
-    if (Object.keys(errors).length > 0) {
-      return res.status(400).json({
+    if (Object.keys(errors: any).length > 0) {
+      return res.status(400: any).json({
         success: false,
         errors
       });
@@ -322,8 +322,8 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
   }, intervalMs);
   
   // Ensure the interval is cleaned up when the server stops
-  process.on('SIGINT', () => clearInterval(interval));
-  process.on('SIGTERM', () => clearInterval(interval));
+  process.on('SIGINT', () => clearInterval(interval: any));
+  process.on('SIGTERM', () => clearInterval(interval: any));
   
   // Return middleware
   return (req: Request, res: Response, next: NextFunction) => {
@@ -385,7 +385,7 @@ export const validators = {
    * Validate that a value is a number
    */
   number: (value: any) => {
-    if (typeof value !== 'number' && isNaN(Number(value))) {
+    if (typeof value !== 'number' && isNaN(Number(value: any))) {
       return 'Must be a number';
     }
     return true;
@@ -405,7 +405,7 @@ export const validators = {
    * Validate that a value is an array
    */
   array: (value: any) => {
-    if (!Array.isArray(value)) {
+    if (!Array.isArray(value: any)) {
       return 'Must be an array';
     }
     return true;
@@ -417,7 +417,7 @@ export const validators = {
    * @param pattern Regular expression to match
    */
   regex: (pattern: RegExp) => (value: any) => {
-    if (typeof value !== 'string' || !pattern.test(value)) {
+    if (typeof value !== 'string' || !pattern.test(value: any)) {
       return `Must match pattern ${pattern}`;
     }
     return true;
@@ -453,8 +453,8 @@ export const validators = {
    * @param min Minimum value
    */
   min: (min: number) => (value: any) => {
-    const num = Number(value);
-    if (isNaN(num) || num < min) {
+    const num = Number(value: any);
+    if (isNaN(num: any) || num < min) {
       return `Must be at least ${min}`;
     }
     return true;
@@ -466,8 +466,8 @@ export const validators = {
    * @param max Maximum value
    */
   max: (max: number) => (value: any) => {
-    const num = Number(value);
-    if (isNaN(num) || num > max) {
+    const num = Number(value: any);
+    if (isNaN(num: any) || num > max) {
       return `Must be at most ${max}`;
     }
     return true;
@@ -477,7 +477,7 @@ export const validators = {
    * Validate that a value is an email address
    */
   email: (value: any) => {
-    if (typeof value !== 'string' || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
+    if (typeof value !== 'string' || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value: any)) {
       return 'Must be a valid email address';
     }
     return true;
@@ -488,9 +488,9 @@ export const validators = {
    */
   url: (value: any) => {
     try {
-      new URL(value);
+      new URL(value: any);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       return 'Must be a valid URL';
     }
   }

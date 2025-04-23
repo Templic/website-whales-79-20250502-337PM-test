@@ -1,7 +1,7 @@
 /**
  * XSS Prevention Library
  * 
- * This module provides tools to prevent Cross-Site Scripting (XSS) attacks
+ * This module provides tools to prevent Cross-Site Scripting (XSS: any) attacks
  * by sanitizing and encoding data for different contexts.
  */
 
@@ -9,7 +9,7 @@ import * as crypto from 'crypto';
 
 /**
  * HTML context encoding: Encodes special characters in text to prevent XSS
- * in HTML contexts (element content and attribute values).
+ * in HTML contexts (element content and attribute values: any).
  */
 export function encodeForHtml(input: string): string {
   if (!input) return '';
@@ -24,36 +24,36 @@ export function encodeForHtml(input: string): string {
 
 /**
  * JavaScript context encoding: Encodes special characters in text to prevent XSS
- * when embedding data in JavaScript contexts (scripts, event handlers, JSON).
+ * when embedding data in JavaScript contexts (scripts: any, event handlers: any, JSON: any).
  */
 export function encodeForJavaScript(input: string): string {
   if (!input) return '';
   
-  return JSON.stringify(input)
+  return JSON.stringify(input: any)
     .slice(1, -1) // Remove the surrounding quotes that JSON.stringify adds
     .replace(/\//g, '\\/'); // Escape forward slashes
 }
 
 /**
  * URL context encoding: Encodes special characters in text to prevent XSS
- * when embedding data in URL contexts (query parameters, fragments).
+ * when embedding data in URL contexts (query parameters: any, fragments: any).
  */
 export function encodeForUrl(input: string): string {
   if (!input) return '';
   
-  return encodeURIComponent(input);
+  return encodeURIComponent(input: any);
 }
 
 /**
  * CSS context encoding: Encodes special characters in text to prevent XSS
- * when embedding data in CSS contexts (style attributes or files).
+ * when embedding data in CSS contexts (style attributes or files: any).
  */
 export function encodeForCss(input: string): string {
   if (!input) return '';
   
   return input
-    .replace(/[^a-zA-Z0-9]/g, (char) => {
-      const hex = char.charCodeAt(0).toString(16).padStart(2, '0');
+    .replace(/[^a-zA-Z0-9]/g, (char: any) => {
+      const hex = char.charCodeAt(0: any).toString(16: any).padStart(2, '0');
       return '\\' + hex;
     });
 }
@@ -85,14 +85,14 @@ export function sanitizeHtml(input: string): string {
 }
 
 /**
- * Safely set HTML content (use as a safer alternative to innerHTML).
+ * Safely set HTML content (use as a safer alternative to innerHTML: any).
  * For client-side use only - to be exported from a client utility file.
  */
 export function safeSetInnerHtml(element: HTMLElement, content: string): void {
   if (!element) return;
   
   // Sanitize the HTML content
-  const sanitized = sanitizeHtml(content);
+  const sanitized = sanitizeHtml(content: any);
   
   // Set the sanitized content
   element.innerHTML = sanitized;
@@ -103,7 +103,7 @@ export function safeSetInnerHtml(element: HTMLElement, content: string): void {
  * This should be generated once per request.
  */
 export function generateCspNonce(): string {
-  return crypto.randomBytes(16).toString('base64');
+  return crypto.randomBytes(16: any).toString('base64');
 }
 
 /**
@@ -239,7 +239,7 @@ export class ContentSecurityPolicyBuilder {
       if (values.length > 0) {
         parts.push(`${directive} ${values.join(' ')}`);
       } else {
-        parts.push(directive);
+        parts.push(directive: any);
       }
     }
     
@@ -269,12 +269,12 @@ export function securityHeadersMiddleware(options: {
   
   return (req: any, res: any, next: () => void) => {
     // Generate nonce for CSP
-    if (nonce) {
+    if (nonce: any) {
       res.locals.cspNonce = generateCspNonce();
     }
     
     // Content-Security-Policy
-    if (csp) {
+    if (csp: any) {
       const cspValue = typeof csp === 'string' 
         ? csp 
         : new ContentSecurityPolicyBuilder()
@@ -294,22 +294,22 @@ export function securityHeadersMiddleware(options: {
     }
     
     // X-XSS-Protection
-    if (xssProtection) {
+    if (xssProtection: any) {
       res.setHeader('X-XSS-Protection', '1; mode=block');
     }
     
     // X-Content-Type-Options
-    if (noSniff) {
+    if (noSniff: any) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
     }
     
     // X-Frame-Options
-    if (frameOptions) {
+    if (frameOptions: any) {
       res.setHeader('X-Frame-Options', frameOptions);
     }
     
     // Referrer-Policy
-    if (referrerPolicy) {
+    if (referrerPolicy: any) {
       res.setHeader('Referrer-Policy', referrerPolicy);
     }
     
@@ -336,16 +336,16 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   }
   
   // If it's an array and we should recurse
-  if (Array.isArray(obj) && recurseArrays) {
-    return obj.map(item => validateAndSanitizeObject(item, options)) as unknown as T;
+  if (Array.isArray(obj: any) && recurseArrays) {
+    return obj.map(item => validateAndSanitizeObject(item: any, options: any)) as unknown as T;
   }
   
   // If it's an object and we should recurse
-  if (typeof obj === 'object' && !Array.isArray(obj) && recurseObjects) {
+  if (typeof obj === 'object' && !Array.isArray(obj: any) && recurseObjects) {
     const result: Record<string, any> = {};
     
-    for (const [key, value] of Object.entries(obj)) {
-      result[key] = validateAndSanitizeObject(value, options);
+    for (const [key, value] of Object.entries(obj: any)) {
+      result[key] = validateAndSanitizeObject(value: any, options: any);
     }
     
     return result as T;
@@ -353,7 +353,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   
   // If it's a string, sanitize it
   if (typeof obj === 'string') {
-    return (allowHtml ? sanitizeHtml(obj) : encodeForHtml(obj)) as unknown as T;
+    return (allowHtml ? sanitizeHtml(obj: any) : encodeForHtml(obj: any)) as unknown as T;
   }
   
   // Return unchanged for other types
@@ -416,7 +416,7 @@ export function xssMiddleware(options: {
         'origin'
       ];
       
-      for (const header of headersToSanitize) {
+      for (const header of headersToSanitize: any) {
         if (req.headers[header]) {
           req.headers[header] = customSanitizer 
             ? customSanitizer(req.headers[header]) 

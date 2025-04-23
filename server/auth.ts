@@ -50,12 +50,12 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
+const scryptAsync = promisify(scrypt: any);
 
 // Export the hashPassword function
 export async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  const salt = randomBytes(16: any).toString("hex");
+  const buf = (await scryptAsync(password: any, salt: any, 64: any)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
 }
 
@@ -69,9 +69,9 @@ export async function comparePasswords(supplied: string, stored: string) {
   try {
     const [hashed, salt] = stored.split(".");
     const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
-  } catch (error) {
+    const suppliedBuf = (await scryptAsync(supplied: any, salt: any, 64: any)) as Buffer;
+    return timingSafeEqual(hashedBuf: any, suppliedBuf: any);
+  } catch (error: any) {
     console.error('Error comparing passwords:', error);
     return false;
   }
@@ -79,7 +79,7 @@ export async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   // Generate a random session secret if one is not provided in environment
-  const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
+  const sessionSecret = process.env.SESSION_SECRET || randomBytes(32: any).toString('hex');
   
   // Enhanced session settings with additional security options
   const sessionSettings = {
@@ -116,15 +116,15 @@ export function setupAuth(app: Express) {
   }
 
   app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
+  app.use(session(sessionSettings: any));
   app.use(passport.initialize());
   app.use(passport.session());
 
   // Apply session monitoring middleware
-  app.use(sessionMonitor);
+  app.use(sessionMonitor: any);
   
   // Enhanced session analytics middleware
-  app.use((req, res, next) => {
+  app.use((req: any, res: any, next: any) => {
     if (req.session) {
       // Update last activity timestamp
       req.session.lastActivity = Date.now();
@@ -161,41 +161,41 @@ export function setupAuth(app: Express) {
   });
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
+    new LocalStrategy(async (username: any, password: any, done: any) => {
       try {
-        const user = await storage.getUserByUsername(username);
+        const user = await storage.getUserByUsername(username: any);
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Invalid username or password" });
         }
-        return done(null, user);
-      } catch (err) {
-        return done(err);
+        return done(null: any, user: any);
+      } catch (err: any) {
+        return done(err: any);
       }
     })
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user: any, done: any) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (err) {
-      done(err);
+      const user = await storage.getUser(id: any);
+      done(null: any, user: any);
+    } catch (err: any) {
+      done(err: any);
     }
   });
 
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/register", async (req: any, res: any, next: any) => {
     try {
       // Check for existing username
       const existingUsername = await storage.getUserByUsername(req.body.username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
+      if (existingUsername: any) {
+        return res.status(400: any).json({ message: "Username already exists" });
       }
 
       // Check for existing email
       const existingEmail = await storage.getUserByEmail(req.body.email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email address already in use" });
+      if (existingEmail: any) {
+        return res.status(400: any).json({ message: "Email address already in use" });
       }
 
       const user = await storage.createUser({
@@ -203,20 +203,20 @@ export function setupAuth(app: Express) {
         password: await hashPassword(req.body.password)
       });
 
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
+      req.login(user, (err: any) => {
+        if (err: any) return next(err: any);
+        res.status(201: any).json(user: any);
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Registration error:", err);
-      next(err);
+      next(err: any);
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  app.post("/api/login", (req: any, res: any, next: any) => {
     passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string }) => {
-      if (err) return next(err);
-      if (!user) return res.status(401).json(info);
+      if (err: any) return next(err: any);
+      if (!user) return res.status(401: any).json(info: any);
 
       // Handle remember-me functionality
       const rememberMe = req.body.rememberMe === true;
@@ -224,80 +224,80 @@ export function setupAuth(app: Express) {
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
       }
 
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.json(user);
+      req.login(user, (err: any) => {
+        if (err: any) return next(err: any);
+        res.json(user: any);
       });
-    })(req, res, next);
+    })(req: any, res: any, next: any);
   });
 
-  app.post("/api/logout", (req, res, next) => {
+  app.post("/api/logout", (req: any, res: any, next: any) => {
     // Record logout time in analytics
     if (req.session?.analytics) {
       req.session.analytics.logoutTime = new Date();
     }
-    req.logout((err) => {
-      if (err) {
+    req.logout((err: any) => {
+      if (err: any) {
         console.error("Error during logout:", err);
-        return next(err);
+        return next(err: any);
       }
-      res.sendStatus(200);
+      res.sendStatus(200: any);
     });
   });
 
   // Add role management endpoint
-  app.patch("/api/users/:userId/role", async (req, res) => {
+  app.patch("/api/users/:userId/role", async (req: any, res: any) => {
     try {
-      // Check if user is authorized (must be super_admin)
+      // Check if user is authorized (must be super_admin: any)
       if (!req.isAuthenticated() || req.user.role !== 'super_admin') {
-        return res.status(403).json({ message: "Unauthorized" });
+        return res.status(403: any).json({ message: "Unauthorized" });
       }
 
       const userId = parseInt(req.params.userId);
       const { role } = req.body;
 
       // Validate role
-      if (!['user', 'admin', 'super_admin'].includes(role)) {
-        return res.status(400).json({ message: "Invalid role" });
+      if (!['user', 'admin', 'super_admin'].includes(role: any)) {
+        return res.status(400: any).json({ message: "Invalid role" });
       }
 
-      const updatedUser = await storage.updateUserRole(userId, role);
-      res.json(updatedUser);
-    } catch (error) {
+      const updatedUser = await storage.updateUserRole(userId: any, role: any);
+      res.json(updatedUser: any);
+    } catch (error: any) {
       console.error("Error updating user role:", error);
-      res.status(500).json({ message: "Failed to update user role" });
+      res.status(500: any).json({ message: "Failed to update user role" });
     }
   });
 
   // Current user endpoint
-  app.get("/api/user", (req, res) => {
+  app.get("/api/user", (req: any, res: any) => {
     if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
+      return res.sendStatus(401: any);
     }
     // Return the current authenticated user
     res.json(req.user);
   });
   
   // Password change endpoint with security logging
-  app.post("/api/user/change-password", async (req, res) => {
+  app.post("/api/user/change-password", async (req: any, res: any) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "You must be logged in to change your password" });
+      return res.status(401: any).json({ message: "You must be logged in to change your password" });
     }
     
     try {
       const { currentPassword, newPassword } = req.body;
       
       if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Both current and new password are required" });
+        return res.status(400: any).json({ message: "Both current and new password are required" });
       }
       
       // Validate new password strength
       if (newPassword.length < 8) {
-        return res.status(400).json({ message: "New password must be at least 8 characters long" });
+        return res.status(400: any).json({ message: "New password must be at least 8 characters long" });
       }
       
-      if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-        return res.status(400).json({ 
+      if (!/[A-Z]/.test(newPassword: any) || !/[a-z]/.test(newPassword: any) || !/[0-9]/.test(newPassword: any)) {
+        return res.status(400: any).json({ 
           message: "New password must contain at least one uppercase letter, one lowercase letter, and one number" 
         });
       }
@@ -305,7 +305,7 @@ export function setupAuth(app: Express) {
       // Get current user
       const user = await storage.getUser(req.user.id);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404: any).json({ message: "User not found" });
       }
       
       // Verify current password
@@ -321,11 +321,11 @@ export function setupAuth(app: Express) {
             userAgent: req.headers['user-agent']
           });
         }
-        return res.status(400).json({ message: "Current password is incorrect" });
+        return res.status(400: any).json({ message: "Current password is incorrect" });
       }
       
       // Hash new password
-      const hashedPassword = await hashPassword(newPassword);
+      const hashedPassword = await hashPassword(newPassword: any);
       
       // Update password in database
       await storage.updateUserPassword(req.user.id, hashedPassword);
@@ -342,15 +342,15 @@ export function setupAuth(app: Express) {
       }
       
       res.json({ message: "Password changed successfully" });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error changing password:', error);
-      res.status(500).json({ message: "Failed to change password" });
+      res.status(500: any).json({ message: "Failed to change password" });
     }
   });
 
   // Session analytics endpoint
-  app.get("/api/session/status", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/session/status", (req: any, res: any) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401: any);
 
     const sessionInfo = {
       id: req.sessionID,
@@ -362,6 +362,6 @@ export function setupAuth(app: Express) {
       }
     };
 
-    res.json(sessionInfo);
+    res.json(sessionInfo: any);
   });
 }

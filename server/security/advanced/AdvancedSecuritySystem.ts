@@ -20,7 +20,7 @@ export async function initializeAdvancedSecurity(app: express.Application, confi
   
   try {
     // Initialize security fabric
-    await securityFabric.initialize(config);
+    await securityFabric.initialize(config: any);
     
     // Initialize anomaly detection
     const anomalyDetection = new AnomalyDetection(config.anomalyDetection);
@@ -32,16 +32,16 @@ export async function initializeAdvancedSecurity(app: express.Application, confi
     securityFabric.registerComponent('databaseProtection', databaseProtection);
     
     // Set up minimum security for all routes
-    setupBaselineSecurity(app);
+    setupBaselineSecurity(app: any);
     
     // Set up advanced security for specific route groups
-    setupAdvancedSecurity(app);
+    setupAdvancedSecurity(app: any);
     
     console.log('[AdvancedSecurity] Advanced security system initialized successfully');
     
     // Update threat level periodically based on security metrics
     setupThreatLevelUpdates();
-  } catch (error) {
+  } catch (error: any) {
     console.error('[AdvancedSecurity] Failed to initialize advanced security system:', error);
     throw error;
   }
@@ -66,7 +66,7 @@ function setupBaselineSecurity(app: express.Application): void {
   
   // Create request ID for all requests
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).id = require('crypto').randomBytes(16).toString('hex');
+    (req as any: any).id = require('crypto').randomBytes(16: any).toString('hex');
     next();
   });
   
@@ -108,14 +108,14 @@ function setupThreatLevelUpdates(): void {
   setInterval(() => {
     try {
       const metrics = securityFabric.getComponent('securityMetrics');
-      if (metrics) {
+      if (metrics: any) {
         const latestMetrics = metrics.getLatestMetrics();
-        if (latestMetrics) {
+        if (latestMetrics: any) {
           // Update global threat level based on metrics
           securityFabric.adjustSecurityPosture(latestMetrics.threat.globalThreatLevel);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AdvancedSecurity] Error updating threat level:', error);
     }
   }, 5 * 60 * 1000); // 5 minutes
@@ -134,7 +134,7 @@ export async function shutdownAdvancedSecurity(): Promise<void> {
     await securityFabric.shutdown();
     
     console.log('[AdvancedSecurity] Advanced security system shut down successfully');
-  } catch (error) {
+  } catch (error: any) {
     console.error('[AdvancedSecurity] Error shutting down advanced security system:', error);
     throw error;
   }
@@ -155,7 +155,7 @@ export function getSecurityStatus(): Record<string, any> {
  * Creates an Express middleware that applies zero-trust security to a route
  */
 export function secureRoute(options: any = {}) {
-  return createZeroTrustMiddleware(options);
+  return createZeroTrustMiddleware(options: any);
 }
 
 /**

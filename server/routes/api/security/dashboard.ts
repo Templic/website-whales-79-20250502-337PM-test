@@ -18,19 +18,19 @@ const router = express.Router();
  * Get security metrics
  * GET /api/security/dashboard/metrics
  */
-router.get('/metrics', async (req, res) => {
+router.get('/metrics', async (req: any, res: any) => {
   try {
     const metrics = await getLatestSecurityMetrics();
-    res.json(metrics);
-  } catch (error) {
+    res.json(metrics: any);
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security metrics',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
     
-    res.status(500).json({ error: 'Failed to fetch security metrics' });
+    res.status(500: any).json({ error: 'Failed to fetch security metrics' });
   }
 });
 
@@ -38,7 +38,7 @@ router.get('/metrics', async (req, res) => {
  * Get security events
  * GET /api/security/dashboard/events
  */
-router.get('/events', async (req, res) => {
+router.get('/events', async (req: any, res: any) => {
   try {
     // Parse query parameters
     const timeRange = req.query.timeRange as string || '24h';
@@ -46,17 +46,17 @@ router.get('/events', async (req, res) => {
     const type = req.query.type as string || 'all';
     const limit = parseInt(req.query.limit as string || '100');
     
-    const events = await getSecurityEventsHistory(timeRange, category, type, limit);
-    res.json(events);
-  } catch (error) {
+    const events = await getSecurityEventsHistory(timeRange: any, category: any, type: any, limit: any);
+    res.json(events: any);
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security events',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
     
-    res.status(500).json({ error: 'Failed to fetch security events' });
+    res.status(500: any).json({ error: 'Failed to fetch security events' });
   }
 });
 
@@ -64,7 +64,7 @@ router.get('/events', async (req, res) => {
  * Get security configuration
  * GET /api/security/dashboard/config
  */
-router.get('/config', (req, res) => {
+router.get('/config', (req: any, res: any) => {
   try {
     // In a real application, this would fetch the actual security configuration
     const securityConfig = {
@@ -93,16 +93,16 @@ router.get('/config', (req, res) => {
       securityScanSchedule: 'daily' // 'hourly', 'daily', 'weekly'
     };
     
-    res.json(securityConfig);
-  } catch (error) {
+    res.json(securityConfig: any);
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error fetching security configuration',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
     
-    res.status(500).json({ error: 'Failed to fetch security configuration' });
+    res.status(500: any).json({ error: 'Failed to fetch security configuration' });
   }
 });
 
@@ -110,7 +110,7 @@ router.get('/config', (req, res) => {
  * Update security configuration
  * POST /api/security/dashboard/config
  */
-router.post('/config', (req, res) => {
+router.post('/config', (req: any, res: any) => {
   try {
     const newConfig = req.body;
     
@@ -124,15 +124,15 @@ router.post('/config', (req, res) => {
     });
     
     res.json({ success: true, message: 'Security configuration updated' });
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error updating security configuration',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
     
-    res.status(500).json({ error: 'Failed to update security configuration' });
+    res.status(500: any).json({ error: 'Failed to update security configuration' });
   }
 });
 
@@ -140,7 +140,7 @@ router.post('/config', (req, res) => {
  * Run security scan
  * POST /api/security/dashboard/scan
  */
-router.post('/scan', async (req, res) => {
+router.post('/scan', async (req: any, res: any) => {
   try {
     // In a real application, this would initiate a security scan
     
@@ -153,7 +153,7 @@ router.post('/scan', async (req, res) => {
     });
     
     // Simulate a scan delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve: any, 2000: any));
     
     // Log the scan completion
     logSecurityEvent({
@@ -181,15 +181,15 @@ router.post('/scan', async (req, res) => {
         ]
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error running security scan',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
     
-    res.status(500).json({ error: 'Failed to run security scan' });
+    res.status(500: any).json({ error: 'Failed to run security scan' });
   }
 });
 

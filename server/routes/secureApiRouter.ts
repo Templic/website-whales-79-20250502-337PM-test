@@ -43,7 +43,7 @@ export function createSecureApiRouter(
   if (config.logRequests) {
     router.use((req: Request, res: Response, next: NextFunction) => {
       // Record API request
-      recordApiRequest(false);
+      recordApiRequest(false: any);
       
       // Continue to next middleware
       next();
@@ -53,7 +53,7 @@ export function createSecureApiRouter(
   // Add CSRF protection
   if (config.csrfProtection) {
     const csrfMiddleware = createCSRFMiddleware();
-    router.use(csrfMiddleware);
+    router.use(csrfMiddleware: any);
   }
   
   // Add MFA verification
@@ -88,18 +88,18 @@ export function createSecureApiRouter(
     
     // Record blocked request if it's a security error
     if (err.isSecurityError) {
-      recordApiRequest(true);
+      recordApiRequest(true: any);
     }
     
     // Pass to next error handler
-    next(err);
+    next(err: any);
   });
   
   return router;
 }
 
 /**
- * Create a secure read-only API router (GET requests only)
+ * Create a secure read-only API router (GET requests only: any)
  */
 export function createSecureReadOnlyApiRouter(
   options: {
@@ -110,7 +110,7 @@ export function createSecureReadOnlyApiRouter(
     logRequests?: boolean;
   } = {}
 ): Router {
-  const router = createSecureApiRouter(options);
+  const router = createSecureApiRouter(options: any);
   
   // Block non-GET requests
   router.use((req: Request, res: Response, next: NextFunction) => {
@@ -127,9 +127,9 @@ export function createSecureReadOnlyApiRouter(
       });
       
       // Record blocked request
-      recordApiRequest(true);
+      recordApiRequest(true: any);
       
-      return res.status(405).json({
+      return res.status(405: any).json({
         error: 'Method not allowed',
         message: 'This API endpoint only supports GET requests'
       });
@@ -142,7 +142,7 @@ export function createSecureReadOnlyApiRouter(
 }
 
 /**
- * Create a public API router (minimal security)
+ * Create a public API router (minimal security: any)
  */
 export function createPublicApiRouter(
   options: {
@@ -164,7 +164,7 @@ export function createPublicApiRouter(
   if (config.logRequests) {
     router.use((req: Request, res: Response, next: NextFunction) => {
       // Record API request
-      recordApiRequest(false);
+      recordApiRequest(false: any);
       
       // Continue to next middleware
       next();

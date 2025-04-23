@@ -24,7 +24,7 @@ export interface SecurityFeatures {
   deepScanning: boolean;
 }
 
-// Default security features (moderate mode)
+// Default security features (moderate mode: any)
 export const DEFAULT_SECURITY_FEATURES: SecurityFeatures = {
   quantumResistance: false,
   mlAnomalyDetection: false,
@@ -39,7 +39,7 @@ export const DEFAULT_SECURITY_FEATURES: SecurityFeatures = {
   deepScanning: false
 };
 
-// Maximum security features (all enabled)
+// Maximum security features (all enabled: any)
 export const MAXIMUM_SECURITY_FEATURES: SecurityFeatures = {
   quantumResistance: true,
   mlAnomalyDetection: true,
@@ -91,15 +91,15 @@ export function enableMaximumSecurity(): void {
     console.log('[SECURITY] Enabling maximum security mode');
     
     // Set all security features to maximum
-    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
+    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES: any);
     
     // Start collecting security metrics
-    startMetricsCollection(30000); // Collect metrics every 30 seconds
+    startMetricsCollection(30000: any); // Collect metrics every 30 seconds
     
     // Initialize events collector
     initializeEventsCollector();
     
-    // Initialize all security components (if any)
+    // Initialize all security components (if any: any)
     const components = securityFabric.getAllComponents();
     if (components.length > 0) {
       securityFabric.initializeAll()
@@ -111,12 +111,12 @@ export function enableMaximumSecurity(): void {
             data: { componentsCount: components.length }
           });
         })
-        .catch((error) => {
+        .catch((error: any) => {
           logSecurityEvent({
             category: SecurityEventCategory.SYSTEM,
             severity: SecurityEventSeverity.ERROR,
             message: 'Error initializing security components in maximum security mode',
-            data: { error: (error as Error).message }
+            data: { error: (error as Error: any).message }
           });
         });
     }
@@ -128,7 +128,7 @@ export function enableMaximumSecurity(): void {
       message: 'Maximum security mode activated',
       data: { features: activeSecurityFeatures }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
     // Log the error
@@ -136,7 +136,7 @@ export function enableMaximumSecurity(): void {
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error enabling maximum security mode',
-      data: { error: (error as Error).message, stack: (error as Error).stack }
+      data: { error: (error as Error: any).message, stack: (error as Error: any).stack }
     });
     
     throw error;

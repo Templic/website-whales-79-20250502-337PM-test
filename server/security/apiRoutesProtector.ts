@@ -5,8 +5,8 @@
  * security middleware to API endpoints, including quantum-resistant cryptography protection.
  * 
  * Key features:
- * - Runtime Application Self-Protection (RASP)
- * - API security checks (parameter validation, injection prevention)
+ * - Runtime Application Self-Protection (RASP: any)
+ * - API security checks (parameter validation: any, injection prevention: any)
  * - Input sanitization and validation
  * - Quantum-resistant cryptography for sensitive routes
  * - Machine learning-based anomaly detection
@@ -44,7 +44,7 @@ export interface ApiProtectionOptions {
   enableDefaultValidation?: boolean;
   
   /**
-   * Enable sensitive procedures (more thorough but slower security checks)
+   * Enable sensitive procedures (more thorough but slower security checks: any)
    */
   enableSensitiveProcedures?: boolean;
   
@@ -74,7 +74,7 @@ export interface ApiProtectionOptions {
   additionalMiddlewares?: RequestHandler[];
   
   /**
-   * Rate limit options (requests per window)
+   * Rate limit options (requests per window: any)
    */
   rateLimit?: {
     windowMs: number;
@@ -143,10 +143,10 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
       res.end = originalEnd;
       
       // Call the original end method
-      res.end(chunk, encoding);
+      res.end(chunk: any, encoding: any);
       
       // Log the request to blockchain if enabled
-      if (enableBlockchainAudit) {
+      if (enableBlockchainAudit: any) {
         securityBlockchain.addSecurityEvent({
           category: SecurityEventCategory.API,
           severity: SecurityEventSeverity.INFO,
@@ -171,9 +171,9 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   };
   
   // Apply middleware to all API routes except excluded paths
-  app.use('/api', (req, res, next) => {
+  app.use('/api', (req: any, res: any, next: any) => {
     // Skip excluded paths
-    if (excludePaths.some(path => req.path.startsWith(path))) {
+    if (excludePaths.some(path => req.path.startsWith(path: any))) {
       return next();
     }
     
@@ -185,7 +185,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   app.use('/api', auditMiddleware);
   
   // Apply rate limiting if enabled
-  if (enableRateLimiting) {
+  if (enableRateLimiting: any) {
     app.use('/api', rateLimit({
       windowMs: rateLimitOptions.windowMs,
       max: rateLimitOptions.max,
@@ -197,17 +197,17 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   }
   
   // Apply RASP protection if enabled
-  if (enableRASP) {
+  if (enableRASP: any) {
     // Apply RASP protection middleware
-    app.use('/api', (req, res, next) => {
+    app.use('/api', (req: any, res: any, next: any) => {
       // Skip excluded paths
-      if (excludePaths.some(path => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path: any))) {
         return next();
       }
       
       try {
         // Apply RASP protections
-        const raspResult = raspManager.protectRequest(req);
+        const raspResult = raspManager.protectRequest(req: any);
         
         if (raspResult.block) {
           // Log blocked request
@@ -224,14 +224,14 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
             }
           }).catch(console.error);
           
-          return res.status(403).json({
+          return res.status(403: any).json({
             error: 'Access Denied',
             message: 'This request has been blocked for security reasons.'
           });
         }
         
         next();
-      } catch (error) {
+      } catch (error: any) {
         // Continue in case of RASP error to avoid blocking legitimate requests
         console.error('RASP error:', error);
         next();
@@ -242,16 +242,16 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   }
   
   // Apply API security checks if enabled
-  if (enableApiSecurity) {
+  if (enableApiSecurity: any) {
     // Apply security policy enforcer middleware
-    app.use('/api', (req, res, next) => {
+    app.use('/api', (req: any, res: any, next: any) => {
       // Skip excluded paths
-      if (excludePaths.some(path => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path: any))) {
         return next();
       }
       
       try {
-        const securityResult = securityPolicyEnforcer.checkRequest(req);
+        const securityResult = securityPolicyEnforcer.checkRequest(req: any);
         
         if (securityResult.block) {
           // Log blocked request
@@ -268,14 +268,14 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
             }
           }).catch(console.error);
           
-          return res.status(403).json({
+          return res.status(403: any).json({
             error: 'Security Violation',
             message: 'This request violates security policies.'
           });
         }
         
         next();
-      } catch (error) {
+      } catch (error: any) {
         // Log the error but allow the request to continue
         console.error('API security check error:', error);
         next();
@@ -286,11 +286,11 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   }
   
   // Apply default input validation if enabled
-  if (enableDefaultValidation) {
+  if (enableDefaultValidation: any) {
     // Apply input validation middleware to all API routes except excluded paths
-    app.use('/api', (req, res, next) => {
+    app.use('/api', (req: any, res: any, next: any) => {
       // Skip excluded paths
-      if (excludePaths.some(path => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path: any))) {
         return next();
       }
       
@@ -301,8 +301,8 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
         });
         
         // Call the validation middleware
-        validationMiddleware(req, res, next);
-      } catch (error) {
+        validationMiddleware(req: any, res: any, next: any);
+      } catch (error: any) {
         // Log the error but allow the request to continue
         console.error('Input validation error:', error);
         next();
@@ -313,7 +313,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   }
   
   // Apply quantum-resistant cryptography middleware if enabled
-  if (enableQuantumResistance) {
+  if (enableQuantumResistance: any) {
     // Create and apply quantum-resistant middleware
     const quantumMiddleware = createQuantumResistantMiddleware({
       protectedPaths: [
@@ -333,23 +333,23 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     app.use('/api', quantumMiddleware);
     
     // Add endpoint to provide the server's quantum-resistant public key
-    app.get('/api/security/quantum-key', (req, res, next) => {
+    app.get('/api/security/quantum-key', (req: any, res: any, next: any) => {
       try {
         import('./advanced/quantum/QuantumResistantMiddleware')
           .then(module => {
             const middleware = module.createPublicKeyEndpointMiddleware();
-            middleware(req, res, next);
+            middleware(req: any, res: any, next: any);
           })
           .catch(error => {
             console.error('Error loading quantum middleware:', error);
-            res.status(500).json({
+            res.status(500: any).json({
               error: 'Internal Server Error',
               message: 'Failed to provide quantum key'
             });
           });
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in quantum key endpoint:', error);
-        next(error);
+        next(error: any);
       }
     });
     
@@ -357,11 +357,11 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
   }
   
   // Apply sensitive procedures if enabled
-  if (enableSensitiveProcedures) {
+  if (enableSensitiveProcedures: any) {
     // Apply sensitive procedures middleware
-    app.use('/api', (req, res, next) => {
+    app.use('/api', (req: any, res: any, next: any) => {
       // Skip excluded paths
-      if (excludePaths.some(path => req.path.startsWith(path))) {
+      if (excludePaths.some(path => req.path.startsWith(path: any))) {
         return next();
       }
       

@@ -41,35 +41,35 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
       // If it's a user object with sensitive fields
       if (data.password && data.username) {
         console.log(`Sanitizing direct user response: ${data.username}`);
-        return originalJson.call(this, createSafeUser(data));
+        return originalJson.call(this, createSafeUser(data: any));
       }
       
       // If it's an array of users
-      if (Array.isArray(data) && data.length > 0 && data[0]?.password && data[0]?.username) {
+      if (Array.isArray(data: any) && data.length > 0 && data[0]?.password && data[0]?.username) {
         console.log(`Sanitizing array of ${data.length} users`);
-        return originalJson.call(this, data.map(user => createSafeUser(user)));
+        return originalJson.call(this, data.map(user => createSafeUser(user: any)));
       }
       
       // For other complex objects that might contain user data
-      if (!Array.isArray(data) && typeof data === 'object') {
+      if (!Array.isArray(data: any) && typeof data === 'object') {
         // Handle nested objects
         const sanitizedData = { ...data };
         
         // Sanitize user fields recursively in nested objects
         // Only scan the first level for performance
-        Object.keys(data).forEach(key => {
+        Object.keys(data: any).forEach(key => {
           if (data[key] && typeof data[key] === 'object' && data[key].password && data[key].username) {
             console.log(`Sanitizing nested user at key ${key}: ${data[key].username}`);
             sanitizedData[key] = createSafeUser(data[key]);
           }
         });
         
-        return originalJson.call(this, sanitizedData);
+        return originalJson.call(this: any, sanitizedData: any);
       }
     }
     
     // If no user data found, just pass through the original
-    return originalJson.call(this, data);
+    return originalJson.call(this: any, data: any);
   };
   
   next();

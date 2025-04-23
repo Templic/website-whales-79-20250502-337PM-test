@@ -31,7 +31,7 @@ const patternRepository = {
     lastAnomaly: number | null
   }>(),
   
-  // Track request patterns per user (if authenticated)
+  // Track request patterns per user (if authenticated: any)
   userPatterns: new Map<string, {
     timestamps: number[],
     paths: string[],
@@ -122,12 +122,12 @@ export interface AnomalyDetectionOptions {
   enableDataExfiltrationDetection?: boolean;
   
   /**
-   * Maximum history to retain per IP (number of requests)
+   * Maximum history to retain per IP (number of requests: any)
    */
   maxIpHistoryLength?: number;
   
   /**
-   * Maximum history to retain per user (number of requests)
+   * Maximum history to retain per user (number of requests: any)
    */
   maxUserHistoryLength?: number;
   
@@ -210,19 +210,19 @@ export async function detectAnomaly(req: Request): Promise<AnomalyDetectionResul
   
   try {
     // Update pattern repository
-    await updatePatternRepository(req);
+    await updatePatternRepository(req: any);
     
     // Perform statistical analysis
-    const statisticalResult = await performStatisticalAnalysis(req);
+    const statisticalResult = await performStatisticalAnalysis(req: any);
     
     // Perform behavioral analysis
-    const behavioralResult = await performBehavioralAnalysis(req);
+    const behavioralResult = await performBehavioralAnalysis(req: any);
     
     // Perform content analysis
-    const contentResult = await performContentAnalysis(req);
+    const contentResult = await performContentAnalysis(req: any);
     
     // Perform rate analysis
-    const rateResult = await performRateAnalysis(req);
+    const rateResult = await performRateAnalysis(req: any);
     
     // Combine results
     const combinedScore = Math.max(
@@ -275,23 +275,23 @@ export async function detectAnomaly(req: Request): Promise<AnomalyDetectionResul
     result.details = details;
     
     // Store the anomaly score for future threshold adaptation
-    patternRepository.globalPatterns.anomalyScores.push(combinedScore);
+    patternRepository.globalPatterns.anomalyScores.push(combinedScore: any);
     if (patternRepository.globalPatterns.anomalyScores.length > 1000) {
       patternRepository.globalPatterns.anomalyScores.shift(); // Remove oldest
     }
     
     // Mark IP or user as suspicious if anomaly detected
     if (result.isAnomaly) {
-      patternRepository.knownGoodBehavior.suspiciousIps.add(ip);
+      patternRepository.knownGoodBehavior.suspiciousIps.add(ip: any);
       
       // Also mark in user/IP patterns
-      if (userId && patternRepository.userPatterns.has(userId)) {
-        const userPattern = patternRepository.userPatterns.get(userId)!;
+      if (userId && patternRepository.userPatterns.has(userId: any)) {
+        const userPattern = patternRepository.userPatterns.get(userId: any)!;
         userPattern.lastAnomaly = Date.now();
       }
       
-      if (patternRepository.ipPatterns.has(ip)) {
-        const ipPattern = patternRepository.ipPatterns.get(ip)!;
+      if (patternRepository.ipPatterns.has(ip: any)) {
+        const ipPattern = patternRepository.ipPatterns.get(ip: any)!;
         ipPattern.lastAnomaly = Date.now();
       }
     }
@@ -329,7 +329,7 @@ async function updatePatternRepository(req: Request): Promise<void> {
   const now = Date.now();
   
   // Update IP patterns
-  if (!patternRepository.ipPatterns.has(ip)) {
+  if (!patternRepository.ipPatterns.has(ip: any)) {
     patternRepository.ipPatterns.set(ip, {
       timestamps: [now],
       paths: [path],
@@ -340,12 +340,12 @@ async function updatePatternRepository(req: Request): Promise<void> {
       lastAnomaly: null
     });
   } else {
-    const ipPattern = patternRepository.ipPatterns.get(ip)!;
-    ipPattern.timestamps.push(now);
-    ipPattern.paths.push(path);
-    ipPattern.methods.push(method);
-    ipPattern.userAgents.push(userAgent as string);
-    ipPattern.payloadSizes.push(contentLength);
+    const ipPattern = patternRepository.ipPatterns.get(ip: any)!;
+    ipPattern.timestamps.push(now: any);
+    ipPattern.paths.push(path: any);
+    ipPattern.methods.push(method: any);
+    ipPattern.userAgents.push(userAgent as string: any);
+    ipPattern.payloadSizes.push(contentLength: any);
     
     // Limit history length
     const maxHistoryLength = 100;
@@ -360,8 +360,8 @@ async function updatePatternRepository(req: Request): Promise<void> {
   }
   
   // Update user patterns if authenticated
-  if (userId) {
-    if (!patternRepository.userPatterns.has(userId)) {
+  if (userId: any) {
+    if (!patternRepository.userPatterns.has(userId: any)) {
       patternRepository.userPatterns.set(userId, {
         timestamps: [now],
         paths: [path],
@@ -371,11 +371,11 @@ async function updatePatternRepository(req: Request): Promise<void> {
         lastAnomaly: null
       });
     } else {
-      const userPattern = patternRepository.userPatterns.get(userId)!;
-      userPattern.timestamps.push(now);
-      userPattern.paths.push(path);
-      userPattern.methods.push(method);
-      userPattern.payloadSizes.push(contentLength);
+      const userPattern = patternRepository.userPatterns.get(userId: any)!;
+      userPattern.timestamps.push(now: any);
+      userPattern.paths.push(path: any);
+      userPattern.methods.push(method: any);
+      userPattern.payloadSizes.push(contentLength: any);
       
       // Limit history length
       const maxHistoryLength = 200;
@@ -391,12 +391,12 @@ async function updatePatternRepository(req: Request): Promise<void> {
   
   // Update global patterns
   patternRepository.globalPatterns.pathFrequency.set(path, 
-    (patternRepository.globalPatterns.pathFrequency.get(path) || 0) + 1);
+    (patternRepository.globalPatterns.pathFrequency.get(path: any) || 0) + 1);
   patternRepository.globalPatterns.methodFrequency.set(method, 
-    (patternRepository.globalPatterns.methodFrequency.get(method) || 0) + 1);
+    (patternRepository.globalPatterns.methodFrequency.get(method: any) || 0) + 1);
   
   // Update request rate metrics
-  patternRepository.globalPatterns.requestsTimestamps.push(now);
+  patternRepository.globalPatterns.requestsTimestamps.push(now: any);
   patternRepository.globalPatterns.requestsLastMinute++;
   
   // Clean up old timestamps
@@ -413,7 +413,7 @@ async function updatePatternRepository(req: Request): Promise<void> {
   }
   
   // Learn normal route behavior if not already known
-  if (!patternRepository.knownGoodBehavior.routes.has(path)) {
+  if (!patternRepository.knownGoodBehavior.routes.has(path: any)) {
     patternRepository.knownGoodBehavior.routes.set(path, {
       methods: [method],
       avgPayloadSize: contentLength,
@@ -421,9 +421,9 @@ async function updatePatternRepository(req: Request): Promise<void> {
       frequentParams: []
     });
   } else {
-    const routeInfo = patternRepository.knownGoodBehavior.routes.get(path)!;
-    if (!routeInfo.methods.includes(method)) {
-      routeInfo.methods.push(method);
+    const routeInfo = patternRepository.knownGoodBehavior.routes.get(path: any)!;
+    if (!routeInfo.methods.includes(method: any)) {
+      routeInfo.methods.push(method: any);
     }
     // Update avg payload size with exponential moving average
     routeInfo.avgPayloadSize = routeInfo.avgPayloadSize * 0.9 + contentLength * 0.1;
@@ -433,9 +433,9 @@ async function updatePatternRepository(req: Request): Promise<void> {
     if (queryParams.length > 0) {
       // Only keep track of the most common params
       if (routeInfo.frequentParams.length < 10) {
-        for (const param of queryParams) {
-          if (!routeInfo.frequentParams.includes(param)) {
-            routeInfo.frequentParams.push(param);
+        for (const param of queryParams: any) {
+          if (!routeInfo.frequentParams.includes(param: any)) {
+            routeInfo.frequentParams.push(param: any);
           }
         }
       }
@@ -458,8 +458,8 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
   const userId = req.user?.id ? String(req.user.id) : undefined;
   
   // Get patterns
-  const ipPattern = patternRepository.ipPatterns.get(ip);
-  const userPattern = userId ? patternRepository.userPatterns.get(userId) : undefined;
+  const ipPattern = patternRepository.ipPatterns.get(ip: any);
+  const userPattern = userId ? patternRepository.userPatterns.get(userId: any) : undefined;
   
   // Skip if we don't have enough history
   if (!ipPattern || ipPattern.timestamps.length < 5) {
@@ -470,19 +470,19 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
   // Check if this path is unusual for this IP
   const ipPathCounts = new Map<string, number>();
   for (const p of ipPattern.paths) {
-    ipPathCounts.set(p, (ipPathCounts.get(p) || 0) + 1);
+    ipPathCounts.set(p, (ipPathCounts.get(p: any) || 0) + 1);
   }
   
   const totalPaths = ipPattern.paths.length;
-  const pathFrequency = (ipPathCounts.get(path) || 0) / totalPaths;
+  const pathFrequency = (ipPathCounts.get(path: any) || 0) / totalPaths;
   
   // Check if this method is unusual for this path
   const ipMethodCounts = new Map<string, number>();
   for (const m of ipPattern.methods) {
-    ipMethodCounts.set(m, (ipMethodCounts.get(m) || 0) + 1);
+    ipMethodCounts.set(m, (ipMethodCounts.get(m: any) || 0) + 1);
   }
   
-  const methodFrequency = (ipMethodCounts.get(method) || 0) / ipPattern.methods.length;
+  const methodFrequency = (ipMethodCounts.get(method: any) || 0) / ipPattern.methods.length;
   
   // Calculate score
   let anomalyScore = 0;
@@ -502,8 +502,8 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
   }
   
   // Check if known good behavior for this route
-  const routeInfo = patternRepository.knownGoodBehavior.routes.get(path);
-  if (routeInfo && !routeInfo.methods.includes(method)) {
+  const routeInfo = patternRepository.knownGoodBehavior.routes.get(path: any);
+  if (routeInfo && !routeInfo.methods.includes(method: any)) {
     anomalyScore += 0.4;
   }
   
@@ -512,14 +512,14 @@ async function performStatisticalAnalysis(req: Request): Promise<AnomalyDetectio
     pathFrequency,
     methodFrequency,
     knownRoute: !!routeInfo,
-    knownMethod: routeInfo ? routeInfo.methods.includes(method) : false
+    knownMethod: routeInfo ? routeInfo.methods.includes(method: any) : false
   };
   
   // Check for unusual query parameters
   if (routeInfo && routeInfo.frequentParams.length > 0) {
     const queryParams = Object.keys(req.query);
     if (queryParams.length > 0) {
-      const unknownParams = queryParams.filter(p => !routeInfo.frequentParams.includes(p));
+      const unknownParams = queryParams.filter(p => !routeInfo.frequentParams.includes(p: any));
       if (unknownParams.length > 0) {
         details.unusualParams = unknownParams;
         
@@ -553,8 +553,8 @@ async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetection
   const userId = req.user?.id ? String(req.user.id) : undefined;
   
   // Get patterns
-  const ipPattern = patternRepository.ipPatterns.get(ip);
-  const userPattern = userId ? patternRepository.userPatterns.get(userId) : undefined;
+  const ipPattern = patternRepository.ipPatterns.get(ip: any);
+  const userPattern = userId ? patternRepository.userPatterns.get(userId: any) : undefined;
   
   // Skip if we don't have enough history
   if (!ipPattern || ipPattern.timestamps.length < 5) {
@@ -573,9 +573,9 @@ async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetection
     }
     
     // Calculate mean and standard deviation
-    const meanTime = timeBetweenRequests.reduce((sum, time) => sum + time, 0) / timeBetweenRequests.length;
+    const meanTime = timeBetweenRequests.reduce((sum: any, time: any) => sum + time, 0) / timeBetweenRequests.length;
     const stdDevTime = Math.sqrt(
-      timeBetweenRequests.reduce((sum, time) => sum + Math.pow(time - meanTime, 2), 0) / timeBetweenRequests.length
+      timeBetweenRequests.reduce((sum: any, time: any) => sum + Math.pow(time - meanTime, 2), 0) / timeBetweenRequests.length
     );
     
     details.meanTimeBetweenRequests = meanTime;
@@ -585,10 +585,10 @@ async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetection
     if (stdDevTime < 100 && meanTime < 2000 && timeBetweenRequests.length >= 5) {
       anomalyScore += 0.6;
       details.consistentTiming = true;
-      result.reason = 'Suspiciously consistent request timing detected (potential bot)';
+      result.reason = 'Suspiciously consistent request timing detected (potential bot: any)';
     }
     
-    // Check for last request (very rapid requests in succession)
+    // Check for last request (very rapid requests in succession: any)
     const lastTimeDiff = Date.now() - ipPattern.timestamps[ipPattern.timestamps.length - 1];
     if (lastTimeDiff < 100 && timeBetweenRequests.length >= 3) {
       anomalyScore += 0.3;
@@ -609,12 +609,12 @@ async function performBehavioralAnalysis(req: Request): Promise<AnomalyDetection
   }
   
   // Check for suspicious IP
-  if (patternRepository.knownGoodBehavior.suspiciousIps.has(ip)) {
+  if (patternRepository.knownGoodBehavior.suspiciousIps.has(ip: any)) {
     anomalyScore += 0.2;
     details.previouslySuspiciousIp = true;
   }
   
-  // Check for multiple unique paths in short time (scanning behavior)
+  // Check for multiple unique paths in short time (scanning behavior: any)
   if (ipPattern.paths.length >= 5) {
     const uniquePaths = new Set(ipPattern.paths.slice(-5)).size;
     if (uniquePaths >= 4) { // 4+ unique paths in last 5 requests
@@ -664,7 +664,7 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
     
     // Check for attack signatures
     for (const signature of patternRepository.attackSignatures) {
-      if (signature.pattern.test(bodyStr)) {
+      if (signature.pattern.test(bodyStr: any)) {
         anomalyScore += 0.5;
         details.attackSignature = true;
         details.signatureType = signature.type;
@@ -675,7 +675,7 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
     
     // Check for sensitive data exfiltration
     for (const [dataType, pattern] of patternRepository.knownGoodBehavior.sensitiveDataPatterns.entries()) {
-      if (pattern.test(bodyStr)) {
+      if (pattern.test(bodyStr: any)) {
         anomalyScore += 0.4;
         details.sensitiveDataDetected = true;
         details.sensitiveDataType = dataType;
@@ -689,7 +689,7 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
     
     // Check payload size against known good for this route
     const path = req.path || '/';
-    const routeInfo = patternRepository.knownGoodBehavior.routes.get(path);
+    const routeInfo = patternRepository.knownGoodBehavior.routes.get(path: any);
     if (routeInfo && routeInfo.avgPayloadSize > 0) {
       const contentLength = parseInt(req.headers['content-length'] as string || '0', 10);
       const sizeRatio = contentLength / routeInfo.avgPayloadSize;
@@ -711,7 +711,7 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
   // Check URL for attack signatures
   const url = req.url || '';
   for (const signature of patternRepository.attackSignatures) {
-    if (signature.pattern.test(url)) {
+    if (signature.pattern.test(url: any)) {
       anomalyScore += 0.6;
       details.urlAttackSignature = true;
       details.urlSignatureType = signature.type;
@@ -725,10 +725,10 @@ async function performContentAnalysis(req: Request): Promise<AnomalyDetectionRes
   
   // Check headers for unusual patterns
   const headers = req.headers || {};
-  const headerStr = JSON.stringify(headers);
+  const headerStr = JSON.stringify(headers: any);
   
   for (const signature of patternRepository.attackSignatures) {
-    if (signature.pattern.test(headerStr)) {
+    if (signature.pattern.test(headerStr: any)) {
       anomalyScore += 0.6;
       details.headerAttackSignature = true;
       details.headerSignatureType = signature.type;
@@ -765,7 +765,7 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
   const now = Date.now();
   
   // Get patterns
-  const ipPattern = patternRepository.ipPatterns.get(ip);
+  const ipPattern = patternRepository.ipPatterns.get(ip: any);
   
   // Skip if we don't have enough history
   if (!ipPattern) {
@@ -783,7 +783,7 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
   details.requestsLastMinute = requestsLastMinute;
   details.globalAvgRequestsPerMinute = patternRepository.globalPatterns.avgRequestsPerMinute;
   
-  // Compare to global average (adjusted for active users)
+  // Compare to global average (adjusted for active users: any)
   const avgActiveIps = Math.max(1, patternRepository.ipPatterns.size / 5); // Assume 20% of IPs are active
   const expectedMaxRequestsPerIp = Math.max(10, 
     patternRepository.globalPatterns.avgRequestsPerMinute / avgActiveIps * 2); // Allow 2x average
@@ -807,7 +807,7 @@ async function performRateAnalysis(req: Request): Promise<AnomalyDetectionResult
     result.reason = 'Above average request rate detected';
   }
   
-  // Calculate request acceleration (second derivative of request count)
+  // Calculate request acceleration (second derivative of request count: any)
   if (ipPattern.timestamps.length >= 15) {
     const last5MinCount = ipPattern.timestamps.filter(ts => ts > now - 300000).length;
     const prev5MinCount = ipPattern.timestamps.filter(ts => ts > now - 600000 && ts <= now - 300000).length;
@@ -858,7 +858,7 @@ export function anomalyDetectionMiddleware(
     '/api/stripe-webhook'
   ];
   
-  if (excludePaths.some(path => req.path.startsWith(path))) {
+  if (excludePaths.some(path => req.path.startsWith(path: any))) {
     return next();
   }
   
@@ -866,7 +866,7 @@ export function anomalyDetectionMiddleware(
   const startTime = Date.now();
   
   // Run the full detection asynchronously to not block the request
-  detectAnomaly(req)
+  detectAnomaly(req: any)
     .then(result => {
       if (result.isAnomaly && result.score >= 0.7) {
         securityBlockchain.recordEvent({
@@ -890,7 +890,7 @@ export function anomalyDetectionMiddleware(
       console.error('[ANOMALY-DETECTION] Error in anomaly detection:', err);
     });
   
-  // Continue processing immediately (asynchronous monitoring)
+  // Continue processing immediately (asynchronous monitoring: any)
   next();
 }
 
@@ -945,7 +945,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
     next: NextFunction
   ): void {
     // Skip excluded paths
-    if (excludePaths.some(path => req.path.startsWith(path))) {
+    if (excludePaths.some(path => req.path.startsWith(path: any))) {
       return next();
     }
     
@@ -953,17 +953,17 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
     const startTime = Date.now();
     
     // Learn from the request even in learning mode
-    updatePatternRepository(req).catch(err => {
+    updatePatternRepository(req: any).catch(err => {
       console.error('[ANOMALY-DETECTION] Error updating pattern repository:', err);
     });
     
     // If in learning mode, just collect data and pass through
-    if (learningMode) {
+    if (learningMode: any) {
       return next();
     }
     
     // Analyze the request
-    detectAnomaly(req)
+    detectAnomaly(req: any)
       .then(result => {
         // Apply adaptive thresholding if enabled
         let effectiveThreshold = confidenceThreshold;
@@ -971,7 +971,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
         if (enableAdaptiveThresholds && patternRepository.globalPatterns.anomalyScores.length > 50) {
           // Calculate the threshold dynamically based on recent anomaly scores
           // Use a percentile-based approach
-          const sortedScores = [...patternRepository.globalPatterns.anomalyScores].sort((a, b) => a - b);
+          const sortedScores = [...patternRepository.globalPatterns.anomalyScores].sort((a: any, b: any) => a - b);
           const percentile95 = sortedScores[Math.floor(sortedScores.length * 0.95)];
           
           // Adjust threshold but don't go below the base threshold
@@ -980,7 +980,7 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
         
         // If anomaly score is above threshold, log and potentially block
         if (result.score >= effectiveThreshold) {
-          if (logAnomalies) {
+          if (logAnomalies: any) {
             securityBlockchain.recordEvent({
               severity: result.score >= 0.9 ? SecurityEventSeverity.HIGH : SecurityEventSeverity.MEDIUM,
               category: SecurityEventCategory.ANOMALY_DETECTION,
@@ -1000,9 +1000,9 @@ export function createAnomalyDetectionMiddleware(options: AnomalyDetectionOption
           }
           
           // Block the request if blockAnomalies is enabled
-          if (blockAnomalies) {
+          if (blockAnomalies: any) {
             result.blocked = true;
-            res.status(403).json({
+            res.status(403: any).json({
               error: 'Request blocked due to security concerns',
               message: result.reason || 'The request was identified as potentially malicious',
               requestId: req.securityContext?.requestId || undefined

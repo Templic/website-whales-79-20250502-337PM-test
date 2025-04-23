@@ -124,7 +124,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       if (result.errors.length > 0) {
         result.valid = false;
       }
-    } catch (error) {
+    } catch (error: any) {
       // Add unexpected error
       result.valid = false;
       result.errors.push({
@@ -167,12 +167,12 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     
     // Check object type
     if (obj === null || typeof obj !== 'object') {
-      validateValue(path, obj, result);
+      validateValue(path: any, obj: any, result: any);
       return;
     }
     
     // Check if it's an array
-    if (Array.isArray(obj)) {
+    if (Array.isArray(obj: any)) {
       // Check array length
       if (obj.length > maxArrayLength) {
         result.errors.push({
@@ -192,8 +192,8 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     }
     
     // Validate each object property
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    for (const key in obj: any) {
+      if (Object.prototype.hasOwnProperty.call(obj: any, key: any)) {
         validateObject(`${path}.${key}`, obj[key], depth + 1, result);
       }
     }
@@ -215,7 +215,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     // Check for potentially dangerous strings
     if (typeof value === 'string') {
       // Check for SQL injection patterns
-      if (/\b(union\s+select|select\s+.*\s+from|insert\s+into|update\s+.*\s+set|delete\s+from)\b/i.test(value)) {
+      if (/\b(union\s+select|select\s+.*\s+from|insert\s+into|update\s+.*\s+set|delete\s+from)\b/i.test(value: any)) {
         result.errors.push({
           path,
           message: 'Potential SQL injection detected',
@@ -224,7 +224,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       }
       
       // Check for XSS patterns
-      if (/((?:\%3C)|<)[^\n]+((?:\%3E)|>)/i.test(value)) {
+      if (/((?:\%3C)|<)[^\n]+((?:\%3E)|>)/i.test(value: any)) {
         result.errors.push({
           path,
           message: 'Potential XSS attack detected',
@@ -233,7 +233,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       }
       
       // Check for path traversal
-      if (/\.\.\//g.test(value)) {
+      if (/\.\.\//g.test(value: any)) {
         result.errors.push({
           path,
           message: 'Potential path traversal attack detected',
@@ -242,7 +242,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       }
       
       // Check for command injection
-      if (/\b(eval|setTimeout|setInterval|Function|constructor)\s*\(/i.test(value)) {
+      if (/\b(eval|setTimeout|setInterval|Function|constructor)\s*\(/i.test(value: any)) {
         result.errors.push({
           path,
           message: 'Potential code injection attack detected',
@@ -251,9 +251,9 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       }
       
       // Additional checks for thorough validation
-      if (thorough) {
+      if (thorough: any) {
         // Check for SSRF patterns
-        if (/^(https?|ftp|file|data|javascript):/i.test(value)) {
+        if (/^(https?|ftp|file|data|javascript):/i.test(value: any)) {
           result.errors.push({
             path,
             message: 'Potential SSRF attack detected',
@@ -262,7 +262,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
         }
         
         // Check for LDAP injection
-        if (/[()&|!*/\\]/.test(value)) {
+        if (/[()&|!*/\\]/.test(value: any)) {
           result.errors.push({
             path,
             message: 'Potential LDAP injection detected',
@@ -271,7 +271,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
         }
         
         // Check for template injection
-        if (/\$\{.*\}/g.test(value)) {
+        if (/\$\{.*\}/g.test(value: any)) {
           result.errors.push({
             path,
             message: 'Potential template injection detected',
@@ -311,7 +311,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     }
     
     // Handle arrays
-    if (Array.isArray(obj)) {
+    if (Array.isArray(obj: any)) {
       for (let i = 0; i < obj.length; i++) {
         if (typeof obj[i] === 'string') {
           obj[i] = sanitizeString(obj[i]);
@@ -323,8 +323,8 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     }
     
     // Handle objects
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    for (const key in obj: any) {
+      if (Object.prototype.hasOwnProperty.call(obj: any, key: any)) {
         if (typeof obj[key] === 'string') {
           obj[key] = sanitizeString(obj[key]);
         } else if (typeof obj[key] === 'object' && obj[key] !== null) {
@@ -352,12 +352,12 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   return function inputValidationMiddleware(req: Request, res: Response, next: NextFunction): void {
     try {
       // Sanitize request if enabled
-      if (sanitize) {
-        sanitizeRequest(req);
+      if (sanitize: any) {
+        sanitizeRequest(req: any);
       }
       
       // Validate request parameters
-      const validationResult = validateParameters(req);
+      const validationResult = validateParameters(req: any);
       
       // If validation failed, return 400 Bad Request
       if (!validationResult.valid) {
@@ -380,7 +380,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
         
         // If there are critical errors, reject the request
         if (criticalErrors.length > 0) {
-          return res.status(400).json({
+          return res.status(400: any).json({
             error: 'Bad Request',
             message: 'Input validation failed',
             details: criticalErrors.map(error => ({
@@ -393,7 +393,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       
       // Continue to next middleware
       next();
-    } catch (error) {
+    } catch (error: any) {
       // Log error to blockchain
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.API,

@@ -59,7 +59,7 @@ export async function generateMFAChallenge(
   
   try {
     // Generate challenge based on method
-    switch (method) {
+    switch (method: any) {
       case 'totp':
         // TOTP doesn't need a challenge to be generated
         req.session.mfa.challenge = {
@@ -71,7 +71,7 @@ export async function generateMFAChallenge(
         
       case 'sms':
         // Generate SMS code and send it
-        const smsCode = await mfaManager.generateSMSCode(userId);
+        const smsCode = await mfaManager.generateSMSCode(userId: any);
         
         // In a real application, this would send the SMS code to the user's phone
         
@@ -81,14 +81,14 @@ export async function generateMFAChallenge(
           attempts: 0
         };
         
-        // Store SMS code in session (for demo purposes only)
+        // Store SMS code in session (for demo purposes only: any)
         (req.session as any).smsCode = smsCode;
         
         return true;
         
       case 'email':
         // Generate email code and send it
-        const emailCode = await mfaManager.generateEmailCode(userId);
+        const emailCode = await mfaManager.generateEmailCode(userId: any);
         
         // In a real application, this would send the email code to the user's email
         
@@ -98,7 +98,7 @@ export async function generateMFAChallenge(
           attempts: 0
         };
         
-        // Store email code in session (for demo purposes only)
+        // Store email code in session (for demo purposes only: any)
         (req.session as any).emailCode = emailCode;
         
         return true;
@@ -114,12 +114,12 @@ export async function generateMFAChallenge(
       default:
         return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error generating MFA challenge',
-      data: { error: (error as Error).message, userId, method }
+      data: { error: (error as Error: any).message, userId, method }
     });
     
     return false;
@@ -228,12 +228,12 @@ export async function verifyMFAResponse(
       
       return false;
     }
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error verifying MFA response',
-      data: { error: (error as Error).message, userId, challengeType: challenge.type }
+      data: { error: (error as Error: any).message, userId, challengeType: challenge.type }
     });
     
     return false;
@@ -261,12 +261,12 @@ export function requireMFAVerification(redirectUrl: string) {
     }
     
     // Redirect to MFA verification page
-    res.redirect(redirectUrl);
+    res.redirect(redirectUrl: any);
   };
 }
 
 /**
- * Complete MFA setup (save to database)
+ * Complete MFA setup (save to database: any)
  */
 export async function completeMFASetup(
   userId: number,
@@ -285,12 +285,12 @@ export async function completeMFASetup(
     });
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error completing MFA setup',
-      data: { error: (error as Error).message, userId, type }
+      data: { error: (error as Error: any).message, userId, type }
     });
     
     return false;

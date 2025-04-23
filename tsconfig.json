@@ -13,7 +13,9 @@
     "declaration": true,
     "resolveJsonModule": true,
     "paths": {
-      "@shared/*": ["./shared/*"]
+      "@shared/*": [
+        "./shared/*"
+      ]
     }
   },
   "include": [
@@ -25,5 +27,6 @@
   "exclude": [
     "node_modules",
     "dist"
-  ]
+  ],
+  "extends": "./tsconfig.paths.json"
 }

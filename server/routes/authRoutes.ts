@@ -29,16 +29,16 @@ const router = express.Router();
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
   password: z.string().min(1, 'Password is required'),
-  rememberMe: z.boolean().optional().default(false),
+  rememberMe: z.boolean().optional().default(false: any),
 });
 
 // Validate 2FA input
 const totpSchema = z.object({
-  token: z.string().min(6).max(6)
+  token: z.string().min(6: any).max(6: any)
 });
 
 const backupCodeSchema = z.object({
-  backupCode: z.string().min(11).max(11) // Format: XXXXX-XXXXX
+  backupCode: z.string().min(11: any).max(11: any) // Format: XXXXX-XXXXX
 });
 
 // Login endpoint
@@ -47,7 +47,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
     // Validate request body
     const validation = loginSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -75,21 +75,21 @@ router.post('/login', async (req: Request, res: Response, next) => {
         severity: 'medium'
       });
       
-      return res.status(429).json({
+      return res.status(429: any).json({
         success: false,
-        message: `Account is temporarily locked. Please try again in ${minutesRemaining} minute(s).`
+        message: `Account is temporarily locked. Please try again in ${minutesRemaining} minute(s: any).`
       });
     }
 
     // Use passport for authentication
     passport.authenticate('local', async (err: any, user: any, info: any) => {
-      if (err) {
-        return next(err);
+      if (err: any) {
+        return next(err: any);
       }
       
       if (!user) {
         // Failed login attempt
-        if (userRecord) {
+        if (userRecord: any) {
           const MAX_ATTEMPTS = 5;
           const updatedAttempts = (userRecord.loginAttempts || 0) + 1;
           
@@ -112,8 +112,8 @@ router.post('/login', async (req: Request, res: Response, next) => {
             });
           }
           
-          await db.update(users)
-            .set(updateData)
+          await db.update(users: any)
+            .set(updateData: any)
             .where(eq(users.id, userRecord.id));
         }
         
@@ -126,7 +126,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
           severity: 'medium'
         });
         
-        return res.status(401).json({
+        return res.status(401: any).json({
           success: false,
           message: info.message
         });
@@ -142,7 +142,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
           twoFactorPending: true
         };
         
-        return res.status(200).json({
+        return res.status(200: any).json({
           success: true,
           requires2FA: true,
           message: 'Please provide your two-factor authentication code'
@@ -156,22 +156,22 @@ router.post('/login', async (req: Request, res: Response, next) => {
       
       // Set session cookie expiration based on "Remember me" option
       if (req.session) {
-        if (rememberMe) {
-          // Set a longer expiration time (30 days)
+        if (rememberMe: any) {
+          // Set a longer expiration time (30 days: any)
           req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
         } else {
-          // Default expiration time (24 hours)
+          // Default expiration time (24 hours: any)
           req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
         }
       }
       
-      req.login(user, async (err) => {
-        if (err) {
-          return next(err);
+      req.login(user, async (err: any) => {
+        if (err: any) {
+          return next(err: any);
         }
         
         // Reset login attempts on successful login
-        await db.update(users)
+        await db.update(users: any)
           .set({ 
             loginAttempts: 0,
             lastLogin: new Date(),
@@ -190,7 +190,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
         });
         
         // Pass rememberMe flag in response for client to store
-        return res.status(200).json({
+        return res.status(200: any).json({
           success: true,
           rememberMe: rememberMe,
           user: {
@@ -201,8 +201,8 @@ router.post('/login', async (req: Request, res: Response, next) => {
           }
         });
       });
-    })(req, res, next);
-  } catch (error) {
+    })(req: any, res: any, next: any);
+  } catch (error: any) {
     console.error('Login error:', error);
     
     logSecurityEvent({
@@ -213,7 +213,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during login'
     });
@@ -224,7 +224,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
 router.post('/verify-2fa', async (req: Request, res: Response) => {
   try {
     if (!req.session.twoFactorAuth || !req.session.twoFactorAuth.twoFactorPending) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid session state. Please try logging in again.'
       });
@@ -233,7 +233,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
     // Validate the 2FA token
     const validation = totpSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -258,7 +258,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
         severity: 'high'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid user or 2FA setup'
       });
@@ -277,25 +277,25 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid authentication code'
       });
     }
     
     // Complete the login process by setting the user in the session
-    req.login(userRecord, async (err) => {
-      if (err) {
+    req.login(userRecord, async (err: any) => {
+      if (err: any) {
         console.error('Error logging in after 2FA:', err);
         
-        return res.status(500).json({
+        return res.status(500: any).json({
           success: false,
           message: 'An error occurred during 2FA verification'
         });
       }
       
       // Reset login attempts and update last login
-      await db.update(users)
+      await db.update(users: any)
         .set({ 
           loginAttempts: 0,
           lastLogin: new Date(),
@@ -316,7 +316,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
         severity: 'low'
       });
       
-      return res.status(200).json({
+      return res.status(200: any).json({
         success: true,
         user: {
           id: userRecord.id,
@@ -326,7 +326,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
         }
       });
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('2FA verification error:', error);
     
     logSecurityEvent({
@@ -337,7 +337,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during 2FA verification'
     });
@@ -348,7 +348,7 @@ router.post('/verify-2fa', async (req: Request, res: Response) => {
 router.post('/verify-backup-code', async (req: Request, res: Response) => {
   try {
     if (!req.session.twoFactorAuth || !req.session.twoFactorAuth.twoFactorPending) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid session state. Please try logging in again.'
       });
@@ -357,7 +357,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
     // Validate the backup code
     const validation = backupCodeSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -382,7 +382,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
         severity: 'high'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid user or backup codes not available'
       });
@@ -401,30 +401,30 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid backup code'
       });
     }
     
-    // Update the user's backup codes (removing the used one)
-    await db.update(users)
+    // Update the user's backup codes (removing the used one: any)
+    await db.update(users: any)
       .set({ backupCodes: remainingCodes })
       .where(eq(users.id, userRecord.id));
     
     // Complete the login process by setting the user in the session
-    req.login(userRecord, async (err) => {
-      if (err) {
+    req.login(userRecord, async (err: any) => {
+      if (err: any) {
         console.error('Error logging in after backup code:', err);
         
-        return res.status(500).json({
+        return res.status(500: any).json({
           success: false,
           message: 'An error occurred during backup code verification'
         });
       }
       
       // Reset login attempts and update last login
-      await db.update(users)
+      await db.update(users: any)
         .set({ 
           loginAttempts: 0,
           lastLogin: new Date(),
@@ -445,7 +445,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
         severity: 'medium' // Medium severity as backup codes should be monitored
       });
       
-      return res.status(200).json({
+      return res.status(200: any).json({
         success: true,
         user: {
           id: userRecord.id,
@@ -456,7 +456,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
         backupCodesRemaining: remainingCodes.length
       });
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Backup code verification error:', error);
     
     logSecurityEvent({
@@ -467,7 +467,7 @@ router.post('/verify-backup-code', async (req: Request, res: Response) => {
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during backup code verification'
     });
@@ -480,7 +480,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
     const userId = req.user?.id;
     
     if (!userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Authentication required'
       });
@@ -492,7 +492,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
     });
     
     if (!userRecord) {
-      return res.status(404).json({
+      return res.status(404: any).json({
         success: false,
         message: 'User not found'
       });
@@ -508,7 +508,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
     const totpUri = generateTotpUri(userRecord.username, secret);
     
     // Generate QR code
-    const qrCode = await generateQrCode(totpUri);
+    const qrCode = await generateQrCode(totpUri: any);
     
     // Store the new secret temporarily in the session
     req.session.twoFactorSetup = {
@@ -526,13 +526,13 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
       severity: 'medium'
     });
     
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       qrCode,
       backupCodes,
       message: 'Scan the QR code with your authenticator app, then verify with the generated code'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('2FA setup error:', error);
     
     logSecurityEvent({
@@ -544,7 +544,7 @@ router.post('/setup-2fa', isAuthenticated, async (req: Request, res: Response) =
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during 2FA setup'
     });
@@ -557,7 +557,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     const userId = req.user?.id;
     
     if (!userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Authentication required'
       });
@@ -566,7 +566,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     // Validate the verification token
     const validation = totpSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -575,7 +575,7 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     
     // Check if 2FA setup is in progress
     if (!req.session.twoFactorSetup) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'No 2FA setup in progress. Please start the setup process again.'
       });
@@ -585,17 +585,17 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
     const { secret, backupCodes } = req.session.twoFactorSetup;
     
     // Verify the provided token
-    const isValidToken = verifyToken(token, secret);
+    const isValidToken = verifyToken(token: any, secret: any);
     
     if (!isValidToken) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid verification code'
       });
     }
     
     // Token is valid, save the 2FA configuration
-    await db.update(users)
+    await db.update(users: any)
       .set({ 
         twoFactorEnabled: true,
         twoFactorSecret: secret,
@@ -615,11 +615,11 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
       severity: 'medium'
     });
     
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       message: 'Two-factor authentication has been activated'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('2FA activation error:', error);
     
     logSecurityEvent({
@@ -631,20 +631,20 @@ router.post('/activate-2fa', isAuthenticated, async (req: Request, res: Response
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred while activating 2FA'
     });
   }
 });
 
-// Endpoint to disable 2FA (requires password confirmation)
+// Endpoint to disable 2FA (requires password confirmation: any)
 router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
     
     if (!userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Authentication required'
       });
@@ -657,7 +657,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
     
     const validation = passwordSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -672,7 +672,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
     });
     
     if (!userRecord) {
-      return res.status(404).json({
+      return res.status(404: any).json({
         success: false,
         message: 'User not found'
       });
@@ -691,14 +691,14 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
         severity: 'high'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid password'
       });
     }
     
     // Disable 2FA for the user
-    await db.update(users)
+    await db.update(users: any)
       .set({ 
         twoFactorEnabled: false,
         twoFactorSecret: null,
@@ -716,11 +716,11 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
       severity: 'high' // High severity as this reduces security
     });
     
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       message: 'Two-factor authentication has been disabled'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('2FA disable error:', error);
     
     logSecurityEvent({
@@ -732,7 +732,7 @@ router.post('/disable-2fa', isAuthenticated, async (req: Request, res: Response)
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred while disabling 2FA'
     });
@@ -745,7 +745,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     const userId = req.user?.id;
     
     if (!userId) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Authentication required'
       });
@@ -758,7 +758,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     
     const validation = passwordSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -773,7 +773,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     });
     
     if (!userRecord) {
-      return res.status(404).json({
+      return res.status(404: any).json({
         success: false,
         message: 'User not found'
       });
@@ -792,7 +792,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid password'
       });
@@ -802,7 +802,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
     const newBackupCodes = generateBackupCodes();
     
     // Update the user with new backup codes
-    await db.update(users)
+    await db.update(users: any)
       .set({ backupCodes: newBackupCodes })
       .where(eq(users.id, userId));
     
@@ -816,12 +816,12 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
       severity: 'medium'
     });
     
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       backupCodes: newBackupCodes,
       message: 'New backup codes have been generated'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Backup codes regeneration error:', error);
     
     logSecurityEvent({
@@ -833,7 +833,7 @@ router.post('/backup-codes/regenerate', isAuthenticated, async (req: Request, re
       severity: 'high'
     });
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred while regenerating backup codes'
     });
@@ -857,21 +857,21 @@ router.post('/logout', (req: Request, res: Response) => {
     });
   }
   
-  req.logout((err) => {
-    if (err) {
+  req.logout((err: any) => {
+    if (err: any) {
       console.error('Logout error:', err);
-      return res.status(500).json({
+      return res.status(500: any).json({
         success: false,
         message: 'An error occurred during logout'
       });
     }
     
-    req.session.destroy((err) => {
-      if (err) {
+    req.session.destroy((err: any) => {
+      if (err: any) {
         console.error('Session destruction error:', err);
       }
       
-      return res.status(200).json({
+      return res.status(200: any).json({
         success: true,
         message: 'Logged out successfully'
       });

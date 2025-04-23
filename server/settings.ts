@@ -25,25 +25,25 @@ const SETTINGS_FILE = path.join(process.cwd(), 'config', 'security_settings.json
 
 // Create config directory if it doesn't exist
 const configDir = path.join(process.cwd(), 'config');
-if (!fs.existsSync(configDir)) {
+if (!fs.existsSync(configDir: any)) {
   fs.mkdirSync(configDir, { recursive: true });
 }
 
 // Get current security settings
 export function getSecuritySettings(): SecuritySettings {
   try {
-    if (fs.existsSync(SETTINGS_FILE)) {
+    if (fs.existsSync(SETTINGS_FILE: any)) {
       const settingsData = fs.readFileSync(SETTINGS_FILE, 'utf8');
-      const settings = JSON.parse(settingsData);
+      const settings = JSON.parse(settingsData: any);
       
       // Merge with default settings to ensure all properties exist
       return { ...DEFAULT_SECURITY_SETTINGS, ...settings };
     } else {
       // If file doesn't exist, create with default settings
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(DEFAULT_SECURITY_SETTINGS, null, 2));
+      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(DEFAULT_SECURITY_SETTINGS: any, null: any, 2: any));
       return DEFAULT_SECURITY_SETTINGS;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error reading security settings:', error);
     return DEFAULT_SECURITY_SETTINGS;
   }
@@ -55,7 +55,7 @@ export function updateSecuritySetting(setting: keyof SecuritySettings, value: bo
     const currentSettings = getSecuritySettings();
     
     // Check if setting exists
-    if (!(setting in currentSettings)) {
+    if (!(setting in currentSettings: any)) {
       return false;
     }
     
@@ -63,7 +63,7 @@ export function updateSecuritySetting(setting: keyof SecuritySettings, value: bo
     currentSettings[setting] = value;
     
     // Write updated settings to file
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings, null, 2));
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings: any, null: any, 2: any));
     
     // Log the security event
     logSecurityEvent({
@@ -75,7 +75,7 @@ export function updateSecuritySetting(setting: keyof SecuritySettings, value: bo
     });
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating security setting:', error);
     return false;
   }

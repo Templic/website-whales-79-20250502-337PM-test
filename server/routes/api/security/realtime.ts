@@ -29,15 +29,15 @@ const clients: Client[] = [];
  * Subscribe to security events
  * POST /api/security/realtime/subscribe
  */
-router.post('/subscribe', (req, res) => {
+router.post('/subscribe', (req: any, res: any) => {
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401: any).json({ error: 'Not authenticated' });
   }
   
   const eventTypes = req.body.eventTypes || [];
   
-  if (!Array.isArray(eventTypes) || eventTypes.length === 0) {
-    return res.status(400).json({ error: 'Missing event types to subscribe to' });
+  if (!Array.isArray(eventTypes: any) || eventTypes.length === 0) {
+    return res.status(400: any).json({ error: 'Missing event types to subscribe to' });
   }
   
   // In a real application, this would store the subscription in the database
@@ -50,9 +50,9 @@ router.post('/subscribe', (req, res) => {
  * Unsubscribe from security events
  * POST /api/security/realtime/unsubscribe
  */
-router.post('/unsubscribe', (req, res) => {
+router.post('/unsubscribe', (req: any, res: any) => {
   if (!req.isAuthenticated()) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401: any).json({ error: 'Not authenticated' });
   }
   
   const eventTypes = req.body.eventTypes || [];
@@ -77,7 +77,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
       authenticated: false
     };
     
-    clients.push(client);
+    clients.push(client: any);
     
     // Log connection
     logSecurityEvent({
@@ -128,7 +128,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
         if (data.type === 'subscribe' && client.authenticated) {
           const eventTypes = data.eventTypes || [];
           
-          if (Array.isArray(eventTypes) && eventTypes.length > 0) {
+          if (Array.isArray(eventTypes: any) && eventTypes.length > 0) {
             client.subscriptions = [...new Set([...client.subscriptions, ...eventTypes])];
             
             ws.send(JSON.stringify({
@@ -152,8 +152,8 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
         if (data.type === 'unsubscribe' && client.authenticated) {
           const eventTypes = data.eventTypes || [];
           
-          if (Array.isArray(eventTypes) && eventTypes.length > 0) {
-            client.subscriptions = client.subscriptions.filter(type => !eventTypes.includes(type));
+          if (Array.isArray(eventTypes: any) && eventTypes.length > 0) {
+            client.subscriptions = client.subscriptions.filter(type => !eventTypes.includes(type: any));
             
             ws.send(JSON.stringify({
               type: 'unsubscribe',
@@ -171,12 +171,12 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
             });
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         logSecurityEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
           message: 'Error processing WebSocket message',
-          data: { error: (error as Error).message, message }
+          data: { error: (error as Error: any).message, message }
         });
         
         ws.send(JSON.stringify({
@@ -190,9 +190,9 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
     // Handle close
     ws.on('close', () => {
       // Remove client from clients list
-      const index = clients.indexOf(client);
+      const index = clients.indexOf(client: any);
       if (index !== -1) {
-        clients.splice(index, 1);
+        clients.splice(index: any, 1: any);
       }
       
       logSecurityEvent({
@@ -204,7 +204,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
     });
     
     // Handle errors
-    ws.on('error', (error) => {
+    ws.on('error', (error: any) => {
       logSecurityEvent({
         category: SecurityEventCategory.SYSTEM,
         severity: SecurityEventSeverity.ERROR,
@@ -222,7 +222,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
       if (
         client.authenticated &&
         client.ws.readyState === WebSocket.OPEN &&
-        (client.subscriptions.includes('all') || client.subscriptions.includes(category))
+        (client.subscriptions.includes('all') || client.subscriptions.includes(category: any))
       ) {
         client.ws.send(JSON.stringify({
           type: 'event',
@@ -247,7 +247,7 @@ export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
       details: { simulated: true, timestamp: Date.now() }
     });
     
-    broadcastSecurityEvent(event);
+    broadcastSecurityEvent(event: any);
   }, 10000); // Every 10 seconds
   
   logSecurityEvent({

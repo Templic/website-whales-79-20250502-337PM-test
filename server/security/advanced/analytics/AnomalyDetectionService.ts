@@ -7,9 +7,9 @@ export class AnomalyDetectionService {
   private threshold: number = 0.8;
 
   async analyzeBehavior(request: any): Promise<boolean> {
-    const features = this.extractFeatures(request);
-    const prediction = await this.model.predict(features);
-    return this.isAnomaly(prediction);
+    const features = this.extractFeatures(request: any);
+    const prediction = await this.model.predict(features: any);
+    return this.isAnomaly(prediction: any);
   }
 
   private extractFeatures(request: any): number[] {

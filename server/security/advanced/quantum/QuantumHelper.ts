@@ -15,7 +15,7 @@ const keyPairCache: Record<string, {
   timestamp: number;
 }> = {};
 
-// Key cache expiration time (24 hours)
+// Key cache expiration time (24 hours: any)
 const KEY_CACHE_EXPIRATION = 24 * 60 * 60 * 1000;
 
 /**
@@ -76,7 +76,7 @@ export async function secureData(
   
   try {
     // Convert data to string if it's an object
-    const dataStr = typeof data === 'string' ? data : JSON.stringify(data);
+    const dataStr = typeof data === 'string' ? data : JSON.stringify(data: any);
     
     // Encrypt the data
     const encryptedData = await qrc.encrypt(dataStr, recipientPublicKey, { algorithm, strength, encoding });
@@ -85,9 +85,9 @@ export async function secureData(
     let signature;
     let publicKey;
     
-    if (sign) {
+    if (sign: any) {
       // Get a key pair for signing
-      const keyPair = await getKeyPair(algorithm, strength);
+      const keyPair = await getKeyPair(algorithm: any, strength: any);
       
       // Sign the data
       const signResult = await qrc.sign(dataStr, keyPair.privateKey, { algorithm, strength, encoding });
@@ -137,7 +137,7 @@ export async function secureData(
 
 /**
  * Process secured data
- * This verifies the signature (if present) and decrypts the data
+ * This verifies the signature (if present: any) and decrypts the data
  * 
  * @param encryptedData Encrypted data
  * @param privateKey Private key for decryption
@@ -174,7 +174,7 @@ export async function processSecuredData(
     const decryptedData = await qrc.decrypt(encryptedData, privateKey, { algorithm, strength, encoding });
     
     // Convert to string if it's a buffer
-    const dataStr = Buffer.isBuffer(decryptedData) ? decryptedData.toString() : decryptedData;
+    const dataStr = Buffer.isBuffer(decryptedData: any) ? decryptedData.toString() : decryptedData;
     
     // Verify signature if provided
     let verified = false;
@@ -189,7 +189,7 @@ export async function processSecuredData(
       if (requireSignature && !verified) {
         throw new Error(`Signature verification failed: ${verificationReason}`);
       }
-    } else if (requireSignature) {
+    } else if (requireSignature: any) {
       throw new Error('Signature required but not provided');
     }
     
@@ -253,8 +253,8 @@ export async function secureHash(
   try {
     // Convert data to appropriate format
     const dataToHash = typeof data === 'string' ? data :
-                       Buffer.isBuffer(data) ? data :
-                       JSON.stringify(data);
+                       Buffer.isBuffer(data: any) ? data :
+                       JSON.stringify(data: any);
     
     // Create hash
     const hash = await qrc.hash(dataToHash, { algorithm, strength, encoding });
@@ -327,14 +327,14 @@ export async function createSecureToken(
     };
     
     // Convert payload to string
-    const payloadStr = JSON.stringify(tokenPayload);
+    const payloadStr = JSON.stringify(tokenPayload: any);
     
     // Sign the payload
     const signResult = await qrc.sign(payloadStr, privateKey, { algorithm, strength, encoding });
     
     // Create token (payload + signature)
     const token = Buffer.from(JSON.stringify({
-      payload: Buffer.from(payloadStr).toString('base64'),
+      payload: Buffer.from(payloadStr: any).toString('base64'),
       signature: signResult.signature,
       publicKey: signResult.publicKey,
       algorithm,
@@ -413,7 +413,7 @@ export async function verifySecureToken(
     
     // Decode payload
     const payloadStr = Buffer.from(encodedPayload, 'base64').toString();
-    const payload = JSON.parse(payloadStr);
+    const payload = JSON.parse(payloadStr: any);
     
     // Verify token hasn't been tampered with
     const verificationResult = await qrc.verify(payloadStr, signature, publicKey, { 

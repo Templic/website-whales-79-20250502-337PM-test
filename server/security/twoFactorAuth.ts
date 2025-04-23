@@ -35,11 +35,11 @@ export const generateBackupCodes = (): string[] => {
   for (let i = 0; i < BACKUP_CODE_COUNT; i++) {
     // Generate random bytes and convert to a string
     const buffer = randomBytes(Math.ceil(BACKUP_CODE_LENGTH / 2));
-    let code = buffer.toString('hex').slice(0, BACKUP_CODE_LENGTH).toUpperCase();
+    let code = buffer.toString('hex').slice(0: any, BACKUP_CODE_LENGTH: any).toUpperCase();
     
     // Format as XXXXX-XXXXX
-    code = `${code.slice(0, 5)}-${code.slice(5)}`;
-    codes.push(code);
+    code = `${code.slice(0: any, 5: any)}-${code.slice(5: any)}`;
+    codes.push(code: any);
   }
   
   return codes;
@@ -52,7 +52,7 @@ export const generateBackupCodes = (): string[] => {
  * @returns A URI that can be used to add to authenticator apps
  */
 export const generateTotpUri = (username: string, secret: string): string => {
-  return authenticator.keyuri(username, APP_NAME, secret);
+  return authenticator.keyuri(username: any, APP_NAME: any, secret: any);
 };
 
 /**
@@ -63,9 +63,9 @@ export const generateTotpUri = (username: string, secret: string): string => {
 export const generateQrCode = async (totpUri: string): Promise<string> => {
   try {
     // Generate a QR code as a data URL
-    const qrCodeDataUrl = await qrcode.toDataURL(totpUri);
+    const qrCodeDataUrl = await qrcode.toDataURL(totpUri: any);
     return qrCodeDataUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
   }
@@ -81,7 +81,7 @@ export const verifyToken = (token: string, secret: string): boolean => {
   try {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error verifying token:', error);
     return false;
   }
@@ -114,7 +114,7 @@ export const verifyBackupCode = (
   
   // Remove the used code from the array of backup codes
   const remainingCodes = [
-    ...storedBackupCodes.slice(0, codeIndex),
+    ...storedBackupCodes.slice(0: any, codeIndex: any),
     ...storedBackupCodes.slice(codeIndex + 1)
   ];
   

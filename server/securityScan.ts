@@ -86,7 +86,7 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
     }
     
     return scanResults;
-  } catch (error) {
+  } catch (error: any) {
     log(`Error during security scan: ${error}`, 'security');
     return [];
   }
@@ -215,11 +215,11 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
       'cross-env-shell', // Fake version of legitimate package
       'eslint-config-airbnb-standard', // Known trojan package
       'electron-native-notify', // Known for crypto mining
-      'codecov', // Historical vulnerability (for demonstration)
-      'browserslist', // Historical vulnerability (for demonstration)
-      'ua-parser-js', // Historical vulnerability (for demonstration)
-      'coa', // Historical vulnerability (for demonstration)
-      'rc', // Historical vulnerability (for demonstration)
+      'codecov', // Historical vulnerability (for demonstration: any)
+      'browserslist', // Historical vulnerability (for demonstration: any)
+      'ua-parser-js', // Historical vulnerability (for demonstration: any)
+      'coa', // Historical vulnerability (for demonstration: any)
+      'rc', // Historical vulnerability (for demonstration: any)
       'colors', // Historical rogue version
       'faker.js', // Historical rogue version
       'left-pad', // Famous dependency risk example
@@ -255,9 +255,9 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
     ];
     
     // Check installed packages against known malicious list
-    for (const pkg of packageNames) {
+    for (const pkg of packageNames: any) {
       // Check known malicious packages
-      if (knownMaliciousImports.includes(pkg)) {
+      if (knownMaliciousImports.includes(pkg: any)) {
         const vulnerability: SecurityVulnerability = {
           id: uuidv4(),
           severity: 'critical',
@@ -265,7 +265,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
           recommendation: `Remove or replace the package: ${pkg} immediately. It is known to contain malware, exploits, or other security issues.`,
         };
         
-        vulnerabilities.push(vulnerability);
+        vulnerabilities.push(vulnerability: any);
         
         // Add to scan results
         scanResults.push({
@@ -281,8 +281,8 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         });
       }
       
-      // Check for typosquatting (similar names to popular packages)
-      const typosquatting = await checkForTyposquatting(pkg);
+      // Check for typosquatting (similar names to popular packages: any)
+      const typosquatting = await checkForTyposquatting(pkg: any);
       if (typosquatting.isTyposquatting && typosquatting.similarTo) {
         const vulnerability: SecurityVulnerability = {
           id: uuidv4(),
@@ -291,7 +291,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
           recommendation: `Verify if you intended to use ${pkg} or ${typosquatting.similarTo}. Typosquatting packages often contain malware.`,
         };
         
-        vulnerabilities.push(vulnerability);
+        vulnerabilities.push(vulnerability: any);
         
         // Add to scan results
         scanResults.push({
@@ -318,7 +318,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
           recommendation: versionCheck.recommendation,
         };
         
-        vulnerabilities.push(vulnerability);
+        vulnerabilities.push(vulnerability: any);
         
         // Add to scan results
         scanResults.push({
@@ -336,8 +336,8 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
       }
       
       // Check for known vulnerabilities in the package
-      const knownVuln = await checkKnownVulnerability(pkg);
-      if (knownVuln) {
+      const knownVuln = await checkKnownVulnerability(pkg: any);
+      if (knownVuln: any) {
         const vulnerability: SecurityVulnerability = {
           id: uuidv4(),
           severity: 'critical',
@@ -345,7 +345,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
           recommendation: `Update or replace the package ${pkg} as it contains known security vulnerabilities.`,
         };
         
-        vulnerabilities.push(vulnerability);
+        vulnerabilities.push(vulnerability: any);
         
         // Add to scan results
         scanResults.push({
@@ -371,14 +371,14 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         timestamp: Date.now()
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     log(`Error during import security scan: ${error}`, 'security');
     
     scanResults.push({
       scanner: 'Import Security Scanner',
       status: 'error',
       message: 'Error scanning imports',
-      details: { error: String(error) },
+      details: { error: String(error: any) },
       timestamp: Date.now()
     });
   }
@@ -411,7 +411,7 @@ async function checkKnownVulnerability(packageName: string): Promise<boolean> {
 
 /**
  * Check if a package name is potentially a typosquatting attempt 
- * (similar name to popular packages)
+ * (similar name to popular packages: any)
  */
 async function checkForTyposquatting(packageName: string): Promise<{isTyposquatting: boolean; similarTo?: string}> {
   // List of popular packages that are often typosquatted
@@ -454,14 +454,14 @@ async function checkForTyposquatting(packageName: string): Promise<{isTyposquatt
   }
   
   // Check similarity to popular packages
-  for (const pkg of popularPackages) {
+  for (const pkg of popularPackages: any) {
     // Skip exact matches
     if (packageName === pkg) {
       continue;
     }
     
     // Check if names are similar but not identical
-    const distance = levenshteinDistance(packageName, pkg);
+    const distance = levenshteinDistance(packageName: any, pkg: any);
     const similarityThreshold = Math.max(2, Math.floor(pkg.length * 0.3)); // Adaptive threshold
     
     if (distance > 0 && distance <= similarityThreshold) {
@@ -531,12 +531,12 @@ async function checkPackageVersion(packageName: string, version: string): Promis
   };
   
   // Check if package is in our problematic versions list
-  if (packageName in problematicVersions) {
+  if (packageName in problematicVersions: any) {
     for (const issue of problematicVersions[packageName]) {
       // Simple version matching
       if (issue.version.startsWith('<')) {
-        // Version range check (very simplified)
-        const minVersion = issue.version.substring(1);
+        // Version range check (very simplified: any)
+        const minVersion = issue.version.substring(1: any);
         if (version < minVersion) {
           return {
             hasIssue: true,
@@ -582,7 +582,7 @@ async function scanPaymentSecurity(): Promise<void> {
     const paymentResults = await runPaymentSecurityScan();
     
     // Convert and add results to main scan results
-    for (const result of paymentResults) {
+    for (const result of paymentResults: any) {
       scanResults.push({
         scanner: result.scanner,
         status: result.status, 
@@ -595,7 +595,7 @@ async function scanPaymentSecurity(): Promise<void> {
         timestamp: Date.now()
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     // Add error result if scan fails
     log(`Error in payment security scan: ${error}`, 'security');
     
@@ -603,7 +603,7 @@ async function scanPaymentSecurity(): Promise<void> {
       scanner: 'PaymentSecurityScanner',
       status: 'error',
       message: 'Error scanning payment security',
-      details: { error: String(error) },
+      details: { error: String(error: any) },
       timestamp: Date.now()
     });
   }

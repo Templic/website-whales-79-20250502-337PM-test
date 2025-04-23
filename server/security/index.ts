@@ -53,7 +53,7 @@ export interface SecurityInitializationOptions {
   adminRoutes?: string[];
   
   /**
-   * Public routes (no authentication required)
+   * Public routes (no authentication required: any)
    */
   publicRoutes?: string[];
   
@@ -103,7 +103,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
     securityFabric.registerComponent({
       name: 'RASP',
       description: 'Runtime Application Self-Protection',
-      async processEvent(event) {
+      async processEvent(event: any) {
         console.log(`[RASP] Processing security event: ${event.message}`);
       },
       async getStatus() {
@@ -138,16 +138,16 @@ export async function initializeSecurity(app: express.Application, options?: Sec
       switch (config.raspProtectionLevel) {
         case RASPProtectionLevel.MONITORING:
           // Only monitor, don't block
-          app.use(raspMonitoringMiddleware);
+          app.use(raspMonitoringMiddleware: any);
           break;
         case RASPProtectionLevel.DETECTION:
           // Detect and log, but don't block
-          app.use(raspDetectionMiddleware);
+          app.use(raspDetectionMiddleware: any);
           break;
         case RASPProtectionLevel.PREVENTION:
         default:
           // Full protection
-          app.use(raspMiddleware);
+          app.use(raspMiddleware: any);
           break;
       }
     }
@@ -157,10 +157,10 @@ export async function initializeSecurity(app: express.Application, options?: Sec
       console.log('[Security] Applying CSRF protection middleware...');
       
       // Set CSRF token on all routes
-      app.use(csrfTokenMiddleware);
+      app.use(csrfTokenMiddleware: any);
       
       // Apply CSRF validation on non-API routes
-      app.use((req, res, next) => {
+      app.use((req: any, res: any, next: any) => {
         // Skip CSRF protection for API routes with token authentication
         if (req.path.startsWith('/api/') && req.headers.authorization) {
           return next();
@@ -177,7 +177,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
         }
         
         // Apply CSRF middleware
-        csrfMiddleware(req, res, next);
+        csrfMiddleware(req: any, res: any, next: any);
       });
       
       // Log initialization
@@ -196,7 +196,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
     
     // Log all requests if enabled
     if (config.logAllRequests) {
-      app.use((req, res, next) => {
+      app.use((req: any, res: any, next: any) => {
         securityBlockchain.addSecurityEvent({
           severity: SecurityEventSeverity.INFO,
           category: SecurityEventCategory.API,
@@ -216,7 +216,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
     }
     
     console.log('[Security] Security system initialized successfully');
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Security] Error initializing security system:', error);
     
     // Log initialization error
@@ -224,7 +224,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
       severity: SecurityEventSeverity.CRITICAL,
       category: SecurityEventCategory.SYSTEM,
       message: 'Security system initialization failed',
-      metadata: { error: error instanceof Error ? error.message : String(error) }
+      metadata: { error: error instanceof Error ? error.message : String(error: any) }
     });
     
     throw error;
@@ -252,7 +252,7 @@ export async function shutdownSecurity(): Promise<void> {
     await securityBlockchain.shutdown();
     
     console.log('[Security] Security system shut down successfully');
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Security] Error shutting down security system:', error);
     throw error;
   }

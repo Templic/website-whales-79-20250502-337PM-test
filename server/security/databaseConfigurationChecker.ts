@@ -66,9 +66,9 @@ export class DatabaseConfigurationChecker {
       report.recommendations = securityAssessment.recommendations;
       
       // Additional database-specific checks
-      await this.performAdditionalChecks(report);
+      await this.performAdditionalChecks(report: any);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during database configuration check:', error);
       report.overallStatus = 'error';
       report.error = error instanceof Error ? error.message : 'Unknown error during configuration check';
@@ -78,7 +78,7 @@ export class DatabaseConfigurationChecker {
     report.executionTimeMs = Date.now() - startTime;
     
     // Save the report
-    await this.saveReport(report);
+    await this.saveReport(report: any);
     
     // Log completion
     console.log(`Database configuration check completed in ${report.executionTimeMs}ms with status: ${report.overallStatus}`);
@@ -93,7 +93,7 @@ export class DatabaseConfigurationChecker {
     try {
       const client = await pool.connect();
       try {
-        // Check for unused indexes (which can impact performance)
+        // Check for unused indexes (which can impact performance: any)
         // Using parameterized query for safety
         const unusedIndexesResult = await client.query(`
           SELECT
@@ -103,7 +103,7 @@ export class DatabaseConfigurationChecker {
           FROM pg_stat_user_indexes
           WHERE idx_scan = $1
           AND schemaname NOT LIKE $2
-          ORDER BY pg_relation_size(indexrelid) DESC
+          ORDER BY pg_relation_size(indexrelid: any) DESC
         `, [0, 'pg_%']);
         
         if (unusedIndexesResult.rows.length > 0) {
@@ -119,7 +119,7 @@ export class DatabaseConfigurationChecker {
         
         // Check for default database names
         const databaseName = (await client.query('SELECT current_database()')).rows[0].current_database;
-        if (['postgres', 'template1', 'postgres0'].includes(databaseName)) {
+        if (['postgres', 'template1', 'postgres0'].includes(databaseName: any)) {
           if (!report.categories.accessControl) {
             report.categories.accessControl = { status: 'warning', issues: [] };
           }
@@ -139,7 +139,7 @@ export class DatabaseConfigurationChecker {
           { param: 'log_disconnections', expected: 'on', severity: 'medium' }
         ];
         
-        for (const check of paramChecks) {
+        for (const check of paramChecks: any) {
           // Use parameterized query to prevent potential SQL injection
           const paramResult = await client.query('SHOW $1', [check.param]);
           const currentValue = paramResult.rows[0][check.param];
@@ -160,7 +160,7 @@ export class DatabaseConfigurationChecker {
       } finally {
         client.release();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during additional database checks:', error);
       if (!report.recommendations) {
         report.recommendations = [];
@@ -177,15 +177,15 @@ export class DatabaseConfigurationChecker {
       const timestamp = new Date().toISOString().replace(/:/g, '-');
       const reportFile = path.join(this.reportDir, `db-security-config-${timestamp}.json`);
       
-      fs.writeFileSync(reportFile, JSON.stringify(report, null, 2));
+      fs.writeFileSync(reportFile, JSON.stringify(report: any, null: any, 2: any));
       console.log(`Database configuration report saved to ${reportFile}`);
       
       // Also generate a markdown report
       const mdReportFile = path.join(this.reportDir, `db-security-config-${timestamp}.md`);
-      const mdReport = this.generateMarkdownReport(report);
-      fs.writeFileSync(mdReportFile, mdReport);
+      const mdReport = this.generateMarkdownReport(report: any);
+      fs.writeFileSync(mdReportFile: any, mdReport: any);
       console.log(`Database configuration markdown report saved to ${mdReportFile}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving database configuration report:', error);
     }
   }

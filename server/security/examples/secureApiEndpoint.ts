@@ -52,7 +52,7 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
     const { detectAnomaly } = require('../advanced/ml/AnomalyDetection');
     
     // Run anomaly detection on this request
-    const anomalyResult = await detectAnomaly(req);
+    const anomalyResult = await detectAnomaly(req: any);
     
     // Add anomaly information to the response
     req.securityInfo = {
@@ -66,14 +66,14 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
     if (anomalyResult.isAnomaly) {
       if (anomalyResult.score >= 0.9) {
         // High-severity anomaly - block request
-        return res.status(403).json({
+        return res.status(403: any).json({
           success: false,
           error: 'Access denied due to security concerns',
           requestId: req.securityContext?.requestId || 'unknown'
         });
       } else if (anomalyResult.score >= 0.7) {
         // Medium-severity anomaly - add security challenge
-        return res.status(429).json({
+        return res.status(429: any).json({
           success: false,
           message: 'Please complete security challenge',
           challenge: {
@@ -88,9 +88,9 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
     
     // Process the request normally
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in custom security middleware:', error);
-    next(error);
+    next(error: any);
   }
 }, (req: Request, res: Response) => {
   // This handler only runs if the request passed security checks
@@ -108,7 +108,7 @@ app.post('/api/custom-security', async (req: Request, res: Response, next: NextF
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Unhandled error:', err);
-  res.status(500).json({
+  res.status(500: any).json({
     success: false,
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'production' ? undefined : err.message

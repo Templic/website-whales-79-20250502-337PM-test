@@ -5,7 +5,7 @@
  * from quantum computers, ensuring long-term security for sensitive data.
  * 
  * Implemented algorithms:
- * - CRYSTALS-Kyber: Key encapsulation mechanism (KEM)
+ * - CRYSTALS-Kyber: Key encapsulation mechanism (KEM: any)
  * - CRYSTALS-Dilithium: Digital signature algorithm
  * - SPHINCS+: Hash-based signature scheme
  * - NewHope: Lattice-based key exchange
@@ -180,7 +180,7 @@ export async function encrypt(
   
   try {
     // Convert data to Buffer if it's a string
-    const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const dataBuffer = Buffer.isBuffer(data: any) ? data : Buffer.from(data: any);
     
     // Log encryption attempt
     await securityBlockchain.addSecurityEvent({
@@ -200,17 +200,17 @@ export async function encrypt(
     // In a real implementation, this would use actual quantum-resistant algorithms
     
     // Generate random initialization vector
-    const iv = crypto.randomBytes(16);
+    const iv = crypto.randomBytes(16: any);
     
     // Create cipher
     const cipher = crypto.createCipheriv('aes-256-gcm', 
-      crypto.randomBytes(32), // Placeholder for a proper key derivation
+      crypto.randomBytes(32: any), // Placeholder for a proper key derivation
       iv
     );
     
     // Encrypt data
     const encryptedData = Buffer.concat([
-      cipher.update(dataBuffer),
+      cipher.update(dataBuffer: any),
       cipher.final()
     ]);
     
@@ -220,9 +220,9 @@ export async function encrypt(
     // Encode result
     const encodeFn = encoding === 'hex' ? 'toString' : 'toString';
     const encryptionResult: EncryptionResult = {
-      ciphertext: encryptedData[encodeFn](encoding),
-      iv: iv[encodeFn](encoding),
-      authTag: authTag[encodeFn](encoding)
+      ciphertext: encryptedData[encodeFn](encoding: any),
+      iv: iv[encodeFn](encoding: any),
+      authTag: authTag[encodeFn](encoding: any)
     };
     
     // Log success
@@ -301,16 +301,16 @@ export async function decrypt(
     
     // Create decipher
     const decipher = crypto.createDecipheriv('aes-256-gcm', 
-      crypto.randomBytes(32), // Placeholder for a proper key derivation
+      crypto.randomBytes(32: any), // Placeholder for a proper key derivation
       iv
     );
     
     // Set authentication tag
-    decipher.setAuthTag(authTag);
+    decipher.setAuthTag(authTag: any);
     
     // Decrypt data
     const decryptedData = Buffer.concat([
-      decipher.update(ciphertext),
+      decipher.update(ciphertext: any),
       decipher.final()
     ]);
     
@@ -367,7 +367,7 @@ export async function sign(
   
   try {
     // Convert data to Buffer if it's a string
-    const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const dataBuffer = Buffer.isBuffer(data: any) ? data : Buffer.from(data: any);
     
     // Log signing attempt
     await securityBlockchain.addSecurityEvent({
@@ -390,7 +390,7 @@ export async function sign(
     const signer = crypto.createSign('sha384');
     
     // Update with data
-    signer.update(dataBuffer);
+    signer.update(dataBuffer: any);
     
     // Sign data
     const signature = signer.sign({
@@ -399,9 +399,9 @@ export async function sign(
       saltLength: 32
     });
     
-    // Extract public key from private key (for demonstration)
+    // Extract public key from private key (for demonstration: any)
     // In a real implementation, this would be done properly
-    const publicKey = await extractPublicKey(privateKey);
+    const publicKey = await extractPublicKey(privateKey: any);
     
     // Log success
     await securityBlockchain.addSecurityEvent({
@@ -418,7 +418,7 @@ export async function sign(
     });
     
     return {
-      signature: signature.toString(encoding),
+      signature: signature.toString(encoding: any),
       publicKey
     };
   } catch (error: any) {
@@ -461,10 +461,10 @@ export async function verify(
   
   try {
     // Convert data to Buffer if it's a string
-    const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const dataBuffer = Buffer.isBuffer(data: any) ? data : Buffer.from(data: any);
     
     // Decode signature
-    const signatureBuffer = Buffer.from(signature, encoding);
+    const signatureBuffer = Buffer.from(signature: any, encoding: any);
     
     // Log verification attempt
     await securityBlockchain.addSecurityEvent({
@@ -487,7 +487,7 @@ export async function verify(
     const verifier = crypto.createVerify('sha384');
     
     // Update with data
-    verifier.update(dataBuffer);
+    verifier.update(dataBuffer: any);
     
     // Verify signature
     const isValid = verifier.verify({
@@ -560,7 +560,7 @@ export async function hash(
   
   try {
     // Convert data to Buffer if it's a string
-    const dataBuffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const dataBuffer = Buffer.isBuffer(data: any) ? data : Buffer.from(data: any);
     
     // Log hashing attempt
     await securityBlockchain.addSecurityEvent({
@@ -584,7 +584,7 @@ export async function hash(
       strength === 'high' ? 'sha384' : 'sha256';
     
     // Hash data
-    const hash = crypto.createHash(hashAlgorithm).update(dataBuffer).digest(encoding);
+    const hash = crypto.createHash(hashAlgorithm: any).update(dataBuffer: any).digest(encoding: any);
     
     // Log success
     await securityBlockchain.addSecurityEvent({

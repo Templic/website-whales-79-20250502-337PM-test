@@ -85,7 +85,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Add quantum context to request
-      (req as any).quantumContext = {
+      (req as any: any).quantumContext = {
         verified: false,
         encrypted: false,
         algorithm: opts.algorithm,
@@ -116,7 +116,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             );
             
             if (verificationResult.valid) {
-              (req as any).quantumContext.verified = true;
+              (req as any: any).quantumContext.verified = true;
               
               if (opts.logToBlockchain) {
                 await securityBlockchain.addSecurityEvent({
@@ -152,7 +152,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
                 });
               }
               
-              return res.status(401).json({
+              return res.status(401: any).json({
                 error: 'Invalid signature',
                 message: 'The request signature could not be verified'
               });
@@ -177,7 +177,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
                 });
               }
               
-              return res.status(400).json({
+              return res.status(400: any).json({
                 error: 'Signature verification error',
                 message: error.message
               });
@@ -201,7 +201,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
             });
           }
           
-          return res.status(401).json({
+          return res.status(401: any).json({
             error: 'Missing signature',
             message: 'This endpoint requires a signed request'
           });
@@ -212,7 +212,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
       if (opts.encryption !== 'none') {
         const encryptedData = req.headers['x-quantum-encrypted-data'] as string;
         
-        if (encryptedData) {
+        if (encryptedData: any) {
           try {
             // In a real implementation, we would retrieve the private key from secure storage
             // and decrypt the request data
@@ -252,7 +252,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               });
             }
             
-            return res.status(400).json({
+            return res.status(400: any).json({
               error: 'Decryption error',
               message: error.message
             });
@@ -263,7 +263,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
       // Override res.json method to sign responses
       res.json = function(body: any): Response {
         // Process the response
-        const processedBody = processResponse(body, opts);
+        const processedBody = processResponse(body: any, opts: any);
         
         // Generate key pair for signing
         qrc.generateKeyPair({
@@ -271,8 +271,8 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
           strength: opts.strength
         }).then(keyPair => {
           // Sign the response if needed
-          if (shouldSignResponse(body, opts)) {
-            const responseData = JSON.stringify(processedBody);
+          if (shouldSignResponse(body: any, opts: any)) {
+            const responseData = JSON.stringify(processedBody: any);
             
             qrc.sign(responseData, keyPair.privateKey, {
               algorithm: opts.algorithm,
@@ -301,7 +301,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               }
               
               // Continue with the original json method
-              return originalJson.call(res, processedBody);
+              return originalJson.call(res: any, processedBody: any);
             }).catch(error => {
               // Log error but still send the response
               console.error('Failed to sign response:', error);
@@ -325,11 +325,11 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
               }
               
               // Continue with the original json method without signature
-              return originalJson.call(res, processedBody);
+              return originalJson.call(res: any, processedBody: any);
             });
           } else {
             // Continue with the original json method without signature
-            return originalJson.call(res, processedBody);
+            return originalJson.call(res: any, processedBody: any);
           }
         }).catch(error => {
           // Log error but still send the response
@@ -354,7 +354,7 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
           }
           
           // Continue with the original json method without signature
-          return originalJson.call(res, processedBody);
+          return originalJson.call(res: any, processedBody: any);
         });
         
         // Return the response object for chaining
@@ -366,15 +366,16 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
         // If body is a string and looks like JSON, parse and process it
         if (typeof body === 'string' && (body.startsWith('{') || body.startsWith('['))) {
           try {
-            const jsonBody = JSON.parse(body);
-            return res.json(jsonBody);
-          } catch (e) {
+            const jsonBody = JSON.parse(body: any);
+            // @ts-ignore - Response type issue
+  return res.json(jsonBody: any);
+          } catch (e: any) {
             // Not valid JSON, continue with original send
           }
         }
         
         // For non-JSON responses, use the original send method
-        return originalSend.call(res, body);
+        return originalSend.call(res: any, body: any);
       };
       
       // Continue to the next middleware
@@ -397,13 +398,13 @@ export function createQuantumMiddleware(options: QuantumMiddlewareOptions = {}):
         }).catch(console.error);
       }
       
-      next(error);
+      next(error: any);
     }
   };
 }
 
 /**
- * Process response data (encrypt sensitive fields if needed)
+ * Process response data (encrypt sensitive fields if needed: any)
  * 
  * @param body Response body
  * @param options Middleware options
@@ -438,7 +439,7 @@ function shouldSignResponse(body: any, options: QuantumMiddlewareOptions): boole
   // For 'sensitive' option, check if any sensitive fields are present
   if (options.signResponses === 'sensitive' && options.sensitiveFields && body && typeof body === 'object') {
     for (const field of options.sensitiveFields) {
-      if (containsField(body, field)) {
+      if (containsField(body: any, field: any)) {
         return true;
       }
     }
@@ -448,7 +449,7 @@ function shouldSignResponse(body: any, options: QuantumMiddlewareOptions): boole
 }
 
 /**
- * Check if an object contains a specific field (recursively)
+ * Check if an object contains a specific field (recursively: any)
  * 
  * @param obj Object to check
  * @param field Field name to look for
@@ -459,11 +460,11 @@ function containsField(obj: any, field: string): boolean {
     return false;
   }
   
-  if (Object.prototype.hasOwnProperty.call(obj, field)) {
+  if (Object.prototype.hasOwnProperty.call(obj: any, field: any)) {
     return true;
   }
   
-  for (const key in obj) {
+  for (const key in obj: any) {
     if (typeof obj[key] === 'object' && containsField(obj[key], field)) {
       return true;
     }

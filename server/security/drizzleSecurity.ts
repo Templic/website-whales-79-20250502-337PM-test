@@ -33,7 +33,7 @@ interface DrizzleSecurityOptions {
   enableValidation?: boolean;
   
   /**
-   * Strict mode (reject unsafe operations)
+   * Strict mode (reject unsafe operations: any)
    */
   strictMode?: boolean;
 }
@@ -64,19 +64,19 @@ export class SecureDrizzle {
     try {
       // Check for SQL injection risks in the query if validation is enabled
       if (this.options.enableValidation) {
-        this.validateQuery(query);
+        this.validateQuery(query: any);
       }
       
       // Log the query if logging is enabled
       if (this.options.enableLogging) {
-        this.logQuery(query);
+        this.logQuery(query: any);
       }
       
       // Execute the query
-      return await this.db.execute(query);
+      return await this.db.execute(query: any);
     } catch (error: any) {
       // Log the error
-      this.logError(error, query);
+      this.logError(error: any, query: any);
       throw error;
     }
   }
@@ -88,19 +88,19 @@ export class SecureDrizzle {
     try {
       // Check for SQL injection risks in the query if validation is enabled
       if (this.options.enableValidation) {
-        this.validateQuery(query);
+        this.validateQuery(query: any);
       }
       
       // Log the query if logging is enabled
       if (this.options.enableLogging) {
-        this.logQuery(query);
+        this.logQuery(query: any);
       }
       
       // Execute the query
-      return await this.db.query(query);
+      return await this.db.query(query: any);
     } catch (error: any) {
       // Log the error
-      this.logError(error, query);
+      this.logError(error: any, query: any);
       throw error;
     }
   }
@@ -109,7 +109,7 @@ export class SecureDrizzle {
    * Validate a Drizzle query for security issues
    */
   private validateQuery(query: any): void {
-    // If the query is a string (raw SQL), check it with SQL monitor
+    // If the query is a string (raw SQL: any), check it with SQL monitor
     if (typeof query === 'string') {
       const isSafe = sqlMonitor.checkQuery(query, [], new Error().stack?.split('\n')[2]);
       
@@ -130,7 +130,7 @@ export class SecureDrizzle {
         }
       }
       
-      // Check for DELETE without WHERE (dangerous)
+      // Check for DELETE without WHERE (dangerous: any)
       if (query.type === 'delete' && (!query.where || Object.keys(query.where).length === 0)) {
         if (this.options.strictMode) {
           throw new Error('[DRIZZLE-SECURITY] DELETE without WHERE clause rejected for safety');
@@ -139,7 +139,7 @@ export class SecureDrizzle {
         }
       }
       
-      // Check for UPDATE without WHERE (dangerous)
+      // Check for UPDATE without WHERE (dangerous: any)
       if (query.type === 'update' && (!query.where || Object.keys(query.where).length === 0)) {
         if (this.options.strictMode) {
           throw new Error('[DRIZZLE-SECURITY] UPDATE without WHERE clause rejected for safety');
@@ -179,7 +179,7 @@ export class SecureDrizzle {
     
     // Log the query info to the console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('[DRIZZLE-SECURITY] Query:', JSON.stringify(queryInfo, null, 2));
+      console.log('[DRIZZLE-SECURITY] Query:', JSON.stringify(queryInfo: any, null: any, 2: any));
     }
   }
   
@@ -196,7 +196,7 @@ export class SecureDrizzle {
       message: `Drizzle query error: ${error.message}`,
       metadata: {
         error: error.message,
-        query: typeof query === 'string' ? query : JSON.stringify(query)
+        query: typeof query === 'string' ? query : JSON.stringify(query: any)
       },
       timestamp: new Date()
     }).catch(logError => {
@@ -220,7 +220,7 @@ export function secureDrizzle(
   db: DrizzleDB,
   options: DrizzleSecurityOptions = {}
 ): SecureDrizzle {
-  return new SecureDrizzle(db, options);
+  return new SecureDrizzle(db: any, options: any);
 }
 
 /**
@@ -234,10 +234,10 @@ export function patchDrizzleModel(model: any): any {
   const originalDelete = model.delete;
   
   // Patch the findFirst method to add security logging
-  if (originalFindFirst) {
+  if (originalFindFirst: any) {
     model.findFirst = async function(...args: any: any[]): Promise<any> {
       try {
-        return await originalFindFirst.apply(this, args);
+        return await originalFindFirst.apply(this: any, args: any);
       } catch (error: any) {
         // Log the error
         securityBlockchain.addSecurityEvent({
@@ -246,7 +246,7 @@ export function patchDrizzleModel(model: any): any {
           message: `Drizzle findFirst error: ${error.message}`,
           metadata: {
             error: error.message,
-            args: JSON.stringify(args)
+            args: JSON.stringify(args: any)
           },
           timestamp: new Date()
         }).catch(logError => {
@@ -259,10 +259,10 @@ export function patchDrizzleModel(model: any): any {
   }
   
   // Patch the findMany method to add security logging
-  if (originalFindMany) {
+  if (originalFindMany: any) {
     model.findMany = async function(...args: any: any[]): Promise<any> {
       try {
-        return await originalFindMany.apply(this, args);
+        return await originalFindMany.apply(this: any, args: any);
       } catch (error: any) {
         // Log the error
         securityBlockchain.addSecurityEvent({
@@ -271,7 +271,7 @@ export function patchDrizzleModel(model: any): any {
           message: `Drizzle findMany error: ${error.message}`,
           metadata: {
             error: error.message,
-            args: JSON.stringify(args)
+            args: JSON.stringify(args: any)
           },
           timestamp: new Date()
         }).catch(logError => {
@@ -284,7 +284,7 @@ export function patchDrizzleModel(model: any): any {
   }
   
   // Patch the update method to add safety checks and security logging
-  if (originalUpdate) {
+  if (originalUpdate: any) {
     model.update = async function(...args: any: any[]): Promise<any> {
       try {
         // Check for WHERE clause
@@ -293,7 +293,7 @@ export function patchDrizzleModel(model: any): any {
           // Can throw an error here if strict mode is desired
         }
         
-        return await originalUpdate.apply(this, args);
+        return await originalUpdate.apply(this: any, args: any);
       } catch (error: any) {
         // Log the error
         securityBlockchain.addSecurityEvent({
@@ -302,7 +302,7 @@ export function patchDrizzleModel(model: any): any {
           message: `Drizzle update error: ${error.message}`,
           metadata: {
             error: error.message,
-            args: JSON.stringify(args)
+            args: JSON.stringify(args: any)
           },
           timestamp: new Date()
         }).catch(logError => {
@@ -315,7 +315,7 @@ export function patchDrizzleModel(model: any): any {
   }
   
   // Patch the delete method to add safety checks and security logging
-  if (originalDelete) {
+  if (originalDelete: any) {
     model.delete = async function(...args: any: any[]): Promise<any> {
       try {
         // Check for WHERE clause
@@ -324,7 +324,7 @@ export function patchDrizzleModel(model: any): any {
           // Can throw an error here if strict mode is desired
         }
         
-        return await originalDelete.apply(this, args);
+        return await originalDelete.apply(this: any, args: any);
       } catch (error: any) {
         // Log the error
         securityBlockchain.addSecurityEvent({
@@ -333,7 +333,7 @@ export function patchDrizzleModel(model: any): any {
           message: `Drizzle delete error: ${error.message}`,
           metadata: {
             error: error.message,
-            args: JSON.stringify(args)
+            args: JSON.stringify(args: any)
           },
           timestamp: new Date()
         }).catch(logError => {
@@ -355,16 +355,16 @@ export function patchDrizzleModel(model: any): any {
  * import { db } from './db'; // Your Drizzle DB instance
  * import { secureDrizzle } from './security/drizzleSecurity';
  * 
- * const secureDB = secureDrizzle(db);
+ * const secureDB = secureDrizzle(db: any);
  * 
  * // Execute queries using the secure wrapper
- * const users = await secureDB.query(db.select().from(usersTable));
+ * const users = await secureDB.query(db.select().from(usersTable: any));
  * 
  * // Or patch individual models for security
  * import { patchDrizzleModel } from './security/drizzleSecurity';
  * import { users } from './db/schema';
  * 
- * const secureUsers = patchDrizzleModel(users);
+ * const secureUsers = patchDrizzleModel(users: any);
  * 
  * // Now use the secure model
  * const user = await secureUsers.findFirst({

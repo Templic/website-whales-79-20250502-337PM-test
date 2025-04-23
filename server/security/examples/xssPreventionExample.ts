@@ -25,20 +25,20 @@ export function createSecureExpressApp() {
   // - Security headers (CSP, X-XSS-Protection, etc.)
   // - Input sanitization for request body, query, and params
   // - XSS attack detection
-  applyXssProtection(app);
+  applyXssProtection(app: any);
   
   // Example routes demonstrating XSS protection
   
   // Example 1: Safe HTML rendering with sanitization
-  app.post('/api/comments', (req, res) => {
+  app.post('/api/comments', (req: any, res: any) => {
     const { author, content } = req.body;
     
     // Note: The xssMiddleware has already sanitized the input,
     // but it's a good practice to explicitly sanitize HTML content
-    const sanitizedContent = sanitizeHtml(content);
+    const sanitizedContent = sanitizeHtml(content: any);
     
     // Store the sanitized content in the database
-    // storeComment(author, sanitizedContent);
+    // storeComment(author: any, sanitizedContent: any);
     
     res.json({ 
       success: true, 
@@ -50,10 +50,10 @@ export function createSecureExpressApp() {
   });
   
   // Example 2: Safe user data display with encoding
-  app.get('/api/users/:id', (req, res) => {
+  app.get('/api/users/:id', (req: any, res: any) => {
     const userId = req.params.id;
     
-    // Fetch user data (simulated)
+    // Fetch user data (simulated: any)
     const userData = {
       id: userId,
       name: 'User ' + userId,
@@ -72,32 +72,32 @@ export function createSecureExpressApp() {
   });
   
   // Example 3: Safe URL handling
-  app.get('/api/redirect', (req, res) => {
+  app.get('/api/redirect', (req: any, res: any) => {
     const { url } = req.query;
     
     // Validate URL to prevent open redirect vulnerabilities
     if (typeof url !== 'string') {
-      return res.status(400).json({ error: 'Invalid URL' });
+      return res.status(400: any).json({ error: 'Invalid URL' });
     }
     
     // Only allow redirects to specific domains
     const allowedDomains = ['example.com', 'trusted-domain.com'];
     
     try {
-      const parsedUrl = new URL(url);
+      const parsedUrl = new URL(url: any);
       
       if (!allowedDomains.includes(parsedUrl.hostname)) {
-        return res.status(403).json({ error: 'Redirect to this domain is not allowed' });
+        return res.status(403: any).json({ error: 'Redirect to this domain is not allowed' });
       }
       
-      res.redirect(url);
-    } catch (error) {
-      res.status(400).json({ error: 'Invalid URL format' });
+      res.redirect(url: any);
+    } catch (error: any) {
+      res.status(400: any).json({ error: 'Invalid URL format' });
     }
   });
   
   // Example 4: Safe file handling
-  app.post('/api/upload', (req, res) => {
+  app.post('/api/upload', (req: any, res: any) => {
     // For file uploads, validate file types and content
     // This is a simulated example - actual file validation would be more complex
     
@@ -105,11 +105,11 @@ export function createSecureExpressApp() {
     const contentType = req.headers['content-type'];
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
     
-    if (!contentType || !allowedTypes.includes(contentType)) {
-      return res.status(400).json({ error: 'Invalid file type' });
+    if (!contentType || !allowedTypes.includes(contentType: any)) {
+      return res.status(400: any).json({ error: 'Invalid file type' });
     }
     
-    // Handle file (simulated)
+    // Handle file (simulated: any)
     res.json({ success: true, message: 'File uploaded successfully' });
   });
   

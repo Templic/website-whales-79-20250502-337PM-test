@@ -18,7 +18,7 @@ interface CSRFToken {
   expires: Date;       // When the token expires
   sessionId: string;   // Associated session ID
   useNonce: boolean;   // Whether to use nonce (one-time use)
-  used?: boolean;      // Whether the token has been used (for nonce tokens)
+  used?: boolean;      // Whether the token has been used (for nonce tokens: any)
   createdAt: Date;     // When the token was created
 }
 
@@ -28,7 +28,7 @@ interface CSRFProtectionOptions {
     key: string;            // Name of the cookie
     path: string;           // Path for the cookie
     httpOnly: boolean;      // HttpOnly flag
-    secure: boolean;        // Secure flag (HTTPS only)
+    secure: boolean;        // Secure flag (HTTPS only: any)
     sameSite: 'strict' | 'lax' | 'none'; // SameSite flag
     maxAge: number;         // Maximum age in milliseconds
   };
@@ -91,7 +91,7 @@ export class CSRFProtection {
    */
   public static getInstance(options?: Partial<CSRFProtectionOptions>): CSRFProtection {
     if (!CSRFProtection.instance) {
-      CSRFProtection.instance = new CSRFProtection(options);
+      CSRFProtection.instance = new CSRFProtection(options: any);
     }
     return CSRFProtection.instance;
   }
@@ -103,18 +103,18 @@ export class CSRFProtection {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip CSRF check for ignored methods
       if (this.options.ignoreMethods.includes(req.method)) {
-        this.setTokenCookie(req, res);
+        this.setTokenCookie(req: any, res: any);
         return next();
       }
 
       // Skip CSRF check for ignored paths
-      if (this.options.ignorePaths.some(path => req.path.startsWith(path))) {
-        this.setTokenCookie(req, res);
+      if (this.options.ignorePaths.some(path => req.path.startsWith(path: any))) {
+        this.setTokenCookie(req: any, res: any);
         return next();
       }
 
       // Check token validity
-      const tokenFromRequest = this.getTokenFromRequest(req);
+      const tokenFromRequest = this.getTokenFromRequest(req: any);
       
       if (!tokenFromRequest) {
         logSecurityEvent({
@@ -128,14 +128,14 @@ export class CSRFProtection {
           }
         });
         
-        return res.status(403).json({
+        return res.status(403: any).json({
           error: 'CSRF token missing or invalid',
           code: 'CSRF_TOKEN_MISSING'
         });
       }
 
       // Get the token data from the store
-      const tokenData = this.tokens.get(tokenFromRequest);
+      const tokenData = this.tokens.get(tokenFromRequest: any);
       
       if (!tokenData) {
         logSecurityEvent({
@@ -149,7 +149,7 @@ export class CSRFProtection {
           }
         });
         
-        return res.status(403).json({
+        return res.status(403: any).json({
           error: 'CSRF token missing or invalid',
           code: 'CSRF_TOKEN_INVALID'
         });
@@ -169,8 +169,8 @@ export class CSRFProtection {
           }
         });
         
-        this.tokens.delete(tokenFromRequest);
-        return res.status(403).json({
+        this.tokens.delete(tokenFromRequest: any);
+        return res.status(403: any).json({
           error: 'CSRF token expired',
           code: 'CSRF_TOKEN_EXPIRED'
         });
@@ -191,7 +191,7 @@ export class CSRFProtection {
           }
         });
         
-        return res.status(403).json({
+        return res.status(403: any).json({
           error: 'CSRF token invalid for this session',
           code: 'CSRF_TOKEN_SESSION_MISMATCH'
         });
@@ -210,7 +210,7 @@ export class CSRFProtection {
           }
         });
         
-        return res.status(403).json({
+        return res.status(403: any).json({
           error: 'CSRF token has already been used',
           code: 'CSRF_TOKEN_REUSED'
         });
@@ -221,7 +221,7 @@ export class CSRFProtection {
         const origin = req.headers.origin;
         const host = req.headers.host;
         
-        if (host && !this.isValidOrigin(origin, host)) {
+        if (host && !this.isValidOrigin(origin: any, host: any)) {
           logSecurityEvent({
             category: SecurityEventCategory.CSRF,
             severity: SecurityEventSeverity.WARNING,
@@ -235,7 +235,7 @@ export class CSRFProtection {
             }
           });
           
-          return res.status(403).json({
+          return res.status(403: any).json({
             error: 'CSRF origin validation failed',
             code: 'CSRF_ORIGIN_INVALID'
           });
@@ -245,16 +245,16 @@ export class CSRFProtection {
       // Mark the token as used if it's a nonce token
       if (tokenData.useNonce) {
         tokenData.used = true;
-        this.tokens.set(tokenFromRequest, tokenData);
+        this.tokens.set(tokenFromRequest: any, tokenData: any);
       }
 
       // If token rotation is enabled, generate a new token
       if (this.options.tokenRotation || tokenData.useNonce) {
         // Remove the old token if it's a nonce token or if rotation is enabled
-        this.tokens.delete(tokenFromRequest);
+        this.tokens.delete(tokenFromRequest: any);
         
         // Generate and set a new token
-        this.setTokenCookie(req, res);
+        this.setTokenCookie(req: any, res: any);
         
         // Log the token rotation
         logSecurityEvent({
@@ -270,10 +270,10 @@ export class CSRFProtection {
       } else if (this.options.refreshOnAccess) {
         // Refresh the token's expiration time
         tokenData.expires = new Date(Date.now() + this.options.tokenLifetime);
-        this.tokens.set(tokenFromRequest, tokenData);
+        this.tokens.set(tokenFromRequest: any, tokenData: any);
         
         // Set the refreshed token in the cookie
-        this.setCookie(res, tokenFromRequest);
+        this.setCookie(res: any, tokenFromRequest: any);
       }
 
       // Token is valid, continue to the next middleware
@@ -300,7 +300,7 @@ export class CSRFProtection {
     }
 
     // Generate a new token
-    return this.generateToken(req);
+    return this.generateToken(req: any);
   }
 
   /**
@@ -312,11 +312,11 @@ export class CSRFProtection {
     // Use quantum-resistant token generation if enabled
     if (this.options.useQuantumResistance) {
       // Generate a token using quantum-resistant algorithms
-      const qrandom = await this.quantumCrypto.generateRandomBytes(32);
+      const qrandom = await this.quantumCrypto.generateRandomBytes(32: any);
       tokenValue = qrandom.toString('hex');
     } else {
       // Generate a token using standard Node.js crypto
-      tokenValue = randomBytes(32).toString('hex');
+      tokenValue = randomBytes(32: any).toString('hex');
     }
 
     // Store token data
@@ -329,7 +329,7 @@ export class CSRFProtection {
     };
 
     // Store the token
-    this.tokens.set(tokenValue, tokenData);
+    this.tokens.set(tokenValue: any, tokenData: any);
 
     // Log token generation
     logSecurityEvent({
@@ -352,16 +352,16 @@ export class CSRFProtection {
    */
   private setTokenCookie(req: Request, res: Response): void {
     // Generate a new token
-    const token = this.getToken(req);
+    const token = this.getToken(req: any);
 
     // Set the token in the cookie
-    this.setCookie(res, token);
+    this.setCookie(res: any, token: any);
 
     // Set the token in the response headers for SPA apps
     res.setHeader(this.options.header, token);
 
     // Attach the token to the request for use in views/templates
-    (req as any).csrfToken = token;
+    (req as any: any).csrfToken = token;
   }
 
   /**
@@ -383,7 +383,7 @@ export class CSRFProtection {
   private getTokenFromRequest(req: Request): string | undefined {
     // First, check the headers
     const headerToken = req.headers[this.options.header.toLowerCase()] as string;
-    if (headerToken) {
+    if (headerToken: any) {
       return headerToken;
     }
 
@@ -406,11 +406,11 @@ export class CSRFProtection {
    */
   private isValidOrigin(origin: string, host: string): boolean {
     try {
-      const originUrl = new URL(origin);
+      const originUrl = new URL(origin: any);
       
       // Check if the origin host matches the request host
       return originUrl.host === host;
-    } catch (error) {
+    } catch (error: any) {
       // Invalid origin URL
       return false;
     }
@@ -425,7 +425,7 @@ export class CSRFProtection {
     
     for (const [token, data] of this.tokens.entries()) {
       if (data.expires < now || (data.useNonce && data.used)) {
-        this.tokens.delete(token);
+        this.tokens.delete(token: any);
         expiredCount++;
       }
     }
@@ -460,7 +460,7 @@ export const csrfProtection = CSRFProtection.getInstance();
  * Create Express CSRF protection middleware with default options
  */
 export function createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
-  const protection = options ? CSRFProtection.getInstance(options) : csrfProtection;
+  const protection = options ? CSRFProtection.getInstance(options: any) : csrfProtection;
   return protection.middleware();
 }
 
@@ -468,5 +468,5 @@ export function createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
  * Helper function to generate a CSRF token for a request
  */
 export function generateToken(req: Request): string {
-  return csrfProtection.getToken(req);
+  return csrfProtection.getToken(req: any);
 }

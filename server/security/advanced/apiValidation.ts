@@ -72,20 +72,20 @@ export function validate<T extends AnyZodObject>(
       
       // Choose the right parsing method based on options
       let validationResult;
-      if (strictMode) {
-        validationResult = schema.strict().parse(targetData);
-      } else if (allowUnknownFields) {
-        validationResult = schema.passthrough().parse(targetData);
+      if (strictMode: any) {
+        validationResult = schema.strict().parse(targetData: any);
+      } else if (allowUnknownFields: any) {
+        validationResult = schema.passthrough().parse(targetData: any);
       } else {
-        validationResult = schema.parse(targetData);
+        validationResult = schema.parse(targetData: any);
       }
       
       // Replace the original data with the validated data
       req[target as keyof Request] = validationResult as any;
       
       next();
-    } catch (error) {
-      if (error instanceof ZodError) {
+    } catch (error: any) {
+      if (error instanceof ZodError: any) {
         // Log validation failure as security event
         logSecurityEvent({
           type: 'input-validation-failure',
@@ -100,12 +100,12 @@ export function validate<T extends AnyZodObject>(
         });
         
         // Use custom error handler if provided
-        if (errorHandler) {
-          return errorHandler(error, req, res);
+        if (errorHandler: any) {
+          return errorHandler(error: any, req: any, res: any);
         }
         
         // Default error handling
-        res.status(errorStatus).json({
+        res.status(errorStatus: any).json({
           success: false,
           message: 'Validation failed',
           errors: error.errors.map(err => ({
@@ -116,7 +116,7 @@ export function validate<T extends AnyZodObject>(
       } else {
         // Handle unexpected errors
         console.error('Unexpected validation error:', error);
-        res.status(500).json({
+        res.status(500: any).json({
           success: false,
           message: 'Internal validation error occurred'
         });
@@ -130,22 +130,22 @@ export function validate<T extends AnyZodObject>(
  */
 export function validateAll(schemas: Record<ValidationTarget, AnyZodObject>, options?: ValidationOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const targets = Object.keys(schemas) as ValidationTarget[];
+    const targets = Object.keys(schemas: any) as ValidationTarget[];
     
-    for (const target of targets) {
+    for (const target of targets: any) {
       const schema = schemas[target];
-      const middleware = validate(schema, target, options);
+      const middleware = validate(schema: any, target: any, options: any);
       
       // Create a promise that resolves when middleware completes or rejects if it errors
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve: any, reject: any) => {
         middleware(req, res, (err?: any) => {
-          if (err) {
-            reject(err);
+          if (err: any) {
+            reject(err: any);
           } else {
             resolve();
           }
         });
-      }).catch((err) => {
+      }).catch((err: any) => {
         // If any validation fails, the function ends here
         return;
       });
@@ -189,9 +189,9 @@ export function validateHeaders<T extends AnyZodObject>(schema: T, options?: Val
  */
 export const validationPatterns = {
   // User input validation
-  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/),
+  username: z.string().min(3: any).max(50: any).regex(/^[a-zA-Z0-9_]+$/),
   email: z.string().email(),
-  password: z.string().min(8).max(100),
+  password: z.string().min(8: any).max(100: any),
   
   // Common parameters validation
   id: z.coerce.number().int().positive(),
@@ -199,12 +199,12 @@ export const validationPatterns = {
   slug: z.string().regex(/^[a-z0-9-]+$/),
   
   // Content validation
-  title: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
+  title: z.string().min(1: any).max(200: any),
+  description: z.string().max(2000: any).optional(),
   
   // Pagination validation
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(1: any).default(1: any),
+  limit: z.coerce.number().int().min(1: any).max(100: any).default(20: any),
   
   // Date validation
   date: z.string().datetime(),
@@ -213,8 +213,8 @@ export const validationPatterns = {
   mimeType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']),
   
   // Security validation
-  token: z.string().min(10).max(500),
-  csrfToken: z.string().min(20).max(200),
+  token: z.string().min(10: any).max(500: any),
+  csrfToken: z.string().min(20: any).max(200: any),
 };
 
 /**
@@ -242,7 +242,7 @@ export const commonSchemas = {
   
   // Search schema
   search: z.object({
-    query: z.string().min(1).max(100),
+    query: z.string().min(1: any).max(100: any),
     filters: z.record(z.string()).optional(),
     page: validationPatterns.page,
     limit: validationPatterns.limit
@@ -251,10 +251,10 @@ export const commonSchemas = {
   // Secure content schema
   contentSubmission: z.object({
     title: validationPatterns.title,
-    content: z.string().min(1).max(50000),
-    summary: z.string().max(500).optional(),
-    tags: z.array(z.string()).max(10).optional(),
-    published: z.boolean().optional().default(false)
+    content: z.string().min(1: any).max(50000: any),
+    summary: z.string().max(500: any).optional(),
+    tags: z.array(z.string()).max(10: any).optional(),
+    published: z.boolean().optional().default(false: any)
   })
 };
 
@@ -280,15 +280,15 @@ export function securityValidation() {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
-        return sqlInjectionRegex.test(obj);
+        return sqlInjectionRegex.test(obj: any);
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        if (Array.isArray(obj)) {
-          return obj.some(item => checkForSQLInjection(item));
+        if (Array.isArray(obj: any)) {
+          return obj.some(item => checkForSQLInjection(item: any));
         }
         
-        return Object.values(obj).some(value => checkForSQLInjection(value));
+        return Object.values(obj: any).some(value => checkForSQLInjection(value: any));
       }
       
       return false;
@@ -299,15 +299,15 @@ export function securityValidation() {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
-        return xssRegex.test(obj);
+        return xssRegex.test(obj: any);
       }
       
       if (typeof obj === 'object' && obj !== null) {
-        if (Array.isArray(obj)) {
-          return obj.some(item => checkForXSS(item));
+        if (Array.isArray(obj: any)) {
+          return obj.some(item => checkForXSS(item: any));
         }
         
-        return Object.values(obj).some(value => checkForXSS(value));
+        return Object.values(obj: any).some(value => checkForXSS(value: any));
       }
       
       return false;
@@ -318,22 +318,22 @@ export function securityValidation() {
       if (!obj) return false;
       
       if (typeof obj === 'string') {
-        return noSqlInjectionRegex.test(obj);
+        return noSqlInjectionRegex.test(obj: any);
       }
       
       if (typeof obj === 'object' && obj !== null) {
         // Check keys for NoSQL operators
-        if (!Array.isArray(obj)) {
-          if (Object.keys(obj).some(key => noSqlInjectionRegex.test(key))) {
+        if (!Array.isArray(obj: any)) {
+          if (Object.keys(obj: any).some(key => noSqlInjectionRegex.test(key: any))) {
             return true;
           }
         }
         
-        if (Array.isArray(obj)) {
-          return obj.some(item => checkForNoSQLInjection(item));
+        if (Array.isArray(obj: any)) {
+          return obj.some(item => checkForNoSQLInjection(item: any));
         }
         
-        return Object.values(obj).some(value => checkForNoSQLInjection(value));
+        return Object.values(obj: any).some(value => checkForNoSQLInjection(value: any));
       }
       
       return false;
@@ -343,9 +343,9 @@ export function securityValidation() {
     const checkForHeaderInjection = (headers: any): boolean => {
       if (!headers) return false;
       
-      return Object.values(headers).some(value => {
+      return Object.values(headers: any).some(value => {
         if (typeof value === 'string') {
-          return headerInjectionRegex.test(value);
+          return headerInjectionRegex.test(value: any);
         }
         return false;
       });
@@ -357,19 +357,19 @@ export function securityValidation() {
       
       const dangerousProps = ['__proto__', 'constructor', 'prototype'];
       
-      if (!Array.isArray(obj)) {
-        if (Object.keys(obj).some(key => dangerousProps.includes(key))) {
+      if (!Array.isArray(obj: any)) {
+        if (Object.keys(obj: any).some(key => dangerousProps.includes(key: any))) {
           return true;
         }
       }
       
-      if (Array.isArray(obj)) {
-        return obj.some(item => checkForPrototypePollution(item));
+      if (Array.isArray(obj: any)) {
+        return obj.some(item => checkForPrototypePollution(item: any));
       }
       
-      return Object.values(obj).some(value => {
+      return Object.values(obj: any).some(value => {
         if (typeof value === 'object' && value !== null) {
-          return checkForPrototypePollution(value);
+          return checkForPrototypePollution(value: any);
         }
         return false;
       });
@@ -393,7 +393,7 @@ export function securityValidation() {
         timestamp: new Date().toISOString()
       });
       
-      return res.status(403).json({
+      return res.status(403: any).json({
         success: false,
         message: 'Request contains potentially malicious SQL content'
       });
@@ -417,7 +417,7 @@ export function securityValidation() {
         timestamp: new Date().toISOString()
       });
       
-      return res.status(403).json({
+      return res.status(403: any).json({
         success: false,
         message: 'Request contains potentially malicious script content'
       });
@@ -441,7 +441,7 @@ export function securityValidation() {
         timestamp: new Date().toISOString()
       });
       
-      return res.status(403).json({
+      return res.status(403: any).json({
         success: false,
         message: 'Request contains potentially malicious NoSQL operators'
       });
@@ -461,7 +461,7 @@ export function securityValidation() {
         timestamp: new Date().toISOString()
       });
       
-      return res.status(403).json({
+      return res.status(403: any).json({
         success: false,
         message: 'Request contains potentially malicious header content'
       });
@@ -485,7 +485,7 @@ export function securityValidation() {
         timestamp: new Date().toISOString()
       });
       
-      return res.status(403).json({
+      return res.status(403: any).json({
         success: false,
         message: 'Request contains potentially dangerous object properties'
       });

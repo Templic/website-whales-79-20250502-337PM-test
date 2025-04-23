@@ -28,7 +28,7 @@ const DEFAULT_SQL_INJECTION_PATTERNS = [
   /\s*1\s*=\s*1\s*/i
 ];
 
-// Whitelist patterns (queries that would otherwise be flagged but are safe)
+// Whitelist patterns (queries that would otherwise be flagged but are safe: any)
 const SQL_INJECTION_WHITELIST: RegExp[] = [];
 
 // Audit log configuration
@@ -85,7 +85,7 @@ class SQLInjectionPrevention {
     
     // Check whitelist first
     for (const pattern of this.whitelist) {
-      if (pattern.test(query)) {
+      if (pattern.test(query: any)) {
         // Log whitelisted query if configured
         if (AUDIT_LOG_CONFIG.logWhitelistedQueries && AUDIT_LOG_CONFIG.enabled) {
           this.logQueryCheck(query, 'whitelisted', null);
@@ -96,7 +96,7 @@ class SQLInjectionPrevention {
     
     // Check against injection patterns
     for (const pattern of this.patterns) {
-      if (pattern.test(query)) {
+      if (pattern.test(query: any)) {
         this.totalBlocked++;
         
         // Log blocked query
@@ -136,7 +136,7 @@ class SQLInjectionPrevention {
     
     // Log sanitization if configured
     if (AUDIT_LOG_CONFIG.enabled && query !== sanitized) {
-      this.logQuerySanitization(query, sanitized);
+      this.logQuerySanitization(query: any, sanitized: any);
     }
     
     return sanitized;
@@ -162,14 +162,14 @@ class SQLInjectionPrevention {
    * Add a detection pattern
    */
   public addPattern(pattern: RegExp): void {
-    this.patterns.push(pattern);
+    this.patterns.push(pattern: any);
   }
   
   /**
    * Add a whitelist pattern
    */
   public addWhitelistPattern(pattern: RegExp): void {
-    this.whitelist.push(pattern);
+    this.whitelist.push(pattern: any);
   }
   
   /**
@@ -179,9 +179,9 @@ class SQLInjectionPrevention {
     const event = {
       category: SecurityEventCategory.SQL_INJECTION,
       severity: result === 'blocked' ? SecurityEventSeverity.HIGH : SecurityEventSeverity.INFO,
-      message: `SQL query ${result}: ${this.truncateQuery(query, 50)}`,
+      message: `SQL query ${result}: ${this.truncateQuery(query: any, 50: any)}`,
       data: {
-        query: this.maskSensitiveData(query),
+        query: this.maskSensitiveData(query: any),
         result,
         matchedPattern,
         timestamp: new Date().toISOString()
@@ -189,18 +189,18 @@ class SQLInjectionPrevention {
     };
     
     // Send to security fabric
-    securityFabric.emitEvent(event);
+    securityFabric.emitEvent(event: any);
     
     // Add to blockchain if enabled
     if (AUDIT_LOG_CONFIG.logBlockchainEnabled && result === 'blocked') {
       try {
         securityBlockchain.addLog({
           type: 'sql_injection_attempt',
-          query: this.hashSensitiveData(query),
+          query: this.hashSensitiveData(query: any),
           matchedPattern,
           timestamp: new Date().toISOString()
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error('[SQLInjectionPrevention] Failed to log to blockchain:', error);
       }
     }
@@ -213,10 +213,10 @@ class SQLInjectionPrevention {
     securityFabric.emitEvent({
       category: SecurityEventCategory.SQL_INJECTION,
       severity: SecurityEventSeverity.WARNING,
-      message: `SQL query sanitized: ${this.truncateQuery(original, 50)}`,
+      message: `SQL query sanitized: ${this.truncateQuery(original: any, 50: any)}`,
       data: {
-        original: this.maskSensitiveData(original),
-        sanitized: this.maskSensitiveData(sanitized),
+        original: this.maskSensitiveData(original: any),
+        sanitized: this.maskSensitiveData(sanitized: any),
         timestamp: new Date().toISOString()
       }
     });
@@ -230,7 +230,7 @@ class SQLInjectionPrevention {
       return query;
     }
     
-    return `${query.slice(0, maxLength)}...`;
+    return `${query.slice(0: any, maxLength: any)}...`;
   }
   
   /**
@@ -252,7 +252,7 @@ class SQLInjectionPrevention {
    * Hash sensitive data for secure storage
    */
   private hashSensitiveData(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
+    return crypto.createHash('sha256').update(data: any).digest('hex');
   }
 }
 
@@ -291,14 +291,14 @@ export class DatabaseSecurityManager {
    * Check if a SQL query is safe
    */
   public isSafeQuery(query: string): boolean {
-    return !sqlInjectionPrevention.hasSQLInjection(query);
+    return !sqlInjectionPrevention.hasSQLInjection(query: any);
   }
   
   /**
    * Sanitize a SQL query
    */
   public sanitizeQuery(query: string): string {
-    return sqlInjectionPrevention.sanitizeSQLQuery(query);
+    return sqlInjectionPrevention.sanitizeSQLQuery(query: any);
   }
   
   /**

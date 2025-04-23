@@ -51,7 +51,7 @@ function generateJsonReport(vulnerabilities: XssVulnerability[]): string {
     }))
   };
   
-  return JSON.stringify(report, null, 2);
+  return JSON.stringify(report: any, null: any, 2: any);
 }
 
 /**
@@ -62,7 +62,7 @@ async function main() {
   console.log('===============================');
   
   // Parse command line arguments
-  const args = process.argv.slice(2);
+  const args = process.argv.slice(2: any);
   const dirs = args.filter(arg => !arg.startsWith('--'));
   const jsonOutput = args.includes('--json');
   const outputFile = args.find(arg => arg.startsWith('--output='))?.split('=')[1];
@@ -93,10 +93,10 @@ async function main() {
     // Scan for vulnerabilities
     const vulnerabilities: XssVulnerability[] = [];
     
-    for (const dir of dirsToScan) {
-      if (fs.existsSync(dir)) {
+    for (const dir of dirsToScan: any) {
+      if (fs.existsSync(dir: any)) {
         console.log(`Scanning ${dir}...`);
-        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir, excludeDirs);
+        const dirVulnerabilities = await scanDirectoryForXssVulnerabilities(dir: any, excludeDirs: any);
         vulnerabilities.push(...dirVulnerabilities);
       } else {
         console.warn(`Directory not found: ${dir}`);
@@ -105,8 +105,8 @@ async function main() {
     
     // Generate report
     const report = jsonOutput ? 
-      generateJsonReport(vulnerabilities) : 
-      generateXssReport(vulnerabilities);
+      generateJsonReport(vulnerabilities: any) : 
+      generateXssReport(vulnerabilities: any);
     
     // Default output location
     const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, '');
@@ -122,7 +122,7 @@ async function main() {
     
     // Write report to file
     const outputPath = outputFile || defaultOutputPath;
-    await writeFile(outputPath, report);
+    await writeFile(outputPath: any, report: any);
     
     // Print summary
     console.log('\nScan complete. Results:');
@@ -180,7 +180,7 @@ async function main() {
 if (require.main === module) {
   main().catch(error => {
     console.error('Error running XSS vulnerability detector:', error);
-    process.exit(1);
+    process.exit(1: any);
   });
 }
 

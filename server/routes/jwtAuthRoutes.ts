@@ -26,7 +26,7 @@ import { comparePasswords } from '../auth';
 const router = express.Router();
 
 // Apply rate limiting to all JWT auth routes
-router.use(authRateLimit);
+router.use(authRateLimit: any);
 
 // Validate login input
 const loginSchema = z.object({
@@ -49,7 +49,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Validate input
     const validation = loginSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -73,11 +73,11 @@ router.post('/login', async (req: Request, res: Response) => {
         type: 'FAILED_JWT_LOGIN',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
-        details: `Failed JWT login attempt for username: ${username} (user not found)`,
+        details: `Failed JWT login attempt for username: ${username} (user not found: any)`,
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid username or password'
       });
@@ -95,7 +95,7 @@ router.post('/login', async (req: Request, res: Response) => {
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Account is temporarily locked. Please try again later.'
       });
@@ -113,7 +113,7 @@ router.post('/login', async (req: Request, res: Response) => {
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'This account has been suspended'
       });
@@ -143,7 +143,7 @@ router.post('/login', async (req: Request, res: Response) => {
       }
       
       // Update failed login attempts
-      await db.update(users)
+      await db.update(users: any)
         .set({ 
           loginAttempts,
           lockedUntil
@@ -156,11 +156,11 @@ router.post('/login', async (req: Request, res: Response) => {
         username: user.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
-        details: 'Failed JWT login attempt (invalid password)',
+        details: 'Failed JWT login attempt (invalid password: any)',
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid username or password'
       });
@@ -172,7 +172,7 @@ router.post('/login', async (req: Request, res: Response) => {
       // that can only be used to complete the 2FA process
       
       // This implementation is simplified for the demo
-      return res.status(200).json({
+      return res.status(200: any).json({
         success: true,
         requireTwoFactor: true,
         message: 'Two-factor authentication required'
@@ -180,7 +180,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
     
     // Reset login attempts and update last login
-    await db.update(users)
+    await db.update(users: any)
       .set({ 
         loginAttempts: 0,
         lastLogin: new Date(),
@@ -189,7 +189,7 @@ router.post('/login', async (req: Request, res: Response) => {
       .where(eq(users.id, user.id));
     
     // Generate tokens
-    const accessToken = generateAccessToken(user);
+    const accessToken = generateAccessToken(user: any);
     const refreshToken = generateRefreshToken(user.id);
     
     // Log successful login
@@ -204,7 +204,7 @@ router.post('/login', async (req: Request, res: Response) => {
     });
     
     // Return successful response
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       accessToken,
       refreshToken,
@@ -215,10 +215,10 @@ router.post('/login', async (req: Request, res: Response) => {
         role: user.role
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('JWT login error:', error);
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during login'
     });
@@ -235,7 +235,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Validate input
     const validation = refreshSchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      return res.status(400: any).json({
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
@@ -245,10 +245,10 @@ router.post('/refresh', async (req: Request, res: Response) => {
     const { refreshToken } = validation.data;
     
     // Verify refresh token
-    const decoded = verifyRefreshToken(refreshToken);
+    const decoded = verifyRefreshToken(refreshToken: any);
     
     if (!decoded) {
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid or expired refresh token'
       });
@@ -271,7 +271,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         severity: 'high'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'Invalid refresh token'
       });
@@ -280,7 +280,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Check if account is banned
     if (user.isBanned) {
       // Revoke all tokens for this user
-      revokeToken(refreshToken);
+      revokeToken(refreshToken: any);
       
       logSecurityEvent({
         type: 'BANNED_USER_TOKEN_REFRESH',
@@ -292,14 +292,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
         severity: 'medium'
       });
       
-      return res.status(401).json({
+      return res.status(401: any).json({
         success: false,
         message: 'This account has been suspended'
       });
     }
     
     // Generate new access token
-    const newAccessToken = generateAccessToken(user);
+    const newAccessToken = generateAccessToken(user: any);
     
     // Log token refresh
     logSecurityEvent({
@@ -313,14 +313,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
     });
     
     // Return new access token
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       accessToken: newAccessToken
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Token refresh error:', error);
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred while refreshing token'
     });
@@ -338,10 +338,10 @@ router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
     const authHeader = req.headers.authorization;
     
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
+      const token = authHeader.substring(7: any);
       
       // Revoke the token
-      revokeToken(token);
+      revokeToken(token: any);
       
       // If refresh token is provided, revoke it too
       if (req.body.refreshToken) {
@@ -358,14 +358,14 @@ router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
       });
     }
     
-    return res.status(200).json({
+    return res.status(200: any).json({
       success: true,
       message: 'Logged out successfully'
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('JWT logout error:', error);
     
-    return res.status(500).json({
+    return res.status(500: any).json({
       success: false,
       message: 'An error occurred during logout'
     });

@@ -18,7 +18,7 @@ async function simulateNormalRequest() {
     path: '/api/products',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '0'
     },
     body: {},
@@ -31,7 +31,7 @@ async function simulateNormalRequest() {
   } as any;
   
   console.log('\n--- Testing normal API request ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -49,7 +49,7 @@ async function simulateSqlInjectionAttack() {
     path: '/api/users',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '250'
     },
     body: {},
@@ -62,7 +62,7 @@ async function simulateSqlInjectionAttack() {
   } as any;
   
   console.log('\n--- Testing SQL injection attack ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -72,13 +72,13 @@ async function simulateSqlInjectionAttack() {
 }
 
 /**
- * Simulates a rate limit attack (rapid requests from same IP)
+ * Simulates a rate limit attack (rapid requests from same IP: any)
  */
 async function simulateRateLimitAttack() {
   const ip = '192.168.1.102';
   const results = [];
   
-  console.log('\n--- Testing rate limit attack (sending 50 requests rapidly from same IP) ---');
+  console.log('\n--- Testing rate limit attack (sending 50 requests rapidly from same IP: any) ---');
   
   // Send 50 requests in rapid succession from the same IP
   for (let i = 0; i < 50; i++) {
@@ -87,7 +87,7 @@ async function simulateRateLimitAttack() {
       path: '/api/login',
       method: 'POST',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
         'content-length': '100'
       },
       body: { username: 'test', password: 'password' + i },
@@ -98,11 +98,11 @@ async function simulateRateLimitAttack() {
       }
     } as any;
     
-    const result = await detectAnomaly(req);
-    results.push(result);
+    const result = await detectAnomaly(req: any);
+    results.push(result: any);
     
     // Small delay to simulate realistic timing
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve: any, 50: any));
   }
   
   // Get the last result, which should have the highest anomaly score
@@ -124,7 +124,7 @@ async function simulatePathTraversalAttack() {
     path: '/api/files',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '50'
     },
     body: {},
@@ -137,7 +137,7 @@ async function simulatePathTraversalAttack() {
   } as any;
   
   console.log('\n--- Testing path traversal attack ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -155,7 +155,7 @@ async function simulateXssAttack() {
     path: '/api/comments',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '200'
     },
     body: {
@@ -170,7 +170,7 @@ async function simulateXssAttack() {
   } as any;
   
   console.log('\n--- Testing XSS attack ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -188,7 +188,7 @@ async function simulateDataExfiltrationAttempt() {
     path: '/api/query',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '300'
     },
     body: {
@@ -203,7 +203,7 @@ async function simulateDataExfiltrationAttempt() {
   } as any;
   
   console.log('\n--- Testing data exfiltration attempt ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -221,7 +221,7 @@ async function simulateSensitiveDataExposure() {
     path: '/api/payment',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '500'
     },
     body: {
@@ -239,7 +239,7 @@ async function simulateSensitiveDataExposure() {
   } as any;
   
   console.log('\n--- Testing sensitive data exposure ---');
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -265,7 +265,7 @@ async function simulateUnusualUserBehavior() {
       path: '/api/dashboard',
       method: 'GET',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
         'content-length': '0'
       },
       user: { id: userId, username: 'testuser' },
@@ -277,9 +277,9 @@ async function simulateUnusualUserBehavior() {
       }
     } as any;
     
-    await detectAnomaly(req);
+    await detectAnomaly(req: any);
     // Small delay between requests
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve: any, 200: any));
   }
   
   console.log('--- Now simulating unusual behavior for same user ---');
@@ -301,7 +301,7 @@ async function simulateUnusualUserBehavior() {
     }
   } as any;
   
-  const result = await detectAnomaly(req);
+  const result = await detectAnomaly(req: any);
   console.log('Anomaly detected:', result.isAnomaly);
   console.log('Score:', result.score);
   console.log('Reason:', result.reason || 'N/A');
@@ -324,7 +324,7 @@ async function runAllTests() {
         path: ['/api/products', '/api/categories', '/api/users/profile', '/api/orders'][i % 4],
         method: ['GET', 'GET', 'GET', 'POST'][i % 4],
         headers: {
-          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML: any, like Gecko: any) Chrome/91.0.4472.124 Safari/537.36',
           'content-length': i % 4 === 3 ? '150' : '0' // POST requests have content
         },
         body: i % 4 === 3 ? { item: 'product-' + i, quantity: i } : {},
@@ -336,9 +336,9 @@ async function runAllTests() {
         }
       } as any;
       
-      await detectAnomaly(req);
+      await detectAnomaly(req: any);
       // Small delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve: any, 100: any));
     }
     
     console.log('\n=== BASELINE ESTABLISHED, STARTING ATTACK TESTS ===');
@@ -356,7 +356,7 @@ async function runAllTests() {
     await simulateRateLimitAttack();
     
     console.log('\n=== ALL TESTS COMPLETED ===');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error during anomaly detection tests:', error);
   }
 }

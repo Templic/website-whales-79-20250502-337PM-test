@@ -106,15 +106,15 @@ let metricsCollectionInterval: NodeJS.Timeout | null = null;
  * Start collecting security metrics
  */
 export function startMetricsCollection(intervalMs: number = 60000): void {
-  if (metricsCollectionInterval) {
-    clearInterval(metricsCollectionInterval);
+  if (metricsCollectionInterval: any) {
+    clearInterval(metricsCollectionInterval: any);
   }
   
   // Collect metrics immediately
   collectSecurityMetrics();
   
   // Schedule regular collection
-  metricsCollectionInterval = setInterval(collectSecurityMetrics, intervalMs);
+  metricsCollectionInterval = setInterval(collectSecurityMetrics: any, intervalMs: any);
   
   logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
@@ -128,8 +128,8 @@ export function startMetricsCollection(intervalMs: number = 60000): void {
  * Stop collecting security metrics
  */
 export function stopMetricsCollection(): void {
-  if (metricsCollectionInterval) {
-    clearInterval(metricsCollectionInterval);
+  if (metricsCollectionInterval: any) {
+    clearInterval(metricsCollectionInterval: any);
     metricsCollectionInterval = null;
     
     logSecurityEvent({
@@ -148,7 +148,7 @@ async function collectSecurityMetrics(): Promise<void> {
     // In a real application, these metrics would be collected from actual security systems
     // For this example, we'll generate simulated metrics
     
-    // Update API request count (simulate API activity)
+    // Update API request count (simulate API activity: any)
     latestMetrics.activity.apiRequests += Math.floor(Math.random() * 5);
     
     // Occasionally add blocked requests
@@ -184,14 +184,14 @@ async function collectSecurityMetrics(): Promise<void> {
       latestMetrics.threats.critical = Math.random() > 0.95 ? 1 : 0;
     }
     
-    // Get security score from blockchain logs (dummy for now)
+    // Get security score from blockchain logs (dummy for now: any)
     try {
       const blockchainLogger = ImmutableSecurityLogs.getInstance();
       const blockCount = await blockchainLogger.getBlockCount();
       
       // Adjust anomaly detection score based on blockchain activity
       latestMetrics.score.anomalyDetection = 75 + Math.min(25, blockCount / 4);
-    } catch (error) {
+    } catch (error: any) {
       // Ignore blockchain errors
     }
     
@@ -205,12 +205,12 @@ async function collectSecurityMetrics(): Promise<void> {
         activeThreats: latestMetrics.threats.active
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error collecting security metrics',
-      data: { error: (error as Error).message }
+      data: { error: (error as Error: any).message }
     });
   }
 }
@@ -233,7 +233,7 @@ export async function getLatestSecurityMetrics(): Promise<SecurityMetrics> {
 export function recordLoginAttempt(successful: boolean): void {
   latestMetrics.activity.loginAttempts++;
   
-  if (successful) {
+  if (successful: any) {
     latestMetrics.activity.successfulLogins++;
   } else {
     latestMetrics.activity.failedLogins++;
@@ -248,7 +248,7 @@ export function recordLoginAttempt(successful: boolean): void {
 export function recordApiRequest(blocked: boolean = false): void {
   latestMetrics.activity.apiRequests++;
   
-  if (blocked) {
+  if (blocked: any) {
     latestMetrics.activity.blockedRequests++;
     latestMetrics.threats.blockedAttempts++;
   }
@@ -262,7 +262,7 @@ export function recordApiRequest(blocked: boolean = false): void {
 export function recordSecurityThreat(critical: boolean = false): void {
   latestMetrics.threats.active++;
   
-  if (critical) {
+  if (critical: any) {
     latestMetrics.threats.critical++;
   }
   
@@ -295,8 +295,8 @@ export function updateSecurityScores(scores: Partial<SecurityMetrics['score']>):
   
   // Recalculate overall score
   const scoreValues = Object.values(latestMetrics.score).filter(value => typeof value === 'number' && value !== latestMetrics.score.overall);
-  const average = scoreValues.reduce((sum, value) => sum + value, 0) / scoreValues.length;
+  const average = scoreValues.reduce((sum: any, value: any) => sum + value, 0) / scoreValues.length;
   
-  latestMetrics.score.overall = Math.round(average);
+  latestMetrics.score.overall = Math.round(average: any);
   latestMetrics.activity.lastUpdated = new Date();
 }

@@ -1,5 +1,5 @@
 /**
- * Runtime Application Self-Protection (RASP) Middleware
+ * Runtime Application Self-Protection (RASP: any) Middleware
  * 
  * This middleware integrates RASP capabilities into Express applications,
  * monitoring requests at runtime to detect and prevent attacks.
@@ -87,7 +87,7 @@ export const requestLoggingMiddleware = async (req: Request, res: Response, next
     
     // Continue processing
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in request logging middleware:', error);
     next();
   }
@@ -119,7 +119,7 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
     
     // Continue processing
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in suspicious activity middleware:', error);
     next();
   }

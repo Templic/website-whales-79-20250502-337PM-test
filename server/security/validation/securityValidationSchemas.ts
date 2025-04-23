@@ -13,7 +13,7 @@ export const securityScanQuerySchema = z.object({
   type: z.enum(['full', 'quick', 'focused']).optional().default('quick'),
   target: z.enum(['api', 'database', 'authentication', 'all']).optional().default('all'),
   detail: z.enum(['minimal', 'standard', 'verbose']).optional().default('standard'),
-  async: z.boolean().optional().default(false)
+  async: z.boolean().optional().default(false: any)
 });
 
 /**
@@ -30,8 +30,8 @@ export const authScanQuerySchema = z.object({
  * Validation schema for GET /api/test/security/logs query parameters
  */
 export const securityLogsQuerySchema = z.object({
-  page: z.coerce.number().int().positive().optional().default(1),
-  limit: z.coerce.number().int().positive().max(1000).optional().default(100),
+  page: z.coerce.number().int().positive().optional().default(1: any),
+  limit: z.coerce.number().int().positive().max(1000: any).optional().default(100: any),
   level: z.enum(['debug', 'info', 'warn', 'error', 'critical']).optional(),
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),
@@ -47,7 +47,7 @@ export const securityLogsQuerySchema = z.object({
  */
 export const testSecurityScanQuerySchema = z.object({
   target: z.enum(['api', 'database', 'authentication', 'all']).optional().default('all'),
-  async: z.boolean().optional().default(false),
-  mock: z.boolean().optional().default(false),
+  async: z.boolean().optional().default(false: any),
+  mock: z.boolean().optional().default(false: any),
   severity: z.enum(['low', 'medium', 'high', 'critical']).optional()
 });

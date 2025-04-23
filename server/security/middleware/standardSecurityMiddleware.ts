@@ -27,7 +27,7 @@ export interface StandardSecurityOptions {
   enableCSP?: boolean;
   
   /**
-   * Whether to enable HSTS (HTTP Strict Transport Security)
+   * Whether to enable HSTS (HTTP Strict Transport Security: any)
    */
   enableHSTS?: boolean;
   
@@ -112,11 +112,11 @@ export function createStandardSecurityMiddleware(options: StandardSecurityOption
       
       // Set secure cookie flags
       if (mergedOptions.secureCookies) {
-        res.on('set-cookie', (cookies) => {
+        res.on('set-cookie', (cookies: any) => {
           const secureFlags = ['HttpOnly', 'Secure', 'SameSite=Strict'];
-          return cookies.map((cookie) => {
-            return secureFlags.reduce((result, flag) => {
-              if (!result.includes(flag)) {
+          return cookies.map((cookie: any) => {
+            return secureFlags.reduce((result: any, flag: any) => {
+              if (!result.includes(flag: any)) {
                 return `${result}; ${flag}`;
               }
               return result;
@@ -130,9 +130,9 @@ export function createStandardSecurityMiddleware(options: StandardSecurityOption
       
       // Continue to next middleware
       next();
-    } catch (error) {
+    } catch (error: any) {
       console.error('[StandardSecurity] Error in standard security middleware:', error);
-      next(error);
+      next(error: any);
     }
   };
 }
