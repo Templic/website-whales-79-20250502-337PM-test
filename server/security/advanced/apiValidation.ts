@@ -16,7 +16,24 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AnyZodObject, ZodError } from 'zod';
-import { logSecurityEvent } from '../security';
+import { SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
+import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
+
+/**
+ * Log a security event to the security blockchain
+ */
+function logSecurityEvent(event: any): void {
+  securityBlockchain.addSecurityEvent({
+    severity: SecurityEventSeverity.MEDIUM,
+    category: SecurityEventCategory.API,
+    message: `API Security: ${event.type}`,
+    ipAddress: event.details?.ip || 'unknown',
+    metadata: event.details || {},
+    timestamp: new Date()
+  }).catch(error => {
+    console.error('[API-SECURITY] Error logging security event:', error);
+  });
+}
 
 // Type definitions
 export type ValidationTarget = 'body' | 'query' | 'params' | 'headers' | 'cookies';
@@ -249,16 +266,110 @@ export function securityValidation() {
     // Check for SQL injection attempts
     const sqlInjectionRegex = /('|"|;|--|\/\*|\*\/|@@|@|char|nchar|varchar|nvarchar|alter|begin|cast|create|cursor|declare|delete|drop|end|exec|execute|fetch|insert|kill|open|select|sys|sysobjects|syscolumns|table|update)/i;
     
+    // Check for XSS attempts
+    const xssRegex = /<script[^>]*>|javascript:|on\w+\s*=|alert\s*\(|eval\s*\(|\bFunction\s*\(|document\.cookie|document\.write/i;
+    
+    // Check for NoSQL injection attempts
+    const noSqlInjectionRegex = /(\$ne|\$gt|\$lt|\$gte|\$lte|\$in|\$nin|\$exists|\$type|\$or|\$and|\$regex|\$where|\$all|\$size)/i;
+    
+    // Check for HTTP header injection
+    const headerInjectionRegex = /[\r\n]/;
+    
     // Check request parameters for SQL injection attempts
-    const checkForSQLInjection = (obj: any) => {
+    const checkForSQLInjection = (obj: any): boolean => {
       if (!obj) return false;
       
-      return Object.values(obj).some(value => {
-        if (typeof value === 'string' && sqlInjectionRegex.test(value)) {
+      if (typeof obj === 'string') {
+        return sqlInjectionRegex.test(obj);
+      }
+      
+      if (typeof obj === 'object' && obj !== null) {
+        if (Array.isArray(obj)) {
+          return obj.some(item => checkForSQLInjection(item));
+        }
+        
+        return Object.values(obj).some(value => checkForSQLInjection(value));
+      }
+      
+      return false;
+    };
+    
+    // Check for XSS attempts
+    const checkForXSS = (obj: any): boolean => {
+      if (!obj) return false;
+      
+      if (typeof obj === 'string') {
+        return xssRegex.test(obj);
+      }
+      
+      if (typeof obj === 'object' && obj !== null) {
+        if (Array.isArray(obj)) {
+          return obj.some(item => checkForXSS(item));
+        }
+        
+        return Object.values(obj).some(value => checkForXSS(value));
+      }
+      
+      return false;
+    };
+    
+    // Check for NoSQL injection attempts
+    const checkForNoSQLInjection = (obj: any): boolean => {
+      if (!obj) return false;
+      
+      if (typeof obj === 'string') {
+        return noSqlInjectionRegex.test(obj);
+      }
+      
+      if (typeof obj === 'object' && obj !== null) {
+        // Check keys for NoSQL operators
+        if (!Array.isArray(obj)) {
+          if (Object.keys(obj).some(key => noSqlInjectionRegex.test(key))) {
+            return true;
+          }
+        }
+        
+        if (Array.isArray(obj)) {
+          return obj.some(item => checkForNoSQLInjection(item));
+        }
+        
+        return Object.values(obj).some(value => checkForNoSQLInjection(value));
+      }
+      
+      return false;
+    };
+    
+    // Check for header injection attempts
+    const checkForHeaderInjection = (headers: any): boolean => {
+      if (!headers) return false;
+      
+      return Object.values(headers).some(value => {
+        if (typeof value === 'string') {
+          return headerInjectionRegex.test(value);
+        }
+        return false;
+      });
+    };
+    
+    // Check for prototype pollution attempts
+    const checkForPrototypePollution = (obj: any): boolean => {
+      if (!obj || typeof obj !== 'object') return false;
+      
+      const dangerousProps = ['__proto__', 'constructor', 'prototype'];
+      
+      if (!Array.isArray(obj)) {
+        if (Object.keys(obj).some(key => dangerousProps.includes(key))) {
           return true;
         }
-        if (typeof value === 'object') {
-          return checkForSQLInjection(value);
+      }
+      
+      if (Array.isArray(obj)) {
+        return obj.some(item => checkForPrototypePollution(item));
+      }
+      
+      return Object.values(obj).some(value => {
+        if (typeof value === 'object' && value !== null) {
+          return checkForPrototypePollution(value);
         }
         return false;
       });
@@ -276,19 +387,111 @@ export function securityValidation() {
         details: {
           endpoint: req.path,
           method: req.method,
-          ip: req.ip
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
         },
         timestamp: new Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
-        message: 'Request contains potentially malicious content'
+        message: 'Request contains potentially malicious SQL content'
       });
     }
     
-    // Additional security checks can be added here
+    // Check for XSS attempts
+    if (
+      checkForXSS(req.body) || 
+      checkForXSS(req.params) || 
+      checkForXSS(req.query)
+    ) {
+      logSecurityEvent({
+        type: 'xss-attempt',
+        category: 'api-security',
+        details: {
+          endpoint: req.path,
+          method: req.method,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: 'Request contains potentially malicious script content'
+      });
+    }
     
+    // Check for NoSQL injection attempts
+    if (
+      checkForNoSQLInjection(req.body) || 
+      checkForNoSQLInjection(req.params) || 
+      checkForNoSQLInjection(req.query)
+    ) {
+      logSecurityEvent({
+        type: 'nosql-injection-attempt',
+        category: 'api-security',
+        details: {
+          endpoint: req.path,
+          method: req.method,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: 'Request contains potentially malicious NoSQL operators'
+      });
+    }
+    
+    // Check for header injection
+    if (checkForHeaderInjection(req.headers)) {
+      logSecurityEvent({
+        type: 'header-injection-attempt',
+        category: 'api-security',
+        details: {
+          endpoint: req.path,
+          method: req.method,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: 'Request contains potentially malicious header content'
+      });
+    }
+    
+    // Check for prototype pollution
+    if (
+      checkForPrototypePollution(req.body) || 
+      checkForPrototypePollution(req.params) || 
+      checkForPrototypePollution(req.query)
+    ) {
+      logSecurityEvent({
+        type: 'prototype-pollution-attempt',
+        category: 'api-security',
+        details: {
+          endpoint: req.path,
+          method: req.method,
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        },
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(403).json({
+        success: false,
+        message: 'Request contains potentially dangerous object properties'
+      });
+    }
+    
+    // All checks passed
     next();
   };
 }
