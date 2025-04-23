@@ -130,7 +130,20 @@ async function setupMaintenanceTasks() {
           WHERE schemaname = 'public'
         `);
         
+        // Function to validate tablename to prevent SQL injection
+        function isValidTableName(name: string): boolean {
+          // Only allow alphanumeric characters, underscores and hyphens
+          const tableNamePattern = /^[a-zA-Z0-9_-]+$/;
+          return tableNamePattern.test(name);
+        }
+
         for (const row of tablesResult.rows) {
+          if (!isValidTableName(row.tablename)) {
+            log(`Skipping invalid table name: ${row.tablename}`, 'db-maintenance');
+            continue;
+          }
+          
+          // Use double quotes for identifier safety and validated table name
           await pgPool.query(`REINDEX TABLE "${row.tablename}"`);
           log(`Reindexed table ${row.tablename}`, 'db-maintenance');
         }
