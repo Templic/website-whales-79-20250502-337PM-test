@@ -1,165 +1,278 @@
 /**
  * Route Security Enhancements
  * 
- * This module applies security enhancements to existing routes.
+ * This module provides functions to enhance route security by applying input validation,
+ * rate limiting, and other security measures to existing routes.
  */
 
-import express, { Request, Response, NextFunction } from 'express';
-import { validate } from '../middleware/apiValidation';
-import { RateLimiters } from '../middleware/rateLimiters';
+import { Router, Request, Response, NextFunction } from 'express';
+import { validate, validateRequest } from '../middleware/apiValidation';
 import { 
+  standardRateLimiter, 
+  authRateLimiter, 
+  adminRateLimiter, 
+  paymentRateLimiter 
+} from '../middleware/rateLimiters';
+import { securityHeadersMiddleware } from '../middleware/securityHeadersMiddleware';
+import { 
+  securityScanQuerySchema, 
+  authScanQuerySchema, 
   securityLogsQuerySchema,
-  securityScanQuerySchema,
-  securityAuthScanQuerySchema
+  testSecurityScanQuerySchema
 } from '../validation/securityValidationSchemas';
-import { applySecurityHeaders } from '../utils/securityUtils';
-import { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
+import { 
+  newsletterIdSchema, 
+  getNewsletterSchema, 
+  newsletterQuerySchema,
+  updateNewsletterSchema
+} from '../validation/newsletterValidationSchemas';
+import {
+  orderIdSchema,
+  getOrderSchema,
+  userOrdersQuerySchema,
+  applyCouponSchema
+} from '../validation/orderValidationSchemas';
+import { logSecurityEvent } from '../utils/securityUtils';
 
 /**
- * Apply enhanced security to the test security logs endpoint
+ * Apply security enhancements to security-related routes
+ * 
+ * @param router Express router
  */
-export function enhanceSecurityLogsEndpoint(app: express.Application) {
-  const originalHandler = app._router.stack
-    .filter((layer: any) => layer.route && layer.route.path === '/api/test/security/logs')
-    .map((layer: any) => layer.route.stack[0].handle)[0];
-
-  if (!originalHandler) {
-    console.warn('Could not find the original security logs endpoint handler');
-    return;
-  }
-
-  // Remove the original route
-  app._router.stack = app._router.stack
-    .filter((layer: any) => !(layer.route && layer.route.path === '/api/test/security/logs'));
-
-  // Re-add the route with enhanced security
-  app.get(
-    '/api/test/security/logs',
-    // Apply rate limiting
-    RateLimiters.securityEndpoint,
-    // Apply input validation
-    validate({
-      query: securityLogsQuerySchema
-    }),
-    // Apply the original handler with enhanced security
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        // Apply security headers
-        applySecurityHeaders(res);
-        
-        // Log access to security logs
-        await securityBlockchain.addSecurityEvent({
-          severity: SecurityEventSeverity.MEDIUM,
-          category: SecurityEventCategory.ACCESS_ATTEMPT,
-          message: 'Access to security logs',
-          ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
-          metadata: {
-            method: req.method,
-            path: req.path,
-            query: req.query,
-            userAgent: req.headers['user-agent']
-          }
-        });
-        
-        // Call the original handler
-        originalHandler(req, res, next);
-      } catch (error) {
-        next(error);
-      }
+export function enhanceSecurityRoutes(router: Router): void {
+  // GET /api/security/scan
+  router.get('/api/security/scan', 
+    standardRateLimiter(),
+    validate(securityScanQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Log the security scan event
+      logSecurityEvent('SECURITY_SCAN_REQUESTED', {
+        ip: req.ip,
+        user: req.session?.userId || 'anonymous',
+        queryParams: req.query,
+        timestamp: new Date()
+      });
+      
+      next();
     }
   );
-}
-
-/**
- * Apply enhanced security to the security scan endpoint
- */
-export function enhanceSecurityScanEndpoint(app: express.Application) {
-  const originalHandler = app._router.stack
-    .filter((layer: any) => layer.route && layer.route.path === '/api/security/scan')
-    .map((layer: any) => layer.route.stack[0].handle)[0];
-
-  if (!originalHandler) {
-    console.warn('Could not find the original security scan endpoint handler');
-    return;
-  }
-
-  // Remove the original route
-  app._router.stack = app._router.stack
-    .filter((layer: any) => !(layer.route && layer.route.path === '/api/security/scan'));
-
-  // Re-add the route with enhanced security
-  app.get(
-    '/api/security/scan',
-    // Apply rate limiting
-    RateLimiters.securityEndpoint,
-    // Apply input validation
-    validate({
-      query: securityScanQuerySchema
-    }),
-    // Apply the original handler with enhanced security
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        // Apply security headers
-        applySecurityHeaders(res);
-        
-        // Call the original handler
-        originalHandler(req, res, next);
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
-}
-
-/**
- * Apply enhanced security to the auth security scan endpoint
- */
-export function enhanceAuthSecurityScanEndpoint(app: express.Application) {
-  const originalHandler = app._router.stack
-    .filter((layer: any) => layer.route && layer.route.path === '/api/security/auth-scan')
-    .map((layer: any) => layer.route.stack[0].handle)[0];
-
-  if (!originalHandler) {
-    console.warn('Could not find the original auth security scan endpoint handler');
-    return;
-  }
-
-  // Remove the original route
-  app._router.stack = app._router.stack
-    .filter((layer: any) => !(layer.route && layer.route.path === '/api/security/auth-scan'));
-
-  // Re-add the route with enhanced security
-  app.get(
-    '/api/security/auth-scan',
-    // Apply rate limiting
-    RateLimiters.securityEndpoint,
-    // Apply input validation
-    validate({
-      query: securityAuthScanQuerySchema
-    }),
-    // Apply the original handler with enhanced security
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        // Apply security headers
-        applySecurityHeaders(res);
-        
-        // Call the original handler
-        originalHandler(req, res, next);
-      } catch (error) {
-        next(error);
-      }
-    }
-  );
-}
-
-/**
- * Apply all route enhancements
- */
-export function applyRouteEnhancements(app: express.Application) {
-  enhanceSecurityLogsEndpoint(app);
-  enhanceSecurityScanEndpoint(app);
-  enhanceAuthSecurityScanEndpoint(app);
   
-  console.log('[Security] Applied enhanced security to 3 vulnerable endpoints');
+  // GET /api/security/auth-scan
+  router.get('/api/security/auth-scan', 
+    authRateLimiter(), // Stricter rate limiting for auth endpoints
+    validate(authScanQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Log the auth scan event
+      logSecurityEvent('AUTH_SCAN_REQUESTED', {
+        ip: req.ip,
+        user: req.session?.userId || 'anonymous',
+        queryParams: req.query,
+        timestamp: new Date()
+      });
+      
+      next();
+    }
+  );
+  
+  // GET /api/test/security/logs
+  router.get('/api/test/security/logs', 
+    adminRateLimiter(), // Admin-level rate limiting
+    validate(securityLogsQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Require admin authentication
+      if (!req.session?.userId || !(req.session as any).isAdmin) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Forbidden: Admin access required'
+        });
+      }
+      
+      // Log the security logs access event
+      logSecurityEvent('SECURITY_LOGS_ACCESSED', {
+        ip: req.ip,
+        user: req.session?.userId,
+        queryParams: req.query,
+        timestamp: new Date()
+      });
+      
+      next();
+    }
+  );
+  
+  // GET /api/test/security/scan
+  router.get('/api/test/security/scan', 
+    adminRateLimiter(),
+    validate(testSecurityScanQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Require authenticated user
+      if (!req.session?.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Forbidden: Authentication required'
+        });
+      }
+      
+      // Log the test security scan event
+      logSecurityEvent('TEST_SECURITY_SCAN_REQUESTED', {
+        ip: req.ip,
+        user: req.session?.userId,
+        queryParams: req.query,
+        timestamp: new Date()
+      });
+      
+      next();
+    }
+  );
+}
+
+/**
+ * Apply security enhancements to newsletter-related routes
+ * 
+ * @param router Express router
+ */
+export function enhanceNewsletterRoutes(router: Router): void {
+  // GET /api/newsletters/:id
+  router.get('/api/newsletters/:id',
+    standardRateLimiter(),
+    validate(getNewsletterSchema, 'params'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      next();
+    }
+  );
+  
+  // PATCH /api/newsletters/:id
+  router.patch('/api/newsletters/:id',
+    adminRateLimiter(),
+    validateRequest({
+      params: newsletterIdSchema,
+      body: updateNewsletterSchema
+    }),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Require authenticated user
+      if (!req.session?.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Forbidden: Authentication required'
+        });
+      }
+      
+      next();
+    }
+  );
+  
+  // GET /api/newsletters
+  router.get('/api/newsletters',
+    standardRateLimiter(),
+    validate(newsletterQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      next();
+    }
+  );
+}
+
+/**
+ * Apply security enhancements to order and cart routes
+ * 
+ * @param router Express router
+ */
+export function enhanceOrderRoutes(router: Router): void {
+  // GET /orders/:orderId
+  router.get('/orders/:orderId',
+    standardRateLimiter(),
+    validate(getOrderSchema, 'params'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Require authenticated user
+      if (!req.session?.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Forbidden: Authentication required'
+        });
+      }
+      
+      next();
+    }
+  );
+  
+  // GET /user/orders
+  router.get('/user/orders',
+    standardRateLimiter(),
+    validate(userOrdersQuerySchema, 'query'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      // Require authenticated user
+      if (!req.session?.userId) {
+        return res.status(403).json({
+          status: 'error',
+          message: 'Forbidden: Authentication required'
+        });
+      }
+      
+      next();
+    }
+  );
+  
+  // POST /cart/coupon
+  router.post('/cart/coupon',
+    standardRateLimiter(),
+    validate(applyCouponSchema, 'body'),
+    securityHeadersMiddleware,
+    (req: Request, res: Response, next: NextFunction) => {
+      next();
+    }
+  );
+}
+
+/**
+ * Apply global security middleware to all routes
+ * 
+ * @param app Express application
+ */
+export function applyGlobalSecurityMiddleware(app: any): void {
+  // Apply security headers to all responses
+  app.use(securityHeadersMiddleware);
+  
+  // Log all requests for security monitoring
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    // Skip logging for static assets
+    if (req.path.startsWith('/static/') || 
+        req.path.startsWith('/assets/') || 
+        req.path.endsWith('.ico') ||
+        req.path.endsWith('.png') ||
+        req.path.endsWith('.jpg') ||
+        req.path.endsWith('.css') ||
+        req.path.endsWith('.js')) {
+      return next();
+    }
+    
+    // Log request details
+    const requestInfo = {
+      method: req.method,
+      path: req.path,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      referer: req.headers.referer,
+      timestamp: new Date()
+    };
+    
+    // Log to debug level to avoid flooding logs
+    if (process.env.NODE_ENV === 'production') {
+      // In production, only log non-GET requests at info level
+      if (req.method !== 'GET') {
+        logSecurityEvent('API_REQUEST', requestInfo);
+      }
+    } else {
+      // In development, log all requests at debug level
+      console.debug(`${req.method} ${req.path} from ${req.ip}`);
+    }
+    
+    next();
+  });
 }

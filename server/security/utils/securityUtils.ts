@@ -8,37 +8,15 @@
 import { Response, Request } from 'express';
 import { randomBytes, createHash } from 'crypto';
 import { Session } from 'express-session';
-import { logger } from '../../utils/logger';
+import { SecurityEventType, SecurityEvent, SecurityLogLevel } from '../types/securityTypes';
 
-/**
- * Type for security event logging
- */
-export type SecurityEventType =
-  | 'AUTHENTICATION_SUCCESS'
-  | 'AUTHENTICATION_FAILURE'
-  | 'ACCESS_DENIED'
-  | 'AUTHORIZATION_FAILURE'
-  | 'SESSION_CREATED'
-  | 'SESSION_DESTROYED'
-  | 'PASSWORD_CHANGED'
-  | 'PASSWORD_RESET_REQUESTED'
-  | 'PASSWORD_RESET_COMPLETED'
-  | 'ACCOUNT_LOCKED'
-  | 'ACCOUNT_UNLOCKED'
-  | 'API_VALIDATION_FAILURE'
-  | 'RATE_LIMIT_EXCEEDED'
-  | 'CSRF_VALIDATION_FAILURE'
-  | 'SUSPICIOUS_ACTIVITY'
-  | 'SECURITY_CONFIGURATION_CHANGED';
-
-/**
- * Basic interface for security events
- */
-export interface SecurityEvent {
-  type: SecurityEventType;
-  timestamp: Date;
-  data: Record<string, any>;
-}
+// Create a simple logger if the actual logger is not available
+const logger = {
+  debug: (message: string, meta?: any) => console.debug(message, meta),
+  info: (message: string, meta?: any) => console.info(message, meta),
+  warn: (message: string, meta?: any) => console.warn(message, meta),
+  error: (message: string, meta?: any) => console.error(message, meta)
+};
 
 /**
  * Apply security headers to HTTP responses
@@ -129,16 +107,37 @@ export function sanitizeString(input: string): string {
  * 
  * @param type Type of security event
  * @param data Additional event data
+ * @param level Log level for the event
  */
-export function logSecurityEvent(type: SecurityEventType, data: Record<string, any>): void {
+export function logSecurityEvent(
+  type: SecurityEventType, 
+  data: Record<string, any>,
+  level: SecurityLogLevel = SecurityLogLevel.INFO
+): void {
   const event: SecurityEvent = {
     type,
     timestamp: new Date(),
+    level,
+    source: 'security-utils',
     data
   };
   
-  // Log to the application logger
-  logger.info(`Security event: ${type}`, { securityEvent: event });
+  // Log to the appropriate logger level
+  switch (level) {
+    case SecurityLogLevel.DEBUG:
+      logger.debug(`Security event: ${type}`, { securityEvent: event });
+      break;
+    case SecurityLogLevel.INFO:
+      logger.info(`Security event: ${type}`, { securityEvent: event });
+      break;
+    case SecurityLogLevel.WARN:
+      logger.warn(`Security event: ${type}`, { securityEvent: event });
+      break;
+    case SecurityLogLevel.ERROR:
+    case SecurityLogLevel.CRITICAL:
+      logger.error(`Security event: ${type}`, { securityEvent: event });
+      break;
+  }
   
   // In a production environment, consider also sending to:
   // - Security information and event management (SIEM) system
