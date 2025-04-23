@@ -1,103 +1,27 @@
 /**
- * Immutable Security Logs with Blockchain-like Structure
+ * Immutable Security Logs
  * 
- * This module implements a blockchain-inspired immutable logging system for security events.
- * It provides tamper-evident logs that can detect any modifications to the security audit trail.
+ * This module implements a blockchain-based immutable security logging system
+ * that ensures the integrity and non-repudiation of security events.
  */
 
 import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+import { SecurityEvent, SecurityEventWithBlockchainData, SecurityEventFilter } from './SecurityEventTypes';
+import { securityFabric } from '../SecurityFabric';
 
 /**
- * Security event severity level
+ * Block in the security blockchain
  */
-export enum SecurityEventSeverity {
-  INFO = 'info',
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical'
-}
-
-/**
- * Security event categories
- */
-export enum SecurityEventCategory {
-  AUTHENTICATION = 'authentication',
-  AUTHORIZATION = 'authorization',
-  ATTACK_ATTEMPT = 'attack_attempt',
-  DATA_ACCESS = 'data_access',
-  CONFIGURATION_CHANGE = 'configuration_change',
-  RESOURCE_ACCESS = 'resource_access',
-  ADMINISTRATIVE = 'administrative',
-  SYSTEM = 'system',
-  API = 'api',
-  USER_ACTIVITY = 'user_activity',
-  CRYPTO = 'crypto',
-  NETWORK = 'network',
-  DATABASE = 'database',
-  FILE_SYSTEM = 'file_system'
-}
-
-/**
- * Security event interface
- */
-export interface SecurityEvent {
+interface SecurityBlock {
   /**
-   * Unique event ID
+   * Block ID
    */
-  id: string;
+  blockId: string;
   
   /**
-   * Event timestamp
+   * Previous block hash
    */
-  timestamp: Date;
-  
-  /**
-   * Event severity
-   */
-  severity: SecurityEventSeverity;
-  
-  /**
-   * Event category
-   */
-  category: SecurityEventCategory;
-  
-  /**
-   * Event message
-   */
-  message: string;
-  
-  /**
-   * User that triggered the event (if applicable)
-   */
-  user?: string;
-  
-  /**
-   * IP address associated with the event
-   */
-  ipAddress?: string;
-  
-  /**
-   * Additional metadata
-   */
-  metadata?: Record<string, any>;
-  
-  /**
-   * Whether the event is verified
-   */
-  verified?: boolean;
-}
-
-/**
- * Block of security events
- */
-export interface SecurityBlock {
-  /**
-   * Block number
-   */
-  blockNumber: number;
+  previousHash: string;
   
   /**
    * Block timestamp
@@ -105,19 +29,14 @@ export interface SecurityBlock {
   timestamp: Date;
   
   /**
-   * Hash of the previous block
+   * Events in the block
    */
-  previousBlockHash: string;
+  events: SecurityEventWithBlockchainData[];
   
   /**
-   * Merkle root of events
+   * Merkle root of the events
    */
   merkleRoot: string;
-  
-  /**
-   * Events in this block
-   */
-  events: SecurityEvent[];
   
   /**
    * Nonce for proof of work
@@ -125,1025 +44,566 @@ export interface SecurityBlock {
   nonce: number;
   
   /**
-   * Block hash
+   * Hash of the block
    */
   hash: string;
-  
-  /**
-   * Validator signatures
-   */
-  signatures: Array<{
-    /**
-     * Validator ID
-     */
-    validatorId: string;
-    
-    /**
-     * Signature
-     */
-    signature: string;
-  }>;
 }
 
 /**
- * Chain validation result
+ * Security blockchain class
+ * Implements a blockchain for immutable security event logging
  */
-export interface ChainValidationResult {
+class SecurityBlockchain {
   /**
-   * Whether the chain is valid
+   * Blocks in the blockchain
    */
-  valid: boolean;
+  private blocks: SecurityBlock[] = [];
   
   /**
-   * Errors found during validation
+   * Unconfirmed events waiting to be added to a block
    */
-  errors: string[];
+  private unconfirmedEvents: SecurityEventWithBlockchainData[] = [];
   
   /**
-   * Block numbers with invalid hashes
+   * Number of events in a block
    */
-  invalidBlocks: number[];
-  
-  /**
-   * Block numbers with invalid events
-   */
-  invalidEvents: number[];
-  
-  /**
-   * Block numbers with invalid signatures
-   */
-  invalidSignatures: number[];
-}
-
-/**
- * Security blockchain options
- */
-export interface SecurityBlockchainOptions {
-  /**
-   * Maximum events per block
-   */
-  maxEventsPerBlock?: number;
-  
-  /**
-   * Block confirmation time in milliseconds
-   */
-  blockConfirmationTime?: number;
-  
-  /**
-   * Storage directory
-   */
-  storageDirectory?: string;
-  
-  /**
-   * Storage format ('json' or 'binary')
-   */
-  storageFormat?: 'json' | 'binary';
-  
-  /**
-   * Whether to compress blocks
-   */
-  compressBlocks?: boolean;
-  
-  /**
-   * Maximum chain length to keep in memory
-   */
-  maxChainLength?: number;
-  
-  /**
-   * Validator IDs
-   */
-  validators?: string[];
+  private blockSize: number = 10;
   
   /**
    * Difficulty for proof of work
    */
-  proofOfWorkDifficulty?: number;
-}
-
-/**
- * Security blockchain storage provider
- */
-interface SecurityBlockchainStorage {
-  /**
-   * Save a block
-   */
-  saveBlock(block: SecurityBlock): Promise<void>;
+  private difficulty: number = 2;
   
   /**
-   * Load a block by number
+   * Interval for block creation (ms)
    */
-  loadBlock(blockNumber: number): Promise<SecurityBlock | null>;
+  private blockInterval: number = 60000; // 1 minute
   
   /**
-   * Get the latest block number
+   * Block creation timer
    */
-  getLatestBlockNumber(): Promise<number>;
+  private blockTimer: NodeJS.Timeout | null = null;
   
   /**
-   * List all block numbers
+   * Flag indicating whether the blockchain is initialized
    */
-  listBlockNumbers(): Promise<number[]>;
-  
-  /**
-   * Check if a block exists
-   */
-  blockExists(blockNumber: number): Promise<boolean>;
-}
-
-/**
- * File-based security blockchain storage
- */
-class FileSecurityBlockchainStorage implements SecurityBlockchainStorage {
-  /**
-   * Storage directory
-   */
-  private storageDirectory: string;
-  
-  /**
-   * Storage format
-   */
-  private storageFormat: 'json' | 'binary';
-  
-  /**
-   * Whether to compress blocks
-   */
-  private compressBlocks: boolean;
-  
-  /**
-   * Create a new file-based storage
-   */
-  constructor(options: {
-    storageDirectory: string;
-    storageFormat: 'json' | 'binary';
-    compressBlocks: boolean;
-  }) {
-    this.storageDirectory = options.storageDirectory;
-    this.storageFormat = options.storageFormat;
-    this.compressBlocks = options.compressBlocks;
-    
-    // Create storage directory if it doesn't exist
-    if (!fs.existsSync(this.storageDirectory)) {
-      fs.mkdirSync(this.storageDirectory, { recursive: true });
-    }
-  }
-  
-  /**
-   * Save a block
-   */
-  public async saveBlock(block: SecurityBlock): Promise<void> {
-    const blockPath = this.getBlockPath(block.blockNumber);
-    
-    try {
-      let data: string | Buffer;
-      
-      if (this.storageFormat === 'json') {
-        // Convert dates to ISO strings for JSON serialization
-        const serializedBlock = this.serializeBlockForJson(block);
-        data = JSON.stringify(serializedBlock, null, 2);
-      } else {
-        // Binary format (would implement custom binary serialization)
-        data = Buffer.from(JSON.stringify(block)); // Simplified for now
-      }
-      
-      // Compress if needed (simplified)
-      if (this.compressBlocks) {
-        // In a real implementation, would use zlib or similar
-        // For now, just use the uncompressed data
-      }
-      
-      // Write to file
-      fs.writeFileSync(blockPath, data);
-    } catch (error) {
-      console.error(`[SecurityBlockchain] Error saving block ${block.blockNumber}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Load a block by number
-   */
-  public async loadBlock(blockNumber: number): Promise<SecurityBlock | null> {
-    const blockPath = this.getBlockPath(blockNumber);
-    
-    if (!fs.existsSync(blockPath)) {
-      return null;
-    }
-    
-    try {
-      const data = fs.readFileSync(blockPath);
-      
-      // Decompress if needed (simplified)
-      const decompressedData = data; // Would implement actual decompression
-      
-      // Parse block
-      if (this.storageFormat === 'json') {
-        const parsedBlock = JSON.parse(decompressedData.toString());
-        return this.deserializeBlockFromJson(parsedBlock);
-      } else {
-        // Binary format (would implement custom binary deserialization)
-        return JSON.parse(decompressedData.toString());
-      }
-    } catch (error) {
-      console.error(`[SecurityBlockchain] Error loading block ${blockNumber}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Get the latest block number
-   */
-  public async getLatestBlockNumber(): Promise<number> {
-    try {
-      const blockNumbers = await this.listBlockNumbers();
-      
-      if (blockNumbers.length === 0) {
-        return -1; // No blocks yet
-      }
-      
-      return Math.max(...blockNumbers);
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error getting latest block number:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * List all block numbers
-   */
-  public async listBlockNumbers(): Promise<number[]> {
-    try {
-      const files = fs.readdirSync(this.storageDirectory);
-      
-      const blockNumbers = files
-        .filter(file => file.endsWith(this.storageFormat === 'json' ? '.json' : '.bin'))
-        .map(file => {
-          const match = file.match(/^block_(\d+)\./);
-          return match ? parseInt(match[1], 10) : -1;
-        })
-        .filter(num => num >= 0);
-      
-      return blockNumbers.sort((a, b) => a - b);
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error listing block numbers:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Check if a block exists
-   */
-  public async blockExists(blockNumber: number): Promise<boolean> {
-    const blockPath = this.getBlockPath(blockNumber);
-    return fs.existsSync(blockPath);
-  }
-  
-  /**
-   * Get the path to a block file
-   */
-  private getBlockPath(blockNumber: number): string {
-    const extension = this.storageFormat === 'json' ? '.json' : '.bin';
-    return path.join(this.storageDirectory, `block_${blockNumber}${extension}`);
-  }
-  
-  /**
-   * Serialize a block for JSON storage
-   */
-  private serializeBlockForJson(block: SecurityBlock): any {
-    return {
-      ...block,
-      timestamp: block.timestamp.toISOString(),
-      events: block.events.map(event => ({
-        ...event,
-        timestamp: event.timestamp.toISOString()
-      }))
-    };
-  }
-  
-  /**
-   * Deserialize a block from JSON storage
-   */
-  private deserializeBlockFromJson(jsonBlock: any): SecurityBlock {
-    return {
-      ...jsonBlock,
-      timestamp: new Date(jsonBlock.timestamp),
-      events: jsonBlock.events.map((event: any) => ({
-        ...event,
-        timestamp: new Date(event.timestamp)
-      }))
-    };
-  }
-}
-
-/**
- * Security blockchain implementation
- */
-export class SecurityBlockchain {
-  /**
-   * Chain options
-   */
-  private options: SecurityBlockchainOptions;
-  
-  /**
-   * Storage provider
-   */
-  private storage: SecurityBlockchainStorage;
-  
-  /**
-   * Current chain (in memory)
-   */
-  private chain: SecurityBlock[] = [];
-  
-  /**
-   * Pending events
-   */
-  private pendingEvents: SecurityEvent[] = [];
-  
-  /**
-   * Interval for creating blocks
-   */
-  private blockCreationInterval: NodeJS.Timeout | null = null;
-  
-  /**
-   * Validator keys (in a real implementation, these would be stored securely)
-   */
-  private validatorKeys: Map<string, { publicKey: string; privateKey: string }> = new Map();
+  private initialized: boolean = false;
   
   /**
    * Create a new security blockchain
    */
-  constructor(options: SecurityBlockchainOptions = {}) {
-    this.options = {
-      maxEventsPerBlock: 100,
-      blockConfirmationTime: 60000, // 1 minute
-      storageDirectory: 'data/security-blockchain',
-      storageFormat: 'json',
-      compressBlocks: false,
-      maxChainLength: 1000,
-      validators: ['validator1', 'validator2', 'validator3'],
-      proofOfWorkDifficulty: 2,
-      ...options
-    };
-    
-    // Initialize storage
-    this.storage = new FileSecurityBlockchainStorage({
-      storageDirectory: this.options.storageDirectory!,
-      storageFormat: this.options.storageFormat!,
-      compressBlocks: this.options.compressBlocks!
-    });
-    
-    // Initialize validator keys (in a real implementation, would load actual keys)
-    for (const validatorId of this.options.validators || []) {
-      // Generate some deterministic keys for simulation
-      const seed = crypto.createHash('sha256').update(validatorId).digest();
-      const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-        modulusLength: 2048,
-        publicKeyEncoding: {
-          type: 'spki',
-          format: 'pem'
-        },
-        privateKeyEncoding: {
-          type: 'pkcs8',
-          format: 'pem'
-        }
-      });
-      
-      this.validatorKeys.set(validatorId, { publicKey, privateKey });
-    }
+  constructor() {
+    this.init();
   }
   
   /**
    * Initialize the blockchain
    */
-  public async initialize(): Promise<void> {
-    try {
-      console.log('[SecurityBlockchain] Initializing security blockchain...');
-      
-      // Load the latest blocks into memory
-      await this.loadLatestBlocks();
-      
-      // Start block creation interval
-      this.startBlockCreation();
-      
-      console.log('[SecurityBlockchain] Security blockchain initialized successfully');
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error initializing security blockchain:', error);
-      throw error;
+  private async init(): Promise<void> {
+    if (this.initialized) {
+      return;
     }
+    
+    // Create the genesis block if no blocks exist
+    if (this.blocks.length === 0) {
+      await this.createGenesisBlock();
+    }
+    
+    // Start the block creation timer
+    this.startBlockTimer();
+    
+    this.initialized = true;
+    
+    console.log('[SECURITY-BLOCKCHAIN] Initialized');
   }
   
   /**
-   * Shut down the blockchain
+   * Create the genesis block
    */
-  public async shutdown(): Promise<void> {
-    try {
-      console.log('[SecurityBlockchain] Shutting down security blockchain...');
-      
-      // Stop block creation interval
-      if (this.blockCreationInterval) {
-        clearInterval(this.blockCreationInterval);
-        this.blockCreationInterval = null;
-      }
-      
-      // Create a final block with any pending events
-      if (this.pendingEvents.length > 0) {
-        await this.createNewBlock();
-      }
-      
-      console.log('[SecurityBlockchain] Security blockchain shut down successfully');
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error shutting down security blockchain:', error);
-      throw error;
+  private async createGenesisBlock(): Promise<void> {
+    const genesisBlock: SecurityBlock = {
+      blockId: '0',
+      previousHash: '0'.repeat(64),
+      timestamp: new Date(),
+      events: [],
+      merkleRoot: '0'.repeat(64),
+      nonce: 0,
+      hash: '0'.repeat(64)
+    };
+    
+    // Add a genesis event
+    const genesisEvent: SecurityEventWithBlockchainData = {
+      id: crypto.randomUUID(),
+      severity: 'info' as any,
+      category: 'system' as any,
+      message: 'Genesis block created',
+      timestamp: new Date(),
+      hash: '',
+      blockId: genesisBlock.blockId,
+      index: 0
+    };
+    
+    // Compute the hash of the event
+    genesisEvent.hash = this.hashEvent(genesisEvent);
+    
+    // Add the event to the block
+    genesisBlock.events.push(genesisEvent);
+    
+    // Compute the merkle root
+    genesisBlock.merkleRoot = this.computeMerkleRoot(genesisBlock.events);
+    
+    // Compute the block hash
+    genesisBlock.hash = this.hashBlock(genesisBlock);
+    
+    // Add the block to the blockchain
+    this.blocks.push(genesisBlock);
+    
+    console.log('[SECURITY-BLOCKCHAIN] Genesis block created');
+  }
+  
+  /**
+   * Start the block creation timer
+   */
+  private startBlockTimer(): void {
+    if (this.blockTimer) {
+      clearInterval(this.blockTimer);
     }
+    
+    this.blockTimer = setInterval(() => {
+      this.createBlock().catch(error => {
+        console.error('[SECURITY-BLOCKCHAIN] Error creating block:', error);
+      });
+    }, this.blockInterval);
   }
   
   /**
    * Add a security event to the blockchain
    */
-  public async addSecurityEvent(event: Omit<SecurityEvent, 'id' | 'timestamp' | 'verified'>): Promise<SecurityEvent> {
-    try {
-      // Create a full event with ID and timestamp
-      const fullEvent: SecurityEvent = {
-        id: crypto.randomBytes(16).toString('hex'),
-        timestamp: new Date(),
-        verified: false,
-        ...event
-      };
-      
-      // Add to pending events
-      this.pendingEvents.push(fullEvent);
-      
-      // Create a new block if we've reached the maximum events per block
-      if (this.pendingEvents.length >= (this.options.maxEventsPerBlock || 100)) {
-        await this.createNewBlock();
-      }
-      
-      return fullEvent;
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error adding security event:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Create a new block with pending events
-   */
-  private async createNewBlock(): Promise<SecurityBlock> {
-    if (this.pendingEvents.length === 0) {
-      throw new Error('No pending events to create a block');
+  public async addSecurityEvent(event: SecurityEvent): Promise<SecurityEventWithBlockchainData> {
+    await this.init();
+    
+    // Generate an ID for the event
+    const eventId = crypto.randomUUID();
+    
+    // Create a blockchain event
+    const blockchainEvent: SecurityEventWithBlockchainData = {
+      ...event,
+      id: eventId,
+      hash: '',
+      blockId: '',
+      index: 0
+    };
+    
+    // Compute the hash of the event
+    blockchainEvent.hash = this.hashEvent(blockchainEvent);
+    
+    // Add the event to the unconfirmed events
+    this.unconfirmedEvents.push(blockchainEvent);
+    
+    // Emit an event
+    securityFabric.emit('security:blockchain:event-added', {
+      eventId,
+      timestamp: new Date()
+    });
+    
+    // If there are enough unconfirmed events, create a new block
+    if (this.unconfirmedEvents.length >= this.blockSize) {
+      await this.createBlock();
     }
     
-    try {
-      // Get the latest block
-      const latestBlockNumber = await this.storage.getLatestBlockNumber();
-      const previousBlock = latestBlockNumber >= 0 ? 
-        await this.storage.loadBlock(latestBlockNumber) : 
-        null;
-      
-      // Generate block number and previous hash
-      const blockNumber = latestBlockNumber + 1;
-      const previousBlockHash = previousBlock ? previousBlock.hash : '0'.repeat(64);
-      
-      // Verify events
-      const verifiedEvents = this.pendingEvents.map(event => ({
-        ...event,
-        verified: true
-      }));
-      
-      // Calculate merkle root
-      const merkleRoot = this.calculateMerkleRoot(verifiedEvents);
-      
-      // Create the new block
-      const newBlock: SecurityBlock = {
-        blockNumber,
-        timestamp: new Date(),
-        previousBlockHash,
-        merkleRoot,
-        events: verifiedEvents,
-        nonce: 0,
-        hash: '',
-        signatures: []
-      };
-      
-      // Perform proof of work
-      const difficulty = this.options.proofOfWorkDifficulty || 2;
-      await this.performProofOfWork(newBlock, difficulty);
-      
-      // Sign the block using validators
-      await this.signBlock(newBlock);
-      
-      // Save the block
-      await this.storage.saveBlock(newBlock);
-      
-      // Add to in-memory chain
-      this.chain.push(newBlock);
-      
-      // Trim in-memory chain if needed
-      this.trimChain();
-      
-      // Clear pending events
-      this.pendingEvents = [];
-      
-      console.log(`[SecurityBlockchain] Created block #${blockNumber} with ${verifiedEvents.length} events`);
-      
-      return newBlock;
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error creating new block:', error);
-      throw error;
-    }
+    return blockchainEvent;
   }
   
   /**
-   * Sign a block with validator keys
+   * Create a new block
    */
-  private async signBlock(block: SecurityBlock): Promise<void> {
-    try {
-      // Calculate block hash
-      const blockData = this.serializeBlockForHashing(block);
-      block.hash = crypto.createHash('sha256').update(blockData).digest('hex');
-      
-      // Sign the block with each validator
-      block.signatures = [];
-      
-      for (const [validatorId, keys] of this.validatorKeys.entries()) {
-        const signature = crypto.sign('sha256', Buffer.from(block.hash), {
-          key: keys.privateKey,
-          padding: crypto.constants.RSA_PKCS1_PSS_PADDING
-        }).toString('base64');
-        
-        block.signatures.push({
-          validatorId,
-          signature
-        });
-      }
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error signing block:', error);
-      throw error;
+  private async createBlock(): Promise<void> {
+    // If there are no unconfirmed events, do nothing
+    if (this.unconfirmedEvents.length === 0) {
+      return;
     }
-  }
-  
-  /**
-   * Perform proof of work
-   */
-  private async performProofOfWork(block: SecurityBlock, difficulty: number): Promise<void> {
-    // Create a string of zeros based on difficulty
-    const targetPrefix = '0'.repeat(difficulty);
     
-    let nonce = 0;
-    let hash = '';
+    // Get the events for the new block
+    const events = this.unconfirmedEvents.splice(0, this.blockSize);
+    
+    // Get the previous block
+    const previousBlock = this.blocks[this.blocks.length - 1];
+    
+    // Create a new block
+    const block: SecurityBlock = {
+      blockId: String(this.blocks.length),
+      previousHash: previousBlock.hash,
+      timestamp: new Date(),
+      events,
+      merkleRoot: '',
+      nonce: 0,
+      hash: ''
+    };
+    
+    // Assign block ID and index to events
+    for (let i = 0; i < events.length; i++) {
+      events[i].blockId = block.blockId;
+      events[i].index = i;
+    }
+    
+    // Compute the merkle root
+    block.merkleRoot = this.computeMerkleRoot(events);
+    
+    // Perform proof of work
+    await this.mineBlock(block);
+    
+    // Add the block to the blockchain
+    this.blocks.push(block);
+    
+    // Emit an event
+    securityFabric.emit('security:blockchain:block-created', {
+      blockId: block.blockId,
+      timestamp: new Date(),
+      eventsCount: events.length
+    });
+    
+    console.log(`[SECURITY-BLOCKCHAIN] Created block #${block.blockId} with ${events.length} events`);
+  }
+  
+  /**
+   * Mine a block (perform proof of work)
+   */
+  private async mineBlock(block: SecurityBlock): Promise<void> {
+    const target = '0'.repeat(this.difficulty);
     
     while (true) {
-      // Update nonce
-      block.nonce = nonce;
+      // Compute the hash of the block
+      block.hash = this.hashBlock(block);
       
-      // Calculate hash
-      const blockData = this.serializeBlockForHashing(block);
-      hash = crypto.createHash('sha256').update(blockData).digest('hex');
-      
-      // Check if hash meets difficulty requirement
-      if (hash.startsWith(targetPrefix)) {
+      // Check if the hash meets the difficulty requirement
+      if (block.hash.startsWith(target)) {
         break;
       }
       
-      nonce++;
+      // Increment the nonce
+      block.nonce++;
       
-      // Yield to event loop periodically
-      if (nonce % 1000 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
+      // Yield to the event loop
+      await new Promise(resolve => setTimeout(resolve, 0));
     }
-    
-    // Update block with final nonce and hash
-    block.nonce = nonce;
-    block.hash = hash;
   }
   
   /**
-   * Calculate merkle root of events
+   * Compute the merkle root of a list of events
    */
-  private calculateMerkleRoot(events: SecurityEvent[]): string {
+  private computeMerkleRoot(events: SecurityEventWithBlockchainData[]): string {
+    // If there are no events, return a default hash
     if (events.length === 0) {
       return '0'.repeat(64);
     }
     
-    // Calculate leaf hashes
-    const leafHashes = events.map(event => {
-      const eventData = JSON.stringify(event);
-      return crypto.createHash('sha256').update(eventData).digest('hex');
-    });
-    
-    // If only one leaf, return it
-    if (leafHashes.length === 1) {
-      return leafHashes[0];
+    // If there is only one event, return its hash
+    if (events.length === 1) {
+      return events[0].hash;
     }
     
-    // Build merkle tree
-    return this.buildMerkleTree(leafHashes);
-  }
-  
-  /**
-   * Build merkle tree from leaf hashes
-   */
-  private buildMerkleTree(hashes: string[]): string {
-    if (hashes.length === 0) {
-      return '0'.repeat(64);
+    // Create a list of leaf nodes (event hashes)
+    let nodes = events.map(event => event.hash);
+    
+    // If the number of nodes is odd, duplicate the last node
+    if (nodes.length % 2 !== 0) {
+      nodes.push(nodes[nodes.length - 1]);
     }
     
-    if (hashes.length === 1) {
-      return hashes[0];
-    }
-    
-    const nextLevel: string[] = [];
-    
-    // Combine pairs of hashes
-    for (let i = 0; i < hashes.length; i += 2) {
-      if (i + 1 < hashes.length) {
-        // Combine pair
-        const combined = hashes[i] + hashes[i + 1];
-        const hash = crypto.createHash('sha256').update(combined).digest('hex');
-        nextLevel.push(hash);
-      } else {
-        // Odd number of hashes, duplicate the last one
-        const combined = hashes[i] + hashes[i];
-        const hash = crypto.createHash('sha256').update(combined).digest('hex');
-        nextLevel.push(hash);
+    // Build the merkle tree
+    while (nodes.length > 1) {
+      const newNodes = [];
+      
+      // Process nodes in pairs
+      for (let i = 0; i < nodes.length; i += 2) {
+        const left = nodes[i];
+        const right = nodes[i + 1];
+        
+        // Combine the hashes of the left and right nodes
+        const combined = this.hashPair(left, right);
+        
+        newNodes.push(combined);
+      }
+      
+      nodes = newNodes;
+      
+      // If the number of nodes is odd, duplicate the last node
+      if (nodes.length % 2 !== 0 && nodes.length > 1) {
+        nodes.push(nodes[nodes.length - 1]);
       }
     }
     
-    // Recursively build the next level
-    return this.buildMerkleTree(nextLevel);
+    // Return the root of the merkle tree
+    return nodes[0];
   }
   
   /**
-   * Serialize a block for hashing
+   * Hash a pair of hashes
    */
-  private serializeBlockForHashing(block: SecurityBlock): string {
-    // Create a copy without the hash and signatures
-    const blockData = {
-      blockNumber: block.blockNumber,
-      timestamp: block.timestamp.toISOString(),
-      previousBlockHash: block.previousBlockHash,
-      merkleRoot: block.merkleRoot,
-      events: block.events.map(event => ({
-        ...event,
-        timestamp: event.timestamp.toISOString()
-      })),
-      nonce: block.nonce
-    };
+  private hashPair(left: string, right: string): string {
+    const data = left + right;
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+  
+  /**
+   * Hash an event
+   */
+  private hashEvent(event: SecurityEventWithBlockchainData): string {
+    // Create a copy of the event without the hash field
+    const { hash, ...eventWithoutHash } = event;
     
-    return JSON.stringify(blockData);
+    // Convert the event to a string
+    const data = JSON.stringify(eventWithoutHash);
+    
+    // Compute the hash
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
   
   /**
-   * Load the latest blocks into memory
+   * Hash a block
    */
-  private async loadLatestBlocks(): Promise<void> {
-    try {
-      const blockNumbers = await this.storage.listBlockNumbers();
+  private hashBlock(block: SecurityBlock): string {
+    // Create a copy of the block without the hash field
+    const { hash, ...blockWithoutHash } = block;
+    
+    // Convert the block to a string
+    const data = JSON.stringify(blockWithoutHash);
+    
+    // Compute the hash
+    return crypto.createHash('sha256').update(data).digest('hex');
+  }
+  
+  /**
+   * Verify the integrity of the blockchain
+   */
+  public async verifyBlockchain(): Promise<boolean> {
+    // Loop through all blocks except the genesis block
+    for (let i = 1; i < this.blocks.length; i++) {
+      const block = this.blocks[i];
+      const previousBlock = this.blocks[i - 1];
       
-      if (blockNumbers.length === 0) {
-        // No blocks yet
-        return;
+      // Verify the previous hash
+      if (block.previousHash !== previousBlock.hash) {
+        console.error(`[SECURITY-BLOCKCHAIN] Invalid previous hash in block #${block.blockId}`);
+        return false;
       }
       
-      // Load the most recent blocks (up to maxChainLength)
-      const maxLength = this.options.maxChainLength || 1000;
-      const startIndex = Math.max(0, blockNumbers.length - maxLength);
-      const blocksToLoad = blockNumbers.slice(startIndex);
+      // Verify the block hash
+      const blockHash = this.hashBlock(block);
+      if (blockHash !== block.hash) {
+        console.error(`[SECURITY-BLOCKCHAIN] Invalid block hash in block #${block.blockId}`);
+        return false;
+      }
       
-      this.chain = [];
+      // Verify the merkle root
+      const merkleRoot = this.computeMerkleRoot(block.events);
+      if (merkleRoot !== block.merkleRoot) {
+        console.error(`[SECURITY-BLOCKCHAIN] Invalid merkle root in block #${block.blockId}`);
+        return false;
+      }
       
-      for (const blockNumber of blocksToLoad) {
-        const block = await this.storage.loadBlock(blockNumber);
-        if (block) {
-          this.chain.push(block);
+      // Verify each event
+      for (const event of block.events) {
+        const eventHash = this.hashEvent(event);
+        if (eventHash !== event.hash) {
+          console.error(`[SECURITY-BLOCKCHAIN] Invalid event hash in block #${block.blockId}, event ${event.id}`);
+          return false;
         }
       }
-      
-      console.log(`[SecurityBlockchain] Loaded ${this.chain.length} blocks into memory`);
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error loading latest blocks:', error);
-      throw error;
     }
+    
+    return true;
   }
   
   /**
-   * Trim the in-memory chain to maxChainLength
+   * Get a security event by ID
    */
-  private trimChain(): void {
-    const maxLength = this.options.maxChainLength || 1000;
-    
-    if (this.chain.length > maxLength) {
-      this.chain = this.chain.slice(-maxLength);
-    }
-  }
-  
-  /**
-   * Start the block creation interval
-   */
-  private startBlockCreation(): void {
-    if (this.blockCreationInterval) {
-      clearInterval(this.blockCreationInterval);
-    }
-    
-    const interval = this.options.blockConfirmationTime || 60000;
-    
-    this.blockCreationInterval = setInterval(async () => {
-      try {
-        if (this.pendingEvents.length > 0) {
-          await this.createNewBlock();
-        }
-      } catch (error) {
-        console.error('[SecurityBlockchain] Error in block creation interval:', error);
-      }
-    }, interval);
-    
-    console.log(`[SecurityBlockchain] Block creation scheduled every ${interval}ms`);
-  }
-  
-  /**
-   * Validate the blockchain
-   */
-  public async validateChain(): Promise<ChainValidationResult> {
-    const result: ChainValidationResult = {
-      valid: true,
-      errors: [],
-      invalidBlocks: [],
-      invalidEvents: [],
-      invalidSignatures: []
-    };
-    
-    try {
-      // Get all block numbers
-      const blockNumbers = await this.storage.listBlockNumbers();
-      
-      if (blockNumbers.length === 0) {
-        return result;
-      }
-      
-      // Validate each block
-      let previousBlockHash = '0'.repeat(64);
-      
-      for (const blockNumber of blockNumbers) {
-        const block = await this.storage.loadBlock(blockNumber);
-        
-        if (!block) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} not found`);
-          result.invalidBlocks.push(blockNumber);
-          continue;
-        }
-        
-        // Validate block number
-        if (block.blockNumber !== blockNumber) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} has incorrect block number: ${block.blockNumber}`);
-          result.invalidBlocks.push(blockNumber);
-        }
-        
-        // Validate previous block hash
-        if (block.previousBlockHash !== previousBlockHash) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} has incorrect previous block hash`);
-          result.invalidBlocks.push(blockNumber);
-        }
-        
-        // Validate merkle root
-        const calculatedMerkleRoot = this.calculateMerkleRoot(block.events);
-        if (block.merkleRoot !== calculatedMerkleRoot) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} has incorrect merkle root`);
-          result.invalidEvents.push(blockNumber);
-        }
-        
-        // Validate block hash
-        const blockData = this.serializeBlockForHashing(block);
-        const calculatedHash = crypto.createHash('sha256').update(blockData).digest('hex');
-        
-        if (block.hash !== calculatedHash) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} has incorrect hash`);
-          result.invalidBlocks.push(blockNumber);
-        }
-        
-        // Validate proof of work
-        const difficulty = this.options.proofOfWorkDifficulty || 2;
-        const targetPrefix = '0'.repeat(difficulty);
-        
-        if (!block.hash.startsWith(targetPrefix)) {
-          result.valid = false;
-          result.errors.push(`Block #${blockNumber} does not meet proof of work requirement`);
-          result.invalidBlocks.push(blockNumber);
-        }
-        
-        // Validate signatures
-        for (const { validatorId, signature } of block.signatures) {
-          const validatorKeys = this.validatorKeys.get(validatorId);
-          
-          if (!validatorKeys) {
-            result.valid = false;
-            result.errors.push(`Block #${blockNumber} has signature from unknown validator: ${validatorId}`);
-            result.invalidSignatures.push(blockNumber);
-            continue;
-          }
-          
-          const isValid = crypto.verify(
-            'sha256',
-            Buffer.from(block.hash),
-            {
-              key: validatorKeys.publicKey,
-              padding: crypto.constants.RSA_PKCS1_PSS_PADDING
-            },
-            Buffer.from(signature, 'base64')
-          );
-          
-          if (!isValid) {
-            result.valid = false;
-            result.errors.push(`Block #${blockNumber} has invalid signature from validator: ${validatorId}`);
-            result.invalidSignatures.push(blockNumber);
-          }
-        }
-        
-        // Update previous block hash for next iteration
-        previousBlockHash = block.hash;
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error validating chain:', error);
-      result.valid = false;
-      result.errors.push(`Validation error: ${error}`);
-      return result;
-    }
-  }
-  
-  /**
-   * Query events from the blockchain
-   */
-  public async queryEvents(options: {
-    fromBlock?: number;
-    toBlock?: number;
-    startTime?: Date;
-    endTime?: Date;
-    category?: SecurityEventCategory;
-    severity?: SecurityEventSeverity;
-    userId?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<SecurityEvent[]> {
-    try {
-      // Default values
-      const fromBlock = options.fromBlock || 0;
-      const toBlock = options.toBlock || Number.MAX_SAFE_INTEGER;
-      const limit = options.limit || 100;
-      const offset = options.offset || 0;
-      
-      let events: SecurityEvent[] = [];
-      let eventCount = 0;
-      let skipCount = 0;
-      
-      // Get block numbers in range
-      const blockNumbers = await this.storage.listBlockNumbers();
-      const filteredBlockNumbers = blockNumbers.filter(num => num >= fromBlock && num <= toBlock);
-      
-      // Load blocks and collect events
-      for (const blockNumber of filteredBlockNumbers) {
-        const block = await this.storage.loadBlock(blockNumber);
-        
-        if (!block) {
-          continue;
-        }
-        
-        // Filter events
-        const filteredEvents = block.events.filter(event => {
-          // Filter by time range
-          if (options.startTime && event.timestamp < options.startTime) {
-            return false;
-          }
-          
-          if (options.endTime && event.timestamp > options.endTime) {
-            return false;
-          }
-          
-          // Filter by category
-          if (options.category && event.category !== options.category) {
-            return false;
-          }
-          
-          // Filter by severity
-          if (options.severity && event.severity !== options.severity) {
-            return false;
-          }
-          
-          // Filter by user ID
-          if (options.userId && event.user !== options.userId) {
-            return false;
-          }
-          
-          return true;
-        });
-        
-        // Apply offset and limit
-        for (const event of filteredEvents) {
-          if (skipCount < offset) {
-            skipCount++;
-            continue;
-          }
-          
-          if (eventCount < limit) {
-            events.push(event);
-            eventCount++;
-          }
-          
-          if (eventCount >= limit) {
-            break;
-          }
-        }
-        
-        if (eventCount >= limit) {
-          break;
+  public getEventById(eventId: string): SecurityEventWithBlockchainData | null {
+    for (const block of this.blocks) {
+      for (const event of block.events) {
+        if (event.id === eventId) {
+          return event;
         }
       }
-      
-      return events;
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error querying events:', error);
-      throw error;
     }
+    
+    // Check unconfirmed events
+    for (const event of this.unconfirmedEvents) {
+      if (event.id === eventId) {
+        return event;
+      }
+    }
+    
+    return null;
   }
   
   /**
-   * Get chain statistics
+   * Get all security events
    */
-  public async getChainStats(): Promise<{
+  public getAllEvents(): SecurityEventWithBlockchainData[] {
+    const events: SecurityEventWithBlockchainData[] = [];
+    
+    // Add events from confirmed blocks
+    for (const block of this.blocks) {
+      events.push(...block.events);
+    }
+    
+    // Add unconfirmed events
+    events.push(...this.unconfirmedEvents);
+    
+    return events;
+  }
+  
+  /**
+   * Get security events by filter
+   */
+  public getEventsByFilter(filter: SecurityEventFilter): SecurityEventWithBlockchainData[] {
+    let events = this.getAllEvents();
+    
+    // Filter by severity
+    if (filter.severities && filter.severities.length > 0) {
+      events = events.filter(event => 
+        filter.severities!.includes(event.severity as any)
+      );
+    }
+    
+    // Filter by category
+    if (filter.categories && filter.categories.length > 0) {
+      events = events.filter(event => 
+        filter.categories!.includes(event.category as any)
+      );
+    }
+    
+    // Filter by timestamp
+    if (filter.startTimestamp) {
+      const startTime = typeof filter.startTimestamp === 'number' ? 
+        filter.startTimestamp : 
+        new Date(filter.startTimestamp).getTime();
+      
+      events = events.filter(event => {
+        const eventTime = event.timestamp instanceof Date ? 
+          event.timestamp.getTime() : 
+          new Date(event.timestamp).getTime();
+        
+        return eventTime >= startTime;
+      });
+    }
+    
+    if (filter.endTimestamp) {
+      const endTime = typeof filter.endTimestamp === 'number' ? 
+        filter.endTimestamp : 
+        new Date(filter.endTimestamp).getTime();
+      
+      events = events.filter(event => {
+        const eventTime = event.timestamp instanceof Date ? 
+          event.timestamp.getTime() : 
+          new Date(event.timestamp).getTime();
+        
+        return eventTime <= endTime;
+      });
+    }
+    
+    // Filter by user ID
+    if (filter.userIds && filter.userIds.length > 0) {
+      events = events.filter(event => 
+        event.userId && filter.userIds!.includes(event.userId)
+      );
+    }
+    
+    // Filter by IP address
+    if (filter.ipAddresses && filter.ipAddresses.length > 0) {
+      events = events.filter(event => 
+        event.ipAddress && filter.ipAddresses!.includes(event.ipAddress)
+      );
+    }
+    
+    // Filter by text search
+    if (filter.query) {
+      const query = filter.query.toLowerCase();
+      events = events.filter(event => 
+        event.message.toLowerCase().includes(query) ||
+        (event.metadata && JSON.stringify(event.metadata).toLowerCase().includes(query))
+      );
+    }
+    
+    // Apply limit
+    if (filter.limit && filter.limit > 0) {
+      events = events.slice(0, filter.limit);
+    }
+    
+    return events;
+  }
+  
+  /**
+   * Get all blocks in the blockchain
+   */
+  public getAllBlocks(): SecurityBlock[] {
+    return [...this.blocks];
+  }
+  
+  /**
+   * Get the number of blocks in the blockchain
+   */
+  public getBlockCount(): number {
+    return this.blocks.length;
+  }
+  
+  /**
+   * Get the number of unconfirmed events
+   */
+  public getUnconfirmedEventCount(): number {
+    return this.unconfirmedEvents.length;
+  }
+  
+  /**
+   * Get the total number of events
+   */
+  public getTotalEventCount(): number {
+    let count = this.unconfirmedEvents.length;
+    
+    for (const block of this.blocks) {
+      count += block.events.length;
+    }
+    
+    return count;
+  }
+  
+  /**
+   * Get the blockchain stats
+   */
+  public getStats(): {
     blockCount: number;
-    eventCount: number;
+    unconfirmedEventCount: number;
+    totalEventCount: number;
     averageEventsPerBlock: number;
-    oldestBlockTimestamp: Date | null;
-    newestBlockTimestamp: Date | null;
-    eventsByCategory: Record<string, number>;
-    eventsBySeverity: Record<string, number>;
-  }> {
-    try {
-      const blockNumbers = await this.storage.listBlockNumbers();
-      let eventCount = 0;
-      let oldestTimestamp: Date | null = null;
-      let newestTimestamp: Date | null = null;
-      const eventsByCategory: Record<string, number> = {};
-      const eventsBySeverity: Record<string, number> = {};
-      
-      // Process each block
-      for (const blockNumber of blockNumbers) {
-        const block = await this.storage.loadBlock(blockNumber);
-        
-        if (!block) {
-          continue;
-        }
-        
-        // Update timestamps
-        if (!oldestTimestamp || block.timestamp < oldestTimestamp) {
-          oldestTimestamp = block.timestamp;
-        }
-        
-        if (!newestTimestamp || block.timestamp > newestTimestamp) {
-          newestTimestamp = block.timestamp;
-        }
-        
-        // Count events
-        eventCount += block.events.length;
-        
-        // Count by category and severity
-        for (const event of block.events) {
-          eventsByCategory[event.category] = (eventsByCategory[event.category] || 0) + 1;
-          eventsBySeverity[event.severity] = (eventsBySeverity[event.severity] || 0) + 1;
-        }
-      }
-      
-      return {
-        blockCount: blockNumbers.length,
-        eventCount,
-        averageEventsPerBlock: blockNumbers.length > 0 ? eventCount / blockNumbers.length : 0,
-        oldestBlockTimestamp: oldestTimestamp,
-        newestBlockTimestamp: newestTimestamp,
-        eventsByCategory,
-        eventsBySeverity
-      };
-    } catch (error) {
-      console.error('[SecurityBlockchain] Error getting chain stats:', error);
-      throw error;
+    lastBlockTime: Date | null;
+  } {
+    const blockCount = this.getBlockCount();
+    const unconfirmedEventCount = this.getUnconfirmedEventCount();
+    const totalEventCount = this.getTotalEventCount();
+    
+    // Calculate average events per block
+    let totalEventsInBlocks = 0;
+    for (const block of this.blocks) {
+      totalEventsInBlocks += block.events.length;
     }
+    
+    const averageEventsPerBlock = blockCount > 0 ? totalEventsInBlocks / blockCount : 0;
+    
+    // Get the timestamp of the last block
+    const lastBlockTime = this.blocks.length > 0 ? this.blocks[this.blocks.length - 1].timestamp : null;
+    
+    return {
+      blockCount,
+      unconfirmedEventCount,
+      totalEventCount,
+      averageEventsPerBlock,
+      lastBlockTime
+    };
   }
 }
 
 /**
- * Singleton instance
+ * Global security blockchain instance
  */
-export const securityBlockchain = new SecurityBlockchain({
-  maxEventsPerBlock: 100,
-  blockConfirmationTime: 60000, // 1 minute
-  storageDirectory: 'data/security-blockchain',
-  storageFormat: 'json',
-  compressBlocks: false,
-  maxChainLength: 1000,
-  validators: ['validator1', 'validator2', 'validator3'],
-  proofOfWorkDifficulty: 2
-});
+export const securityBlockchain = new SecurityBlockchain();

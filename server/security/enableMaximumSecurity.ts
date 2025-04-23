@@ -1,84 +1,133 @@
 /**
- * Enable Maximum Security
+ * Enable Maximum Security Module
  * 
- * This module enables the maximum security features across the application,
- * activating all available security controls at their highest settings.
+ * This module provides a function to enable all security mechanisms
+ * in the application with maximum protection levels.
  */
 
-import * as express from 'express';
-import { initializeSecurity } from './index';
-import { runMaximumSecurityScan } from './maximumSecurityScan';
-import { RASPProtectionLevel } from './advanced/rasp/RASPManager';
-import { securityBlockchain, SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/ImmutableSecurityLogs';
+import { Express } from 'express';
+import { protectApiRoutes } from './apiRoutesProtector';
+import { raspManager } from './advanced/rasp';
+import { createMaximumSecurityScanMiddleware } from './maximumSecurityScan';
+import { anomalyDetectionMiddleware } from './advanced/ml/AnomalyDetection';
 import { securityFabric } from './advanced/SecurityFabric';
+import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
 
 /**
- * Enable maximum security
+ * Maximum security options
  */
-export async function enableMaximumSecurity(app: express.Application): Promise<void> {
-  console.log('[Security] Enabling MAXIMUM security protection...');
+export interface MaximumSecurityOptions {
+  /**
+   * Whether to block suspicious requests
+   */
+  blockSuspiciousRequests?: boolean;
   
-  try {
-    // Initialize security with maximum settings
-    await initializeSecurity(app, {
-      mode: 'maximum',
-      advanced: true,
-      logAllRequests: true,
-      enableRASP: true,
-      raspProtectionLevel: RASPProtectionLevel.PREVENTION
-    });
-    
-    // Log maximum security activation
-    await securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.HIGH,
-      category: SecurityEventCategory.SYSTEM,
-      message: 'MAXIMUM security mode activated',
-      metadata: {
-        activationTime: new Date().toISOString(),
-        activatedBy: 'system'
-      }
-    });
-    
-    // Register security components for maximum security
-    securityFabric.registerComponent({
-      name: 'MaximumSecurityMonitor',
-      description: 'Monitors the system for security events in maximum security mode',
-      async processEvent(event) {
-        console.log(`[MaximumSecurity] Processing security event in MAXIMUM mode: ${event.message}`);
-        
-        // In a real implementation, would take additional actions based on events
-      }
-    });
-    
-    // Run initial security scan
-    console.log('[Security] Running initial maximum security scan...');
-    const scanResult = await runMaximumSecurityScan();
-    
-    console.log(`[Security] Initial scan complete: found ${scanResult.findings.length} security findings`);
-    
-    // Set up recurring scans
-    const scanIntervalMinutes = 120; // 2 hours
-    setInterval(async () => {
-      try {
-        console.log('[Security] Running scheduled maximum security scan...');
-        await runMaximumSecurityScan();
-      } catch (error) {
-        console.error('[Security] Error in scheduled security scan:', error);
-      }
-    }, scanIntervalMinutes * 60 * 1000);
-    
-    console.log('[Security] MAXIMUM security protection enabled successfully');
-  } catch (error) {
-    console.error('[Security] Error enabling maximum security:', error);
-    
-    // Log failure
-    await securityBlockchain.addSecurityEvent({
-      severity: SecurityEventSeverity.CRITICAL,
-      category: SecurityEventCategory.SYSTEM,
-      message: 'Failed to enable MAXIMUM security mode',
-      metadata: { error: error instanceof Error ? error.message : String(error) }
-    });
-    
-    throw error;
-  }
+  /**
+   * Whether to enable anomaly detection
+   */
+  enableAnomalyDetection?: boolean;
+  
+  /**
+   * Whether to enable RASP protection
+   */
+  enableRASP?: boolean;
+  
+  /**
+   * Whether to enable API security
+   */
+  enableApiSecurity?: boolean;
+  
+  /**
+   * Whether to enable deep validation
+   */
+  enableDeepValidation?: boolean;
+  
+  /**
+   * Paths to exclude from protection
+   */
+  excludePaths?: string[];
 }
+
+/**
+ * Enable maximum security for the application
+ */
+export function enableMaximumSecurity(app: Express, options: MaximumSecurityOptions = {}) {
+  const {
+    blockSuspiciousRequests = true,
+    enableAnomalyDetection = true,
+    enableRASP = true,
+    enableApiSecurity = true,
+    enableDeepValidation = true,
+    excludePaths = [
+      '/api/health',
+      '/api/public',
+      '/api/webhooks',
+      '/api/external-callbacks',
+      '/api/stripe-webhook'
+    ]
+  } = options;
+  
+  console.log('[SECURITY] Enabling maximum security mode');
+  
+  // Apply API routes protection
+  protectApiRoutes(app, {
+    enableRASP,
+    enableApiSecurity,
+    enableDefaultValidation: enableDeepValidation,
+    enableSensitiveProcedures: true,
+    excludePaths,
+    additionalMiddlewares: enableAnomalyDetection ? [anomalyDetectionMiddleware] : []
+  });
+  
+  // Apply maximum security scan middleware to all routes
+  app.use(createMaximumSecurityScanMiddleware(raspManager));
+  
+  // Log maximum security enablement
+  securityBlockchain.addSecurityEvent({
+    severity: SecurityEventSeverity.INFO,
+    category: SecurityEventCategory.SYSTEM,
+    message: 'Maximum security mode enabled',
+    metadata: {
+      options,
+      timestamp: new Date().toISOString()
+    },
+    timestamp: new Date()
+  }).catch(error => {
+    console.error('[SECURITY] Error logging maximum security enablement:', error);
+  });
+  
+  // Emit maximum security enablement event
+  securityFabric.emit('security:maximum-security:enabled', {
+    options,
+    timestamp: new Date()
+  });
+  
+  console.log('[SECURITY] Maximum security mode enabled');
+  
+  return {
+    /**
+     * Run a security scan
+     */
+    runSecurityScan: async (scanOptions: any = {}) => {
+      console.log('[SECURITY] Running security scan');
+      
+      const { performSecurityScan } = await import('./maximumSecurityScan');
+      
+      return performSecurityScan({
+        scanType: scanOptions.scanType || 'full',
+        deep: scanOptions.deep !== undefined ? scanOptions.deep : true,
+        emitEvents: true,
+        logFindings: true,
+        ...scanOptions
+      }, raspManager);
+    }
+  };
+}
+
+/**
+ * Default maximum security instance
+ */
+export const maximumSecurity = {
+  enable: enableMaximumSecurity
+};

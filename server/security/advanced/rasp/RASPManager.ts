@@ -8,7 +8,8 @@
 import * as express from 'express';
 import * as crypto from 'crypto';
 import { securityFabric } from '../SecurityFabric';
-import { SecurityEventSeverity, SecurityEventCategory, securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
+import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { z, ZodError } from 'zod';
 
 /**

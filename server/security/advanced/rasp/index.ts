@@ -1,29 +1,41 @@
 /**
- * RASP Module
+ * Runtime Application Self-Protection (RASP) Module
  * 
- * This module exports the RASP (Runtime Application Self-Protection) manager 
- * and other related components for application security.
+ * This module provides runtime protection against security threats by
+ * integrating into the application's execution environment.
  */
 
+import { Request, Response, NextFunction } from 'express';
 import { RASPManager, RASPProtectionLevel, RASPProtectionCategory } from './RASPManager';
 
-// Create a singleton instance of the RASP manager
-const raspManager = new RASPManager({
+// Create a global RASP manager instance
+export const raspManager = new RASPManager({
   protectionLevel: RASPProtectionLevel.PREVENTION,
   blockRequests: true,
   logEvents: true,
   excludePaths: [
     '/api/health',
-    '/api/webhooks', 
-    '/api/external-callbacks',
+    '/api/public',
+    '/api/webhooks',
+    '/api/metrics',
     '/api/stripe-webhook'
+  ],
+  enableCategories: [
+    RASPProtectionCategory.INPUT_VALIDATION,
+    RASPProtectionCategory.COMMAND_INJECTION,
+    RASPProtectionCategory.PATH_TRAVERSAL,
+    RASPProtectionCategory.AUTHENTICATION,
+    RASPProtectionCategory.API_SECURITY,
+    RASPProtectionCategory.MEMORY_PROTECTION,
+    RASPProtectionCategory.MALICIOUS_PAYLOAD
   ]
 });
 
-// Export the RASP manager, classes and enums
-export {
-  raspManager,
-  RASPManager,
-  RASPProtectionLevel,
-  RASPProtectionCategory
+// Create a RASP middleware function for use in Express applications
+export const raspMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Create RASP middleware
+  const middleware = raspManager.createMiddleware();
+  
+  // Apply RASP middleware
+  middleware(req, res, next);
 };
