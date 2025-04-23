@@ -1,233 +1,336 @@
 /**
  * Security Fabric
  * 
- * This module provides a central orchestration layer for all security components.
- * It enables communication between components, manages security posture,
- * and provides a unified interface for security operations.
+ * The Security Fabric is the central orchestrator for all security components,
+ * providing a unified interface for security events, configuration, and coordination.
+ * It serves as the "nervous system" of the security architecture.
  */
 
-import { Request, Response } from 'express';
 import { EventEmitter } from 'events';
-import { SecurityContext, createSecurityContext } from './context/SecurityContext';
-import { SecurityConfig } from './config/SecurityConfig';
+import { SecurityEventSeverity, SecurityEventCategory } from './blockchain/ImmutableSecurityLogs';
 
 /**
- * Security posture levels
+ * Security event interface
  */
-export type SecurityPosture = 'normal' | 'elevated' | 'high' | 'maximum';
+export interface SecurityEvent {
+  /**
+   * Event ID
+   */
+  id?: string;
+  
+  /**
+   * Event timestamp
+   */
+  timestamp: Date;
+  
+  /**
+   * Event severity
+   */
+  severity: SecurityEventSeverity;
+  
+  /**
+   * Event category
+   */
+  category: SecurityEventCategory;
+  
+  /**
+   * Event message
+   */
+  message: string;
+  
+  /**
+   * User that triggered the event (if applicable)
+   */
+  user?: string;
+  
+  /**
+   * IP address associated with the event
+   */
+  ipAddress?: string;
+  
+  /**
+   * Additional metadata
+   */
+  metadata?: Record<string, any>;
+}
 
 /**
  * Security component interface
  */
 export interface SecurityComponent {
   /**
-   * Initialize the component
+   * Component name
    */
-  initialize(): Promise<void>;
+  name: string;
   
   /**
-   * Shutdown the component
+   * Component description
    */
-  shutdown(): Promise<void>;
+  description: string;
+  
+  /**
+   * Initialize the component
+   */
+  initialize?(): Promise<void>;
+  
+  /**
+   * Shut down the component
+   */
+  shutdown?(): Promise<void>;
+  
+  /**
+   * Process a security event
+   */
+  processEvent?(event: SecurityEvent): Promise<void>;
   
   /**
    * Get component status
    */
-  getStatus(): Record<string, any>;
+  getStatus?(): Promise<Record<string, any>>;
 }
 
 /**
- * Security Fabric class
- * 
- * Central orchestration layer for security components
+ * Security Fabric interface
  */
-export class SecurityFabric extends EventEmitter {
-  private components: Map<string, any> = new Map();
-  private securityPosture: SecurityPosture = 'normal';
-  private threatLevel: number = 0;
-  private initialized: boolean = false;
+export interface ISecurityFabric {
+  /**
+   * Register a security component
+   */
+  registerComponent(component: SecurityComponent): void;
   
   /**
-   * Initialize the security fabric
+   * Unregister a security component
    */
-  public async initialize(config: SecurityConfig = {}): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
-    
-    console.log('[SecurityFabric] Initializing security fabric...');
-    
-    try {
-      // Set initial security posture from config
-      this.securityPosture = config.initialSecurityPosture || 'normal';
-      
-      // Set max listeners to avoid memory leak warnings
-      this.setMaxListeners(50);
-      
-      // Mark as initialized
-      this.initialized = true;
-      
-      console.log(`[SecurityFabric] Security fabric initialized with ${this.securityPosture} security posture`);
-      
-      // Emit initialization event
-      this.emit('security:initialized', {
-        timestamp: new Date(),
-        securityPosture: this.securityPosture
-      });
-    } catch (error) {
-      console.error('[SecurityFabric] Failed to initialize security fabric:', error);
-      throw error;
-    }
-  }
+  unregisterComponent(componentName: string): void;
   
   /**
-   * Shut down the security fabric
+   * Get a security component by name
    */
-  public async shutdown(): Promise<void> {
-    console.log('[SecurityFabric] Shutting down security fabric...');
+  getComponent(componentName: string): SecurityComponent | null;
+  
+  /**
+   * Process a security event
+   */
+  processEvent(event: SecurityEvent): Promise<void>;
+  
+  /**
+   * Emit a security event
+   */
+  emit(eventName: string, eventData: any): boolean;
+  
+  /**
+   * Subscribe to a security event
+   */
+  on(eventName: string, handler: (...args: any[]) => void): this;
+  
+  /**
+   * Get the status of all security components
+   */
+  getSecurityStatus(): Promise<Record<string, any>>;
+}
+
+/**
+ * Security Fabric implementation
+ */
+class SecurityFabric extends EventEmitter implements ISecurityFabric {
+  /**
+   * Security components
+   */
+  private components: Map<string, SecurityComponent> = new Map();
+  
+  /**
+   * Security events log
+   */
+  private events: SecurityEvent[] = [];
+  
+  /**
+   * Maximum events to keep in memory
+   */
+  private maxEvents = 1000;
+  
+  /**
+   * Create a new security fabric
+   */
+  constructor() {
+    super();
     
-    try {
-      // Shut down all components
-      for (const [name, component] of this.components.entries()) {
-        if (typeof component.shutdown === 'function') {
-          console.log(`[SecurityFabric] Shutting down component: ${name}`);
-          await component.shutdown();
-        }
-      }
-      
-      // Clear all components
-      this.components.clear();
-      
-      // Remove all listeners
-      this.removeAllListeners();
-      
-      // Mark as not initialized
-      this.initialized = false;
-      
-      console.log('[SecurityFabric] Security fabric shut down successfully');
-    } catch (error) {
-      console.error('[SecurityFabric] Error shutting down security fabric:', error);
-      throw error;
-    }
+    // Set maximum number of listeners
+    this.setMaxListeners(100);
+    
+    console.log('[SecurityFabric] Security Fabric initialized');
   }
   
   /**
    * Register a security component
    */
-  public registerComponent<T>(name: string, component: T): void {
-    if (this.components.has(name)) {
-      console.warn(`[SecurityFabric] Component already registered with name: ${name}`);
+  public registerComponent(component: SecurityComponent): void {
+    if (this.components.has(component.name)) {
+      console.warn(`[SecurityFabric] Component ${component.name} is already registered`);
       return;
     }
     
-    this.components.set(name, component);
-    console.log(`[SecurityFabric] Registered component: ${name}`);
+    this.components.set(component.name, component);
+    console.log(`[SecurityFabric] Registered component: ${component.name}`);
     
-    // Emit component registered event
-    this.emit('security:component:registered', {
-      name,
-      timestamp: new Date()
-    });
+    // Emit component registration event
+    this.emit('security:component:registered', { name: component.name });
+  }
+  
+  /**
+   * Unregister a security component
+   */
+  public unregisterComponent(componentName: string): void {
+    if (!this.components.has(componentName)) {
+      console.warn(`[SecurityFabric] Component ${componentName} is not registered`);
+      return;
+    }
+    
+    this.components.delete(componentName);
+    console.log(`[SecurityFabric] Unregistered component: ${componentName}`);
+    
+    // Emit component unregistration event
+    this.emit('security:component:unregistered', { name: componentName });
   }
   
   /**
    * Get a security component by name
    */
-  public getComponent<T>(name: string): T | undefined {
-    return this.components.get(name) as T | undefined;
+  public getComponent(componentName: string): SecurityComponent | null {
+    return this.components.get(componentName) || null;
   }
   
   /**
-   * Create a security context for a request
+   * Process a security event
    */
-  public createSecurityContext(req: Request, res: Response): SecurityContext {
-    return createSecurityContext(req, res, {
-      securityPosture: this.securityPosture,
-      threatLevel: this.threatLevel
-    });
-  }
-  
-  /**
-   * Get the current security posture
-   */
-  public getSecurityPosture(): SecurityPosture {
-    return this.securityPosture;
-  }
-  
-  /**
-   * Get the current threat level (0-1)
-   */
-  public getThreatLevel(): number {
-    return this.threatLevel;
-  }
-  
-  /**
-   * Set the security posture
-   */
-  public setSecurityPosture(posture: SecurityPosture): void {
-    const previousPosture = this.securityPosture;
-    this.securityPosture = posture;
-    
-    console.log(`[SecurityFabric] Security posture changed from ${previousPosture} to ${posture}`);
-    
-    // Emit security posture change event
-    this.emit('security:posture:changed', {
-      previous: previousPosture,
-      current: posture,
-      timestamp: new Date()
-    });
-  }
-  
-  /**
-   * Adjust the security posture based on threat level
-   */
-  public adjustSecurityPosture(threatLevel: number): void {
-    // Update threat level
-    this.threatLevel = Math.max(0, Math.min(1, threatLevel));
-    
-    // Adjust security posture based on threat level
-    const previousPosture = this.securityPosture;
-    
-    if (threatLevel >= 0.8) {
-      this.securityPosture = 'maximum';
-    } else if (threatLevel >= 0.6) {
-      this.securityPosture = 'high';
-    } else if (threatLevel >= 0.3) {
-      this.securityPosture = 'elevated';
-    } else {
-      this.securityPosture = 'normal';
-    }
-    
-    // If posture changed, emit event
-    if (previousPosture !== this.securityPosture) {
-      console.log(`[SecurityFabric] Security posture adjusted from ${previousPosture} to ${this.securityPosture} (threat level: ${threatLevel.toFixed(2)})`);
+  public async processEvent(event: SecurityEvent): Promise<void> {
+    try {
+      // Add event to in-memory log
+      this.events.push(event);
       
-      // Emit security posture change event
-      this.emit('security:posture:changed', {
-        previous: previousPosture,
-        current: this.securityPosture,
-        threatLevel: this.threatLevel,
-        timestamp: new Date()
-      });
+      // Trim events if needed
+      if (this.events.length > this.maxEvents) {
+        this.events = this.events.slice(-this.maxEvents);
+      }
+      
+      // Emit event
+      this.emit(`security:event:${event.category}`, event);
+      this.emit(`security:event:${event.severity}`, event);
+      this.emit('security:event', event);
+      
+      // Process event in all components
+      const promises: Promise<void>[] = [];
+      
+      for (const component of this.components.values()) {
+        if (component.processEvent) {
+          promises.push(component.processEvent(event));
+        }
+      }
+      
+      await Promise.all(promises);
+    } catch (error) {
+      console.error('[SecurityFabric] Error processing security event:', error);
     }
   }
   
   /**
-   * Get all registered component names
+   * Get the status of all security components
    */
-  public getComponentNames(): string[] {
-    return Array.from(this.components.keys());
+  public async getSecurityStatus(): Promise<Record<string, any>> {
+    try {
+      const status: Record<string, any> = {
+        components: {},
+        eventCounts: {}
+      };
+      
+      // Get component statuses
+      for (const [name, component] of this.components.entries()) {
+        if (component.getStatus) {
+          try {
+            status.components[name] = await component.getStatus();
+          } catch (error) {
+            status.components[name] = { error: 'Failed to get component status' };
+            console.error(`[SecurityFabric] Error getting status for component ${name}:`, error);
+          }
+        } else {
+          status.components[name] = { registered: true };
+        }
+      }
+      
+      // Get event counts by category and severity
+      const eventCountsByCategory: Record<string, number> = {};
+      const eventCountsBySeverity: Record<string, number> = {};
+      
+      for (const event of this.events) {
+        // Count by category
+        eventCountsByCategory[event.category] = (eventCountsByCategory[event.category] || 0) + 1;
+        
+        // Count by severity
+        eventCountsBySeverity[event.severity] = (eventCountsBySeverity[event.severity] || 0) + 1;
+      }
+      
+      status.eventCounts.byCategory = eventCountsByCategory;
+      status.eventCounts.bySeverity = eventCountsBySeverity;
+      status.eventCounts.total = this.events.length;
+      
+      return status;
+    } catch (error) {
+      console.error('[SecurityFabric] Error getting security status:', error);
+      return { error: 'Failed to get security status' };
+    }
   }
   
   /**
-   * Check if the security fabric is initialized
+   * Initialize all registered components
    */
-  public isInitialized(): boolean {
-    return this.initialized;
+  public async initializeComponents(): Promise<void> {
+    try {
+      console.log('[SecurityFabric] Initializing all components...');
+      
+      for (const [name, component] of this.components.entries()) {
+        if (component.initialize) {
+          try {
+            console.log(`[SecurityFabric] Initializing component: ${name}`);
+            await component.initialize();
+            console.log(`[SecurityFabric] Component ${name} initialized successfully`);
+          } catch (error) {
+            console.error(`[SecurityFabric] Error initializing component ${name}:`, error);
+          }
+        }
+      }
+      
+      console.log('[SecurityFabric] All components initialized');
+    } catch (error) {
+      console.error('[SecurityFabric] Error initializing components:', error);
+    }
+  }
+  
+  /**
+   * Shut down all registered components
+   */
+  public async shutdownComponents(): Promise<void> {
+    try {
+      console.log('[SecurityFabric] Shutting down all components...');
+      
+      for (const [name, component] of this.components.entries()) {
+        if (component.shutdown) {
+          try {
+            console.log(`[SecurityFabric] Shutting down component: ${name}`);
+            await component.shutdown();
+            console.log(`[SecurityFabric] Component ${name} shut down successfully`);
+          } catch (error) {
+            console.error(`[SecurityFabric] Error shutting down component ${name}:`, error);
+          }
+        }
+      }
+      
+      console.log('[SecurityFabric] All components shut down');
+    } catch (error) {
+      console.error('[SecurityFabric] Error shutting down components:', error);
+    }
   }
 }
 
 /**
- * Create a singleton instance of the security fabric
+ * Singleton security fabric instance
  */
 export const securityFabric = new SecurityFabric();

@@ -1,0 +1,59 @@
+{
+  "blockNumber": 0,
+  "timestamp": "2025-04-23T00:45:05.429Z",
+  "previousBlockHash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "merkleRoot": "690065e8c7608681311e8b9af657e393168cda951c797aae3c85dd3d67346bae",
+  "events": [
+    {
+      "id": "195ae47f36c7bdf1bb0fa10068ffcd06",
+      "timestamp": "2025-04-23T00:44:05.429Z",
+      "verified": true,
+      "severity": "info",
+      "category": "system",
+      "message": "Security system initialized in maximum mode",
+      "metadata": {
+        "mode": "maximum",
+        "advanced": true,
+        "rasp": true
+      }
+    },
+    {
+      "id": "68ad3ef884749aa7e08db5d32b80f793",
+      "timestamp": "2025-04-23T00:44:05.431Z",
+      "verified": true,
+      "severity": "critical",
+      "category": "system",
+      "message": "Security system initialization failed",
+      "metadata": {
+        "error": "Cannot read properties of undefined (reading 'use')"
+      }
+    },
+    {
+      "id": "acfce8fa9743ee332cf5693f6c0b16f2",
+      "timestamp": "2025-04-23T00:44:05.432Z",
+      "verified": true,
+      "severity": "critical",
+      "category": "system",
+      "message": "Failed to enable MAXIMUM security mode",
+      "metadata": {
+        "error": "Cannot read properties of undefined (reading 'use')"
+      }
+    }
+  ],
+  "nonce": 250,
+  "hash": "0084bdcf57be51de1a14a7bde5f26b8a43e5fefe2679089c50d43475050ebc1a",
+  "signatures": [
+    {
+      "validatorId": "validator1",
+      "signature": "gJVxSd49YrQRSNSuFLUU/lb7dgN8Zbn76QvOefAZpH7ReONKxsc/Nt9USdNFpDvZkCGDic7QIkKXfw6NX2U9LsSU71OesKnUSWk6Xk/KEecuAMgXP5xyg0AxtDmwILB/UFnRReNd7QGhJJoxsneVJTKdKzn9OXIwmWA1u5ivIyPA5Zfx3KnC7SCzg7zdzWO/t4mDu4/LJ4I2g5Whzqc44zc+2V0lN3eT1RZx3JcbuKU2UhqyQdcO+mSwdArhUtPV11Jn9IOAAuiom88d67y8mzj/FLHnoxU0HuUmpDnItiEv4l9cIEYR2uDxPTyg2xyY1qhtRngX0tAcqGk6pjgw4A=="
+    },
+    {
+      "validatorId": "validator2",
+      "signature": "Fv7xf3LzPJnUeVFg2obloHTiPxt81xl39VivNHJ6zUqSBRBPpNWOPMdl/w40lbFZFhxO5aZ0kk1WXFz8/XjjaxGW0lGuCSgjEN3+SP+VLLDzWViMa2sBxpz6/071e/5ZtgYOYGncBjHPi9R6g0n5kTdSy9DsaT35Zy7HQGZwAHtFl9Tfydgzkryi07dUP0o4kh5W4hlHdYsXY+CWSDd/S2WcnEfK7gzpq0/aZaARd+co81xe9wuy3T44pWQF3/yBOSQG2GD3BShPJbJfMIpQZrDhiX2x0fdObj8Eg6rmL2cuIoDJHZA4HHz8EBJIAKJTCHitAuAi+s4wsLpW2NQvaw=="
+    },
+    {
+      "validatorId": "validator3",
+      "signature": "DEAUYq0YykBK0srKeiqBA52HvJUR9sPYaXKDcTQ62ATyHKl4VrnZ+op3DgTaUJVWBGmCtqgt/+Y74LHBahzmzpNBHAO531L6kL3CYgNP7SYHFR4fe56SdOpq53bTgsCIDHg80Kx4HZM6USXAwVjt5U+F/kU+hJMFXv4n+zY1kGpccOMykzIsUAXV5UCgKuCfDNo6o/dtI4TxQUJ0yRrOOFFvBUThGmD4wMOrP/60MxS4UlxhGardOZFW+vtLS4LabKqZ24V+a/XFWJXmdqDTxKIDsGMXRMr/It4JNwm5jJqTfnKyflhflzszGs8LDeKM71wFnArky+kQduMh261anw=="
+    }
+  ]
+}

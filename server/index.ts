@@ -15,7 +15,7 @@ import { enableMaximumSecurity } from './security/enableMaximumSecurity';
 import { scheduleIntelligentMaintenance } from './db-maintenance';
 import { loadConfig, getEnabledFeatures, config } from './config';
 import { initBackgroundServices, stopBackgroundServices } from './background-services';
-import session from 'express-session';
+import expressSession from 'express-session';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -274,7 +274,7 @@ async function initializeServer() {
     log('Generated dynamic session secret for this instance', 'server');
 
     // Create the session middleware
-    app.use(session({
+    app.use(expressSession({
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
@@ -352,7 +352,7 @@ function initializeNonCriticalServices() {
       if ((config.security as any)?.scanMode === 'maximum' || 
           (config.features as any)?.enableDeepSecurityScanning) {
         log('Activating MAXIMUM security scan mode', 'security');
-        enableMaximumSecurity();
+        enableMaximumSecurity(app); // Pass the app parameter
       } else {
         log('Running standard security scan', 'security');
         runDeferredSecurityScan();
@@ -384,7 +384,7 @@ async function initializeAllServices() {
     // Check if maximum security mode is enabled
     if (config.security?.scanMode === 'maximum' || config.features.enableDeepSecurityScanning) {
       log('Activating MAXIMUM security scan mode', 'security');
-      enableMaximumSecurity();
+      enableMaximumSecurity(app); // Pass the app parameter
     } else {
       runDeferredSecurityScan();
     }
