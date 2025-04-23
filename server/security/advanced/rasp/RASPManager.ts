@@ -633,7 +633,7 @@ export class RASPManager {
       return;
     }
     
-    const { body, headers } = context;
+    const { body, headers, method, path } = context;
     
     // Skip if no body or not a JSON/form content type
     if (
@@ -641,7 +641,8 @@ export class RASPManager {
       typeof body !== 'object' || 
       !(
         headers['content-type']?.includes('application/json') ||
-        headers['content-type']?.includes('application/x-www-form-urlencoded')
+        headers['content-type']?.includes('application/x-www-form-urlencoded') ||
+        headers['content-type']?.includes('multipart/form-data')
       )
     ) {
       return;
@@ -657,6 +658,14 @@ export class RASPManager {
         location: 'body',
         value: `Payload size (${jsonSize} bytes) exceeds maximum allowed size`
       };
+      this.logSecurityEvent({
+        type: 'malicious-payload-detection',
+        category: 'oversized-payload',
+        details: `Payload size (${jsonSize} bytes) exceeds maximum allowed size`,
+        method, 
+        path,
+        timestamp: new Date().toISOString()
+      });
       return;
     }
     
@@ -689,8 +698,204 @@ export class RASPManager {
         location: 'body',
         value: `Object nesting depth (${depth}) exceeds maximum allowed depth`
       };
+      this.logSecurityEvent({
+        type: 'malicious-payload-detection',
+        category: 'deep-nesting',
+        details: `Object nesting depth (${depth}) exceeds maximum allowed depth`,
+        method,
+        path,
+        timestamp: new Date().toISOString()
+      });
       return;
     }
+    
+    // Advanced suspicious field detection
+    const suspiciousFieldNames = [
+      // JavaScript code execution
+      'eval', 'setTimeout', 'setInterval', 'Function',
+      'constructor', 'prototype', '__proto__', '__defineGetter__',
+      '__defineSetter__', '__lookupGetter__', '__lookupSetter__',
+      
+      // JSON Injection
+      '$where', '$regex', '$ne', '$gt', '$lt', '$gte', '$lte',
+      
+      // NoSQL Injection
+      '$or', '$and', '$exists', '$elemMatch',
+      
+      // Prototype Pollution
+      'constructor.prototype', '__proto__.constructor'
+    ];
+    
+    // Suspicious JSON patterns
+    const suspiciousJsonPatterns = [
+      /"__proto__"\s*:/, /"constructor"\s*:/, /"prototype"\s*:/
+    ];
+    
+    // Check for JSON pattern in stringified body
+    const bodyStr = JSON.stringify(body);
+    for (const pattern of suspiciousJsonPatterns) {
+      if (pattern.test(bodyStr)) {
+        context.detected = true;
+        context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
+        context.detectionDetails = {
+          type: 'suspicious-json-pattern',
+          pattern: pattern.toString()
+        };
+        this.logSecurityEvent({
+          type: 'malicious-payload-detection',
+          category: 'suspicious-json-pattern',
+          details: `Suspicious JSON pattern detected: ${pattern.toString()}`,
+          method,
+          path,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+    }
+    
+    // Check for suspicious field names
+    const checkForSuspiciousKeys = (obj: any, path: string = ''): boolean => {
+      if (!obj || typeof obj !== 'object') {
+        return false;
+      }
+      
+      if (Array.isArray(obj)) {
+        for (let i = 0; i < obj.length; i++) {
+          if (checkForSuspiciousKeys(obj[i], `${path}[${i}]`)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      
+      for (const key in obj) {
+        if (suspiciousFieldNames.includes(key)) {
+          context.detected = true;
+          context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
+          context.detectionDetails = {
+            type: 'suspicious-field',
+            field: `${path}.${key}`
+          };
+          this.logSecurityEvent({
+            type: 'malicious-payload-detection',
+            category: 'suspicious-field',
+            details: `Suspicious field name detected: ${path}.${key}`,
+            method,
+            path,
+            timestamp: new Date().toISOString()
+          });
+          return true;
+        }
+        
+        // Check for suspicious values that might contain code
+        if (typeof obj[key] === 'string') {
+          // Check for potential code injection in string values
+          const codeInjectionPatterns = [
+            /\beval\s*\(/, /\bnew\s+Function\b/, /\bsetTimeout\s*\(/,
+            /\bdocument\.\s*cookie/, /\blocation\.\s*href/,
+            /\bwindow\.\s*location/, /\bnavigator\.\s*/, /\bexec\s*\(/
+          ];
+          
+          for (const pattern of codeInjectionPatterns) {
+            if (pattern.test(obj[key])) {
+              context.detected = true;
+              context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
+              context.detectionDetails = {
+                type: 'potential-code-injection',
+                field: `${path}.${key}`,
+                pattern: pattern.toString()
+              };
+              this.logSecurityEvent({
+                type: 'malicious-payload-detection',
+                category: 'potential-code-injection',
+                details: `Potential code injection detected in field: ${path}.${key}`,
+                pattern: pattern.toString(),
+                method,
+                path,
+                timestamp: new Date().toISOString()
+              });
+              return true;
+            }
+          }
+        }
+        
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+          if (checkForSuspiciousKeys(obj[key], `${path}.${key}`)) {
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    };
+    
+    // Check for circular references (potential DoS vector)
+    const checkForCircular = (obj: any, seen = new WeakSet()): boolean => {
+      if (obj === null || typeof obj !== 'object') return false;
+      
+      if (seen.has(obj)) {
+        context.detected = true;
+        context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
+        context.detectionDetails = {
+          type: 'circular-reference',
+          description: 'Detected circular reference in request payload'
+        };
+        this.logSecurityEvent({
+          type: 'malicious-payload-detection',
+          category: 'circular-reference',
+          details: 'Detected circular reference in request payload',
+          method,
+          path,
+          timestamp: new Date().toISOString()
+        });
+        return true;
+      }
+      
+      seen.add(obj);
+      
+      if (Array.isArray(obj)) {
+        for (const item of obj) {
+          if (typeof item === 'object' && item !== null) {
+            if (checkForCircular(item, seen)) return true;
+          }
+        }
+      } else {
+        for (const key in obj) {
+          if (typeof obj[key] === 'object' && obj[key] !== null) {
+            if (checkForCircular(obj[key], seen)) return true;
+          }
+        }
+      }
+      
+      return false;
+    };
+    
+    // Run checks
+    checkForSuspiciousKeys(body);
+    checkForCircular(body);
+  }
+  
+  /**
+   * Log security events for future analysis
+   */
+  private logSecurityEvent(event: any): void {
+    // This could be extended to send events to a centralized monitoring system
+    console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event)}`);
+    
+    // Store events for pattern analysis
+    if (!global.raspSecurityEvents) {
+      global.raspSecurityEvents = [];
+    }
+    
+    // Keep a limited history of events (last 1000)
+    if (global.raspSecurityEvents.length >= 1000) {
+      global.raspSecurityEvents.shift();
+    }
+    
+    global.raspSecurityEvents.push(event);
+    
+    // Emit event to security fabric
+    securityFabric.emit('security:rasp:event', event);
   }
 }
 

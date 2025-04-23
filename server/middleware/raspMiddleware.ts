@@ -9,7 +9,8 @@ import { Request, Response, NextFunction } from 'express';
 import { 
   raspManager, 
   createRASPMiddleware, 
-  RASPProtectionLevel 
+  RASPProtectionLevel,
+  RASPProtectionCategory
 } from '../security/advanced/rasp/RASPManager';
 import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from '../security/advanced/blockchain/ImmutableSecurityLogs';
@@ -51,17 +52,17 @@ export const raspMonitoringMiddleware = createRASPMiddleware({
  */
 export const raspDetectionMiddleware = createRASPMiddleware({
   protectionLevel: RASPProtectionLevel.DETECTION,
-  enableXSSProtection: true,
-  enableSQLInjectionProtection: true,
-  enableCommandInjectionProtection: true,
-  enablePathTraversalProtection: true,
-  enableDeserializationProtection: true,
-  enableTemplateInjectionProtection: true,
-  enableSSRFProtection: true,
-  enableFileUploadProtection: true,
-  enableBusinessLogicProtection: true,
+  blockRequests: false,
   logEvents: true,
-  enableDynamicInstrumentation: true
+  enableCategories: [
+    RASPProtectionCategory.INPUT_VALIDATION,
+    RASPProtectionCategory.COMMAND_INJECTION,
+    RASPProtectionCategory.PATH_TRAVERSAL,
+    RASPProtectionCategory.API_SECURITY,
+    RASPProtectionCategory.MALICIOUS_PAYLOAD,
+    RASPProtectionCategory.AUTHENTICATION,
+    RASPProtectionCategory.MEMORY_PROTECTION
+  ]
 });
 
 /**

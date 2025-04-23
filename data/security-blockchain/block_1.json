@@ -1,0 +1,120 @@
+{
+  "blockNumber": 1,
+  "timestamp": "2025-04-23T00:49:46.575Z",
+  "previousBlockHash": "0084bdcf57be51de1a14a7bde5f26b8a43e5fefe2679089c50d43475050ebc1a",
+  "merkleRoot": "50c7e6c02224b57793b4a4b32d5c9ef373c1ad5a81705ecc36c170b16825eb20",
+  "events": [
+    {
+      "id": "84e338cc3bd17de75fbbd4752c4df3b0",
+      "timestamp": "2025-04-23T00:48:46.574Z",
+      "verified": true,
+      "severity": "info",
+      "category": "system",
+      "message": "Security system initialized in maximum mode",
+      "metadata": {
+        "mode": "maximum",
+        "advanced": true,
+        "rasp": true
+      }
+    },
+    {
+      "id": "a9aab54610cc4a616c377e116b413693",
+      "timestamp": "2025-04-23T00:48:46.575Z",
+      "verified": true,
+      "severity": "high",
+      "category": "system",
+      "message": "MAXIMUM security mode activated",
+      "metadata": {
+        "activationTime": "2025-04-23T00:48:46.574Z",
+        "activatedBy": "system"
+      }
+    },
+    {
+      "id": "1282ea299842e9c958f202400c8b3a54",
+      "timestamp": "2025-04-23T00:48:46.576Z",
+      "verified": true,
+      "severity": "high",
+      "category": "system",
+      "message": "Security scan found a high issue: Hardcoded Secret",
+      "metadata": {
+        "finding": {
+          "id": "FILE-001",
+          "title": "Hardcoded Secret",
+          "description": "A hardcoded API key was found in a source file",
+          "severity": "high"
+        },
+        "scanId": "e94ccbb585e5452db2c488192c3d9198"
+      }
+    },
+    {
+      "id": "0a1e797d12b7f027b0a5e871f04536bf",
+      "timestamp": "2025-04-23T00:48:46.576Z",
+      "verified": true,
+      "severity": "high",
+      "category": "system",
+      "message": "Security scan found a critical issue: Vulnerable Dependency",
+      "metadata": {
+        "finding": {
+          "id": "DEP-001",
+          "title": "Vulnerable Dependency",
+          "description": "A dependency with known security vulnerabilities was found",
+          "severity": "critical"
+        },
+        "scanId": "e94ccbb585e5452db2c488192c3d9198"
+      }
+    },
+    {
+      "id": "3ec5ba632968774df9315ec64dad75ae",
+      "timestamp": "2025-04-23T00:48:46.576Z",
+      "verified": true,
+      "severity": "high",
+      "category": "system",
+      "message": "Security scan found a high issue: Insecure Configuration",
+      "metadata": {
+        "finding": {
+          "id": "CONFIG-001",
+          "title": "Insecure Configuration",
+          "description": "Insecure configuration detected that could expose sensitive information",
+          "severity": "high"
+        },
+        "scanId": "e94ccbb585e5452db2c488192c3d9198"
+      }
+    },
+    {
+      "id": "5efab21892aa8eaa51631ffcabb2e1cd",
+      "timestamp": "2025-04-23T00:48:46.576Z",
+      "verified": true,
+      "severity": "info",
+      "category": "system",
+      "message": "Maximum security scan completed",
+      "metadata": {
+        "scanId": "e94ccbb585e5452db2c488192c3d9198",
+        "timestamp": "2025-04-23T00:48:46.576Z",
+        "findingCount": 6,
+        "metrics": {
+          "fileCount": 716,
+          "apiEndpointCount": 153,
+          "dependencyCount": 138,
+          "scanDuration": 1
+        },
+        "signature": "e18d8ae53eedf6021298bd355b8308619ee724f78a768b77af9487c8b797b870"
+      }
+    }
+  ],
+  "nonce": 106,
+  "hash": "00e1f84317df5ae7340b31bec159fbe9e5f410fa39950be76cbb3f7fb85723dd",
+  "signatures": [
+    {
+      "validatorId": "validator1",
+      "signature": "FRbf6WFRsm0Y2C7JDSckENXJ6TnZZ89Ht/68mlwzU6K4zSL40kc3TUnjKbRsKW3CquS7vn/J+v0KTEGVQxrE9hpD82/71WrlDdtgJKWbX8PwVJPfTPAKjGhyJZ9LdLKFSwOIynmAnv7WpWZeVOGWCwNeUg2kQ+kZLdB1MZLZ8j6aMvDvSUenEuLrjSGTcwMX10Wg26b0+Eqbss69unr7kyCpVk+U3fp5NP71x4le1w7CDIpmudwoxQvX42bIuvo2dA/i22fzCkhnjurMdiuEDoIVYNJxr3bhRE5fTYgE0nphY69beKivTfeAB1hwhOXAIaoLD5VTGc7H10vDCGXflw=="
+    },
+    {
+      "validatorId": "validator2",
+      "signature": "egLaSFg5Z5EKvwBZU1oec8YU5n6gN7Nn9yOUDK7gITTB+iJ9BiC/ESEJo5bu0DqnjWGQMIW+Ud8Ga5Q3Fic7MnRP+nw9MEReCTrMj88AFL3FIfwLtoBXJhT+INhvZQHDlRPSQO352eQ7WEr4UbtPy5qYJ6/EHPHv6EAEjvotg11yXeKtXgqU4flXOELWzQ3qwVBrBIc+t2Wk6Nd8aVbuYUxzxSysnBKFVB6yOg263XVpPLmNaRt8KWCG4pBLc/Ed5WyU5B/vHtXAEBZ+ut/ZkJh1u0kxJL2Cr29smwYuJcbUwV1AB5F9idYU4/CXV8WGhJfa5Pou5BVJM6QKNytEtw=="
+    },
+    {
+      "validatorId": "validator3",
+      "signature": "GvusH84UdqNy3yGpk/Ce+9oWGmQqUyQmTR1PNHRCiNGsBtXhCqXJeghxk9eyOhwYSda4QxbWu8C3MwtE83Q/qH8dcnvgy9dfq9ViUs5AEdGM5PLFAsj6SDDwUW7AbFeDr5ZPLdyUsHlPd0SYECvtV+XmJVx1ZMp42v9YY6W7v4HekGg/o1GaRvFG1eBZFlhodpbkgIew58T72SscHpTnbmXKWqDiI+psCV0vfw5/qEtp9subJQez1maO/GQ5lXt5X5Uq2RkyNL/d5m59PYdKrnPb8da6RkcmW5cegIr2I1gsmOCTxbWSz3eHBAqy8Y1ztfc6E/D0dNRIb5Rp7W8P6g=="
+    }
+  ]
+}
