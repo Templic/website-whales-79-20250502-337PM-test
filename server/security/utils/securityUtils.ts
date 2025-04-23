@@ -1,124 +1,54 @@
 /**
- * Security Utilities
+ * Security Utility Functions
  * 
- * This module provides utility functions for enhancing security
- * throughout the application.
+ * This module provides various utility functions for security-related operations
+ * including response security headers, security logging, and token generation.
  */
 
-import crypto from 'crypto';
-import { Request, Response } from 'express';
-import { z } from 'zod';
+import { Response, Request } from 'express';
+import { randomBytes, createHash } from 'crypto';
+import { Session } from 'express-session';
+import { logger } from '../../utils/logger';
 
 /**
- * Generate a cryptographically secure random token
- * 
- * @param bytes - Number of random bytes (default: 32)
- * @param encoding - Encoding type (default: 'hex')
- * @returns Random token string
+ * Type for security event logging
  */
-export function generateSecureToken(
-  bytes: number = 32,
-  encoding: BufferEncoding = 'hex'
-): string {
-  return crypto.randomBytes(bytes).toString(encoding);
+export type SecurityEventType =
+  | 'AUTHENTICATION_SUCCESS'
+  | 'AUTHENTICATION_FAILURE'
+  | 'ACCESS_DENIED'
+  | 'AUTHORIZATION_FAILURE'
+  | 'SESSION_CREATED'
+  | 'SESSION_DESTROYED'
+  | 'PASSWORD_CHANGED'
+  | 'PASSWORD_RESET_REQUESTED'
+  | 'PASSWORD_RESET_COMPLETED'
+  | 'ACCOUNT_LOCKED'
+  | 'ACCOUNT_UNLOCKED'
+  | 'API_VALIDATION_FAILURE'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'CSRF_VALIDATION_FAILURE'
+  | 'SUSPICIOUS_ACTIVITY'
+  | 'SECURITY_CONFIGURATION_CHANGED';
+
+/**
+ * Basic interface for security events
+ */
+export interface SecurityEvent {
+  type: SecurityEventType;
+  timestamp: Date;
+  data: Record<string, any>;
 }
 
 /**
- * Generate a time-limited token with built-in expiration
+ * Apply security headers to HTTP responses
  * 
- * @param data - Data to include in the token
- * @param expiresInMs - Token expiration in milliseconds
- * @param secret - Secret key for signing
- * @returns Secure token containing data and expiration
+ * @param res Express response object
  */
-export function generateTimeLimitedToken<T extends Record<string, any>>(
-  data: T,
-  expiresInMs: number,
-  secret: string
-): string {
-  // Create token payload
-  const payload = {
-    ...data,
-    exp: Date.now() + expiresInMs,
-    iat: Date.now(),
-    jti: crypto.randomBytes(16).toString('hex')
-  };
-  
-  // Stringify and encrypt payload
-  const payloadStr = JSON.stringify(payload);
-  const iv = crypto.randomBytes(16);
-  const key = crypto.createHash('sha256').update(String(secret)).digest();
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-  
-  let encrypted = cipher.update(payloadStr, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  
-  // Combine IV and encrypted data
-  return iv.toString('hex') + ':' + encrypted;
-}
-
-/**
- * Verify and decode a time-limited token
- * 
- * @param token - Token to verify
- * @param secret - Secret key for verification
- * @returns Decoded token data or null if invalid
- */
-export function verifyTimeLimitedToken<T>(
-  token: string,
-  secret: string
-): (T & { exp: number; iat: number; jti: string }) | null {
-  try {
-    // Split IV and encrypted data
-    const [ivHex, encrypted] = token.split(':');
-    if (!ivHex || !encrypted) return null;
-    
-    // Decrypt payload
-    const iv = Buffer.from(ivHex, 'hex');
-    const key = crypto.createHash('sha256').update(String(secret)).digest();
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    // Parse payload
-    const payload = JSON.parse(decrypted) as T & { exp: number; iat: number; jti: string };
-    
-    // Check if token is expired
-    if (payload.exp < Date.now()) return null;
-    
-    return payload;
-  } catch (error) {
-    console.error('Error verifying token:', error);
-    return null;
-  }
-}
-
-/**
- * Sanitize user input to prevent XSS attacks
- * 
- * @param input - User input to sanitize
- * @returns Sanitized input
- */
-export function sanitizeUserInput(input: string): string {
-  if (!input) return '';
-  
-  // Replace potentially dangerous characters
-  return input
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-    .replace(/`/g, '&#x60;')
-    .replace(/\(/g, '&#40;')
-    .replace(/\)/g, '&#41;');
-}
-
-/**
- * Security headers for HTTP responses
- */
-export const securityHeaders = {
-  'Content-Security-Policy': 
+export function applySecurityHeaders(res: Response): void {
+  // Content Security Policy (CSP)
+  res.setHeader(
+    'Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' https://analytics.example.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
@@ -128,119 +58,256 @@ export const securityHeaders = {
     "frame-src 'none'; " +
     "object-src 'none'; " +
     "base-uri 'self'; " +
-    "form-action 'self';",
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-};
-
-/**
- * Apply security headers to a response
- * 
- * @param res - Express response object
- */
-export function applySecurityHeaders(res: Response): void {
-  Object.entries(securityHeaders).forEach(([header, value]) => {
-    res.setHeader(header, value);
-  });
-}
-
-/**
- * Create a security context for a request
- * 
- * @param req - Express request object
- * @returns Security context with request metadata
- */
-export function createRequestSecurityContext(req: Request) {
-  return {
-    timestamp: Date.now(),
-    ip: req.ip || req.socket.remoteAddress || 'unknown',
-    userAgent: req.headers['user-agent'],
-    method: req.method,
-    path: req.path,
-    query: req.query,
-    authenticated: req.session?.userId ? true : false,
-    userId: req.session?.userId,
-    sessionId: req.session?.id
-  };
-}
-
-/**
- * Common schema for password validation
- */
-export const passwordSchema = z.string()
-  .min(12, { message: 'Password must be at least 12 characters long' })
-  .max(128, { message: 'Password must not exceed 128 characters' })
-  .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-  .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
-  .regex(/[0-9]/, { message: 'Password must contain at least one number' })
-  .regex(/[^A-Za-z0-9]/, { message: 'Password must contain at least one special character' });
-
-/**
- * Estimate password strength
- * 
- * @param password - Password to evaluate
- * @returns Score from 0 (weak) to 100 (strong)
- */
-export function estimatePasswordStrength(password: string): number {
-  if (!password) return 0;
+    "form-action 'self';"
+  );
   
+  // HTTP Strict Transport Security (HSTS)
+  res.setHeader(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains; preload'
+  );
+  
+  // X-Content-Type-Options
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  
+  // X-Frame-Options
+  res.setHeader('X-Frame-Options', 'DENY');
+  
+  // X-XSS-Protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  
+  // Referrer Policy
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Permissions Policy
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), interest-cohort=()'
+  );
+}
+
+/**
+ * Generate a secure random token
+ * 
+ * @param byteLength Number of random bytes to generate
+ * @returns Hex string of the token
+ */
+export function generateSecureToken(byteLength = 32): string {
+  return randomBytes(byteLength).toString('hex');
+}
+
+/**
+ * Generate a secure hash for the given data
+ * 
+ * @param data Data to hash
+ * @param algorithm Hash algorithm to use
+ * @returns Hex string of the hash
+ */
+export function secureHash(data: string, algorithm = 'sha256'): string {
+  return createHash(algorithm).update(data).digest('hex');
+}
+
+/**
+ * Sanitize a string for safe output
+ * 
+ * @param input String to sanitize
+ * @returns Sanitized string
+ */
+export function sanitizeString(input: string): string {
+  // Replace potentially dangerous characters
+  return input
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
+/**
+ * Log a security event
+ * 
+ * @param type Type of security event
+ * @param data Additional event data
+ */
+export function logSecurityEvent(type: SecurityEventType, data: Record<string, any>): void {
+  const event: SecurityEvent = {
+    type,
+    timestamp: new Date(),
+    data
+  };
+  
+  // Log to the application logger
+  logger.info(`Security event: ${type}`, { securityEvent: event });
+  
+  // In a production environment, consider also sending to:
+  // - Security information and event management (SIEM) system
+  // - Blockchain-based immutable security log
+  // - Anomaly detection system
+}
+
+/**
+ * Check if a request is from an authenticated user
+ * 
+ * @param req Express request object
+ * @returns Boolean indicating if user is authenticated
+ */
+export function isAuthenticated(req: Request): boolean {
+  return !!(req.session && req.session.userId);
+}
+
+/**
+ * Check if a user has a specific role
+ * 
+ * @param req Express request object
+ * @param role Role to check for
+ * @returns Boolean indicating if user has the role
+ */
+export function hasRole(req: Request, role: string): boolean {
+  if (!req.session) {
+    return false;
+  }
+  
+  const userRoles = (req.session as any).roles || [];
+  return userRoles.includes(role);
+}
+
+/**
+ * Get the user ID from the session
+ * 
+ * @param session Express session
+ * @returns User ID or null if not authenticated
+ */
+export function getUserIdFromSession(session: Session): string | null {
+  if (!session) {
+    return null;
+  }
+  
+  return (session as any).userId || null;
+}
+
+/**
+ * Mask sensitive data for logging
+ * 
+ * @param data Object containing data to mask
+ * @param sensitiveFields Fields to mask
+ * @returns Object with masked sensitive fields
+ */
+export function maskSensitiveData<T extends Record<string, any>>(
+  data: T,
+  sensitiveFields: string[] = ['password', 'token', 'secret', 'apiKey', 'credit_card']
+): T {
+  const maskedData = { ...data };
+  
+  for (const field of sensitiveFields) {
+    if (field in maskedData) {
+      // Mask with asterisks, preserving length
+      const value = String(maskedData[field]);
+      maskedData[field] = '*'.repeat(Math.min(value.length, 8)) + 
+        (value.length > 8 ? `[${value.length - 8} more]` : '');
+    }
+  }
+  
+  return maskedData;
+}
+
+/**
+ * Generate a nonce for use in CSP
+ * 
+ * @returns Random nonce value
+ */
+export function generateNonce(): string {
+  return randomBytes(16).toString('base64');
+}
+
+/**
+ * Get client IP address from request
+ * 
+ * @param req Express request
+ * @returns IP address string
+ */
+export function getClientIp(req: Request): string {
+  // Check for proxy headers first
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  if (xForwardedFor) {
+    // X-Forwarded-For can be a comma-separated list of IPs
+    // The leftmost is the original client
+    const ips = Array.isArray(xForwardedFor) 
+      ? xForwardedFor[0]
+      : xForwardedFor.split(',')[0];
+    
+    return ips.trim();
+  }
+  
+  // If no proxy headers, use the remote address
+  return req.ip || 'unknown';
+}
+
+/**
+ * Validate password strength
+ * 
+ * @param password Password to validate
+ * @returns Validation result with score and feedback
+ */
+export function validatePasswordStrength(password: string): {
+  isValid: boolean;
+  score: number;
+  feedback: string[];
+} {
+  const feedback: string[] = [];
   let score = 0;
   
-  // Base score from length
-  score += Math.min(20, password.length * 2);
+  // Length check
+  if (password.length < 8) {
+    feedback.push('Password must be at least 8 characters long');
+  } else {
+    score += 1;
+  }
   
-  // Check for character types
-  if (/[A-Z]/.test(password)) score += 10;
-  if (/[a-z]/.test(password)) score += 10;
-  if (/[0-9]/.test(password)) score += 10;
-  if (/[^A-Za-z0-9]/.test(password)) score += 15;
+  // Complexity checks
+  if (/[A-Z]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('Password should contain at least one uppercase letter');
+  }
   
-  // Check for variety
-  const uniqueChars = new Set(password.split('')).size;
-  score += Math.min(15, uniqueChars);
+  if (/[a-z]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('Password should contain at least one lowercase letter');
+  }
   
-  // Check for patterns and repetitions
-  if (/(.)\1\1/.test(password)) score -= 10; // Repeated characters
-  if (/12345|qwerty|asdfg|zxcvb/i.test(password)) score -= 15; // Common sequences
+  if (/[0-9]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('Password should contain at least one number');
+  }
   
-  // Normalize score
-  return Math.max(0, Math.min(100, score));
-}
-
-/**
- * Get feature-specific security requirements
- * 
- * @param feature - Feature name
- * @returns Security requirements for the feature
- */
-export function getSecurityRequirements(feature: string) {
-  const requirements: Record<string, any> = {
-    'authentication': {
-      rateLimit: { windowMs: 15 * 60 * 1000, max: 5 },
-      validation: { username: 'required', password: 'required' },
-      securityLevel: 'high'
-    },
-    'payment': {
-      rateLimit: { windowMs: 60 * 60 * 1000, max: 10 },
-      validation: { amount: 'required', paymentMethod: 'required' },
-      securityLevel: 'critical',
-      requiresTLS: true
-    },
-    'api': {
-      rateLimit: { windowMs: 15 * 60 * 1000, max: 100 },
-      validation: { apiKey: 'required' },
-      securityLevel: 'medium'
-    },
-    'default': {
-      rateLimit: { windowMs: 15 * 60 * 1000, max: 100 },
-      validation: {},
-      securityLevel: 'standard'
-    }
+  if (/[^A-Za-z0-9]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push('Password should contain at least one special character');
+  }
+  
+  // Advanced checks
+  if (password.length >= 12) {
+    score += 1;
+  }
+  
+  if (password.length >= 16) {
+    score += 1;
+  }
+  
+  // Common password check (simplified for example)
+  const commonPasswords = ['password', '123456', 'qwerty', 'admin'];
+  if (commonPasswords.includes(password.toLowerCase())) {
+    score = 0;
+    feedback.push('Password is too common');
+  }
+  
+  return {
+    isValid: score >= 4,
+    score,
+    feedback
   };
-  
-  return requirements[feature] || requirements.default;
 }

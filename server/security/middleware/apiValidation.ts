@@ -1,241 +1,267 @@
 /**
- * API Input Validation Middleware
+ * API Validation Middleware
  * 
- * This module provides comprehensive input validation for API requests
- * using Zod schema validation.
+ * This middleware provides robust validation for API requests using Zod schemas.
+ * It validates request parameters, query strings, and body data.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject, ZodError, z } from 'zod';
-import { securityBlockchain } from '../advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockchain/SecurityEventTypes';
+import { AnyZodObject, ZodError } from 'zod';
+import { logger } from '../../utils/logger';
+import { logSecurityEvent } from '../utils/securityUtils';
 
 /**
- * Validation locations in the request
+ * Type for validation locations in a request
  */
-export enum ValidationTarget {
-  BODY = 'body',
-  QUERY = 'query',
-  PARAMS = 'params',
-  HEADERS = 'headers',
-  COOKIES = 'cookies'
-}
+type ValidationTarget = 'params' | 'query' | 'body' | 'headers' | 'cookies';
 
 /**
- * Options for validation
+ * Configuration for validation middleware
  */
-export interface ValidationOptions {
-  /**
-   * Whether to strip unknown properties (defaults to true)
-   */
-  stripUnknown?: boolean;
-  
-  /**
-   * Whether to abort early on first error (defaults to false)
-   */
+interface ValidationConfig {
+  sanitize?: boolean;
   abortEarly?: boolean;
-  
-  /**
-   * Custom error messages
-   */
-  errorMap?: z.ZodErrorMap;
-  
-  /**
-   * Log validation failures as security events (defaults to true)
-   */
-  logFailures?: boolean;
-  
-  /**
-   * Severity of validation failure log events
-   */
-  logSeverity?: SecurityEventSeverity;
+  logViolations?: boolean;
+  strictMode?: boolean;
 }
 
 /**
- * Default validation options
+ * Default validation configuration
  */
-const defaultOptions: ValidationOptions = {
-  stripUnknown: true,
-  abortEarly: false,
-  logFailures: true,
-  logSeverity: SecurityEventSeverity.MEDIUM
+const defaultValidationConfig: ValidationConfig = {
+  sanitize: true,      // Sanitize inputs when possible
+  abortEarly: false,   // Return all validation errors, not just the first one
+  logViolations: true, // Log validation violations
+  strictMode: true     // Reject requests with unexpected properties
 };
 
 /**
- * Creates validation middleware for specified request parts
+ * Creates validation middleware for a specific part of the request
  * 
- * @param schemas - Object mapping validation targets to Zod schemas
- * @param options - Validation options
+ * @param schema Zod schema to validate against
+ * @param target Part of request to validate ('params', 'query', 'body', etc.)
+ * @param config Validation configuration options
  * @returns Express middleware function
  */
-export function validateRequest(
-  schemas: Partial<Record<ValidationTarget, AnyZodObject>>,
-  options: ValidationOptions = {}
+export function validate(
+  schema: AnyZodObject,
+  target: ValidationTarget = 'body',
+  config: ValidationConfig = defaultValidationConfig
 ) {
-  const mergedOptions = { ...defaultOptions, ...options };
-  
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // Process each validation target
-      for (const [target, schema] of Object.entries(schemas)) {
-        const data = req[target as keyof Request];
-        
-        if (schema && data) {
-          // Validate data against schema
-          const parsed = await schema.parseAsync(data, {
-            errorMap: mergedOptions.errorMap,
-            async: true
+      // Get the data to validate from the request
+      const dataToValidate = req[target];
+      
+      // Skip validation if the target doesn't exist and we're validating body/params/query
+      // Headers and cookies always exist, so we'll validate empty objects
+      if (!dataToValidate && !['headers', 'cookies'].includes(target)) {
+        if (config.strictMode) {
+          return res.status(400).json({
+            status: 'error',
+            message: `Missing ${target} data to validate`,
+            error: 'VALIDATION_ERROR',
+            code: 'MISSING_DATA'
           });
-          
-          // Replace request data with validated (and potentially transformed) data
-          if (mergedOptions.stripUnknown) {
-            req[target as keyof Request] = parsed;
-          }
+        } else {
+          return next();
         }
       }
       
+      // Parse and validate the data
+      const validData = await schema.parseAsync(dataToValidate);
+      
+      // If sanitization is enabled, replace the original data with the sanitized version
+      if (config.sanitize) {
+        req[target] = validData;
+      }
+      
+      // Continue to the next middleware
       next();
     } catch (error) {
+      // Handle validation errors
       if (error instanceof ZodError) {
-        // Format validation errors
-        const formattedErrors = formatZodErrors(error);
-        
-        // Log validation failure as security event if enabled
-        if (mergedOptions.logFailures) {
-          logValidationFailure(req, formattedErrors, mergedOptions.logSeverity || SecurityEventSeverity.MEDIUM);
+        // Log the validation error if configured to do so
+        if (config.logViolations) {
+          const validationErrors = error.errors.map(err => ({
+            path: err.path.join('.'),
+            code: err.code,
+            message: err.message
+          }));
+          
+          logger.warn(`Validation error for ${req.method} ${req.path} on ${target}`, {
+            validationErrors,
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+          });
+          
+          // Log as security event
+          logSecurityEvent('API_VALIDATION_FAILURE', {
+            ip: req.ip,
+            method: req.method,
+            path: req.path,
+            target,
+            errors: validationErrors,
+            timestamp: new Date()
+          });
         }
         
-        // Send validation error response
+        // Send formatted validation error response
         return res.status(400).json({
           status: 'error',
-          message: 'Input validation failed',
-          errors: formattedErrors
+          message: 'Validation error',
+          error: 'VALIDATION_ERROR',
+          validationErrors: error.errors.map(err => ({
+            path: err.path.join('.'),
+            code: err.code,
+            message: err.message
+          }))
         });
       }
       
-      // For other errors, pass to the next error handler
-      next(error);
+      // Handle unexpected errors
+      logger.error('Unexpected validation error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      return res.status(500).json({
+        status: 'error',
+        message: 'Internal server error during request validation'
+      });
     }
   };
 }
 
 /**
- * Create a wrapped validation middleware for common patterns
+ * Combined validator that can validate multiple parts of a request at once
  * 
- * @param bodySchema - Schema for request body
- * @param querySchema - Schema for query parameters
- * @param paramsSchema - Schema for route parameters
- * @param options - Validation options
+ * @param validators Object mapping request parts to schemas
+ * @param config Validation configuration
  * @returns Express middleware function
  */
-export function validate({
-  body,
-  query,
-  params,
-  headers,
-  cookies,
-  options = {}
-}: {
-  body?: AnyZodObject;
-  query?: AnyZodObject;
-  params?: AnyZodObject;
-  headers?: AnyZodObject;
-  cookies?: AnyZodObject;
-  options?: ValidationOptions;
-}) {
-  const schemas: Partial<Record<ValidationTarget, AnyZodObject>> = {};
-  
-  if (body) schemas[ValidationTarget.BODY] = body;
-  if (query) schemas[ValidationTarget.QUERY] = query;
-  if (params) schemas[ValidationTarget.PARAMS] = params;
-  if (headers) schemas[ValidationTarget.HEADERS] = headers;
-  if (cookies) schemas[ValidationTarget.COOKIES] = cookies;
-  
-  return validateRequest(schemas, options);
-}
-
-/**
- * Format Zod validation errors for response
- * 
- * @param error - Zod error object
- * @returns Formatted error messages
- */
-function formatZodErrors(error: ZodError) {
-  return error.errors.reduce((acc, err) => {
-    const path = err.path.join('.');
-    acc[path] = err.message;
-    return acc;
-  }, {} as Record<string, string>);
-}
-
-/**
- * Log validation failure as security event
- * 
- * @param req - Express request
- * @param errors - Validation errors
- * @param severity - Security event severity
- */
-async function logValidationFailure(
-  req: Request,
-  errors: Record<string, string>,
-  severity: SecurityEventSeverity
+export function validateRequest(
+  validators: Partial<Record<ValidationTarget, AnyZodObject>>,
+  config: ValidationConfig = defaultValidationConfig
 ) {
-  try {
-    await securityBlockchain.addSecurityEvent({
-      severity,
-      category: SecurityEventCategory.INPUT_VALIDATION,
-      message: 'API input validation failed',
-      ipAddress: req.ip || req.socket.remoteAddress || 'unknown',
-      metadata: {
-        method: req.method,
-        path: req.path,
-        errors,
-        userAgent: req.headers['user-agent']
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Create a deep copy of the request to prevent mutation during validation
+      const reqCopy = JSON.parse(JSON.stringify({
+        params: req.params,
+        query: req.query,
+        body: req.body,
+        headers: req.headers,
+        cookies: req.cookies
+      }));
+      
+      // Validate each part of the request
+      for (const [target, schema] of Object.entries(validators) as [ValidationTarget, AnyZodObject][]) {
+        const dataToValidate = reqCopy[target];
+        
+        // Skip if no data and we're not in strict mode
+        if (!dataToValidate && !config.strictMode) {
+          continue;
+        }
+        
+        // Validate the data
+        const validData = await schema.parseAsync(dataToValidate);
+        
+        // Update the request with validated data if sanitization is enabled
+        if (config.sanitize) {
+          req[target] = validData;
+        }
       }
-    });
-  } catch (error) {
-    console.error('Error logging validation failure:', error);
-  }
+      
+      next();
+    } catch (error) {
+      // Handle validation errors
+      if (error instanceof ZodError) {
+        if (config.logViolations) {
+          const validationErrors = error.errors.map(err => ({
+            path: err.path.join('.'),
+            code: err.code,
+            message: err.message
+          }));
+          
+          logger.warn(`Combined validation error for ${req.method} ${req.path}`, {
+            validationErrors,
+            ip: req.ip,
+            userAgent: req.headers['user-agent']
+          });
+          
+          // Log as security event
+          logSecurityEvent('API_VALIDATION_FAILURE', {
+            ip: req.ip,
+            method: req.method,
+            path: req.path,
+            errors: validationErrors,
+            timestamp: new Date()
+          });
+        }
+        
+        return res.status(400).json({
+          status: 'error',
+          message: 'Validation error',
+          error: 'VALIDATION_ERROR',
+          validationErrors: error.errors.map(err => ({
+            path: err.path.join('.'),
+            code: err.code,
+            message: err.message
+          }))
+        });
+      }
+      
+      // Handle unexpected errors
+      logger.error('Unexpected validation error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      return res.status(500).json({
+        status: 'error',
+        message: 'Internal server error during request validation'
+      });
+    }
+  };
 }
 
 /**
- * Common validation schemas for reuse
+ * Sanitizes request data based on schemas without performing validation
+ * Useful for non-critical endpoints where you want to clean data but not block requests
+ * 
+ * @param schema Schema to use for sanitization
+ * @param target Part of request to sanitize
+ * @returns Express middleware function
  */
-export const CommonValidators = {
-  /**
-   * ID parameter validation
-   */
-  id: z.object({
-    id: z.string().uuid({ message: 'Invalid ID format' })
-  }),
-  
-  /**
-   * Pagination parameters validation
-   */
-  pagination: z.object({
-    page: z.coerce.number().int().positive().optional().default(1),
-    limit: z.coerce.number().int().positive().max(100).optional().default(20)
-  }),
-  
-  /**
-   * Date range validation
-   */
-  dateRange: z.object({
-    startDate: z.string().datetime({ offset: true }).optional(),
-    endDate: z.string().datetime({ offset: true }).optional()
-  }),
-  
-  /**
-   * Email validation
-   */
-  email: z.object({
-    email: z.string().email({ message: 'Invalid email format' })
-  }),
-  
-  /**
-   * Search query validation
-   */
-  search: z.object({
-    query: z.string().trim().min(2).max(100)
-  })
-};
+export function sanitize(schema: AnyZodObject, target: ValidationTarget = 'body') {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const dataToSanitize = req[target];
+      
+      if (!dataToSanitize) {
+        return next();
+      }
+      
+      // Attempt to sanitize with the schema (but don't throw on errors)
+      const result = await schema.safeParseAsync(dataToSanitize);
+      
+      if (result.success) {
+        // Replace the original data with the sanitized version
+        req[target] = result.data;
+      }
+      
+      // Continue regardless of validation result
+      next();
+    } catch (error) {
+      // Just log the error and continue
+      logger.debug('Error during request sanitization', {
+        error: error instanceof Error ? error.message : String(error),
+        path: req.path,
+        method: req.method
+      });
+      
+      next();
+    }
+  };
+}
