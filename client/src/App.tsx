@@ -246,6 +246,7 @@ function AppRouter() {
           } />
           {/* Security Testing Pages */}
           <Route path="/security-test" component={SecurityTestPage} />
+          <Route path="/security-dashboard" component={SecurityDashboardPage} />
           {/* Archived Page - /button-demo */}
           {/* <Route path="/button-demo" component={ButtonDemo} /> */}
 
