@@ -140,7 +140,8 @@ export class DatabaseConfigurationChecker {
         ];
         
         for (const check of paramChecks) {
-          const paramResult = await client.query(`SHOW ${check.param}`);
+          // Use parameterized query to prevent potential SQL injection
+          const paramResult = await client.query('SHOW $1', [check.param]);
           const currentValue = paramResult.rows[0][check.param];
           
           if (currentValue !== check.expected) {

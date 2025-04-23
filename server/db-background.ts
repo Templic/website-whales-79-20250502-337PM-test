@@ -71,10 +71,11 @@ async function registerWorkers() {
   // Cleanup old sessions
   await boss.work('cleanup-sessions', async () => {
     try {
+      // Use parameterized query with SQL template literal for safety
       const result = await pgPool.query(`
         DELETE FROM "session"
-        WHERE expire < NOW()
-      `);
+        WHERE expire < $1
+      `, [new Date()]);
       
       logBackground(`Cleaned up ${result.rowCount} expired sessions`);
       return { success: true, cleanedCount: result.rowCount };
@@ -127,10 +128,11 @@ async function registerWorkers() {
       ]);
       
       // Cleanup old metrics (keep only last 30 days)
+      // Use parameterized query for safety
       await pgPool.query(`
         DELETE FROM db_metrics
-        WHERE collected_at < NOW() - INTERVAL '30 days'
-      `);
+        WHERE collected_at < NOW() - INTERVAL $1
+      `, ['30 days']);
       
       logBackground('Database metrics collected successfully');
       return { success: true };
@@ -147,7 +149,16 @@ async function registerWorkers() {
       const results = [];
       
       for (const table of tables) {
+        // Validate table name - only allow alphanumeric and underscore
+        if (!/^[a-zA-Z0-9_]+$/.test(table)) {
+          logBackground(`Invalid table name format: ${table}`, 'error');
+          results.push({ table, status: 'error', message: 'Invalid table name format' });
+          continue;
+        }
+        
         logBackground(`Running VACUUM ANALYZE on table ${table}`);
+        // Using identifier escaping with double quotes provides some protection, 
+        // but adding regex validation above as additional security
         await pgPool.query(`VACUUM ANALYZE "${table}"`);
         results.push({ table, status: 'success' });
       }
