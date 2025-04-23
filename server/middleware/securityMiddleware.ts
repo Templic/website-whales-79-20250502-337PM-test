@@ -165,7 +165,7 @@ export function createCustomSecurityMiddleware(options: {
         category: SecurityEventCategory.REQUEST as any,
         severity: SecurityEventSeverity.INFO,
         message: 'Request received',
-        timestamp: new Date(),
+        timestamp: Date.now(),
         metadata: {
           requestId: req.securityContext.requestId,
           path: req.path,
@@ -184,7 +184,7 @@ export function createCustomSecurityMiddleware(options: {
           category: SecurityEventCategory.REQUEST as any,
           severity: SecurityEventSeverity.INFO,
           message: 'Request completed',
-          timestamp: new Date(),
+          timestamp: Date.now(),
           metadata: {
             requestId: req.securityContext.requestId,
             path: req.path,
@@ -217,7 +217,7 @@ export function createCustomSecurityMiddleware(options: {
               category: SecurityEventCategory.ANOMALY_DETECTED as any,
               severity: SecurityEventSeverity.WARNING,
               message: 'ML anomaly detection triggered',
-              timestamp: new Date(),
+              timestamp: Date.now(),
               metadata: {
                 requestId: req.securityContext.requestId,
                 path: req.path,
@@ -253,7 +253,7 @@ export function createCustomSecurityMiddleware(options: {
               category: SecurityEventCategory.THREAT_DETECTED as any,
               severity: SecurityEventSeverity.HIGH,
               message: 'Runtime protection detected threat',
-              timestamp: new Date(),
+              timestamp: Date.now(),
               metadata: {
                 requestId: req.securityContext.requestId,
                 path: req.path,
@@ -336,7 +336,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
           category: SecurityEventCategory.VALIDATION,
           severity: SecurityEventSeverity.INFO,
           message: `Valid ${target} received`,
-          timestamp: new Date().getTime(),
+          timestamp: Date.now(),
           metadata: {
             path: req.path,
             method: req.method,
