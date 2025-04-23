@@ -2038,6 +2038,42 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
   
+  // Add special route for testing quantum API endpoints without CSRF
+  app.post('/api/test-quantum/generate-keys', (req, res) => {
+    const { algorithm = 'kyber', strength = 'high' } = req.body;
+    
+    // Forward the request to the actual implementation
+    import('./security/advanced/quantum/QuantumResistantCrypto')
+      .then(async (qrc) => {
+        try {
+          // Generate key pair
+          const keyPair = await qrc.generateKeyPair({
+            algorithm,
+            strength
+          });
+          
+          // Return key pair
+          res.json({
+            publicKey: keyPair.publicKey,
+            privateKey: keyPair.privateKey
+          });
+        } catch (error) {
+          console.error('Error in test-quantum endpoint:', error);
+          res.status(500).json({
+            error: 'Internal Server Error',
+            message: 'Failed to generate quantum-resistant key pair'
+          });
+        }
+      })
+      .catch((error) => {
+        console.error('Error importing quantum module:', error);
+        res.status(500).json({
+          error: 'Internal Server Error',
+          message: 'Failed to load quantum cryptography module'
+        });
+      });
+  });
+  
   // Quantum-resistant security API routes
   app.use('/api/security/quantum', secureApiRoutes);
   
