@@ -135,7 +135,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     const originalEnd = res.end;
     
     // Override the end method
-    res.end = function(chunk, encoding: any) {
+    res.end = function(chunk, encoding) {
       // Get response time
       const responseTime = Date.now() - requestStartTime;
       

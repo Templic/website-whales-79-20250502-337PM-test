@@ -67,7 +67,7 @@ export function setupCSRFProtection(app: Express): void {
     const originalRender = res.render;
     
     // Override render to include CSRF token in all templates
-    res.render = function(view: string, options?: object, callback?: (err: Error, html: string: any) => void): void {
+    res.render = function(view: string, options?: object, callback?: (err: Error, html: string) => void): void {
       // Add CSRF token to template variables
       const csrfToken = (req as any).csrfToken;
       const templateVars = { ...options, csrfToken };

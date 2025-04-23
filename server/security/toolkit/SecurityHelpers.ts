@@ -50,7 +50,7 @@ export function createSecureDecorator() {
     ) {
       const originalMethod = descriptor.value;
       
-      descriptor.value = async function(req: Request, res: Response, next: NextFunction: any) {
+      descriptor.value = async function(req: Request, res: Response, next: NextFunction) {
         try {
           // Check authentication if required
           if (requireAuth && (!req.isAuthenticated || !req.isAuthenticated())) {

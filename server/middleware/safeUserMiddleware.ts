@@ -35,7 +35,7 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
   const originalJson = res.json;
   
   // Override res.json to sanitize user data in responses
-  res.json = function(data: any) {
+  res.json = function(data) {
     // Check if the response data contains user information and sanitize it
     if (data && typeof data === 'object') {
       // If it's a user object with sensitive fields
