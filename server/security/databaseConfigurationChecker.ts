@@ -94,16 +94,17 @@ export class DatabaseConfigurationChecker {
       const client = await pool.connect();
       try {
         // Check for unused indexes (which can impact performance)
+        // Using parameterized query for safety
         const unusedIndexesResult = await client.query(`
           SELECT
             schemaname || '.' || relname as table,
             indexrelname as index,
             idx_scan as index_scans
           FROM pg_stat_user_indexes
-          WHERE idx_scan = 0
-          AND schemaname NOT LIKE 'pg_%'
+          WHERE idx_scan = $1
+          AND schemaname NOT LIKE $2
           ORDER BY pg_relation_size(indexrelid) DESC
-        `);
+        `, [0, 'pg_%']);
         
         if (unusedIndexesResult.rows.length > 0) {
           if (!report.recommendations) {
