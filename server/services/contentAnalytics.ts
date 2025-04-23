@@ -109,26 +109,28 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     .from(contentItems)
     .where(gte(contentItems.createdAt, lastMonth));
     
-    // Get published counts using raw SQL since we don't have a publishedAt column in the schema
+    // Get published counts
+    // Since we're dealing with a potentially complex database structure, we'll use SQL template literals
+    // with parameter binding for the date values which ensures safety from SQL injection
     const publishedLast24Hours = await db.execute(sql`
       SELECT COUNT(*) 
       FROM content_items 
       WHERE status = 'published' 
-      AND published_at >= ${yesterday}
+      AND (published_at >= ${yesterday} OR updated_at >= ${yesterday})
     `);
     
     const publishedLast7Days = await db.execute(sql`
       SELECT COUNT(*) 
       FROM content_items 
       WHERE status = 'published' 
-      AND published_at >= ${lastWeek}
+      AND (published_at >= ${lastWeek} OR updated_at >= ${lastWeek})
     `);
     
     const publishedLast30Days = await db.execute(sql`
       SELECT COUNT(*) 
       FROM content_items 
       WHERE status = 'published' 
-      AND published_at >= ${lastMonth}
+      AND (published_at >= ${lastMonth} OR updated_at >= ${lastMonth})
     `);
     
     // Get updated counts
