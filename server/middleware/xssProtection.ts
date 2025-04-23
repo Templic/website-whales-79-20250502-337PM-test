@@ -1,229 +1,261 @@
 /**
  * XSS Protection Middleware
  * 
- * This module provides Express middleware to protect against XSS attacks
- * by applying security headers and input sanitization.
+ * This middleware protects against XSS attacks by sanitizing input, setting
+ * appropriate security headers, and validating HTML/JS content.
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { securityHeadersMiddleware, xssMiddleware } from '../security/xss/XssPrevention';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 
-/**
- * Apply all XSS protection middleware at once
- */
-export function applyXssProtection(app: any) {
-  console.log('[SECURITY] Applying XSS protection middleware');
+// Initialize DOMPurify with JSDOM
+const window = new JSDOM('').window;
+const purify = DOMPurify(window);
+
+// Default purify config (stricter than default)
+const DEFAULT_PURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'a', 'b', 'br', 'code', 'div', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'i', 'li', 'ol', 'p', 'pre', 'span', 'strong', 'table', 'tbody', 'td',
+    'th', 'thead', 'tr', 'ul'
+  ],
+  ALLOWED_ATTR: [
+    'class', 'href', 'id', 'style', 'target'
+  ],
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onunload', 'src', 'style'],
+  FORBID_CONTENTS: ['script', 'style', 'iframe', 'object', 'embed', 'form'],
+  ALLOW_DATA_ATTR: false,
+  SAFE_FOR_TEMPLATES: true,
+  SANITIZE_DOM: true,
+  KEEP_CONTENT: true,
+  USE_PROFILES: { html: true },
+};
+
+// Add additional hooks to DOMPurify
+purify.addHook('beforeSanitizeElements', (node) => {
+  if (node.textContent && node.textContent.match(/javascript|eval|Function|document\.cookie|alert|confirm|prompt/i)) {
+    // Log potential XSS attack
+    logXssAttempt({
+      type: 'suspicious_content',
+      content: node.textContent.substring(0, 50),
+      node_name: node.nodeName
+    });
+  }
+  return node;
+});
+
+// Configure specific sanitization profiles
+export enum SanitizationProfile {
+  STRICT = 'strict',
+  BASIC = 'basic',
+  BLOG = 'blog',
+  COMMENT = 'comment',
+  EMAIL = 'email'
+}
+
+// Purify configs for different profiles
+const PURIFY_CONFIGS = {
+  [SanitizationProfile.STRICT]: {
+    ...DEFAULT_PURIFY_CONFIG,
+    ALLOWED_TAGS: ['a', 'b', 'br', 'div', 'em', 'i', 'p', 'span', 'strong'],
+    ALLOWED_ATTR: ['class', 'href', 'id', 'target']
+  },
+  [SanitizationProfile.BASIC]: DEFAULT_PURIFY_CONFIG,
+  [SanitizationProfile.BLOG]: {
+    ...DEFAULT_PURIFY_CONFIG,
+    ALLOWED_TAGS: [
+      ...DEFAULT_PURIFY_CONFIG.ALLOWED_TAGS,
+      'img', 'blockquote', 'hr', 'caption', 'figure', 'figcaption'
+    ],
+    ALLOWED_ATTR: [
+      ...DEFAULT_PURIFY_CONFIG.ALLOWED_ATTR,
+      'alt', 'title'
+    ]
+  },
+  [SanitizationProfile.COMMENT]: {
+    ...DEFAULT_PURIFY_CONFIG,
+    ALLOWED_TAGS: ['a', 'b', 'br', 'em', 'i', 'p', 'strong'],
+    ALLOWED_ATTR: ['href', 'target']
+  },
+  [SanitizationProfile.EMAIL]: {
+    ...DEFAULT_PURIFY_CONFIG,
+    ALLOWED_TAGS: [
+      ...DEFAULT_PURIFY_CONFIG.ALLOWED_TAGS,
+      'img', 'blockquote', 'hr'
+    ],
+    ALLOWED_ATTR: [
+      ...DEFAULT_PURIFY_CONFIG.ALLOWED_ATTR,
+      'alt', 'title'
+    ]
+  }
+};
+
+// Function to sanitize HTML content
+export function sanitizeHtml(html: string, profile: SanitizationProfile = SanitizationProfile.BASIC): string {
+  if (!html) {
+    return '';
+  }
   
-  // Log the initialization
-  securityBlockchain.addSecurityEvent({
-    category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
-    severity: SecurityEventSeverity.INFO,
-    message: 'XSS protection middleware initialized',
-    timestamp: Date.now(),
-    metadata: {
-      component: 'xssProtection',
-      protections: [
-        'Content-Security-Policy',
-        'X-XSS-Protection',
-        'X-Content-Type-Options',
-        'X-Frame-Options',
-        'Referrer-Policy',
-        'Input sanitization'
-      ]
+  // Get profile-specific config
+  const config = PURIFY_CONFIGS[profile] || DEFAULT_PURIFY_CONFIG;
+  
+  // Check for potential XSS attacks
+  if (
+    html.match(/javascript|eval|Function|document\.cookie|alert|confirm|prompt/i) ||
+    html.match(/<script|<img|<iframe|<object|<embed|<form|<input|<button/i) ||
+    html.match(/onerror|onload|onclick|onmouseover|onunload/i)
+  ) {
+    // Log potential XSS attack
+    logXssAttempt({
+      type: 'pattern_match',
+      content: html.substring(0, 100),
+      profile
+    });
+  }
+  
+  // Sanitize and return
+  return purify.sanitize(html, config);
+}
+
+// Function to create XSS protection middleware
+export function xssProtectionMiddleware(options: {
+  sanitizeBody?: boolean;
+  sanitizeParams?: boolean;
+  sanitizeQuery?: boolean;
+  profile?: SanitizationProfile;
+  securityHeaders?: boolean;
+  excludePaths?: string[];
+} = {}) {
+  // Default options
+  const {
+    sanitizeBody = true,
+    sanitizeParams = true,
+    sanitizeQuery = true,
+    profile = SanitizationProfile.BASIC,
+    securityHeaders = true,
+    excludePaths = []
+  } = options;
+  
+  // Return middleware function
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Check if path is excluded
+      if (excludePaths.some(path => req.path.startsWith(path))) {
+        return next();
+      }
+      
+      // Add security headers
+      if (securityHeaders) {
+        res.setHeader('X-XSS-Protection', '1; mode=block');
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; object-src 'none'");
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      }
+      
+      // Sanitize request body
+      if (sanitizeBody && req.body) {
+        sanitizeObject(req.body, profile);
+      }
+      
+      // Sanitize URL parameters
+      if (sanitizeParams && req.params) {
+        sanitizeObject(req.params, profile);
+      }
+      
+      // Sanitize query parameters
+      if (sanitizeQuery && req.query) {
+        sanitizeObject(req.query, profile);
+      }
+      
+      next();
+    } catch (error) {
+      // Log error
+      console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
+      
+      // Log to security fabric
+      securityFabric.emitEvent({
+        category: SecurityEventCategory.XSS,
+        severity: SecurityEventSeverity.ERROR,
+        message: 'Error in XSS protection middleware',
+        data: {
+          error: (error as Error).message,
+          stack: (error as Error).stack,
+          path: req.path,
+          method: req.method
+        }
+      });
+      
+      // Continue despite error
+      next();
     }
-  }).catch(err => {
-    console.error('[SECURITY ERROR] Failed to log XSS middleware initialization:', err);
+  };
+}
+
+// Function to sanitize object (recursively)
+function sanitizeObject(obj: any, profile: SanitizationProfile): void {
+  if (!obj || typeof obj !== 'object') {
+    return;
+  }
+  
+  for (const key in obj) {
+    if (typeof obj[key] === 'string') {
+      const original = obj[key];
+      obj[key] = sanitizeHtml(obj[key], profile);
+      
+      // Log if content was modified
+      if (original !== obj[key]) {
+        logXssAttempt({
+          type: 'sanitized_field',
+          field: key,
+          original: original.substring(0, 50),
+          sanitized: obj[key].substring(0, 50)
+        });
+      }
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      sanitizeObject(obj[key], profile);
+    }
+  }
+}
+
+// Function to log XSS attempt
+function logXssAttempt(data: any): void {
+  // Log to console
+  console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
+  
+  // Log to security fabric
+  securityFabric.emitEvent({
+    category: SecurityEventCategory.XSS,
+    severity: SecurityEventSeverity.HIGH,
+    message: `Potential XSS attempt detected: ${data.type}`,
+    data
   });
   
-  // Apply security headers
-  app.use(securityHeadersMiddleware({
-    csp: true,
-    xssProtection: true,
-    noSniff: true,
-    frameOptions: 'DENY',
-    referrerPolicy: 'strict-origin-when-cross-origin',
-    nonce: true
-  }));
-  
-  // Apply input sanitization
-  app.use(xssMiddleware({
-    allowHtmlInBody: false,  // Disallow HTML in request body by default
-    scanBody: true,          // Scan request body
-    scanQuery: true,         // Scan query parameters
-    scanParams: true,        // Scan URL parameters
-    scanHeaders: false       // Don't scan headers (can cause issues with some proxies)
-  }));
-  
-  // Advanced XSS attack detection and logging
-  app.use(xssAttackDetectionMiddleware());
-}
-
-/**
- * Middleware to detect potential XSS attacks in real-time
- */
-function xssAttackDetectionMiddleware() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    // Known XSS attack patterns to detect
-    const xssPatterns = [
-      /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
-      /javascript:/i,
-      /data:text\/html/i,
-      /vbscript:/i,
-      /expression\s*\(/i,
-      /on\w+\s*=\s*["']/i,
-      /<iframe/i,
-      /<embed/i,
-      /<object/i,
-      /document\.cookie/i,
-      /document\.location/i,
-      /document\.write/i,
-      /localStorage/i,
-      /sessionStorage/i,
-      /alert\s*\(/i,
-      /eval\s*\(/i,
-      /setTimeout\s*\(/i,
-      /setInterval\s*\(/i,
-      /innerHTML/i,
-      /outerHTML/i
-    ];
-    
-    // Function to check a single value against XSS patterns
-    const checkValue = (value: any, path: string) => {
-      if (typeof value !== 'string') return false;
-      
-      for (const pattern of xssPatterns) {
-        if (pattern.test(value)) {
-          // Potential XSS attack detected
-          const match = value.match(pattern);
-          
-          // Log the attack
-          securityBlockchain.addSecurityEvent({
-            category: SecurityEventCategory.ATTACK_ATTEMPT as any,
-            severity: SecurityEventSeverity.MEDIUM,
-            message: 'Potential XSS attack detected',
-            timestamp: Date.now(),
-            metadata: {
-              path: req.path,
-              method: req.method,
-              ip: req.ip,
-              dataPath: path,
-              pattern: pattern.toString(),
-              match: match ? match[0] : null,
-              // Don't log the full value to avoid sensitive data exposure
-              valuePreview: value.substring(0, 50) + (value.length > 50 ? '...' : '')
-            }
-          }).catch(err => {
-            console.error('[SECURITY ERROR] Failed to log XSS attack:', err);
-          });
-          
-          return true;
-        }
+  // Log to blockchain for forensics
+  try {
+    securityBlockchain.addSecurityEvent({
+      category: SecurityEventCategory.XSS,
+      severity: SecurityEventSeverity.HIGH,
+      message: `XSS attempt detected: ${data.type}`,
+      timestamp: Date.now(),
+      metadata: {
+        ...data,
+        timestamp: new Date().toISOString()
       }
-      
-      return false;
-    };
-    
-    // Function to recursively scan objects for XSS payloads
-    const scanObject = (obj: any, path: string) => {
-      if (!obj || typeof obj !== 'object') return false;
-      
-      if (Array.isArray(obj)) {
-        for (let i = 0; i < obj.length; i++) {
-          const itemPath = `${path}[${i}]`;
-          if (typeof obj[i] === 'string') {
-            if (checkValue(obj[i], itemPath)) return true;
-          } else if (typeof obj[i] === 'object') {
-            if (scanObject(obj[i], itemPath)) return true;
-          }
-        }
-      } else {
-        for (const key in obj) {
-          const valuePath = path ? `${path}.${key}` : key;
-          if (typeof obj[key] === 'string') {
-            if (checkValue(obj[key], valuePath)) return true;
-          } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-            if (scanObject(obj[key], valuePath)) return true;
-          }
-        }
-      }
-      
-      return false;
-    };
-    
-    // Scan request components
-    let attackDetected = false;
-    
-    // Scan URL
-    attackDetected = attackDetected || checkValue(req.url, 'req.url');
-    
-    // Scan query parameters
-    attackDetected = attackDetected || scanObject(req.query, 'req.query');
-    
-    // Scan parameters
-    attackDetected = attackDetected || scanObject(req.params, 'req.params');
-    
-    // Scan body
-    attackDetected = attackDetected || scanObject(req.body, 'req.body');
-    
-    // If attack is highly suspicious, we can block the request
-    // This is commented out by default to avoid false positives
-    /*
-    if (attackDetected) {
-      // Log the blocked attack
-      securityBlockchain.addSecurityEvent({
-        category: SecurityEventCategory.ATTACK_BLOCKED,
-        severity: SecurityEventSeverity.HIGH,
-        message: 'XSS attack blocked',
-        timestamp: Date.now(),
-        metadata: {
-          path: req.path,
-          method: req.method,
-          ip: req.ip
-        }
-      }).catch(err => {
-        console.error('[SECURITY ERROR] Failed to log blocked XSS attack:', err);
-      });
-      
-      return res.status(403).send({ 
-        error: 'Request blocked due to security concerns',
-        code: 'SECURITY_VIOLATION'
-      });
-    }
-    */
-    
-    next();
-  };
+    });
+  } catch (error) {
+    console.error('[XSS-PROTECTION] Error logging to blockchain:', error);
+  }
 }
 
-/**
- * Middleware to add a Content-Security-Policy nonce to the response locals
- * so it can be used in templates
- */
-export function cspNonceMiddleware() {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const crypto = require('crypto');
-    res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
-    
-    // Set CSP header with nonce
-    const csp = `default-src 'self'; script-src 'self' 'nonce-${res.locals.cspNonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests;`;
-    
-    res.setHeader('Content-Security-Policy', csp);
-    next();
-  };
-}
-
-/**
- * Example usage:
- * 
- * import express from 'express';
- * import { applyXssProtection } from './middleware/xssProtection';
- * 
- * const app = express();
- * 
- * // Apply all XSS protection middleware
- * applyXssProtection(app);
- * 
- * // Rest of application
- */
+// Export default middleware with basic configuration
+export default xssProtectionMiddleware({
+  sanitizeBody: true,
+  sanitizeParams: true,
+  sanitizeQuery: true,
+  profile: SanitizationProfile.BASIC,
+  securityHeaders: true,
+  excludePaths: ['/api/health', '/api/public', '/api/webhooks']
+});

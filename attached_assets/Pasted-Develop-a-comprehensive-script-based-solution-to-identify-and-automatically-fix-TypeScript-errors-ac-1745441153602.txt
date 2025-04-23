@@ -1,0 +1,23 @@
+Develop a comprehensive script-based solution to identify and automatically fix TypeScript errors across a full-stack TypeScript project, assuming a monorepo-style layout with multiple packages (backend, frontend, microservices). The script should perform the following actions:
+
+1.  **Project Traversal:** Recursively traverse all sub-projects (e.g., backend, frontend, microservices) within the monorepo to locate TypeScript files.
+2.  **Error Detection:** Execute the TypeScript compiler (`tsc`) in each sub-project to identify type-checking errors. The script should capture the compiler's output, including error messages, file paths, and line numbers.
+3.  **Error Formatting:** Format the collected errors into a clear, concise, and easily readable report. The report should group errors by file and provide detailed information for each error, such as the error message, the line number, and the relevant code snippet.
+4.  **Automated Fixes (Optional):** Implement an optional automated fixing mechanism using tools like `ts-migrate` or `eslint --fix`. The script should provide a configuration option to enable or disable automated fixes. If enabled, the script should attempt to automatically fix the identified errors using the specified tool. The script should log the changes made by the fixing tool.
+5.  **Error Reporting:** Generate a final report summarizing the remaining errors after the automated fixes have been applied (or if automated fixes are disabled). The report should clearly indicate the number of errors found, the number of errors fixed (if applicable), and the remaining errors with their details.
+6.  **Error Filtering:** Implement the ability to filter errors based on specific criteria, such as error codes or file paths. This will allow developers to focus on specific types of errors or specific parts of the codebase.
+7.  **Integration with CI/CD:** Ensure the script can be easily integrated into a CI/CD pipeline. The script should return an appropriate exit code (e.g., 0 for no errors, 1 for errors) to indicate the success or failure of the type-checking process.
+8.  **Configuration:** Allow for configuration of the script through command-line arguments or a configuration file. The configuration options should include:
+    *   The root directory of the monorepo.
+    *   The tools to use for automated fixes (e.g., `ts-migrate`, `eslint --fix`).
+    *   The error filtering criteria.
+    *   The output format of the error report (e.g., plain text, JSON).
+    *   Whether to enable or disable automated fixes.
+9.  **Error Analysis:** Provide the ability to analyze the errors and suggest potential solutions or code improvements. This could involve integrating with a code analysis tool or using a rule-based system to identify common error patterns and suggest fixes.
+10. **Performance Optimization:** Optimize the script's performance to minimize the time it takes to identify and fix errors. This could involve parallelizing the execution of the TypeScript compiler across multiple sub-projects or using caching mechanisms to avoid re-compiling unchanged files.
+
+The script should be written in a language suitable for scripting and automation, such as Node.js with TypeScript. The script should be well-documented and easy to understand and maintain. The script should handle errors gracefully and provide informative error messages to the user. The script should be designed to be robust and reliable, and it should be able to handle a wide range of TypeScript projects and error scenarios.
+
+Provide the script code, along with clear instructions on how to run it and integrate it into a CI/CD pipeline. Include examples of how to configure the script and use the command-line arguments. Also, provide examples of how to use the error filtering and automated fixing features.
+
+Ensure the solution is resilient, secure, and durable, considering potential vulnerabilities and best practices for code quality and maintainability.

@@ -6,8 +6,8 @@
  */
 
 import { Express, Router, Request, Response, NextFunction } from 'express';
-import { applyXssProtection } from './xssProtection';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import xssProtectionMiddleware from './xssProtection';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 import { AnyZodObject, z } from 'zod';
 
@@ -33,7 +33,7 @@ export function applySecurityMiddleware(app: Express) {
   
   try {
     // Apply XSS protection
-    applyXssProtection(app);
+    app.use(xssProtectionMiddleware());
     
     // Add Helmet for additional security headers
     if (!app.get('helmet-applied')) {

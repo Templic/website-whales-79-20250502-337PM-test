@@ -1,133 +1,136 @@
 /**
- * Security API Routes
+ * Security Routes Module
  * 
- * Provides endpoints for the security dashboard and security operations
+ * This module sets up routes for security features including:
+ * - MFA setup and verification
+ * - Security dashboard API endpoints
+ * - Security testing endpoints
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from '../security/advanced/blockchain/SecurityEventTypes';
-import { asyncHandler } from '../middleware/errorHandler';
-import { csrfProtection } from '../middleware/csrfProtection';
-import { runSecurityScan } from '../security/securityController';
-import { requireAuth } from '../middleware/authMiddleware';
+import express from 'express';
+import { createSecureApiRouter, createPublicApiRouter } from './secureApiRouter';
+import mfaRoutes from './api/security/mfa';
+import dashboardRoutes from './api/security/dashboard';
+import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime';
+import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
+import { logSecurityEvent } from '../security/advanced/SecurityLogger';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import { startMetricsCollection } from '../security/monitoring/MetricsCollector';
+import { initializeEventsCollector } from '../security/monitoring/EventsCollector';
+import http from 'http';
 
-const router = Router();
+// Create router
+const router = express.Router();
 
-// Middleware to ensure only authenticated admin users can access security routes
-const requireAdmin = [requireAuth, (req: Request, res: Response, next: NextFunction): void => {
-  // In a real app, we would check if the user has the admin role
-  // For now, we'll assume all authenticated users are admins
-  next();
-}];
+// Setup security dashboard API routes
+const securityApiRouter = createSecureApiRouter({
+  requireMFA: true,
+  quantumProtection: true
+});
 
-/**
- * @route GET /api/security/blockchain/blocks
- * @desc Get all blocks from the security blockchain
- * @access Admin only
- */
-router.get('/blockchain/blocks', requireAdmin, asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const blocks = securityBlockchain.getBlocks();
-  res.json(blocks);
-}));
+// Security dashboard API routes
+securityApiRouter.use('/dashboard', dashboardRoutes);
+securityApiRouter.use('/realtime', realtimeRoutes);
 
-/**
- * @route GET /api/security/events
- * @desc Get filtered security events
- * @access Admin only
- */
-router.get('/events', requireAdmin, asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { 
-    severity, 
-    category, 
-    titleContains, 
-    descriptionContains,
-    fromDate,
-    toDate,
-    maxResults
-  } = req.query;
+// MFA API routes
+securityApiRouter.use('/mfa', mfaRoutes);
 
-  // Convert query params to the right types
-  const queryOptions: {
-    severity?: SecurityEventSeverity;
-    category?: SecurityEventCategory;
-    titleContains?: string;
-    descriptionContains?: string;
-    fromDate?: Date;
-    toDate?: Date;
-    maxResults?: number;
-  } = {};
-  
-  if (severity) {
-    queryOptions.severity = severity as SecurityEventSeverity;
-  }
-  
-  if (category) {
-    queryOptions.category = category as SecurityEventCategory;
-  }
-  
-  if (titleContains) {
-    queryOptions.titleContains = titleContains as string;
-  }
-  
-  if (descriptionContains) {
-    queryOptions.descriptionContains = descriptionContains as string;
-  }
-  
-  if (fromDate) {
-    queryOptions.fromDate = new Date(fromDate as string);
-  }
-  
-  if (toDate) {
-    queryOptions.toDate = new Date(toDate as string);
-  }
-  
-  if (maxResults) {
-    queryOptions.maxResults = parseInt(maxResults as string);
-  }
-  
-  const events = securityBlockchain.queryEvents(queryOptions);
-  res.json(events);
-}));
+// Register security API routes
+router.use('/api/security', securityApiRouter);
 
-/**
- * @route POST /api/security/scan/force
- * @desc Force a security scan with specified level
- * @access Admin only
- */
-router.post('/scan/force', requireAdmin, csrfProtection, asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { level = 'normal' } = req.body;
+// MFA verification routes
+const authRouter = express.Router();
+
+// MFA setup page
+authRouter.get('/setup-mfa', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth');
+  }
   
-  // Start security scan in background
-  runSecurityScan({ 
-    level, 
-    userId: req.user?.id ? String(req.user.id) : undefined, 
-    userIp: req.ip
+  res.render('auth/mfa-setup', {
+    user: req.user
   });
+});
+
+// MFA verification page
+authRouter.get('/mfa', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth');
+  }
   
-  res.json({ 
-    success: true, 
-    message: `Security scan initiated with level: ${level}` 
+  // Check if MFA is already verified
+  if (req.session.mfa?.state === 'verified') {
+    return res.redirect('/');
+  }
+  
+  // Initialize MFA verification if not already done
+  if (!req.session.mfa) {
+    initializeMFAVerification(req, (req.user as any).id);
+  }
+  
+  res.render('auth/mfa-verify', {
+    user: req.user
   });
-}));
+});
+
+// MFA verification POST endpoint
+authRouter.post('/mfa/verify', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect('/auth');
+  }
+  
+  const { code, method } = req.body;
+  
+  // Generate challenge if method is provided
+  if (method && !code) {
+    const success = await generateMFAChallenge(req, res, method);
+    
+    if (success) {
+      return res.json({ success: true, message: 'Challenge generated' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Failed to generate challenge' });
+    }
+  }
+  
+  // Verify MFA response
+  if (code) {
+    const success = await verifyMFAResponse(req, res, code);
+    
+    if (success) {
+      return res.json({ success: true, message: 'MFA verified successfully' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid verification code' });
+    }
+  }
+  
+  res.status(400).json({ success: false, message: 'Missing verification code' });
+});
+
+// Register auth routes
+router.use('/auth', authRouter);
 
 /**
- * @route GET /api/security/health
- * @desc Get security system health and status
- * @access Admin only
+ * Initialize security components and routes
  */
-router.get('/health', requireAdmin, asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  // In a real app, we would check the status of all security systems
-  const securityHealth = {
-    csrfProtection: { status: 'active', lastChecked: new Date() },
-    immutableLogs: { status: 'active', lastChecked: new Date() },
-    quantumResistantCrypto: { status: 'active', lastChecked: new Date() },
-    anomalyDetection: { status: 'active', lastChecked: new Date() },
-    raspProtection: { status: 'active', lastChecked: new Date() },
-    chainIntegrity: securityBlockchain.verifyChain()
-  };
+export function initializeSecurity(app: express.Express, server: http.Server): void {
+  // Register security routes
+  app.use(router);
   
-  res.json(securityHealth);
-}));
+  // Start security metrics collection
+  startMetricsCollection();
+  
+  // Initialize events collector
+  initializeEventsCollector();
+  
+  // Setup WebSocket server for real-time security updates
+  setupSecurityWebSockets(server);
+  
+  logSecurityEvent({
+    category: SecurityEventCategory.SYSTEM,
+    severity: SecurityEventSeverity.INFO,
+    message: 'Security routes and components initialized',
+    data: { timestamp: new Date().toISOString() }
+  });
+}
 
 export default router;

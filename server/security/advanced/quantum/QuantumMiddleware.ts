@@ -7,7 +7,7 @@
  */
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 import * as qrc from './QuantumResistantCrypto';
 

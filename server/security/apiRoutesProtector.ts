@@ -18,7 +18,7 @@
 import type { Express, RequestHandler } from 'express';
 import { createQuantumResistantMiddleware } from './advanced/quantum/QuantumResistantMiddleware';
 import { raspManager } from './advanced/rasp';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 import { securityPolicyEnforcer } from './apiSecurityPolicyEnforcer';
 import rateLimit from 'express-rate-limit';

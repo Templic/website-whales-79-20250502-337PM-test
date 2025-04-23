@@ -7,7 +7,7 @@
  */
 
 import { Request } from 'express';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
 
 /**

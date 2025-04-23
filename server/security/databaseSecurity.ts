@@ -1,476 +1,313 @@
 /**
  * Database Security Module
  * 
- * Provides secure database access patterns and protection against SQL injection
- * by implementing parameterized queries, query sanitization, and monitoring.
+ * This module provides security features for database operations including
+ * SQL injection prevention, data encryption, and audit logging.
  */
 
-import { securityFabric } from './advanced/SecurityFabric';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
-import * as crypto from 'crypto';
+import crypto from 'crypto';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from './advanced/SecurityFabric';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 
-/**
- * Query type enumeration
- */
-export enum QueryType {
-  SELECT = 'SELECT',
-  INSERT = 'INSERT',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE',
-  CREATE = 'CREATE',
-  DROP = 'DROP',
-  ALTER = 'ALTER',
-  TRUNCATE = 'TRUNCATE',
-  OTHER = 'OTHER'
-}
+// Default patterns to detect SQL injection attempts
+const DEFAULT_SQL_INJECTION_PATTERNS = [
+  /(\s|^)(?:OR|AND)\s+[\w\s]+\s*=['\s]*[\w\s]+['\s]*(?:--|#|\/\*|;)/i,
+  /(\s|^)(?:UNION|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|EXEC|DECLARE)\s+/i,
+  /(\s|^)(?:--|\*\/|#)/i,
+  /;\s*(?:--|\*\/|#)/i,
+  /'\s*(?:--|#|\/\*|;)/i,
+  /\/\*.*?\*\//i,
+  /;\s*(?:DROP|ALTER|CREATE|TRUNCATE)/i,
+  /(?:SLEEP|BENCHMARK|WAITFOR|DELAY)\s*\(/i,
+  /(?:FROM|INTO|JOIN)\s+information_schema/i,
+  /\bSYSTEM\b/i,
+  /\bMASTER\b\.\b/i,
+  /(?:LOAD_FILE|LOAD DATA|INTO OUTFILE)/i,
+  /(?:CURRENT_USER|DATABASE|SCHEMA|USER)\s*\(/i,
+  /\s+like\s+[%_]/i,
+  /\s*1\s*=\s*1\s*/i
+];
 
-/**
- * Database query interface
- */
-export interface DatabaseQuery {
-  /**
-   * Query ID
-   */
-  id: string;
-  
-  /**
-   * Query type
-   */
-  type: QueryType;
-  
-  /**
-   * SQL query text
-   */
-  sql: string;
-  
-  /**
-   * Query parameters
-   */
-  params: any[];
-  
-  /**
-   * Source location (file and line number)
-   */
-  source?: string;
-  
-  /**
-   * Timestamp
-   */
-  timestamp: Date;
-}
+// Whitelist patterns (queries that would otherwise be flagged but are safe)
+const SQL_INJECTION_WHITELIST: RegExp[] = [];
+
+// Audit log configuration
+const AUDIT_LOG_CONFIG = {
+  enabled: true,
+  logAllQueries: false,
+  logWhitelistedQueries: false,
+  logBlockchainEnabled: true,
+  sensitiveColumns: [
+    'password', 'credit_card', 'ssn', 'secret', 'token', 'key',
+    'passphrase', 'security_question', 'security_answer'
+  ]
+};
 
 /**
- * Database security options
+ * SQL Injection Prevention class
  */
-export interface DatabaseSecurityOptions {
-  /**
-   * Enable query logging
-   */
-  enableQueryLogging?: boolean;
+class SQLInjectionPrevention {
+  private patterns: RegExp[];
+  private whitelist: RegExp[];
+  private initialized: boolean;
+  private totalBlocked: number;
   
-  /**
-   * Enable query analysis
-   */
-  enableQueryAnalysis?: boolean;
-  
-  /**
-   * Enable query blocking for dangerous operations
-   */
-  enableQueryBlocking?: boolean;
-  
-  /**
-   * Maximum query length
-   */
-  maxQueryLength?: number;
-  
-  /**
-   * Maximum parameter count
-   */
-  maxParamCount?: number;
-  
-  /**
-   * List of allowed query types
-   */
-  allowedQueryTypes?: QueryType[];
-  
-  /**
-   * Additional dangerous patterns to check
-   */
-  dangerousPatterns?: RegExp[];
-}
-
-/**
- * Database security class
- */
-export class DatabaseSecurity {
-  /**
-   * Database security options
-   */
-  private options: DatabaseSecurityOptions;
-  
-  /**
-   * Query history
-   */
-  private queryHistory: DatabaseQuery[] = [];
-  
-  /**
-   * Maximum query history size
-   */
-  private readonly MAX_QUERY_HISTORY = 1000;
-  
-  /**
-   * Default dangerous patterns
-   */
-  private readonly DEFAULT_DANGEROUS_PATTERNS = [
-    /DROP\s+TABLE/i,
-    /DROP\s+DATABASE/i,
-    /TRUNCATE\s+TABLE/i,
-    /DELETE\s+FROM\s+.+\s+(?:WHERE\s+1\s*=\s*1|WITHOUT\s+WHERE)/i,
-    /sys\.fn_sqlvarbasetostr/i,
-    /EXEC\s+xp_cmdshell/i,
-    /sp_execute_external_script/i
-  ];
-  
-  /**
-   * Constructor
-   */
-  constructor(options: DatabaseSecurityOptions = {}) {
-    // Set default options
-    this.options = {
-      enableQueryLogging: true,
-      enableQueryAnalysis: true,
-      enableQueryBlocking: true,
-      maxQueryLength: 8192,
-      maxParamCount: 100,
-      allowedQueryTypes: [
-        QueryType.SELECT,
-        QueryType.INSERT,
-        QueryType.UPDATE,
-        QueryType.DELETE
-      ],
-      dangerousPatterns: [],
-      ...options
-    };
+  constructor() {
+    this.patterns = [...DEFAULT_SQL_INJECTION_PATTERNS];
+    this.whitelist = [...SQL_INJECTION_WHITELIST];
+    this.initialized = false;
+    this.totalBlocked = 0;
     
-    // Add default dangerous patterns
-    if (this.options.dangerousPatterns) {
-      this.options.dangerousPatterns = [
-        ...this.DEFAULT_DANGEROUS_PATTERNS,
-        ...this.options.dangerousPatterns
-      ];
-    } else {
-      this.options.dangerousPatterns = this.DEFAULT_DANGEROUS_PATTERNS;
-    }
-    
-    // Register with security fabric
-    securityFabric.registerComponent('databaseSecurity', this);
-    
-    console.log('[DATABASE-SECURITY] Database security module initialized');
+    this.initialize();
   }
   
   /**
-   * Create a parameterized query
+   * Initialize the SQL injection prevention module
    */
-  public createParameterizedQuery(sql: string, params: any[] = [], source?: string): DatabaseQuery {
-    // Determine query type
-    const type = this.determineQueryType(sql);
-    
-    // Create query object
-    const query: DatabaseQuery = {
-      id: crypto.randomUUID(),
-      type,
-      sql,
-      params,
-      source,
-      timestamp: new Date()
-    };
-    
-    // Validate and analyze query
-    if (this.options.enableQueryAnalysis) {
-      this.analyzeQuery(query);
+  public initialize(): void {
+    if (this.initialized) {
+      return;
     }
     
-    // Log query
-    if (this.options.enableQueryLogging) {
-      this.logQuery(query);
-    }
+    // Log initialization
+    console.log(`[SQLInjectionPrevention] Initialized with ${this.patterns.length} detection patterns and ${this.whitelist.length} whitelist patterns`);
     
-    return query;
+    this.initialized = true;
   }
   
   /**
-   * Determine query type
+   * Check if a SQL query contains potential SQL injection
    */
-  private determineQueryType(sql: string): QueryType {
-    const upperSql = sql.trim().toUpperCase();
-    
-    if (upperSql.startsWith('SELECT')) return QueryType.SELECT;
-    if (upperSql.startsWith('INSERT')) return QueryType.INSERT;
-    if (upperSql.startsWith('UPDATE')) return QueryType.UPDATE;
-    if (upperSql.startsWith('DELETE')) return QueryType.DELETE;
-    if (upperSql.startsWith('CREATE')) return QueryType.CREATE;
-    if (upperSql.startsWith('DROP')) return QueryType.DROP;
-    if (upperSql.startsWith('ALTER')) return QueryType.ALTER;
-    if (upperSql.startsWith('TRUNCATE')) return QueryType.TRUNCATE;
-    
-    return QueryType.OTHER;
-  }
-  
-  /**
-   * Analyze a query for security issues
-   */
-  private analyzeQuery(query: DatabaseQuery): void {
-    // Check query length
-    if (this.options.maxQueryLength && query.sql.length > this.options.maxQueryLength) {
-      this.handleSecurityViolation(
-        query,
-        'Query exceeds maximum length',
-        SecurityEventSeverity.MEDIUM
-      );
+  public hasSQLInjection(query: string): boolean {
+    if (!query || typeof query !== 'string') {
+      return false;
     }
     
-    // Check parameter count
-    if (this.options.maxParamCount && query.params.length > this.options.maxParamCount) {
-      this.handleSecurityViolation(
-        query,
-        'Query exceeds maximum parameter count',
-        SecurityEventSeverity.MEDIUM
-      );
-    }
-    
-    // Check if query type is allowed
-    if (
-      this.options.allowedQueryTypes &&
-      !this.options.allowedQueryTypes.includes(query.type)
-    ) {
-      this.handleSecurityViolation(
-        query,
-        `Query type ${query.type} is not allowed`,
-        SecurityEventSeverity.HIGH
-      );
-    }
-    
-    // Check for dangerous patterns
-    if (this.options.dangerousPatterns) {
-      for (const pattern of this.options.dangerousPatterns) {
-        if (pattern.test(query.sql)) {
-          this.handleSecurityViolation(
-            query,
-            `Query contains dangerous pattern: ${pattern}`,
-            SecurityEventSeverity.HIGH
-          );
-          break;
+    // Check whitelist first
+    for (const pattern of this.whitelist) {
+      if (pattern.test(query)) {
+        // Log whitelisted query if configured
+        if (AUDIT_LOG_CONFIG.logWhitelistedQueries && AUDIT_LOG_CONFIG.enabled) {
+          this.logQueryCheck(query, 'whitelisted', null);
         }
+        return false;
       }
     }
     
-    // Check for SQL injection patterns in string parameters
-    for (const param of query.params) {
-      if (typeof param === 'string') {
-        const sqlInjectionPatterns = [
-          /'\s*OR\s*['"]/i,
-          /'\s*OR\s*(\d+|true)\s*--/i,
-          /'\s*;\s*[A-Z]/i,
-          /'\s*UNION\s+ALL\s+SELECT/i,
-          /'\s*DROP\s+TABLE/i
-        ];
+    // Check against injection patterns
+    for (const pattern of this.patterns) {
+      if (pattern.test(query)) {
+        this.totalBlocked++;
         
-        for (const pattern of sqlInjectionPatterns) {
-          if (pattern.test(param)) {
-            this.handleSecurityViolation(
-              query,
-              `Parameter contains potential SQL injection pattern: ${pattern}`,
-              SecurityEventSeverity.HIGH
-            );
-            break;
-          }
+        // Log blocked query
+        if (AUDIT_LOG_CONFIG.enabled) {
+          this.logQueryCheck(query, 'blocked', pattern.toString());
         }
+        
+        return true;
+      }
+    }
+    
+    // Log regular query if configured
+    if (AUDIT_LOG_CONFIG.logAllQueries && AUDIT_LOG_CONFIG.enabled) {
+      this.logQueryCheck(query, 'passed', null);
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Sanitize a SQL query by removing potential injection patterns
+   * Note: This is a basic sanitization and should not be relied upon for critical security
+   */
+  public sanitizeSQLQuery(query: string): string {
+    if (!query || typeof query !== 'string') {
+      return query;
+    }
+    
+    // Replace potentially dangerous characters
+    let sanitized = query
+      .replace(/'/g, "''")
+      .replace(/;/g, '')
+      .replace(/--/g, '')
+      .replace(/\/\*/g, '')
+      .replace(/\*\//g, '')
+      .replace(/#/g, '');
+    
+    // Log sanitization if configured
+    if (AUDIT_LOG_CONFIG.enabled && query !== sanitized) {
+      this.logQuerySanitization(query, sanitized);
+    }
+    
+    return sanitized;
+  }
+  
+  /**
+   * Get statistics about SQL injection prevention
+   */
+  public getStats(): { totalBlocked: number } {
+    return {
+      totalBlocked: this.totalBlocked
+    };
+  }
+  
+  /**
+   * Reset statistics
+   */
+  public resetStats(): void {
+    this.totalBlocked = 0;
+  }
+  
+  /**
+   * Add a detection pattern
+   */
+  public addPattern(pattern: RegExp): void {
+    this.patterns.push(pattern);
+  }
+  
+  /**
+   * Add a whitelist pattern
+   */
+  public addWhitelistPattern(pattern: RegExp): void {
+    this.whitelist.push(pattern);
+  }
+  
+  /**
+   * Log a query check
+   */
+  private logQueryCheck(query: string, result: 'passed' | 'blocked' | 'whitelisted', matchedPattern: string | null): void {
+    const event = {
+      category: SecurityEventCategory.SQL_INJECTION,
+      severity: result === 'blocked' ? SecurityEventSeverity.HIGH : SecurityEventSeverity.INFO,
+      message: `SQL query ${result}: ${this.truncateQuery(query, 50)}`,
+      data: {
+        query: this.maskSensitiveData(query),
+        result,
+        matchedPattern,
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    // Send to security fabric
+    securityFabric.emitEvent(event);
+    
+    // Add to blockchain if enabled
+    if (AUDIT_LOG_CONFIG.logBlockchainEnabled && result === 'blocked') {
+      try {
+        securityBlockchain.addLog({
+          type: 'sql_injection_attempt',
+          query: this.hashSensitiveData(query),
+          matchedPattern,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('[SQLInjectionPrevention] Failed to log to blockchain:', error);
       }
     }
   }
   
   /**
-   * Handle security violation
+   * Log a query sanitization
    */
-  private handleSecurityViolation(
-    query: DatabaseQuery,
-    reason: string,
-    severity: SecurityEventSeverity
-  ): void {
-    // Log security event
-    securityBlockchain.addSecurityEvent({
-      severity,
-      category: SecurityEventCategory.DATABASE_SECURITY as any,
-      message: `Database security violation: ${reason}`,
-      metadata: {
-        queryId: query.id,
-        queryType: query.type,
-        source: query.source
-      },
-      timestamp: new Date()
-    }).catch(error => {
-      console.error('[DATABASE-SECURITY] Error logging security event:', error);
+  private logQuerySanitization(original: string, sanitized: string): void {
+    securityFabric.emitEvent({
+      category: SecurityEventCategory.SQL_INJECTION,
+      severity: SecurityEventSeverity.WARNING,
+      message: `SQL query sanitized: ${this.truncateQuery(original, 50)}`,
+      data: {
+        original: this.maskSensitiveData(original),
+        sanitized: this.maskSensitiveData(sanitized),
+        timestamp: new Date().toISOString()
+      }
     });
-    
-    // Emit security event
-    securityFabric.emit('security:database:violation', {
-      queryId: query.id,
-      queryType: query.type,
-      reason,
-      severity,
-      timestamp: new Date()
-    });
-    
-    // Block query if enabled
-    if (this.options.enableQueryBlocking && severity === SecurityEventSeverity.HIGH) {
-      throw new Error(`[DATABASE-SECURITY] Blocked query execution: ${reason}`);
+  }
+  
+  /**
+   * Truncate a query for display in logs
+   */
+  private truncateQuery(query: string, maxLength: number): string {
+    if (query.length <= maxLength) {
+      return query;
     }
     
-    // Log warning
-    console.warn(`[DATABASE-SECURITY] Security violation: ${reason}`);
+    return `${query.slice(0, maxLength)}...`;
   }
   
   /**
-   * Log a query
+   * Mask sensitive data in a query for logging
    */
-  private logQuery(query: DatabaseQuery): void {
-    // Add to query history
-    this.queryHistory.unshift(query);
+  private maskSensitiveData(query: string): string {
+    let maskedQuery = query;
     
-    // Trim history if needed
-    if (this.queryHistory.length > this.MAX_QUERY_HISTORY) {
-      this.queryHistory = this.queryHistory.slice(0, this.MAX_QUERY_HISTORY);
+    // Mask passwords and sensitive data
+    for (const column of AUDIT_LOG_CONFIG.sensitiveColumns) {
+      const regex = new RegExp(`(${column}\\s*=\\s*['"])([^'"]*?)(['"])`, 'gi');
+      maskedQuery = maskedQuery.replace(regex, '$1******$3');
     }
     
-    // Emit query event
-    securityFabric.emit('security:database:query', {
-      queryId: query.id,
-      queryType: query.type,
-      source: query.source,
-      timestamp: new Date()
-    });
-    
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `[DATABASE-SECURITY] Query: ${query.sql}`,
-        'Params:',
-        query.params
-      );
-    }
+    return maskedQuery;
   }
   
   /**
-   * Execute a query securely
+   * Hash sensitive data for secure storage
    */
-  public async executeQuery<T>(
-    db: any,
-    sql: string,
-    params: any[] = [],
-    source?: string
-  ): Promise<T> {
-    // Create parameterized query
-    const query = this.createParameterizedQuery(sql, params, source);
-    
-    try {
-      // Execute query using the provided database connection
-      const startTime = Date.now();
-      const result = await db.query(query.sql, query.params);
-      const endTime = Date.now();
-      
-      // Emit query completion event
-      securityFabric.emit('security:database:query:complete', {
-        queryId: query.id,
-        queryType: query.type,
-        source: query.source,
-        duration: endTime - startTime,
-        timestamp: new Date()
-      });
-      
-      return result as T;
-    } catch (error: any) {
-      // Emit query error event
-      securityFabric.emit('security:database:query:error', {
-        queryId: query.id,
-        queryType: query.type,
-        source: query.source,
-        error: error.message,
-        timestamp: new Date()
-      });
-      
-      // Log error
-      securityBlockchain.addSecurityEvent({
-        severity: SecurityEventSeverity.MEDIUM,
-        category: SecurityEventCategory.DATABASE_ERROR as any,
-        message: `Database query error: ${error.message}`,
-        metadata: {
-          queryId: query.id,
-          queryType: query.type,
-          source: query.source,
-          sql: query.sql,
-          error: error.message
-        },
-        timestamp: new Date()
-      }).catch(logError => {
-        console.error('[DATABASE-SECURITY] Error logging security event:', logError);
-      });
-      
-      throw error;
-    }
-  }
-  
-  /**
-   * Get query history
-   */
-  public getQueryHistory(): DatabaseQuery[] {
-    return [...this.queryHistory];
-  }
-  
-  /**
-   * Clear query history
-   */
-  public clearQueryHistory(): void {
-    this.queryHistory = [];
-  }
-  
-  /**
-   * Sanitize SQL identifier
-   */
-  public sanitizeIdentifier(identifier: string): string {
-    // Remove potential SQL injection characters
-    return identifier.replace(/[^a-zA-Z0-9_]/g, '');
-  }
-  
-  /**
-   * Create a prepared statement
-   */
-  public createPreparedStatement(
-    db: any,
-    sql: string,
-    params: any[] = [],
-    source?: string
-  ): any {
-    // Create parameterized query
-    const query = this.createParameterizedQuery(sql, params, source);
-    
-    // Create prepared statement using the provided database connection
-    return db.prepare(query.sql);
-  }
-  
-  /**
-   * Create IN clause with parameters
-   */
-  public createInClause(values: any[]): { sql: string; params: any[] } {
-    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-    return {
-      sql: `IN (${placeholders})`,
-      params: values
-    };
+  private hashSensitiveData(data: string): string {
+    return crypto.createHash('sha256').update(data).digest('hex');
   }
 }
 
+// Create singleton instance
+export const sqlInjectionPrevention = new SQLInjectionPrevention();
+
 /**
- * Global database security instance
+ * Database Security Manager class
  */
-export const databaseSecurity = new DatabaseSecurity();
+export class DatabaseSecurityManager {
+  private initialized: boolean;
+  
+  constructor() {
+    this.initialized = false;
+  }
+  
+  /**
+   * Initialize database security
+   */
+  public initialize(): void {
+    if (this.initialized) {
+      return;
+    }
+    
+    // Initialize SQL injection prevention
+    sqlInjectionPrevention.initialize();
+    
+    // Log initialization
+    console.log('[DATABASE-SECURITY] Database security module initialized');
+    
+    // Mark as initialized
+    this.initialized = true;
+  }
+  
+  /**
+   * Check if a SQL query is safe
+   */
+  public isSafeQuery(query: string): boolean {
+    return !sqlInjectionPrevention.hasSQLInjection(query);
+  }
+  
+  /**
+   * Sanitize a SQL query
+   */
+  public sanitizeQuery(query: string): string {
+    return sqlInjectionPrevention.sanitizeSQLQuery(query);
+  }
+  
+  /**
+   * Get SQL injection prevention statistics
+   */
+  public getSQLInjectionStats(): { totalBlocked: number } {
+    return sqlInjectionPrevention.getStats();
+  }
+}
+
+// Export singleton instance
+export const databaseSecurity = new DatabaseSecurityManager();

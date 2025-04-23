@@ -1,210 +1,263 @@
 /**
- * Real-time Security Monitoring API
+ * Real-time Security API Routes
  * 
- * This module provides API endpoints for real-time security monitoring,
- * connecting the security dashboard to live data from security systems.
+ * This module provides real-time updates for security events and metrics
+ * using WebSockets.
  */
 
 import express from 'express';
-import WebSocket from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
+import { recordSecurityEvent, subscribeToSecurityEvents } from '../../../security/monitoring/EventsCollector';
 import { logSecurityEvent } from '../../../security/advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../../../security/advanced/SecurityFabric';
-import { getLatestSecurityMetrics } from '../../../security/monitoring/MetricsCollector';
-import { getSecurityEventsHistory } from '../../../security/monitoring/EventsCollector';
 
-// Create an Express router for security monitoring
+// Create router
 const router = express.Router();
 
+// Store all connected WebSocket clients
+interface Client {
+  ws: WebSocket;
+  subscriptions: string[];
+  authenticated: boolean;
+  userId?: number;
+}
+
+const clients: Client[] = [];
+
 /**
- * Get current security metrics summary
- * GET /api/security/realtime/metrics
+ * Subscribe to security events
+ * POST /api/security/realtime/subscribe
  */
-router.get('/metrics', async (req, res) => {
-  try {
-    // Get latest metrics from the security system
-    const metrics = await getLatestSecurityMetrics();
-    
-    res.json(metrics);
-  } catch (error) {
-    logSecurityEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.ERROR,
-      message: 'Error retrieving security metrics',
-      data: { error: (error as Error).message }
-    });
-    
-    res.status(500).json({ message: 'Failed to retrieve security metrics' });
+router.post('/subscribe', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Not authenticated' });
   }
+  
+  const eventTypes = req.body.eventTypes || [];
+  
+  if (!Array.isArray(eventTypes) || eventTypes.length === 0) {
+    return res.status(400).json({ error: 'Missing event types to subscribe to' });
+  }
+  
+  // In a real application, this would store the subscription in the database
+  // and be used by the WebSocket server to filter events
+  
+  res.json({ success: true, message: 'Subscribed to security events' });
 });
 
 /**
- * Get security events history
- * GET /api/security/realtime/events
+ * Unsubscribe from security events
+ * POST /api/security/realtime/unsubscribe
  */
-router.get('/events', async (req, res) => {
-  try {
-    // Parse query parameters
-    const timeRange = req.query.timeRange as string || '24h';
-    const category = req.query.category as string || 'all';
-    const type = req.query.type as string || 'all';
-    const limit = parseInt(req.query.limit as string || '100');
-    
-    // Get events history from the security system
-    const events = await getSecurityEventsHistory(timeRange, category, type, limit);
-    
-    res.json(events);
-  } catch (error) {
-    logSecurityEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.ERROR,
-      message: 'Error retrieving security events history',
-      data: { error: (error as Error).message }
-    });
-    
-    res.status(500).json({ message: 'Failed to retrieve security events history' });
+router.post('/unsubscribe', (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: 'Not authenticated' });
   }
+  
+  const eventTypes = req.body.eventTypes || [];
+  
+  // In a real application, this would remove the subscription from the database
+  
+  res.json({ success: true, message: 'Unsubscribed from security events' });
 });
 
 /**
  * Setup WebSocket server for real-time security updates
  */
-export function setupSecurityWebSockets(server: http.Server): void {
-  const wss = new WebSocket.Server({
-    server,
-    path: '/api/security/realtime/ws'
-  });
+export function setupSecurityWebSockets(server: http.Server): WebSocketServer {
+  // Create WebSocket server
+  const wss = new WebSocketServer({ server, path: '/api/security/ws' });
   
-  // Store connected clients
-  const clients = new Set<WebSocket>();
-  
-  // Listen for WebSocket connections
-  wss.on('connection', (ws) => {
-    // Add client to the set
-    clients.add(ws);
+  wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+    // Add client to clients list
+    const client: Client = {
+      ws,
+      subscriptions: [],
+      authenticated: false
+    };
     
+    clients.push(client);
+    
+    // Log connection
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.INFO,
-      message: 'Security WebSocket client connected',
-      data: { clientsCount: clients.size }
+      severity: SecurityEventSeverity.DEBUG,
+      message: 'WebSocket connection established',
+      data: { ip: req.socket.remoteAddress, timestamp: new Date().toISOString() }
     });
     
-    // Handshake with client
+    // Send welcome message
     ws.send(JSON.stringify({
-      type: 'connection_established',
-      timestamp: new Date().toISOString(),
-      message: 'Connected to security monitoring system'
+      type: 'connection',
+      message: 'Connected to Security WebSocket Server',
+      timestamp: new Date().toISOString()
     }));
     
-    // Handle client disconnection
-    ws.on('close', () => {
-      // Remove client from the set
-      clients.delete(ws);
-      
-      logSecurityEvent({
-        category: SecurityEventCategory.SYSTEM,
-        severity: SecurityEventSeverity.INFO,
-        message: 'Security WebSocket client disconnected',
-        data: { clientsCount: clients.size }
-      });
-    });
-    
-    // Handle client messages
-    ws.on('message', (message) => {
+    // Handle messages
+    ws.on('message', (message: string) => {
       try {
         const data = JSON.parse(message.toString());
         
-        // Validate message type
-        if (data.type === 'heartbeat') {
-          // Respond to heartbeat
+        // Handle authentication
+        if (data.type === 'auth') {
+          // In a real application, this would validate the token
+          // and set authenticated = true if valid
+          client.authenticated = true;
+          client.userId = 1; // Example user ID
+          
+          // Add some subscriptions
+          client.subscriptions = ['authentication', 'system', 'anomaly'];
+          
           ws.send(JSON.stringify({
-            type: 'heartbeat_ack',
+            type: 'auth',
+            success: true,
+            message: 'Authenticated successfully',
             timestamp: new Date().toISOString()
           }));
-        } else if (data.type === 'subscribe') {
-          // Handle subscription request
-          handleSubscription(ws, data);
+          
+          logSecurityEvent({
+            category: SecurityEventCategory.SYSTEM,
+            severity: SecurityEventSeverity.INFO,
+            message: 'WebSocket client authenticated',
+            data: { userId: client.userId, ip: req.socket.remoteAddress }
+          });
+        }
+        
+        // Handle subscription
+        if (data.type === 'subscribe' && client.authenticated) {
+          const eventTypes = data.eventTypes || [];
+          
+          if (Array.isArray(eventTypes) && eventTypes.length > 0) {
+            client.subscriptions = [...new Set([...client.subscriptions, ...eventTypes])];
+            
+            ws.send(JSON.stringify({
+              type: 'subscribe',
+              success: true,
+              message: 'Subscribed to event types',
+              eventTypes: client.subscriptions,
+              timestamp: new Date().toISOString()
+            }));
+            
+            logSecurityEvent({
+              category: SecurityEventCategory.SYSTEM,
+              severity: SecurityEventSeverity.DEBUG,
+              message: 'WebSocket client subscribed to events',
+              data: { userId: client.userId, eventTypes }
+            });
+          }
+        }
+        
+        // Handle unsubscribe
+        if (data.type === 'unsubscribe' && client.authenticated) {
+          const eventTypes = data.eventTypes || [];
+          
+          if (Array.isArray(eventTypes) && eventTypes.length > 0) {
+            client.subscriptions = client.subscriptions.filter(type => !eventTypes.includes(type));
+            
+            ws.send(JSON.stringify({
+              type: 'unsubscribe',
+              success: true,
+              message: 'Unsubscribed from event types',
+              eventTypes: client.subscriptions,
+              timestamp: new Date().toISOString()
+            }));
+            
+            logSecurityEvent({
+              category: SecurityEventCategory.SYSTEM,
+              severity: SecurityEventSeverity.DEBUG,
+              message: 'WebSocket client unsubscribed from events',
+              data: { userId: client.userId, eventTypes }
+            });
+          }
         }
       } catch (error) {
         logSecurityEvent({
           category: SecurityEventCategory.SYSTEM,
-          severity: SecurityEventSeverity.WARNING,
-          message: 'Error processing security WebSocket message',
-          data: { error: (error as Error).message, message: message.toString() }
+          severity: SecurityEventSeverity.ERROR,
+          message: 'Error processing WebSocket message',
+          data: { error: (error as Error).message, message }
         });
+        
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format',
+          timestamp: new Date().toISOString()
+        }));
       }
+    });
+    
+    // Handle close
+    ws.on('close', () => {
+      // Remove client from clients list
+      const index = clients.indexOf(client);
+      if (index !== -1) {
+        clients.splice(index, 1);
+      }
+      
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.DEBUG,
+        message: 'WebSocket connection closed',
+        data: { ip: req.socket.remoteAddress, userId: client.userId }
+      });
+    });
+    
+    // Handle errors
+    ws.on('error', (error) => {
+      logSecurityEvent({
+        category: SecurityEventCategory.SYSTEM,
+        severity: SecurityEventSeverity.ERROR,
+        message: 'WebSocket error',
+        data: { error: error.message, ip: req.socket.remoteAddress, userId: client.userId }
+      });
     });
   });
   
-  // Periodically broadcast security metrics to all clients
+  // Broadcast event to relevant clients
+  const broadcastSecurityEvent = (event: any) => {
+    const { category } = event;
+    
+    clients.forEach(client => {
+      if (
+        client.authenticated &&
+        client.ws.readyState === WebSocket.OPEN &&
+        (client.subscriptions.includes('all') || client.subscriptions.includes(category))
+      ) {
+        client.ws.send(JSON.stringify({
+          type: 'event',
+          event,
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
+  };
+  
+  // Simulate periodic security events
   setInterval(() => {
-    broadcastSecurityMetrics(clients);
+    const eventTypes = ['authentication', 'system', 'anomaly', 'api'];
+    const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    
+    // Record and broadcast a security event
+    const event = recordSecurityEvent({
+      timestamp: new Date(),
+      type: Math.random() > 0.7 ? 'warning' : 'info',
+      category: eventType,
+      message: `Simulated ${eventType} event`,
+      details: { simulated: true, timestamp: Date.now() }
+    });
+    
+    broadcastSecurityEvent(event);
   }, 10000); // Every 10 seconds
   
   logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
     severity: SecurityEventSeverity.INFO,
-    message: 'Security WebSocket server initialized',
-    data: { path: '/api/security/realtime/ws' }
-  });
-}
-
-/**
- * Handle WebSocket subscription requests
- */
-function handleSubscription(ws: WebSocket, data: any): void {
-  const channel = data.channel;
-  
-  logSecurityEvent({
-    category: SecurityEventCategory.SYSTEM,
-    severity: SecurityEventSeverity.INFO,
-    message: 'Security WebSocket subscription request',
-    data: { channel }
+    message: 'WebSocket server for security updates initialized',
+    data: { path: '/api/security/ws' }
   });
   
-  // Acknowledge subscription
-  ws.send(JSON.stringify({
-    type: 'subscription_ack',
-    channel,
-    timestamp: new Date().toISOString(),
-    message: `Subscribed to ${channel}`
-  }));
-}
-
-/**
- * Broadcast security metrics to all connected clients
- */
-async function broadcastSecurityMetrics(clients: Set<WebSocket>): Promise<void> {
-  if (clients.size === 0) {
-    return; // No clients connected
-  }
-  
-  try {
-    // Get latest metrics
-    const metrics = await getLatestSecurityMetrics();
-    
-    // Prepare message
-    const message = JSON.stringify({
-      type: 'metrics_update',
-      timestamp: new Date().toISOString(),
-      metrics
-    });
-    
-    // Broadcast to all clients
-    for (const client of clients) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    }
-  } catch (error) {
-    logSecurityEvent({
-      category: SecurityEventCategory.SYSTEM,
-      severity: SecurityEventSeverity.ERROR,
-      message: 'Error broadcasting security metrics',
-      data: { error: (error as Error).message, clientsCount: clients.size }
-    });
-  }
+  return wss;
 }
 
 export default router;

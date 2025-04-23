@@ -1,332 +1,288 @@
 /**
- * Security Fabric
+ * Security Fabric Module
  * 
- * This module provides a centralized event bus for security events
- * that allows different security components to communicate with each other.
+ * This module provides the core security fabric architecture that allows
+ * security components to register and communicate with each other.
  */
 
 import { EventEmitter } from 'events';
-import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from './blockchain/SecurityEventTypes';
 
-/**
- * Security fabric event types
- */
-export enum SecurityEventType {
-  AUTHENTICATION_FAILURE = 'security:authentication:failure',
-  AUTHENTICATION_SUCCESS = 'security:authentication:success',
-  AUTHORIZATION_FAILURE = 'security:authorization:failure',
-  AUTHORIZATION_SUCCESS = 'security:authorization:success',
-  ANOMALY_DETECTED = 'security:anomaly:detected',
-  ATTACK_DETECTED = 'security:attack:detected',
-  ATTACK_MITIGATED = 'security:attack:mitigated',
-  SCAN_STARTED = 'security:scan:started',
-  SCAN_COMPLETED = 'security:scan:completed',
-  SCAN_FINDING = 'security:scan:finding',
-  CONFIGURATION_CHANGED = 'security:configuration:changed',
+// Security event categories
+export enum SecurityEventCategory {
+  AUTHENTICATION = 'authentication',
+  AUTHORIZATION = 'authorization',
+  SYSTEM = 'system',
+  DATA = 'data',
+  NETWORK = 'network',
+  CRYPTO = 'crypto',
+  QUANTUM = 'quantum',
+  BLOCKCHAIN = 'blockchain',
+  MFA = 'mfa',
+  INPUT_VALIDATION = 'input_validation',
+  CSRF = 'csrf',
+  XSS = 'xss',
+  SQL_INJECTION = 'sql_injection',
+  API_SECURITY = 'api_security',
+  DOS = 'dos',
+  ANOMALY_DETECTION = 'anomaly_detection',
+  GENERAL = 'general'
+}
+
+// Security event severity levels
+export enum SecurityEventSeverity {
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARNING = 'warning',
+  ERROR = 'error',
+  CRITICAL = 'critical',
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high'
+}
+
+// Security event interface
+export interface SecurityEvent {
+  category: SecurityEventCategory;
+  severity: SecurityEventSeverity;
+  message: string;
+  data?: Record<string, any>;
+  timestamp?: string;
+}
+
+// Security component interface
+export interface SecurityComponent {
+  name: string;
+  type: string;
+  version: string;
+  initialize(): Promise<void>;
+  shutdown(): Promise<void>;
 }
 
 /**
- * Security fabric events
+ * Security Fabric class
+ * 
+ * This is the central hub for all security components to register and communicate.
  */
-export interface SecurityEvents {
-  [SecurityEventType.AUTHENTICATION_FAILURE]: {
-    userId?: string | number;
-    username?: string;
-    reason: string;
-    sourceIp?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.AUTHENTICATION_SUCCESS]: {
-    userId: string | number;
-    username: string;
-    sourceIp?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.AUTHORIZATION_FAILURE]: {
-    userId?: string | number;
-    username?: string;
-    resource: string;
-    action: string;
-    reason: string;
-    sourceIp?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.AUTHORIZATION_SUCCESS]: {
-    userId: string | number;
-    username: string;
-    resource: string;
-    action: string;
-    sourceIp?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.ANOMALY_DETECTED]: {
-    type: string;
-    details: string;
-    score: number;
-    sourceIp?: string;
-    path?: string;
-    method?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.ATTACK_DETECTED]: {
-    type: string;
-    details: string;
-    severity: string;
-    sourceIp?: string;
-    path?: string;
-    method?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.ATTACK_MITIGATED]: {
-    type: string;
-    details: string;
-    mitigation: string;
-    sourceIp?: string;
-    path?: string;
-    method?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.SCAN_STARTED]: {
-    scanId: string;
-    scanType: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.SCAN_COMPLETED]: {
-    scanId: string;
-    scanType: string;
-    findings: number;
-    duration: number;
-    timestamp: Date;
-  };
-  [SecurityEventType.SCAN_FINDING]: {
-    scanId: string;
-    findingId: string;
-    severity: string;
-    title: string;
-    description: string;
-    location?: string;
-    timestamp: Date;
-  };
-  [SecurityEventType.CONFIGURATION_CHANGED]: {
-    setting: string;
-    oldValue: any;
-    newValue: any;
-    changedBy?: string;
-    timestamp: Date;
-  };
-  'security:maximum-security:enabled': {
-    options: any;
-    timestamp: Date;
-  };
-}
-
-/**
- * Security fabric class
- */
-class SecurityFabric {
-  private emitter = new EventEmitter();
-  private components: Map<string, any> = new Map();
+export class SecurityFabric {
+  private static instance: SecurityFabric;
+  private components: Map<string, SecurityComponent>;
+  private eventEmitter: EventEmitter;
+  
+  private constructor() {
+    this.components = new Map();
+    this.eventEmitter = new EventEmitter();
+    
+    // Set max listeners to avoid Node.js warning
+    this.eventEmitter.setMaxListeners(100);
+  }
+  
+  /**
+   * Get the singleton instance of SecurityFabric
+   */
+  public static getInstance(): SecurityFabric {
+    if (!SecurityFabric.instance) {
+      SecurityFabric.instance = new SecurityFabric();
+    }
+    
+    return SecurityFabric.instance;
+  }
   
   /**
    * Register a security component
    */
-  public registerComponent(name: string, component: any): void {
-    this.components.set(name, component);
-    console.log(`[SECURITY-FABRIC] Registered component: ${name}`);
+  public registerComponent(component: SecurityComponent): void {
+    if (this.components.has(component.name)) {
+      throw new Error(`Security component '${component.name}' is already registered`);
+    }
+    
+    this.components.set(component.name, component);
+    
+    // Log registration
+    this.emitEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: `Security component registered: ${component.name}`,
+      data: { 
+        name: component.name, 
+        type: component.type, 
+        version: component.version 
+      }
+    });
+  }
+  
+  /**
+   * Unregister a security component
+   */
+  public unregisterComponent(componentName: string): void {
+    if (!this.components.has(componentName)) {
+      throw new Error(`Security component '${componentName}' is not registered`);
+    }
+    
+    this.components.delete(componentName);
+    
+    // Log unregistration
+    this.emitEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: `Security component unregistered: ${componentName}`
+    });
   }
   
   /**
    * Get a registered security component
    */
-  public getComponent(name: string): any {
-    return this.components.get(name);
+  public getComponent(componentName: string): SecurityComponent | undefined {
+    return this.components.get(componentName);
   }
   
   /**
-   * Register an event listener
+   * Get all registered security components
    */
-  public on<T extends keyof SecurityEvents>(
-    event: T,
-    listener: (data: SecurityEvents[T]) => void
-  ): void {
-    this.emitter.on(event, listener);
+  public getAllComponents(): SecurityComponent[] {
+    return Array.from(this.components.values());
   }
   
   /**
-   * Register a one-time event listener
+   * Subscribe to security events
    */
-  public once<T extends keyof SecurityEvents>(
-    event: T,
-    listener: (data: SecurityEvents[T]) => void
-  ): void {
-    this.emitter.once(event, listener);
-  }
-  
-  /**
-   * Remove an event listener
-   */
-  public off<T extends keyof SecurityEvents>(
-    event: T,
-    listener: (data: SecurityEvents[T]) => void
-  ): void {
-    this.emitter.off(event, listener);
-  }
-  
-  /**
-   * Emit an event
-   */
-  public emit<T extends keyof SecurityEvents>(
-    event: T,
-    data: SecurityEvents[T]
-  ): boolean {
-    // Record events in the blockchain
-    this.recordSecurityEvent(event, data);
+  public subscribeToEvents(
+    callback: (event: SecurityEvent) => void,
+    filter?: {
+      category?: SecurityEventCategory | SecurityEventCategory[];
+      severity?: SecurityEventSeverity | SecurityEventSeverity[];
+    }
+  ): () => void {
+    const handler = (event: SecurityEvent) => {
+      // Apply category filter
+      if (filter?.category) {
+        const categories = Array.isArray(filter.category) 
+          ? filter.category 
+          : [filter.category];
+        
+        if (!categories.includes(event.category)) {
+          return;
+        }
+      }
+      
+      // Apply severity filter
+      if (filter?.severity) {
+        const severities = Array.isArray(filter.severity)
+          ? filter.severity
+          : [filter.severity];
+        
+        if (!severities.includes(event.severity)) {
+          return;
+        }
+      }
+      
+      // Call the callback
+      callback(event);
+    };
     
-    return this.emitter.emit(event, data);
+    // Register event handler
+    this.eventEmitter.on('security-event', handler);
+    
+    // Return unsubscribe function
+    return () => {
+      this.eventEmitter.off('security-event', handler);
+    };
   }
   
   /**
-   * Record a security event in the blockchain
+   * Emit a security event
    */
-  private recordSecurityEvent<T extends keyof SecurityEvents>(
-    event: T,
-    data: SecurityEvents[T]
-  ): void {
-    // Convert event type to security event category
-    let category = SecurityEventCategory.GENERAL;
-    let severity = SecurityEventSeverity.INFO;
-    
-    if (event.includes('authentication')) {
-      category = SecurityEventCategory.AUTHENTICATION;
-    } else if (event.includes('authorization')) {
-      category = SecurityEventCategory.AUTHORIZATION;
-    } else if (event.includes('anomaly')) {
-      category = SecurityEventCategory.ANOMALY_DETECTION;
-    } else if (event.includes('attack')) {
-      category = SecurityEventCategory.API_SECURITY;
-    } else if (event.includes('scan')) {
-      category = SecurityEventCategory.GENERAL;
-    } else if (event.includes('configuration')) {
-      category = SecurityEventCategory.GENERAL;
-    } else if (event.includes('maximum-security')) {
-      category = SecurityEventCategory.GENERAL;
+  public emitEvent(event: SecurityEvent): void {
+    // Add timestamp if not provided
+    if (!event.timestamp) {
+      event.timestamp = new Date().toISOString();
     }
     
-    // Convert event data to severity
-    if (event === SecurityEventType.AUTHENTICATION_FAILURE || 
-        event === SecurityEventType.AUTHORIZATION_FAILURE) {
-      severity = SecurityEventSeverity.MEDIUM;
-    } else if (event === SecurityEventType.ATTACK_DETECTED) {
-      // @ts-ignore - Dynamic access
-      if (data.severity === 'critical') {
-        severity = SecurityEventSeverity.CRITICAL;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'high') {
-        severity = SecurityEventSeverity.HIGH;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'medium') {
-        severity = SecurityEventSeverity.MEDIUM;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'low') {
-        severity = SecurityEventSeverity.LOW;
-      }
-    } else if (event === SecurityEventType.SCAN_FINDING) {
-      // @ts-ignore - Dynamic access
-      if (data.severity === 'critical') {
-        severity = SecurityEventSeverity.CRITICAL;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'high') {
-        severity = SecurityEventSeverity.HIGH;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'medium') {
-        severity = SecurityEventSeverity.MEDIUM;
-      // @ts-ignore - Dynamic access
-      } else if (data.severity === 'low') {
-        severity = SecurityEventSeverity.LOW;
-      }
-    } else if (event === SecurityEventType.ANOMALY_DETECTED) {
-      // @ts-ignore - Dynamic access
-      if (data.score > 0.8) {
-        severity = SecurityEventSeverity.HIGH;
-      // @ts-ignore - Dynamic access
-      } else if (data.score > 0.5) {
-        severity = SecurityEventSeverity.MEDIUM;
-      } else {
-        severity = SecurityEventSeverity.LOW;
+    // Emit the event
+    this.eventEmitter.emit('security-event', event);
+  }
+  
+  /**
+   * Initialize all registered components
+   */
+  public async initializeAll(): Promise<void> {
+    // Initialize components sequentially to avoid race conditions
+    for (const [name, component] of this.components.entries()) {
+      try {
+        await component.initialize();
+        
+        this.emitEvent({
+          category: SecurityEventCategory.SYSTEM,
+          severity: SecurityEventSeverity.INFO,
+          message: `Security component initialized: ${name}`
+        });
+      } catch (error) {
+        this.emitEvent({
+          category: SecurityEventCategory.SYSTEM,
+          severity: SecurityEventSeverity.ERROR,
+          message: `Error initializing security component: ${name}`,
+          data: { error: (error as Error).message }
+        });
+        
+        throw error;
       }
     }
+  }
+  
+  /**
+   * Shutdown all registered components
+   */
+  public async shutdownAll(): Promise<void> {
+    // Shutdown components in reverse order
+    const componentEntries = Array.from(this.components.entries()).reverse();
     
-    // Generate a title and description for the event
-    let title = 'Security Event';
-    let description = 'A security event occurred';
-    
-    if (event === SecurityEventType.AUTHENTICATION_FAILURE) {
-      title = 'Authentication Failure';
-      // @ts-ignore - Dynamic access
-      description = `Authentication failed for user ${data.username || 'unknown'}: ${data.reason}`;
-    } else if (event === SecurityEventType.AUTHENTICATION_SUCCESS) {
-      title = 'Authentication Success';
-      // @ts-ignore - Dynamic access
-      description = `User ${data.username} authenticated successfully`;
-    } else if (event === SecurityEventType.AUTHORIZATION_FAILURE) {
-      title = 'Authorization Failure';
-      // @ts-ignore - Dynamic access
-      description = `User ${data.username || 'unknown'} was denied access to ${data.resource}: ${data.reason}`;
-    } else if (event === SecurityEventType.AUTHORIZATION_SUCCESS) {
-      title = 'Authorization Success';
-      // @ts-ignore - Dynamic access
-      description = `User ${data.username} was granted access to ${data.resource}`;
-    } else if (event === SecurityEventType.ANOMALY_DETECTED) {
-      title = 'Anomaly Detected';
-      // @ts-ignore - Dynamic access
-      description = `Anomaly detected: ${data.details}`;
-    } else if (event === SecurityEventType.ATTACK_DETECTED) {
-      title = 'Attack Detected';
-      // @ts-ignore - Dynamic access
-      description = `Attack detected: ${data.details}`;
-    } else if (event === SecurityEventType.ATTACK_MITIGATED) {
-      title = 'Attack Mitigated';
-      // @ts-ignore - Dynamic access
-      description = `Attack mitigated: ${data.details}`;
-    } else if (event === SecurityEventType.SCAN_STARTED) {
-      title = 'Security Scan Started';
-      // @ts-ignore - Dynamic access
-      description = `Security scan ${data.scanId} of type ${data.scanType} started`;
-    } else if (event === SecurityEventType.SCAN_COMPLETED) {
-      title = 'Security Scan Completed';
-      // @ts-ignore - Dynamic access
-      description = `Security scan ${data.scanId} of type ${data.scanType} completed with ${data.findings} findings`;
-    } else if (event === SecurityEventType.SCAN_FINDING) {
-      title = 'Security Scan Finding';
-      // @ts-ignore - Dynamic access
-      description = `Security scan ${data.scanId} found: ${data.title}`;
-    } else if (event === SecurityEventType.CONFIGURATION_CHANGED) {
-      title = 'Security Configuration Changed';
-      // @ts-ignore - Dynamic access
-      description = `Security setting ${data.setting} changed from ${data.oldValue} to ${data.newValue}`;
-    } else if (event === 'security:maximum-security:enabled') {
-      title = 'Maximum Security Mode Enabled';
-      description = 'Maximum security mode has been enabled for the application';
-    }
-    
-    // Record the event
-    securityBlockchain.addSecurityEvent({
-      severity,
-      category,
-      message: title, // Changed title to message to match the new interface
-      timestamp: Date.now(),
-      metadata: { 
-        description, // Added description in metadata
-        event, 
-        data,
-        timestamp: new Date().toISOString()
+    for (const [name, component] of componentEntries) {
+      try {
+        await component.shutdown();
+        
+        this.emitEvent({
+          category: SecurityEventCategory.SYSTEM,
+          severity: SecurityEventSeverity.INFO,
+          message: `Security component shutdown: ${name}`
+        });
+      } catch (error) {
+        this.emitEvent({
+          category: SecurityEventCategory.SYSTEM,
+          severity: SecurityEventSeverity.ERROR,
+          message: `Error shutting down security component: ${name}`,
+          data: { error: (error as Error).message }
+        });
+        
+        // Continue shutting down other components
       }
-    }).catch(error => {
-      console.error('Error recording security event:', error);
-    });
+    }
+  }
+  
+  /**
+   * Get security status information
+   */
+  public getSecurityStatus(): Record<string, any> {
+    const registeredComponents = Array.from(this.components.entries()).map(
+      ([name, component]) => ({
+        name,
+        type: component.type,
+        version: component.version
+      })
+    );
+    
+    return {
+      componentsCount: this.components.size,
+      components: registeredComponents,
+      timestamp: new Date().toISOString()
+    };
   }
 }
 
 // Export singleton instance
-export const securityFabric = new SecurityFabric();
+export const securityFabric = SecurityFabric.getInstance();
+
+/**
+ * Utility function to log a security event
+ */
+export function logSecurityEvent(event: SecurityEvent): void {
+  securityFabric.emitEvent(event);
+}

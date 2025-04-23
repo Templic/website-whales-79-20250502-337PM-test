@@ -1,170 +1,180 @@
 /**
- * Enable Maximum Security Module
+ * Maximum Security Mode
  * 
- * This module provides a function to enable all security mechanisms
- * in the application with maximum protection levels.
+ * This module enables maximum security mode which activates all security
+ * features regardless of performance impact.
  */
 
-import { Express } from 'express';
-import { protectApiRoutes } from './apiRoutesProtector';
-import { raspManager } from './advanced/rasp';
-import { createMaximumSecurityScanMiddleware } from './maximumSecurityScan';
-import { anomalyDetectionMiddleware } from './advanced/ml/AnomalyDetection';
-import { securityFabric } from './advanced/SecurityFabric';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
-import { createQuantumResistantMiddleware, createPublicKeyEndpointMiddleware } from './advanced/quantum/QuantumResistantMiddleware';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from './advanced/SecurityFabric';
+import { startMetricsCollection } from './monitoring/MetricsCollector';
+import { initializeEventsCollector } from './monitoring/EventsCollector';
 
-/**
- * Maximum security options
- */
-export interface MaximumSecurityOptions {
-  /**
-   * Whether to block suspicious requests
-   */
-  blockSuspiciousRequests?: boolean;
-  
-  /**
-   * Whether to enable anomaly detection
-   */
-  enableAnomalyDetection?: boolean;
-  
-  /**
-   * Whether to enable RASP protection
-   */
-  enableRASP?: boolean;
-  
-  /**
-   * Whether to enable API security
-   */
-  enableApiSecurity?: boolean;
-  
-  /**
-   * Whether to enable deep validation
-   */
-  enableDeepValidation?: boolean;
-  
-  /**
-   * Paths to exclude from protection
-   */
-  excludePaths?: string[];
+// Available security features
+export interface SecurityFeatures {
+  quantumResistance: boolean;
+  mlAnomalyDetection: boolean;
+  blockchainLogging: boolean;
+  mfa: boolean;
+  csrf: boolean;
+  inputValidation: boolean;
+  apiSecurity: boolean;
+  realTimeMonitoring: boolean;
+  bruteForceProtection: boolean;
+  rateLimiting: boolean;
+  deepScanning: boolean;
 }
 
-/**
- * Enable maximum security for the application
- */
-export function enableMaximumSecurity(app: Express, options: MaximumSecurityOptions = {}) {
-  const {
-    blockSuspiciousRequests = true,
-    enableAnomalyDetection = true,
-    enableRASP = true,
-    enableApiSecurity = true,
-    enableDeepValidation = true,
-    excludePaths = [
-      '/api/health',
-      '/api/public',
-      '/api/webhooks',
-      '/api/external-callbacks',
-      '/api/stripe-webhook'
-    ]
-  } = options;
-  
-  console.log('[SECURITY] Enabling maximum security mode');
-  
-  // Apply API routes protection
-  protectApiRoutes(app, {
-    enableRASP,
-    enableApiSecurity,
-    enableDefaultValidation: enableDeepValidation,
-    enableSensitiveProcedures: true,
-    excludePaths,
-    additionalMiddlewares: enableAnomalyDetection ? [anomalyDetectionMiddleware] : []
-  });
-  
-  // Apply maximum security scan middleware to all routes
-  app.use(createMaximumSecurityScanMiddleware({
-    realtimeValidation: enableDeepValidation,
-    deepInspection: blockSuspiciousRequests,
-    quantumResistantAlgorithms: true,
-    mlAnomalyDetection: enableAnomalyDetection,
-    blockchainLogging: true,
-    performanceImpactWarnings: true
-  }));
-  
-  // Apply quantum-resistant middleware for sensitive data protection
-  app.use(createQuantumResistantMiddleware({
-    encryptResponses: true,
-    verifyRequestSignatures: true,
-    protectedPaths: [
-      '/api/user',
-      '/api/auth',
-      '/api/security',
-      '/api/payment',
-      '/api/admin'
-    ],
-    exemptPaths: excludePaths,
-    bypassInDevelopment: process.env.NODE_ENV === 'development',
-    sensitiveResponseFields: [
-      'password',
-      'token',
-      'key',
-      'secret',
-      'ssn',
-      'creditCard',
-      'bankAccount'
-    ]
-  }));
-  
-  // Add endpoint to provide the server's quantum-resistant public key
-  app.get('/api/security/quantum-key', createPublicKeyEndpointMiddleware());
-  
-  // Log maximum security enablement
-  securityBlockchain.addSecurityEvent({
-    severity: SecurityEventSeverity.INFO,
-    category: SecurityEventCategory.CRYPTOGRAPHY, // Using existing category
-    message: 'Maximum Security Mode Enabled',
-    timestamp: Date.now(),
-    metadata: {
-      options,
-      timestamp: new Date().toISOString()
-    }
-  }).catch(error => {
-    console.error('Error logging maximum security enablement:', error);
-  });
-  
-  // Emit maximum security enablement event
-  securityFabric.emit('security:maximum-security:enabled', {
-    options,
-    timestamp: new Date()
-  });
-  
-  console.log('[SECURITY] Maximum security mode enabled');
-  
-  return {
-    /**
-     * Run a security scan
-     */
-    runSecurityScan: async (scanOptions: any = {}) => {
-      console.log('[SECURITY] Running security scan');
-      
-      const { securityScanner, SecurityScanType } = await import('./maximumSecurityScan');
-      
-      const scanId = securityScanner.createScan({
-        scanType: scanOptions.scanType ? scanOptions.scanType : SecurityScanType.FULL,
-        deep: scanOptions.deep !== undefined ? scanOptions.deep : true,
-        emitEvents: true,
-        logFindings: true,
-        customRules: scanOptions.customRules
-      });
-      
-      return securityScanner.startScan(scanId);
-    }
-  };
-}
-
-/**
- * Default maximum security instance
- */
-export const maximumSecurity = {
-  enable: enableMaximumSecurity
+// Default security features (moderate mode)
+export const DEFAULT_SECURITY_FEATURES: SecurityFeatures = {
+  quantumResistance: false,
+  mlAnomalyDetection: false,
+  blockchainLogging: false,
+  mfa: true,
+  csrf: true,
+  inputValidation: true,
+  apiSecurity: true,
+  realTimeMonitoring: false,
+  bruteForceProtection: true,
+  rateLimiting: true,
+  deepScanning: false
 };
+
+// Maximum security features (all enabled)
+export const MAXIMUM_SECURITY_FEATURES: SecurityFeatures = {
+  quantumResistance: true,
+  mlAnomalyDetection: true,
+  blockchainLogging: true,
+  mfa: true,
+  csrf: true,
+  inputValidation: true,
+  apiSecurity: true,
+  realTimeMonitoring: true,
+  bruteForceProtection: true,
+  rateLimiting: true,
+  deepScanning: true
+};
+
+// Current active security features
+let activeSecurityFeatures: SecurityFeatures = { ...DEFAULT_SECURITY_FEATURES };
+
+/**
+ * Get the current active security features
+ */
+export function getActiveSecurityFeatures(): SecurityFeatures {
+  return { ...activeSecurityFeatures };
+}
+
+/**
+ * Set active security features
+ */
+export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
+  // Update active features
+  activeSecurityFeatures = {
+    ...activeSecurityFeatures,
+    ...features
+  };
+  
+  // Log the changes
+  logSecurityEvent({
+    category: SecurityEventCategory.SYSTEM,
+    severity: SecurityEventSeverity.INFO,
+    message: 'Security features updated',
+    data: { features: activeSecurityFeatures }
+  });
+}
+
+/**
+ * Enable maximum security mode
+ */
+export function enableMaximumSecurity(): void {
+  try {
+    console.log('[SECURITY] Enabling maximum security mode');
+    
+    // Set all security features to maximum
+    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
+    
+    // Start collecting security metrics
+    startMetricsCollection(30000); // Collect metrics every 30 seconds
+    
+    // Initialize events collector
+    initializeEventsCollector();
+    
+    // Initialize all security components (if any)
+    const components = securityFabric.getAllComponents();
+    if (components.length > 0) {
+      securityFabric.initializeAll()
+        .then(() => {
+          logSecurityEvent({
+            category: SecurityEventCategory.SYSTEM,
+            severity: SecurityEventSeverity.INFO,
+            message: 'All security components initialized in maximum security mode',
+            data: { componentsCount: components.length }
+          });
+        })
+        .catch((error) => {
+          logSecurityEvent({
+            category: SecurityEventCategory.SYSTEM,
+            severity: SecurityEventSeverity.ERROR,
+            message: 'Error initializing security components in maximum security mode',
+            data: { error: (error as Error).message }
+          });
+        });
+    }
+    
+    // Log the maximum security mode activation
+    logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: 'Maximum security mode activated',
+      data: { features: activeSecurityFeatures }
+    });
+  } catch (error) {
+    console.error('[SECURITY] Error enabling maximum security mode:', error);
+    
+    // Log the error
+    logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.ERROR,
+      message: 'Error enabling maximum security mode',
+      data: { error: (error as Error).message, stack: (error as Error).stack }
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Check if a specific security feature is enabled
+ */
+export function isSecurityFeatureEnabled(feature: keyof SecurityFeatures): boolean {
+  return activeSecurityFeatures[feature];
+}
+
+/**
+ * Get performance impact warning
+ */
+export function getPerformanceImpactWarning(): string | null {
+  const highImpactFeatures = [];
+  
+  if (activeSecurityFeatures.quantumResistance) {
+    highImpactFeatures.push('Quantum-Resistant Cryptography');
+  }
+  
+  if (activeSecurityFeatures.mlAnomalyDetection) {
+    highImpactFeatures.push('ML-based Anomaly Detection');
+  }
+  
+  if (activeSecurityFeatures.blockchainLogging) {
+    highImpactFeatures.push('Blockchain Logging');
+  }
+  
+  if (activeSecurityFeatures.deepScanning) {
+    highImpactFeatures.push('Deep Scanning');
+  }
+  
+  if (highImpactFeatures.length > 0) {
+    return `Warning: The following security features may impact performance: ${highImpactFeatures.join(', ')}`;
+  }
+  
+  return null;
+}

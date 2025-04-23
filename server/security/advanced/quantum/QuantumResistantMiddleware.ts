@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import * as qrc from './QuantumResistantCrypto';
-import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
 
 // Define the quantum-resistant algorithm enum - matching our implementation

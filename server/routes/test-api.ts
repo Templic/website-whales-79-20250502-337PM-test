@@ -7,7 +7,7 @@
 
 import express, { Request, Response } from 'express';
 import * as qrc from '../security/advanced/quantum/QuantumResistantCrypto';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
 import { bypassCsrfForTesting } from '../security/middleware/bypassCsrfForTesting';
 

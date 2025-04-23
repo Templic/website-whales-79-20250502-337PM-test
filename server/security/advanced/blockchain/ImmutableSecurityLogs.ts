@@ -1,555 +1,115 @@
 /**
- * Immutable Security Logs
+ * Immutable Security Logs Module
  * 
  * This module provides blockchain-based immutable logging for security events.
- * It ensures that security logs cannot be tampered with, providing a
- * trustworthy audit trail for forensic analysis.
+ * It ensures that security logs cannot be tampered with after they are recorded.
  */
 
 import crypto from 'crypto';
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
-import { 
-  SecurityEvent, 
-  SecurityEventFilter,
-  SecurityEventQueryOptions 
-} from './SecurityEventTypes';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '../SecurityFabric';
 
-/**
- * Block in the security blockchain
- */
+// Blockchain block interface
 export interface SecurityBlock {
-  // Block index
   index: number;
-  
-  // Timestamp (milliseconds since epoch)
-  timestamp: number;
-  
-  // Security events in this block
-  events: SecurityEvent[];
-  
-  // Hash of the previous block
+  timestamp: string;
+  data: any;
   previousHash: string;
-  
-  // Hash of this block
   hash: string;
-  
-  // Proof of work
   nonce: number;
 }
 
-/**
- * Interface for the security blockchain
- */
-export interface SecurityBlockchain {
-  /**
-   * Add a security event to the blockchain
-   * 
-   * @param event Security event to add
-   * @returns Promise resolving to the block containing the event
-   */
-  addSecurityEvent(event: SecurityEvent): Promise<SecurityBlock>;
-  
-  /**
-   * Get security events matching the filter
-   * 
-   * @param filter Filter for security events
-   * @param options Query options
-   * @returns Promise resolving to matching security events
-   */
-  getSecurityEvents(
-    filter?: SecurityEventFilter,
-    options?: SecurityEventQueryOptions
-  ): Promise<SecurityEvent[]>;
-  
-  /**
-   * Get a specific block from the blockchain
-   * 
-   * @param index Block index
-   * @returns Promise resolving to the block
-   */
-  getBlock(index: number): Promise<SecurityBlock | null>;
-  
-  /**
-   * Get the latest block in the blockchain
-   * 
-   * @returns Promise resolving to the latest block
-   */
-  getLatestBlock(): Promise<SecurityBlock>;
-  
-  /**
-   * Check if the blockchain is valid
-   * 
-   * @returns Promise resolving to a boolean indicating validity
-   */
-  isValid(): Promise<boolean>;
-  
-  /**
-   * Get the current chain length
-   * 
-   * @returns Promise resolving to the chain length
-   */
-  getLength(): Promise<number>;
-}
-
-/**
- * Implementation of the security blockchain
- */
-export class ImmutableSecurityLogs implements SecurityBlockchain {
-  // Path to store the blockchain
-  private storagePath: string;
-  
-  // In-memory cache of the blockchain
-  private chain: SecurityBlock[] = [];
-  
-  // Pending events to be added to the next block
-  private pendingEvents: SecurityEvent[] = [];
-  
-  // Maximum events per block
-  private maxEventsPerBlock: number;
-  
-  // Auto-save interval (milliseconds)
-  private autoSaveInterval: number;
-  
-  // Timer for auto-saving
-  private autoSaveTimer: NodeJS.Timeout | null = null;
-  
-  // Difficulty for proof of work
+// Immutable Security Logs class
+export class ImmutableSecurityLogs {
+  private static instance: ImmutableSecurityLogs;
+  private chain: SecurityBlock[];
+  private blockchainFile: string;
   private difficulty: number;
+  private pendingLogs: any[];
+  private autoSaveInterval: NodeJS.Timeout | null;
+  private maxPendingLogs: number;
   
-  /**
-   * Create a new immutable security logs blockchain
-   * 
-   * @param options Options for the blockchain
-   */
-  constructor(options: {
-    storagePath?: string;
-    maxEventsPerBlock?: number;
-    autoSaveInterval?: number;
-    difficulty?: number;
-  } = {}) {
-    this.storagePath = options.storagePath || path.join(process.cwd(), 'security-blockchain');
-    this.maxEventsPerBlock = options.maxEventsPerBlock || 100;
-    this.autoSaveInterval = options.autoSaveInterval || 60000; // 1 minute
-    this.difficulty = options.difficulty || 2;
+  private constructor() {
+    this.chain = [];
+    this.blockchainFile = './logs/security-blockchain.json';
+    this.difficulty = 2; // Mining difficulty (number of leading zeros in hash)
+    this.pendingLogs = [];
+    this.autoSaveInterval = null;
+    this.maxPendingLogs = 10;
     
-    // Initialize the blockchain
-    this.init().catch(console.error);
-  }
-  
-  /**
-   * Initialize the blockchain
-   */
-  private async init(): Promise<void> {
-    try {
-      // Ensure storage directory exists
-      await fs.mkdir(this.storagePath, { recursive: true });
-      
-      // Try to load existing blockchain
-      try {
-        const data = await fs.readFile(
-          path.join(this.storagePath, 'blockchain.json'),
-          'utf8'
-        );
-        this.chain = JSON.parse(data);
-        
-        // Verify the loaded blockchain
-        if (!await this.isValid()) {
-          console.warn('Loaded blockchain is invalid, creating a new one');
-          this.chain = [];
-        }
-      } catch (error) {
-        // No existing blockchain, create a new one
-        console.log('No existing blockchain found, creating a new one');
-      }
-      
-      // If chain is empty, create genesis block
-      if (this.chain.length === 0) {
-        const genesisBlock = this.createGenesisBlock();
-        this.chain.push(genesisBlock);
-        await this.saveChain();
-      }
-      
-      // Start auto-save timer
-      this.startAutoSave();
-      
-      console.log(`Blockchain initialized with ${this.chain.length} blocks`);
-    } catch (error) {
-      console.error('Failed to initialize blockchain:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Start the auto-save timer
-   */
-  private startAutoSave(): void {
-    if (this.autoSaveTimer) {
-      clearInterval(this.autoSaveTimer);
+    // Create directory for blockchain file if it doesn't exist
+    const dir = path.dirname(this.blockchainFile);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
     
-    this.autoSaveTimer = setInterval(() => {
-      this.saveChain()
-        .then(() => {
-          if (this.pendingEvents.length >= this.maxEventsPerBlock) {
-            return this.createNewBlock();
-          }
-        })
-        .catch(console.error);
-    }, this.autoSaveInterval);
-  }
-  
-  /**
-   * Stop the auto-save timer
-   */
-  private stopAutoSave(): void {
-    if (this.autoSaveTimer) {
-      clearInterval(this.autoSaveTimer);
-      this.autoSaveTimer = null;
-    }
-  }
-  
-  /**
-   * Save the blockchain to disk
-   */
-  private async saveChain(): Promise<void> {
-    try {
-      await fs.writeFile(
-        path.join(this.storagePath, 'blockchain.json'),
-        JSON.stringify(this.chain, null, 2)
-      );
-    } catch (error) {
-      console.error('Failed to save blockchain:', error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Create the genesis block
-   */
-  private createGenesisBlock(): SecurityBlock {
-    const genesisBlock: SecurityBlock = {
-      index: 0,
-      timestamp: Date.now(),
-      events: [{
-        category: 'system' as any,
-        severity: 'info' as any,
-        message: 'Genesis block created',
-        timestamp: Date.now(),
-        metadata: {
-          version: '1.0.0',
-          createdAt: new Date().toISOString()
-        }
-      }],
-      previousHash: '0'.repeat(64),
-      nonce: 0,
-      hash: ''
-    };
+    // Load existing blockchain or create genesis block
+    this.loadChain();
     
-    // Calculate the hash
-    genesisBlock.hash = this.calculateHash(genesisBlock);
-    
-    return genesisBlock;
+    // Start auto-save interval
+    this.startAutoSave();
   }
   
   /**
-   * Calculate the hash of a block
-   * 
-   * @param block Block to calculate hash for
-   * @returns Hash of the block
+   * Get the singleton instance
    */
-  private calculateHash(block: Omit<SecurityBlock, 'hash'>): string {
-    const data = JSON.stringify({
-      index: block.index,
-      timestamp: block.timestamp,
-      events: block.events,
-      previousHash: block.previousHash,
-      nonce: block.nonce
+  public static getInstance(): ImmutableSecurityLogs {
+    if (!ImmutableSecurityLogs.instance) {
+      ImmutableSecurityLogs.instance = new ImmutableSecurityLogs();
+    }
+    
+    return ImmutableSecurityLogs.instance;
+  }
+  
+  /**
+   * Add a log entry to the blockchain
+   */
+  public addLog(data: any): void {
+    this.pendingLogs.push({
+      ...data,
+      timestamp: data.timestamp || new Date().toISOString()
     });
     
-    return crypto
-      .createHash('sha256')
-      .update(data)
-      .digest('hex');
+    // Create a new block if we've reached the maximum pending logs
+    if (this.pendingLogs.length >= this.maxPendingLogs) {
+      this.mineBlock();
+    }
   }
   
   /**
-   * Mine a new block
-   * 
-   * @param events Events to include in the block
-   * @returns The mined block
+   * Mine a new block with pending logs
    */
-  private mineBlock(events: SecurityEvent[]): SecurityBlock {
-    const latestBlock = this.getLatestBlockSync();
-    
-    // Create new block
-    const newBlock: Omit<SecurityBlock, 'hash'> = {
-      index: latestBlock.index + 1,
-      timestamp: Date.now(),
-      events,
-      previousHash: latestBlock.hash,
-      nonce: 0
-    };
-    
-    // Mine the block (proof of work)
-    let hash = this.calculateHash(newBlock);
-    while (hash.substring(0, this.difficulty) !== '0'.repeat(this.difficulty)) {
-      newBlock.nonce++;
-      hash = this.calculateHash(newBlock);
-    }
-    
-    // Create the final block
-    const minedBlock: SecurityBlock = {
-      ...newBlock,
-      hash
-    };
-    
-    return minedBlock;
-  }
-  
-  /**
-   * Create a new block with pending events
-   */
-  private async createNewBlock(): Promise<void> {
-    if (this.pendingEvents.length === 0) {
-      return;
-    }
-    
-    // Take events for this block
-    const eventsForBlock = this.pendingEvents.slice(0, this.maxEventsPerBlock);
-    this.pendingEvents = this.pendingEvents.slice(this.maxEventsPerBlock);
-    
-    // Mine the block
-    const newBlock = this.mineBlock(eventsForBlock);
-    
-    // Add to chain
-    this.chain.push(newBlock);
-    
-    // Save the chain
-    await this.saveChain();
-  }
-  
-  /**
-   * Get the latest block synchronously
-   */
-  private getLatestBlockSync(): SecurityBlock {
-    return this.chain[this.chain.length - 1];
-  }
-  
-  /**
-   * Check if a block is valid
-   * 
-   * @param block Block to check
-   * @param previousBlock Previous block
-   * @returns Whether the block is valid
-   */
-  private isBlockValid(block: SecurityBlock, previousBlock: SecurityBlock): boolean {
-    // Check index
-    if (block.index !== previousBlock.index + 1) {
-      console.warn(`Invalid block index: ${block.index} vs ${previousBlock.index + 1}`);
-      return false;
-    }
-    
-    // Check previous hash
-    if (block.previousHash !== previousBlock.hash) {
-      console.warn(`Invalid previous hash: ${block.previousHash} vs ${previousBlock.hash}`);
-      return false;
-    }
-    
-    // Check block hash
-    const calculatedHash = this.calculateHash({
-      index: block.index,
-      timestamp: block.timestamp,
-      events: block.events,
-      previousHash: block.previousHash,
-      nonce: block.nonce
-    });
-    
-    if (calculatedHash !== block.hash) {
-      console.warn(`Invalid block hash: ${calculatedHash} vs ${block.hash}`);
-      return false;
-    }
-    
-    // Check proof of work
-    if (block.hash.substring(0, this.difficulty) !== '0'.repeat(this.difficulty)) {
-      console.warn(`Invalid proof of work: ${block.hash.substring(0, this.difficulty)} vs ${'0'.repeat(this.difficulty)}`);
-      return false;
-    }
-    
-    return true;
-  }
-  
-  /**
-   * Add a security event to the blockchain
-   * 
-   * @param event Security event to add
-   * @returns Promise resolving to the block containing the event
-   */
-  public async addSecurityEvent(event: SecurityEvent): Promise<SecurityBlock> {
-    // Add to pending events
-    this.pendingEvents.push(event);
-    
-    // Create a new block if we have enough events
-    if (this.pendingEvents.length >= this.maxEventsPerBlock) {
-      await this.createNewBlock();
-      return this.getLatestBlockSync();
-    }
-    
-    // Return the latest block
-    return this.getLatestBlockSync();
-  }
-  
-  /**
-   * Get security events matching the filter
-   * 
-   * @param filter Filter for security events
-   * @param options Query options
-   * @returns Promise resolving to matching security events
-   */
-  public async getSecurityEvents(
-    filter?: SecurityEventFilter,
-    options?: SecurityEventQueryOptions
-  ): Promise<SecurityEvent[]> {
-    // Get all events from the chain
-    const allEvents: SecurityEvent[] = [];
-    for (const block of this.chain) {
-      allEvents.push(...block.events);
-    }
-    
-    // Add pending events
-    allEvents.push(...this.pendingEvents);
-    
-    // Apply filters
-    let filteredEvents = allEvents;
-    
-    if (filter) {
-      // Filter by categories
-      if (filter.categories && filter.categories.length > 0) {
-        filteredEvents = filteredEvents.filter(event => 
-          filter.categories!.includes(event.category)
-        );
-      }
-      
-      // Filter by severities
-      if (filter.severities && filter.severities.length > 0) {
-        filteredEvents = filteredEvents.filter(event => 
-          filter.severities!.includes(event.severity)
-        );
-      }
-      
-      // Filter by time range
-      if (filter.timeRange) {
-        if (filter.timeRange.start) {
-          filteredEvents = filteredEvents.filter(event => 
-            event.timestamp >= filter.timeRange!.start!
-          );
-        }
-        
-        if (filter.timeRange.end) {
-          filteredEvents = filteredEvents.filter(event => 
-            event.timestamp <= filter.timeRange!.end!
-          );
-        }
-      }
-      
-      // Filter by search terms
-      if (filter.searchTerms && filter.searchTerms.length > 0) {
-        filteredEvents = filteredEvents.filter(event => {
-          const eventText = JSON.stringify(event).toLowerCase();
-          return filter.searchTerms!.some(term => 
-            eventText.includes(term.toLowerCase())
-          );
-        });
-      }
-      
-      // Filter by metadata
-      if (filter.metadata) {
-        filteredEvents = filteredEvents.filter(event => {
-          if (!event.metadata) return false;
-          
-          for (const [key, value] of Object.entries(filter.metadata!)) {
-            if (event.metadata[key] !== value) {
-              return false;
-            }
-          }
-          
-          return true;
-        });
-      }
-    }
-    
-    // Apply sorting
-    if (options?.sort) {
-      filteredEvents.sort((a, b) => {
-        const field = options.sort!.field;
-        const direction = options.sort!.direction === 'asc' ? 1 : -1;
-        
-        if (a[field] < b[field]) {
-          return -1 * direction;
-        }
-        
-        if (a[field] > b[field]) {
-          return 1 * direction;
-        }
-        
-        return 0;
-      });
-    } else {
-      // Default sort: newest first
-      filteredEvents.sort((a, b) => b.timestamp - a.timestamp);
-    }
-    
-    // Apply pagination
-    if (options?.skip || options?.limit) {
-      const skip = options.skip || 0;
-      const limit = options.limit || filteredEvents.length;
-      
-      filteredEvents = filteredEvents.slice(skip, skip + limit);
-    }
-    
-    return filteredEvents;
-  }
-  
-  /**
-   * Get a specific block from the blockchain
-   * 
-   * @param index Block index
-   * @returns Promise resolving to the block
-   */
-  public async getBlock(index: number): Promise<SecurityBlock | null> {
-    if (index < 0 || index >= this.chain.length) {
+  public mineBlock(): SecurityBlock | null {
+    if (this.pendingLogs.length === 0) {
       return null;
     }
     
-    return this.chain[index];
-  }
-  
-  /**
-   * Get the latest block in the blockchain
-   * 
-   * @returns Promise resolving to the latest block
-   */
-  public async getLatestBlock(): Promise<SecurityBlock> {
-    return this.getLatestBlockSync();
-  }
-  
-  /**
-   * Check if the blockchain is valid
-   * 
-   * @returns Promise resolving to a boolean indicating validity
-   */
-  public async isValid(): Promise<boolean> {
-    // Chain with only genesis block is valid
-    if (this.chain.length === 1) {
-      return true;
-    }
+    const newBlock = this.createBlock(this.pendingLogs);
+    this.chain.push(newBlock);
+    this.pendingLogs = [];
     
-    // Check each block in the chain
+    // Save the blockchain to file
+    this.saveChain();
+    
+    return newBlock;
+  }
+  
+  /**
+   * Verify the integrity of the blockchain
+   */
+  public verifyChain(): boolean {
     for (let i = 1; i < this.chain.length; i++) {
       const currentBlock = this.chain[i];
       const previousBlock = this.chain[i - 1];
       
-      if (!this.isBlockValid(currentBlock, previousBlock)) {
+      // Check if the hash is valid
+      if (currentBlock.hash !== this.calculateHash(currentBlock)) {
+        return false;
+      }
+      
+      // Check if the previous hash link is valid
+      if (currentBlock.previousHash !== previousBlock.hash) {
         return false;
       }
     }
@@ -558,29 +118,264 @@ export class ImmutableSecurityLogs implements SecurityBlockchain {
   }
   
   /**
-   * Get the current chain length
-   * 
-   * @returns Promise resolving to the chain length
+   * Get the blockchain
    */
-  public async getLength(): Promise<number> {
-    return this.chain.length;
+  public getChain(): SecurityBlock[] {
+    return [...this.chain];
   }
   
   /**
-   * Clean up resources
+   * Get the last block
    */
-  public async cleanup(): Promise<void> {
-    this.stopAutoSave();
+  public getLastBlock(): SecurityBlock | null {
+    return this.chain.length > 0 ? this.chain[this.chain.length - 1] : null;
+  }
+  
+  /**
+   * Search for logs in the blockchain
+   */
+  public searchLogs(query: {
+    fromDate?: string;
+    toDate?: string;
+    category?: SecurityEventCategory | SecurityEventCategory[];
+    severity?: SecurityEventSeverity | SecurityEventSeverity[];
+    keyword?: string;
+  }): any[] {
+    const results: any[] = [];
     
-    // Save any pending events
-    if (this.pendingEvents.length > 0) {
-      await this.createNewBlock();
+    // Process query parameters
+    const fromDate = query.fromDate ? new Date(query.fromDate).getTime() : 0;
+    const toDate = query.toDate ? new Date(query.toDate).getTime() : Date.now();
+    const categories = query.category
+      ? Array.isArray(query.category) ? query.category : [query.category]
+      : null;
+    const severities = query.severity
+      ? Array.isArray(query.severity) ? query.severity : [query.severity]
+      : null;
+    
+    // Search all blocks
+    for (const block of this.chain) {
+      // Search data in the block (can be an array of logs or a single log)
+      const dataArray = Array.isArray(block.data) ? block.data : [block.data];
+      
+      for (const log of dataArray) {
+        const logDate = new Date(log.timestamp).getTime();
+        
+        // Skip if log is outside date range
+        if (logDate < fromDate || logDate > toDate) {
+          continue;
+        }
+        
+        // Skip if category doesn't match
+        if (categories && !categories.includes(log.category)) {
+          continue;
+        }
+        
+        // Skip if severity doesn't match
+        if (severities && !severities.includes(log.severity)) {
+          continue;
+        }
+        
+        // Skip if keyword doesn't match
+        if (query.keyword && !this.logContainsKeyword(log, query.keyword)) {
+          continue;
+        }
+        
+        // Add log to results
+        results.push({
+          ...log,
+          blockIndex: block.index,
+          blockHash: block.hash,
+          blockTimestamp: block.timestamp
+        });
+      }
     }
     
-    // Save the chain
-    await this.saveChain();
+    return results;
+  }
+  
+  /**
+   * Check if a log contains a keyword
+   */
+  private logContainsKeyword(log: any, keyword: string): boolean {
+    const term = keyword.toLowerCase();
+    
+    // Check in message
+    if (log.message && log.message.toLowerCase().includes(term)) {
+      return true;
+    }
+    
+    // Check in data (recursively)
+    if (log.data && typeof log.data === 'object') {
+      return this.objectContainsKeyword(log.data, term);
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Check if an object contains a keyword (recursive)
+   */
+  private objectContainsKeyword(obj: any, keyword: string): boolean {
+    for (const key in obj) {
+      const value = obj[key];
+      
+      // Check key
+      if (key.toLowerCase().includes(keyword)) {
+        return true;
+      }
+      
+      // Check value based on type
+      if (typeof value === 'string' && value.toLowerCase().includes(keyword)) {
+        return true;
+      } else if (typeof value === 'object' && value !== null) {
+        if (this.objectContainsKeyword(value, keyword)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Create a new block
+   */
+  private createBlock(data: any): SecurityBlock {
+    const previousBlock = this.getLastBlock();
+    const index = previousBlock ? previousBlock.index + 1 : 0;
+    const timestamp = new Date().toISOString();
+    const previousHash = previousBlock ? previousBlock.hash : '0';
+    
+    // Create the block
+    const block: SecurityBlock = {
+      index,
+      timestamp,
+      data,
+      previousHash,
+      hash: '',
+      nonce: 0
+    };
+    
+    // Mine the block (find a valid hash)
+    this.mineBlockHash(block);
+    
+    return block;
+  }
+  
+  /**
+   * Mine a block hash (find a hash with leading zeros)
+   */
+  private mineBlockHash(block: SecurityBlock): void {
+    const target = Array(this.difficulty + 1).join('0');
+    
+    while (true) {
+      block.hash = this.calculateHash(block);
+      
+      if (block.hash.substring(0, this.difficulty) === target) {
+        break;
+      }
+      
+      block.nonce++;
+    }
+  }
+  
+  /**
+   * Calculate the hash of a block
+   */
+  private calculateHash(block: SecurityBlock): string {
+    const { index, timestamp, data, previousHash, nonce } = block;
+    const blockString = JSON.stringify({ index, timestamp, data, previousHash, nonce });
+    
+    return crypto.createHash('sha256').update(blockString).digest('hex');
+  }
+  
+  /**
+   * Load the blockchain from file
+   */
+  private loadChain(): void {
+    try {
+      if (fs.existsSync(this.blockchainFile)) {
+        const data = fs.readFileSync(this.blockchainFile, 'utf8');
+        this.chain = JSON.parse(data);
+        
+        // Verify the loaded chain
+        if (!this.verifyChain()) {
+          console.error('[ImmutableSecurityLogs] Loaded blockchain is invalid!');
+          this.createGenesisBlock();
+        }
+      } else {
+        this.createGenesisBlock();
+      }
+    } catch (error) {
+      console.error('[ImmutableSecurityLogs] Error loading blockchain:', error);
+      this.createGenesisBlock();
+    }
+  }
+  
+  /**
+   * Save the blockchain to file
+   */
+  private saveChain(): void {
+    try {
+      fs.writeFileSync(
+        this.blockchainFile,
+        JSON.stringify(this.chain, null, 2),
+        'utf8'
+      );
+    } catch (error) {
+      console.error('[ImmutableSecurityLogs] Error saving blockchain:', error);
+    }
+  }
+  
+  /**
+   * Create the genesis block
+   */
+  private createGenesisBlock(): void {
+    const genesisBlock: SecurityBlock = {
+      index: 0,
+      timestamp: new Date().toISOString(),
+      data: { message: 'Genesis Block' },
+      previousHash: '0',
+      hash: '',
+      nonce: 0
+    };
+    
+    this.mineBlockHash(genesisBlock);
+    this.chain = [genesisBlock];
+    this.saveChain();
+  }
+  
+  /**
+   * Start auto-save interval
+   */
+  private startAutoSave(): void {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+    }
+    
+    this.autoSaveInterval = setInterval(() => {
+      if (this.pendingLogs.length > 0) {
+        this.mineBlock();
+      }
+    }, 60000); // Auto-save every minute
+  }
+  
+  /**
+   * Stop auto-save interval
+   */
+  public stopAutoSave(): void {
+    if (this.autoSaveInterval) {
+      clearInterval(this.autoSaveInterval);
+      this.autoSaveInterval = null;
+    }
+    
+    // Mine any pending logs
+    if (this.pendingLogs.length > 0) {
+      this.mineBlock();
+    }
   }
 }
 
-// Create and export a singleton instance
-export const securityBlockchain = new ImmutableSecurityLogs();
+// Export the singleton instance
+export const immutableSecurityLogs = ImmutableSecurityLogs.getInstance();

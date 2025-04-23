@@ -5,7 +5,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { securityBlockchain } from '../../security/advanced/blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../../security/advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from '../../security/advanced/blockchain/SecurityEventTypes';
 import { securityScanner, SecurityScanType } from '../../security/maximumSecurityScan';
 

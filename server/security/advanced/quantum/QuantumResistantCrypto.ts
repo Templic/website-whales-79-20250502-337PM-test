@@ -13,7 +13,7 @@
  */
 
 import crypto from 'crypto';
-import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 
 // Type definitions

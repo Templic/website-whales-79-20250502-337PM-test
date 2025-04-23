@@ -6,7 +6,7 @@
  */
 
 import * as qrc from './QuantumResistantCrypto';
-import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 
 // Store key pairs for different security levels

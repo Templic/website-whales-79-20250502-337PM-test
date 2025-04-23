@@ -6,7 +6,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import { immutableSecurityLogs as securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from './advanced/blockchain/SecurityEventTypes';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -284,7 +284,7 @@ class SecurityScanner {
     console.log(`[SECURITY-SCANNER] Starting scan ${scanId} of type ${scan.scanType}`);
     
     // Record scan start
-    securityBlockchain.recordEvent({
+    securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
       category: SecurityEventCategory.SECURITY_SCAN,
       title: 'Security Scan Started',
@@ -318,7 +318,7 @@ class SecurityScanner {
       this.calculateRiskScore(scan);
       
       // Record scan completion
-      securityBlockchain.recordEvent({
+      securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.INFO,
         category: SecurityEventCategory.SECURITY_SCAN,
         title: 'Security Scan Completed',
@@ -346,7 +346,7 @@ class SecurityScanner {
       scan.error = error instanceof Error ? error.message : String(error);
       
       // Record scan error
-      securityBlockchain.recordEvent({
+      securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.MEDIUM,
         category: SecurityEventCategory.SECURITY_SCAN,
         title: 'Security Scan Error',
@@ -402,7 +402,7 @@ class SecurityScanner {
     scan.findingsCount = scan.findings.length;
     
     // Record the finding
-    securityBlockchain.recordEvent({
+    securityBlockchain.addSecurityEvent({
       severity: finding.severity,
       category: finding.category,
       title: finding.title,
