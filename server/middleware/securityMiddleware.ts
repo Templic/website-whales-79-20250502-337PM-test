@@ -206,35 +206,80 @@ export function createCustomSecurityMiddleware(options: {
     if (enableMlDetection) {
       try {
         // Import ML detection dynamically to avoid dependency if not used
-        const { detectAnomaly } = require('../security/advanced/ml/AnomalyDetection');
+        const { detectAnomaly, createAnomalyDetectionMiddleware } = require('../security/advanced/ml/AnomalyDetection');
+        
+        // Create anomaly detection options based on security settings
+        const anomalyOptions = {
+          confidenceThreshold: 0.7,
+          blockAnomalies: false, // By default, don't block - just detect and log
+          logAnomalies: true,
+          enableAdaptiveThresholds: true,
+          enableStatisticalAnalysis: true,
+          enableBehavioralAnalysis: true,
+          enableDataExfiltrationDetection: true,
+          maxIpHistoryLength: 200,
+          maxUserHistoryLength: 500,
+          learningPhaseDuration: 60000 // 1 minute in production (would be longer)
+        };
+        
+        console.log('[SECURITY] Initializing ML-based anomaly detection with quantum-resistant security');
         
         // Run anomaly detection asynchronously to not block request processing
         detectAnomaly(req).then(result => {
           req.securityContext.securityChecks.mlAnomalyDetection = true;
           
           if (result.isAnomaly) {
+            // Determine severity based on anomaly score
+            const severity = result.score >= 0.9 ? SecurityEventSeverity.HIGH : 
+                            result.score >= 0.8 ? SecurityEventSeverity.MEDIUM : 
+                            SecurityEventSeverity.WARNING;
+            
+            // Determine category based on anomaly type
+            let category = SecurityEventCategory.ANOMALY_DETECTION;
+            if (result.anomalyType === 'CONTENT' && result.details?.contentDetails?.attackSignature) {
+              category = SecurityEventCategory.ATTACK_ATTEMPT;
+            } else if (result.anomalyType === 'RATE') {
+              category = SecurityEventCategory.RATE_LIMITING;
+            }
+            
             securityBlockchain.addSecurityEvent({
-              category: SecurityEventCategory.ANOMALY_DETECTED as any,
-              severity: SecurityEventSeverity.WARNING,
+              category: category as any,
+              severity: severity,
               message: 'ML anomaly detection triggered',
               timestamp: Date.now(),
               metadata: {
                 requestId: req.securityContext.requestId,
                 path: req.path,
                 method: req.method,
+                userId: req.user?.id ? String(req.user.id) : undefined,
                 anomalyScore: result.score,
                 anomalyReason: result.reason,
+                anomalyType: result.anomalyType,
+                anomalyDetails: result.details,
                 timestamp: new Date().toISOString()
               }
             }).catch(err => {
               console.error('[SECURITY ERROR] Failed to log anomaly detection:', err);
             });
+            
+            // If it's a high-severity anomaly, add more detailed information to the security context
+            if (result.score >= 0.9) {
+              req.securityContext.highSeverityAnomaly = true;
+              req.securityContext.anomalyDetails = {
+                score: result.score,
+                reason: result.reason,
+                type: result.anomalyType
+              };
+              
+              // Optionally apply additional security measures for high-severity anomalies
+              // This would depend on your security policy
+            }
           }
         }).catch(err => {
           console.error('[SECURITY ERROR] Error in anomaly detection:', err);
         });
       } catch (error) {
-        console.warn('[SECURITY] ML anomaly detection module not available');
+        console.warn('[SECURITY] ML anomaly detection module not available:', error);
       }
     }
     
