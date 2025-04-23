@@ -353,7 +353,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
           category: SecurityEventCategory.VALIDATION,
           severity: SecurityEventSeverity.MEDIUM,
           message: `Invalid ${target} received`,
-          timestamp: new Date().getTime(),
+          timestamp: Date.now(),
           metadata: {
             path: req.path,
             method: req.method,
@@ -462,7 +462,7 @@ export function createSecureRouter(options: SecureRouterOptions = {}): SecureRou
             category: SecurityEventCategory.API_ERROR,
             severity: SecurityEventSeverity.ERROR,
             message: 'API route handler error',
-            timestamp: new Date().getTime(),
+            timestamp: Date.now(),
             metadata: {
               path: req.path,
               method: req.method,
@@ -511,7 +511,7 @@ export function createAdminRouter(): SecureRouter {
         category: SecurityEventCategory.ACCESS_DENIED,
         severity: SecurityEventSeverity.HIGH,
         message: 'Unauthorized admin access attempt',
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
         metadata: {
           path: req.path,
           method: req.method,

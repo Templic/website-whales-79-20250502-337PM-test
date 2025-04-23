@@ -21,7 +21,7 @@ export function applyXssProtection(app: any) {
     category: SecurityEventCategory.SECURITY_INITIALIZATION as any,
     severity: SecurityEventSeverity.INFO,
     message: 'XSS protection middleware initialized',
-    timestamp: new Date().getTime(), // Use timestamp as number
+    timestamp: Date.now(),
     metadata: {
       component: 'xssProtection',
       protections: [
@@ -103,7 +103,7 @@ function xssAttackDetectionMiddleware() {
             category: SecurityEventCategory.ATTACK_ATTEMPT as any,
             severity: SecurityEventSeverity.MEDIUM,
             message: 'Potential XSS attack detected',
-            timestamp: new Date().getTime(), // Use timestamp as number
+            timestamp: Date.now(),
             metadata: {
               path: req.path,
               method: req.method,
@@ -176,7 +176,7 @@ function xssAttackDetectionMiddleware() {
         category: SecurityEventCategory.ATTACK_BLOCKED,
         severity: SecurityEventSeverity.HIGH,
         message: 'XSS attack blocked',
-        timestamp: new Date().getTime(), // Use timestamp as number
+        timestamp: Date.now(),
         metadata: {
           path: req.path,
           method: req.method,
