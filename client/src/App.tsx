@@ -38,7 +38,8 @@ import AdminPortalPage from "@/pages/admin/AdminPortalPage";
 import AnalyticsPage from "@/pages/admin/AnalyticsPage";
 import EnhancedAnalyticsPage from "@/pages/admin/EnhancedAnalyticsPage";
 import SecuritySettingsPage from "@/pages/admin/SecuritySettingsPage";
-import SecurityAlertsPage from "@/pages/admin/SecurityAlertsPage"; 
+import SecurityAlertsPage from "@/pages/admin/SecurityAlertsPage";
+import SecurityDashboardPage from "@/pages/SecurityDashboardPage";
 import RoleManagementPage from "@/pages/admin/RoleManagementPage";
 import UserActivityPage from "@/pages/admin/UserActivityPage";
 import ContentSchedulerPage from "@/pages/admin/ContentSchedulerPage";
@@ -187,6 +188,7 @@ function AppRouter() {
           <ProtectedRoute path="/admin/enhanced-analytics" component={EnhancedAnalyticsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security" component={SecuritySettingsPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/security/alerts" component={SecurityAlertsPage} requiredRole="admin" />
+          <ProtectedRoute path="/admin/security/dashboard" component={SecurityDashboardPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users" component={UsersPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users/roles" component={RoleManagementPage} requiredRole="admin" />
           <ProtectedRoute path="/admin/users/activity" component={UserActivityPage} requiredRole="admin" />

@@ -6,6 +6,7 @@
  */
 
 import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
+import { Request, Response, NextFunction } from 'express';
 
 const logger = new ImmutableSecurityLogger('ANOMALY-DETECTION');
 
@@ -187,4 +188,84 @@ function getExpectedRatio(operationType: string): number {
   };
   
   return ratios[operationType] || 1.0; // Default to 1.0
+}
+
+/**
+ * Express middleware for API request anomaly detection
+ * 
+ * This middleware analyzes incoming API requests for anomalies and
+ * logs suspicious patterns that might indicate security issues.
+ * 
+ * @param req Express request object
+ * @param res Express response object
+ * @param next Express next function
+ */
+export function anomalyDetectionMiddleware(req: Request, res: Response, next: NextFunction): void {
+  // Store start time to measure request duration
+  const startTime = Date.now();
+  
+  // Collect features for anomaly detection
+  const features: Record<string, any> = {
+    method: req.method,
+    path: req.path,
+    clientIp: req.ip,
+    userAgent: req.get('User-Agent'),
+    contentType: req.get('Content-Type'),
+    bodySize: req.body ? JSON.stringify(req.body).length : 0,
+    querySize: req.query ? Object.keys(req.query).length : 0,
+    timestamp: startTime
+  };
+  
+  // Intercept response to analyze it after processing
+  const originalSend = res.send;
+  res.send = function(body: any): Response {
+    // Restore original function
+    res.send = originalSend;
+    
+    // Calculate request duration
+    const duration = Date.now() - startTime;
+    
+    // Add response features
+    features.duration = duration;
+    features.statusCode = res.statusCode;
+    features.responseSize = typeof body === 'string' ? body.length : 
+                           (body ? JSON.stringify(body).length : 0);
+                           
+    // Perform anomaly detection
+    const apiOperationType = `API_${req.method}_${req.path.split('/')[1] || 'root'}`;
+    const result = detectAnomaly(apiOperationType, features);
+    
+    // If an anomaly is detected, log it with detailed information
+    if (result.isAnomaly) {
+      logger.warn(`API anomaly detected: ${result.reason}`, {
+        request: {
+          method: req.method,
+          path: req.path,
+          query: req.query,
+          headers: req.headers,
+          // Don't log sensitive body information
+          bodyKeys: req.body ? Object.keys(req.body) : []
+        },
+        response: {
+          statusCode: res.statusCode,
+          duration,
+          // Don't log sensitive response information
+          size: features.responseSize
+        },
+        anomaly: {
+          score: result.score,
+          confidence: result.confidence,
+          reason: result.reason
+        },
+        timestamp: Date.now(),
+        eventType: SecurityEventType.API_ANOMALY
+      });
+    }
+    
+    // Send the original response
+    return originalSend.call(this, body);
+  };
+  
+  // Continue with request processing
+  next();
 }
