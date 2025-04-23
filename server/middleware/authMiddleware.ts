@@ -12,7 +12,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanc
 /**
  * Ensure user is authenticated
  */
-export function isAuthenticated(req: Request, res: Response, next: NextFunction): void {
+export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
@@ -36,14 +36,9 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
 }
 
 /**
- * Legacy alias for isAuthenticated for backward compatibility
- */
-export const requireAuth = isAuthenticated;
-
-/**
  * Ensure user has admin role
  */
-export function isAdmin(req: Request, res: Response, next: NextFunction): void {
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     res.status(401).json({ 
       error: 'Unauthorized',
@@ -62,7 +57,7 @@ export function isAdmin(req: Request, res: Response, next: NextFunction): void {
 /**
  * Ensure user has a specific role
  */
-export function requireSpecificRole(role: string) {
+export function requireRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       res.status(401).json({ 
@@ -84,7 +79,7 @@ export function requireSpecificRole(role: string) {
         description: `User tried to access resource requiring '${role}' role: ${req.originalUrl}`,
         sourceIp: req.ip,
         action: 'ACCESS_DENIED',
-        userId: req.user?.id as string,
+        userId: String(req.user?.id),
         resource: req.originalUrl,
         timestamp: new Date()
       });
@@ -99,11 +94,6 @@ export function requireSpecificRole(role: string) {
     next();
   };
 }
-
-/**
- * Legacy alias for requireSpecificRole for backward compatibility
- */
-export const requireRole = requireSpecificRole;
 
 /**
  * For development only: bypass authentication for testing
