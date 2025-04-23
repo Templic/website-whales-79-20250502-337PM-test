@@ -36,6 +36,25 @@ const CONFIG = {
     'coverage'
   ],
   fixPatterns: [
+    // Fix malformed type annotations with `: any` pattern
+    {
+      name: 'Malformed parameter type with any',
+      description: 'Fixes malformed type annotations like `param: any` in function calls and declarations',
+      pattern: /(\w+): any([),])/g,
+      replacement: '$1$2'
+    },
+    
+    // Malformed type annotations in callsites
+    {
+      name: 'Malformed function call arguments',
+      description: 'Fixes malformed type annotations in function calls',
+      pattern: /\(([^)]*\w+): any([^)]*)\)/g,
+      fix: (match, before, after) => {
+        // Replace all instances of foo: any with just foo
+        return `(${before}${after})`.replace(/: any/g, '');
+      }
+    },
+    
     // Malformed type annotations
     {
       name: 'Malformed callback parameter type',
