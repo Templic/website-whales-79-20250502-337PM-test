@@ -26,7 +26,7 @@ interface SecurityBlock {
   /**
    * Block timestamp
    */
-  timestamp: Date;
+  timestamp: number;
   
   /**
    * Events in the block
@@ -124,7 +124,7 @@ class SecurityBlockchain {
     const genesisBlock: SecurityBlock = {
       blockId: '0',
       previousHash: '0'.repeat(64),
-      timestamp: new Date(),
+      timestamp: Date.now(),
       events: [],
       merkleRoot: '0'.repeat(64),
       nonce: 0,
@@ -137,7 +137,7 @@ class SecurityBlockchain {
       severity: 'info' as any,
       category: 'system' as any,
       message: 'Genesis block created',
-      timestamp: new Date(),
+      timestamp: Date.now(),
       hash: '',
       blockId: genesisBlock.blockId,
       index: 0
@@ -203,7 +203,7 @@ class SecurityBlockchain {
     // Emit an event
     securityFabric.emit('security:blockchain:event-added', {
       eventId,
-      timestamp: new Date()
+      timestamp: Date.now()
     });
     
     // If there are enough unconfirmed events, create a new block
@@ -233,7 +233,7 @@ class SecurityBlockchain {
     const block: SecurityBlock = {
       blockId: String(this.blocks.length),
       previousHash: previousBlock.hash,
-      timestamp: new Date(),
+      timestamp: Date.now(),
       events,
       merkleRoot: '',
       nonce: 0,
@@ -258,7 +258,7 @@ class SecurityBlockchain {
     // Emit an event
     securityFabric.emit('security:blockchain:block-created', {
       blockId: block.blockId,
-      timestamp: new Date(),
+      timestamp: Date.now(),
       eventsCount: events.length
     });
     
@@ -481,9 +481,9 @@ class SecurityBlockchain {
         new Date(filter.startTimestamp).getTime();
       
       events = events.filter(event => {
-        const eventTime = event.timestamp instanceof Date ? 
-          event.timestamp.getTime() : 
-          new Date(event.timestamp).getTime();
+        const eventTime = typeof event.timestamp === 'number' ? 
+          event.timestamp : 
+          (event.timestamp ? new Date(event.timestamp).getTime() : 0);
         
         return eventTime >= startTime;
       });
@@ -495,9 +495,9 @@ class SecurityBlockchain {
         new Date(filter.endTimestamp).getTime();
       
       events = events.filter(event => {
-        const eventTime = event.timestamp instanceof Date ? 
-          event.timestamp.getTime() : 
-          new Date(event.timestamp).getTime();
+        const eventTime = typeof event.timestamp === 'number' ? 
+          event.timestamp : 
+          (event.timestamp ? new Date(event.timestamp).getTime() : 0);
         
         return eventTime <= endTime;
       });
@@ -576,7 +576,7 @@ class SecurityBlockchain {
     unconfirmedEventCount: number;
     totalEventCount: number;
     averageEventsPerBlock: number;
-    lastBlockTime: Date | null;
+    lastBlockTime: number | null;
   } {
     const blockCount = this.getBlockCount();
     const unconfirmedEventCount = this.getUnconfirmedEventCount();
