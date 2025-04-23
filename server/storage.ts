@@ -845,68 +845,94 @@ export class PostgresStorage implements IStorage {
         // Get the inserted posts to link them with categories
         const insertedPosts = await db.select().from(posts);
 
-        // Link posts to categories (post_categories junction table)
+        // Link posts to categories using the ORM instead of raw SQL
         if (insertedPosts.length > 0) {
-          // First post categories: Music, Cosmic Exploration
-          awaitdb.execute(sql`
-            INSERT INTO post_categories (post_id, category_id)
-            VALUES 
-              (${insertedPosts[0].id}, ${categoryMap['music']}),
-              (${insertedPosts[0].id}, ${categoryMap['cosmic-exploration']})
-          `);
-
-          // Second post categories: Ocean Conservation, Events
-          await db.execute(sql`
-            INSERT INTO post_categories (post_id, category_id)
-            VALUES 
-              (${insertedPosts[1].id}, ${categoryMap['ocean-conservation']}),
-              (${insertedPosts[1].id}, ${categoryMap['events']})
-          `);
-
-          // Third post categories: Music
-          await db.execute(sql`
-            INSERT INTO post_categories (post_id, category_id)
-            VALUES 
-              (${insertedPosts[2].id}, ${categoryMap['music']})
-          `);
+          try {
+            // Define post_categories junction table using Drizzle ORM
+            const postCategoriesTable = pgTable('post_categories', {
+              id: serial('id').primaryKey(),
+              post_id: integer('post_id').notNull(),
+              category_id: integer('category_id').notNull()
+            });
+            
+            // Create arrays of post-category relationships
+            const postCategoryRelations = [];
+            
+            // First post categories: Music, Cosmic Exploration
+            if (insertedPosts[0] && categoryMap['music'] && categoryMap['cosmic-exploration']) {
+              postCategoryRelations.push(
+                { post_id: insertedPosts[0].id, category_id: categoryMap['music'] },
+                { post_id: insertedPosts[0].id, category_id: categoryMap['cosmic-exploration'] }
+              );
+            }
+            
+            // Second post categories: Ocean Conservation, Events
+            if (insertedPosts[1] && categoryMap['ocean-conservation'] && categoryMap['events']) {
+              postCategoryRelations.push(
+                { post_id: insertedPosts[1].id, category_id: categoryMap['ocean-conservation'] },
+                { post_id: insertedPosts[1].id, category_id: categoryMap['events'] }
+              );
+            }
+            
+            // Third post categories: Music
+            if (insertedPosts[2] && categoryMap['music']) {
+              postCategoryRelations.push(
+                { post_id: insertedPosts[2].id, category_id: categoryMap['music'] }
+              );
+            }
+            
+            // Batch insert all relations
+            if (postCategoryRelations.length > 0) {
+              await db.insert(postCategoriesTable).values(postCategoryRelations);
+            }
+          } catch (error) {
+            console.error('Error creating post-category relationships:', error);
+          }
         }
       }
 
-      // Initialize collaboration proposals
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS collaboration_proposals (
-          id SERIAL PRIMARY KEY,
-          artist_name TEXT NOT NULL,
-          email TEXT NOT NULL,
-          proposal_type TEXT NOT NULL,
-          description TEXT NOT NULL,
-          status TEXT DEFAULT 'pending',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
-
-      const existingProposals = await db.execute(sql`SELECT * FROM collaboration_proposals`);
-      if (existingProposals.rowCount === 0) {
-        await db.execute(sql`
-          INSERT INTO collaboration_proposals (artist_name, email, proposal_type, description, status)
-          VALUES 
-            ('Luna Echo', 'luna@example.com', 'Music Collaboration', 'Interested in creating a cosmic ambient track together', 'pending'),
-            ('DJ Starlight', 'djstar@example.com', 'Live Performance', 'Would love to collaborate for an ocean-themed event', 'pending'),
-            ('The Wave Riders', 'wave@example.com', 'Album Feature', 'Proposing a joint EP focused on marine conservation', 'pending')
-        `);
+      // Define collaboration proposals table using Drizzle ORM
+      const collaborationProposalsTable = pgTable('collaboration_proposals', {
+        id: serial('id').primaryKey(),
+        artist_name: text('artist_name').notNull(),
+        email: text('email').notNull(),
+        proposal_type: text('proposal_type').notNull(),
+        description: text('description').notNull(),
+        status: text('status').default('pending'),
+        created_at: timestamp('created_at').defaultNow()
+      });
+      
+      // Use Drizzle's ORM methods instead of raw SQL
+      try {
+        const existingProposals = await db.select().from(collaborationProposalsTable);
+        if (existingProposals.length === 0) {
+          await db.insert(collaborationProposalsTable).values([
+            {
+              artist_name: 'Luna Echo',
+              email: 'luna@example.com',
+              proposal_type: 'Music Collaboration',
+              description: 'Interested in creating a cosmic ambient track together',
+              status: 'pending'
+            },
+            {
+              artist_name: 'DJ Starlight',
+              email: 'djstar@example.com',
+              proposal_type: 'Live Performance',
+              description: 'Would love to collaborate for an ocean-themed event',
+              status: 'pending'
+            },
+            {
+              artist_name: 'The Wave Riders',
+              email: 'wave@example.com',
+              proposal_type: 'Album Feature',
+              description: 'Proposing a joint EP focused on marine conservation',
+              status: 'pending'
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error initializing collaboration proposals:', error);
       }
-
-      // Initialize patrons
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS patrons (
-          id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          email TEXT NOT NULL,
-          tier TEXT NOT NULL,
-          subscription_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          active BOOLEAN DEFAULT true
-        )
-      `);
 
       // Define patrons table using Drizzle ORM
       const patronsTable = pgTable('patrons', {
