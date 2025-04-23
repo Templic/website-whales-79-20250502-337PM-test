@@ -908,15 +908,28 @@ export class PostgresStorage implements IStorage {
         )
       `);
 
-      const existingPatrons = await db.execute(sql`SELECT * FROM patrons`);
-      if (existingPatrons.rowCount === 0) {
-        await db.execute(sql`
-          INSERT INTO patrons (name, email, tier)
-          VALUES 
-            ('Alex Thompson', 'alex@example.com', 'Whale Guardian'),
-            ('Maria Garcia', 'maria@example.com', 'Ocean Protector'),
-            ('James Wilson', 'james@example.com', 'Wave Rider')
-        `);
+      // Define patrons table using Drizzle ORM
+      const patronsTable = pgTable('patrons', {
+        id: serial('id').primaryKey(),
+        name: text('name').notNull(),
+        email: text('email').notNull(),
+        tier: text('tier').notNull(),
+        subscription_date: timestamp('subscription_date').defaultNow(),
+        active: integer('active').default(1)
+      });
+      
+      // Use Drizzle's ORM methods instead of raw SQL
+      try {
+        const existingPatrons = await db.select().from(patronsTable);
+        if (existingPatrons.length === 0) {
+          await db.insert(patronsTable).values([
+            { name: 'Alex Thompson', email: 'alex@example.com', tier: 'Whale Guardian' },
+            { name: 'Maria Garcia', email: 'maria@example.com', tier: 'Ocean Protector' },
+            { name: 'James Wilson', email: 'james@example.com', tier: 'Wave Rider' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error initializing patrons:', error);
       }
 
       // Initialize tour dates
