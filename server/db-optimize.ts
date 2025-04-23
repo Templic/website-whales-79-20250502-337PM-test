@@ -231,8 +231,13 @@ async function setupMaintenanceTasks() {
 // Import SQLInjectionPrevention module
 import { sqlInjectionPrevention } from './security/advanced/database/SQLInjectionPrevention';
 
-// Utility function to execute query with detailed performance metrics and SQL injection protection
-export async function executeOptimizedQuery(query: string, params?: any[]) {
+// Maximum number of retry attempts for database queries
+const MAX_RETRY_ATTEMPTS = 3;
+// Base delay in milliseconds before retrying (will be multiplied by attempt number)
+const BASE_RETRY_DELAY = 300;
+
+// Utility function to execute query with detailed performance metrics, SQL injection protection, and robust error handling
+export async function executeOptimizedQuery(query: string, params?: any[], retryCount = 0) {
   const start = Date.now();
   try {
     // Analyze the query for potential SQL injection
@@ -257,20 +262,44 @@ export async function executeOptimizedQuery(query: string, params?: any[]) {
     }
     
     return result;
-  } catch (error) {
+  } catch (error: any) {
     const duration = Date.now() - start;
+    
+    // Check if this is a connection error that we should retry
+    const isConnectionError = error.code === '57P01' || // admin shutdown
+                            error.code === '08006' || // connection terminated
+                            error.code === '08001' || // connection refused
+                            error.code === '08004' || // rejected connection
+                            error.code === 'ECONNRESET' || // connection reset by peer
+                            error.code === 'ETIMEDOUT' || // connection timeout
+                            error.message?.includes('Connection terminated');
+    
+    if (isConnectionError && retryCount < MAX_RETRY_ATTEMPTS) {
+      // Calculate exponential backoff delay
+      const retryDelay = BASE_RETRY_DELAY * Math.pow(2, retryCount);
+      
+      log(`Database connection error (${error.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      
+      // Retry the query with incremented retry count
+      return executeOptimizedQuery(query, params, retryCount + 1);
+    }
+    
+    // Log all errors
     console.error(`Query error after ${duration}ms:`, error);
+    
+    // Rethrow the error if we've exhausted retries or it's not a connection error
     throw error;
   }
 }
 
 // Connection pooling optimization
-export async function getConnectionPoolStats() {
+export async function getConnectionPoolStats(retryCount = 0) {
   try {
-    // Use parameterized query where applicable
-    // For database catalog operations, use safe system function calls
-    // All column names and table names here are fixed system table references, not user inputs
-    const result = await pgPool.query(`
+    // Use the optimized query function to leverage SQL injection prevention and retry logic
+    const result = await executeOptimizedQuery(`
       SELECT count(*) as total,
              count(*) FILTER (WHERE state = $1) as active,
              count(*) FILTER (WHERE state = $2) as idle,
@@ -298,12 +327,14 @@ export async function getConnectionPoolStats() {
     };
   } catch (error) {
     console.error('Failed to get connection pool stats:', error);
+    
     // Return default values instead of error to prevent frontend from crashing
     return {
       total: 0,
       active: 0,
       idle: 0,
-      waiting: 0
+      waiting: 0,
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 }
