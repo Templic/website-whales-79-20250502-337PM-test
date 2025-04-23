@@ -1,72 +1,43 @@
 /**
  * Security Context
  * 
- * This module implements the security context for each request,
- * gathering all relevant security information for making access decisions.
+ * This module provides a comprehensive security context for each request.
+ * It encapsulates all security-related information about a request and
+ * provides methods for risk and trust assessment.
  */
 
 import { Request, Response } from 'express';
-import { createHash } from 'crypto';
+import { SecurityPosture } from '../SecurityFabric';
 
 /**
- * Device information extracted from request
+ * Resource information
  */
-export interface DeviceInfo {
+export interface ResourceInfo {
   /**
-   * Browser user agent
+   * Resource type (e.g., 'api', 'file', 'data')
    */
-  userAgent: string;
+  type: string;
   
   /**
-   * IP address
+   * Resource identifier
    */
-  ip: string;
+  id: string;
   
   /**
-   * Calculated fingerprint
+   * Sensitivity level of the resource (0-100)
    */
-  fingerprint: string;
+  sensitivityLevel: number;
   
   /**
-   * Device type (desktop, mobile, tablet, etc.)
+   * Required permissions to access the resource
    */
-  deviceType: string;
-  
-  /**
-   * Operating system
-   */
-  os: string;
-  
-  /**
-   * Browser name and version
-   */
-  browser: string;
-  
-  /**
-   * Any available device identifiers
-   */
-  deviceId?: string;
+  requiredPermissions: string[];
 }
 
 /**
- * User information extracted from request
+ * Authentication information
  */
-export interface UserInfo {
-  /**
-   * User ID 
-   */
-  id?: string | number;
-  
-  /**
-   * Username
-   */
-  username?: string;
-  
-  /**
-   * User roles
-   */
-  roles?: string[];
-  
+export interface AuthenticationInfo {
   /**
    * Whether the user is authenticated
    */
@@ -75,17 +46,52 @@ export interface UserInfo {
   /**
    * Authentication method used
    */
-  authMethod?: string;
+  method: string;
   
   /**
-   * When the user was authenticated
+   * Authentication strength (0-1)
    */
-  authTimestamp?: Date;
+  strength: number;
   
   /**
-   * Multi-factor authentication status
+   * Authentication factors present
    */
-  mfaCompleted?: boolean;
+  factors: string[];
+  
+  /**
+   * Time elapsed since authentication (in seconds)
+   */
+  timeSinceAuthentication: number;
+}
+
+/**
+ * User information
+ */
+export interface UserInfo {
+  /**
+   * User ID
+   */
+  id: string;
+  
+  /**
+   * User roles
+   */
+  roles: string[];
+  
+  /**
+   * User permissions
+   */
+  permissions: string[];
+  
+  /**
+   * User risk level (0-1)
+   */
+  riskLevel: number;
+  
+  /**
+   * User trust level (0-1)
+   */
+  trustLevel: number;
 }
 
 /**
@@ -93,29 +99,29 @@ export interface UserInfo {
  */
 export interface RequestInfo {
   /**
-   * HTTP method
+   * Request ID
+   */
+  id: string;
+  
+  /**
+   * Request method
    */
   method: string;
   
   /**
-   * Request path
+   * Request URL
    */
-  path: string;
+  url: string;
   
   /**
-   * Query parameters
+   * Client IP address
    */
-  query: Record<string, any>;
+  ip: string;
   
   /**
-   * Request body
+   * User agent
    */
-  body: any;
-  
-  /**
-   * Request headers
-   */
-  headers: Record<string, string>;
+  userAgent: string;
   
   /**
    * Request timestamp
@@ -123,34 +129,64 @@ export interface RequestInfo {
   timestamp: Date;
   
   /**
-   * Whether the request is over HTTPS
+   * Request headers
    */
-  isSecure: boolean;
+  headers: Record<string, string>;
 }
 
 /**
- * Behavioral analysis results
+ * Environmental information
  */
-export interface BehavioralAnalysis {
+export interface EnvironmentalInfo {
+  /**
+   * Current security posture
+   */
+  securityPosture: SecurityPosture;
+  
+  /**
+   * Global threat level (0-1)
+   */
+  threatLevel: number;
+  
+  /**
+   * Whether the request is coming from a known location
+   */
+  knownLocation: boolean;
+  
+  /**
+   * Whether the request is coming from a known device
+   */
+  knownDevice: boolean;
+  
+  /**
+   * Location risk level (0-1)
+   */
+  locationRiskLevel: number;
+  
+  /**
+   * Device risk level (0-1)
+   */
+  deviceRiskLevel: number;
+}
+
+/**
+ * Behavioral analysis information
+ */
+export interface BehavioralAnalysisInfo {
   /**
    * Anomaly score (0-1)
    */
   anomalyScore: number;
   
   /**
-   * Confidence in the anomaly score (0-1)
+   * Confidence in the analysis (0-1)
    */
   confidence: number;
   
   /**
-   * Any anomalies detected
+   * Detected anomalies
    */
   anomalies: string[];
-  
-  /**
-   * Last known normal behavior
-   */
-  lastNormalBehavior?: Date;
   
   /**
    * Pattern match score (0-1)
@@ -159,36 +195,11 @@ export interface BehavioralAnalysis {
 }
 
 /**
- * Resource information
+ * Threat assessment information
  */
-export interface ResourceInfo {
+export interface ThreatAssessmentInfo {
   /**
-   * Resource type
-   */
-  type: string;
-  
-  /**
-   * Resource identifier
-   */
-  id?: string;
-  
-  /**
-   * Resource sensitivity level (0-100)
-   */
-  sensitivityLevel: number;
-  
-  /**
-   * Required permissions
-   */
-  requiredPermissions: string[];
-}
-
-/**
- * Threat assessment result
- */
-export interface ThreatAssessment {
-  /**
-   * Overall risk score (0-1)
+   * Risk score (0-1)
    */
   riskScore: number;
   
@@ -198,370 +209,435 @@ export interface ThreatAssessment {
   indicators: string[];
   
   /**
-   * IP address reputation (0-1, higher is worse)
+   * IP reputation score (0-1)
    */
   ipReputation: number;
   
   /**
-   * Device reputation (0-1, higher is worse)
+   * Device reputation score (0-1)
    */
   deviceReputation: number;
   
   /**
-   * Known malicious patterns detected
+   * Detected malicious patterns
    */
   maliciousPatterns: string[];
 }
 
 /**
- * Context status after evaluation
+ * Security context status
  */
-export type ContextStatus = 'collecting' | 'evaluating' | 'approved' | 'denied' | 'challenge' | 'error';
+export type SecurityContextStatus = 'pending' | 'approved' | 'denied' | 'challenge';
 
 /**
- * Security Context
- * Encapsulates all security-relevant information about a request
+ * Security context class
  */
 export class SecurityContext {
-  private req: Request;
-  private res: Response;
+  /**
+   * Resource information
+   */
+  private resource: ResourceInfo | null = null;
   
   /**
-   * Device information
+   * Authentication information
    */
-  public deviceInfo: DeviceInfo;
+  private authentication: AuthenticationInfo | null = null;
   
   /**
    * User information
    */
-  public userInfo: UserInfo;
+  private user: UserInfo | null = null;
   
   /**
    * Request information
    */
-  public requestInfo: RequestInfo;
+  private request: RequestInfo;
   
   /**
-   * Resource being accessed
+   * Environmental information
    */
-  public resourceInfo: ResourceInfo | null = null;
+  private environment: EnvironmentalInfo;
   
   /**
-   * Behavioral analysis results
+   * Behavioral analysis information
    */
-  public behavioralAnalysis: BehavioralAnalysis | null = null;
+  private behavioralAnalysis: BehavioralAnalysisInfo | null = null;
   
   /**
-   * Threat assessment
+   * Threat assessment information
    */
-  public threatAssessment: ThreatAssessment | null = null;
+  private threatAssessment: ThreatAssessmentInfo | null = null;
   
   /**
-   * Current context status
+   * Context status
    */
-  public status: ContextStatus = 'collecting';
+  private status: SecurityContextStatus = 'pending';
   
   /**
-   * Reason for current status
+   * Status reason
    */
-  public statusReason: string = '';
+  private statusReason: string = '';
   
   /**
-   * When the context was created
+   * Create a new security context
    */
-  public createdAt: Date = new Date();
-  
-  /**
-   * Context identifier
-   */
-  public readonly id: string;
-  
-  /**
-   * Create a security context from Express request and response
-   */
-  constructor(req: Request, res: Response) {
-    this.req = req;
-    this.res = res;
-    this.id = this.generateContextId();
-    
-    // Extract device information
-    this.deviceInfo = this.extractDeviceInfo();
-    
-    // Extract user information
-    this.userInfo = this.extractUserInfo();
-    
+  constructor(
+    req: Request,
+    res: Response,
+    environment: {
+      securityPosture: SecurityPosture;
+      threatLevel: number;
+    }
+  ) {
     // Extract request information
-    this.requestInfo = this.extractRequestInfo();
+    this.request = {
+      id: (req as any).id || Math.random().toString(36).substring(2, 15),
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip || req.socket.remoteAddress || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      timestamp: new Date(),
+      headers: {}
+    };
+    
+    // Copy headers
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === 'string') {
+        this.request.headers[key] = value;
+      } else if (Array.isArray(value)) {
+        this.request.headers[key] = value.join(', ');
+      }
+    }
+    
+    // Create environmental information
+    this.environment = {
+      securityPosture: environment.securityPosture,
+      threatLevel: environment.threatLevel,
+      knownLocation: false,
+      knownDevice: false,
+      locationRiskLevel: 0.5,
+      deviceRiskLevel: 0.5
+    };
+    
+    // Extract user information if available
+    if (req.user) {
+      this.setUser({
+        id: (req.user as any).id || 'unknown',
+        roles: Array.isArray((req.user as any).roles)
+          ? (req.user as any).roles
+          : [(req.user as any).role].filter(Boolean),
+        permissions: Array.isArray((req.user as any).permissions)
+          ? (req.user as any).permissions
+          : [],
+        riskLevel: (req.user as any).riskLevel || 0.5,
+        trustLevel: (req.user as any).trustLevel || 0.5
+      });
+      
+      // Set authentication status
+      this.setAuthentication({
+        isAuthenticated: true,
+        method: (req.user as any).authMethod || 'unknown',
+        strength: (req.user as any).authStrength || 0.5,
+        factors: (req.user as any).authFactors || ['password'],
+        timeSinceAuthentication: 0
+      });
+    } else {
+      // Set as unauthenticated
+      this.setAuthentication({
+        isAuthenticated: false,
+        method: 'none',
+        strength: 0,
+        factors: [],
+        timeSinceAuthentication: 0
+      });
+    }
   }
-
+  
   /**
-   * Set the resource being accessed
+   * Set resource information
    */
-  public setResource(resourceInfo: ResourceInfo): void {
-    this.resourceInfo = resourceInfo;
+  public setResource(resource: ResourceInfo): void {
+    this.resource = resource;
   }
-
+  
   /**
-   * Add behavioral analysis results
+   * Set authentication information
    */
-  public setBehavioralAnalysis(analysis: BehavioralAnalysis): void {
-    this.behavioralAnalysis = analysis;
+  public setAuthentication(authentication: AuthenticationInfo): void {
+    this.authentication = authentication;
   }
-
+  
   /**
-   * Add threat assessment
+   * Set user information
    */
-  public setThreatAssessment(assessment: ThreatAssessment): void {
-    this.threatAssessment = assessment;
+  public setUser(user: UserInfo): void {
+    this.user = user;
   }
-
+  
   /**
-   * Update context status
+   * Set behavioral analysis information
    */
-  public setStatus(status: ContextStatus, reason: string = ''): void {
+  public setBehavioralAnalysis(behavioralAnalysis: BehavioralAnalysisInfo): void {
+    this.behavioralAnalysis = behavioralAnalysis;
+  }
+  
+  /**
+   * Set threat assessment information
+   */
+  public setThreatAssessment(threatAssessment: ThreatAssessmentInfo): void {
+    this.threatAssessment = threatAssessment;
+  }
+  
+  /**
+   * Set context status
+   */
+  public setStatus(status: SecurityContextStatus, reason: string): void {
     this.status = status;
     this.statusReason = reason;
   }
-
+  
   /**
-   * Calculate trust score based on all context information
-   * Returns a score between 0-1 where higher means more trustworthy
+   * Get resource information
+   */
+  public getResource(): ResourceInfo | null {
+    return this.resource;
+  }
+  
+  /**
+   * Get authentication information
+   */
+  public getAuthentication(): AuthenticationInfo | null {
+    return this.authentication;
+  }
+  
+  /**
+   * Get user information
+   */
+  public getUser(): UserInfo | null {
+    return this.user;
+  }
+  
+  /**
+   * Get request information
+   */
+  public getRequest(): RequestInfo {
+    return this.request;
+  }
+  
+  /**
+   * Get environmental information
+   */
+  public getEnvironment(): EnvironmentalInfo {
+    return this.environment;
+  }
+  
+  /**
+   * Get behavioral analysis information
+   */
+  public getBehavioralAnalysis(): BehavioralAnalysisInfo | null {
+    return this.behavioralAnalysis;
+  }
+  
+  /**
+   * Get threat assessment information
+   */
+  public getThreatAssessment(): ThreatAssessmentInfo | null {
+    return this.threatAssessment;
+  }
+  
+  /**
+   * Get context status
+   */
+  public getStatus(): { status: SecurityContextStatus; reason: string } {
+    return {
+      status: this.status,
+      reason: this.statusReason
+    };
+  }
+  
+  /**
+   * Check if the context has all required information
+   */
+  public isComplete(): boolean {
+    return (
+      this.resource !== null &&
+      this.authentication !== null &&
+      this.user !== null &&
+      this.behavioralAnalysis !== null &&
+      this.threatAssessment !== null
+    );
+  }
+  
+  /**
+   * Calculate a trust score based on all available information (0-1)
    */
   public calculateTrustScore(): number {
-    let score = 0.5; // Start with neutral score
+    // Start with a base score
+    let trustScore = 0.5;
+    let factorsConsidered = 0;
     
-    // Adjust based on user authentication
-    if (this.userInfo.isAuthenticated) {
-      score += 0.2;
-      if (this.userInfo.mfaCompleted) {
-        score += 0.1;
+    // Authentication factors
+    if (this.authentication) {
+      // Authentication strength
+      trustScore += this.authentication.strength * 0.2;
+      factorsConsidered++;
+      
+      // Multi-factor authentication bonus
+      if (this.authentication.factors.length > 1) {
+        trustScore += 0.1 * Math.min(this.authentication.factors.length - 1, 2);
+        factorsConsidered++;
       }
+      
+      // Authentication recency
+      if (this.authentication.timeSinceAuthentication < 300) { // Less than 5 minutes
+        trustScore += 0.1;
+      } else if (this.authentication.timeSinceAuthentication > 3600) { // More than 1 hour
+        trustScore -= 0.1;
+      }
+      factorsConsidered++;
+    } else {
+      // No authentication is a significant trust reduction
+      trustScore -= 0.3;
+      factorsConsidered++;
     }
     
-    // Adjust based on connection security
-    if (this.requestInfo.isSecure) {
-      score += 0.1;
+    // User trust level
+    if (this.user) {
+      trustScore += this.user.trustLevel * 0.2;
+      factorsConsidered++;
     }
     
-    // Adjust based on behavioral analysis
+    // Environmental factors
+    if (this.environment.knownLocation) {
+      trustScore += 0.1;
+      factorsConsidered++;
+    }
+    
+    if (this.environment.knownDevice) {
+      trustScore += 0.1;
+      factorsConsidered++;
+    }
+    
+    // Behavioral analysis
     if (this.behavioralAnalysis) {
-      // Lower anomaly score is better
-      score += (1 - this.behavioralAnalysis.anomalyScore) * 0.2;
+      // Pattern match score contributes to trust
+      trustScore += this.behavioralAnalysis.patternMatchScore * 0.2;
+      factorsConsidered++;
       
-      // Higher pattern match is better
-      score += this.behavioralAnalysis.patternMatchScore * 0.1;
+      // Anomaly score reduces trust
+      trustScore -= this.behavioralAnalysis.anomalyScore * 0.3;
+      factorsConsidered++;
     }
     
-    // Adjust based on threat assessment
-    if (this.threatAssessment) {
-      // Lower risk score is better
-      score -= this.threatAssessment.riskScore * 0.3;
-      
-      // Each malicious pattern reduces score
-      score -= this.threatAssessment.maliciousPatterns.length * 0.05;
-    }
-    
-    // Ensure score is between 0 and 1
-    return Math.max(0, Math.min(1, score));
+    // Normalize the trust score to be between 0 and 1
+    return Math.max(0, Math.min(1, trustScore));
   }
-
+  
   /**
-   * Calculate a risk score based on all context information
-   * Returns a score between 0-1 where higher means more risky
+   * Calculate a risk score based on all available information (0-1)
    */
   public calculateRiskScore(): number {
-    // Inverse of trust score with some additional logic
-    const baseRisk = 1 - this.calculateTrustScore();
+    // Start with a base score based on global threat level
+    let riskScore = this.environment.threatLevel * 0.3;
+    let factorsConsidered = 1;
     
-    // Add additional risk factors
-    let adjustedRisk = baseRisk;
-    
-    // High sensitivity resources are riskier
-    if (this.resourceInfo && this.resourceInfo.sensitivityLevel > 50) {
-      adjustedRisk += (this.resourceInfo.sensitivityLevel / 100) * 0.2;
-    }
-    
-    // Mutation operations are riskier
-    if (this.requestInfo.method !== 'GET') {
-      adjustedRisk += 0.1;
-    }
-    
-    // If the threat assessment shows risk, amplify it
-    if (this.threatAssessment && this.threatAssessment.riskScore > 0.7) {
-      adjustedRisk += 0.2;
-    }
-    
-    // If behavioral analysis detected anomalies, increase risk
-    if (this.behavioralAnalysis && this.behavioralAnalysis.anomalies.length > 0) {
-      adjustedRisk += 0.15;
-    }
-    
-    // Ensure score is between 0 and 1
-    return Math.max(0, Math.min(1, adjustedRisk));
-  }
-
-  /**
-   * Get a simplified version of the context for logging
-   */
-  public toLogFormat(): Record<string, any> {
-    return {
-      contextId: this.id,
-      timestamp: this.createdAt.toISOString(),
-      status: this.status,
-      user: this.userInfo.isAuthenticated ? {
-        id: this.userInfo.id,
-        username: this.userInfo.username,
-        roles: this.userInfo.roles
-      } : 'anonymous',
-      device: {
-        ip: this.deviceInfo.ip,
-        userAgent: this.deviceInfo.userAgent,
-        fingerprint: this.deviceInfo.fingerprint
-      },
-      request: {
-        method: this.requestInfo.method,
-        path: this.requestInfo.path,
-        isSecure: this.requestInfo.isSecure
-      },
-      resource: this.resourceInfo,
-      riskScore: this.calculateRiskScore(),
-      trustScore: this.calculateTrustScore()
-    };
-  }
-
-  /**
-   * Generate a unique ID for this context
-   */
-  private generateContextId(): string {
-    const timestamp = new Date().getTime().toString();
-    const ip = this.req.ip || '0.0.0.0';
-    const userAgent = this.req.headers['user-agent'] || 'unknown';
-    const path = this.req.originalUrl || this.req.url || '/';
-    
-    const hash = createHash('sha256');
-    hash.update(`${timestamp}:${ip}:${userAgent}:${path}`);
-    return hash.digest('hex').substring(0, 16);
-  }
-
-  /**
-   * Extract device information from request
-   */
-  private extractDeviceInfo(): DeviceInfo {
-    const userAgent = this.req.headers['user-agent'] || 'unknown';
-    const ip = this.req.ip || this.req.socket.remoteAddress || '0.0.0.0';
-    
-    // Simple device type detection
-    let deviceType = 'unknown';
-    let os = 'unknown';
-    let browser = 'unknown';
-    
-    if (userAgent.includes('Mobile')) {
-      deviceType = 'mobile';
-    } else if (userAgent.includes('Tablet')) {
-      deviceType = 'tablet';
-    } else {
-      deviceType = 'desktop';
-    }
-    
-    // Simple OS detection
-    if (userAgent.includes('Windows')) {
-      os = 'Windows';
-    } else if (userAgent.includes('Mac OS')) {
-      os = 'MacOS';
-    } else if (userAgent.includes('Linux')) {
-      os = 'Linux';
-    } else if (userAgent.includes('Android')) {
-      os = 'Android';
-    } else if (userAgent.includes('iOS')) {
-      os = 'iOS';
-    }
-    
-    // Simple browser detection
-    if (userAgent.includes('Chrome')) {
-      browser = 'Chrome';
-    } else if (userAgent.includes('Firefox')) {
-      browser = 'Firefox';
-    } else if (userAgent.includes('Safari')) {
-      browser = 'Safari';
-    } else if (userAgent.includes('Edge')) {
-      browser = 'Edge';
-    }
-    
-    // Generate fingerprint
-    const fingerprint = this.generateDeviceFingerprint(ip, userAgent);
-    
-    return {
-      userAgent,
-      ip,
-      fingerprint,
-      deviceType,
-      os,
-      browser,
-      deviceId: (this.req as any).cookies?.deviceId
-    };
-  }
-
-  /**
-   * Extract user information from request
-   */
-  private extractUserInfo(): UserInfo {
-    const user = this.req.user || (this.req as any).session?.user;
-    
-    if (!user) {
-      return {
-        isAuthenticated: false
-      };
-    }
-    
-    return {
-      id: user.id,
-      username: user.username,
-      roles: Array.isArray(user.roles) ? user.roles : (user.role ? [user.role] : []),
-      isAuthenticated: true,
-      authMethod: (this.req as any).authMethod || 'session',
-      authTimestamp: user.lastLogin ? new Date(user.lastLogin) : new Date(),
-      mfaCompleted: user.mfaCompleted || false
-    };
-  }
-
-  /**
-   * Extract request information
-   */
-  private extractRequestInfo(): RequestInfo {
-    return {
-      method: this.req.method,
-      path: this.req.originalUrl || this.req.url || '/',
-      query: this.req.query,
-      body: this.req.body,
-      headers: this.getFilteredHeaders(),
-      timestamp: new Date(),
-      isSecure: this.req.secure || this.req.headers['x-forwarded-proto'] === 'https'
-    };
-  }
-
-  /**
-   * Generate a fingerprint for the device
-   */
-  private generateDeviceFingerprint(ip: string, userAgent: string): string {
-    const data = `${ip}:${userAgent}`;
-    const hash = createHash('sha256');
-    hash.update(data);
-    return hash.digest('hex');
-  }
-
-  /**
-   * Get filtered request headers (excludes sensitive headers)
-   */
-  private getFilteredHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {};
-    const sensitiveHeaders = ['authorization', 'cookie', 'x-api-key'];
-    
-    for (const [key, value] of Object.entries(this.req.headers)) {
-      if (!sensitiveHeaders.includes(key.toLowerCase())) {
-        headers[key] = Array.isArray(value) ? value.join(', ') : String(value);
+    // Threat assessment
+    if (this.threatAssessment) {
+      // Direct risk score
+      riskScore += this.threatAssessment.riskScore * 0.3;
+      factorsConsidered++;
+      
+      // IP reputation
+      riskScore += (1 - this.threatAssessment.ipReputation) * 0.1;
+      factorsConsidered++;
+      
+      // Device reputation
+      riskScore += (1 - this.threatAssessment.deviceReputation) * 0.1;
+      factorsConsidered++;
+      
+      // Malicious patterns
+      if (this.threatAssessment.maliciousPatterns.length > 0) {
+        riskScore += Math.min(this.threatAssessment.maliciousPatterns.length * 0.05, 0.2);
+        factorsConsidered++;
       }
     }
     
-    return headers;
+    // Behavioral analysis
+    if (this.behavioralAnalysis) {
+      // Anomaly score
+      riskScore += this.behavioralAnalysis.anomalyScore * 0.3 * this.behavioralAnalysis.confidence;
+      factorsConsidered++;
+    }
+    
+    // User risk level
+    if (this.user) {
+      riskScore += this.user.riskLevel * 0.2;
+      factorsConsidered++;
+    }
+    
+    // Environmental factors
+    riskScore += this.environment.locationRiskLevel * 0.1;
+    factorsConsidered++;
+    
+    riskScore += this.environment.deviceRiskLevel * 0.1;
+    factorsConsidered++;
+    
+    // Resource sensitivity increases risk
+    if (this.resource) {
+      riskScore += (this.resource.sensitivityLevel / 100) * 0.2;
+      factorsConsidered++;
+    }
+    
+    // Normalize the risk score to be between 0 and 1
+    return Math.max(0, Math.min(1, riskScore / factorsConsidered * factorsConsidered));
   }
+  
+  /**
+   * Check if the user has the required permissions
+   */
+  public hasRequiredPermissions(): boolean {
+    if (!this.resource || !this.user) {
+      return false;
+    }
+    
+    // No permissions required
+    if (this.resource.requiredPermissions.length === 0) {
+      return true;
+    }
+    
+    // Check if user has all required permissions
+    return this.resource.requiredPermissions.every(
+      permission => this.user!.permissions.includes(permission)
+    );
+  }
+  
+  /**
+   * Get a summary of the security context
+   */
+  public getSummary(): Record<string, any> {
+    return {
+      request: this.request,
+      user: this.user ? { id: this.user.id, roles: this.user.roles } : null,
+      resource: this.resource ? { type: this.resource.type, id: this.resource.id, sensitivityLevel: this.resource.sensitivityLevel } : null,
+      authentication: this.authentication ? { isAuthenticated: this.authentication.isAuthenticated, method: this.authentication.method, factors: this.authentication.factors.length } : null,
+      trustScore: this.calculateTrustScore(),
+      riskScore: this.calculateRiskScore(),
+      status: this.status,
+      statusReason: this.statusReason
+    };
+  }
+}
+
+/**
+ * Create a security context for a request
+ */
+export function createSecurityContext(
+  req: Request,
+  res: Response,
+  environment: {
+    securityPosture: SecurityPosture;
+    threatLevel: number;
+  }
+): SecurityContext {
+  return new SecurityContext(req, res, environment);
 }

@@ -1,141 +1,252 @@
 /**
- * Security Configuration Interface
+ * Security Configuration
  * 
- * This module defines the configuration options for the advanced security architecture.
+ * This module defines the configuration options for the advanced security system.
  */
 
-export interface ThreatIntelligenceConfig {
-  /**
-   * Sources to use for threat intelligence
-   */
-  sources?: string[];
-  
-  /**
-   * How often to update threat intelligence (in minutes)
-   */
-  updateInterval?: number;
-  
-  /**
-   * API keys for external threat intelligence services
-   */
-  apiKeys?: Record<string, string>;
-  
-  /**
-   * Whether to use simulated threat intelligence in development
-   */
-  useSimulation?: boolean;
-}
+import { SecurityPosture } from '../SecurityFabric';
 
-export interface AnomalyDetectionConfig {
+/**
+ * Security configuration options
+ */
+export interface SecurityConfig {
   /**
-   * Whether to enable anomaly detection
+   * Initial security posture
    */
-  enabled?: boolean;
+  initialSecurityPosture?: SecurityPosture;
   
   /**
-   * Model parameters for anomaly detection
+   * Maximum security scan interval in minutes
    */
-  modelParams?: {
+  maxSecurityScanInterval?: number;
+  
+  /**
+   * Whether to enable zero-trust security model
+   */
+  enableZeroTrust?: boolean;
+  
+  /**
+   * Whether to enable machine learning-based anomaly detection
+   */
+  enableAnomalyDetection?: boolean;
+  
+  /**
+   * Whether to enable threat intelligence
+   */
+  enableThreatIntelligence?: boolean;
+  
+  /**
+   * Whether to enable security metrics collection
+   */
+  enableSecurityMetrics?: boolean;
+  
+  /**
+   * Whether to enable database security
+   */
+  enableDatabaseSecurity?: boolean;
+  
+  /**
+   * Whether to block SQL injections
+   */
+  blockSqlInjections?: boolean;
+  
+  /**
+   * Whether to enable API security
+   */
+  enableApiSecurity?: boolean;
+  
+  /**
+   * Whether to enable file security
+   */
+  enableFileSecurity?: boolean;
+  
+  /**
+   * Whether to enable secure headers
+   */
+  enableSecureHeaders?: boolean;
+  
+  /**
+   * Whether to enable CSRF protection
+   */
+  enableCsrf?: boolean;
+  
+  /**
+   * Whether to enable rate limiting
+   */
+  enableRateLimiting?: boolean;
+  
+  /**
+   * Rate limiting options
+   */
+  rateLimiting?: {
     /**
-     * Learning rate for the model
+     * Maximum number of requests per window
      */
-    learningRate?: number;
+    maxRequests?: number;
     
     /**
-     * Time window for analysis (in minutes)
+     * Window size in milliseconds
      */
-    timeWindow?: number;
-    
-    /**
-     * Threshold for anomaly detection (0-1)
-     */
-    anomalyThreshold?: number;
+    windowMs?: number;
   };
   
   /**
-   * How often to retrain the model (in hours)
+   * Content Security Policy options
    */
-  retrainInterval?: number;
-}
-
-export interface CryptographicConfig {
-  /**
-   * Whether to use quantum-resistant algorithms
-   */
-  useQuantumResistant?: boolean;
+  csp?: {
+    /**
+     * Whether to enable CSP
+     */
+    enabled?: boolean;
+    
+    /**
+     * Whether to set CSP in report-only mode
+     */
+    reportOnly?: boolean;
+  };
   
   /**
-   * Key size for cryptographic operations
+   * HTTP Strict Transport Security options
    */
-  keySize?: number;
+  hsts?: {
+    /**
+     * Whether to enable HSTS
+     */
+    enabled?: boolean;
+    
+    /**
+     * Max age in seconds
+     */
+    maxAge?: number;
+    
+    /**
+     * Whether to include subdomains
+     */
+    includeSubDomains?: boolean;
+    
+    /**
+     * Whether to preload
+     */
+    preload?: boolean;
+  };
   
   /**
-   * How often to rotate keys (in days)
+   * Anomaly detection options
    */
-  keyRotationDays?: number;
-}
-
-export interface SecurityConfig {
-  /**
-   * Global security mode
-   */
-  mode?: 'development' | 'testing' | 'production';
+  anomalyDetection?: {
+    /**
+     * Anomaly detection mode
+     */
+    mode?: 'standard' | 'enhanced' | 'maximum';
+    
+    /**
+     * Minimum confidence threshold for anomaly alerts
+     */
+    minConfidence?: number;
+    
+    /**
+     * Learning period in days
+     */
+    learningPeriod?: number;
+    
+    /**
+     * Baseline update interval in hours
+     */
+    baselineUpdateInterval?: number;
+  };
   
   /**
-   * Whether to enable debug logging
+   * Zero-trust options
    */
-  debug?: boolean;
+  zeroTrust?: {
+    /**
+     * Default minimum trust score (0-1)
+     */
+    defaultMinTrustScore?: number;
+    
+    /**
+     * Default maximum risk score (0-1)
+     */
+    defaultMaxRiskScore?: number;
+    
+    /**
+     * Whether to challenge users for additional verification
+     */
+    enableChallenges?: boolean;
+  };
   
   /**
-   * Configuration for threat intelligence
+   * Database security options
    */
-  threatIntelligence?: ThreatIntelligenceConfig;
-  
-  /**
-   * Configuration for anomaly detection
-   */
-  anomalyDetection?: AnomalyDetectionConfig;
-  
-  /**
-   * Configuration for cryptographic operations
-   */
-  cryptographic?: CryptographicConfig;
-  
-  /**
-   * How frequently to perform security scans (in minutes)
-   */
-  scanInterval?: number;
-  
-  /**
-   * Custom settings for specific security components
-   */
-  components?: Record<string, any>;
+  databaseSecurity?: {
+    /**
+     * Whether to analyze all queries
+     */
+    analyzeAllQueries?: boolean;
+    
+    /**
+     * Whether to log all query analyses
+     */
+    logAllQueries?: boolean;
+    
+    /**
+     * Maximum query length to analyze
+     */
+    maxQueryLength?: number;
+  };
 }
 
 /**
  * Default security configuration
  */
 export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
-  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-  debug: process.env.NODE_ENV !== 'production',
-  threatIntelligence: {
-    sources: ['internal', 'osint'],
-    updateInterval: 60, // 1 hour
-    useSimulation: process.env.NODE_ENV !== 'production'
+  initialSecurityPosture: 'normal',
+  maxSecurityScanInterval: 60,
+  enableZeroTrust: true,
+  enableAnomalyDetection: true,
+  enableThreatIntelligence: true,
+  enableSecurityMetrics: true,
+  enableDatabaseSecurity: true,
+  blockSqlInjections: true,
+  enableApiSecurity: true,
+  enableFileSecurity: true,
+  enableSecureHeaders: true,
+  enableCsrf: true,
+  enableRateLimiting: true,
+  
+  rateLimiting: {
+    maxRequests: 100,
+    windowMs: 60 * 1000 // 1 minute
   },
-  anomalyDetection: {
+  
+  csp: {
     enabled: true,
-    modelParams: {
-      learningRate: 0.01,
-      timeWindow: 60, // 1 hour
-      anomalyThreshold: 0.85
-    },
-    retrainInterval: 24 // 24 hours
+    reportOnly: false
   },
-  cryptographic: {
-    useQuantumResistant: true,
-    keySize: 4096,
-    keyRotationDays: 30
+  
+  hsts: {
+    enabled: true,
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
   },
-  scanInterval: 60 // 1 hour
+  
+  anomalyDetection: {
+    mode: 'enhanced',
+    minConfidence: 0.7,
+    learningPeriod: 7,
+    baselineUpdateInterval: 24
+  },
+  
+  zeroTrust: {
+    defaultMinTrustScore: 0.6,
+    defaultMaxRiskScore: 0.3,
+    enableChallenges: true
+  },
+  
+  databaseSecurity: {
+    analyzeAllQueries: true,
+    logAllQueries: false,
+    maxQueryLength: 10000
+  }
 };

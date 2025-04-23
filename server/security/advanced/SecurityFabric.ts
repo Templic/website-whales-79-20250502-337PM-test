@@ -1,143 +1,196 @@
 /**
- * Security Fabric Core
+ * Security Fabric
  * 
- * This module implements the central orchestration layer for the next-generation 
- * security architecture. It coordinates all security components, manages their 
- * lifecycle, and ensures integrated defensive capabilities.
+ * This module provides a central orchestration layer for all security components.
+ * It enables communication between components, manages security posture,
+ * and provides a unified interface for security operations.
  */
 
+import { Request, Response } from 'express';
 import { EventEmitter } from 'events';
-import { SecurityContext } from './context/SecurityContext';
-import { ThreatIntelligence } from './intelligence/ThreatIntelligence';
-import { SecurityMetrics } from './metrics/SecurityMetrics';
+import { SecurityContext, createSecurityContext } from './context/SecurityContext';
 import { SecurityConfig } from './config/SecurityConfig';
-import { Logger } from '../../utils/Logger';
-
-// Security posture levels
-export type SecurityPostureLevel = 'normal' | 'elevated' | 'high' | 'maximum';
 
 /**
- * Central orchestration for the advanced security architecture
+ * Security posture levels
  */
-export class SecurityFabric {
-  private static instance: SecurityFabric;
-  private eventBus: EventEmitter;
-  private components: Map<string, any> = new Map();
-  private securityPosture: SecurityPostureLevel = 'normal';
-  private threatLevel: number = 0;
-  private startTime: number;
-  private metricsCollectionInterval: NodeJS.Timeout | null = null;
+export type SecurityPosture = 'normal' | 'elevated' | 'high' | 'maximum';
 
-  private constructor() {
-    this.startTime = Date.now();
-    this.eventBus = new EventEmitter();
-    this.eventBus.setMaxListeners(100); // Allow many listeners for security events
-    
-    console.log('[SecurityFabric] Initializing advanced security architecture...');
-    
-    // Publish initialization event
-    this.eventBus.emit('security:fabric:initializing', { timestamp: new Date() });
-  }
-
+/**
+ * Security component interface
+ */
+export interface SecurityComponent {
   /**
-   * Get the singleton instance of SecurityFabric
+   * Initialize the component
    */
-  public static getInstance(): SecurityFabric {
-    if (!SecurityFabric.instance) {
-      SecurityFabric.instance = new SecurityFabric();
-    }
-    return SecurityFabric.instance;
-  }
-
+  initialize(): Promise<void>;
+  
   /**
-   * Initialize the security fabric and all its components
+   * Shutdown the component
+   */
+  shutdown(): Promise<void>;
+  
+  /**
+   * Get component status
+   */
+  getStatus(): Record<string, any>;
+}
+
+/**
+ * Security Fabric class
+ * 
+ * Central orchestration layer for security components
+ */
+export class SecurityFabric extends EventEmitter {
+  private components: Map<string, any> = new Map();
+  private securityPosture: SecurityPosture = 'normal';
+  private threatLevel: number = 0;
+  private initialized: boolean = false;
+  
+  /**
+   * Initialize the security fabric
    */
   public async initialize(config: SecurityConfig = {}): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+    
+    console.log('[SecurityFabric] Initializing security fabric...');
+    
     try {
-      console.log('[SecurityFabric] Starting security fabric initialization...');
+      // Set initial security posture from config
+      this.securityPosture = config.initialSecurityPosture || 'normal';
       
-      // Register internal event listeners
-      this.registerEventListeners();
+      // Set max listeners to avoid memory leak warnings
+      this.setMaxListeners(50);
       
-      // Initialize core security components
-      await this.initializeSecurityComponents(config);
+      // Mark as initialized
+      this.initialized = true;
       
-      // Start continuous security monitoring
-      this.startContinuousMonitoring();
+      console.log(`[SecurityFabric] Security fabric initialized with ${this.securityPosture} security posture`);
       
-      // Initialize security posture
-      this.adjustSecurityPosture(0.1); // Start with low threat level
-      
-      // Emit completion event
-      this.eventBus.emit('security:fabric:initialized', {
+      // Emit initialization event
+      this.emit('security:initialized', {
         timestamp: new Date(),
-        initializationTime: Date.now() - this.startTime
+        securityPosture: this.securityPosture
       });
-      
-      console.log(`[SecurityFabric] Security fabric initialized in ${Date.now() - this.startTime}ms`);
     } catch (error) {
-      console.error('[SecurityFabric] Failed to initialize security fabric', error);
-      // Re-throw to allow proper handling by the application
-      throw new Error('Failed to initialize security fabric: ' + (error as Error).message);
+      console.error('[SecurityFabric] Failed to initialize security fabric:', error);
+      throw error;
     }
   }
-
+  
   /**
-   * Register a security component with the fabric
+   * Shut down the security fabric
    */
-  public registerComponent(name: string, component: any): void {
-    this.components.set(name, component);
-    console.debug(`[SecurityFabric] Registered component: ${name}`);
+  public async shutdown(): Promise<void> {
+    console.log('[SecurityFabric] Shutting down security fabric...');
     
-    // Notify about new component registration
-    this.eventBus.emit('security:component:registered', { name, component });
+    try {
+      // Shut down all components
+      for (const [name, component] of this.components.entries()) {
+        if (typeof component.shutdown === 'function') {
+          console.log(`[SecurityFabric] Shutting down component: ${name}`);
+          await component.shutdown();
+        }
+      }
+      
+      // Clear all components
+      this.components.clear();
+      
+      // Remove all listeners
+      this.removeAllListeners();
+      
+      // Mark as not initialized
+      this.initialized = false;
+      
+      console.log('[SecurityFabric] Security fabric shut down successfully');
+    } catch (error) {
+      console.error('[SecurityFabric] Error shutting down security fabric:', error);
+      throw error;
+    }
   }
-
+  
   /**
-   * Get a registered security component
+   * Register a security component
+   */
+  public registerComponent<T>(name: string, component: T): void {
+    if (this.components.has(name)) {
+      console.warn(`[SecurityFabric] Component already registered with name: ${name}`);
+      return;
+    }
+    
+    this.components.set(name, component);
+    console.log(`[SecurityFabric] Registered component: ${name}`);
+    
+    // Emit component registered event
+    this.emit('security:component:registered', {
+      name,
+      timestamp: new Date()
+    });
+  }
+  
+  /**
+   * Get a security component by name
    */
   public getComponent<T>(name: string): T | undefined {
     return this.components.get(name) as T | undefined;
   }
-
+  
   /**
-   * Subscribe to security events
+   * Create a security context for a request
    */
-  public on(event: string, listener: (...args: any[]) => void): void {
-    this.eventBus.on(event, listener);
-  }
-
-  /**
-   * Publish a security event
-   */
-  public emit(event: string, data: any): void {
-    this.eventBus.emit(event, {
-      ...data,
-      timestamp: new Date(),
+  public createSecurityContext(req: Request, res: Response): SecurityContext {
+    return createSecurityContext(req, res, {
       securityPosture: this.securityPosture,
       threatLevel: this.threatLevel
     });
   }
-
+  
   /**
-   * Create a security context for the current request
+   * Get the current security posture
    */
-  public createSecurityContext(req: any, res: any): SecurityContext {
-    const context = new SecurityContext(req, res);
-    this.emit('security:context:created', { context });
-    return context;
+  public getSecurityPosture(): SecurityPosture {
+    return this.securityPosture;
   }
-
+  
   /**
-   * Adjust the system-wide security posture based on threat intelligence
+   * Get the current threat level (0-1)
+   */
+  public getThreatLevel(): number {
+    return this.threatLevel;
+  }
+  
+  /**
+   * Set the security posture
+   */
+  public setSecurityPosture(posture: SecurityPosture): void {
+    const previousPosture = this.securityPosture;
+    this.securityPosture = posture;
+    
+    console.log(`[SecurityFabric] Security posture changed from ${previousPosture} to ${posture}`);
+    
+    // Emit security posture change event
+    this.emit('security:posture:changed', {
+      previous: previousPosture,
+      current: posture,
+      timestamp: new Date()
+    });
+  }
+  
+  /**
+   * Adjust the security posture based on threat level
    */
   public adjustSecurityPosture(threatLevel: number): void {
-    this.threatLevel = threatLevel;
+    // Update threat level
+    this.threatLevel = Math.max(0, Math.min(1, threatLevel));
     
-    // Determine appropriate security posture based on threat level
+    // Adjust security posture based on threat level
+    const previousPosture = this.securityPosture;
+    
     if (threatLevel >= 0.8) {
       this.securityPosture = 'maximum';
-    } else if (threatLevel >= 0.5) {
+    } else if (threatLevel >= 0.6) {
       this.securityPosture = 'high';
     } else if (threatLevel >= 0.3) {
       this.securityPosture = 'elevated';
@@ -145,193 +198,36 @@ export class SecurityFabric {
       this.securityPosture = 'normal';
     }
     
-    console.log(`[SecurityFabric] Security posture adjusted to: ${this.securityPosture} (threat level: ${threatLevel})`);
-    
-    // Notify all components about posture change
-    this.emit('security:posture:changed', {
-      posture: this.securityPosture,
-      previousThreatLevel: this.threatLevel,
-      newThreatLevel: threatLevel
-    });
-    
-    // Apply security settings based on new posture
-    this.applySecurityPostureSettings();
-  }
-
-  /**
-   * Get the current security posture
-   */
-  public getSecurityPosture(): SecurityPostureLevel {
-    return this.securityPosture;
-  }
-
-  /**
-   * Get the current threat level (0-1)
-   */
-  public getThreatLevel(): number {
-    return this.threatLevel;
-  }
-
-  /**
-   * Clean shutdown of the security fabric
-   */
-  public async shutdown(): Promise<void> {
-    console.log('[SecurityFabric] Initiating security fabric shutdown...');
-    
-    // Notify about shutdown
-    this.emit('security:fabric:shuttingDown', { timestamp: new Date() });
-    
-    // Stop metrics collection
-    if (this.metricsCollectionInterval) {
-      clearInterval(this.metricsCollectionInterval);
-      this.metricsCollectionInterval = null;
-    }
-    
-    // Shutdown each component
-    for (const [name, component] of this.components.entries()) {
-      if (component && typeof component.shutdown === 'function') {
-        try {
-          console.debug(`[SecurityFabric] Shutting down component: ${name}`);
-          await component.shutdown();
-        } catch (error) {
-          console.error(`[SecurityFabric] Error shutting down component ${name}:`, error);
-        }
-      }
-    }
-    
-    // Clear all components
-    this.components.clear();
-    
-    // Remove all event listeners
-    this.eventBus.removeAllListeners();
-    
-    console.log('[SecurityFabric] Security fabric shutdown complete');
-  }
-
-  /**
-   * Register internal event listeners
-   */
-  private registerEventListeners(): void {
-    // Log all security events at debug level
-    this.eventBus.on('security:*', (data) => {
-      console.debug(`[SecurityEvent] ${data.event}`, data);
-    });
-    
-    // Listen for threat intelligence updates
-    this.eventBus.on('security:threatIntelligence:updated', (data) => {
-      this.adjustSecurityPosture(data.threatLevel);
-    });
-  }
-
-  /**
-   * Initialize core security components
-   */
-  private async initializeSecurityComponents(config: SecurityConfig): Promise<void> {
-    // Initialize threat intelligence
-    const threatIntelligence = new ThreatIntelligence(config.threatIntelligence);
-    await threatIntelligence.initialize();
-    this.registerComponent('threatIntelligence', threatIntelligence);
-    
-    // Initialize security metrics
-    const securityMetrics = new SecurityMetrics();
-    await securityMetrics.initialize();
-    this.registerComponent('securityMetrics', securityMetrics);
-    
-    // Additional components will be initialized in their respective modules
-  }
-
-  /**
-   * Start continuous security monitoring
-   */
-  private startContinuousMonitoring(): void {
-    // Collect security metrics periodically
-    this.metricsCollectionInterval = setInterval(() => {
-      const metrics = this.getComponent<SecurityMetrics>('securityMetrics');
-      if (metrics) {
-        metrics.collectMetrics();
-      }
-    }, 60000); // Collect metrics every minute
-    
-    console.log('[SecurityFabric] Started continuous security monitoring');
-  }
-
-  /**
-   * Apply settings based on current security posture
-   */
-  private applySecurityPostureSettings(): void {
-    // Adjust security parameters based on current posture
-    const settings = {
-      rateLimitMultiplier: this.getRateLimitMultiplierForPosture(),
-      sessionTTL: this.getSessionTTLForPosture(),
-      additionalValidations: this.getValidationsForPosture(),
-      loggingLevel: this.getLoggingLevelForPosture()
-    };
-    
-    // Apply settings to all relevant components
-    this.emit('security:settings:updated', { settings });
-    
-    console.log(`[SecurityFabric] Applied security settings for posture: ${this.securityPosture}`);
-  }
-
-  /**
-   * Get rate limit multiplier based on security posture
-   */
-  private getRateLimitMultiplierForPosture(): number {
-    switch (this.securityPosture) {
-      case 'maximum': return 0.2;  // Most restrictive (20% of normal)
-      case 'high': return 0.5;     // Very restrictive (50% of normal)
-      case 'elevated': return 0.7; // Somewhat restrictive (70% of normal)
-      case 'normal': return 1.0;   // Normal rate limits (100%)
-      default: return 1.0;
+    // If posture changed, emit event
+    if (previousPosture !== this.securityPosture) {
+      console.log(`[SecurityFabric] Security posture adjusted from ${previousPosture} to ${this.securityPosture} (threat level: ${threatLevel.toFixed(2)})`);
+      
+      // Emit security posture change event
+      this.emit('security:posture:changed', {
+        previous: previousPosture,
+        current: this.securityPosture,
+        threatLevel: this.threatLevel,
+        timestamp: new Date()
+      });
     }
   }
-
+  
   /**
-   * Get session TTL based on security posture
+   * Get all registered component names
    */
-  private getSessionTTLForPosture(): number {
-    switch (this.securityPosture) {
-      case 'maximum': return 5 * 60;     // 5 minutes
-      case 'high': return 15 * 60;       // 15 minutes
-      case 'elevated': return 30 * 60;   // 30 minutes
-      case 'normal': return 60 * 60;     // 1 hour
-      default: return 60 * 60;
-    }
+  public getComponentNames(): string[] {
+    return Array.from(this.components.keys());
   }
-
+  
   /**
-   * Get additional validations based on security posture
+   * Check if the security fabric is initialized
    */
-  private getValidationsForPosture(): string[] {
-    const baseValidations = ['input', 'csrf', 'xss'];
-    
-    switch (this.securityPosture) {
-      case 'maximum':
-        return [...baseValidations, 'deviceFingerprint', 'behavioralAnalysis', 'deepContentInspection'];
-      case 'high':
-        return [...baseValidations, 'deviceFingerprint', 'behavioralAnalysis'];
-      case 'elevated':
-        return [...baseValidations, 'deviceFingerprint'];
-      case 'normal':
-        return baseValidations;
-      default:
-        return baseValidations;
-    }
-  }
-
-  /**
-   * Get logging level based on security posture
-   */
-  private getLoggingLevelForPosture(): string {
-    switch (this.securityPosture) {
-      case 'maximum': return 'trace';  // Maximum logging detail
-      case 'high': return 'debug';     // Detailed logging
-      case 'elevated': return 'info';  // Standard logging
-      case 'normal': return 'warn';    // Minimal logging
-      default: return 'info';
-    }
+  public isInitialized(): boolean {
+    return this.initialized;
   }
 }
 
-// Export singleton instance
-export const securityFabric = SecurityFabric.getInstance();
+/**
+ * Create a singleton instance of the security fabric
+ */
+export const securityFabric = new SecurityFabric();
