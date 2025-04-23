@@ -67,7 +67,7 @@ export interface KeyPair {
   /**
    * Generation timestamp
    */
-  generatedAt: Date;
+  generatedAt: number;
 }
 
 /**
@@ -97,7 +97,7 @@ export interface EncryptionResult {
   /**
    * Encryption timestamp
    */
-  timestamp: Date;
+  timestamp: number;
 }
 
 /**
@@ -122,7 +122,7 @@ export interface SignatureResult {
   /**
    * Signature timestamp
    */
-  timestamp: Date;
+  timestamp: number;
 }
 
 /**
@@ -189,7 +189,7 @@ export class QuantumKeyGenerator {
         algorithm,
         format: 'pem',
         keySize,
-        generatedAt: new Date()
+        generatedAt: Date.now()
       };
     } catch (error) {
       console.error(`[QuantumCrypto] Error generating key pair:`, error);
@@ -247,7 +247,7 @@ export class QuantumEncryption {
         iv: iv.toString('base64'),
         authTag,
         algorithm,
-        timestamp: new Date()
+        timestamp: Date.now()
       };
     } catch (error) {
       console.error(`[QuantumCrypto] Error encrypting data:`, error);
@@ -324,7 +324,7 @@ export class QuantumSignature {
         message: data,
         signature: signature.toString('base64'),
         algorithm,
-        timestamp: new Date()
+        timestamp: Date.now()
       };
     } catch (error) {
       console.error(`[QuantumCrypto] Error signing data:`, error);
@@ -398,7 +398,7 @@ export class HybridEncryptionSystem {
         iv: iv.toString('base64'),
         authTag,
         iterations,
-        timestamp: new Date()
+        timestamp: Date.now()
       };
       
       return {
@@ -470,7 +470,7 @@ export class PerfectForwardSecrecy {
       algorithm: QuantumAlgorithmType.LATTICE_NTRU, // Simulated
       format: 'pem',
       keySize: 2048,
-      generatedAt: new Date()
+      generatedAt: Date.now()
     };
   }
   
