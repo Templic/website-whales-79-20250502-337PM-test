@@ -1,232 +1,171 @@
 /**
  * Security Event Types
  * 
- * This module defines the types used for security events.
+ * This module defines the types and categories for security events
+ * that can be recorded in the blockchain.
  */
 
 /**
- * Severity levels for security events
+ * Security event severity levels
  */
 export enum SecurityEventSeverity {
-  CRITICAL = 'critical',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
+  /**
+   * Informational events that do not indicate a security issue
+   */
   INFO = 'info',
-  WARNING = 'warning',
-  ERROR = 'error'
+  
+  /**
+   * Low severity events that may indicate a minor security issue
+   */
+  LOW = 'low',
+  
+  /**
+   * Medium severity events that indicate a moderate security issue
+   */
+  MEDIUM = 'medium',
+  
+  /**
+   * High severity events that indicate a significant security issue
+   */
+  HIGH = 'high',
+  
+  /**
+   * Critical severity events that indicate a severe security issue
+   */
+  CRITICAL = 'critical'
 }
 
 /**
- * Categories for security events
+ * Security event categories
  */
 export enum SecurityEventCategory {
-  // System events
-  SYSTEM = 'system',
-  SECURITY_INITIALIZATION = 'security_initialization',
-  SECURITY_ERROR = 'security_error',
+  /**
+   * General security events
+   */
+  GENERAL = 'general',
   
-  // Authentication events
+  /**
+   * Authentication-related security events
+   */
   AUTHENTICATION = 'authentication',
-  LOGIN_ATTEMPT = 'login_attempt',
-  LOGIN_SUCCESS = 'login_success',
-  LOGIN_FAILURE = 'login_failure',
-  LOGOUT = 'logout',
   
-  // Authorization events
+  /**
+   * Authorization-related security events
+   */
   AUTHORIZATION = 'authorization',
-  ACCESS_ATTEMPT = 'access_attempt',
-  ACCESS_DENIED = 'access_denied',
-  ACCESS_GRANTED = 'access_granted',
-  PERMISSION_CHANGE = 'permission_change',
   
-  // Data events
-  DATA = 'data',
-  DATA_ACCESS = 'data_access',
-  DATA_MODIFICATION = 'data_modification',
-  DATA_DELETION = 'data_deletion',
-  DATA_EXPORT = 'data_export',
+  /**
+   * Data security events
+   */
+  DATA_SECURITY = 'data_security',
   
-  // Attack events
-  ATTACK_ATTEMPT = 'attack_attempt',
-  SQL_INJECTION = 'sql_injection',
-  XSS = 'xss',
-  CSRF = 'csrf',
-  DOS = 'dos',
-  BRUTE_FORCE = 'brute_force',
+  /**
+   * API security events
+   */
+  API_SECURITY = 'api_security',
   
-  // Validation events
-  VALIDATION = 'validation',
-  INPUT_VALIDATION = 'input_validation',
+  /**
+   * Web security events
+   */
+  WEB_SECURITY = 'web_security',
   
-  // Rate limiting events
-  RATE_LIMIT = 'rate_limit',
+  /**
+   * Database security events
+   */
+  DATABASE_SECURITY = 'database_security',
   
-  // Admin events
-  ADMIN = 'admin',
-  ADMIN_ACTION = 'admin_action',
-  SETTINGS_CHANGE = 'settings_change',
+  /**
+   * Network security events
+   */
+  NETWORK_SECURITY = 'network_security',
   
-  // User events
-  USER = 'user',
-  USER_CREATION = 'user_creation',
-  USER_MODIFICATION = 'user_modification',
-  USER_DELETION = 'user_deletion',
-  PASSWORD_CHANGE = 'password_change',
-  PASSWORD_RESET = 'password_reset',
+  /**
+   * System-level security events
+   */
+  SYSTEM = 'system',
   
-  // Session events
-  SESSION = 'session',
-  SESSION_CREATION = 'session_creation',
-  SESSION_EXPIRATION = 'session_expiration',
-  SESSION_INVALIDATION = 'session_invalidation',
+  /**
+   * Anomaly detection events
+   */
+  ANOMALY_DETECTION = 'anomaly_detection',
   
-  // API events
-  API = 'api',
-  API_REQUEST = 'api_request',
-  API_ERROR = 'api_error',
-  REQUEST = 'request',
+  /**
+   * Compliance-related security events
+   */
+  COMPLIANCE = 'compliance',
   
-  // Security scan events
-  SECURITY_SCAN = 'security_scan',
-  VULNERABILITY_FOUND = 'vulnerability_found',
+  /**
+   * Audit-related security events
+   */
+  AUDIT = 'audit',
   
-  // Anomaly detection events
-  ANOMALY = 'anomaly',
-  ANOMALY_DETECTED = 'anomaly_detected',
-  THREAT_DETECTED = 'threat_detected',
-  UNUSUAL_BEHAVIOR = 'unusual_behavior',
-  UNUSUAL_ACCESS_PATTERN = 'unusual_access_pattern',
+  /**
+   * Cryptography-related security events
+   */
+  CRYPTOGRAPHY = 'cryptography',
   
-  // Blockchain events
-  BLOCKCHAIN = 'blockchain',
-  CHAIN_VALIDATION = 'chain_validation',
-  BLOCK_CREATION = 'block_creation',
-  BLOCK_VALIDATION = 'block_validation',
-  
-  // Crypto events
-  CRYPTO = 'crypto',
-  KEY_GENERATION = 'key_generation',
-  ENCRYPTION = 'encryption',
-  DECRYPTION = 'decryption',
-  SIGNATURE = 'signature',
-  SIGNATURE_VERIFICATION = 'signature_verification',
-  
-  // Unknown events
-  UNKNOWN = 'unknown'
+  /**
+   * Security scanning events
+   */
+  SECURITY_SCAN = 'security_scan'
 }
 
 /**
- * Security event interface
+ * Security event structure
  */
 export interface SecurityEvent {
   /**
-   * Severity of the event
+   * Event severity
    */
   severity: SecurityEventSeverity;
   
   /**
-   * Category of the event
+   * Event category
    */
   category: SecurityEventCategory;
   
   /**
-   * Message describing the event
+   * Event title
    */
-  message: string;
+  title: string;
   
   /**
-   * IP address of the request
+   * Event description
    */
-  ipAddress?: string;
+  description: string;
   
   /**
-   * Timestamp of the event
+   * Source IP address
    */
-  timestamp?: number;
+  sourceIp?: string;
   
   /**
    * User ID associated with the event
    */
-  userId?: string;
+  userId?: string | number;
   
   /**
-   * Session ID associated with the event
+   * Username associated with the event
    */
-  sessionId?: string;
+  username?: string;
+  
+  /**
+   * Resource associated with the event
+   */
+  resource?: string;
+  
+  /**
+   * Action associated with the event
+   */
+  action?: string;
   
   /**
    * Additional metadata for the event
    */
-  metadata?: Record<string, any>;
-}
-
-/**
- * Security event with blockchain data
- */
-export interface SecurityEventWithBlockchainData extends SecurityEvent {
-  /**
-   * ID of the event
-   */
-  id: string;
+  metadata?: any;
   
   /**
-   * Hash of the event
+   * Timestamp of the event
    */
-  hash: string;
-  
-  /**
-   * ID of the block containing the event
-   */
-  blockId: string;
-  
-  /**
-   * Index of the event in the block
-   */
-  index: number;
-}
-
-/**
- * Security event filter
- */
-export interface SecurityEventFilter {
-  /**
-   * Severity levels to include
-   */
-  severities?: SecurityEventSeverity[];
-  
-  /**
-   * Categories to include
-   */
-  categories?: SecurityEventCategory[];
-  
-  /**
-   * Start timestamp
-   */
-  startTimestamp?: number;
-  
-  /**
-   * End timestamp
-   */
-  endTimestamp?: number;
-  
-  /**
-   * User IDs to include
-   */
-  userIds?: string[];
-  
-  /**
-   * IP addresses to include
-   */
-  ipAddresses?: string[];
-  
-  /**
-   * Text search query
-   */
-  query?: string;
-  
-  /**
-   * Maximum number of results to return
-   */
-  limit?: number;
+  timestamp?: Date;
 }

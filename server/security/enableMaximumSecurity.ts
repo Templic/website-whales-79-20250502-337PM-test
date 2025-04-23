@@ -81,20 +81,25 @@ export function enableMaximumSecurity(app: Express, options: MaximumSecurityOpti
   });
   
   // Apply maximum security scan middleware to all routes
-  app.use(createMaximumSecurityScanMiddleware(raspManager));
+  app.use(createMaximumSecurityScanMiddleware({
+    realtimeValidation: enableDeepValidation,
+    deepInspection: blockSuspiciousRequests,
+    quantumResistantAlgorithms: true,
+    mlAnomalyDetection: enableAnomalyDetection,
+    blockchainLogging: true,
+    performanceImpactWarnings: true
+  }));
   
   // Log maximum security enablement
-  securityBlockchain.addSecurityEvent({
+  securityBlockchain.recordEvent({
     severity: SecurityEventSeverity.INFO,
-    category: SecurityEventCategory.SYSTEM,
-    message: 'Maximum security mode enabled',
+    category: SecurityEventCategory.GENERAL,
+    title: 'Maximum Security Mode Enabled',
+    description: 'Maximum security mode has been enabled for the application',
     metadata: {
       options,
       timestamp: new Date().toISOString()
-    },
-    timestamp: new Date()
-  }).catch(error => {
-    console.error('[SECURITY] Error logging maximum security enablement:', error);
+    }
   });
   
   // Emit maximum security enablement event
@@ -112,15 +117,17 @@ export function enableMaximumSecurity(app: Express, options: MaximumSecurityOpti
     runSecurityScan: async (scanOptions: any = {}) => {
       console.log('[SECURITY] Running security scan');
       
-      const { performSecurityScan } = await import('./maximumSecurityScan');
+      const { securityScanner, SecurityScanType } = await import('./maximumSecurityScan');
       
-      return performSecurityScan({
-        scanType: scanOptions.scanType || 'full',
+      const scanId = securityScanner.createScan({
+        scanType: scanOptions.scanType ? scanOptions.scanType : SecurityScanType.FULL,
         deep: scanOptions.deep !== undefined ? scanOptions.deep : true,
         emitEvents: true,
         logFindings: true,
-        ...scanOptions
-      }, raspManager);
+        customRules: scanOptions.customRules
+      });
+      
+      return securityScanner.startScan(scanId);
     }
   };
 }

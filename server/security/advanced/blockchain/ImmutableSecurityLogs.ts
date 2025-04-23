@@ -1,22 +1,31 @@
 /**
  * Immutable Security Logs
  * 
- * This module implements a blockchain-based immutable security logging system
- * that ensures the integrity and non-repudiation of security events.
+ * This module implements a blockchain-based immutable security log
+ * that provides tamper-proof audit trails for security events.
  */
 
-import * as crypto from 'crypto';
-import { SecurityEvent, SecurityEventWithBlockchainData, SecurityEventFilter } from './SecurityEventTypes';
-import { securityFabric } from '../SecurityFabric';
+import { createHash } from 'crypto';
+import { SecurityEvent, SecurityEventSeverity, SecurityEventCategory } from './SecurityEventTypes';
 
 /**
- * Block in the security blockchain
+ * Block structure
  */
-interface SecurityBlock {
+interface Block {
   /**
-   * Block ID
+   * Block index
    */
-  blockId: string;
+  index: number;
+  
+  /**
+   * Block timestamp
+   */
+  timestamp: Date;
+  
+  /**
+   * Block data
+   */
+  data: SecurityEvent[];
   
   /**
    * Previous block hash
@@ -24,391 +33,184 @@ interface SecurityBlock {
   previousHash: string;
   
   /**
-   * Block timestamp
-   */
-  timestamp: number;
-  
-  /**
-   * Events in the block
-   */
-  events: SecurityEventWithBlockchainData[];
-  
-  /**
-   * Merkle root of the events
-   */
-  merkleRoot: string;
-  
-  /**
-   * Nonce for proof of work
-   */
-  nonce: number;
-  
-  /**
-   * Hash of the block
+   * Block hash
    */
   hash: string;
+  
+  /**
+   * Block nonce
+   */
+  nonce: number;
 }
 
 /**
  * Security blockchain class
- * Implements a blockchain for immutable security event logging
  */
 class SecurityBlockchain {
-  /**
-   * Blocks in the blockchain
-   */
-  private blocks: SecurityBlock[] = [];
+  private chain: Block[] = [];
+  private pendingData: SecurityEvent[] = [];
+  private maxDataPerBlock: number = 10;
+  private miningDifficulty: number = 2;
+  private miningInterval: NodeJS.Timeout | null = null;
+  private isInitialized: boolean = false;
   
   /**
-   * Unconfirmed events waiting to be added to a block
-   */
-  private unconfirmedEvents: SecurityEventWithBlockchainData[] = [];
-  
-  /**
-   * Number of events in a block
-   */
-  private blockSize: number = 10;
-  
-  /**
-   * Difficulty for proof of work
-   */
-  private difficulty: number = 2;
-  
-  /**
-   * Interval for block creation (ms)
-   */
-  private blockInterval: number = 60000; // 1 minute
-  
-  /**
-   * Block creation timer
-   */
-  private blockTimer: NodeJS.Timeout | null = null;
-  
-  /**
-   * Flag indicating whether the blockchain is initialized
-   */
-  private initialized: boolean = false;
-  
-  /**
-   * Create a new security blockchain
+   * Create a new blockchain
    */
   constructor() {
-    this.init();
+    this.initialize();
   }
   
   /**
    * Initialize the blockchain
    */
-  private async init(): Promise<void> {
-    if (this.initialized) {
+  private initialize(): void {
+    if (this.isInitialized) {
       return;
     }
     
-    // Create the genesis block if no blocks exist
-    if (this.blocks.length === 0) {
-      await this.createGenesisBlock();
-    }
-    
-    // Start the block creation timer
-    this.startBlockTimer();
-    
-    this.initialized = true;
-    
-    console.log('[SECURITY-BLOCKCHAIN] Initialized');
-  }
-  
-  /**
-   * Create the genesis block
-   */
-  private async createGenesisBlock(): Promise<void> {
-    const genesisBlock: SecurityBlock = {
-      blockId: '0',
+    // Create genesis block
+    const genesisBlock: Block = {
+      index: 0,
+      timestamp: new Date(),
+      data: [],
       previousHash: '0'.repeat(64),
-      timestamp: Date.now(),
-      events: [],
-      merkleRoot: '0'.repeat(64),
-      nonce: 0,
-      hash: '0'.repeat(64)
-    };
-    
-    // Add a genesis event
-    const genesisEvent: SecurityEventWithBlockchainData = {
-      id: crypto.randomUUID(),
-      severity: 'info' as any,
-      category: 'system' as any,
-      message: 'Genesis block created',
-      timestamp: Date.now(),
       hash: '',
-      blockId: genesisBlock.blockId,
-      index: 0
+      nonce: 0
     };
     
-    // Compute the hash of the event
-    genesisEvent.hash = this.hashEvent(genesisEvent);
+    // Create a valid hash for the genesis block
+    genesisBlock.hash = this.calculateHash(genesisBlock);
     
-    // Add the event to the block
-    genesisBlock.events.push(genesisEvent);
-    
-    // Compute the merkle root
-    genesisBlock.merkleRoot = this.computeMerkleRoot(genesisBlock.events);
-    
-    // Compute the block hash
-    genesisBlock.hash = this.hashBlock(genesisBlock);
-    
-    // Add the block to the blockchain
-    this.blocks.push(genesisBlock);
+    // Add the genesis block to the chain
+    this.chain.push(genesisBlock);
     
     console.log('[SECURITY-BLOCKCHAIN] Genesis block created');
-  }
-  
-  /**
-   * Start the block creation timer
-   */
-  private startBlockTimer(): void {
-    if (this.blockTimer) {
-      clearInterval(this.blockTimer);
-    }
     
-    this.blockTimer = setInterval(() => {
-      this.createBlock().catch(error => {
-        console.error('[SECURITY-BLOCKCHAIN] Error creating block:', error);
-      });
-    }, this.blockInterval);
+    // Start mining interval
+    this.miningInterval = setInterval(() => this.mineNextBlock(), 10000);
+    
+    this.isInitialized = true;
   }
   
   /**
    * Add a security event to the blockchain
    */
-  public async addSecurityEvent(event: SecurityEvent): Promise<SecurityEventWithBlockchainData> {
-    await this.init();
-    
-    // Generate an ID for the event
-    const eventId = crypto.randomUUID();
-    
-    // Create a blockchain event
-    const blockchainEvent: SecurityEventWithBlockchainData = {
-      ...event,
-      id: eventId,
-      hash: '',
-      blockId: '',
-      index: 0
-    };
-    
-    // Compute the hash of the event
-    blockchainEvent.hash = this.hashEvent(blockchainEvent);
-    
-    // Add the event to the unconfirmed events
-    this.unconfirmedEvents.push(blockchainEvent);
-    
-    // Emit an event
-    securityFabric.emit('security:blockchain:event-added', {
-      eventId,
-      timestamp: Date.now()
-    });
-    
-    // If there are enough unconfirmed events, create a new block
-    if (this.unconfirmedEvents.length >= this.blockSize) {
-      await this.createBlock();
+  public async recordEvent(event: SecurityEvent): Promise<void> {
+    // Add timestamp if not provided
+    if (!event.timestamp) {
+      event.timestamp = new Date();
     }
     
-    return blockchainEvent;
+    // Add the event to the pending data
+    this.pendingData.push(event);
+    
+    // Mine a new block if we have enough data
+    if (this.pendingData.length >= this.maxDataPerBlock) {
+      this.mineNextBlock();
+    }
   }
   
   /**
-   * Create a new block
+   * Get all blocks
    */
-  private async createBlock(): Promise<void> {
-    // If there are no unconfirmed events, do nothing
-    if (this.unconfirmedEvents.length === 0) {
+  public getBlocks(): Block[] {
+    return [...this.chain];
+  }
+  
+  /**
+   * Get the latest block
+   */
+  public getLatestBlock(): Block | undefined {
+    return this.chain[this.chain.length - 1];
+  }
+  
+  /**
+   * Calculate the hash of a block
+   */
+  private calculateHash(block: Block): string {
+    return createHash('sha256')
+      .update(
+        block.index +
+        block.timestamp.toISOString() +
+        JSON.stringify(block.data) +
+        block.previousHash +
+        block.nonce
+      )
+      .digest('hex');
+  }
+  
+  /**
+   * Mine a new block with pending data
+   */
+  private mineNextBlock(): void {
+    if (this.pendingData.length === 0) {
       return;
     }
     
-    // Get the events for the new block
-    const events = this.unconfirmedEvents.splice(0, this.blockSize);
+    // Get the data to include in the new block
+    const data = this.pendingData.slice(0, this.maxDataPerBlock);
     
-    // Get the previous block
-    const previousBlock = this.blocks[this.blocks.length - 1];
+    // Remove the data from the pending data
+    this.pendingData = this.pendingData.slice(this.maxDataPerBlock);
+    
+    // Get the latest block
+    const lastBlock = this.getLatestBlock();
+    if (!lastBlock) return;
     
     // Create a new block
-    const block: SecurityBlock = {
-      blockId: String(this.blocks.length),
-      previousHash: previousBlock.hash,
-      timestamp: Date.now(),
-      events,
-      merkleRoot: '',
-      nonce: 0,
-      hash: ''
+    const newBlock: Block = {
+      index: lastBlock.index + 1,
+      timestamp: new Date(),
+      data,
+      previousHash: lastBlock.hash,
+      hash: '',
+      nonce: 0
     };
     
-    // Assign block ID and index to events
-    for (let i = 0; i < events.length; i++) {
-      events[i].blockId = block.blockId;
-      events[i].index = i;
-    }
+    // Mine the block
+    this.mineBlock(newBlock);
     
-    // Compute the merkle root
-    block.merkleRoot = this.computeMerkleRoot(events);
+    // Add the block to the chain
+    this.chain.push(newBlock);
     
-    // Perform proof of work
-    await this.mineBlock(block);
-    
-    // Add the block to the blockchain
-    this.blocks.push(block);
-    
-    // Emit an event
-    securityFabric.emit('security:blockchain:block-created', {
-      blockId: block.blockId,
-      timestamp: Date.now(),
-      eventsCount: events.length
-    });
-    
-    console.log(`[SECURITY-BLOCKCHAIN] Created block #${block.blockId} with ${events.length} events`);
+    console.log(`[SECURITY-BLOCKCHAIN] Block ${newBlock.index} mined with ${newBlock.data.length} events`);
   }
   
   /**
-   * Mine a block (perform proof of work)
+   * Mine a block
    */
-  private async mineBlock(block: SecurityBlock): Promise<void> {
-    const target = '0'.repeat(this.difficulty);
+  private mineBlock(block: Block): void {
+    const difficultyPattern = '0'.repeat(this.miningDifficulty);
     
-    while (true) {
-      // Compute the hash of the block
-      block.hash = this.hashBlock(block);
-      
-      // Check if the hash meets the difficulty requirement
-      if (block.hash.startsWith(target)) {
-        break;
-      }
-      
-      // Increment the nonce
+    let hash = this.calculateHash(block);
+    while (!hash.startsWith(difficultyPattern)) {
       block.nonce++;
-      
-      // Yield to the event loop
-      await new Promise(resolve => setTimeout(resolve, 0));
+      hash = this.calculateHash(block);
     }
+    
+    block.hash = hash;
   }
   
   /**
-   * Compute the merkle root of a list of events
+   * Verify blockchain integrity
    */
-  private computeMerkleRoot(events: SecurityEventWithBlockchainData[]): string {
-    // If there are no events, return a default hash
-    if (events.length === 0) {
-      return '0'.repeat(64);
-    }
-    
-    // If there is only one event, return its hash
-    if (events.length === 1) {
-      return events[0].hash;
-    }
-    
-    // Create a list of leaf nodes (event hashes)
-    let nodes = events.map(event => event.hash);
-    
-    // If the number of nodes is odd, duplicate the last node
-    if (nodes.length % 2 !== 0) {
-      nodes.push(nodes[nodes.length - 1]);
-    }
-    
-    // Build the merkle tree
-    while (nodes.length > 1) {
-      const newNodes = [];
+  public verifyChain(): boolean {
+    // Check each block
+    for (let i = 1; i < this.chain.length; i++) {
+      const currentBlock = this.chain[i];
+      const previousBlock = this.chain[i - 1];
       
-      // Process nodes in pairs
-      for (let i = 0; i < nodes.length; i += 2) {
-        const left = nodes[i];
-        const right = nodes[i + 1];
-        
-        // Combine the hashes of the left and right nodes
-        const combined = this.hashPair(left, right);
-        
-        newNodes.push(combined);
-      }
-      
-      nodes = newNodes;
-      
-      // If the number of nodes is odd, duplicate the last node
-      if (nodes.length % 2 !== 0 && nodes.length > 1) {
-        nodes.push(nodes[nodes.length - 1]);
-      }
-    }
-    
-    // Return the root of the merkle tree
-    return nodes[0];
-  }
-  
-  /**
-   * Hash a pair of hashes
-   */
-  private hashPair(left: string, right: string): string {
-    const data = left + right;
-    return crypto.createHash('sha256').update(data).digest('hex');
-  }
-  
-  /**
-   * Hash an event
-   */
-  private hashEvent(event: SecurityEventWithBlockchainData): string {
-    // Create a copy of the event without the hash field
-    const { hash, ...eventWithoutHash } = event;
-    
-    // Convert the event to a string
-    const data = JSON.stringify(eventWithoutHash);
-    
-    // Compute the hash
-    return crypto.createHash('sha256').update(data).digest('hex');
-  }
-  
-  /**
-   * Hash a block
-   */
-  private hashBlock(block: SecurityBlock): string {
-    // Create a copy of the block without the hash field
-    const { hash, ...blockWithoutHash } = block;
-    
-    // Convert the block to a string
-    const data = JSON.stringify(blockWithoutHash);
-    
-    // Compute the hash
-    return crypto.createHash('sha256').update(data).digest('hex');
-  }
-  
-  /**
-   * Verify the integrity of the blockchain
-   */
-  public async verifyBlockchain(): Promise<boolean> {
-    // Loop through all blocks except the genesis block
-    for (let i = 1; i < this.blocks.length; i++) {
-      const block = this.blocks[i];
-      const previousBlock = this.blocks[i - 1];
-      
-      // Verify the previous hash
-      if (block.previousHash !== previousBlock.hash) {
-        console.error(`[SECURITY-BLOCKCHAIN] Invalid previous hash in block #${block.blockId}`);
+      // Check hash validity
+      if (currentBlock.hash !== this.calculateHash(currentBlock)) {
+        console.error(`[SECURITY-BLOCKCHAIN] Block ${currentBlock!.index} hash is invalid`);
         return false;
       }
       
-      // Verify the block hash
-      const blockHash = this.hashBlock(block);
-      if (blockHash !== block.hash) {
-        console.error(`[SECURITY-BLOCKCHAIN] Invalid block hash in block #${block.blockId}`);
+      // Check previous hash validity
+      if (currentBlock!.previousHash !== previousBlock!.hash) {
+        console.error(`[SECURITY-BLOCKCHAIN] Block ${currentBlock!.index} previous hash is invalid`);
         return false;
-      }
-      
-      // Verify the merkle root
-      const merkleRoot = this.computeMerkleRoot(block.events);
-      if (merkleRoot !== block.merkleRoot) {
-        console.error(`[SECURITY-BLOCKCHAIN] Invalid merkle root in block #${block.blockId}`);
-        return false;
-      }
-      
-      // Verify each event
-      for (const event of block.events) {
-        const eventHash = this.hashEvent(event);
-        if (eventHash !== event.hash) {
-          console.error(`[SECURITY-BLOCKCHAIN] Invalid event hash in block #${block.blockId}, event ${event.id}`);
-          return false;
-        }
       }
     }
     
@@ -416,194 +218,80 @@ class SecurityBlockchain {
   }
   
   /**
-   * Get a security event by ID
+   * Export blockchain to JSON
    */
-  public getEventById(eventId: string): SecurityEventWithBlockchainData | null {
-    for (const block of this.blocks) {
-      for (const event of block.events) {
-        if (event.id === eventId) {
-          return event;
-        }
+  public exportToJSON(): string {
+    return JSON.stringify(this.chain, null, 2);
+  }
+  
+  /**
+   * Query the blockchain for events
+   */
+  public queryEvents(options: {
+    severity?: SecurityEventSeverity;
+    category?: SecurityEventCategory;
+    titleContains?: string;
+    descriptionContains?: string;
+    fromDate?: Date;
+    toDate?: Date;
+    maxResults?: number;
+  } = {}): SecurityEvent[] {
+    const {
+      severity,
+      category,
+      titleContains,
+      descriptionContains,
+      fromDate,
+      toDate,
+      maxResults = 100
+    } = options;
+    
+    // Collect all events from all blocks
+    const allEvents: SecurityEvent[] = [];
+    for (const block of this.chain) {
+      allEvents.push(...block.data);
+    }
+    
+    // Filter the events
+    const filteredEvents = allEvents.filter(event => {
+      if (severity && event.severity !== severity) {
+        return false;
       }
-    }
-    
-    // Check unconfirmed events
-    for (const event of this.unconfirmedEvents) {
-      if (event.id === eventId) {
-        return event;
+      
+      if (category && event.category !== category) {
+        return false;
       }
-    }
-    
-    return null;
-  }
-  
-  /**
-   * Get all security events
-   */
-  public getAllEvents(): SecurityEventWithBlockchainData[] {
-    const events: SecurityEventWithBlockchainData[] = [];
-    
-    // Add events from confirmed blocks
-    for (const block of this.blocks) {
-      events.push(...block.events);
-    }
-    
-    // Add unconfirmed events
-    events.push(...this.unconfirmedEvents);
-    
-    return events;
-  }
-  
-  /**
-   * Get security events by filter
-   */
-  public getEventsByFilter(filter: SecurityEventFilter): SecurityEventWithBlockchainData[] {
-    let events = this.getAllEvents();
-    
-    // Filter by severity
-    if (filter.severities && filter.severities.length > 0) {
-      events = events.filter(event => 
-        filter.severities!.includes(event.severity as any)
-      );
-    }
-    
-    // Filter by category
-    if (filter.categories && filter.categories.length > 0) {
-      events = events.filter(event => 
-        filter.categories!.includes(event.category as any)
-      );
-    }
-    
-    // Filter by timestamp
-    if (filter.startTimestamp) {
-      const startTime = typeof filter.startTimestamp === 'number' ? 
-        filter.startTimestamp : 
-        new Date(filter.startTimestamp).getTime();
       
-      events = events.filter(event => {
-        const eventTime = typeof event.timestamp === 'number' ? 
-          event.timestamp : 
-          (event.timestamp ? new Date(event.timestamp).getTime() : 0);
-        
-        return eventTime >= startTime;
-      });
-    }
-    
-    if (filter.endTimestamp) {
-      const endTime = typeof filter.endTimestamp === 'number' ? 
-        filter.endTimestamp : 
-        new Date(filter.endTimestamp).getTime();
+      if (titleContains && (!event.title || !event.title.includes(titleContains))) {
+        return false;
+      }
       
-      events = events.filter(event => {
-        const eventTime = typeof event.timestamp === 'number' ? 
-          event.timestamp : 
-          (event.timestamp ? new Date(event.timestamp).getTime() : 0);
-        
-        return eventTime <= endTime;
-      });
-    }
+      if (descriptionContains && (!event.description || !event.description.includes(descriptionContains))) {
+        return false;
+      }
+      
+      if (fromDate && event.timestamp && event.timestamp < fromDate) {
+        return false;
+      }
+      
+      if (toDate && event.timestamp && event.timestamp > toDate) {
+        return false;
+      }
+      
+      return true;
+    });
     
-    // Filter by user ID
-    if (filter.userIds && filter.userIds.length > 0) {
-      events = events.filter(event => 
-        event.userId && filter.userIds!.includes(event.userId)
-      );
-    }
+    // Sort by timestamp, newest first
+    filteredEvents.sort((a, b) => {
+      const aTime = a.timestamp ? a.timestamp.getTime() : 0;
+      const bTime = b.timestamp ? b.timestamp.getTime() : 0;
+      return bTime - aTime;
+    });
     
-    // Filter by IP address
-    if (filter.ipAddresses && filter.ipAddresses.length > 0) {
-      events = events.filter(event => 
-        event.ipAddress && filter.ipAddresses!.includes(event.ipAddress)
-      );
-    }
-    
-    // Filter by text search
-    if (filter.query) {
-      const query = filter.query.toLowerCase();
-      events = events.filter(event => 
-        event.message.toLowerCase().includes(query) ||
-        (event.metadata && JSON.stringify(event.metadata).toLowerCase().includes(query))
-      );
-    }
-    
-    // Apply limit
-    if (filter.limit && filter.limit > 0) {
-      events = events.slice(0, filter.limit);
-    }
-    
-    return events;
-  }
-  
-  /**
-   * Get all blocks in the blockchain
-   */
-  public getAllBlocks(): SecurityBlock[] {
-    return [...this.blocks];
-  }
-  
-  /**
-   * Get the number of blocks in the blockchain
-   */
-  public getBlockCount(): number {
-    return this.blocks.length;
-  }
-  
-  /**
-   * Get the number of unconfirmed events
-   */
-  public getUnconfirmedEventCount(): number {
-    return this.unconfirmedEvents.length;
-  }
-  
-  /**
-   * Get the total number of events
-   */
-  public getTotalEventCount(): number {
-    let count = this.unconfirmedEvents.length;
-    
-    for (const block of this.blocks) {
-      count += block.events.length;
-    }
-    
-    return count;
-  }
-  
-  /**
-   * Get the blockchain stats
-   */
-  public getStats(): {
-    blockCount: number;
-    unconfirmedEventCount: number;
-    totalEventCount: number;
-    averageEventsPerBlock: number;
-    lastBlockTime: number | null;
-  } {
-    const blockCount = this.getBlockCount();
-    const unconfirmedEventCount = this.getUnconfirmedEventCount();
-    const totalEventCount = this.getTotalEventCount();
-    
-    // Calculate average events per block
-    let totalEventsInBlocks = 0;
-    for (const block of this.blocks) {
-      totalEventsInBlocks += block.events.length;
-    }
-    
-    const averageEventsPerBlock = blockCount > 0 ? totalEventsInBlocks / blockCount : 0;
-    
-    // Get the timestamp of the last block
-    const lastBlockTime = this.blocks.length > 0 ? this.blocks[this.blocks.length - 1].timestamp : null;
-    
-    return {
-      blockCount,
-      unconfirmedEventCount,
-      totalEventCount,
-      averageEventsPerBlock,
-      lastBlockTime
-    };
+    // Limit the number of results
+    return filteredEvents.slice(0, maxResults);
   }
 }
 
-/**
- * Global security blockchain instance
- */
+// Export singleton instance
 export const securityBlockchain = new SecurityBlockchain();
