@@ -83,6 +83,7 @@ import { runSecurityScan } from './securityScan';
 import { runAuthSecurityScan } from './security/authSecurityScan';
 import { getSecuritySettings, updateSecuritySetting, type SecuritySettings } from './settings';
 import { securityRouter, testSecurityRouter } from './securityRoutes';
+import { securityDashboardRoutes } from './routes/security/dashboard';
 import authRoutes from './routes/authRoutes';
 import jwtAuthRoutes from './routes/jwtAuthRoutes';
 import contentRoutes from './routes/content';
@@ -2032,6 +2033,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Security routes
   app.use('/api/security', securityRouter);
   app.use('/api/security/audit', auditSecurityRoutes);
+  app.use('/api/security/dashboard', securityDashboardRoutes);
   app.use('/api/test', testSecurityRouter);
 
   // Create HTTP server with the Express app

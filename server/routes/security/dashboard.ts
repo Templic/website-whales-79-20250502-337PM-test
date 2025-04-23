@@ -170,8 +170,8 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
       date.setDate(today.getDate() - i);
       const dateString = date.toISOString().split('T')[0];
       
-      const startOfDay = new Date(dateString);
-      const endOfDay = new Date(dateString);
+      const startOfDay = new Date(dateString as string);
+      const endOfDay = new Date(dateString as string);
       endOfDay.setHours(23, 59, 59, 999);
       
       dailyEventCounts[dateString] = securityBlockchain.queryEvents({
@@ -272,7 +272,7 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
  */
 securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) => {
   try {
-    const scanId = req.params.id;
+    const scanId = req.params.id as string;
     const scan = securityScanner.getScan(scanId);
     
     if (!scan) {
