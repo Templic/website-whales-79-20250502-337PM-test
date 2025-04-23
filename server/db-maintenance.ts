@@ -233,11 +233,11 @@ async function runVacuum(tables: string[]): Promise<void> {
       const startTime = Date.now();
       log(`Running VACUUM on table '${table}'...`, 'db-maintenance');
       
-      // Using parameterized query with proper escape for identifiers
-      // PostgreSQL requires double quotes for identifiers, which needs to be handled separately
-      // from parameterized values
-      const query = 'VACUUM (ANALYZE, VERBOSE) $1:name';
-      await client.query(query, [table]);
+      // PostgreSQL requires double quotes for identifiers
+      // Since parameterized queries don't directly support identifier substitution,
+      // we need to validate the table name and then use template literals
+      const query = `VACUUM (ANALYZE, VERBOSE) "${table}"`;
+      await client.query(query);
       
       const duration = Date.now() - startTime;
       log(`VACUUM on '${table}' completed in ${duration}ms`, 'db-maintenance');
@@ -268,9 +268,11 @@ async function runAnalyze(tables: string[]): Promise<void> {
       const startTime = Date.now();
       log(`Running ANALYZE on table '${table}'...`, 'db-maintenance');
       
-      // Using parameterized query with proper escape for identifiers
-      const query = 'ANALYZE VERBOSE $1:name';
-      await client.query(query, [table]);
+      // PostgreSQL requires double quotes for identifiers
+      // Since parameterized queries don't directly support identifier substitution,
+      // we need to validate the table name and then use template literals
+      const query = `ANALYZE VERBOSE "${table}"`;
+      await client.query(query);
       
       const duration = Date.now() - startTime;
       log(`ANALYZE on '${table}' completed in ${duration}ms`, 'db-maintenance');
@@ -321,9 +323,11 @@ export async function forceFullMaintenance(): Promise<void> {
       const tableStartTime = Date.now();
       log(`Running VACUUM ANALYZE on table '${table}'...`, 'db-maintenance');
       
-      // Using parameterized query with proper escape for identifiers
-      const query = 'VACUUM (ANALYZE, VERBOSE) $1:name';
-      await client.query(query, [table]);
+      // PostgreSQL requires double quotes for identifiers
+      // Since parameterized queries don't directly support identifier substitution,
+      // we need to validate the table name and then use template literals
+      const query = `VACUUM (ANALYZE, VERBOSE) "${table}"`;
+      await client.query(query);
       
       const tableDuration = Date.now() - tableStartTime;
       log(`Maintenance on '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
