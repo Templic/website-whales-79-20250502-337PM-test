@@ -171,7 +171,7 @@ export class QuantumKeyGenerator {
       
       // For simulation, generate an RSA key pair
       // In a real implementation, we would use actual quantum-resistant algorithms
-      keyPair = crypto.generateKeyPairSync('rsa', {
+      const result = crypto.generateKeyPairSync('rsa', {
         modulusLength: keySize,
         publicKeyEncoding: {
           type: 'spki',
@@ -181,11 +181,11 @@ export class QuantumKeyGenerator {
           type: 'pkcs8',
           format: 'pem'
         }
-      });
+      }) as crypto.KeyPairSyncResult<string, string>;
       
       return {
-        publicKey: keyPair.publicKey,
-        privateKey: keyPair.privateKey,
+        publicKey: result.publicKey,
+        privateKey: result.privateKey,
         algorithm,
         format: 'pem',
         keySize,
@@ -270,8 +270,12 @@ export class QuantumEncryption {
       
       // Split the ciphertext into encrypted symmetric key and encrypted data
       const parts = ciphertextBuffer.toString('utf8').split(':');
-      const encryptedSymmetricKey = Buffer.from(parts[0], 'base64');
-      const encryptedData = Buffer.from(parts[1], 'base64');
+      if (parts.length < 2) {
+        throw new Error('Invalid ciphertext format');
+      }
+      // Ensure non-undefined values for Buffer.from
+      const encryptedSymmetricKey = Buffer.from(parts[0] || '', 'base64');
+      const encryptedData = Buffer.from(parts[1] || '', 'base64');
       
       // Decrypt the symmetric key with the private key
       const symmetricKey = crypto.privateDecrypt(
@@ -388,7 +392,9 @@ export class HybridEncryptionSystem {
       encrypted += cipher.final('base64');
       
       // Get the auth tag for authenticated encryption
-      const authTag = cipher.getAuthTag().toString('base64');
+      // Cast to appropriate GCM cipher type
+      const gcmCipher = cipher as crypto.CipherGCM;
+      const authTag = gcmCipher.getAuthTag().toString('base64');
       
       // Package the encryption details
       const encryptionDetails = {
@@ -452,7 +458,7 @@ export class PerfectForwardSecrecy {
     // In a real implementation, we would use DH or ECDH for key exchange
     // For simulation, we'll use a standard key pair
     
-    const keyPair = crypto.generateKeyPairSync('rsa', {
+    const result = crypto.generateKeyPairSync('rsa', {
       modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
@@ -462,11 +468,11 @@ export class PerfectForwardSecrecy {
         type: 'pkcs8',
         format: 'pem'
       }
-    });
+    }) as crypto.KeyPairSyncResult<string, string>;
     
     return {
-      publicKey: keyPair.publicKey,
-      privateKey: keyPair.privateKey,
+      publicKey: result.publicKey,
+      privateKey: result.privateKey,
       algorithm: QuantumAlgorithmType.LATTICE_NTRU, // Simulated
       format: 'pem',
       keySize: 2048,
@@ -515,14 +521,16 @@ export class PerfectForwardSecrecy {
       encrypted += cipher.final('base64');
       
       // Get the auth tag
-      const authTag = cipher.getAuthTag().toString('base64');
+      // Cast to appropriate GCM cipher type
+      const gcmCipher = cipher as crypto.CipherGCM;
+      const authTag = gcmCipher.getAuthTag().toString('base64');
       
       return {
         ciphertext: encrypted,
         iv: iv.toString('base64'),
         authTag,
         algorithm: QuantumAlgorithmType.LATTICE_NTRU, // Simulated
-        timestamp: new Date()
+        timestamp: Date.now()
       };
     } catch (error) {
       console.error(`[QuantumCrypto] Error encrypting with session key:`, error);
