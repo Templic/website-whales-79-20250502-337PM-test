@@ -18,6 +18,9 @@ import {
   RASPManager,
   raspManager
 } from './advanced/rasp/RASPManager';
+// Import CSRF protection components
+import { csrfProtection, csrfMiddleware, csrfTokenMiddleware } from './advanced/csrf';
+import { csrfValidator } from './advanced/rasp/CSRFValidator';
 
 // Create middleware instances with different protection levels
 const raspMiddleware = raspMw;
@@ -149,6 +152,48 @@ export async function initializeSecurity(app: express.Application, options?: Sec
       }
     }
     
+    // Apply CSRF protection middleware on all non-API routes
+    if (config.advanced && config.mode === 'maximum') {
+      console.log('[Security] Applying CSRF protection middleware...');
+      
+      // Set CSRF token on all routes
+      app.use(csrfTokenMiddleware);
+      
+      // Apply CSRF validation on non-API routes
+      app.use((req, res, next) => {
+        // Skip CSRF protection for API routes with token authentication
+        if (req.path.startsWith('/api/') && req.headers.authorization) {
+          return next();
+        }
+        
+        // Skip for non-state-changing methods
+        if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+          return next();
+        }
+        
+        // Skip for auth routes
+        if (req.path.includes('/auth/') || req.path.includes('/login') || req.path.includes('/register')) {
+          return next();
+        }
+        
+        // Apply CSRF middleware
+        csrfMiddleware(req, res, next);
+      });
+      
+      // Log initialization
+      securityBlockchain.addSecurityEvent({
+        severity: SecurityEventSeverity.INFO,
+        category: SecurityEventCategory.SYSTEM,
+        message: 'CSRF protection enabled',
+        metadata: {
+          protection: 'maximum',
+          type: 'double-submit-cookie'
+        }
+      }).catch(error => {
+        console.error('[Security] Error logging CSRF initialization:', error);
+      });
+    }
+    
     // Log all requests if enabled
     if (config.logAllRequests) {
       app.use((req, res, next) => {
@@ -226,5 +271,10 @@ export {
   raspManager,
   RASPManager,
   RASPProtectionLevel,
-  RASPProtectionCategory
+  RASPProtectionCategory,
+  // CSRF components
+  csrfProtection,
+  csrfMiddleware,
+  csrfTokenMiddleware,
+  csrfValidator
 };
