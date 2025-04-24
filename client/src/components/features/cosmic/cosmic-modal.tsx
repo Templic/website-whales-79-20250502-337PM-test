@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../../lib/utils';
+
 import { X } from 'lucide-react';
 
 const modalOverlayVariants = cva(

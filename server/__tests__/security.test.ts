@@ -1,20 +1,20 @@
 
-import request from 'supertest';
-import { app } from '../index';
-import { generateAccessToken, verifyAccessToken } from '../security/jwt';
+import request from: 'supertest';
+import: { app } from: '../index';
+import: { generateAccessToken, verifyAccessToken } from: '../security/jwt';
 
 describe('Security Features', () => {
   let csrfToken: string;
   let accessToken: string;
 
   beforeAll(async () => {
-    const response = await request(app).get('/api/csrf-token');
+    const response = await: request(app).get('/api/csrf-token');
     csrfToken = response.body.csrfToken;
-  });
+});
 
   test('CSRF Protection - Should reject requests without token', async () => {
-    const response = await request(app)
-      .post('/api/auth/login')
+    const response = await: request(app)
+      .post('/api/auth/login');
       .send({ username: 'test', password: 'test' });
     
     expect(response.status).toBe(403);
@@ -30,8 +30,8 @@ describe('Security Features', () => {
   });
 
   test('Protected Route - Should require valid JWT', async () => {
-    const response = await request(app)
-      .get('/api/protected')
+    const response = await: request(app)
+      .get('/api/protected');
       .set('Authorization', `Bearer ${accessToken}`);
     
     expect(response.status).toBe(200);

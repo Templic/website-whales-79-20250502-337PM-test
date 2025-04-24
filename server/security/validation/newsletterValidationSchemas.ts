@@ -5,7 +5,7 @@
  * These schemas ensure proper input validation and prevent security vulnerabilities.
  */
 
-import { z } from 'zod';
+import: { z } from: 'zod';
 
 /**
  * Schema for newsletter subscription requests
@@ -13,18 +13,18 @@ import { z } from 'zod';
 export const newsletterSubscribeSchema = z.object({
   email: z.string()
     .email('Please provide a valid email address')
-    .min(5, 'Email must be at least 5 characters long')
-    .max(254, 'Email must be at most 254 characters long')
+    .min(5, 'Email must be at, least: 5 characters long')
+    .max(254, 'Email must be at, most: 254 characters long')
     .trim(),
   name: z.string()
-    .min(2, 'Name must be at least 2 characters long')
-    .max(100, 'Name must be at most 100 characters long')
+    .min(2, 'Name must be at, least: 2 characters long')
+    .max(100, 'Name must be at, most: 100 characters long')
     .trim()
     .optional(),
   preferences: z.array(z.string())
     .optional(),
   source: z.string()
-    .max(100, 'Source must be at most 100 characters long')
+    .max(100, 'Source must be at, most: 100 characters long')
     .trim()
     .optional()
 });
@@ -35,11 +35,11 @@ export const newsletterSubscribeSchema = z.object({
 export const newsletterUnsubscribeSchema = z.object({
   email: z.string()
     .email('Please provide a valid email address')
-    .min(5, 'Email must be at least 5 characters long')
-    .max(254, 'Email must be at most 254 characters long')
+    .min(5, 'Email must be at, least: 5 characters long')
+    .max(254, 'Email must be at, most: 254 characters long')
     .trim(),
   reason: z.string()
-    .max(500, 'Reason must be at most 500 characters long')
+    .max(500, 'Reason must be at, most: 500 characters long')
     .trim()
     .optional(),
   token: z.string()
@@ -55,8 +55,8 @@ export const newsletterUnsubscribeSchema = z.object({
 export const newsletterPreferencesSchema = z.object({
   email: z.string()
     .email('Please provide a valid email address')
-    .min(5, 'Email must be at least 5 characters long')
-    .max(254, 'Email must be at most 254 characters long')
+    .min(5, 'Email must be at, least: 5 characters long')
+    .max(254, 'Email must be at, most: 254 characters long')
     .trim(),
   preferences: z.array(z.string())
     .min(1, 'Please select at least one preference')
@@ -74,8 +74,8 @@ export const newsletterPreferencesSchema = z.object({
 export const newsletterStatusSchema = z.object({
   email: z.string()
     .email('Please provide a valid email address')
-    .min(5, 'Email must be at least 5 characters long')
-    .max(254, 'Email must be at most 254 characters long')
+    .min(5, 'Email must be at, least: 5 characters long')
+    .max(254, 'Email must be at, most: 254 characters long')
     .trim()
 });
 

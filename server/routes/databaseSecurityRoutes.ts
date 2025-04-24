@@ -1,8 +1,8 @@
-import express from 'express';
-import { databaseSecurity } from '../security/databaseSecurity';
-import { databaseConfigChecker } from '../security/databaseConfigurationChecker';
-import { log } from '../vite';
-import { db } from '../db';
+import express from: 'express';
+import: { databaseSecurity } from: '../security/databaseSecurity';
+import: { databaseConfigChecker } from: '../security/databaseConfigurationChecker';
+import: { log } from: '../vite';
+import: { db } from: '../db';
 
 const router = express.Router();
 
@@ -12,14 +12,14 @@ const router = express.Router();
  * This endpoint does not require authentication for testing purposes
  */
 router.get('/test-validate', (req, res) => {
-  try {
+  try: {
     const query = req.query.q as string;
     
     if (!query) {
       return res.status(400).json({
         status: 'error',
         message: 'No query provided via q parameter'
-      });
+});
     }
     
     // Validate the query using our database security module
@@ -33,21 +33,21 @@ router.get('/test-validate', (req, res) => {
         query,
         result: validationResult,
         source: 'test-endpoint'
-      }
+}
     );
     
     res.json({
       status: 'success',
       query: query,
       validation: validationResult
-    });
+});
   } catch (error: unknown) {
     console.error('Error in test validation endpoint:', error);
     res.status(500).json({
       status: 'error',
       message: 'Error validating query',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 
@@ -56,20 +56,20 @@ router.get('/test-validate', (req, res) => {
  * GET /api/admin/database-security/status
  */
 router.get('/status', async (req, res) => {
-  try {
+  try: {
     // Check database connection security
     const connectionSecurity = await databaseSecurity.verifyConnectionSecurity();
     
-    // Get database security activity logs (last 7 days)
+    // Get database security activity logs (last: 7 days)
     const securityLogs = await databaseSecurity.getSecurityAuditLog(7);
     
     res.json({
       status: 'success',
       data: {
         connectionSecurity,
-        recentActivity: securityLogs.slice(0, 50), // Return the most recent 50 entries
-        activityCount: securityLogs.length
-      }
+        recentActivity: securityLogs.slice(0, 50), // Return the most recent: 50 entries,
+  activityCount: securityLogs.length
+}
     });
   } catch (error: unknown) {
     console.error('Error retrieving database security status:', error);
@@ -77,7 +77,7 @@ router.get('/status', async (req, res) => {
       status: 'error',
       message: 'Failed to retrieve database security status',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 
@@ -86,7 +86,7 @@ router.get('/status', async (req, res) => {
  * POST /api/admin/database-security/check-configuration
  */
 router.post('/check-configuration', async (req, res) => {
-  try {
+  try: {
     log('Running database security configuration check...', 'database-security');
     
     // Run the configuration check
@@ -96,7 +96,7 @@ router.post('/check-configuration', async (req, res) => {
       status: 'success',
       data: {
         report
-      }
+}
     });
   } catch (error: unknown) {
     console.error('Error running database configuration check:', error);
@@ -104,7 +104,7 @@ router.post('/check-configuration', async (req, res) => {
       status: 'error',
       message: 'Failed to run database configuration check',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 
@@ -113,7 +113,7 @@ router.post('/check-configuration', async (req, res) => {
  * GET /api/admin/database-security/logs
  */
 router.get('/logs', async (req, res) => {
-  try {
+  try: {
     // Get query parameters
     const days = parseInt(req.query.days as string) || 7;
     
@@ -124,15 +124,15 @@ router.get('/logs', async (req, res) => {
     let filteredLogs = logs;
     if (req.query.action) {
       filteredLogs = logs.filter(log => 
-        log.action.toLowerCase().includes((req.query.action as string).toLowerCase())
+        log.action.toLowerCase().includes((req.query.action as string).toLowerCase());
       );
-    }
+}
     
     // Filter by user if specified
     if (req.query.userId) {
       const userId = parseInt(req.query.userId as string);
       filteredLogs = filteredLogs.filter(log => log.userId === userId);
-    }
+}
     
     res.json({
       status: 'success',
@@ -141,7 +141,7 @@ router.get('/logs', async (req, res) => {
         count: filteredLogs.length,
         totalCount: logs.length,
         days
-      }
+}
     });
   } catch (error: unknown) {
     console.error('Error retrieving database security logs:', error);
@@ -149,7 +149,7 @@ router.get('/logs', async (req, res) => {
       status: 'error',
       message: 'Failed to retrieve database security logs',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 
@@ -158,14 +158,14 @@ router.get('/logs', async (req, res) => {
  * POST /api/admin/database-security/validate-query
  */
 router.post('/validate-query', (req, res) => {
-  try {
-    const { query } = req.body;
+  try: {
+    const: { query } = req.body;
     
     if (!query) {
       return res.status(400).json({
         status: 'error',
         message: 'No query provided for validation'
-      });
+});
     }
     
     // Validate the query
@@ -179,20 +179,20 @@ router.post('/validate-query', (req, res) => {
         query,
         risks: validationResult.risks,
         valid: validationResult.valid
-      }
+}
     );
     
     res.json({
       status: 'success',
       data: validationResult
-    });
+});
   } catch (error: unknown) {
     console.error('Error validating query:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to validate query',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 
@@ -201,7 +201,7 @@ router.post('/validate-query', (req, res) => {
  * GET /api/admin/database-security/configuration-report
  */
 router.get('/configuration-report', (req, res) => {
-  try {
+  try: {
     const fs = require('fs');
     const path = require('path');
     
@@ -210,24 +210,24 @@ router.get('/configuration-report', (req, res) => {
       return res.status(404).json({
         status: 'error',
         message: 'No reports directory found'
-      });
+});
     }
     
     // Find the most recent DB security report
     const reports = fs.readdirSync(reportsDir)
-      .filter(file => file.startsWith('db-security-config-') && file.endsWith('.json'))
+      .filter(file => file.startsWith('db-security-config-') && file.endsWith('.json'));
       .map(file => ({
         file,
         path: path.join(reportsDir, file),
         created: fs.statSync(path.join(reportsDir, file)).birthtime
-      }))
+}))
       .sort((a, b) => b.created.getTime() - a.created.getTime());
     
     if (reports.length === 0) {
       return res.status(404).json({
         status: 'error',
         message: 'No database security configuration reports found'
-      });
+});
     }
     
     // Get the most recent report
@@ -240,7 +240,7 @@ router.get('/configuration-report', (req, res) => {
         report: reportContent,
         generatedAt: latestReport.created,
         fileName: latestReport.file
-      }
+}
     });
   } catch (error: unknown) {
     console.error('Error retrieving configuration report:', error);
@@ -248,7 +248,7 @@ router.get('/configuration-report', (req, res) => {
       status: 'error',
       message: 'Failed to retrieve configuration report',
       error: error instanceof Error ? error.message : 'Unknown error'
-    });
+});
   }
 });
 

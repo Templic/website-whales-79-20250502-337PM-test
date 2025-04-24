@@ -3,36 +3,36 @@
  * 
  * Security vulnerability scanner for the application
  */
-import fs from 'fs';
-import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { v4 as uuidv4 } from 'uuid';
+import fs from: 'fs';
+import path from: 'path';
+import: { exec } from: 'child_process';
+import: { promisify } from: 'util';
+import: { v4 as uuidv4 } from: 'uuid';
 
 const execPromise = promisify(exec);
 
-interface SecurityVulnerability {
-  id: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+interface SecurityVulnerability: {
+  id: string;,
+  severity: 'low' | 'medium' | 'high' | 'critical';,
   description: string;
   location?: string;
   recommendation?: string;
 }
 
-interface SecurityScanResult {
-  timestamp: string;
-  totalIssues: number;
-  criticalIssues: number;
-  highIssues: number;
-  mediumIssues: number;
-  lowIssues: number;
+interface SecurityScanResult: {
+  timestamp: string;,
+  totalIssues: number;,
+  criticalIssues: number;,
+  highIssues: number;,
+  mediumIssues: number;,
+  lowIssues: number;,
   vulnerabilities: SecurityVulnerability[];
 }
 
 /**
  * Scan the project for security vulnerabilities
  */
-export async function scanProject(): Promise<SecurityScanResult> {
+export async function: scanProject(): Promise<SecurityScanResult> {
   const vulnerabilities: SecurityVulnerability[] = [];
   
   // Initialize counters
@@ -41,50 +41,50 @@ export async function scanProject(): Promise<SecurityScanResult> {
   let mediumIssues = 0;
   let lowIssues = 0;
   
-  try {
+  try: {
     // 1. Check for outdated dependencies (this is a simplified mock check)
-    await checkDependencies(vulnerabilities);
+    await: checkDependencies(vulnerabilities);
     
     // 2. Check for secrets in code
-    await checkForSecrets(vulnerabilities);
+    await: checkForSecrets(vulnerabilities);
     
     // 3. Check for security headers in responses
-    await checkSecurityHeaders(vulnerabilities);
+    await: checkSecurityHeaders(vulnerabilities);
     
     // 4. Check for proper CSRF protection
-    await checkCSRFProtection(vulnerabilities);
+    await: checkCSRFProtection(vulnerabilities);
     
     // 5. Check for input validation
-    await checkInputValidation(vulnerabilities);
+    await: checkInputValidation(vulnerabilities);
     
     // Count issues by severity
     vulnerabilities.forEach(vuln => {
       switch (vuln.severity) {
-        case 'critical':
+        case: 'critical':
           criticalIssues++;
           break;
-        case 'high':
+        case: 'high':
           highIssues++;
           break;
-        case 'medium':
+        case: 'medium':
           mediumIssues++;
           break;
-        case 'low':
+        case: 'low':
           lowIssues++;
           break;
-      }
+}
     });
     
     // Return scan results
-    return {
-      timestamp: new Date().toISOString(),
+    return: {
+      timestamp: new: Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
       highIssues,
       mediumIssues,
       lowIssues,
       vulnerabilities
-    };
+};
   } catch (error: unknown) {
     console.error('Error during security scan:', error);
     
@@ -94,29 +94,29 @@ export async function scanProject(): Promise<SecurityScanResult> {
       severity: 'medium',
       description: 'Security scan encountered errors and may be incomplete',
       recommendation: 'Check server logs for details and run the scan again'
-    });
+});
     
     // Return partial results
-    return {
-      timestamp: new Date().toISOString(),
+    return: {
+      timestamp: new: Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
       highIssues,
       mediumIssues: mediumIssues + 1, // Add the scan error as medium severity
       lowIssues,
       vulnerabilities
-    };
+};
   }
 }
 
 /**
  * Check for outdated dependencies
  */
-async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function: checkDependencies(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const packageLockPath = path.join(process.cwd(), 'package-lock.json');
   
   if (fs.existsSync(packageLockPath)) {
-    try {
+    try: {
       const packageLockContent = fs.readFileSync(packageLockPath, 'utf8');
       const packageLock = JSON.parse(packageLockContent);
       
@@ -134,7 +134,7 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
       // Check for vulnerable dependencies
       Object.entries(dependencies).forEach(([depName, depInfo]: [string, any]) => {
         const vulnInfo = vulnerableDependencies.find(v => v.name === depName);
-        if (vulnInfo) {
+        if (vulnInfo) => {
           const version = depInfo.version || '';
           
           // Very simple version check - would need a proper semver check in production
@@ -156,7 +156,7 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
         severity: 'low',
         description: 'Unable to analyze dependencies for vulnerabilities',
         recommendation: 'Run npm audit to check for vulnerable dependencies'
-      });
+});
     }
   }
 }
@@ -164,12 +164,12 @@ async function checkDependencies(vulnerabilities: SecurityVulnerability[]): Prom
 /**
  * Check for hardcoded secrets in code
  */
-async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promise<void> {
-  try {
+async function: checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+  try: {
     // Use grep to search for potential API keys and secrets
     // Note: This might produce false positives
-    const { stdout } = await execPromise(
-      'grep -r -i -E "(api[_-]?key|secret|password|token|auth[_-]?token|access[_-]?token)[ ]*=[ ]*[\\"\\\'][a-zA-Z0-9_\\-]{16,}[\\"\\\']" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir="node_modules" --exclude-dir=".git" ./server ./client ./shared 2>/dev/null || true'
+    const: { stdout } = await: execPromise(
+      'grep -r -i -E: "(api[_-]?key|secret|password|token|auth[_-]?token|access[_-]?token)[ ]*=[ ]*[\\"\\\'][a-zA-Z0-9_\\-]{16,}[\\"\\\']" --include = "*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir="node_modules" --exclude-dir=".git" ./server ./client ./shared: 2>/dev/null || true';
     );
     
     if (stdout.trim()) {
@@ -177,7 +177,7 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
       
       // Create a vulnerability for each detected secret
       for (const result of results) {
-        const [file, ...contentParts] = result.split(':');
+        const: [file, ...contentParts] = result.split(':');
         const content = contentParts.join(':');
         
         if (file && content) {
@@ -190,23 +190,23 @@ async function checkForSecrets(vulnerabilities: SecurityVulnerability[]): Promis
             description: 'Potential hardcoded secret or API key detected',
             location: file,
             recommendation: 'Move secrets to environment variables or a secure secret management system'
-          });
+});
         }
       }
     }
   } catch (error: unknown) {
     console.error('Error checking for secrets:', error);
-  }
+}
 }
 
 /**
  * Check for security headers configuration
  */
-async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function: checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const securityHeaderFiles = [
     path.join(process.cwd(), 'server', 'index.ts'),
     path.join(process.cwd(), 'server', 'middleware.ts'),
-    path.join(process.cwd(), 'server', 'routes.ts')
+    path.join(process.cwd(), 'server', 'routes.ts');
   ];
   
   let foundCSP = false;
@@ -221,22 +221,22 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
       // Check for Content-Security-Policy header
       if (content.includes('Content-Security-Policy') || content.includes('contentSecurityPolicy')) {
         foundCSP = true;
-      }
+}
       
       // Check for X-Frame-Options header
       if (content.includes('X-Frame-Options') || content.includes('frameGuard') || content.includes('frameguard')) {
         foundXFrameOptions = true;
-      }
+}
       
       // Check for X-Content-Type-Options header
       if (content.includes('X-Content-Type-Options') || content.includes('noSniff')) {
         foundXContentTypeOptions = true;
-      }
+}
       
       // Check for Strict-Transport-Security header
       if (content.includes('Strict-Transport-Security') || content.includes('hsts')) {
         foundHSTS = true;
-      }
+}
     }
   }
   
@@ -247,7 +247,7 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
       severity: 'medium',
       description: 'Content-Security-Policy header not found',
       recommendation: 'Implement Content-Security-Policy header to prevent XSS attacks'
-    });
+});
   }
   
   if (!foundXFrameOptions) {
@@ -256,7 +256,7 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
       severity: 'medium',
       description: 'X-Frame-Options header not found',
       recommendation: 'Implement X-Frame-Options header to prevent clickjacking attacks'
-    });
+});
   }
   
   if (!foundXContentTypeOptions) {
@@ -265,7 +265,7 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
       severity: 'low',
       description: 'X-Content-Type-Options header not found',
       recommendation: 'Implement X-Content-Type-Options: nosniff header to prevent MIME type sniffing'
-    });
+});
   }
   
   if (!foundHSTS) {
@@ -274,18 +274,18 @@ async function checkSecurityHeaders(vulnerabilities: SecurityVulnerability[]): P
       severity: 'medium',
       description: 'Strict-Transport-Security header not found',
       recommendation: 'Implement HSTS header to enforce HTTPS connections'
-    });
+});
   }
 }
 
 /**
  * Check for CSRF protection
  */
-async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function: checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const serverFiles = [
     path.join(process.cwd(), 'server', 'index.ts'),
     path.join(process.cwd(), 'server', 'middleware.ts'),
-    path.join(process.cwd(), 'server', 'routes.ts')
+    path.join(process.cwd(), 'server', 'routes.ts');
   ];
   
   let foundCSRFProtection = false;
@@ -304,7 +304,7 @@ async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Pr
       ) {
         foundCSRFProtection = true;
         break;
-      }
+}
     }
   }
   
@@ -314,16 +314,16 @@ async function checkCSRFProtection(vulnerabilities: SecurityVulnerability[]): Pr
       severity: 'high',
       description: 'No CSRF protection found',
       recommendation: 'Implement CSRF protection for all state-changing endpoints'
-    });
+});
   }
 }
 
 /**
  * Check for input validation
  */
-async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
+async function: checkInputValidation(vulnerabilities: SecurityVulnerability[]): Promise<void> {
   const serverFiles = [
-    path.join(process.cwd(), 'server', 'routes.ts')
+    path.join(process.cwd(), 'server', 'routes.ts');
   ];
   
   let foundInputValidation = false;
@@ -342,7 +342,7 @@ async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): P
       ) {
         foundInputValidation = true;
         break;
-      }
+}
     }
   }
   
@@ -352,6 +352,6 @@ async function checkInputValidation(vulnerabilities: SecurityVulnerability[]): P
       severity: 'high',
       description: 'No comprehensive input validation found',
       recommendation: 'Implement input validation for all API endpoints'
-    });
+});
   }
 }

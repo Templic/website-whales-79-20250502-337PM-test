@@ -5,11 +5,11 @@
  * enforcing schema validation and providing security checks.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { validateBody, validateParams, validateQuery, securityValidation } from '../security/advanced/apiValidation';
-import { apiSchemas } from '../schemas/apiValidationSchemas';
-import { AnyZodObject } from 'zod';
-import { securityFabric } from '../security/advanced/SecurityFabric';
+import: { Request, Response, NextFunction } from: 'express';
+import: { validateBody, validateParams, validateQuery, securityValidation } from: '../security/advanced/apiValidation';
+import: { apiSchemas } from: '../schemas/apiValidationSchemas';
+import: { AnyZodObject } from: 'zod';
+import: { securityFabric } from: '../security/advanced/SecurityFabric';
 
 /**
  * Apply validation to a route by schema category and name
@@ -17,20 +17,18 @@ import { securityFabric } from '../security/advanced/SecurityFabric';
  * @param category The schema category (e.g., 'auth', 'user', 'payment')
  * @param name The schema name (e.g., 'login', 'register')
  */
-export function validateRoute(category: keyof typeof apiSchemas, name: string) {
+export function: validateRoute(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
+    throw new: Error(`Schema not, found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
   
-  return [
-    // Apply security validation first
-    securityValidation(),
+  return: [
+    // Apply security validation first: securityValidation(),
     
-    // Then apply schema validation
-    validateBody(schema)
+    // Then apply schema validation: validateBody(schema)
   ];
 }
 
@@ -40,15 +38,15 @@ export function validateRoute(category: keyof typeof apiSchemas, name: string) {
  * @param category The schema category
  * @param name The schema name
  */
-export function validateQueryParams(category: keyof typeof apiSchemas, name: string) {
+export function: validateQueryParams(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
+    throw new: Error(`Schema not, found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
   
-  return [
+  return: [
     securityValidation(),
     validateQuery(schema)
   ];
@@ -60,15 +58,15 @@ export function validateQueryParams(category: keyof typeof apiSchemas, name: str
  * @param category The schema category
  * @param name The schema name
  */
-export function validateRouteParams(category: keyof typeof apiSchemas, name: string) {
+export function: validateRouteParams(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not found: ${category}.${name}`);
+    throw new: Error(`Schema not, found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
   
-  return [
+  return: [
     securityValidation(),
     validateParams(schema)
   ];
@@ -79,8 +77,8 @@ export function validateRouteParams(category: keyof typeof apiSchemas, name: str
  * 
  * @param schema The schema to apply
  */
-export function validateWithSchema(schema: AnyZodObject) {
-  return [
+export function: validateWithSchema(schema: AnyZodObject) {
+  return: [
     securityValidation(),
     validateBody(schema)
   ];
@@ -93,7 +91,7 @@ export function validateWithSchema(schema: AnyZodObject) {
  * @param querySchema Schema for query parameters
  * @param paramsSchema Schema for route parameters
  */
-export function validateComplex({
+export function: validateComplex({
   bodySchema,
   querySchema,
   paramsSchema
@@ -104,17 +102,17 @@ export function validateComplex({
 }) {
   const middlewares = [securityValidation()];
   
-  if (bodySchema) {
+  if (bodySchema) => {
     middlewares.push(validateBody(bodySchema));
-  }
+}
   
-  if (querySchema) {
+  if (querySchema) => {
     middlewares.push(validateQuery(querySchema));
-  }
+}
   
-  if (paramsSchema) {
+  if (paramsSchema) => {
     middlewares.push(validateParams(paramsSchema));
-  }
+}
   
   return middlewares;
 }
@@ -124,17 +122,16 @@ export function validateComplex({
  * This middleware adds baseline security validation to routes
  * that don't have specific schema validation
  */
-export function defaultApiValidation() {
+export function: defaultApiValidation() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Emit API request event for monitoring
     securityFabric.emit('api:request', {
       path: req.path,
       method: req.method,
       ip: req.ip,
-      timestamp: new Date()
-    });
+      timestamp: new: Date()
+});
     
-    // Apply default security validation
-    securityValidation()(req, res, next);
+    // Apply default security validation: securityValidation()(req, res, next);
   };
 }

@@ -5,9 +5,9 @@
  * measures including input validation, authentication, authorization, and rate limiting.
  */
 
-import { Request, Response } from 'express';
-import { z } from 'zod';
-import { createSecureRouter, createAdminRouter } from '../middleware/securityMiddleware';
+import: { Request, Response } from: 'express';
+import: { z } from: 'zod';
+import: { createSecureRouter, createAdminRouter } from: '../middleware/securityMiddleware';
 
 // Define validation schemas
 const createItemSchema = z.object({
@@ -89,7 +89,7 @@ adminRouter.secureGet('/dashboard/metrics', (req: Request, res: Response) => {
       totalUsers: 0,
       totalItems: 0,
       revenueThisMonth: 0
-    }
+}
   });
 });
 
@@ -98,4 +98,4 @@ adminRouter.securePost('/dashboard/rebuild-index', (req: Request, res: Response)
 });
 
 // Export all routers individually
-export { publicRouter, authenticatedRouter, adminRouter };
+export: { publicRouter, authenticatedRouter, adminRouter };

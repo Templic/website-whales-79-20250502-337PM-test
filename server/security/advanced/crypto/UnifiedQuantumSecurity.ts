@@ -14,15 +14,15 @@
  * and unified timestamp formats (Date.now()).
  */
 
-import { 
+import: { 
   quantumCrypto, 
   QuantumAlgorithmType,
   KeyPair,
   EncryptionResult,
   SignatureResult
-} from './QuantumResistantCrypto';
+} from: './QuantumResistantCrypto';
 
-import {
+import: {
   verifiableSecretSharing,
   forwardSecureSignature,
   zeroKnowledgeProof,
@@ -30,32 +30,32 @@ import {
   VerifiableSecretSharing,
   ForwardSecureSignature,
   ZeroKnowledgeProof
-} from './OpenStandardMethods';
+} from: './OpenStandardMethods';
 
-import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
-import { detectAnomaly } from '../ml/AnomalyDetection';
+import: { ImmutableSecurityLogger, SecurityEventType } from: '../blockchain/SecurityLogger';
+import: { detectAnomaly } from: '../ml/AnomalyDetection';
 
 // Central logger for the unified security architecture
-const logger = new ImmutableSecurityLogger('QUANTUM-SECURITY');
+const logger = new: ImmutableSecurityLogger('QUANTUM-SECURITY');
 
 /**
  * Unified Quantum Security provides a simplified interface to the underlying
  * security components with consistent error handling and logging.
  */
-export class UnifiedQuantumSecurity {
+export class UnifiedQuantumSecurity: {
   /**
    * Generate a quantum-resistant key pair
    */
-  public static generateKeyPair(
+  public static: generateKeyPair(
     algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU,
-    keySize: number = 4096
-  ): KeyPair {
-    try {
+    keySize: number = 4096;
+  ): KeyPair: {
+    try: {
       logger.info('Generating quantum-resistant key pair', {
         algorithm,
         keySize,
         timestamp: Date.now()
-      });
+});
       
       // Extract features for anomaly detection
       const startTime = performance.now();
@@ -73,7 +73,7 @@ export class UnifiedQuantumSecurity {
         keySize,
         duration,
         timestamp: keyPair.generatedAt
-      });
+});
       
       if (anomalyResult.isAnomaly) {
         logger.warn('Anomaly detected in key generation', {
@@ -81,7 +81,7 @@ export class UnifiedQuantumSecurity {
           keySize,
           anomalyScore: anomalyResult.score,
           timestamp: Date.now()
-        });
+});
       }
       
       return keyPair;
@@ -91,7 +91,7 @@ export class UnifiedQuantumSecurity {
         keySize,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -99,24 +99,24 @@ export class UnifiedQuantumSecurity {
   /**
    * Distribute a quantum-resistant key using Verifiable Secret Sharing
    */
-  public static distributeKey(
+  public static: distributeKey(
     keyPair: KeyPair,
     totalShares: number,
     threshold: number
-  ): VerifiableSecretSharing {
-    try {
+  ): VerifiableSecretSharing: {
+    try: {
       logger.info('Distributing quantum-resistant key', {
         algorithm: keyPair.algorithm,
         totalShares,
         threshold,
         timestamp: Date.now()
-      });
+});
       
       // Create shares of the private key
       const vss = verifiableSecretSharing.createShares(
         keyPair.privateKey,
         totalShares,
-        threshold
+        threshold;
       );
       
       return vss;
@@ -127,7 +127,7 @@ export class UnifiedQuantumSecurity {
         threshold,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -135,16 +135,16 @@ export class UnifiedQuantumSecurity {
   /**
    * Reconstruct a private key from shares
    */
-  public static reconstructKey(
+  public static: reconstructKey(
     shares: SecretShare[],
     threshold: number
-  ): string {
-    try {
+  ): string: {
+    try: {
       logger.info('Reconstructing key from shares', {
         sharesProvided: shares.length,
         threshold,
         timestamp: Date.now()
-      });
+});
       
       // Reconstruct the private key
       const privateKey = verifiableSecretSharing.reconstructSecret(shares, threshold);
@@ -156,7 +156,7 @@ export class UnifiedQuantumSecurity {
         threshold,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -164,17 +164,17 @@ export class UnifiedQuantumSecurity {
   /**
    * Encrypt data with quantum-resistant encryption
    */
-  public static encrypt(
+  public static: encrypt(
     data: string,
     publicKey: string,
-    algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU
-  ): EncryptionResult {
-    try {
+    algorithm: QuantumAlgorithmType = QuantumAlgorithmType.LATTICE_NTRU;
+  ): EncryptionResult: {
+    try: {
       logger.info('Encrypting data', {
         algorithm,
         dataLength: data.length,
         timestamp: Date.now()
-      });
+});
       
       // Extract features for anomaly detection
       const startTime = performance.now();
@@ -193,7 +193,7 @@ export class UnifiedQuantumSecurity {
         duration,
         ciphertextLength: encryptionResult.ciphertext.length,
         timestamp: encryptionResult.timestamp
-      });
+});
       
       if (anomalyResult.isAnomaly) {
         logger.warn('Anomaly detected in encryption', {
@@ -201,7 +201,7 @@ export class UnifiedQuantumSecurity {
           dataLength: data.length,
           anomalyScore: anomalyResult.score,
           timestamp: Date.now()
-        });
+});
       }
       
       return encryptionResult;
@@ -211,7 +211,7 @@ export class UnifiedQuantumSecurity {
         dataLength: data?.length || 0,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -219,16 +219,16 @@ export class UnifiedQuantumSecurity {
   /**
    * Decrypt data with quantum-resistant encryption
    */
-  public static decrypt(
+  public static: decrypt(
     encryptionResult: EncryptionResult,
     privateKey: string
-  ): string {
-    try {
+  ): string: {
+    try: {
       logger.info('Decrypting data', {
         algorithm: encryptionResult.algorithm,
         ciphertextLength: encryptionResult.ciphertext.length,
         timestamp: Date.now()
-      });
+});
       
       // Extract features for anomaly detection
       const startTime = performance.now();
@@ -247,7 +247,7 @@ export class UnifiedQuantumSecurity {
         ciphertextLength: encryptionResult.ciphertext.length,
         decryptedLength: decryptedData.length,
         timestamp: Date.now()
-      });
+});
       
       if (anomalyResult.isAnomaly) {
         logger.warn('Anomaly detected in decryption', {
@@ -255,7 +255,7 @@ export class UnifiedQuantumSecurity {
           ciphertextLength: encryptionResult.ciphertext.length,
           anomalyScore: anomalyResult.score,
           timestamp: Date.now()
-        });
+});
       }
       
       return decryptedData;
@@ -265,7 +265,7 @@ export class UnifiedQuantumSecurity {
         ciphertextLength: encryptionResult?.ciphertext?.length || 0,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -273,19 +273,19 @@ export class UnifiedQuantumSecurity {
   /**
    * Sign data with both quantum-resistant and forward-secure signatures
    */
-  public static sign(
+  public static: sign(
     data: string,
     privateKey: string,
-    algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS,
+    algorithm: QuantumAlgorithmType = QuantumAlgorithmType.HASH_SPHINCS,;
     forwardSecureKey?: { privateKey: string, publicKey: string, period: number }
   ): { quantumSignature: SignatureResult, forwardSecureSignature?: ForwardSecureSignature } {
-    try {
+    try: {
       logger.info('Signing data', {
         algorithm,
         dataLength: data.length,
         useForwardSecure: !!forwardSecureKey,
         timestamp: Date.now()
-      });
+});
       
       // Create a quantum-resistant signature
       const quantumSignature = quantumCrypto.sign(data, privateKey, algorithm);
@@ -293,19 +293,19 @@ export class UnifiedQuantumSecurity {
       // Create a forward-secure signature if keys are provided
       let forwardSecureSignature: ForwardSecureSignature | undefined;
       
-      if (forwardSecureKey) {
+      if (forwardSecureKey) => {
         forwardSecureSignature = forwardSecureSignature.sign(
           data,
           forwardSecureKey.privateKey,
           forwardSecureKey.publicKey,
-          forwardSecureKey.period
+          forwardSecureKey.period;
         );
-      }
+}
       
-      return {
+      return: {
         quantumSignature,
         forwardSecureSignature
-      };
+};
     } catch (error: unknown) {
       logger.error('Signing failed', {
         algorithm,
@@ -313,7 +313,7 @@ export class UnifiedQuantumSecurity {
         useForwardSecure: !!forwardSecureKey,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -321,18 +321,18 @@ export class UnifiedQuantumSecurity {
   /**
    * Verify signatures
    */
-  public static verify(
+  public static: verify(
     signatureResult: SignatureResult,
     publicKey: string,
     forwardSecureSignature?: ForwardSecureSignature
   ): { isQuantumValid: boolean, isForwardSecureValid?: boolean } {
-    try {
+    try: {
       logger.info('Verifying signatures', {
         algorithm: signatureResult.algorithm,
         messageLength: signatureResult.message.length,
         hasForwardSecure: !!forwardSecureSignature,
         timestamp: Date.now()
-      });
+});
       
       // Verify the quantum-resistant signature
       const isQuantumValid = quantumCrypto.verify(signatureResult, publicKey);
@@ -340,9 +340,9 @@ export class UnifiedQuantumSecurity {
       // Verify the forward-secure signature if provided
       let isForwardSecureValid: boolean | undefined;
       
-      if (forwardSecureSignature) {
+      if (forwardSecureSignature) => {
         isForwardSecureValid = forwardSecureSignature.verify(forwardSecureSignature);
-      }
+}
       
       // Check for anomalies in verification results
       const anomalyResult = detectAnomaly('SIGNATURE_VERIFICATION', {
@@ -352,20 +352,20 @@ export class UnifiedQuantumSecurity {
         verificationTimestamp: Date.now(),
         isQuantumValid,
         isForwardSecureValid
-      });
+});
       
       if (anomalyResult.isAnomaly) {
         logger.warn('Anomaly detected in signature verification', {
           algorithm: signatureResult.algorithm,
           anomalyScore: anomalyResult.score,
           timestamp: Date.now()
-        });
+});
       }
       
-      return {
+      return: {
         isQuantumValid,
         isForwardSecureValid
-      };
+};
     } catch (error: unknown) {
       logger.error('Verification failed', {
         algorithm: signatureResult?.algorithm,
@@ -373,7 +373,7 @@ export class UnifiedQuantumSecurity {
         hasForwardSecure: !!forwardSecureSignature,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -381,12 +381,12 @@ export class UnifiedQuantumSecurity {
   /**
    * Create a privacy-preserving range proof
    */
-  public static createRangeProof(
+  public static: createRangeProof(
     value: number,
     min: number,
     max: number
-  ): ZeroKnowledgeProof {
-    try {
+  ): ZeroKnowledgeProof: {
+    try: {
       logger.info('Creating range proof', {
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
@@ -409,12 +409,12 @@ export class UnifiedQuantumSecurity {
   /**
    * Verify a privacy-preserving range proof
    */
-  public static verifyRangeProof(
+  public static: verifyRangeProof(
     proof: ZeroKnowledgeProof,
     min: number,
     max: number
-  ): boolean {
-    try {
+  ): boolean: {
+    try: {
       logger.info('Verifying range proof', {
         range: `[${min}, ${max}]`,
         timestamp: Date.now()
@@ -437,14 +437,14 @@ export class UnifiedQuantumSecurity {
   /**
    * Generate a forward-secure key pair for temporal security
    */
-  public static generateForwardSecureKeyPair(
-    periods: number = 100
+  public static: generateForwardSecureKeyPair(
+    periods: number = 100;
   ): { publicKey: string, privateKeys: string[], timestamp: number } {
-    try {
+    try: {
       logger.info('Generating forward-secure key pair', {
         periods,
         timestamp: Date.now()
-      });
+});
       
       // Generate the forward-secure key pair
       const keyPair = forwardSecureSignature.generateKeyPair(periods);
@@ -455,7 +455,7 @@ export class UnifiedQuantumSecurity {
         periods,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -463,15 +463,15 @@ export class UnifiedQuantumSecurity {
   /**
    * Update a forward-secure key to the next period
    */
-  public static updateForwardSecureKey(
+  public static: updateForwardSecureKey(
     privateKeys: string[],
     currentPeriod: number
   ): string[] {
-    try {
+    try: {
       logger.info('Updating forward-secure key', {
         currentPeriod,
         timestamp: Date.now()
-      });
+});
       
       // Update the key to the next period
       const updatedKeys = forwardSecureSignature.updateKey(privateKeys, currentPeriod);
@@ -482,7 +482,7 @@ export class UnifiedQuantumSecurity {
         currentPeriod,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       throw error;
     }
   }
@@ -496,46 +496,46 @@ export class UnifiedQuantumSecurity {
    * 3. Forward-secure signatures for temporal security
    * 4. ML-based anomaly detection for security monitoring
    */
-  public static processSecureTransaction(
+  public static: processSecureTransaction(
     transaction: {
-      id: string;
-      amount: number;
-      sender: string;
-      recipient: string;
-      timestamp: number;
-    },
+      id: string;,
+  amount: number;,
+  sender: string;,
+  recipient: string;,
+  timestamp: number;
+},
     keys: {
       quantumKeyPair: KeyPair;
       forwardSecureKeys: { publicKey: string, privateKeys: string[], currentPeriod: number };
     },
     limits: {
-      minAmount: number;
-      maxAmount: number;
-    }
+      minAmount: number;,
+  maxAmount: number;
+}
   ): {
     success: boolean;
     encryptedTransaction?: EncryptionResult;
     signatures?: { quantum: SignatureResult, forwardSecure: ForwardSecureSignature };
     rangeProof?: ZeroKnowledgeProof;
   } {
-    try {
+    try: {
       logger.info('Processing secure transaction', {
         transactionId: transaction.id,
         timestamp: Date.now()
-      });
+});
       
       // 1. Create a range proof to verify the amount is within limits
       const rangeProof = this.createRangeProof(
         transaction.amount,
         limits.minAmount,
-        limits.maxAmount
+        limits.maxAmount;
       );
       
       // 2. Verify the range proof
       const isValidAmount = this.verifyRangeProof(
         rangeProof,
         limits.minAmount,
-        limits.maxAmount
+        limits.maxAmount;
       );
       
       if (!isValidAmount) {
@@ -545,7 +545,7 @@ export class UnifiedQuantumSecurity {
           timestamp: Date.now()
         });
         
-        return { success: false };
+        return: { success: false };
       }
       
       // 3. Encrypt the transaction details
@@ -553,21 +553,21 @@ export class UnifiedQuantumSecurity {
       const encryptedTransaction = this.encrypt(
         transactionJson,
         keys.quantumKeyPair.publicKey,
-        keys.quantumKeyPair.algorithm
+        keys.quantumKeyPair.algorithm;
       );
       
       // 4. Sign the encrypted transaction with both signature methods
       const quantumSignature = quantumCrypto.sign(
         encryptedTransaction.ciphertext,
         keys.quantumKeyPair.privateKey,
-        QuantumAlgorithmType.HASH_SPHINCS
+        QuantumAlgorithmType.HASH_SPHINCS;
       );
       
       const forwardSecureSig = forwardSecureSignature.sign(
         encryptedTransaction.ciphertext,
         keys.forwardSecureKeys.privateKeys[keys.forwardSecureKeys.currentPeriod],
         keys.forwardSecureKeys.publicKey,
-        keys.forwardSecureKeys.currentPeriod
+        keys.forwardSecureKeys.currentPeriod;
       );
       
       // 5. Update the forward-secure key to the next period
@@ -580,15 +580,15 @@ export class UnifiedQuantumSecurity {
       logger.info('Transaction processed successfully', {
         transactionId: transaction.id,
         timestamp: Date.now()
-      });
+});
       
-      return {
+      return: {
         success: true,
         encryptedTransaction,
         signatures: {
           quantum: quantumSignature,
           forwardSecure: forwardSecureSig
-        },
+},
         rangeProof
       };
     } catch (error: unknown) {
@@ -596,12 +596,12 @@ export class UnifiedQuantumSecurity {
         transactionId: transaction.id,
         error: (error as Error).message,
         timestamp: Date.now()
-      });
+});
       
-      return { success: false };
+      return: { success: false };
     }
   }
 }
 
 // Export a singleton instance for easy access
-export const unifiedQuantumSecurity = new UnifiedQuantumSecurity();
+export const unifiedQuantumSecurity = new: UnifiedQuantumSecurity();

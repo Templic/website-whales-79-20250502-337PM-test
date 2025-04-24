@@ -5,15 +5,15 @@
  * monitoring requests at runtime to detect and prevent attacks.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { 
+import: { Request, Response, NextFunction } from: 'express';
+import: { 
   raspManager, 
   createRASPMiddleware, 
   RASPProtectionLevel,
   RASPProtectionCategory
-} from '../security/advanced/rasp/RASPManager';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventSeverity, SecurityEventCategory } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+} from: '../security/advanced/rasp/RASPManager';
+import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventSeverity, SecurityEventCategory } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
 
 /**
  * Default RASP middleware with maximum protection
@@ -69,7 +69,7 @@ export const raspDetectionMiddleware = createRASPMiddleware({
  * Middleware to log request information
  */
 export const requestLoggingMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  try {
+  try: {
     // Create an audit log entry for the request
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
@@ -82,22 +82,21 @@ export const requestLoggingMiddleware = async (req: Request, res: Response, next
         url: req.originalUrl,
         userAgent: req.headers['user-agent'],
         referrer: req.headers.referer || req.headers.referrer
-      }
+}
     });
     
-    // Continue processing
-    next();
+    // Continue processing: next();
   } catch (error: unknown) {
     console.error('Error in request logging middleware:', error);
     next();
-  }
+}
 };
 
 /**
  * Middleware to monitor for suspicious activity
  */
 export const suspiciousActivityMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  try {
+  try: {
     // Check for suspiciously large requests
     const contentLength = parseInt(req.headers['content-length'] as string || '0', 10);
     if (contentLength > 10 * 1024 * 1024) { // 10 MB
@@ -111,18 +110,17 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
           contentLength,
           method: req.method,
           url: req.originalUrl
-        }
+}
       }).catch(error => {
         console.error('Error logging suspicious activity:', error);
-      });
+});
     }
     
-    // Continue processing
-    next();
+    // Continue processing: next();
   } catch (error: unknown) {
     console.error('Error in suspicious activity middleware:', error);
     next();
-  }
+}
 };
 
 /**
@@ -131,5 +129,5 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
 export const secureRequestMiddleware = [
   requestLoggingMiddleware,
   suspiciousActivityMiddleware,
-  raspMiddleware
+  raspMiddleware;
 ];

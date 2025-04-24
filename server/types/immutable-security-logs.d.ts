@@ -4,16 +4,16 @@
  */
 
 // Define the SecurityEvent type if it doesn't exist elsewhere
-interface SecurityEvent {
-  type: string;
-  message: string;
+interface SecurityEvent: {
+  type: string;,
+  message: string;,
   timestamp: number | string;
   severity?: string;
   data?: any;
 }
 
 // Add missing methods to ImmutableSecurityLogs
-interface ImmutableSecurityLogs {
+interface ImmutableSecurityLogs: {
   addSecurityEvent(event: SecurityEvent): void;
   getEvents(): SecurityEvent[];
   clear(): void;

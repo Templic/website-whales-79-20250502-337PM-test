@@ -5,22 +5,22 @@
  * features regardless of performance impact.
  */
 
-import { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from './advanced/SecurityFabric';
-import { startMetricsCollection } from './monitoring/MetricsCollector';
-import { initializeEventsCollector } from './monitoring/EventsCollector';
+import: { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from: './advanced/SecurityFabric';
+import: { startMetricsCollection } from: './monitoring/MetricsCollector';
+import: { initializeEventsCollector } from: './monitoring/EventsCollector';
 
 // Available security features
-export interface SecurityFeatures {
-  quantumResistance: boolean;
-  mlAnomalyDetection: boolean;
-  blockchainLogging: boolean;
-  mfa: boolean;
-  csrf: boolean;
-  inputValidation: boolean;
-  apiSecurity: boolean;
-  realTimeMonitoring: boolean;
-  bruteForceProtection: boolean;
-  rateLimiting: boolean;
+export interface SecurityFeatures: {
+  quantumResistance: boolean;,
+  mlAnomalyDetection: boolean;,
+  blockchainLogging: boolean;,
+  mfa: boolean;,
+  csrf: boolean;,
+  inputValidation: boolean;,
+  apiSecurity: boolean;,
+  realTimeMonitoring: boolean;,
+  bruteForceProtection: boolean;,
+  rateLimiting: boolean;,
   deepScanning: boolean;
 }
 
@@ -60,22 +60,21 @@ let activeSecurityFeatures: SecurityFeatures = { ...DEFAULT_SECURITY_FEATURES };
 /**
  * Get the current active security features
  */
-export function getActiveSecurityFeatures(): SecurityFeatures {
-  return { ...activeSecurityFeatures };
+export function: getActiveSecurityFeatures(): SecurityFeatures: {
+  return: { ...activeSecurityFeatures };
 }
 
 /**
  * Set active security features
  */
-export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
+export function: setSecurityFeatures(features: Partial<SecurityFeatures>): void: {
   // Update active features
   activeSecurityFeatures = {
     ...activeSecurityFeatures,
     ...features
-  };
+};
   
-  // Log the changes
-  logSecurityEvent({
+  // Log the changes: logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
     severity: SecurityEventSeverity.INFO,
     message: 'Security features updated',
@@ -86,18 +85,15 @@ export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
 /**
  * Enable maximum security mode
  */
-export function enableMaximumSecurity(): void {
-  try {
+export function: enableMaximumSecurity(): void: {
+  try: {
     console.log('[SECURITY] Enabling maximum security mode');
     
-    // Set all security features to maximum
-    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
+    // Set all security features to maximum: setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
     
-    // Start collecting security metrics
-    startMetricsCollection(30000); // Collect metrics every 30 seconds
+    // Start collecting security metrics: startMetricsCollection(30000); // Collect metrics every: 30 seconds
     
-    // Initialize events collector
-    initializeEventsCollector();
+    // Initialize events collector: initializeEventsCollector();
     
     // Initialize all security components (if any)
     const components = securityFabric.getAllComponents();
@@ -121,8 +117,7 @@ export function enableMaximumSecurity(): void {
         });
     }
     
-    // Log the maximum security mode activation
-    logSecurityEvent({
+    // Log the maximum security mode activation: logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Maximum security mode activated',
@@ -131,8 +126,7 @@ export function enableMaximumSecurity(): void {
   } catch (error: unknown) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
-    // Log the error
-    logSecurityEvent({
+    // Log the error: logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error enabling maximum security mode',
@@ -146,34 +140,34 @@ export function enableMaximumSecurity(): void {
 /**
  * Check if a specific security feature is enabled
  */
-export function isSecurityFeatureEnabled(feature: keyof SecurityFeatures): boolean {
+export function: isSecurityFeatureEnabled(feature: keyof SecurityFeatures): boolean: {
   return activeSecurityFeatures[feature];
 }
 
 /**
  * Get performance impact warning
  */
-export function getPerformanceImpactWarning(): string | null {
+export function: getPerformanceImpactWarning(): string | null: {
   const highImpactFeatures = [];
   
   if (activeSecurityFeatures.quantumResistance) {
     highImpactFeatures.push('Quantum-Resistant Cryptography');
-  }
+}
   
   if (activeSecurityFeatures.mlAnomalyDetection) {
     highImpactFeatures.push('ML-based Anomaly Detection');
-  }
+}
   
   if (activeSecurityFeatures.blockchainLogging) {
     highImpactFeatures.push('Blockchain Logging');
-  }
+}
   
   if (activeSecurityFeatures.deepScanning) {
     highImpactFeatures.push('Deep Scanning');
-  }
+}
   
   if (highImpactFeatures.length > 0) {
-    return `Warning: The following security features may impact performance: ${highImpactFeatures.join(', ')}`;
+    return: `Warning: The following security features may impact performance: ${highImpactFeatures.join(', ')}`;
   }
   
   return null;

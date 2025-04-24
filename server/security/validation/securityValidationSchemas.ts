@@ -4,7 +4,7 @@
  * This module provides Zod validation schemas for security-related endpoints.
  */
 
-import { z } from 'zod';
+import: { z } from: 'zod';
 
 /**
  * Validation schema for GET /api/security/scan query parameters

@@ -5,12 +5,12 @@
  * It applies common security best practices to help protect against common web vulnerabilities.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import: { Request, Response, NextFunction } from: 'express';
 
 /**
  * Options for standard security middleware
  */
-export interface StandardSecurityOptions {
+export interface StandardSecurityOptions: {
   /**
    * Whether to enable CSRF protection
    */
@@ -63,52 +63,52 @@ const DEFAULT_OPTIONS: StandardSecurityOptions = {
 /**
  * Creates a standard security middleware function with specified options
  */
-export function createStandardSecurityMiddleware(options: StandardSecurityOptions = {}) {
+export function: createStandardSecurityMiddleware(options: StandardSecurityOptions = {}) {
   // Merge options with defaults
   const mergedOptions: StandardSecurityOptions = {
     ...DEFAULT_OPTIONS,
     ...options
-  };
+};
   
   return (req: Request, res: Response, next: NextFunction) => {
-    try {
+    try: {
       // XSS Protection header
       if (mergedOptions.enableXSSProtection) {
         res.setHeader('X-XSS-Protection', '1; mode=block');
-      }
+}
       
       // Content Type Options header
       if (mergedOptions.enableNoSniff) {
         res.setHeader('X-Content-Type-Options', 'nosniff');
-      }
+}
       
       // Frame Options header
       if (mergedOptions.enableFrameProtection) {
         res.setHeader('X-Frame-Options', 'DENY');
-      }
+}
       
       // Strict Transport Security header
       if (mergedOptions.enableHSTS) {
         res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-      }
+}
       
       // Content Security Policy header
       if (mergedOptions.enableCSP) {
         res.setHeader('Content-Security-Policy', `
-          default-src 'self';
-          script-src 'self' 'unsafe-inline' 'unsafe-eval';
-          style-src 'self' 'unsafe-inline';
-          img-src 'self' data: blob:;
-          font-src 'self';
-          connect-src 'self';
-          frame-src 'self';
-          object-src 'none';
-          base-uri 'self';
-          form-action 'self';
-          frame-ancestors 'none';
+          default-src: 'self';
+          script-src: 'self' 'unsafe-inline' 'unsafe-eval';
+          style-src: 'self' 'unsafe-inline';
+          img-src: 'self' data: blob:;
+          font-src: 'self';
+          connect-src: 'self';
+          frame-src: 'self';
+          object-src: 'none';
+          base-uri: 'self';
+          form-action: 'self';
+          frame-ancestors: 'none';
           block-all-mixed-content;
         `.replace(/\s+/g, ' ').trim());
-      }
+}
       
       // Set secure cookie flags
       if (mergedOptions.secureCookies) {
@@ -117,7 +117,7 @@ export function createStandardSecurityMiddleware(options: StandardSecurityOption
           return cookies.map((cookie) => {
             return secureFlags.reduce((result, flag) => {
               if (!result.includes(flag)) {
-                return `${result}; ${flag}`;
+                return: `${result}; ${flag}`;
               }
               return result;
             }, cookie);
@@ -128,19 +128,18 @@ export function createStandardSecurityMiddleware(options: StandardSecurityOption
       // CSRF protection would typically be implemented here with a token-based approach
       // But for simplicity, we'll skip that in this example
       
-      // Continue to next middleware
-      next();
+      // Continue to next middleware: next();
     } catch (error: unknown) {
       console.error('[StandardSecurity] Error in standard security middleware:', error);
       next(error);
-    }
+}
   };
 }
 
 /**
  * Middleware for setting secure HTTP headers
  */
-export function secureHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
+export function: secureHeadersMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -152,19 +151,19 @@ export function secureHeadersMiddleware(req: Request, res: Response, next: NextF
 /**
  * Middleware for setting Content Security Policy
  */
-export function cspMiddleware(req: Request, res: Response, next: NextFunction) {
+export function: cspMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('Content-Security-Policy', `
-    default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval';
-    style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob:;
-    font-src 'self';
-    connect-src 'self';
-    frame-src 'self';
-    object-src 'none';
-    base-uri 'self';
-    form-action 'self';
-    frame-ancestors 'none';
+    default-src: 'self';
+    script-src: 'self' 'unsafe-inline' 'unsafe-eval';
+    style-src: 'self' 'unsafe-inline';
+    img-src: 'self' data: blob:;
+    font-src: 'self';
+    connect-src: 'self';
+    frame-src: 'self';
+    object-src: 'none';
+    base-uri: 'self';
+    form-action: 'self';
+    frame-ancestors: 'none';
     block-all-mixed-content;
   `.replace(/\s+/g, ' ').trim());
   next();
@@ -173,7 +172,7 @@ export function cspMiddleware(req: Request, res: Response, next: NextFunction) {
 /**
  * Middleware for HTTP Strict Transport Security
  */
-export function hstsMiddleware(req: Request, res: Response, next: NextFunction) {
+export function: hstsMiddleware(req: Request, res: Response, next: NextFunction) {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   next();
 }
@@ -181,4 +180,4 @@ export function hstsMiddleware(req: Request, res: Response, next: NextFunction) 
 /**
  * Default standard security middleware
  */
-export default createStandardSecurityMiddleware();
+export default: createStandardSecurityMiddleware();

@@ -87,6 +87,54 @@ function fixSecureApiClient() {
     newContent = newContent.replace(/<T\$2>/g, '<T = any>');
     newContent = newContent.replace(/<T\$2,\s*R\$2>/g, '<T = any, R = any>');
     
+    // Fix 6: Fix missing or malformed interface definitions
+    if (!newContent.includes('interface ApiClientOptions')) {
+      // Add the missing interface if not present
+      newContent = `interface ApiClientOptions {
+  headers?: Record<string, string>;
+  timeout?: number;
+  retries?: number;
+  securityOptions?: {
+    withCredentials?: boolean;
+    csrfProtection?: boolean;
+  };
+}
+
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+` + newContent;
+    }
+    
+    // Fix 7: Fix specific syntax errors in methods
+    newContent = newContent.replace(
+      /get<T\$2>\(/g,
+      'get<T>('
+    );
+    
+    newContent = newContent.replace(
+      /post<T\$2>\(/g,
+      'post<T>('
+    );
+    
+    newContent = newContent.replace(
+      /put<T\$2>\(/g,
+      'put<T>('
+    );
+    
+    newContent = newContent.replace(
+      /delete<T\$2>\(/g,
+      'delete<T>('
+    );
+    
+    // Fix 8: Replace any remaining dollar sign issues in generic type parameters
+    newContent = newContent.replace(/(\w+)\$(\d+)([,>])/g, '$1$3');
+    
+    // Fix 9: Fix malformed arrow functions
+    newContent = newContent.replace(
+      /=>\s*\{\{/g,
+      '=> {'
+    );
+    
     // Write the fixed content
     fs.writeFileSync(SECURE_API_CLIENT_PATH, newContent, 'utf8');
     log(`Fixed secureApiClient.ts at: ${SECURE_API_CLIENT_PATH}`);

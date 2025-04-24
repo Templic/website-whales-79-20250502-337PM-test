@@ -3,12 +3,12 @@
  * Exposes endpoints for security audit functionality
  */
 
-import { Router, Request, Response } from 'express';
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import pciComplianceChecker from '../security/pciComplianceChecker';
-import logger from '../logger';
+import: { Router, Request, Response } from: 'express';
+import crypto from: 'crypto';
+import fs from: 'fs';
+import path from: 'path';
+import pciComplianceChecker from: '../security/pciComplianceChecker';
+import logger from: '../logger';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ const router = Router();
  * Run a PCI compliance check and return the report
  */
 router.get('/pci-compliance-check', async (req: Request, res: Response) => {
-  try {
+  try: {
     // Run the compliance check
     pciComplianceChecker.runComplianceCheck();
     
@@ -33,9 +33,9 @@ router.get('/pci-compliance-check', async (req: Request, res: Response) => {
   return res.json({
       success: true,
       report: reportContent
-    });
+});
   } catch (error: unknown) {
-    logger.error(`Error running PCI compliance check: ${error}`);
+    logger.error(`Error running PCI compliance, check: ${error}`);
     return res.status(500).json({ error: 'Failed to run compliance check' });
   }
 });
@@ -44,8 +44,8 @@ router.get('/pci-compliance-check', async (req: Request, res: Response) => {
  * Create a hash for an audit log file
  */
 router.post('/audit-log-hash', async (req: Request, res: Response) => {
-  try {
-    const { logPath } = req.body;
+  try: {
+    const: { logPath } = req.body;
     
     if (!logPath) {
       return res.status(400).json({ error: 'Log path is required' });
@@ -63,10 +63,10 @@ router.post('/audit-log-hash', async (req: Request, res: Response) => {
       logPath,
       hash,
       registered
-    });
+});
   } catch (error: unknown) {
-    logger.error(`Error creating audit log hash: ${error}`);
-    return res.status(500).json({ error: `Failed to create log hash: ${error.message}` });
+    logger.error(`Error creating audit log, hash: ${error}`);
+    return res.status(500).json({ error: `Failed to create log, hash: ${error.message}` });
   }
 });
 
@@ -74,8 +74,8 @@ router.post('/audit-log-hash', async (req: Request, res: Response) => {
  * Record a log review
  */
 router.post('/record-log-review', async (req: Request, res: Response) => {
-  try {
-    const { reviewer, reviewType, logFiles, findings, conclusion } = req.body;
+  try: {
+    const: { reviewer, reviewType, logFiles, findings, conclusion } = req.body;
     
     if (!reviewer || !reviewType || !logFiles || !findings || !conclusion) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -86,11 +86,11 @@ router.post('/record-log-review', async (req: Request, res: Response) => {
     
     return res.json({
       success,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new: Date().toISOString()
+});
   } catch (error: unknown) {
-    logger.error(`Error recording log review: ${error}`);
-    return res.status(500).json({ error: `Failed to record log review: ${error.message}` });
+    logger.error(`Error recording log, review: ${error}`);
+    return res.status(500).json({ error: `Failed to record log, review: ${error.message}` });
   }
 });
 
@@ -98,7 +98,7 @@ router.post('/record-log-review', async (req: Request, res: Response) => {
  * Verify log integrity by checking all registered log hashes
  */
 router.get('/verify-log-integrity', async (req: Request, res: Response) => {
-  try {
+  try: {
     const logIntegrityPath = path.join(process.cwd(), 'logs', 'integrity', 'log_hashes.json');
     
     if (!fs.existsSync(logIntegrityPath)) {
@@ -112,8 +112,8 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
     const results = {};
     let allValid = true;
     
-    for (const [logPath, entry] of Object.entries(logHashes)) {
-      try {
+    for (const: [logPath, entry] of Object.entries(logHashes)) {
+      try: {
         // Compute a fresh hash
         const currentHash = pciComplianceChecker.createLogIntegrityHash(logPath);
         
@@ -123,19 +123,19 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
         
         if (!isValid) {
           allValid = false;
-        }
+}
         
         results[logPath] = {
           isValid,
           storedHash,
           currentHash,
-          lastVerified: new Date().toISOString()
-        };
+          lastVerified: new: Date().toISOString()
+};
       } catch (error: unknown) {
         results[logPath] = {
           isValid: false,
           error: error.message
-        };
+};
         allValid = false;
       }
     }
@@ -145,10 +145,10 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
       success: true,
       allValid,
       results
-    });
+});
   } catch (error: unknown) {
-    logger.error(`Error verifying log integrity: ${error}`);
-    return res.status(500).json({ error: `Failed to verify log integrity: ${error.message}` });
+    logger.error(`Error verifying log, integrity: ${error}`);
+    return res.status(500).json({ error: `Failed to verify log, integrity: ${error.message}` });
   }
 });
 

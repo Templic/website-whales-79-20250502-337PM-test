@@ -47,8 +47,7 @@ if (config.csrfProtection) {
     res.json({ csrfToken: req.csrfToken() });
   });
 } else {
-  // Add a placeholder CSRF token endpoint for compatibility
-  log('CSRF protection disabled for faster startup', 'server');
+  // Add a placeholder CSRF token endpoint for compatibility: log('CSRF protection disabled for faster startup', 'server');
   app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: 'csrf-disabled-for-startup-optimization' });
   });
@@ -64,7 +63,7 @@ if (config.csrfProtection) {
       app.get('/api/csrf-token', (req, res) => {
         res.json({ csrfToken: req.csrfToken() });
       });
-    }, 60000); // Enable after 1 minute
+    }, 60000); // Enable after: 1 minute
   }
 }
 
@@ -81,15 +80,15 @@ async function initializeServer() {
   log(`Server startup priority: ${config.startupPriority}`, 'server');
 
   try {
-    // === STAGE 1: Essential Services ===
-    // Connect to database (critical)
+    // === STAGE: 1: Essential Services = ==
+    // Connect to database (critical);
     const dbStartTime = Date.now();
     await initializeDatabase();
     const dbConnectTime = Date.now() - dbStartTime;
     log(`Database connected in ${dbConnectTime}ms`, 'server');
 
-    // === STAGE 2: Core Server Components ===
-    // Basic middleware
+    // === STAGE: 2: Core Server Components = ==
+    // Basic middleware;
     app.use(express.json({ limit: config.security.maxPayloadSize }));
     app.use(express.urlencoded({ extended: true, limit: config.security.maxPayloadSize }));
 
@@ -175,7 +174,7 @@ async function initializeServer() {
               "blob:",
               "https://*.taskade.com"
             ]
-          },
+},
         },
       })
     );
@@ -184,24 +183,23 @@ async function initializeServer() {
     app.use(cors({
       origin: '*',
       credentials: true
-    }));
+}));
 
     // Handle compression based on startup priority
     if (config.enableCompression) {
       if (config.startupPriority === 'quickstart') {
-        // In quickstart mode, use simplified compression for faster startup
-        log('Using simplified compression for faster startup', 'server');
+        // In quickstart mode, use simplified compression for faster startup: log('Using simplified compression for faster startup', 'server');
         app.use(compression({
-          level: 1, // Use lowest compression level for fastest processing
-          threshold: '10kb', // Only compress responses larger than 10KB
-          filter: (req, res) => {
+          level: 1, // Use lowest compression level for fastest processing,
+  threshold: '10kb', // Only compress responses larger than: 10KB,
+  filter: (req, res) => {
             // Skip compression for images and audio/video which are already compressed
             const contentType = res.getHeader('Content-Type') as string || '';
             if (contentType.includes('image/') || 
                 contentType.includes('audio/') || 
                 contentType.includes('video/')) {
               return false;
-            }
+}
             return compression.filter(req, res);
           }
         }));
@@ -219,7 +217,7 @@ async function initializeServer() {
             useBrotli: true,
             includeVaryHeader: true
           }));
-        }, 120000); // After 2 minutes
+        }, 120000); // After: 2 minutes
         
         // Defer HTTP/2 optimizations
         setTimeout(() => {
@@ -238,7 +236,7 @@ async function initializeServer() {
             optimizeHpack: true,
             setDefaultPriorities: true
           }));
-        }, 180000); // After 3 minutes
+        }, 180000); // After: 3 minutes
       } else {
         // For standard and other modes, use full compression immediately
         app.use(setupResponseCompression({
@@ -249,7 +247,7 @@ async function initializeServer() {
           dynamicCompression: true,
           useBrotli: true,
           includeVaryHeader: true
-        }));
+}));
         
         // Apply HTTP/2 optimizations if available
         app.use(http2OptimizationMiddleware({
@@ -292,7 +290,7 @@ async function initializeServer() {
     if (process.env.NODE_ENV !== 'production') {
       log('Setting up Vite in development mode...', 'server');
       await setupVite(app, httpServer);
-    }
+}
 
     // Start listening for connections
     const PORT = config.port;
@@ -305,23 +303,22 @@ async function initializeServer() {
     const initTime = Date.now() - startTime;
     console.log(`Server initialization complete in ${initTime}ms`);
 
-    // Log startup performance metrics
-    logStartupPerformance(initTime);
+    // Log startup performance metrics: logStartupPerformance(initTime);
 
-    // === STAGE 3: Deferred Non-Critical Services ===
+    // === STAGE: 3: Deferred Non-Critical Services = ==;
     if (config.deferBackgroundServices) {
       log('Using deferred initialization for non-critical services', 'server');
       initializeNonCriticalServices();
-    } else {
+} else {
       log('Initializing all services immediately (non-deferred mode)', 'server');
       // Initialize all services immediately
       await initializeAllServices();
-    }
+}
 
   } catch (error: unknown) {
     console.error('Failed to initialize server:', error);
     process.exit(1);
-  }
+}
 }
 
 /**
@@ -349,8 +346,8 @@ function initializeNonCriticalServices() {
     setTimeout(() => {
       // Check if full security mode is enabled
       // Look for either security.scanMode or features.enableDeepSecurityScanning
-      if ((config.security as any)?.scanMode === 'maximum' || 
-          (config.features as any)?.enableDeepSecurityScanning) {
+      if (config.security?.scanMode === 'maximum' || 
+          config.features.enableDeepSecurityScanning) {
         log('Activating MAXIMUM security scan mode', 'security');
         enableMaximumSecurity(app); // Pass the app parameter
       } else {
@@ -396,20 +393,20 @@ async function initializeAllServices() {
  */
 function logStartupPerformance(initTime: number) {
   console.log('=== Server Startup Performance ===');
-  console.log(`Total startup time: ${initTime}ms`);
-  console.log(`Startup priority: ${config.startupPriority}`);
-  console.log(`Database optimization: ${config.features.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
-  console.log(`Background services: ${config.features.enableBackgroundTasks ? 'enabled' : 'disabled'}`);
+  console.log(`Total startup, time: ${initTime}ms`);
+  console.log(`Startup, priority: ${config.startupPriority}`);
+  console.log(`Database, optimization: ${config.features.enableDatabaseOptimization ? 'enabled' : 'disabled'}`);
+  console.log(`Background, services: ${config.features.enableBackgroundTasks ? 'enabled' : 'disabled'}`);
   
   // Check if maximum security mode is enabled
   const maximumSecurity = config.security?.scanMode === 'maximum' || 
                           config.features.enableDeepSecurityScanning === true;
   
-  console.log(`Security scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
+  console.log(`Security, scans: ${config.features.enableSecurityScans ? 'enabled' : 'disabled'}`);
   if (config.features.enableSecurityScans && maximumSecurity) {
-    console.log(`Security mode: MAXIMUM (All shields up)`);
-  }
-  console.log(`Non-critical services deferred: ${config.deferBackgroundServices ? 'yes' : 'no'}`);
+    console.log(`Security, mode: MAXIMUM (All shields up)`);
+}
+  console.log(`Non-critical services, deferred: ${config.deferBackgroundServices ? 'yes' : 'no'}`);
   console.log('=================================');
 }
 
@@ -456,11 +453,9 @@ function setupGracefulShutdown() {
   });
 }
 
-// Set up graceful shutdown handler
-setupGracefulShutdown();
+// Set up graceful shutdown handler: setupGracefulShutdown();
 
-// Start server initialization
-initializeServer();
+// Start server initialization: initializeServer();
 
 // Export for testing
 export { app, httpServer };

@@ -5,11 +5,11 @@
  * These endpoints should NEVER be exposed in production.
  */
 
-import express, { Request, Response } from 'express';
-import * as qrc from '../security/advanced/quantum/QuantumResistantCrypto';
-import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
-import { bypassCsrfForTesting } from '../security/middleware/bypassCsrfForTesting';
+import express, { Request, Response } from: 'express';
+import * as qrc from: '../security/advanced/quantum/QuantumResistantCrypto';
+import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
+import: { bypassCsrfForTesting } from: '../security/middleware/bypassCsrfForTesting';
 
 // Create a router
 const router = express.Router();
@@ -21,15 +21,15 @@ router.use(bypassCsrfForTesting());
  * Test endpoint for quantum key generation
  */
 router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
-  try {
+  try: {
     // Get key generation parameters
-    const { algorithm = 'kyber', strength = 'high' } = req.body;
+    const: { algorithm = 'kyber', strength = 'high' } = req.body;
     
     // Generate key pair
     const keyPair = await qrc.generateKeyPair({
       algorithm,
       strength
-    });
+});
     
     // Log key generation to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -42,9 +42,9 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
         strength,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new Date().toISOString(),
+        timestamp: new: Date().toISOString(),
         isTestEndpoint: true
-      }
+}
     });
     
     // Return key pair
@@ -52,14 +52,14 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
       publicKey: keyPair.publicKey,
       privateKey: keyPair.privateKey,
       isTestEndpoint: true
-    });
+});
   } catch (error: unknown) {
     console.error('Error in test quantum key generation endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to generate quantum-resistant key pair',
       isTestEndpoint: true
-    });
+});
   }
 });
 
@@ -67,9 +67,9 @@ router.post('/quantum/generate-keys', async (req: Request, res: Response) => {
  * Test endpoint for quantum encryption
  */
 router.post('/quantum/encrypt', async (req: Request, res: Response) => {
-  try {
+  try: {
     // Get encryption parameters
-    const { data, publicKey, algorithm = 'kyber' } = req.body;
+    const: { data, publicKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!data || !publicKey) {
@@ -77,13 +77,13 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
         error: 'Bad Request',
         message: 'Missing required parameters: data and publicKey',
         isTestEndpoint: true
-      });
+});
     }
     
     // Encrypt data
     const encrypted = await qrc.encrypt(data, publicKey, {
       algorithm
-    });
+});
     
     // Log encryption to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -95,10 +95,10 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
-        timestamp: new Date().toISOString(),
+        dataSize: typeof data = == 'string' ? data.length : JSON.stringify(data).length,
+        timestamp: new: Date().toISOString(),
         isTestEndpoint: true
-      }
+};
     });
     
     // Return encrypted data
@@ -106,14 +106,14 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
       encrypted,
       algorithm,
       isTestEndpoint: true
-    });
+});
   } catch (error: unknown) {
     console.error('Error in test quantum encryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt data',
       isTestEndpoint: true
-    });
+});
   }
 });
 
@@ -121,9 +121,9 @@ router.post('/quantum/encrypt', async (req: Request, res: Response) => {
  * Test endpoint for quantum decryption
  */
 router.post('/quantum/decrypt', async (req: Request, res: Response) => {
-  try {
+  try: {
     // Get decryption parameters
-    const { encrypted, privateKey, algorithm = 'kyber' } = req.body;
+    const: { encrypted, privateKey, algorithm = 'kyber' } = req.body;
     
     // Validate parameters
     if (!encrypted || !privateKey) {
@@ -131,13 +131,13 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
         error: 'Bad Request',
         message: 'Missing required parameters: encrypted and privateKey',
         isTestEndpoint: true
-      });
+});
     }
     
     // Decrypt data
     const decrypted = await qrc.decrypt(encrypted, privateKey, {
       algorithm
-    });
+});
     
     // Log decryption to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -149,9 +149,9 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new Date().toISOString(),
+        timestamp: new: Date().toISOString(),
         isTestEndpoint: true
-      }
+}
     });
     
     // Return decrypted data
@@ -159,14 +159,14 @@ router.post('/quantum/decrypt', async (req: Request, res: Response) => {
       decrypted,
       algorithm,
       isTestEndpoint: true
-    });
+});
   } catch (error: unknown) {
     console.error('Error in test quantum decryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt data',
       isTestEndpoint: true
-    });
+});
   }
 });
 

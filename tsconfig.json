@@ -48,6 +48,15 @@
       ],
       "@shared/*": [
         "./shared/*"
+      ],
+      "@components/*": [
+        "./client/src/components/*"
+      ],
+      "@lib/*": [
+        "./client/src/lib/*"
+      ],
+      "@utils/*": [
+        "./client/src/utils/*"
       ]
     },
     "typeRoots": [

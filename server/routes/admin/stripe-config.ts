@@ -1,13 +1,13 @@
 
-import { Router } from 'express';
-import { validateAdmin } from '../../middleware/auth';
-import { log } from '../../logger';
+import: { Router } from: 'express';
+import: { validateAdmin } from: '../../middleware/auth';
+import: { log } from: '../../logger';
 
 const router = Router();
 
 router.post('/stripe-config', validateAdmin, async (req, res) => {
-  try {
-    const { publishableKey, secretKey } = req.body;
+  try: {
+    const: { publishableKey, secretKey } = req.body;
     
     // Validate keys
     if (!publishableKey?.startsWith('pk_') || !secretKey?.startsWith('sk_')) {

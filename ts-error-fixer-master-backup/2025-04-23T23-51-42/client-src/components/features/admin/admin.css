@@ -1,0 +1,243 @@
+/* Admin Features CSS */
+
+/* Edit Button Positioning */
+.edit-button-container {
+  position: relative;
+}
+
+.edit-button-absolute {
+  position: absolute;
+  z-index: 10;
+}
+
+.edit-button-top-left {
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+.edit-button-top-right {
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.edit-button-bottom-left {
+  bottom: 0.5rem;
+  left: 0.5rem;
+}
+
+.edit-button-bottom-right {
+  bottom: 0.5rem;
+  right: 0.5rem;
+}
+
+.edit-button-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.edit-button-hover-reveal {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.edit-button-container:hover .edit-button-hover-reveal {
+  opacity: 1;
+}
+
+.edit-button-row {
+  display: flex;
+  align-items: center;
+}
+
+.edit-button-inline {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* Edit Menu */
+.edit-menu .bg-default {
+  background-color: #0a0a0a;
+}
+
+.edit-menu .bg-primary {
+  background-color: #3b82f6;
+}
+
+.edit-menu .bg-secondary {
+  background-color: #6b7280;
+}
+
+.edit-menu .bg-accent {
+  background-color: #8b5cf6;
+}
+
+.edit-menu .bg-info {
+  background-color: #06b6d4;
+}
+
+.edit-menu .bg-success {
+  background-color: #10b981;
+}
+
+.edit-menu .bg-warning {
+  background-color: #f59e0b;
+}
+
+.edit-menu .bg-danger {
+  background-color: #ef4444;
+}
+
+/* Cosmic theme overrides */
+.edit-menu button[data-variant="cosmic"] {
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  color: white;
+  border: none;
+}
+
+.edit-menu button[data-variant="cosmic"]:hover {
+  background: linear-gradient(135deg, #9f75ff 0%, #4f92ff 100%);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+/* Prose styling for formatted content */
+.prose {
+  max-width: 65ch;
+  line-height: 1.75;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.prose h1 {
+  font-size: 2.25em;
+}
+
+.prose h2 {
+  font-size: 1.875em;
+}
+
+.prose h3 {
+  font-size: 1.5em;
+}
+
+.prose h4 {
+  font-size: 1.25em;
+}
+
+.prose h5 {
+  font-size: 1.125em;
+}
+
+.prose h6 {
+  font-size: 1em;
+}
+
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose ol, .prose ul {
+  padding-left: 1.5rem;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.prose.dark, .prose-invert {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.prose.dark a, .prose-invert a {
+  color: #60a5fa;
+}
+
+/* Text sizes */
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-md {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+/* Text colors */
+.text-default-500 {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.text-primary-500 {
+  color: #3b82f6;
+}
+
+.text-secondary-500 {
+  color: #6b7280;
+}
+
+.text-accent-500 {
+  color: #8b5cf6;
+}
+
+.text-info-500 {
+  color: #06b6d4;
+}
+
+.text-success-500 {
+  color: #10b981;
+}
+
+.text-warning-500 {
+  color: #f59e0b;
+}
+
+.text-danger-500 {
+  color: #ef4444;
+}

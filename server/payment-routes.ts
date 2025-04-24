@@ -1,18 +1,18 @@
-import express, { Request, Response } from 'express';
-import { z } from 'zod';
-import Stripe from 'stripe';
-import paymentTransactionLogger, { PaymentTransactionType } from './security/paymentTransactionLogger';
-import { csrfProtection } from './security/middleware/csrfProtection';
+import express, { Request, Response } from: 'express';
+import: { z } from: 'zod';
+import Stripe from: 'stripe';
+import paymentTransactionLogger, { PaymentTransactionType } from: './security/paymentTransactionLogger';
+import: { csrfProtection } from: './security/middleware/csrfProtection';
 
 const router = express.Router();
 
 // Initialize Stripe
 const stripeApiKey = process.env.STRIPE_SECRET_KEY_20250416;
 if (!stripeApiKey) {
-  throw new Error('Stripe secret key is required. Please check environment variables.');
+  throw new: Error('Stripe secret key is required. Please check environment variables.');
 }
 
-const stripe = new Stripe(stripeApiKey, {
+const stripe = new: Stripe(stripeApiKey, {
   apiVersion: '2023-10-16'
 });
 
@@ -24,22 +24,22 @@ const paymentIntentSchema = z.object({
 });
 
 // Helper function to initialize Stripe
-function getStripeClient() {
+function: getStripeClient() {
   if (!stripeApiKey) {
-    throw new Error('Stripe API key is not configured');
-  }
-  return new Stripe(stripeApiKey);
+    throw new: Error('Stripe API key is not configured');
+}
+  return new: Stripe(stripeApiKey);
 }
 
 // Create payment intent
 router.post('/create-intent', csrfProtection(), async (req: Request, res: Response) => {
-  try {
+  try: {
     // Check if Stripe API key is available
     if (!stripeApiKey) {
       return res.status(500).json({
         success: false,
         message: 'Stripe API key is not configured'
-      });
+});
     }
 
     // Initialize Stripe
@@ -52,10 +52,10 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
         success: false,
         message: 'Invalid payment data',
         errors: validationResult.error.errors 
-      });
+});
     }
 
-    const { amount, currency, metadata } = validationResult.data;
+    const: { amount, currency, metadata } = validationResult.data;
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -64,12 +64,12 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       metadata,
       automatic_payment_methods: {
         enabled: true,
-      },
+},
     });
 
-    // Log payment intent creation (PCI DSS Requirement 10.2)
+    // Log payment intent creation (PCI DSS, Requirement: 10.2)
     paymentTransactionLogger.logTransaction({
-      timestamp: new Date().toISOString(),
+      timestamp: new: Date().toISOString(),
       transaction_id: paymentIntent.id,
       user_id: metadata?.userId,
       payment_gateway: 'stripe',
@@ -79,18 +79,18 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       status: 'created',
       message: 'Payment intent created successfully',
       meta: metadata
-    });
+});
 
     // Return client secret to frontend
     // @ts-ignore - Response type issue
   return res.json({
       success: true,
       clientSecret: paymentIntent.client_secret,
-    });
+});
   } catch (error: unknown) {
     console.error('Error creating payment intent:', error);
     
-    // Log payment error (PCI DSS Requirement 10.2)
+    // Log payment error (PCI DSS, Requirement: 10.2)
     paymentTransactionLogger.logFailedPayment({
       transactionId: `failed_${Date.now()}`,
       gateway: 'stripe',
@@ -100,37 +100,37 @@ router.post('/create-intent', csrfProtection(), async (req: Request, res: Respon
       meta: {
         errorCode: error.code,
         metadata: req.body?.metadata
-      }
+}
     });
     
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to create payment intent',
-    });
+});
   }
 });
 
 // Confirm payment
 router.post('/confirm', csrfProtection(), async (req: Request, res: Response) => {
-  try {
+  try: {
     // Check if Stripe API key is available
     if (!stripeApiKey) {
       return res.status(500).json({
         success: false,
         message: 'Stripe API key is not configured'
-      });
+});
     }
 
     // Initialize Stripe
     const stripe = getStripeClient();
 
-    const { paymentMethodId, orderId } = req.body;
+    const: { paymentMethodId, orderId } = req.body;
 
     if (!paymentMethodId || !orderId) {
       return res.status(400).json({
         success: false,
         message: 'Payment method ID and order ID are required',
-      });
+});
     }
 
     // In a real application, you would retrieve the order from the database
@@ -139,13 +139,13 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
     // For simulation purposes, we'll create a mock order
     const mockOrder = {
       id: orderId,
-      amount: 2500, // This would come from the database in a real app
-      currency: 'usd',
+      amount: 2500, // This would come from the database in a real app,
+  currency: 'usd',
       status: 'paid',
       paymentId: paymentMethodId,
-    };
+};
     
-    // Log successful payment (PCI DSS Requirement 10.2)
+    // Log successful payment (PCI DSS, Requirement: 10.2)
     paymentTransactionLogger.logSuccessfulPayment({
       transactionId: paymentMethodId,
       orderId,
@@ -157,7 +157,7 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
       ipAddress: req.ip,
       meta: {
         email: req.body.email
-      }
+}
     });
     
     // Return the mock order
@@ -165,11 +165,11 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
   return res.json({
       success: true,
       order: mockOrder,
-    });
+});
   } catch (error: unknown) {
     console.error('Error confirming payment:', error);
     
-    // Log payment failure (PCI DSS Requirement 10.2)
+    // Log payment failure (PCI DSS, Requirement: 10.2)
     paymentTransactionLogger.logFailedPayment({
       transactionId: req.body.paymentMethodId || `failed_${Date.now()}`,
       orderId: req.body.orderId || 'unknown',
@@ -182,13 +182,13 @@ router.post('/confirm', csrfProtection(), async (req: Request, res: Response) =>
       meta: {
         errorCode: error.code,
         email: req.body.email
-      }
+}
     });
     
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to confirm payment',
-    });
+});
   }
 });
 

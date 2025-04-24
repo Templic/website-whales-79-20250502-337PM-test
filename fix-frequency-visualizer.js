@@ -60,16 +60,10 @@ function fixFrequencyVisualizer() {
     // Create a backup
     backupFile(COMPONENT_PATH);
     
-    // Fix 1: Correct malformed imports
+    // Fix 1: Replace the malformed line with the corrected import
     content = content.replace(
-      /nimport\s*{.+?}\s*from\s*.+?;/g,
-      (match) => match.replace('nimport', 'import')
-    );
-    
-    // Fix 2: Fix Switch import
-    content = content.replace(
-      /nimport\s*{\s*.*?Switch.*?\s*}\s*from\s*['"]@\/components\/ui\/switch['"];?/g,
-      'import { Switch } from "@/components/ui/switch";'
+      /import \{ RefreshCw, Upload, Mic, Settings, ChevronDown \} from ['"]lucide-react['"];?\\n\\import \{ Switch \} from ["']@\/components\/ui\/switch["'] ['"]@\/components\/ui\/switch['"].*/,
+      'import { RefreshCw, Upload, Mic, Settings, ChevronDown } from "lucide-react";\nimport { Switch } from "@/components/ui/switch";'
     );
     
     // Fix 3: Add props interface if missing

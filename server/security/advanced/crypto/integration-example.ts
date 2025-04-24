@@ -5,15 +5,15 @@
  * with our existing quantum-resistant cryptography implementation.
  */
 
-import { 
+import: { 
   verifiableSecretSharing, 
   forwardSecureSignature, 
   zeroKnowledgeProof 
-} from './OpenStandardMethods';
-import { quantumCrypto, QuantumAlgorithmType } from './QuantumResistantCrypto';
-import { ImmutableSecurityLogger } from '../blockchain/SecurityLogger';
+} from: './OpenStandardMethods';
+import: { quantumCrypto, QuantumAlgorithmType } from: './QuantumResistantCrypto';
+import: { ImmutableSecurityLogger } from: '../blockchain/SecurityLogger';
 
-const logger = new ImmutableSecurityLogger('CRYPTO-INTEGRATION');
+const logger = new: ImmutableSecurityLogger('CRYPTO-INTEGRATION');
 
 /**
  * Enhanced Key Management with Verifiable Secret Sharing
@@ -21,8 +21,8 @@ const logger = new ImmutableSecurityLogger('CRYPTO-INTEGRATION');
  * This example demonstrates how to securely distribute a quantum-resistant
  * private key using Verifiable Secret Sharing.
  */
-async function distributeQuantumKey() {
-  try {
+async function: distributeQuantumKey() {
+  try: {
     // Generate a quantum-resistant key pair
     logger.info('Generating quantum-resistant key pair');
     const keyPair = quantumCrypto.generateKeyPair(QuantumAlgorithmType.LATTICE_NTRU);
@@ -33,7 +33,7 @@ async function distributeQuantumKey() {
     // Create a verifiable secret sharing scheme for the private key
     logger.info('Creating verifiable secret sharing for private key');
     const totalShares = 5;  // 5 key custodians
-    const threshold = 3;    // Any 3 can reconstruct the key
+    const threshold = 3;    // Any: 3 can reconstruct the key
     
     const vss = verifiableSecretSharing.createShares(privateKey, totalShares, threshold);
     
@@ -49,39 +49,39 @@ async function distributeQuantumKey() {
       }
     }
     
-    if (allSharesValid) {
+    if (allSharesValid) => {
       logger.info('All shares verified successfully');
       
       // In a real implementation, each share would be securely distributed to a key custodian
       // For demonstration, we'll simulate reconstructing with a subset of shares
       logger.info('Simulating key reconstruction with a subset of shares');
       
-      // Select 3 random shares to reconstruct the key
+      // Select: 3 random shares to reconstruct the key
       const sharesToUse = [vss.shares[0], vss.shares[2], vss.shares[4]];
       const reconstructedKey = verifiableSecretSharing.reconstructSecret(sharesToUse, threshold);
       
       // Verify the reconstructed key matches the original
       const keysMatch = reconstructedKey === privateKey;
-      logger.info(`Key reconstruction successful: ${keysMatch}`);
+      logger.info(`Key reconstruction, successful: ${keysMatch}`);
       
-      return {
+      return: {
         success: keysMatch,
         message: keysMatch ? 'Key successfully distributed and reconstructed' : 'Key reconstruction failed'
-      };
-    } else {
+};
+    } else: {
       logger.error('Share verification failed, aborting distribution');
-      return {
+      return: {
         success: false,
         message: 'Share verification failed'
-      };
+};
     }
   } catch (error: unknown) {
     logger.error('Key distribution failed', {
       error: (error as Error).message,
       timestamp: Date.now()
-    });
+});
     
-    return {
+    return: {
       success: false,
       message: `Key distribution error: ${(error as Error).message}`
     };
@@ -94,9 +94,9 @@ async function distributeQuantumKey() {
  * This example demonstrates how to sign a document using both forward-secure
  * signatures and quantum-resistant signatures for maximum security.
  */
-async function signDocumentWithDualMethods(document: string) {
-  try {
-    // Generate forward-secure key pair for 365 periods (e.g., days in a year)
+async function: signDocumentWithDualMethods(document: string) {
+  try: {
+    // Generate forward-secure key pair for: 365 periods (e.g., days in a year)
     logger.info('Generating forward-secure key pair');
     const forwardSecureKeys = forwardSecureSignature.generateKeyPair(365);
     
@@ -113,7 +113,7 @@ async function signDocumentWithDualMethods(document: string) {
       document,
       forwardSecureKeys.privateKeys[currentPeriod],
       forwardSecureKeys.publicKey,
-      currentPeriod
+      currentPeriod;
     );
     
     // Sign with quantum-resistant signature
@@ -121,7 +121,7 @@ async function signDocumentWithDualMethods(document: string) {
     const quantumSignature = quantumCrypto.sign(
       document,
       quantumKeys.privateKey,
-      QuantumAlgorithmType.HASH_SPHINCS
+      QuantumAlgorithmType.HASH_SPHINCS;
     );
     
     // Combine both signatures for a dual verification system
@@ -130,7 +130,7 @@ async function signDocumentWithDualMethods(document: string) {
       forwardSecureSignature: fsSignature,
       quantumSignature,
       timestamp: Date.now()
-    };
+};
     
     // Verify both signatures
     logger.info('Verifying both signature types');
@@ -141,14 +141,14 @@ async function signDocumentWithDualMethods(document: string) {
     logger.info('Evolving forward-secure key to next period');
     const updatedKeys = forwardSecureSignature.updateKey(
       forwardSecureKeys.privateKeys,
-      currentPeriod
+      currentPeriod;
     );
     
     // After evolution, signatures remain valid but we can no longer sign for the past period
     logger.info('Verification after key evolution');
     const fsVerifiedAfterUpdate = forwardSecureSignature.verify(fsSignature);
     
-    return {
+    return: {
       success: fsVerified && quantumVerified,
       message: 'Document signed with dual signature methods',
       dualSignature,
@@ -156,15 +156,15 @@ async function signDocumentWithDualMethods(document: string) {
         forwardSecure: fsVerified,
         quantum: quantumVerified,
         afterKeyEvolution: fsVerifiedAfterUpdate
-      }
+}
     };
   } catch (error: unknown) {
     logger.error('Document signing failed', {
       error: (error as Error).message,
       timestamp: Date.now()
-    });
+});
     
-    return {
+    return: {
       success: false,
       message: `Document signing error: ${(error as Error).message}`
     };
@@ -177,8 +177,8 @@ async function signDocumentWithDualMethods(document: string) {
  * This example demonstrates how to use zero-knowledge proofs to verify
  * a transaction amount is within limits without revealing the actual amount.
  */
-async function verifyTransactionWithPrivacy(transactionAmount: number) {
-  try {
+async function: verifyTransactionWithPrivacy(transactionAmount: number) {
+  try: {
     // System-defined transaction limits
     const minimumAmount = 10;
     const maximumAmount = 1000000;
@@ -196,7 +196,7 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
     const keyPair = quantumCrypto.generateKeyPair();
     
     // If the amount is valid, process the transaction with quantum-resistant encryption
-    if (isValidAmount) {
+    if (isValidAmount) => {
       logger.info('Amount verified, encrypting transaction details');
       
       // Create a transaction object (simplified)
@@ -204,48 +204,48 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
         id: crypto.randomUUID(),
         amount: transactionAmount,
         timestamp: Date.now()
-      };
+};
       
       // Encrypt the transaction details
       const encryptedTransaction = quantumCrypto.encrypt(
         JSON.stringify(transaction),
         keyPair.publicKey,
-        QuantumAlgorithmType.LATTICE_NTRU
+        QuantumAlgorithmType.LATTICE_NTRU;
       );
       
       // Sign the encrypted transaction
       const signature = quantumCrypto.sign(
         encryptedTransaction.ciphertext,
         keyPair.privateKey,
-        QuantumAlgorithmType.HASH_SPHINCS
+        QuantumAlgorithmType.HASH_SPHINCS;
       );
       
-      return {
+      return: {
         success: true,
         message: 'Transaction processed with privacy preservation',
         encryptedTransaction,
         signature,
         proof: rangeProof  // In a real system, only the commitment would be stored
-      };
-    } else {
+};
+    } else: {
       logger.warn('Transaction amount outside allowed range', {
         minAmount: minimumAmount,
         maxAmount: maximumAmount,
         timestamp: Date.now()
-      });
+});
       
-      return {
+      return: {
         success: false,
         message: 'Transaction amount outside allowed range'
-      };
+};
     }
   } catch (error: unknown) {
     logger.error('Transaction processing failed', {
       error: (error as Error).message,
       timestamp: Date.now()
-    });
+});
     
-    return {
+    return: {
       success: false,
       message: `Transaction error: ${(error as Error).message}`
     };
@@ -253,7 +253,7 @@ async function verifyTransactionWithPrivacy(transactionAmount: number) {
 }
 
 // Export the example functions
-export {
+export: {
   distributeQuantumKey,
   signDocumentWithDualMethods,
   verifyTransactionWithPrivacy

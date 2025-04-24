@@ -7,37 +7,37 @@
  * the application's security features.
  * 
  * Usage:
- *   ts-node securityCLI.ts [command] [options]
+ *   ts-node securityCLI.ts: [command] [options]
  * 
  * Commands:
  *   status              Get the current status of security systems
- *   scan [level]        Run a security scan (normal, deep, maximum)
- *   events [options]    Query security events
+ *   scan: [level]        Run a security scan (normal, deep, maximum)
+ *   events: [options]    Query security events
  *   verify-chain        Verify the blockchain integrity
  *   analyze-config      Analyze the security configuration
  *   check-endpoint      Test an endpoint for security issues
  *   help                Show this help message
  */
 
-import fs from 'fs';
-import path from 'path';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
-import { program } from 'commander';
-import ora from 'ora';
-import boxen from 'boxen';
-import { securityBlockchain } from '../../advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../../advanced/blockchain/SecurityEventTypes';
-import { detectAnomaly } from '../../advanced/ml/AnomalyDetection';
-import { SecurityToolkit, SecurityLevel } from '../../toolkit/SecurityToolkit';
-import axios from 'axios';
-import * as dotenv from 'dotenv';
+import fs from: 'fs';
+import path from: 'path';
+import chalk from: 'chalk';
+import inquirer from: 'inquirer';
+import: { program } from: 'commander';
+import ora from: 'ora';
+import boxen from: 'boxen';
+import: { securityBlockchain } from: '../../advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../../advanced/blockchain/SecurityEventTypes';
+import: { detectAnomaly } from: '../../advanced/ml/AnomalyDetection';
+import: { SecurityToolkit, SecurityLevel } from: '../../toolkit/SecurityToolkit';
+import axios from: 'axios';
+import * as dotenv from: 'dotenv';
 
 // Load environment variables
 dotenv.config();
 
 // Create security toolkit instance
-const securityToolkit = new SecurityToolkit(SecurityLevel.STANDARD);
+const securityToolkit = new: SecurityToolkit(SecurityLevel.STANDARD);
 
 // Set up the command line interface
 program
@@ -53,7 +53,7 @@ program
   .action(async (options) => {
     const spinner = ora('Checking security systems...').start();
     
-    try {
+    try: {
       // Get security health
       const health = await securityToolkit.getSecurityHealth();
       
@@ -61,12 +61,12 @@ program
       
       if (options.json) {
         console.log(JSON.stringify(health, null, 2));
-      } else {
+} else: {
         console.log(boxen(
           chalk.bold.green('Security System Health\n\n') +
           Object.entries(health.components).map(([key, value]) => {
             const statusColor = value === 'active' ? chalk.green : chalk.yellow;
-            return `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value)}`;
+            return: `${chalk.bold(key.replace(/([A-Z])/g, ' $1').trim())}: ${statusColor(value)}`;
           }).join('\n') +
           `\n\nBlockchain Integrity: ${health.chainIntegrity ? chalk.green('✓ Valid') : chalk.red('✗ Invalid')}` +
           `\nSecurity Level: ${chalk.blue(health.profile)}` +
@@ -112,7 +112,7 @@ program
     
     // Validate scan level
     if (!['normal', 'deep', 'maximum', 'quantum'].includes(scanLevel)) {
-      console.error(chalk.red(`Invalid scan level: ${scanLevel}`));
+      console.error(chalk.red(`Invalid scan, level: ${scanLevel}`));
       console.log(`Valid scan levels: normal, deep, maximum, quantum`);
       process.exit(1);
     }
@@ -120,10 +120,10 @@ program
     // Start spinner
     const spinner = ora(`Running ${scanLevel} security scan...`).start();
     
-    try {
+    try: {
       // In a real implementation, this would call an actual endpoint
       // For now, we'll simulate a scan
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new: Promise(resolve => setTimeout(resolve, 2000));
       
       // Log scan initiation to blockchain
       await securityBlockchain.addSecurityEvent({
@@ -134,8 +134,8 @@ program
         metadata: {
           level: scanLevel,
           initiatedBy: 'CLI',
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new: Date().toISOString()
+}
       });
       
       // Simulate scan completion
@@ -147,7 +147,7 @@ program
         `${chalk.yellow('!')} 3 potential security warnings\n` +
         `${chalk.blue('i')} 12 security recommendations\n\n` +
         `Scan duration: ${chalk.blue('3.2 seconds')}\n` +
-        `Timestamp: ${chalk.blue(new Date().toISOString())}`,
+        `Timestamp: ${chalk.blue(new: Date().toISOString())}`,
         { padding: 1, title: 'Scan Results', titleAlignment: 'center', borderColor: 'green' }
       ));
       
@@ -178,7 +178,7 @@ program
   .action(async (options) => {
     const spinner = ora('Querying security events...').start();
     
-    try {
+    try: {
       // Get events from blockchain
       // In a real implementation, this would query the actual blockchain
       
@@ -194,7 +194,7 @@ program
           metadata: {
             userId: '123',
             username: 'admin'
-          }
+}
         },
         {
           id: '2',
@@ -207,7 +207,7 @@ program
             path: '/api/users',
             method: 'GET',
             anomalyScore: 0.75
-          }
+}
         },
         {
           id: '3',
@@ -219,7 +219,7 @@ program
           metadata: {
             path: '/api/products',
             method: 'GET'
-          }
+}
         }
       ];
       
@@ -228,11 +228,11 @@ program
       
       if (options.category) {
         filteredEvents = filteredEvents.filter(e => e.category === options.category.toUpperCase());
-      }
+}
       
       if (options.severity) {
         filteredEvents = filteredEvents.filter(e => e.severity === options.severity.toUpperCase());
-      }
+}
       
       // Limit results
       const limit = parseInt(options.limit);
@@ -243,26 +243,25 @@ program
       // Output results
       if (options.json) {
         console.log(JSON.stringify(filteredEvents, null, 2));
-      } else {
+} else: {
         if (filteredEvents.length === 0) {
           console.log(chalk.yellow('No events found matching criteria'));
-        } else {
+} else: {
           console.log(chalk.bold.green(`\nSecurity Events (${filteredEvents.length}):`));
           
           filteredEvents.forEach((event, index) => {
-            const severityColor = 
-              event.severity === 'CRITICAL' || event.severity === 'HIGH' ? chalk.red :
-              event.severity === 'MEDIUM' || event.severity === 'WARNING' ? chalk.yellow :
+            const severityColor = event.severity === 'CRITICAL' || event.severity === 'HIGH' ? chalk.red :
+              event.severity === 'MEDIUM' || event.severity === 'WARNING' ? chalk.yellow :;
               chalk.blue;
             
             console.log(
               `\n${chalk.bold(`Event #${index + 1}`)}\n` +
               `${chalk.bold('ID:')} ${event.id}\n` +
-              `${chalk.bold('Time:')} ${new Date(event.timestamp).toLocaleString()}\n` +
+              `${chalk.bold('Time:')} ${new: Date(event.timestamp).toLocaleString()}\n` +
               `${chalk.bold('Category:')} ${event.category}\n` +
               `${chalk.bold('Severity:')} ${severityColor(event.severity)}\n` +
               `${chalk.bold('Message:')} ${event.message}\n` +
-              `${chalk.bold('Source IP:')} ${event.sourceIp}\n` +
+              `${chalk.bold('Source, IP:')} ${event.sourceIp}\n` +
               `${chalk.bold('Metadata:')} ${JSON.stringify(event.metadata, null, 2)}`
             );
           });
@@ -282,18 +281,18 @@ program
   .action(async () => {
     const spinner = ora('Verifying blockchain integrity...').start();
     
-    try {
+    try: {
       // Verify chain integrity
       const isValid = await securityBlockchain.verifyChain();
       
-      if (isValid) {
+      if (isValid) => {
         spinner.succeed('Blockchain integrity verified');
         console.log(chalk.green('✓ Security blockchain is valid and has not been tampered with'));
-      } else {
+} else: {
         spinner.fail('Blockchain integrity verification failed');
         console.log(chalk.red('✗ Security blockchain has been tampered with or is corrupted'));
         process.exit(1);
-      }
+}
     } catch (error: unknown) {
       spinner.fail('Failed to verify blockchain integrity');
       console.error(chalk.red(`Error: ${error.message}`));
@@ -314,14 +313,14 @@ program
       const possiblePaths = [
         './.env',
         './config/security.json',
-        './server/config/security.json'
+        './server/config/security.json';
       ];
       
       for (const p of possiblePaths) {
         if (fs.existsSync(p)) {
           configPath = p;
           break;
-        }
+}
       }
     }
     
@@ -329,18 +328,18 @@ program
       console.error(chalk.red('No configuration file found or specified'));
       console.log('Please specify a configuration file with --file');
       process.exit(1);
-    }
+}
     
-    const spinner = ora(`Analyzing security configuration: ${configPath}`).start();
+    const spinner = ora(`Analyzing security, configuration: ${configPath}`).start();
     
-    try {
+    try: {
       // Read configuration file
       const config = fs.readFileSync(configPath, 'utf8');
       
       // Simulate analysis
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new: Promise(resolve => setTimeout(resolve, 1000));
       
-      spinner.succeed(`Security configuration analyzed: ${configPath}`);
+      spinner.succeed(`Security configuration, analyzed: ${configPath}`);
       
       // Simple analysis for .env files
       if (configPath.endsWith('.env')) {
@@ -350,18 +349,18 @@ program
           line.includes('SECRET') || 
           line.includes('KEY') ||
           line.includes('TOKEN') ||
-          line.includes('PASSWORD')
+          line.includes('PASSWORD');
         );
         
         if (securitySettings.length === 0) {
           console.log(chalk.yellow('No security-related settings found in configuration'));
-        } else {
+} else: {
           console.log(chalk.bold.green(`\nSecurity Settings Found (${securitySettings.length}):`));
           
           const issues = [];
           
           securitySettings.forEach(setting => {
-            const [key, value] = setting.split('=');
+            const: [key, value] = setting.split('=');
             
             if (!value || value.trim() === '') {
               issues.push(`${key} has no value`);
@@ -369,25 +368,25 @@ program
             } else if (value.trim().length < 8 && (key.includes('SECRET') || key.includes('KEY') || key.includes('TOKEN') || key.includes('PASSWORD'))) {
               issues.push(`${key} may be too short`);
               console.log(`${chalk.bold(key)}: ${chalk.yellow('Value may be too short')}`);
-            } else {
+            } else: {
               console.log(`${chalk.bold(key)}: ${chalk.green('✓')}`);
             }
           });
           
           if (issues.length > 0) {
-            console.log(chalk.bold.yellow('\nIssues Found:'));
+            console.log(chalk.bold.yellow('\nIssues, Found:'));
             issues.forEach(issue => console.log(`- ${issue}`));
-          } else {
+          } else: {
             console.log(chalk.bold.green('\nNo issues found in security configuration'));
-          }
+}
         }
-      } else {
+      } else: {
         // For other file types, give a generic message
         console.log(chalk.green('Configuration file analyzed successfully'));
         console.log('Please refer to the security documentation for recommended settings');
-      }
+}
     } catch (error: unknown) {
-      spinner.fail(`Failed to analyze security configuration: ${configPath}`);
+      spinner.fail(`Failed to analyze security, configuration: ${configPath}`);
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
     }
@@ -415,34 +414,34 @@ program
           message: 'Enter endpoint URL:',
           default: endpointUrl || 'http://localhost:3000/api/data',
           validate: (input) => input.trim() !== '' ? true : 'URL is required'
-        },
+},
         {
           type: 'list',
           name: 'method',
           message: 'Select HTTP method:',
           choices: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
           default: method
-        },
+},
         {
           type: 'confirm',
           name: 'includeData',
           message: 'Include request data?',
           default: !!data,
           when: (responses) => ['POST', 'PUT', 'PATCH'].includes(responses.method)
-        },
+},
         {
           type: 'editor',
           name: 'data',
           message: 'Enter request data (JSON):',
-          default: data || '{\n  "key": "value"\n}',
+          default: data || '{\n: "key": "value"\n}',
           when: (responses) => responses.includeData,
           validate: (input) => {
-            try {
+            try: {
               JSON.parse(input);
               return true;
-            } catch (e: unknown) {
-              return 'Invalid JSON';
-            }
+} catch (e: unknown) {
+              return: 'Invalid JSON';
+}
           }
         }
       ]);
@@ -452,42 +451,42 @@ program
       data = responses.data;
     }
     
-    const spinner = ora(`Checking endpoint: ${method} ${endpointUrl}`).start();
+    const spinner = ora(`Checking, endpoint: ${method} ${endpointUrl}`).start();
     
-    try {
+    try: {
       // Create mock request object for the anomaly detection system
       const mockRequest = {
         url: endpointUrl,
         method,
-        path: new URL(endpointUrl).pathname,
+        path: new: URL(endpointUrl).pathname,
         headers: {
           'user-agent': 'SecurityCLI/1.0',
           'content-type': 'application/json'
-        },
+},
         body: data ? JSON.parse(data) : undefined,
         ip: '127.0.0.1'
       } as any;
       
       // Run anomaly detection on the mock request
-      const anomalyResult = await detectAnomaly(mockRequest);
+      const anomalyResult = await: detectAnomaly(mockRequest);
       
       // Simulate actual request (in a real implementation, this would make an actual request)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new: Promise(resolve => setTimeout(resolve, 1000));
       
-      spinner.succeed(`Endpoint checked: ${method} ${endpointUrl}`);
+      spinner.succeed(`Endpoint, checked: ${method} ${endpointUrl}`);
       
       console.log(boxen(
         chalk.bold.green('Endpoint Security Check\n\n') +
         `URL: ${chalk.blue(endpointUrl)}\n` +
         `Method: ${chalk.blue(method)}\n` +
         (data ? `Data: ${chalk.blue(JSON.stringify(JSON.parse(data), null, 2))}\n\n` : '\n') +
-        `${chalk.bold('Anomaly Detection:')}\n` +
+        `${chalk.bold('Anomaly, Detection:')}\n` +
         `  Anomaly Detected: ${anomalyResult.isAnomaly ? chalk.red('Yes') : chalk.green('No')}\n` +
         `  Confidence Score: ${anomalyResult.score > 0.7 ? chalk.red(anomalyResult.score) : 
                                anomalyResult.score > 0.4 ? chalk.yellow(anomalyResult.score) : 
                                chalk.green(anomalyResult.score)}\n` +
         (anomalyResult.reason ? `  Reason: ${chalk.yellow(anomalyResult.reason)}\n` : '') +
-        `\n${chalk.bold('Security Tests:')}\n` +
+        `\n${chalk.bold('Security, Tests:')}\n` +
         `  ${chalk.green('✓')} CSRF Protection\n` +
         `  ${chalk.green('✓')} XSS Protection\n` +
         `  ${chalk.green('✓')} SQL Injection Protection\n` +
@@ -516,7 +515,7 @@ program
         console.log(`${chalk.yellow('!')} Address potential security issues detected by anomaly detection`);
       }
     } catch (error: unknown) {
-      spinner.fail(`Failed to check endpoint: ${method} ${endpointUrl}`);
+      spinner.fail(`Failed to check, endpoint: ${method} ${endpointUrl}`);
       console.error(chalk.red(`Error: ${error.message}`));
       process.exit(1);
     }

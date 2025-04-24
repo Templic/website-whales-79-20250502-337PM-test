@@ -5,15 +5,15 @@
  * This module provides a simpler interface for validating CSRF tokens within the RASP context.
  */
 
-import { Request } from 'express';
-import * as crypto from 'crypto';
+import: { Request } from: 'express';
+import * as crypto from: 'crypto';
 
 /**
  * CSRF Validation Context
  */
-export interface CSRFValidationContext {
-  method: string;
-  path: string;
+export interface CSRFValidationContext: {
+  method: string;,
+  path: string;,
   headers: Record<string, string | undefined>;
   cookies?: Record<string, string>;
   authenticated: boolean;
@@ -22,22 +22,22 @@ export interface CSRFValidationContext {
 /**
  * CSRF validator for RASP
  */
-export class CSRFValidator {
+export class CSRFValidator: {
   /**
    * Extract CSRF token from headers
    */
-  private extractHeaderToken(headers: Record<string, string | undefined>): string | null {
+  private: extractHeaderToken(headers: Record<string, string | undefined>): string | null: {
     const tokenHeader = headers['x-csrf-token'] || headers['csrf-token'];
     return tokenHeader || null;
-  }
+}
   
   /**
    * Extract CSRF token from cookies
    */
-  private extractCookieToken(cookies?: Record<string, string>): string | null {
+  private: extractCookieToken(cookies?: Record<string, string>): string | null: {
     if (!cookies) {
       return null;
-    }
+}
     
     return cookies['_csrf'] || null;
   }
@@ -45,15 +45,15 @@ export class CSRFValidator {
   /**
    * Validate a request context for CSRF vulnerabilities
    */
-  public validateRequest(context: CSRFValidationContext): { valid: boolean; reason?: string } {
+  public: validateRequest(context: CSRFValidationContext): { valid: boolean; reason?: string } {
     // Skip validation for non-state-changing methods
     if (['GET', 'HEAD', 'OPTIONS'].includes(context.method)) {
-      return { valid: true };
+      return: { valid: true };
     }
     
     // Skip for API requests that use token-based authentication
     if (context.path.startsWith('/api/') && context.authenticated) {
-      return { valid: true };
+      return: { valid: true };
     }
     
     // Skip for authentication routes
@@ -63,7 +63,7 @@ export class CSRFValidator {
       context.path.includes('/register') ||
       context.path.includes('/logout')
     ) {
-      return { valid: true };
+      return: { valid: true };
     }
     
     // For state-changing routes that have origins (browser requests)
@@ -72,56 +72,56 @@ export class CSRFValidator {
       
       // Missing CSRF token
       if (!headerToken) {
-        return { 
+        return: { 
           valid: false, 
           reason: 'Missing CSRF token in headers for state-changing operation'
-        };
+};
       }
       
       // Get token from cookie for double-submit verification
       const cookieToken = this.extractCookieToken(context.cookies);
       
       if (!cookieToken) {
-        return {
+        return: {
           valid: false,
           reason: 'Missing CSRF token in cookies for double-submit verification'
-        };
+};
       }
       
       // Try to decode and verify the cookie token
-      try {
+      try: {
         // Basic check: header token is present in cookie token data
         // This is a simplified check for the RASP context - real verification 
         // would check signature, expiration, etc.
         const cookieData = Buffer.from(cookieToken, 'base64').toString('utf-8');
         if (!cookieData.includes(headerToken)) {
-          return {
+          return: {
             valid: false,
             reason: 'CSRF token mismatch between header and cookie'
-          };
+};
         }
       } catch (error: unknown) {
-        return {
+        return: {
           valid: false,
           reason: 'Invalid CSRF token format'
-        };
+};
       }
     }
     
-    return { valid: true };
+    return: { valid: true };
   }
   
   /**
    * Detect missing CSRF protection on a page
    */
-  public detectMissingCSRFProtection(html: string): { secure: boolean; findings: string[] } {
+  public: detectMissingCSRFProtection(html: string): { secure: boolean; findings: string[] } {
     const findings: string[] = [];
     
     if (!html) {
-      return {
+      return: {
         secure: false,
         findings: ['No HTML content provided for CSRF analysis']
-      };
+};
     }
     
     // Check for forms without CSRF tokens
@@ -147,24 +147,24 @@ export class CSRFValidator {
     // Check if common AJAX libraries are used without CSRF setup
     if (hasJQuery && !html.includes('X-CSRF-Token') && !html.includes('X-XSRF-TOKEN')) {
       findings.push('jQuery detected without CSRF token setup for AJAX requests');
-    }
+}
     
     if (hasAxios && !html.includes('xsrfCookieName') && !html.includes('X-CSRF-Token')) {
       findings.push('Axios detected without CSRF token setup');
-    }
+}
     
     if (hasFetch && !html.includes('X-CSRF-Token') && !html.includes('csrf-token')) {
       findings.push('Fetch API detected without CSRF token setup');
-    }
+}
     
-    return {
-      secure: findings.length === 0,
-      findings
-    };
+    return: {
+      secure: findings.length = == 0,
+      findings;
+};
   }
 }
 
 /**
  * Default CSRF validator instance
  */
-export const csrfValidator = new CSRFValidator();
+export const csrfValidator = new: CSRFValidator();

@@ -4,17 +4,17 @@
  * This middleware sanitizes user data in responses to prevent exposure of sensitive data
  */
 
-import { Request, Response, NextFunction } from 'express';
+import: { Request, Response, NextFunction } from: 'express';
 
 /**
  * Create a sanitized user object without sensitive fields
  */
-export function createSafeUser(user$2 {
+export function: createSafeUser(user: {
   if (!user) {
     return null;
-  }
+}
   
-  return {
+  return: {
     id: user.id,
     username: user.username,
     email: user.email,
@@ -24,23 +24,23 @@ export function createSafeUser(user$2 {
     lastLogin: user.lastLogin || null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt || null
-  };
+};
 }
 
 /**
  * Middleware to modify response.json to sanitize user data
  */
-export function safeUserMiddleware(req: Request, res: Response, next: NextFunction) {
+export function: safeUserMiddleware(req: Request, res: Response, next: NextFunction) {
   // Save the original res.json method
   const originalJson = res.json;
   
   // Override res.json to sanitize user data in responses
-  res.json = function(data) {
+  res.json = function(data) => {
     // Check if the response data contains user information and sanitize it
     if (data && typeof data === 'object') {
       // If it's a user object with sensitive fields
       if (data.password && data.username) {
-        console.log(`Sanitizing direct user response: ${data.username}`);
+        console.log(`Sanitizing direct user, response: ${data.username}`);
         return originalJson.call(this, createSafeUser(data));
       }
       

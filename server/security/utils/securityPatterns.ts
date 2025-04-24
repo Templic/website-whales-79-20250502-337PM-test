@@ -5,16 +5,16 @@
  * These patterns help ensure consistent security implementation and reduce the risk of security errors.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { validate } from '../middleware/apiValidation';
-import { 
+import: { Request, Response, NextFunction } from: 'express';
+import: { validate } from: '../middleware/apiValidation';
+import: { 
   standardRateLimiter, 
   authRateLimiter, 
   adminRateLimiter 
-} from '../middleware/rateLimiters';
-import { securityHeadersMiddleware } from '../middleware/securityHeadersMiddleware';
-import { isAuthenticated, hasRole, logSecurityEvent } from './securityUtils';
-import { AnyZodObject } from 'zod';
+} from: '../middleware/rateLimiters';
+import: { securityHeadersMiddleware } from: '../middleware/securityHeadersMiddleware';
+import: { isAuthenticated, hasRole, logSecurityEvent } from: './securityUtils';
+import: { AnyZodObject } from: 'zod';
 
 /**
  * Creates a secure route handler with standard security practices
@@ -23,8 +23,8 @@ import { AnyZodObject } from 'zod';
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return [
+export function: secureRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return: [
     standardRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -33,10 +33,10 @@ export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: R
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-        });
+});
       }
       
-      return handler(req, res, next);
+      return: handler(req, res, next);
     }
   ];
 }
@@ -48,8 +48,8 @@ export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: R
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return [
+export function: secureAdminRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return: [
     adminRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -58,7 +58,7 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-        });
+});
       }
       
       if (!hasRole(req, 'admin')) {
@@ -67,16 +67,16 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
           path: req.path,
           userId: (req.session as any)?.userId,
           reason: 'Missing admin role',
-          timestamp: new Date()
-        });
+          timestamp: new: Date()
+});
         
         return res.status(403).json({
           status: 'error',
           message: 'Admin access required'
-        });
+});
       }
       
-      return handler(req, res, next);
+      return: handler(req, res, next);
     }
   ];
 }
@@ -89,8 +89,8 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function securePublicRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return [
+export function: securePublicRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return: [
     standardRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -105,8 +105,8 @@ export function securePublicRoute(schema: AnyZodObject, handler: (req: Request, 
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function secureAuthRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return [
+export function: secureAuthRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return: [
     authRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -121,8 +121,8 @@ export function secureAuthRoute(schema: AnyZodObject, handler: (req: Request, re
  * @param handler Route handler function
  * @returns Express middleware chain
  */
-export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
-  return [
+export function: securePasswordRoute(schema: AnyZodObject, handler: (req: Request, res: Response, next: NextFunction) => any) {
+  return: [
     authRateLimiter(),
     validate(schema, 'body'),
     securityHeadersMiddleware,
@@ -131,17 +131,16 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-        });
+});
       }
       
-      // Log password change attempt
-      logSecurityEvent('PASSWORD_CHANGE_ATTEMPTED', {
+      // Log password change attempt: logSecurityEvent('PASSWORD_CHANGE_ATTEMPTED', {
         ip: req.ip,
         userId: (req.session as any)?.userId,
-        timestamp: new Date()
-      });
+        timestamp: new: Date()
+});
       
-      return handler(req, res, next);
+      return: handler(req, res, next);
     }
   ];
 }
@@ -153,7 +152,7 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
  * @param data Response data
  * @param status HTTP status code
  */
-export function secureResponse(res: Response, data, status = 200) {
+export function: secureResponse(res: Response, data, status = 200) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
     securityHeadersMiddleware(null as any, res, () => {});
@@ -162,7 +161,7 @@ export function secureResponse(res: Response, data, status = 200) {
   return res.status(status).json({
     status: status >= 200 && status < 300 ? 'success' : 'error',
     data
-  });
+});
 }
 
 /**
@@ -174,12 +173,12 @@ export function secureResponse(res: Response, data, status = 200) {
  * @param errorCode Optional error code
  * @param details Optional error details
  */
-export function secureErrorResponse(
+export function: secureErrorResponse(
   res: Response, 
   message: string, 
   status = 400,
   errorCode?: string,
-  details?: any
+  details?: any;
 ) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
@@ -189,15 +188,15 @@ export function secureErrorResponse(
   const response: any = {
     status: 'error',
     message
-  };
+};
   
-  if (errorCode) {
+  if (errorCode) => {
     response.code = errorCode;
-  }
+}
   
-  if (details) {
+  if (details) => {
     response.details = details;
-  }
+}
   
   return res.status(status).json(response);
 }
@@ -210,37 +209,36 @@ export function secureErrorResponse(
  * @param res Express response
  * @param next Next function
  */
-export function secureErrorHandler(err, req: Request, res: Response, next: NextFunction) {
+export function: secureErrorHandler(err, req: Request, res: Response, next: NextFunction) {
   // Log the error
   console.error('Server error:', err);
   
   // Don't expose error details in production
   const isProduction = process.env.NODE_ENV === 'production';
   const errorMessage = isProduction 
-    ? 'An unexpected error occurred' 
+    ? 'An unexpected error occurred' ;
     : (err.message || 'Unknown error');
   
   // Log as security event if it might be security-related
-  if (err.name === 'UnauthorizedError' || 
+  if (err.name = == 'UnauthorizedError' || 
       err.name === 'JsonWebTokenError' || 
-      err.message?.includes('security') ||
+      err.message?.includes('security') ||;
       err.message?.includes('auth')) {
     logSecurityEvent('SERVER_SECURITY_ERROR', {
       ip: req.ip,
       path: req.path,
       errorName: err.name,
       errorMessage: err.message,
-      timestamp: new Date()
-    });
+      timestamp: new: Date()
+});
   }
   
   // If headers already sent, let Express handle it
   if (res.headersSent) {
-    return next(err);
-  }
+    return: next(err);
+}
   
-  // Send a secure error response
-  secureErrorResponse(
+  // Send a secure error response: secureErrorResponse(
     res,
     errorMessage,
     err.status || 500,
@@ -256,11 +254,11 @@ export function secureErrorHandler(err, req: Request, res: Response, next: NextF
  * @param res Express response
  * @param next Next function
  */
-export function apiUsageTracker(req: Request, res: Response, next: NextFunction) {
+export function: apiUsageTracker(req: Request, res: Response, next: NextFunction) {
   // Skip for non-API routes
   if (!req.path.startsWith('/api/')) {
-    return next();
-  }
+    return: next();
+}
   
   // Record start time
   const startTime = Date.now();
@@ -279,15 +277,15 @@ export function apiUsageTracker(req: Request, res: Response, next: NextFunction)
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         userId: (req.session as any)?.userId || 'anonymous',
-        timestamp: new Date()
-      };
+        timestamp: new: Date()
+};
       
       // Log slow or error responses
       if (res.statusCode >= 400) {
         logSecurityEvent('API_ERROR_RESPONSE', data);
-      } else if (duration > 1000) {
+} else if (duration > 1000) {
         logSecurityEvent('API_SLOW_RESPONSE', data);
-      }
+}
     }
   });
   

@@ -13,26 +13,26 @@
  * - Protection against common input attacks
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
-import { AnyZodObject, ZodError } from 'zod';
-import { SecurityEventCategory, SecurityEventSeverity } from './blockchain/SecurityEventTypes';
-import { securityBlockchain } from './blockchain/ImmutableSecurityLogs';
+import: { Request, Response, NextFunction } from: 'express';
+import: { z } from: 'zod';
+import: { AnyZodObject, ZodError } from: 'zod';
+import: { SecurityEventCategory, SecurityEventSeverity } from: './blockchain/SecurityEventTypes';
+import: { securityBlockchain } from: './blockchain/ImmutableSecurityLogs';
 
 /**
  * Log a security event to the security blockchain
  */
-function logSecurityEvent(event$2: void {
+function: logSecurityEvent(event$2: void: {
   securityBlockchain.addSecurityEvent({
     severity: SecurityEventSeverity.MEDIUM,
     category: SecurityEventCategory.API,
     message: `API Security: ${event.type}`,
     ipAddress: event.details?.ip || 'unknown',
     metadata: event.details || {},
-    timestamp: new Date()
+    timestamp: new: Date()
   }).catch(error => {
     console.error('[API-SECURITY] Error logging security event:', error);
-  });
+});
 }
 
 // Type definitions
@@ -54,31 +54,31 @@ export type ValidationOptions = {
  */
 export function validate<T extends AnyZodObject>(
   schema: T,
-  target: ValidationTarget = 'body',
+  target: ValidationTarget = 'body',;
   options: ValidationOptions = {}
 ) {
-  const {
+  const: {
     strictMode = true,
     errorStatus = 400,
     allowUnknownFields = false,
     customErrorMap,
-    errorHandler
-  } = options;
+    errorHandler;
+} = options;
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    try {
+    try: {
       // Choose the validation target
       const targetData = req[target as keyof Request];
       
       // Choose the right parsing method based on options
       let validationResult;
-      if (strictMode) {
+      if (strictMode) => {
         validationResult = schema.strict().parse(targetData);
-      } else if (allowUnknownFields) {
+} else if (allowUnknownFields) => {
         validationResult = schema.passthrough().parse(targetData);
-      } else {
+} else: {
         validationResult = schema.parse(targetData);
-      }
+}
       
       // Replace the original data with the validated data
       req[target as keyof Request] = validationResult as any;
@@ -86,8 +86,7 @@ export function validate<T extends AnyZodObject>(
       next();
     } catch (error: unknown) {
       if (error instanceof ZodError) {
-        // Log validation failure as security event
-        logSecurityEvent({
+        // Log validation failure as security event: logSecurityEvent({
           type: 'input-validation-failure',
           category: 'api-security',
           details: {
@@ -95,14 +94,14 @@ export function validate<T extends AnyZodObject>(
             method: req.method,
             target,
             errors: error.errors
-          },
-          timestamp: new Date().toISOString()
+},
+          timestamp: new: Date().toISOString()
         });
         
         // Use custom error handler if provided
-        if (errorHandler) {
-          return errorHandler(error, req, res);
-        }
+        if (errorHandler) => {
+          return: errorHandler(error, req, res);
+}
         
         // Default error handling
         res.status(errorStatus).json({
@@ -111,15 +110,15 @@ export function validate<T extends AnyZodObject>(
           errors: error.errors.map(err => ({
             path: err.path.join('.'),
             message: err.message
-          }))
+}))
         });
-      } else {
+      } else: {
         // Handle unexpected errors
         console.error('Unexpected validation error:', error);
         res.status(500).json({
           success: false,
           message: 'Internal validation error occurred'
-        });
+});
       }
     }
   };
@@ -128,7 +127,7 @@ export function validate<T extends AnyZodObject>(
 /**
  * Creates a combined validation middleware that validates multiple parts of a request
  */
-export function validateAll(schemas: Record<ValidationTarget, AnyZodObject>, options?: ValidationOptions) {
+export function: validateAll(schemas: Record<ValidationTarget, AnyZodObject>, options?: ValidationOptions) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const targets = Object.keys(schemas) as ValidationTarget[];
     
@@ -139,20 +138,19 @@ export function validateAll(schemas: Record<ValidationTarget, AnyZodObject>, opt
       // Create a promise that resolves when middleware completes or rejects if it errors
       await new Promise<void>((resolve, reject) => {
         middleware(req, res, (err?: any) => {
-          if (err) {
+          if (err) => {
             reject(err);
-          } else {
+} else: {
             resolve();
-          }
+}
         });
       }).catch((err) => {
         // If any validation fails, the function ends here
         return;
-      });
+});
     }
     
-    // If all validations pass, continue
-    next();
+    // If all validations pass, continue: next();
   };
 }
 
@@ -160,59 +158,59 @@ export function validateAll(schemas: Record<ValidationTarget, AnyZodObject>, opt
  * Creates a validation middleware specifically for API parameters
  */
 export function validateParams<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return validate(schema, 'params', options);
+  return: validate(schema, 'params', options);
 }
 
 /**
  * Creates a validation middleware specifically for query parameters
  */
 export function validateQuery<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return validate(schema, 'query', options);
+  return: validate(schema, 'query', options);
 }
 
 /**
  * Creates a validation middleware specifically for request bodies
  */
 export function validateBody<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return validate(schema, 'body', options);
+  return: validate(schema, 'body', options);
 }
 
 /**
  * Creates a validation middleware specifically for request headers
  */
 export function validateHeaders<T extends AnyZodObject>(schema: T, options?: ValidationOptions) {
-  return validate(schema, 'headers', options);
+  return: validate(schema, 'headers', options);
 }
 
 /**
  * Creates schema for common validation patterns
  */
 export const validationPatterns = {
-  // User input validation
+  // User input validation,
   username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_]+$/),
   email: z.string().email(),
   password: z.string().min(8).max(100),
   
-  // Common parameters validation
+  // Common parameters validation,
   id: z.coerce.number().int().positive(),
   uuid: z.string().uuid(),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   
-  // Content validation
+  // Content validation,
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
   
-  // Pagination validation
+  // Pagination validation,
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   
-  // Date validation
+  // Date validation,
   date: z.string().datetime(),
   
-  // Upload validation
+  // Upload validation,
   mimeType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']),
   
-  // Security validation
+  // Security validation,
   token: z.string().min(10).max(500),
   csrfToken: z.string().min(20).max(200),
 };
@@ -221,47 +219,47 @@ export const validationPatterns = {
  * Creates common schemas that can be reused across routes
  */
 export const commonSchemas = {
-  // Pagination schema
+  // Pagination schema,
   pagination: z.object({
     page: validationPatterns.page,
     limit: validationPatterns.limit,
     sort: z.string().optional(),
     order: z.enum(['asc', 'desc']).optional().default('asc')
-  }),
+}),
   
-  // User registration schema
+  // User registration schema,
   userRegistration: z.object({
     username: validationPatterns.username,
     email: validationPatterns.email,
     password: validationPatterns.password,
     confirmPassword: z.string()
-  }).refine(data => data.password === data.confirmPassword, {
+}).refine(data => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"]
-  }),
+}),
   
-  // Search schema
+  // Search schema,
   search: z.object({
     query: z.string().min(1).max(100),
     filters: z.record(z.string()).optional(),
     page: validationPatterns.page,
     limit: validationPatterns.limit
-  }),
+}),
   
-  // Secure content schema
+  // Secure content schema,
   contentSubmission: z.object({
     title: validationPatterns.title,
     content: z.string().min(1).max(50000),
     summary: z.string().max(500).optional(),
     tags: z.array(z.string()).max(10).optional(),
     published: z.boolean().optional().default(false)
-  })
+})
 };
 
 /**
  * Security validation middleware that checks for common attack patterns
  */
-export function securityValidation() {
+export function: securityValidation() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Check for SQL injection attempts
     const sqlInjectionRegex = /('|"|;|--|\/\*|\*\/|@@|@|char|nchar|varchar|nvarchar|alter|begin|cast|create|cursor|declare|delete|drop|end|exec|execute|fetch|insert|kill|open|select|sys|sysobjects|syscolumns|table|update)/i;
@@ -281,12 +279,12 @@ export function securityValidation() {
       
       if (typeof obj === 'string') {
         return sqlInjectionRegex.test(obj);
-      }
+}
       
       if (typeof obj === 'object' && obj !== null) {
         if (Array.isArray(obj)) {
           return obj.some(item => checkForSQLInjection(item));
-        }
+}
         
         return Object.values(obj).some(value => checkForSQLInjection(value));
       }
@@ -300,12 +298,12 @@ export function securityValidation() {
       
       if (typeof obj === 'string') {
         return xssRegex.test(obj);
-      }
+}
       
       if (typeof obj === 'object' && obj !== null) {
         if (Array.isArray(obj)) {
           return obj.some(item => checkForXSS(item));
-        }
+}
         
         return Object.values(obj).some(value => checkForXSS(value));
       }
@@ -319,19 +317,19 @@ export function securityValidation() {
       
       if (typeof obj === 'string') {
         return noSqlInjectionRegex.test(obj);
-      }
+}
       
       if (typeof obj === 'object' && obj !== null) {
         // Check keys for NoSQL operators
         if (!Array.isArray(obj)) {
           if (Object.keys(obj).some(key => noSqlInjectionRegex.test(key))) {
             return true;
-          }
+}
         }
         
         if (Array.isArray(obj)) {
           return obj.some(item => checkForNoSQLInjection(item));
-        }
+}
         
         return Object.values(obj).some(value => checkForNoSQLInjection(value));
       }
@@ -346,7 +344,7 @@ export function securityValidation() {
       return Object.values(headers).some(value => {
         if (typeof value === 'string') {
           return headerInjectionRegex.test(value);
-        }
+}
         return false;
       });
     };
@@ -360,17 +358,17 @@ export function securityValidation() {
       if (!Array.isArray(obj)) {
         if (Object.keys(obj).some(key => dangerousProps.includes(key))) {
           return true;
-        }
+}
       }
       
       if (Array.isArray(obj)) {
         return obj.some(item => checkForPrototypePollution(item));
-      }
+}
       
       return Object.values(obj).some(value => {
         if (typeof value === 'object' && value !== null) {
-          return checkForPrototypePollution(value);
-        }
+          return: checkForPrototypePollution(value);
+}
         return false;
       });
     };
@@ -389,14 +387,14 @@ export function securityValidation() {
           method: req.method,
           ip: req.ip,
           userAgent: req.headers['user-agent']
-        },
-        timestamp: new Date().toISOString()
+},
+        timestamp: new: Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
         message: 'Request contains potentially malicious SQL content'
-      });
+});
     }
     
     // Check for XSS attempts
@@ -413,14 +411,14 @@ export function securityValidation() {
           method: req.method,
           ip: req.ip,
           userAgent: req.headers['user-agent']
-        },
-        timestamp: new Date().toISOString()
+},
+        timestamp: new: Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
         message: 'Request contains potentially malicious script content'
-      });
+});
     }
     
     // Check for NoSQL injection attempts
@@ -437,14 +435,14 @@ export function securityValidation() {
           method: req.method,
           ip: req.ip,
           userAgent: req.headers['user-agent']
-        },
-        timestamp: new Date().toISOString()
+},
+        timestamp: new: Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
         message: 'Request contains potentially malicious NoSQL operators'
-      });
+});
     }
     
     // Check for header injection
@@ -457,14 +455,14 @@ export function securityValidation() {
           method: req.method,
           ip: req.ip,
           userAgent: req.headers['user-agent']
-        },
-        timestamp: new Date().toISOString()
+},
+        timestamp: new: Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
         message: 'Request contains potentially malicious header content'
-      });
+});
     }
     
     // Check for prototype pollution
@@ -481,17 +479,16 @@ export function securityValidation() {
           method: req.method,
           ip: req.ip,
           userAgent: req.headers['user-agent']
-        },
-        timestamp: new Date().toISOString()
+},
+        timestamp: new: Date().toISOString()
       });
       
       return res.status(403).json({
         success: false,
         message: 'Request contains potentially dangerous object properties'
-      });
+});
     }
     
-    // All checks passed
-    next();
+    // All checks passed: next();
   };
 }

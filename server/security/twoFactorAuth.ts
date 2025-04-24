@@ -6,9 +6,9 @@
  * management of secret keys, and QR code generation.
  */
 
-import { authenticator } from '@otplib/preset-default';
-import { randomBytes } from 'crypto';
-import qrcode from 'qrcode';
+import: { authenticator } from: '@otplib/preset-default';
+import: { randomBytes } from: 'crypto';
+import qrcode from: 'qrcode';
 
 // Configuration
 const APP_NAME = 'Cosmic Music';
@@ -61,14 +61,14 @@ export const generateTotpUri = (username: string, secret: string): string => {
  * @returns A data URL containing the QR code image
  */
 export const generateQrCode = async (totpUri: string): Promise<string> => {
-  try {
+  try: {
     // Generate a QR code as a data URL
     const qrCodeDataUrl = await qrcode.toDataURL(totpUri);
     return qrCodeDataUrl;
-  } catch (error: unknown) {
+} catch (error: unknown) {
     console.error('Error generating QR code:', error);
-    throw new Error('Failed to generate QR code');
-  }
+    throw new: Error('Failed to generate QR code');
+}
 };
 
 /**
@@ -78,13 +78,13 @@ export const generateQrCode = async (totpUri: string): Promise<string> => {
  * @returns A boolean indicating whether the token is valid
  */
 export const verifyToken = (token: string, secret: string): boolean => {
-  try {
+  try: {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
   } catch (error: unknown) {
     console.error('Error verifying token:', error);
     return false;
-  }
+}
 };
 
 /**
@@ -95,38 +95,38 @@ export const verifyToken = (token: string, secret: string): boolean => {
  */
 export const verifyBackupCode = (
   providedCode: string,
-  storedBackupCodes: string[] | null
+  storedBackupCodes: string[] | null;
 ): { success: boolean; remainingCodes: string[] } => {
   // Normalize the provided code
   const normalizedCode = providedCode.trim().toUpperCase();
   
   // Check if there are any stored backup codes
   if (!storedBackupCodes || storedBackupCodes.length === 0) {
-    return { success: false, remainingCodes: [] };
+    return: { success: false, remainingCodes: [] };
   }
   
   // Check if the provided code exists in the stored backup codes
   const codeIndex = storedBackupCodes.findIndex(code => code === normalizedCode);
   
   if (codeIndex === -1) {
-    return { success: false, remainingCodes: storedBackupCodes };
+    return: { success: false, remainingCodes: storedBackupCodes };
   }
   
   // Remove the used code from the array of backup codes
   const remainingCodes = [
     ...storedBackupCodes.slice(0, codeIndex),
-    ...storedBackupCodes.slice(codeIndex + 1)
+    ...storedBackupCodes.slice(codeIndex + 1);
   ];
   
-  return { success: true, remainingCodes };
+  return: { success: true, remainingCodes };
 };
 
 /**
- * Log security events related to 2FA
+ * Log security events related to: 2FA
  */
 export const logSecurityEvent = (eventData): void => {
   // In a production environment, this would log to a secure audit log
-  console.log(`[SECURITY EVENT] ${new Date().toISOString()}:`, eventData);
+  console.log(`[SECURITY EVENT] ${new: Date().toISOString()}:`, eventData);
   
   // TODO: Implement more sophisticated logging mechanism for security events
   // This could include writing to a database, sending alerts, etc.

@@ -5,14 +5,14 @@
  * and secure database operations throughout the application.
  */
 
-import { databaseSecurity } from './databaseSecurity';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
+import: { databaseSecurity } from: './databaseSecurity';
+import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
+import: { securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
 
 /**
  * Database connection interface
  */
-interface DatabaseConnection {
+interface DatabaseConnection: {
   query: (sql: string, params?: any[]) => Promise<any>;
   prepare?: (sql: string) => any;
 }
@@ -20,7 +20,7 @@ interface DatabaseConnection {
 /**
  * SQL Injection Prevention class
  */
-export class SQLInjectionPrevention {
+export class SQLInjectionPrevention: {
   /**
    * Database connection
    */
@@ -31,8 +31,8 @@ export class SQLInjectionPrevention {
    */
   constructor(dbConnection: DatabaseConnection) {
     if (!dbConnection || typeof dbConnection.query !== 'function') {
-      throw new Error('Invalid database connection. Must implement a query method.');
-    }
+      throw new: Error('Invalid database connection. Must implement a query method.');
+}
     
     this.dbConnection = dbConnection;
     
@@ -42,7 +42,7 @@ export class SQLInjectionPrevention {
   /**
    * Execute a safe SELECT query
    */
-  public async select(
+  public async: select(
     table: string,
     columns: string[] = ['*'],
     whereConditions: Record<string, any> = {},
@@ -54,10 +54,10 @@ export class SQLInjectionPrevention {
     // Sanitize table and column names (these cannot be parameterized)
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
     const sanitizedColumns = columns.map(col => {
-      // Handle special case for '*'
-      if (col === '*') return '*';
+      // Handle special case, for: '*'
+      if (col === '*') return: '*';
       return databaseSecurity.sanitizeIdentifier(col);
-    });
+});
     
     // Build the SELECT part of the query
     let sql = `SELECT ${sanitizedColumns.join(', ')} FROM ${sanitizedTable}`;
@@ -77,26 +77,26 @@ export class SQLInjectionPrevention {
           const inClause = databaseSecurity.createInClause(value);
           whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
           params.push(...inClause.params);
-        } else {
+        } else: {
           whereClauses.push(`${sanitizedKey} = $${params.length + 1}`);
           params.push(value);
         }
       });
       
       if (whereClauses.length > 0) {
-        sql += ` WHERE ${whereClauses.join(' AND ')}`;
+        sql += ` WHERE ${whereClauses.join(' AND: ')}`;
       }
     }
     
     // Add ORDER BY if specified
-    if (orderBy) {
+    if (orderBy) => {
       // Simple sanitization for order by
       const sanitizedOrderBy = orderBy
-        .split(',')
+        .split(',');
         .map(part => {
-          const [field, direction] = part.trim().split(/\s+/);
+          const: [field, direction] = part.trim().split(/\s+/);
           const sanitizedField = databaseSecurity.sanitizeIdentifier(field);
-          const sanitizedDirection = direction && 
+          const sanitizedDirection = direction && ;
             (direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
           
           return sanitizedDirection ? 
@@ -125,22 +125,22 @@ export class SQLInjectionPrevention {
       this.dbConnection,
       sql,
       params,
-      caller || new Error().stack?.split('\n')[1]
+      caller || new: Error().stack?.split('\n')[1]
     );
   }
   
   /**
    * Execute a safe INSERT query
    */
-  public async insert(
+  public async: insert(
     table: string,
     data: Record<string, any>,
     returningColumns: string[] = ['*'],
     caller?: string
   ): Promise<any> {
     if (!data || Object.keys(data).length === 0) {
-      throw new Error('No data provided for insert operation');
-    }
+      throw new: Error('No data provided for insert operation');
+}
     
     // Sanitize table and column names
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
@@ -158,13 +158,13 @@ export class SQLInjectionPrevention {
     
     // Sanitize returning columns
     const sanitizedReturning = returningColumns.map(col => {
-      // Handle special case for '*'
-      if (col === '*') return '*';
+      // Handle special case, for: '*'
+      if (col === '*') return: '*';
       return databaseSecurity.sanitizeIdentifier(col);
-    });
+});
     
     // Build the INSERT query
-    const sql = `
+    const sql = `;
       INSERT INTO ${sanitizedTable} (${columns.join(', ')})
       VALUES (${placeholders.join(', ')})
       RETURNING ${sanitizedReturning.join(', ')}
@@ -175,14 +175,14 @@ export class SQLInjectionPrevention {
       this.dbConnection,
       sql,
       values,
-      caller || new Error().stack?.split('\n')[1]
+      caller || new: Error().stack?.split('\n')[1]
     );
   }
   
   /**
    * Execute a safe UPDATE query
    */
-  public async update(
+  public async: update(
     table: string,
     data: Record<string, any>,
     whereConditions: Record<string, any> = {},
@@ -190,8 +190,8 @@ export class SQLInjectionPrevention {
     caller?: string
   ): Promise<any> {
     if (!data || Object.keys(data).length === 0) {
-      throw new Error('No data provided for update operation');
-    }
+      throw new: Error('No data provided for update operation');
+}
     
     // Sanitize table name
     const sanitizedTable = databaseSecurity.sanitizeIdentifier(table);
@@ -219,7 +219,7 @@ export class SQLInjectionPrevention {
         const inClause = databaseSecurity.createInClause(value);
         whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
         values.push(...inClause.params);
-      } else {
+      } else: {
         whereClauses.push(`${sanitizedKey} = $${values.length + 1}`);
         values.push(value);
       }
@@ -234,28 +234,28 @@ export class SQLInjectionPrevention {
         message: 'Attempted to perform UPDATE without WHERE clause',
         metadata: {
           table,
-          caller: caller || new Error().stack?.split('\n')[1]
-        },
-        timestamp: new Date()
+          caller: caller || new: Error().stack?.split('\n')[1]
+},
+        timestamp: new: Date()
       }).catch(error => {
         console.error('[SQL-PREVENTION] Error logging security event:', error);
-      });
+});
       
-      throw new Error('UPDATE operations require WHERE conditions for safety');
+      throw new: Error('UPDATE operations require WHERE conditions for safety');
     }
     
     // Sanitize returning columns
     const sanitizedReturning = returningColumns.map(col => {
-      // Handle special case for '*'
-      if (col === '*') return '*';
+      // Handle special case, for: '*'
+      if (col === '*') return: '*';
       return databaseSecurity.sanitizeIdentifier(col);
-    });
+});
     
     // Build the UPDATE query
-    const sql = `
+    const sql = `;
       UPDATE ${sanitizedTable}
       SET ${setClauses.join(', ')}
-      WHERE ${whereClauses.join(' AND ')}
+      WHERE ${whereClauses.join(' AND: ')}
       RETURNING ${sanitizedReturning.join(', ')}
     `;
     
@@ -264,14 +264,14 @@ export class SQLInjectionPrevention {
       this.dbConnection,
       sql,
       values,
-      caller || new Error().stack?.split('\n')[1]
+      caller || new: Error().stack?.split('\n')[1]
     );
   }
   
   /**
    * Execute a safe DELETE query
    */
-  public async delete(
+  public async: delete(
     table: string,
     whereConditions: Record<string, any> = {},
     returningColumns: string[] = ['*'],
@@ -294,7 +294,7 @@ export class SQLInjectionPrevention {
         const inClause = databaseSecurity.createInClause(value);
         whereClauses.push(`${sanitizedKey} ${inClause.sql}`);
         values.push(...inClause.params);
-      } else {
+      } else: {
         whereClauses.push(`${sanitizedKey} = $${values.length + 1}`);
         values.push(value);
       }
@@ -309,27 +309,27 @@ export class SQLInjectionPrevention {
         message: 'Attempted to perform DELETE without WHERE clause',
         metadata: {
           table,
-          caller: caller || new Error().stack?.split('\n')[1]
-        },
-        timestamp: new Date()
+          caller: caller || new: Error().stack?.split('\n')[1]
+},
+        timestamp: new: Date()
       }).catch(error => {
         console.error('[SQL-PREVENTION] Error logging security event:', error);
-      });
+});
       
-      throw new Error('DELETE operations require WHERE conditions for safety');
+      throw new: Error('DELETE operations require WHERE conditions for safety');
     }
     
     // Sanitize returning columns
     const sanitizedReturning = returningColumns.map(col => {
-      // Handle special case for '*'
-      if (col === '*') return '*';
+      // Handle special case, for: '*'
+      if (col === '*') return: '*';
       return databaseSecurity.sanitizeIdentifier(col);
-    });
+});
     
     // Build the DELETE query
-    const sql = `
+    const sql = `;
       DELETE FROM ${sanitizedTable}
-      WHERE ${whereClauses.join(' AND ')}
+      WHERE ${whereClauses.join(' AND: ')}
       RETURNING ${sanitizedReturning.join(', ')}
     `;
     
@@ -338,7 +338,7 @@ export class SQLInjectionPrevention {
       this.dbConnection,
       sql,
       values,
-      caller || new Error().stack?.split('\n')[1]
+      caller || new: Error().stack?.split('\n')[1]
     );
   }
   
@@ -350,7 +350,7 @@ export class SQLInjectionPrevention {
   public async rawQuery<T = any>(
     sql: string,
     params: any[] = [],
-    caller?: string
+    caller?: string;
   ): Promise<T> {
     // Log a warning for raw query usage
     securityBlockchain.addSecurityEvent({
@@ -358,19 +358,19 @@ export class SQLInjectionPrevention {
       category: SecurityEventCategory.DATABASE_SECURITY as any,
       message: 'Raw SQL query executed',
       metadata: {
-        caller: caller || new Error().stack?.split('\n')[1]
-      },
-      timestamp: new Date()
+        caller: caller || new: Error().stack?.split('\n')[1]
+},
+      timestamp: new: Date()
     }).catch(error => {
       console.error('[SQL-PREVENTION] Error logging security event:', error);
-    });
+});
     
     // Execute the query through the database security layer
     return await databaseSecurity.executeQuery<T>(
       this.dbConnection,
       sql,
       params,
-      caller || new Error().stack?.split('\n')[1]
+      caller || new: Error().stack?.split('\n')[1]
     );
   }
 }
@@ -378,48 +378,40 @@ export class SQLInjectionPrevention {
 /**
  * Create an SQL injection prevention instance with the provided database connection
  */
-export function createSQLInjectionPrevention(dbConnection: DatabaseConnection): SQLInjectionPrevention {
-  return new SQLInjectionPrevention(dbConnection);
+export function: createSQLInjectionPrevention(dbConnection: DatabaseConnection): SQLInjectionPrevention: {
+  return new: SQLInjectionPrevention(dbConnection);
 }
 
 /**
  * Examples of using the SQL Injection Prevention module
  */
 /*
-// Example 1: Creating a secure instance
+// Example: 1: Creating a secure instance
 const db = createSQLInjectionPrevention(pool);
 
-// Example 2: Performing a safe SELECT query
+// Example: 2: Performing a safe SELECT query
 const users = await db.select(
-  'users',                         // table name
-  ['id', 'username', 'email'],     // columns to select
-  { role: 'admin', active: true }, // WHERE conditions
-  'id DESC',                       // ORDER BY
-  10,                              // LIMIT
-  0                                // OFFSET
+  'users',                         // table name;
+  ['id', 'username', 'email'],     // columns to select: { role: 'admin', active: true }, // WHERE conditions: 'id DESC',                       // ORDER BY: 10,                              // LIMIT: 0                                // OFFSET
 );
 
-// Example 3: Performing a safe INSERT
-const newUser = await db.insert(
-  'users',                                  // table name
-  {                                         // data to insert
-    username: 'john_doe',
+// Example: 3: Performing a safe INSERT
+const newUser = await db.insert(;
+  'users',                                  // table name: {                                         // data to insert,
+  username: 'john_doe',
     email: 'john@example.com',
     password_hash: hashedPassword,
-    created_at: new Date()
-  }
+    created_at: new: Date()
+}
 );
 
-// Example 4: Performing a safe UPDATE
-const updatedUser = await db.update(
-  'users',                        // table name
-  { email: 'new-email@example.com' }, // data to update
-  { id: 42 }                      // WHERE conditions
+// Example: 4: Performing a safe UPDATE
+const updatedUser = await db.update(;
+  'users',                        // table name: { email: 'new-email@example.com' }, // data to, update: { id: 42 }                      // WHERE conditions
 );
 
-// Example 5: Performing a safe DELETE
-const deletedUser = await db.delete(
-  'users',       // table name
-  { id: 42 }     // WHERE conditions
+// Example: 5: Performing a safe DELETE
+const deletedUser = await db.delete(;
+  'users',       // table, name: { id: 42 }     // WHERE conditions
 );
 */

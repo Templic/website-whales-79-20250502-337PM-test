@@ -1,6 +1,8 @@
 import pkg from 'pg';
 const { Pool } = pkg;
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { sql } from 'drizzle-orm';
+import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 import * as schema from "../shared/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -35,8 +37,6 @@ export const initializeDatabase = async () => {
 
 // Export pool to be able to end it when the server closes
 export const pgPool = pool;
-import { sql } from 'drizzle-orm';
-import { text, timestamp, pgTable } from 'drizzle-orm/pg-core';
 
 // This is a legacy table, using contactMessages from schema.ts instead
 /*export const contactFormEntries = pgTable('contact_form_entries', {

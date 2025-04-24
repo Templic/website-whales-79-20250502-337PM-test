@@ -7,7 +7,7 @@
 import React, { forwardRef } from 'react';
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../../lib/utils';
+
 
 // Toggle wrapper styling
 const toggleWrapperVariants = cva(

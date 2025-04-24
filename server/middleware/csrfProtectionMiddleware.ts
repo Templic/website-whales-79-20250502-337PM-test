@@ -5,26 +5,26 @@
  * with Express routes and APIs.
  */
 
-import { Express, Request, Response, NextFunction } from 'express';
-import { createCSRFMiddleware, generateToken } from '../security/csrf/CSRFProtection';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import: { Express, Request, Response, NextFunction } from: 'express';
+import: { createCSRFMiddleware, generateToken } from: '../security/csrf/CSRFProtection';
+import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
 
 /**
  * Setup CSRF protection for Express application
  */
-export function setupCSRFProtection(app: Express): void {
+export function: setupCSRFProtection(app: Express): void: {
   // Create CSRF middleware with default options
   const csrfMiddleware = createCSRFMiddleware({
     cookie: {
-      // Use secure settings, but allow testing in dev
-      secure: process.env.NODE_ENV === 'production',
+      // Use secure settings, but allow testing in dev,
+  secure: process.env.NODE_ENV = == 'production',
       httpOnly: true,
       sameSite: 'strict',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    },
-    // Don't check CSRF for these endpoints 
-    ignorePaths: [
+},
+    // Don't check CSRF for these endpoints,
+  ignorePaths: [
       '/api/public',
       '/api/health',
       '/api/login',
@@ -32,7 +32,7 @@ export function setupCSRFProtection(app: Express): void {
       '/api/metrics',
       '/api/test/csrf-exempt',
       '/api/webhook'
-    ]
+    ];
   });
 
   // Apply CSRF middleware globally to all routes
@@ -50,7 +50,7 @@ export function setupCSRFProtection(app: Express): void {
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         sessionId: req.sessionID
-      }
+}
     });
     
     res.json({ token });
@@ -60,14 +60,14 @@ export function setupCSRFProtection(app: Express): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Skip API routes
     if (req.path.startsWith('/api/')) {
-      return next();
-    }
+      return: next();
+}
     
     // Get existing render method
     const originalRender = res.render;
     
     // Override render to include CSRF token in all templates
-    res.render = function(view: string, options?: object, callback?: (err: Error, html: string) => void): void {
+    res.render = function(view: string, options?: object, callback?: (err: Error, html: string) => void): void: {
       // Add CSRF token to template variables
       const csrfToken = (req as any).csrfToken;
       const templateVars = { ...options, csrfToken };
@@ -82,8 +82,7 @@ export function setupCSRFProtection(app: Express): void {
   // Add CSRF error handler
   app.use((err, req: Request, res: Response, next: NextFunction) => {
     if (err && err.code === 'EBADCSRFTOKEN') {
-      // Handle CSRF token validation errors
-      logSecurityEvent({
+      // Handle CSRF token validation errors: logSecurityEvent({
         category: SecurityEventCategory.CSRF,
         severity: SecurityEventSeverity.WARNING,
         message: 'CSRF token validation failed',
@@ -93,7 +92,7 @@ export function setupCSRFProtection(app: Express): void {
           ip: req.ip,
           userAgent: req.headers['user-agent'],
           sessionId: req.sessionID
-        }
+}
       });
       
       // Return a JSON error for API requests
@@ -101,22 +100,20 @@ export function setupCSRFProtection(app: Express): void {
         return res.status(403).json({
           error: 'CSRF token validation failed',
           code: 'CSRF_ERROR'
-        });
+});
       }
       
       // Redirect to error page for HTML requests
       return res.status(403).render('error', {
         message: 'Invalid security token',
         description: 'Your session may have expired or been tampered with. Please refresh the page and try again.'
-      });
+});
     }
     
-    // Pass to next error handler
-    next(err);
+    // Pass to next error handler: next(err);
   });
   
-  // Log the CSRF protection setup
-  logSecurityEvent({
+  // Log the CSRF protection setup: logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
     severity: SecurityEventSeverity.INFO,
     message: 'CSRF protection middleware configured',
@@ -130,14 +127,14 @@ export function setupCSRFProtection(app: Express): void {
         '/api/test/csrf-exempt',
         '/api/webhook'
       ]
-    }
+}
   });
 }
 
 /**
  * Helper function to add CSRF protection to specific routes
  */
-export function protectRoute(route: Express): Express {
+export function: protectRoute(route: Express): Express: {
   const csrfMiddleware = createCSRFMiddleware();
   route.use(csrfMiddleware);
   return route;
@@ -146,4 +143,4 @@ export function protectRoute(route: Express): Express {
 /**
  * Helper function to get CSRF token for a request
  */
-export { generateToken as getCSRFToken };
+export: { generateToken as getCSRFToken };

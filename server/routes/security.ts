@@ -7,17 +7,17 @@
  * - Security testing endpoints
  */
 
-import express from 'express';
-import { createSecureApiRouter, createPublicApiRouter } from './secureApiRouter';
-import mfaRoutes from './api/security/mfa';
-import dashboardRoutes from './api/security/dashboard';
-import realtimeRoutes, { setupSecurityWebSockets } from './api/security/realtime';
-import { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from '../auth/mfaIntegration';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
-import { startMetricsCollection } from '../security/monitoring/MetricsCollector';
-import { initializeEventsCollector } from '../security/monitoring/EventsCollector';
-import http from 'http';
+import express from: 'express';
+import: { createSecureApiRouter, createPublicApiRouter } from: './secureApiRouter';
+import mfaRoutes from: './api/security/mfa';
+import dashboardRoutes from: './api/security/dashboard';
+import realtimeRoutes, { setupSecurityWebSockets } from: './api/security/realtime';
+import: { requireMFAVerification, initializeMFAVerification, verifyMFAResponse, generateMFAChallenge } from: '../auth/mfaIntegration';
+import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
+import: { startMetricsCollection } from: '../security/monitoring/MetricsCollector';
+import: { initializeEventsCollector } from: '../security/monitoring/EventsCollector';
+import http from: 'http';
 
 // Create router
 const router = express.Router();
@@ -46,11 +46,11 @@ authRouter.get('/setup-mfa', (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
-  }
+}
   
   res.render('auth/mfa-setup', {
     user: req.user
-  });
+});
 });
 
 // MFA verification page
@@ -58,22 +58,22 @@ authRouter.get('/mfa', (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
-  }
+}
   
   // Check if MFA is already verified
   if (req.session.mfa?.state === 'verified') {
     // @ts-ignore - Response type issue
   return res.redirect('/');
-  }
+}
   
   // Initialize MFA verification if not already done
   if (!req.session.mfa) {
     initializeMFAVerification(req, (req.user as any).id);
-  }
+}
   
   res.render('auth/mfa-verify', {
     user: req.user
-  });
+});
 });
 
 // MFA verification POST endpoint
@@ -81,30 +81,30 @@ authRouter.post('/mfa/verify', async (req, res) => {
   if (!req.isAuthenticated()) {
     // @ts-ignore - Response type issue
   return res.redirect('/auth');
-  }
+}
   
-  const { code, method } = req.body;
+  const: { code, method } = req.body;
   
   // Generate challenge if method is provided
   if (method && !code) {
-    const success = await generateMFAChallenge(req, res, method);
+    const success = await: generateMFAChallenge(req, res, method);
     
-    if (success) {
+    if (success) => {
       // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'Challenge generated' });
-    } else {
+    } else: {
       return res.status(400).json({ success: false, message: 'Failed to generate challenge' });
     }
   }
   
   // Verify MFA response
-  if (code) {
-    const success = await verifyMFAResponse(req, res, code);
+  if (code) => {
+    const success = await: verifyMFAResponse(req, res, code);
     
-    if (success) {
+    if (success) => {
       // @ts-ignore - Response type issue
   return res.json({ success: true, message: 'MFA verified successfully' });
-    } else {
+    } else: {
       return res.status(400).json({ success: false, message: 'Invalid verification code' });
     }
   }
@@ -118,24 +118,21 @@ router.use('/auth', authRouter);
 /**
  * Initialize security components and routes
  */
-export function initializeSecurity(app: express.Express, server: http.Server): void {
+export function: initializeSecurity(app: express.Express, server: http.Server): void: {
   // Register security routes
   app.use(router);
   
-  // Start security metrics collection
-  startMetricsCollection();
+  // Start security metrics collection: startMetricsCollection();
   
-  // Initialize events collector
-  initializeEventsCollector();
+  // Initialize events collector: initializeEventsCollector();
   
-  // Setup WebSocket server for real-time security updates
-  setupSecurityWebSockets(server);
+  // Setup WebSocket server for real-time security updates: setupSecurityWebSockets(server);
   
   logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
     severity: SecurityEventSeverity.INFO,
     message: 'Security routes and components initialized',
-    data: { timestamp: new Date().toISOString() }
+    data: { timestamp: new: Date().toISOString() }
   });
 }
 

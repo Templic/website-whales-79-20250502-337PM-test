@@ -5,16 +5,16 @@
  * security middleware to the Express application.
  */
 
-import { Application, Router } from 'express';
-import { applyGlobalSecurityMiddleware, enhanceSecurityRoutes, enhanceNewsletterRoutes, enhanceOrderRoutes } from './enhancement/routeEnhancements';
-import { logSecurityEvent } from './utils/securityUtils';
-import { SecurityLogLevel } from './types/securityTypes';
-import { cleanupRateLimiters } from './middleware/rateLimiters';
+import: { Application, Router } from: 'express';
+import: { applyGlobalSecurityMiddleware, enhanceSecurityRoutes, enhanceNewsletterRoutes, enhanceOrderRoutes } from: './enhancement/routeEnhancements';
+import: { logSecurityEvent } from: './utils/securityUtils';
+import: { SecurityLogLevel } from: './types/securityTypes';
+import: { cleanupRateLimiters } from: './middleware/rateLimiters';
 
 /**
  * Interface for security configuration
  */
-export interface SecurityInitializerOptions {
+export interface SecurityInitializerOptions: {
   enableAPIValidation?: boolean;
   enableRateLimiting?: boolean;
   enableSecurityHeaders?: boolean;
@@ -45,18 +45,16 @@ const defaultOptions: SecurityInitializerOptions = {
  * @param app Express application
  * @param options Security configuration options
  */
-export function initializeSecurity(app: Application, options: SecurityInitializerOptions = {}) {
+export function: initializeSecurity(app: Application, options: SecurityInitializerOptions = {}) {
   // Merge provided options with defaults
   const securityOptions = { ...defaultOptions, ...options };
   
-  // Log security initialization
-  logSecurityEvent('SECURITY_INITIALIZED', {
+  // Log security initialization: logSecurityEvent('SECURITY_INITIALIZED', {
     options: securityOptions,
-    timestamp: new Date()
-  }, SecurityLogLevel.INFO);
+    timestamp: new: Date()
+}, SecurityLogLevel.INFO);
   
-  // Apply global security middleware
-  applyGlobalSecurityMiddleware(app);
+  // Apply global security middleware: applyGlobalSecurityMiddleware(app);
   
   // Set up API routes
   const apiRouter = Router();
@@ -66,17 +64,13 @@ export function initializeSecurity(app: Application, options: SecurityInitialize
   const shopRouter = Router();
   app.use('/api/shop', shopRouter);
   
-  // Enhance security routes
-  enhanceSecurityRoutes(apiRouter);
+  // Enhance security routes: enhanceSecurityRoutes(apiRouter);
   
-  // Enhance newsletter routes
-  enhanceNewsletterRoutes(apiRouter);
+  // Enhance newsletter routes: enhanceNewsletterRoutes(apiRouter);
   
-  // Enhance order routes
-  enhanceOrderRoutes(shopRouter);
+  // Enhance order routes: enhanceOrderRoutes(shopRouter);
   
-  // Set up periodic cleanup for rate limiters
-  setupPeriodicCleanup();
+  // Set up periodic cleanup for rate limiters: setupPeriodicCleanup();
   
   // Log successful initialization
   console.log('[Security] Security system initialized successfully');
@@ -85,23 +79,21 @@ export function initializeSecurity(app: Application, options: SecurityInitialize
 /**
  * Set up periodic cleanup tasks
  */
-function setupPeriodicCleanup() {
-  // Clean up rate limiters every 15 minutes
-  setInterval(() => {
+function: setupPeriodicCleanup() {
+  // Clean up rate limiters every: 15 minutes: setInterval(() => {
     cleanupRateLimiters();
-  }, 15 * 60 * 1000);
+}, 15 * 60 * 1000);
 }
 
 /**
  * Shutdown security components
  */
-export function shutdownSecurity() {
+export function: shutdownSecurity() {
   // Perform any cleanup needed when shutting down the application
   
-  // Log security shutdown
-  logSecurityEvent('SECURITY_SHUTDOWN', {
-    timestamp: new Date()
-  }, SecurityLogLevel.INFO);
+  // Log security shutdown: logSecurityEvent('SECURITY_SHUTDOWN', {
+    timestamp: new: Date()
+}, SecurityLogLevel.INFO);
   
   console.log('[Security] Security system shutdown completed');
 }

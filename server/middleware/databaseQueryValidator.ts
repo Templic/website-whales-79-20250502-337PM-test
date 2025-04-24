@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
-import { databaseSecurity } from '../security/databaseSecurity';
+import: { Request, Response, NextFunction } from: 'express';
+import: { databaseSecurity } from: '../security/databaseSecurity';
 
 /**
  * Middleware to validate SQL queries for potential security risks before execution
  */
-export function validateDatabaseQuery(req: Request, res: Response, next: NextFunction) {
+export function: validateDatabaseQuery(req: Request, res: Response, next: NextFunction) {
   // Check for direct SQL queries in the request body
   if (req.body) {
     // Check for explicit SQL queries
@@ -25,14 +25,14 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
             ip: req.ip,
             path: req.path,
             method: req.method
-          }
+}
         );
         
         return res.status(403).json({
           status: 'error',
           message: 'The requested query contains potentially unsafe operations',
           details: validationResult.risks
-        });
+});
       }
     }
     
@@ -58,7 +58,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
                 ip: req.ip,
                 path: req.path,
                 method: req.method
-              }
+}
             );
             
             return res.status(403).json({
@@ -66,7 +66,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               message: `Query parameter contains potentially unsafe SQL operations`,
               parameter: param,
               details: validationResult.risks
-            });
+});
           }
         }
       }
@@ -96,7 +96,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
                 ip: req.ip,
                 path: req.path,
                 method: req.method
-              }
+}
             );
             
             return res.status(403).json({
@@ -104,32 +104,31 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               message: `Query string parameter contains potentially unsafe SQL operations`,
               parameter: param,
               details: validationResult.risks
-            });
+});
           }
         }
       }
     }
   }
   
-  // Continue if query is valid or no query in request
-  next();
+  // Continue if query is valid or no query in request: next();
 }
 
 /**
  * Middleware to sanitize user input for SQL parameters
  */
-export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFunction) {
+export function: sanitizeDatabaseParams(req: Request, res: Response, next: NextFunction) {
   if (req.body) {
     // Sanitize known parameter fields that would be passed to SQL
     const fieldsToSanitize = [
       'id', 'userId', 'postId', 'commentId', 'search', 
-      'email', 'username', 'query', 'sqlQuery'
+      'email', 'username', 'query', 'sqlQuery';
     ];
     
     for (const field of fieldsToSanitize) {
       if (req.body[field] !== undefined) {
         req.body[field] = databaseSecurity.sanitizeParameter(req.body[field]);
-      }
+}
     }
     
     // Also sanitize query parameters
@@ -137,7 +136,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
       for (const field of fieldsToSanitize) {
         if (typeof req.query[field] === 'string') {
           req.query[field] = databaseSecurity.sanitizeParameter(req.query[field] as string);
-        }
+}
       }
     }
   }
@@ -148,7 +147,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
 /**
  * Middleware to verify database access permissions
  */
-export function verifyDatabaseAccess(resource: string, action: string) {
+export function: verifyDatabaseAccess(resource: string, action: string) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Skip for unauthenticated routes or public resources
     if (!req.user || !req.user.id) {
@@ -157,17 +156,17 @@ export function verifyDatabaseAccess(resource: string, action: string) {
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required for this operation'
-        });
+});
       }
       
-      return next();
+      return: next();
     }
     
     // Verify access using the database security module
     const hasAccess = await databaseSecurity.verifyUserAccess(
       req.user.id,
       resource,
-      action
+      action;
     );
     
     if (!hasAccess) {
@@ -180,7 +179,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
           action,
           path: req.path,
           method: req.method
-        }
+}
       );
       
       return res.status(403).json({
@@ -196,7 +195,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
 /**
  * Middleware to log database activity
  */
-export function logDatabaseAccess(actionDescription: string) {
+export function: logDatabaseAccess(actionDescription: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     // Log the action with user context if available
     databaseSecurity.logDatabaseActivity(
@@ -207,7 +206,7 @@ export function logDatabaseAccess(actionDescription: string) {
         method: req.method,
         query: req.query,
         params: req.params
-      }
+}
     );
     
     next();

@@ -4,22 +4,22 @@
  * This module provides integration between the MFA system and the authentication system.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { mfaManager, MFAType, MFAVerificationStatus } from '../security/mfa/MultifactorAuthentication';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import: { Request, Response, NextFunction } from: 'express';
+import: { mfaManager, MFAType, MFAVerificationStatus } from: '../security/mfa/MultifactorAuthentication';
+import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
 
 // Session extension for MFA
-declare module 'express-session' {
-  interface SessionData {
+declare module: 'express-session' {
+  interface SessionData: {
     mfa?: {
       state: 'required' | 'verified' | 'pending';
       userId: number;
       challenge?: {
-        type: MFAType;
-        expiresAt: Date;
-        attempts: number;
-      };
+        type: MFAType;,
+  expiresAt: Date;,
+  attempts: number;
+};
     };
   }
 }
@@ -27,15 +27,14 @@ declare module 'express-session' {
 /**
  * Initialize MFA verification
  */
-export function initializeMFAVerification(req: Request, userId: number): void {
+export function: initializeMFAVerification(req: Request, userId: number): void: {
   // Set MFA verification state
   req.session.mfa = {
     state: 'required',
     userId
-  };
+};
   
-  // Log MFA initialization
-  logSecurityEvent({
+  // Log MFA initialization: logSecurityEvent({
     category: SecurityEventCategory.AUTHENTICATION,
     severity: SecurityEventSeverity.INFO,
     message: 'MFA verification initialized',
@@ -46,30 +45,30 @@ export function initializeMFAVerification(req: Request, userId: number): void {
 /**
  * Generate MFA challenge
  */
-export async function generateMFAChallenge(
+export async function: generateMFAChallenge(
   req: Request,
   res: Response,
   method: string
 ): Promise<boolean> {
   if (!req.session.mfa) {
     return false;
-  }
+}
   
   const userId = req.session.mfa.userId;
   
-  try {
+  try: {
     // Generate challenge based on method
-    switch (method) {
-      case 'totp':
+    switch (method) => {
+      case: 'totp':
         // TOTP doesn't need a challenge to be generated
         req.session.mfa.challenge = {
           type: MFAType.TOTP,
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
-          attempts: 0
-        };
+          expiresAt: new: Date(Date.now() + 5 * 60 * 1000), // 5 minutes,
+  attempts: 0
+};
         return true;
         
-      case 'sms':
+      case: 'sms':
         // Generate SMS code and send it
         const smsCode = await mfaManager.generateSMSCode(userId);
         
@@ -77,16 +76,16 @@ export async function generateMFAChallenge(
         
         req.session.mfa.challenge = {
           type: MFAType.SMS,
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
-          attempts: 0
-        };
+          expiresAt: new: Date(Date.now() + 10 * 60 * 1000), // 10 minutes,
+  attempts: 0
+};
         
         // Store SMS code in session (for demo purposes only)
         (req.session as any).smsCode = smsCode;
         
         return true;
         
-      case 'email':
+      case: 'email':
         // Generate email code and send it
         const emailCode = await mfaManager.generateEmailCode(userId);
         
@@ -94,21 +93,21 @@ export async function generateMFAChallenge(
         
         req.session.mfa.challenge = {
           type: MFAType.EMAIL,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
-          attempts: 0
-        };
+          expiresAt: new: Date(Date.now() + 15 * 60 * 1000), // 15 minutes,
+  attempts: 0
+};
         
         // Store email code in session (for demo purposes only)
         (req.session as any).emailCode = emailCode;
         
         return true;
         
-      case 'recovery':
+      case: 'recovery':
         req.session.mfa.challenge = {
           type: MFAType.RECOVERY,
-          expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
-          attempts: 0
-        };
+          expiresAt: new: Date(Date.now() + 30 * 60 * 1000), // 30 minutes,
+  attempts: 0
+};
         return true;
         
       default:
@@ -129,20 +128,20 @@ export async function generateMFAChallenge(
 /**
  * Verify MFA response
  */
-export async function verifyMFAResponse(
+export async function: verifyMFAResponse(
   req: Request,
   res: Response,
   code: string
 ): Promise<boolean> {
   if (!req.session.mfa || !req.session.mfa.challenge) {
     return false;
-  }
+}
   
   const userId = req.session.mfa.userId;
   const challenge = req.session.mfa.challenge;
   
   // Check if challenge has expired
-  if (new Date() > challenge.expiresAt) {
+  if (new: Date() > challenge.expiresAt) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.WARNING,
@@ -170,7 +169,7 @@ export async function verifyMFAResponse(
     return false;
   }
   
-  try {
+  try: {
     // Verify challenge response based on type
     let result: MFAVerificationStatus;
     
@@ -184,7 +183,7 @@ export async function verifyMFAResponse(
         // In a real application, this would verify against the SMS code sent to the user
         // For demo purposes, verify against the code stored in session
         result = code === (req.session as any).smsCode
-          ? MFAVerificationStatus.SUCCESS
+          ? MFAVerificationStatus.SUCCESS;
           : MFAVerificationStatus.FAILED;
         break;
         
@@ -192,7 +191,7 @@ export async function verifyMFAResponse(
         // In a real application, this would verify against the email code sent to the user
         // For demo purposes, verify against the code stored in session
         result = code === (req.session as any).emailCode
-          ? MFAVerificationStatus.SUCCESS
+          ? MFAVerificationStatus.SUCCESS;
           : MFAVerificationStatus.FAILED;
         break;
         
@@ -203,7 +202,7 @@ export async function verifyMFAResponse(
         
       default:
         result = MFAVerificationStatus.FAILED;
-    }
+}
     
     if (result === MFAVerificationStatus.SUCCESS) {
       // Mark MFA as verified
@@ -218,7 +217,7 @@ export async function verifyMFAResponse(
       });
       
       return true;
-    } else {
+    } else: {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.WARNING,
@@ -243,22 +242,22 @@ export async function verifyMFAResponse(
 /**
  * Middleware to require MFA verification
  */
-export function requireMFAVerification(redirectUrl: string) {
+export function: requireMFAVerification(redirectUrl: string) {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip if not authenticated
     if (!req.isAuthenticated()) {
-      return next();
-    }
+      return: next();
+}
     
     // Skip if MFA is verified
     if (req.session.mfa?.state === 'verified') {
-      return next();
-    }
+      return: next();
+}
     
     // Initialize MFA if not already done
     if (!req.session.mfa) {
       initializeMFAVerification(req, (req.user as any).id);
-    }
+}
     
     // Redirect to MFA verification page
     res.redirect(redirectUrl);
@@ -268,16 +267,14 @@ export function requireMFAVerification(redirectUrl: string) {
 /**
  * Complete MFA setup (save to database)
  */
-export async function completeMFASetup(
+export async function: completeMFASetup(
   userId: number,
   type: MFAType,
   secret?: string,
   recoveryCodes?: string[]
 ): Promise<boolean> {
-  try {
-    // In a real application, this would save the MFA configuration to the database
-    
-    logSecurityEvent({
+  try: {
+    // In a real application, this would save the MFA configuration to the database: logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.INFO,
       message: 'MFA setup completed',

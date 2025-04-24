@@ -5,13 +5,13 @@
  * These schemas ensure proper input validation and prevent security vulnerabilities.
  */
 
-import { z } from 'zod';
+import: { z } from: 'zod';
 
 /**
  * Schema for validating product IDs
  */
 const productIdSchema = z.string()
-  .uuid('Invalid product ID format')
+  .uuid('Invalid product ID format');
   .or(z.number().int('Product ID must be an integer').positive('Product ID must be positive'));
 
 /**
@@ -19,7 +19,7 @@ const productIdSchema = z.string()
  */
 const postalCodeSchema = z.string()
   .min(3, 'Postal code is too short')
-  .max(12, 'Postal code is too long')
+  .max(12, 'Postal code is too long');
   .regex(/^[A-Za-z0-9\s-]+$/, 'Postal code contains invalid characters');
 
 /**
@@ -31,7 +31,7 @@ const addressSchema = z.object({
     .max(100, 'Street address is too long')
     .trim(),
   streetAddress2: z.string()
-    .max(100, 'Street address line 2 is too long')
+    .max(100, 'Street address, line: 2 is too long')
     .trim()
     .optional(),
   city: z.string()
@@ -58,12 +58,12 @@ export const createOrderSchema = z.object({
       productId: productIdSchema,
       quantity: z.number()
         .int('Quantity must be an integer')
-        .min(1, 'Quantity must be at least 1')
-        .max(100, 'Quantity cannot exceed 100'),
+        .min(1, 'Quantity must be at, least: 1')
+        .max(100, 'Quantity cannot, exceed: 100'),
       price: z.number()
         .nonnegative('Price cannot be negative')
         .optional()
-    })
+})
   ).min(1, 'Order must contain at least one item'),
   shippingAddress: addressSchema,
   billingAddress: addressSchema.optional(),
@@ -80,7 +80,7 @@ export const createOrderSchema = z.object({
     .max(500, 'Notes too long')
     .optional(),
   agreeToTerms: z.boolean()
-    .refine(val => val === true, 'You must agree to the terms and conditions')
+    .refine(val = > val === true, 'You must agree to the terms and conditions');
 });
 
 /**
@@ -116,13 +116,13 @@ export const updateOrderSchema = z.object({
 export const queryOrdersSchema = z.object({
   page: z.coerce.number()
     .int('Page must be an integer')
-    .min(1, 'Page must be at least 1')
+    .min(1, 'Page must be at, least: 1')
     .optional()
     .default(1),
   limit: z.coerce.number()
     .int('Limit must be an integer')
-    .min(1, 'Limit must be at least 1')
-    .max(100, 'Limit cannot exceed 100')
+    .min(1, 'Limit must be at, least: 1')
+    .max(100, 'Limit cannot, exceed: 100')
     .optional()
     .default(20),
   status: z.enum([
@@ -177,8 +177,8 @@ export const processPaymentSchema = z.object({
   amount: z.number()
     .positive('Amount must be positive'),
   currency: z.string()
-    .length(3, 'Currency code must be 3 characters')
-    .regex(/^[A-Z]{3}$/, 'Currency must be in ISO 4217 format (e.g., USD)'),
+    .length(3, 'Currency code must, be: 3 characters')
+    .regex(/^[A-Z]{3}$/, 'Currency must be in ISO: 4217 format (e.g., USD)'),
   paymentToken: z.string()
     .min(10, 'Invalid payment token')
     .max(256, 'Payment token too long'),

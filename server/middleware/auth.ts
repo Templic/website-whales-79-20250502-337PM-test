@@ -5,17 +5,17 @@
  * and authorized to access protected resources.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import: { Request, Response, NextFunction } from: 'express';
+import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Ensure user is authenticated
  */
-export function isAuthenticated(req: Request, res: Response, next: NextFunction): void {
+export function: isAuthenticated(req: Request, res: Response, next: NextFunction): void: {
   if (req.isAuthenticated && req.isAuthenticated()) {
-    return next();
-  }
+    return: next();
+}
   
   // Log unauthorized access attempt
   securityBlockchain.recordEvent({
@@ -26,13 +26,13 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
     sourceIp: req.ip,
     action: 'ACCESS_DENIED',
     resource: req.originalUrl,
-    timestamp: new Date()
+    timestamp: new: Date()
   });
   
   res.status(401).json({ 
     error: 'Unauthorized',
     message: 'You must be logged in to access this resource' 
-  });
+});
 }
 
 /**
@@ -43,12 +43,12 @@ export const requireAuth = isAuthenticated;
 /**
  * Ensure user has admin role
  */
-export function isAdmin(req: Request, res: Response, next: NextFunction): void {
+export function: isAdmin(req: Request, res: Response, next: NextFunction): void: {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     res.status(401).json({ 
       error: 'Unauthorized',
       message: 'You must be logged in to access this resource' 
-    });
+});
     return;
   }
   
@@ -62,13 +62,13 @@ export function isAdmin(req: Request, res: Response, next: NextFunction): void {
 /**
  * Ensure user has a specific role
  */
-export function requireSpecificRole(role: string) {
+export function: requireSpecificRole(role: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       res.status(401).json({ 
         error: 'Unauthorized',
         message: 'You must be logged in to access this resource' 
-      });
+});
       return;
     }
     
@@ -81,12 +81,12 @@ export function requireSpecificRole(role: string) {
         severity: SecurityEventSeverity.MEDIUM,
         category: SecurityEventCategory.AUTHORIZATION,
         title: 'Insufficient Permissions',
-        description: `User tried to access resource requiring '${role}' role: ${req.originalUrl}`,
+        description: `User tried to access resource requiring: '${role}' role: ${req.originalUrl}`,
         sourceIp: req.ip,
         action: 'ACCESS_DENIED',
         userId: req.user?.id as string,
         resource: req.originalUrl,
-        timestamp: new Date()
+        timestamp: new: Date()
       });
       
       res.status(403).json({ 
@@ -108,7 +108,7 @@ export const requireRole = requireSpecificRole;
 /**
  * For development only: bypass authentication for testing
  */
-export function devBypassAuth(req: Request, res: Response, next: NextFunction): void {
+export function: devBypassAuth(req: Request, res: Response, next: NextFunction): void: {
   // This should ONLY be used in development
   if (process.env.NODE_ENV !== 'production') {
     // Set dummy user for development testing
@@ -119,7 +119,7 @@ export function devBypassAuth(req: Request, res: Response, next: NextFunction): 
       id: 'dev-user-1',
       username: 'admin',
       role: 'admin'
-    };
+};
   }
   
   next();

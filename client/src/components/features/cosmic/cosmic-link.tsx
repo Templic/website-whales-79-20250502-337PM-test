@@ -7,7 +7,7 @@
 import React from 'react';
 import { cn } from "@/lib/utils"
 import { Link } from 'wouter';
-import { cn } from '../../../lib/utils';
+
 
 export interface CosmicLinkProps {
   href: string;

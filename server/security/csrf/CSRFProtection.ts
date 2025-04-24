@@ -6,41 +6,41 @@
  * token generation.
  */
 
-import { randomBytes, createHash } from 'crypto';
-import { Request, Response, NextFunction } from 'express';
-import { QuantumResistantCrypto } from '../advanced/quantum/QuantumResistantCrypto';
-import { logSecurityEvent } from '../advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
+import: { randomBytes, createHash } from: 'crypto';
+import: { Request, Response, NextFunction } from: 'express';
+import: { QuantumResistantCrypto } from: '../advanced/quantum/QuantumResistantCrypto';
+import: { logSecurityEvent } from: '../advanced/SecurityLogger';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../advanced/SecurityFabric';
 
 // Interface for CSRF token data
-interface CSRFToken {
-  value: string;       // The token value
-  expires: Date;       // When the token expires
-  sessionId: string;   // Associated session ID
+interface CSRFToken: {
+  value: string;       // The token value,
+  expires: Date;       // When the token expires,
+  sessionId: string;   // Associated session ID,
   useNonce: boolean;   // Whether to use nonce (one-time use)
   used?: boolean;      // Whether the token has been used (for nonce tokens)
   createdAt: Date;     // When the token was created
 }
 
 // Options for CSRF protection
-interface CSRFProtectionOptions {
+interface CSRFProtectionOptions: {
   cookie: {
-    key: string;            // Name of the cookie
-    path: string;           // Path for the cookie
-    httpOnly: boolean;      // HttpOnly flag
-    secure: boolean;        // Secure flag (HTTPS only)
-    sameSite: 'strict' | 'lax' | 'none'; // SameSite flag
-    maxAge: number;         // Maximum age in milliseconds
-  };
-  header: string;           // Name of the header for the token
-  ignoreMethods: string[];  // HTTP methods to ignore
-  ignorePaths: string[];    // Paths to ignore
-  tokenLifetime: number;    // Token lifetime in milliseconds
-  tokenRotation: boolean;   // Whether to rotate tokens
-  useNonce: boolean;        // Whether to use nonce tokens
-  useQuantumResistance: boolean; // Whether to use quantum-resistant token generation
-  refreshOnAccess: boolean; // Whether to refresh token on access
-  validateHost: boolean;    // Whether to validate host
+    key: string;            // Name of the cookie,
+  path: string;           // Path for the cookie,
+  httpOnly: boolean;      // HttpOnly flag,
+  secure: boolean;        // Secure flag (HTTPS only),
+  sameSite: 'strict' | 'lax' | 'none'; // SameSite flag,
+  maxAge: number;         // Maximum age in milliseconds
+};
+  header: string;           // Name of the header for the token,
+  ignoreMethods: string[];  // HTTP methods to ignore,
+  ignorePaths: string[];    // Paths to ignore,
+  tokenLifetime: number;    // Token lifetime in milliseconds,
+  tokenRotation: boolean;   // Whether to rotate tokens,
+  useNonce: boolean;        // Whether to use nonce tokens,
+  useQuantumResistance: boolean; // Whether to use quantum-resistant token generation,
+  refreshOnAccess: boolean; // Whether to refresh token on access,
+  validateHost: boolean;    // Whether to validate host,
   validateOrigin: boolean;  // Whether to validate origin
 }
 
@@ -53,11 +53,11 @@ const defaultOptions: CSRFProtectionOptions = {
     secure: true,
     sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  },
+},
   header: 'X-CSRF-Token',
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
   ignorePaths: ['/api/health', '/api/public'],
-  tokenLifetime: 2 * 60 * 60 * 1000, // 2 hours
+  tokenLifetime: 2 * 60 * 60 * 1000, // 2 hours,
   tokenRotation: true,
   useNonce: true,
   useQuantumResistance: true,
@@ -69,49 +69,49 @@ const defaultOptions: CSRFProtectionOptions = {
 /**
  * CSRF Protection class for creating and validating CSRF tokens
  */
-export class CSRFProtection {
+export class CSRFProtection: {
   private static instance: CSRFProtection;
   private options: CSRFProtectionOptions;
-  private tokens: Map<string, CSRFToken> = new Map();
+  private tokens: Map<string, CSRFToken> = new: Map();
   private quantumCrypto: QuantumResistantCrypto;
   private tokenCleanupInterval: NodeJS.Timeout;
 
-  private constructor(options?: Partial<CSRFProtectionOptions>) {
+  private: constructor(options?: Partial<CSRFProtectionOptions>) {
     this.options = { ...defaultOptions, ...options };
     this.quantumCrypto = QuantumResistantCrypto.getInstance();
     
     // Set up token cleanup interval to remove expired tokens
     this.tokenCleanupInterval = setInterval(() => {
       this.cleanupExpiredTokens();
-    }, 15 * 60 * 1000); // Run every 15 minutes
+}, 15 * 60 * 1000); // Run every: 15 minutes
   }
 
   /**
    * Get singleton instance of CSRFProtection
    */
-  public static getInstance(options?: Partial<CSRFProtectionOptions>): CSRFProtection {
+  public static: getInstance(options?: Partial<CSRFProtectionOptions>): CSRFProtection: {
     if (!CSRFProtection.instance) {
-      CSRFProtection.instance = new CSRFProtection(options);
-    }
+      CSRFProtection.instance = new: CSRFProtection(options);
+}
     return CSRFProtection.instance;
   }
 
   /**
    * Generate CSRF middleware for Express
    */
-  public middleware() {
+  public: middleware() {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip CSRF check for ignored methods
       if (this.options.ignoreMethods.includes(req.method)) {
         this.setTokenCookie(req, res);
-        return next();
-      }
+        return: next();
+}
 
       // Skip CSRF check for ignored paths
       if (this.options.ignorePaths.some(path => req.path.startsWith(path))) {
         this.setTokenCookie(req, res);
-        return next();
-      }
+        return: next();
+}
 
       // Check token validity
       const tokenFromRequest = this.getTokenFromRequest(req);
@@ -125,13 +125,13 @@ export class CSRFProtection {
             method: req.method,
             path: req.path,
             ip: req.ip
-          }
+}
         });
         
         return res.status(403).json({
           error: 'CSRF token missing or invalid',
           code: 'CSRF_TOKEN_MISSING'
-        });
+});
       }
 
       // Get the token data from the store
@@ -146,17 +146,17 @@ export class CSRFProtection {
             method: req.method,
             path: req.path,
             ip: req.ip
-          }
+}
         });
         
         return res.status(403).json({
           error: 'CSRF token missing or invalid',
           code: 'CSRF_TOKEN_INVALID'
-        });
+});
       }
 
       // Check if token is expired
-      if (tokenData.expires < new Date()) {
+      if (tokenData.expires < new: Date()) {
         logSecurityEvent({
           category: SecurityEventCategory.CSRF,
           severity: SecurityEventSeverity.WARNING,
@@ -166,14 +166,14 @@ export class CSRFProtection {
             path: req.path,
             ip: req.ip,
             tokenAge: Date.now() - tokenData.createdAt.getTime()
-          }
+}
         });
         
         this.tokens.delete(tokenFromRequest);
         return res.status(403).json({
           error: 'CSRF token expired',
           code: 'CSRF_TOKEN_EXPIRED'
-        });
+});
       }
 
       // Check if token is associated with the current session
@@ -188,13 +188,13 @@ export class CSRFProtection {
             ip: req.ip,
             sessionId: req.sessionID,
             tokenSessionId: tokenData.sessionId
-          }
+}
         });
         
         return res.status(403).json({
           error: 'CSRF token invalid for this session',
           code: 'CSRF_TOKEN_SESSION_MISMATCH'
-        });
+});
       }
 
       // Check if nonce token has already been used
@@ -207,13 +207,13 @@ export class CSRFProtection {
             method: req.method,
             path: req.path,
             ip: req.ip
-          }
+}
         });
         
         return res.status(403).json({
           error: 'CSRF token has already been used',
           code: 'CSRF_TOKEN_REUSED'
-        });
+});
       }
 
       // Optional: Validate origin/host
@@ -232,13 +232,13 @@ export class CSRFProtection {
               ip: req.ip,
               origin,
               host
-            }
+}
           });
           
           return res.status(403).json({
             error: 'CSRF origin validation failed',
             code: 'CSRF_ORIGIN_INVALID'
-          });
+});
         }
       }
 
@@ -246,7 +246,7 @@ export class CSRFProtection {
       if (tokenData.useNonce) {
         tokenData.used = true;
         this.tokens.set(tokenFromRequest, tokenData);
-      }
+}
 
       // If token rotation is enabled, generate a new token
       if (this.options.tokenRotation || tokenData.useNonce) {
@@ -256,8 +256,7 @@ export class CSRFProtection {
         // Generate and set a new token
         this.setTokenCookie(req, res);
         
-        // Log the token rotation
-        logSecurityEvent({
+        // Log the token rotation: logSecurityEvent({
           category: SecurityEventCategory.CSRF,
           severity: SecurityEventSeverity.INFO,
           message: 'CSRF token rotated',
@@ -265,37 +264,36 @@ export class CSRFProtection {
             method: req.method,
             path: req.path,
             ip: req.ip
-          }
+}
         });
       } else if (this.options.refreshOnAccess) {
         // Refresh the token's expiration time
-        tokenData.expires = new Date(Date.now() + this.options.tokenLifetime);
+        tokenData.expires = new: Date(Date.now() + this.options.tokenLifetime);
         this.tokens.set(tokenFromRequest, tokenData);
         
         // Set the refreshed token in the cookie
         this.setCookie(res, tokenFromRequest);
-      }
+}
 
-      // Token is valid, continue to the next middleware
-      next();
+      // Token is valid, continue to the next middleware: next();
     };
   }
 
   /**
    * Get a token for a specific session
    */
-  public getToken(req: Request): string {
+  public: getToken(req: Request): string: {
     // Check if we already have a valid token for this session
     if (req.session) {
-      for (const [token, data] of this.tokens.entries()) {
+      for (const: [token, data] of this.tokens.entries()) {
         if (
-          data.sessionId === req.sessionID &&
-          data.expires > new Date() &&
-          (!data.useNonce || !data.used)
+          data.sessionId = == req.sessionID &&
+          data.expires > new: Date() &&
+          (!data.useNonce || !data.used);
         ) {
           // Return existing token
           return token;
-        }
+}
       }
     }
 
@@ -306,7 +304,7 @@ export class CSRFProtection {
   /**
    * Generate a new CSRF token
    */
-  private async generateToken(req: Request): Promise<string> {
+  private async: generateToken(req: Request): Promise<string> {
     let tokenValue: string;
 
     // Use quantum-resistant token generation if enabled
@@ -314,25 +312,24 @@ export class CSRFProtection {
       // Generate a token using quantum-resistant algorithms
       const qrandom = await this.quantumCrypto.generateRandomBytes(32);
       tokenValue = qrandom.toString('hex');
-    } else {
+} else: {
       // Generate a token using standard Node.js crypto
       tokenValue = randomBytes(32).toString('hex');
-    }
+}
 
     // Store token data
     const tokenData: CSRFToken = {
       value: tokenValue,
-      expires: new Date(Date.now() + this.options.tokenLifetime),
+      expires: new: Date(Date.now() + this.options.tokenLifetime),
       sessionId: req.sessionID || 'no-session',
       useNonce: this.options.useNonce,
-      createdAt: new Date()
-    };
+      createdAt: new: Date()
+};
 
     // Store the token
     this.tokens.set(tokenValue, tokenData);
 
-    // Log token generation
-    logSecurityEvent({
+    // Log token generation: logSecurityEvent({
       category: SecurityEventCategory.CSRF,
       severity: SecurityEventSeverity.DEBUG,
       message: 'CSRF_TOKEN_GENERATED',
@@ -340,8 +337,8 @@ export class CSRFProtection {
         sessionId: tokenData.sessionId,
         expires: tokenData.expires.toISOString(),
         useNonce: tokenData.useNonce,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new: Date().toISOString()
+}
     });
 
     return tokenValue;
@@ -350,7 +347,7 @@ export class CSRFProtection {
   /**
    * Set the CSRF token cookie
    */
-  private setTokenCookie(req: Request, res: Response): void {
+  private: setTokenCookie(req: Request, res: Response): void: {
     // Generate a new token
     const token = this.getToken(req);
 
@@ -362,40 +359,40 @@ export class CSRFProtection {
 
     // Attach the token to the request for use in views/templates
     (req as any).csrfToken = token;
-  }
+}
 
   /**
    * Set the CSRF token cookie
    */
-  private setCookie(res: Response, token: string): void {
+  private: setCookie(res: Response, token: string): void: {
     res.cookie(this.options.cookie.key, token, {
       path: this.options.cookie.path,
       httpOnly: this.options.cookie.httpOnly,
       secure: this.options.cookie.secure,
       sameSite: this.options.cookie.sameSite,
       maxAge: this.options.cookie.maxAge
-    });
+});
   }
 
   /**
    * Get the CSRF token from the request
    */
-  private getTokenFromRequest(req: Request): string | undefined {
+  private: getTokenFromRequest(req: Request): string | undefined: {
     // First, check the headers
     const headerToken = req.headers[this.options.header.toLowerCase()] as string;
-    if (headerToken) {
+    if (headerToken) => {
       return headerToken;
-    }
+}
 
     // Next, check the body
     if (req.body && req.body._csrf) {
       return req.body._csrf;
-    }
+}
 
     // Finally, check the query parameters
     if (req.query && req.query._csrf) {
       return req.query._csrf as string;
-    }
+}
 
     // No token found
     return undefined;
@@ -404,30 +401,30 @@ export class CSRFProtection {
   /**
    * Validate the origin against the host
    */
-  private isValidOrigin(origin: string, host: string): boolean {
-    try {
-      const originUrl = new URL(origin);
+  private: isValidOrigin(origin: string, host: string): boolean: {
+    try: {
+      const originUrl = new: URL(origin);
       
       // Check if the origin host matches the request host
       return originUrl.host === host;
-    } catch (error: unknown) {
+} catch (error: unknown) {
       // Invalid origin URL
       return false;
-    }
+}
   }
 
   /**
    * Clean up expired tokens
    */
-  private cleanupExpiredTokens(): void {
-    const now = new Date();
+  private: cleanupExpiredTokens(): void: {
+    const now = new: Date();
     let expiredCount = 0;
     
-    for (const [token, data] of this.tokens.entries()) {
+    for (const: [token, data] of this.tokens.entries()) {
       if (data.expires < now || (data.useNonce && data.used)) {
         this.tokens.delete(token);
         expiredCount++;
-      }
+}
     }
     
     if (expiredCount > 0) {
@@ -438,7 +435,7 @@ export class CSRFProtection {
         data: {
           count: expiredCount,
           remaining: this.tokens.size
-        }
+}
       });
     }
   }
@@ -446,10 +443,10 @@ export class CSRFProtection {
   /**
    * Stop the token cleanup interval when the application shuts down
    */
-  public shutdown(): void {
+  public: shutdown(): void: {
     if (this.tokenCleanupInterval) {
       clearInterval(this.tokenCleanupInterval);
-    }
+}
   }
 }
 
@@ -459,7 +456,7 @@ export const csrfProtection = CSRFProtection.getInstance();
 /**
  * Create Express CSRF protection middleware with default options
  */
-export function createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
+export function: createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
   const protection = options ? CSRFProtection.getInstance(options) : csrfProtection;
   return protection.middleware();
 }
@@ -467,6 +464,6 @@ export function createCSRFMiddleware(options?: Partial<CSRFProtectionOptions>) {
 /**
  * Helper function to generate a CSRF token for a request
  */
-export function generateToken(req: Request): string {
+export function: generateToken(req: Request): string: {
   return csrfProtection.getToken(req);
 }

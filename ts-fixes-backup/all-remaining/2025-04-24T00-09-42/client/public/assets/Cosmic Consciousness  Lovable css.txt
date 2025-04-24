@@ -1,0 +1,341 @@
+
+/**
+ * Cosmic Theme - Animation & Style System
+ * A unified styling system for cosmic-themed components
+ */
+
+/* Base Animations */
+.cosmic-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.cosmic-slide-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cosmic-slide-up.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cosmic-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cosmic-scale.in {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cosmic-slide-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cosmic-slide-left.in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cosmic-slide-right {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.cosmic-slide-right.in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Glassmorphism Effects */
+.cosmic-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.cosmic-glass-card {
+  background: rgba(20, 20, 30, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(155, 135, 245, 0.2);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.cosmic-glass-card:hover {
+  border-color: rgba(155, 135, 245, 0.3);
+  box-shadow: 0 8px 40px rgba(155, 135, 245, 0.15);
+}
+
+.cosmic-glass-field {
+  background: rgba(30, 30, 40, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(155, 135, 245, 0.15);
+  transition: all 0.2s ease;
+}
+
+.cosmic-glass-field:focus {
+  background: rgba(30, 30, 40, 0.6);
+  border-color: rgba(155, 135, 245, 0.4);
+  box-shadow: 0 0 0 2px rgba(155, 135, 245, 0.15);
+}
+
+/* Interactive Elements */
+.cosmic-hover-glow {
+  transition: all 0.3s ease;
+}
+
+.cosmic-hover-glow:hover {
+  box-shadow: 0 0 15px rgba(155, 135, 245, 0.5);
+  transform: translateY(-2px);
+}
+
+.cosmic-hover-scale {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cosmic-hover-scale:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.cosmic-hover-bright:hover {
+  filter: brightness(1.1);
+}
+
+.cosmic-active-scale:active {
+  transform: scale(0.97);
+}
+
+/* Button States */
+.cosmic-btn {
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cosmic-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.2), rgba(255,255,255,0));
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.cosmic-btn:hover::before {
+  transform: translateX(100%);
+}
+
+.cosmic-btn:active {
+  transform: translateY(1px);
+}
+
+/* Text Effects */
+.cosmic-text-glow {
+  text-shadow: 0 0 10px rgba(155, 135, 245, 0.7);
+}
+
+.cosmic-gradient-text {
+  background: linear-gradient(120deg, rgba(155, 135, 245, 1), rgba(30, 174, 219, 1));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stars and Cosmic Particles */
+.stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  animation: stars-twinkle 4s ease-in-out infinite;
+}
+
+.bright-star {
+  background-color: rgba(214, 188, 250, 0.9);
+}
+
+.cosmic-particle {
+  position: fixed;
+  border-radius: 50%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.cosmic-particle.dust {
+  background: radial-gradient(circle, rgba(155,135,245,0.8) 0%, rgba(155,135,245,0) 70%);
+}
+
+.cosmic-particle.wave {
+  background: radial-gradient(circle, rgba(51,195,240,0.6) 0%, rgba(51,195,240,0) 80%);
+}
+
+.cosmic-particle.burst {
+  background: radial-gradient(circle, rgba(214,188,250,1) 0%, rgba(214,188,250,0) 70%);
+  box-shadow: 0 0 10px rgba(214,188,250,0.8);
+}
+
+.constellation-line {
+  position: fixed;
+  height: 1px;
+  background-color: rgba(155, 135, 245, 0.3);
+  transform-origin: 0 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-gentle {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px rgba(155, 135, 245, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(155, 135, 245, 0.7); }
+  100% { box-shadow: 0 0 5px rgba(155, 135, 245, 0.3); }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes stars-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes cosmic-particle {
+  0% { 
+    transform: scale(0); 
+    opacity: 0; 
+  }
+  50% { 
+    opacity: 0.8; 
+  }
+  100% { 
+    transform: scale(2); 
+    opacity: 0; 
+  }
+}
+
+/* Animation Classes */
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s infinite ease-in-out;
+}
+
+.animate-float {
+  animation: float 6s infinite ease-in-out;
+}
+
+.animate-glow {
+  animation: glow 3s infinite ease-in-out;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* Animation Utilities */
+.cosmic-animate {
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.cosmic-animate.in {
+  opacity: 1;
+}
+
+/* Staggered animations */
+.cosmic-stagger-children > * {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.cosmic-stagger-children.in > *:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.1s;
+}
+
+.cosmic-stagger-children.in > *:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.2s;
+}
+
+.cosmic-stagger-children.in > *:nth-child(3) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+.cosmic-stagger-children.in > *:nth-child(4) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.4s;
+}
+
+.cosmic-stagger-children.in > *:nth-child(5) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.5s;
+}
+
+/* Cosmic Card Styles */
+.cosmic-card {
+  @apply cosmic-glass-card cosmic-hover-glow p-4 rounded-lg;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .cosmic-slide-up {
+    transform: translateY(10px);
+  }
+  
+  .cosmic-glass-card {
+    backdrop-filter: blur(10px);
+  }
+}
+

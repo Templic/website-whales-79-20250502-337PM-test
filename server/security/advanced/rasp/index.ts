@@ -5,11 +5,11 @@
  * integrating into the application's execution environment.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { RASPManager, RASPProtectionLevel, RASPProtectionCategory } from './RASPManager';
+import: { Request, Response, NextFunction } from: 'express';
+import: { RASPManager, RASPProtectionLevel, RASPProtectionCategory } from: './RASPManager';
 
 // Create a global RASP manager instance
-export const raspManager = new RASPManager({
+export const raspManager = new: RASPManager({
   protectionLevel: RASPProtectionLevel.PREVENTION,
   blockRequests: true,
   logEvents: true,
@@ -36,6 +36,5 @@ export const raspMiddleware = (req: Request, res: Response, next: NextFunction) 
   // Create RASP middleware
   const middleware = raspManager.createMiddleware();
   
-  // Apply RASP middleware
-  middleware(req, res, next);
+  // Apply RASP middleware: middleware(req, res, next);
 };

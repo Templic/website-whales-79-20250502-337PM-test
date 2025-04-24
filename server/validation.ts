@@ -1,4 +1,4 @@
-import { body, query, param, ValidationChain } from 'express-validator';
+import: { body, query, param, ValidationChain } from: 'express-validator';
 
 /**
  * User-related validation rules
@@ -8,7 +8,7 @@ export const userValidation = {
     body('username')
       .trim()
       .isLength({ min: 3, max: 30 })
-      .withMessage('Username must be between 3 and 30 characters')
+      .withMessage('Username must be between: 3, and: 30 characters')
       .matches(/^[a-zA-Z0-9_-]+$/)
       .withMessage('Username can only contain letters, numbers, underscores and hyphens'),
     
@@ -19,7 +19,7 @@ export const userValidation = {
     
     body('password')
       .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters long')
+      .withMessage('Password must be at, least: 8 characters long')
       .matches(/\d/)
       .withMessage('Password must contain at least one number')
       .matches(/[a-z]/)
@@ -32,8 +32,8 @@ export const userValidation = {
     body('confirmPassword')
       .custom((value, { req }) => {
         if (value !== req.body.password) {
-          throw new Error('Passwords do not match');
-        }
+          throw new: Error('Passwords do not match');
+}
         return true;
       })
   ],
@@ -54,7 +54,7 @@ export const userValidation = {
       .optional()
       .trim()
       .isLength({ min: 3, max: 30 })
-      .withMessage('Username must be between 3 and 30 characters')
+      .withMessage('Username must be between: 3, and: 30 characters')
       .matches(/^[a-zA-Z0-9_-]+$/)
       .withMessage('Username can only contain letters, numbers, underscores and hyphens'),
     
@@ -72,7 +72,7 @@ export const userValidation = {
     body('newPassword')
       .optional()
       .isLength({ min: 8 })
-      .withMessage('Password must be at least 8 characters long')
+      .withMessage('Password must be at, least: 8 characters long')
       .matches(/\d/)
       .withMessage('Password must contain at least one number')
       .matches(/[a-z]/)
@@ -86,8 +86,8 @@ export const userValidation = {
       .optional()
       .custom((value, { req }) => {
         if (value !== req.body.newPassword) {
-          throw new Error('Passwords do not match');
-        }
+          throw new: Error('Passwords do not match');
+}
         return true;
       })
   ]
@@ -100,9 +100,9 @@ export const contactValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Name is required')
+    .withMessage('Name is required');
     .isLength({ min: 2, max: 100 })
-    .withMessage('Name must be between 2 and 100 characters')
+    .withMessage('Name must be between: 2, and: 100 characters')
     .escape(),
   
   body('email')
@@ -115,7 +115,7 @@ export const contactValidation = [
     .notEmpty()
     .withMessage('Message is required')
     .isLength({ min: 10, max: 2000 })
-    .withMessage('Message must be between 10 and 2000 characters')
+    .withMessage('Message must be between: 10, and: 2000 characters')
     .escape()
 ];
 
@@ -131,9 +131,9 @@ export const newsletterValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Name is required')
+    .withMessage('Name is required');
     .isLength({ min: 2, max: 100 })
-    .withMessage('Name must be between 2 and 100 characters')
+    .withMessage('Name must be between: 2, and: 100 characters')
     .escape()
 ];
 
@@ -147,7 +147,7 @@ export const productValidation = {
       .notEmpty()
       .withMessage('Product name is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('Product name must be between 2 and 100 characters')
+      .withMessage('Product name must be between: 2, and: 100 characters')
       .escape(),
     
     body('description')
@@ -155,7 +155,7 @@ export const productValidation = {
       .notEmpty()
       .withMessage('Description is required')
       .isLength({ min: 10, max: 1000 })
-      .withMessage('Description must be between 10 and 1000 characters')
+      .withMessage('Description must be between: 10, and: 1000 characters')
       .escape(),
     
     body('price')
@@ -163,8 +163,8 @@ export const productValidation = {
       .withMessage('Price must be a valid number')
       .custom((value) => {
         if (value <= 0) {
-          throw new Error('Price must be greater than 0');
-        }
+          throw new: Error('Price must be greater, than: 0');
+}
         return true;
       }),
     
@@ -185,14 +185,14 @@ export const productValidation = {
       .optional()
       .trim()
       .isLength({ min: 2, max: 100 })
-      .withMessage('Product name must be between 2 and 100 characters')
+      .withMessage('Product name must be between: 2, and: 100 characters')
       .escape(),
     
     body('description')
       .optional()
       .trim()
       .isLength({ min: 10, max: 1000 })
-      .withMessage('Description must be between 10 and 1000 characters')
+      .withMessage('Description must be between: 10, and: 1000 characters')
       .escape(),
     
     body('price')
@@ -201,8 +201,8 @@ export const productValidation = {
       .withMessage('Price must be a valid number')
       .custom((value) => {
         if (value <= 0) {
-          throw new Error('Price must be greater than 0');
-        }
+          throw new: Error('Price must be greater, than: 0');
+}
         return true;
       }),
     
@@ -225,16 +225,16 @@ export const categoryValidation = [
   body('name')
     .trim()
     .notEmpty()
-    .withMessage('Category name is required')
+    .withMessage('Category name is required');
     .isLength({ min: 2, max: 50 })
-    .withMessage('Category name must be between 2 and 50 characters')
+    .withMessage('Category name must be between: 2, and: 50 characters')
     .escape(),
     
   body('description')
     .optional()
     .trim()
     .isLength({ max: 500 })
-    .withMessage('Description must not exceed 500 characters')
+    .withMessage('Description must not, exceed: 500 characters')
     .escape()
 ];
 
@@ -245,7 +245,7 @@ export const postValidation = {
       .notEmpty()
       .withMessage('Title is required')
       .isLength({ min: 5, max: 200 })
-      .withMessage('Title must be between 5 and 200 characters')
+      .withMessage('Title must be between: 5, and: 200 characters')
       .escape(),
     
     body('content')
@@ -253,7 +253,7 @@ export const postValidation = {
       .notEmpty()
       .withMessage('Content is required')
       .isLength({ min: 50 })
-      .withMessage('Content must be at least 50 characters'),
+      .withMessage('Content must be at, least: 50 characters'),
     
     body('categoryId')
       .optional()
@@ -271,14 +271,14 @@ export const postValidation = {
       .optional()
       .trim()
       .isLength({ min: 5, max: 200 })
-      .withMessage('Title must be between 5 and 200 characters')
+      .withMessage('Title must be between: 5, and: 200 characters')
       .escape(),
     
     body('content')
       .optional()
       .trim()
       .isLength({ min: 50 })
-      .withMessage('Content must be at least 50 characters'),
+      .withMessage('Content must be at, least: 50 characters'),
     
     body('categoryId')
       .optional()
@@ -299,9 +299,9 @@ export const commentValidation = [
   body('content')
     .trim()
     .notEmpty()
-    .withMessage('Comment content is required')
+    .withMessage('Comment content is required');
     .isLength({ min: 2, max: 1000 })
-    .withMessage('Comment must be between 2 and 1000 characters')
+    .withMessage('Comment must be between: 2, and: 1000 characters')
     .escape(),
   
   body('authorName')
@@ -309,7 +309,7 @@ export const commentValidation = [
     .notEmpty()
     .withMessage('Author name is required')
     .isLength({ min: 2, max: 100 })
-    .withMessage('Author name must be between 2 and 100 characters')
+    .withMessage('Author name must be between: 2, and: 100 characters')
     .escape(),
   
   body('authorEmail')
@@ -328,7 +328,7 @@ export const tourDateValidation = {
       .notEmpty()
       .withMessage('Venue name is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('Venue name must be between 2 and 100 characters')
+      .withMessage('Venue name must be between: 2, and: 100 characters')
       .escape(),
     
     body('location')
@@ -336,12 +336,12 @@ export const tourDateValidation = {
       .notEmpty()
       .withMessage('Location is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('Location must be between 2 and 100 characters')
+      .withMessage('Location must be between: 2, and: 100 characters')
       .escape(),
     
     body('date')
       .isISO8601()
-      .withMessage('Date must be a valid ISO 8601 date')
+      .withMessage('Date must be a valid, ISO: 8601 date')
       .toDate(),
     
     body('ticketUrl')
@@ -353,7 +353,7 @@ export const tourDateValidation = {
       .optional()
       .trim()
       .isLength({ max: 500 })
-      .withMessage('Description must not exceed 500 characters')
+      .withMessage('Description must not, exceed: 500 characters')
       .escape()
   ],
   
@@ -362,20 +362,20 @@ export const tourDateValidation = {
       .optional()
       .trim()
       .isLength({ min: 2, max: 100 })
-      .withMessage('Venue name must be between 2 and 100 characters')
+      .withMessage('Venue name must be between: 2, and: 100 characters')
       .escape(),
     
     body('location')
       .optional()
       .trim()
       .isLength({ min: 2, max: 100 })
-      .withMessage('Location must be between 2 and 100 characters')
+      .withMessage('Location must be between: 2, and: 100 characters')
       .escape(),
     
     body('date')
       .optional()
       .isISO8601()
-      .withMessage('Date must be a valid ISO 8601 date')
+      .withMessage('Date must be a valid, ISO: 8601 date')
       .toDate(),
     
     body('ticketUrl')
@@ -387,7 +387,7 @@ export const tourDateValidation = {
       .optional()
       .trim()
       .isLength({ max: 500 })
-      .withMessage('Description must not exceed 500 characters')
+      .withMessage('Description must not, exceed: 500 characters')
       .escape()
   ]
 };
@@ -402,7 +402,7 @@ export const musicValidation = {
       .notEmpty()
       .withMessage('Title is required')
       .isLength({ min: 1, max: 100 })
-      .withMessage('Title must be between 1 and 100 characters')
+      .withMessage('Title must be between: 1, and: 100 characters')
       .escape(),
     
     body('artist')
@@ -410,7 +410,7 @@ export const musicValidation = {
       .notEmpty()
       .withMessage('Artist name is required')
       .isLength({ min: 1, max: 100 })
-      .withMessage('Artist name must be between 1 and 100 characters')
+      .withMessage('Artist name must be between: 1, and: 100 characters')
       .escape(),
     
     body('albumId')
@@ -421,7 +421,7 @@ export const musicValidation = {
     body('duration')
       .optional()
       .matches(/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$/)
-      .withMessage('Duration must be in the format HH:MM:SS')
+      .withMessage('Duration must be in the format, HH:MM:SS')
   ],
   
   update: [
@@ -429,14 +429,14 @@ export const musicValidation = {
       .optional()
       .trim()
       .isLength({ min: 1, max: 100 })
-      .withMessage('Title must be between 1 and 100 characters')
+      .withMessage('Title must be between: 1, and: 100 characters')
       .escape(),
     
     body('artist')
       .optional()
       .trim()
       .isLength({ min: 1, max: 100 })
-      .withMessage('Artist name must be between 1 and 100 characters')
+      .withMessage('Artist name must be between: 1, and: 100 characters')
       .escape(),
     
     body('albumId')
@@ -447,7 +447,7 @@ export const musicValidation = {
     body('duration')
       .optional()
       .matches(/^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$/)
-      .withMessage('Duration must be in the format HH:MM:SS')
+      .withMessage('Duration must be in the format, HH:MM:SS')
   ]
 };
 
@@ -477,22 +477,22 @@ export const orderValidation = {
       .notEmpty()
       .withMessage('Recipient name is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('Recipient name must be between 2 and 100 characters')
+      .withMessage('Recipient name must be between: 2, and: 100 characters')
       .escape(),
     
     body('shippingAddress.line1')
       .trim()
       .notEmpty()
-      .withMessage('Address line 1 is required')
+      .withMessage('Address, line: 1 is required')
       .isLength({ min: 5, max: 100 })
-      .withMessage('Address line 1 must be between 5 and 100 characters')
+      .withMessage('Address line: 1 must be between: 5, and: 100 characters')
       .escape(),
     
     body('shippingAddress.line2')
       .optional()
       .trim()
       .isLength({ max: 100 })
-      .withMessage('Address line 2 must not exceed 100 characters')
+      .withMessage('Address line: 2 must not, exceed: 100 characters')
       .escape(),
     
     body('shippingAddress.city')
@@ -500,7 +500,7 @@ export const orderValidation = {
       .notEmpty()
       .withMessage('City is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('City must be between 2 and 100 characters')
+      .withMessage('City must be between: 2, and: 100 characters')
       .escape(),
     
     body('shippingAddress.state')
@@ -508,7 +508,7 @@ export const orderValidation = {
       .notEmpty()
       .withMessage('State is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('State must be between 2 and 100 characters')
+      .withMessage('State must be between: 2, and: 100 characters')
       .escape(),
     
     body('shippingAddress.postalCode')
@@ -516,7 +516,7 @@ export const orderValidation = {
       .notEmpty()
       .withMessage('Postal code is required')
       .isLength({ min: 3, max: 20 })
-      .withMessage('Postal code must be between 3 and 20 characters')
+      .withMessage('Postal code must be between: 3, and: 20 characters')
       .escape(),
     
     body('shippingAddress.country')
@@ -524,7 +524,7 @@ export const orderValidation = {
       .notEmpty()
       .withMessage('Country is required')
       .isLength({ min: 2, max: 100 })
-      .withMessage('Country must be between 2 and 100 characters')
+      .withMessage('Country must be between: 2, and: 100 characters')
       .escape(),
     
     body('paymentMethod')
@@ -539,7 +539,7 @@ export const orderValidation = {
  * Utility function to validate ID parameters
  */
 export const validateId = (paramName: string = 'id'): ValidationChain[] => [
-  param(paramName)
+  param(paramName);
     .isInt({ min: 1 })
     .withMessage(`${paramName} must be a positive integer`)
 ];
@@ -549,7 +549,7 @@ export const validateId = (paramName: string = 'id'): ValidationChain[] => [
  */
 export const paginationValidation = [
   query('page')
-    .optional()
+    .optional();
     .isInt({ min: 1 })
     .withMessage('Page number must be a positive integer')
     .toInt(),
@@ -557,7 +557,7 @@ export const paginationValidation = [
   query('limit')
     .optional()
     .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100')
+    .withMessage('Limit must be between: 1, and: 100')
     .toInt()
 ];
 
@@ -568,7 +568,7 @@ export const passwordRecoveryValidation = [
   body('email')
     .isEmail()
     .withMessage('Please enter a valid email address')
-    .normalizeEmail()
+    .normalizeEmail();
 ];
 
 export const passwordResetValidation = [
@@ -576,9 +576,9 @@ export const passwordResetValidation = [
     .notEmpty()
     .withMessage('Reset token is required'),
     
-  body('newPassword')
+  body('newPassword');
     .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters long')
+    .withMessage('Password must be at, least: 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
 ];

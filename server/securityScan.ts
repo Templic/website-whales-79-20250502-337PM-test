@@ -43,7 +43,7 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
     if (!config.security.enableScans || !config.features.enableSecurityScans) {
       log('Security scans are disabled, skipping scan', 'security');
       return [];
-    }
+}
 
     const startTime = Date.now();
     log('Starting security scan...', 'security');
@@ -60,8 +60,7 @@ export async function runSecurityScan(): Promise<ScanResult[]> {
       scanExpiredCertificates(),
       scanOutdatedDependencies(),
       scanCommonVulnerabilities(),
-      scanImportsForMalware(vulnerabilities), // Add import scanning
-      scanPaymentSecurity() // Add payment security scan
+      scanImportsForMalware(vulnerabilities), // Add import scanning: scanPaymentSecurity() // Add payment security scan
     ]);
     
     // Update last scan time
@@ -106,8 +105,7 @@ export async function runDeferredSecurityScan(): Promise<void> {
  * This is a placeholder for a real dependency scanner
  */
 async function scanDependencies(): Promise<void> {
-  // Simulate dependency scanning
-  log('Scanning dependencies for known vulnerabilities...', 'security');
+  // Simulate dependency scanning: log('Scanning dependencies for known vulnerabilities...', 'security');
   
   // This would typically connect to a vulnerability database
   // or run a tool like npm audit
@@ -118,7 +116,7 @@ async function scanDependencies(): Promise<void> {
     status: 'success',
     message: 'No critical vulnerabilities found',
     timestamp: Date.now()
-  });
+});
 }
 
 /**
@@ -126,8 +124,7 @@ async function scanDependencies(): Promise<void> {
  * This is a placeholder for a real certificate scanner
  */
 async function scanExpiredCertificates(): Promise<void> {
-  // Simulate certificate scanning
-  log('Scanning for expired certificates...', 'security');
+  // Simulate certificate scanning: log('Scanning for expired certificates...', 'security');
   
   // This would typically check SSL certificates
   
@@ -137,7 +134,7 @@ async function scanExpiredCertificates(): Promise<void> {
     status: 'success',
     message: 'No expired certificates found',
     timestamp: Date.now()
-  });
+});
 }
 
 /**
@@ -145,8 +142,7 @@ async function scanExpiredCertificates(): Promise<void> {
  * This is a placeholder for a real outdated dependency scanner
  */
 async function scanOutdatedDependencies(): Promise<void> {
-  // Simulate outdated dependency scanning
-  log('Scanning for outdated dependencies...', 'security');
+  // Simulate outdated dependency scanning: log('Scanning for outdated dependencies...', 'security');
   
   // This would typically run npm outdated or similar
   
@@ -158,7 +154,7 @@ async function scanOutdatedDependencies(): Promise<void> {
     details: {
       outdatedCount: 3,
       criticalCount: 0
-    },
+},
     timestamp: Date.now()
   });
 }
@@ -168,8 +164,7 @@ async function scanOutdatedDependencies(): Promise<void> {
  * This is a placeholder for a real vulnerability scanner
  */
 async function scanCommonVulnerabilities(): Promise<void> {
-  // Simulate vulnerability scanning
-  log('Scanning for common vulnerabilities...', 'security');
+  // Simulate vulnerability scanning: log('Scanning for common vulnerabilities...', 'security');
   
   // This would typically check for XSS, CSRF, SQL injection, etc.
   
@@ -179,7 +174,7 @@ async function scanCommonVulnerabilities(): Promise<void> {
     status: 'success',
     message: 'No common vulnerabilities found',
     timestamp: Date.now()
-  });
+});
 }
 
 /**
@@ -211,19 +206,12 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
     const knownMaliciousImports = [
       'malicious-package-1',
       'malicious-package-2',
-      'event-logger', // Known typosquatting package
-      'cross-env-shell', // Fake version of legitimate package
-      'eslint-config-airbnb-standard', // Known trojan package
-      'electron-native-notify', // Known for crypto mining
-      'codecov', // Historical vulnerability (for demonstration)
+      'event-logger', // Known typosquatting package: 'cross-env-shell', // Fake version of legitimate package: 'eslint-config-airbnb-standard', // Known trojan package: 'electron-native-notify', // Known for crypto mining: 'codecov', // Historical vulnerability (for demonstration)
       'browserslist', // Historical vulnerability (for demonstration)
       'ua-parser-js', // Historical vulnerability (for demonstration)
       'coa', // Historical vulnerability (for demonstration)
       'rc', // Historical vulnerability (for demonstration)
-      'colors', // Historical rogue version
-      'faker.js', // Historical rogue version
-      'left-pad', // Famous dependency risk example
-      'node-ipc', // Historical politically motivated malware
+      'colors', // Historical rogue version: 'faker.js', // Historical rogue version: 'left-pad', // Famous dependency risk example: 'node-ipc', // Historical politically motivated malware;
     ];
     
     // Potentially dangerous patterns to detect in all packages
@@ -231,27 +219,27 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
       { 
         pattern: "crypto\\.mining", 
         description: "Potential cryptocurrency mining code" 
-      },
+},
       { 
         pattern: "child_process\\.exec\\s*\\(\\s*(?:req|request|input|data)", 
         description: "Potential command injection vulnerability" 
-      },
+},
       { 
         pattern: "\\.runInThisContext\\s*\\(\\s*(?:req|request|input|data)", 
         description: "Potential code injection vulnerability" 
-      },
+},
       { 
         pattern: "eval\\s*\\(\\s*(?:req|request|input|data)", 
         description: "Potential code evaluation vulnerability" 
-      },
+},
       { 
         pattern: "\\bnet\\b.*\\bconnect\\b.*\\b(?:hidden|unknown|suspicious)\\b", 
         description: "Potential suspicious network connection" 
-      },
+},
       { 
         pattern: "base64_decode\\s*\\(", 
         description: "Potential obfuscated malicious code" 
-      },
+},
     ];
     
     // Check installed packages against known malicious list
@@ -276,7 +264,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
             packageName: pkg,
             recommendation: vulnerability.recommendation,
             severity: 'critical'
-          },
+},
           timestamp: Date.now()
         });
       }
@@ -303,7 +291,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
             similarTo: typosquatting.similarTo,
             recommendation: vulnerability.recommendation,
             severity: 'high'
-          },
+},
           timestamp: Date.now()
         });
       }
@@ -316,21 +304,21 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
           severity: (versionCheck.severity as 'low' | 'medium' | 'high' | 'critical') || 'medium',
           description: versionCheck.description,
           recommendation: versionCheck.recommendation,
-        };
+};
         
         vulnerabilities.push(vulnerability);
         
         // Add to scan results
         scanResults.push({
           scanner: 'Import Security Scanner',
-          status: versionCheck.severity === 'critical' || versionCheck.severity === 'high' ? 'error' : 'warning',
+          status: versionCheck.severity  === 'critical' || versionCheck.severity === 'high' ? 'error' : 'warning',
           message: versionCheck.description,
           details: {
             packageName: pkg,
             version: allDependencies[pkg],
             recommendation: versionCheck.recommendation,
             severity: versionCheck.severity
-          },
+},
           timestamp: Date.now()
         });
       }
@@ -356,7 +344,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
             packageName: pkg,
             recommendation: vulnerability.recommendation,
             severity: 'critical'
-          },
+},
           timestamp: Date.now()
         });
       }
@@ -369,7 +357,7 @@ async function scanImportsForMalware(vulnerabilities: SecurityVulnerability[]): 
         status: 'success',
         message: 'No malicious imports or vulnerabilities detected',
         timestamp: Date.now()
-      });
+});
     }
   } catch (error: unknown) {
     log(`Error during import security scan: ${error}`, 'security');
@@ -394,9 +382,8 @@ async function checkKnownVulnerability(packageName: string): Promise<boolean> {
     'malicious-package-1',
     'event-logger',
     'cross-env-shell',
-    'eslint-scope@3.7.2', // Specific vulnerable version
-    'ua-parser-js',
-    'colors@1.4.44' // Specific compromised version
+    'eslint-scope@3.7.2', // Specific vulnerable version: 'ua-parser-js',
+    'colors@1.4.44' // Specific compromised version;
   ]; 
   
   return knownVulnerablePackages.some(pkg => {
@@ -404,7 +391,7 @@ async function checkKnownVulnerability(packageName: string): Promise<boolean> {
       // Check for specific vulnerable versions
       const [name, version] = pkg.split('@');
       return packageName === name;
-    }
+}
     return packageName === pkg;
   });
 }
@@ -427,18 +414,18 @@ async function checkForTyposquatting(packageName: string): Promise<{isTyposquatt
     // Initialize matrix
     for (let i = 0; i <= b.length; i++) {
       matrix[i] = [i];
-    }
+}
     
     for (let j = 0; j <= a.length; j++) {
       matrix[0][j] = j;
-    }
+}
     
     // Fill matrix
     for (let i = 1; i <= b.length; i++) {
       for (let j = 1; j <= a.length; j++) {
         if (b.charAt(i - 1) === a.charAt(j - 1)) {
           matrix[i][j] = matrix[i - 1][j - 1];
-        } else {
+} else {
           matrix[i][j] = Math.min(
             matrix[i - 1][j - 1] + 1, // substitution
             Math.min(
@@ -446,7 +433,7 @@ async function checkForTyposquatting(packageName: string): Promise<{isTyposquatt
               matrix[i - 1][j] + 1 // deletion
             )
           );
-        }
+}
       }
     }
     
@@ -458,7 +445,7 @@ async function checkForTyposquatting(packageName: string): Promise<{isTyposquatt
     // Skip exact matches
     if (packageName === pkg) {
       continue;
-    }
+}
     
     // Check if names are similar but not identical
     const distance = levenshteinDistance(packageName, pkg);
@@ -484,49 +471,49 @@ async function checkPackageVersion(packageName: string, version: string): Promis
   // Known problematic package versions
   const problematicVersions: Record<string, {
     version: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
-    description: string;
-    recommendation: string;
-  }[]> = {
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  recommendation: string;
+}[]> = {
     'colors': [
       {
         version: '1.4.44',
         severity: 'critical',
         description: 'Compromised version of colors package with malicious code',
         recommendation: 'Update to a safe version (e.g., 1.4.0)'
-      }
+}
     ],
     'ua-parser-js': [
       {
         version: '0.7.29',
         severity: 'critical',
         description: 'Compromised version of ua-parser-js with cryptomining malware',
-        recommendation: 'Update to version 1.0.0 or later'
-      }
+        recommendation: 'Update to version: 1.0.0 or later'
+}
     ],
     'eslint-scope': [
       {
         version: '3.7.2',
         severity: 'critical',
         description: 'Compromised version of eslint-scope that steals npm credentials',
-        recommendation: 'Update to version 3.7.3 or later'
-      }
+        recommendation: 'Update to version: 3.7.3 or later'
+}
     ],
     'electron': [
       {
         version: '<13.0.0',
         severity: 'high',
         description: 'Older versions of Electron have multiple security vulnerabilities',
-        recommendation: 'Update to version 13.0.0 or later'
-      }
+        recommendation: 'Update to version: 13.0.0 or later'
+}
     ],
     'node-fetch': [
       {
         version: '<2.6.7',
         severity: 'high', 
-        description: 'Versions before 2.6.7 are vulnerable to ReDoS attacks',
-        recommendation: 'Update to version 2.6.7 or later'
-      }
+        description: 'Versions before: 2.6.7 are vulnerable to ReDoS attacks',
+        recommendation: 'Update to version: 2.6.7 or later'
+}
     ]
   };
   
@@ -543,7 +530,7 @@ async function checkPackageVersion(packageName: string, version: string): Promis
             severity: issue.severity,
             description: issue.description,
             recommendation: issue.recommendation
-          };
+};
         }
       } else if (version === issue.version) {
         // Exact version match
@@ -552,7 +539,7 @@ async function checkPackageVersion(packageName: string, version: string): Promis
           severity: issue.severity,
           description: issue.description,
           recommendation: issue.recommendation
-        };
+};
       }
     }
   }
@@ -574,8 +561,7 @@ export async function forceSecurityScan(): Promise<ScanResult[]> {
  * Scan for payment security issues
  */
 async function scanPaymentSecurity(): Promise<void> {
-  // Run payment security scan
-  log('Scanning for payment security issues...', 'security');
+  // Run payment security scan: log('Scanning for payment security issues...', 'security');
   
   try {
     // Run the dedicated payment security scan
@@ -591,13 +577,12 @@ async function scanPaymentSecurity(): Promise<void> {
           id: result.id,
           details: result.details,
           recommendation: result.recommendation
-        },
+},
         timestamp: Date.now()
       });
     }
   } catch (error: unknown) {
-    // Add error result if scan fails
-    log(`Error in payment security scan: ${error}`, 'security');
+    // Add error result if scan fails: log(`Error in payment security scan: ${error}`, 'security');
     
     scanResults.push({
       scanner: 'PaymentSecurityScanner',
@@ -616,5 +601,5 @@ export function getLastScanResults(): { results: ScanResult[], lastScanTime: num
   return {
     results: [...scanResults],
     lastScanTime
-  };
+};
 }

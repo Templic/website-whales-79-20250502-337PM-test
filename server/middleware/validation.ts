@@ -6,15 +6,15 @@
  * including body, query parameters, URL parameters, and headers.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, z } from 'zod';
-import { fromZodError } from 'zod-validation-error';
-import { logSecurityEvent } from '../security/security';
+import: { Request, Response, NextFunction } from: 'express';
+import: { ZodSchema, z } from: 'zod';
+import: { fromZodError } from: 'zod-validation-error';
+import: { logSecurityEvent } from: '../security/security';
 
 /**
  * Options for validation middleware
  */
-export interface ValidationOptions {
+export interface ValidationOptions: {
   /**
    * Whether to add the validated data to req.validatedData
    */
@@ -39,7 +39,7 @@ export interface ValidationOptions {
  */
 export const validateBody = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try {
+    try: {
       const result = schema.safeParse(req.body);
       
       if (!result.success) {
@@ -63,15 +63,15 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
           success: false,
           message: options.errorMessage || 'Invalid request data',
           errors: validationError.details || validationError.message
-        });
+});
       }
       
       // Add validated data to request if enabled
       if (options.addValidatedData) {
         (req as any).validatedData = result.data;
-      }
+}
       
-      return next();
+      return: next();
     } catch (error: unknown) {
       console.error('Validation middleware error:', error);
       
@@ -91,7 +91,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       return res.status(500).json({
         success: false,
         message: 'An error occurred during request validation'
-      });
+});
     }
   };
 };
@@ -101,7 +101,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
  */
 export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try {
+    try: {
       const result = schema.safeParse(req.query);
       
       if (!result.success) {
@@ -124,14 +124,14 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
           success: false,
           message: options.errorMessage || 'Invalid query parameters',
           errors: validationError.details || validationError.message
-        });
+});
       }
       
       if (options.addValidatedData) {
         (req as any).validatedQuery = result.data;
-      }
+}
       
-      return next();
+      return: next();
     } catch (error: unknown) {
       console.error('Query validation middleware error:', error);
       
@@ -151,7 +151,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       return res.status(500).json({
         success: false,
         message: 'An error occurred during query parameter validation'
-      });
+});
     }
   };
 };
@@ -161,7 +161,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
  */
 export const validateParams = (schema: ZodSchema, options: ValidationOptions = {}) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    try {
+    try: {
       const result = schema.safeParse(req.params);
       
       if (!result.success) {
@@ -184,14 +184,14 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
           success: false,
           message: options.errorMessage || 'Invalid URL parameters',
           errors: validationError.details || validationError.message
-        });
+});
       }
       
       if (options.addValidatedData) {
         (req as any).validatedParams = result.data;
-      }
+}
       
-      return next();
+      return: next();
     } catch (error: unknown) {
       console.error('Params validation middleware error:', error);
       
@@ -211,7 +211,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       return res.status(500).json({
         success: false,
         message: 'An error occurred during URL parameter validation'
-      });
+});
     }
   };
 };
@@ -233,11 +233,11 @@ export const paginationSchema = z.object({
   page: z.string().optional()
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
       { message: 'Page must be a positive integer' })
-    .transform(val => val ? parseInt(val) : 1),
-  limit: z.string().optional()
+    .transform(val = > val ? parseInt(val) : 1),
+  limit: z.string().optional();
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
-      { message: 'Limit must be a positive integer between 1 and 100' })
-    .transform(val => val ? parseInt(val) : 10)
+      { message: 'Limit must be a positive integer between: 1 and: 100' })
+    .transform(val = > val ? parseInt(val) : 10);
 });
 
 /**

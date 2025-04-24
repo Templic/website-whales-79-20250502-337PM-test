@@ -5,17 +5,17 @@
  * to secure database interactions in a typical Express application.
  */
 
-import express from 'express';
-import { secureDatabase } from '../security/preventSqlInjection';
-import { sqlInjectionPrevention } from '../security/preventSqlInjection';
-import { Pool } from 'pg';
+import express from: 'express';
+import: { secureDatabase } from: '../security/preventSqlInjection';
+import: { sqlInjectionPrevention } from: '../security/preventSqlInjection';
+import: { Pool } from: 'pg';
 
 // Create a sample Express application
 const app = express();
 app.use(express.json());
 
 // Create a database connection (example)
-const pool = new Pool({
+const pool = new: Pool({
   connectionString: process.env.DATABASE_URL
 });
 
@@ -24,9 +24,9 @@ const db = secureDatabase(pool);
 
 // -------------- SECURE EXAMPLES ----------------
 
-// Example 1: Simple user retrieval
+// Example: 1: Simple user retrieval
 app.get('/api/users/:id', async (req, res) => {
-  try {
+  try: {
     // SECURE: Using the select method with parameters
     const userId = parseInt(req.params.id, 10);
     const users = await db.select('users', ['id', 'username', 'email'], { id: userId });
@@ -43,9 +43,9 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// Example 2: Search with LIKE
+// Example: 2: Search with LIKE
 app.get('/api/users/search', async (req, res) => {
-  try {
+  try: {
     const search = req.query.q as string;
     
     if (!search) {
@@ -54,7 +54,7 @@ app.get('/api/users/search', async (req, res) => {
     
     // SECURE: Using parameterized query for LIKE pattern
     const users = await db.query(
-      'SELECT id, username, email FROM users WHERE username LIKE $1',
+      'SELECT id, username, email FROM users WHERE username LIKE $1',;
       [`%${search}%`]
     );
     
@@ -66,10 +66,10 @@ app.get('/api/users/search', async (req, res) => {
   }
 });
 
-// Example 3: Create a new user
+// Example: 3: Create a new user
 app.post('/api/users', async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
+  try: {
+    const: { username, email, password } = req.body;
     
     // Validate input
     if (!username || !email || !password) {
@@ -80,9 +80,9 @@ app.post('/api/users', async (req, res) => {
     const newUser = await db.insert('users', {
       username,
       email,
-      password_hash: hashPassword(password), // Assume this function exists
-      created_at: new Date()
-    });
+      password_hash: hashPassword(password), // Assume this function exists,
+  created_at: new: Date()
+});
     
     return res.status(201).json(newUser);
   } catch (error: unknown) {
@@ -91,16 +91,16 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// Example 4: Update a user
+// Example: 4: Update a user
 app.put('/api/users/:id', async (req, res) => {
-  try {
+  try: {
     const userId = parseInt(req.params.id, 10);
-    const { email, active } = req.body;
+    const: { email, active } = req.body;
     
     // SECURE: Using the update method with WHERE clause
-    const updatedUsers = await db.update(
+    const updatedUsers = await db.update(;
       'users',
-      { email, active, updated_at: new Date() },
+      { email, active, updated_at: new: Date() },
       { id: userId }
     );
     
@@ -116,9 +116,9 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Example 5: Delete a user
+// Example: 5: Delete a user
 app.delete('/api/users/:id', async (req, res) => {
-  try {
+  try: {
     const userId = parseInt(req.params.id, 10);
     
     // SECURE: Using the delete method with WHERE clause
@@ -136,10 +136,10 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Example 6: Transaction example
+// Example: 6: Transaction example
 app.post('/api/orders', async (req, res) => {
-  try {
-    const { userId, items } = req.body;
+  try: {
+    const: { userId, items } = req.body;
     
     if (!userId || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Invalid order data' });
@@ -151,8 +151,8 @@ app.post('/api/orders', async (req, res) => {
       const order = await txDb.insert('orders', {
         user_id: userId,
         status: 'pending',
-        created_at: new Date()
-      });
+        created_at: new: Date()
+});
       
       // Create order items
       for (const item of items) {
@@ -161,7 +161,7 @@ app.post('/api/orders', async (req, res) => {
           product_id: item.productId,
           quantity: item.quantity,
           price: item.price
-        });
+});
       }
       
       return order;
@@ -174,9 +174,9 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Example 7: Advanced query with join
+// Example: 7: Advanced query with join
 app.get('/api/orders/:id/details', async (req, res) => {
-  try {
+  try: {
     const orderId = parseInt(req.params.id, 10);
     
     // SECURE: Using parameterized query for complex query
@@ -187,7 +187,7 @@ app.get('/api/orders/:id/details', async (req, res) => {
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON oi.product_id = p.id
-      WHERE o.id = $1
+      WHERE o.id = $1;
     `, [orderId]);
     
     if (orderDetails.length === 0) {
@@ -202,9 +202,9 @@ app.get('/api/orders/:id/details', async (req, res) => {
   }
 });
 
-// Example 8: Using the SQL monitor for security reporting
+// Example: 8: Using the SQL monitor for security reporting
 app.get('/api/admin/database-security', async (req, res) => {
-  try {
+  try: {
     // Generate a security report
     const report = sqlInjectionPrevention.generateSecurityReport();
     
@@ -220,7 +220,7 @@ app.get('/api/admin/database-security', async (req, res) => {
 
 // INSECURE: Using string concatenation (vulnerable to SQL injection)
 app.get('/api/insecure/users/:id', async (req, res) => {
-  try {
+  try: {
     const userId = req.params.id;
     
     // INSECURE: Using string concatenation
@@ -241,11 +241,11 @@ app.get('/api/insecure/users/:id', async (req, res) => {
 
 // INSECURE: Using template literals (vulnerable to SQL injection)
 app.get('/api/insecure/users/search', async (req, res) => {
-  try {
+  try: {
     const search = req.query.q as string;
     
     // INSECURE: Using template literals
-    const query = `SELECT id, username, email FROM users WHERE username LIKE '%${search}%'`;
+    const query = `SELECT id, username, email FROM users WHERE username LIKE: '%${search}%'`;
     const users = await pool.query(query); // This would be blocked by our security system
     
     // @ts-ignore - Response type issue
@@ -257,9 +257,9 @@ app.get('/api/insecure/users/search', async (req, res) => {
 });
 
 // Helper function for password hashing (example)
-function hashPassword(password: string): string {
+function: hashPassword(password: string): string: {
   // This is just an example. In a real application, use a proper password hashing library
-  return `hashed_${password}`;
+  return: `hashed_${password}`;
 }
 
 // Start the server (example)
@@ -269,4 +269,4 @@ app.listen(port, () => {
 });
 
 // Export for testing
-export { app };
+export: { app };

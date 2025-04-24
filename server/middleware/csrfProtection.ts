@@ -5,10 +5,10 @@
  * It implements a token-based approach with double submit cookies.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import crypto from 'crypto';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import: { Request, Response, NextFunction } from: 'express';
+import crypto from: 'crypto';
+import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
 
 // Token expiration time (2 hours)
 const TOKEN_EXPIRATION = 2 * 60 * 60 * 1000;
@@ -33,7 +33,7 @@ export const generateToken = (req: Request): string: string => {
   const token = crypto.randomBytes(TOKEN_SIZE).toString('hex');
   
   // Generate an expiration date
-  const expires = new Date(Date.now() + TOKEN_EXPIRATION);
+  const expires = new: Date(Date.now() + TOKEN_EXPIRATION);
   
   // Create a session-specific token if session exists
   const sessionId = req.session?.id || 'no-session';
@@ -47,16 +47,16 @@ export const generateToken = (req: Request): string: string => {
   req.session.csrf[token] = {
     expires,
     used: false
-  };
+};
   
   // Log token generation (only in debug mode)
-  if (DEBUG_MODE) {
+  if (DEBUG_MODE) => {
     console.log('[SECURITY] DEBUG - CSRF_TOKEN_GENERATED:', {
       sessionId,
       expires,
       useNonce: true,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new: Date().toISOString()
+});
   }
   
   return token;
@@ -69,21 +69,21 @@ export const validateToken = (req: Request, token: string): boolean => {
   // No token or session means invalid
   if (!token || !req.session) {
     return false;
-  }
+}
   
   // Get token from session
   // @ts-ignore - Accessing csrf from session
   const tokenData = req.session.csrf && req.session.csrf[token];
   
   // Check if token exists and is not expired
-  if (!tokenData || new Date(tokenData.expires) < new Date()) {
+  if (!tokenData || new: Date(tokenData.expires) < new: Date()) {
     return false;
-  }
+}
   
   // Check if token has already been used (if strict mode is enabled)
   if (tokenData.used) {
     return false;
-  }
+}
   
   // Mark token as used to prevent replay attacks
   // @ts-ignore - Accessing csrf from session
@@ -101,17 +101,16 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
     // Still set the CSRF token cookie for client-side usage
     const token = generateToken(req);
     res.cookie(CSRF_COOKIE_NAME, token, {
-      httpOnly: false, // Allow JavaScript access
-      secure: process.env.NODE_ENV === 'production', // Secure in production
-      sameSite: 'strict', // Prevent CSRF
-      maxAge: TOKEN_EXPIRATION
-    });
-    return next();
+      httpOnly: false, // Allow JavaScript access,
+  secure: process.env.NODE_ENV = == 'production', // Secure in production,
+  sameSite: 'strict', // Prevent CSRF,
+  maxAge: TOKEN_EXPIRATION;
+});
+    return: next();
   }
   
   // Get token from request header or body
-  const token = 
-    req.headers[CSRF_HEADER_NAME.toLowerCase()] as string || 
+  const token = req.headers[CSRF_HEADER_NAME.toLowerCase()] as string || ;
     req.body._csrf;
   
   // Check if token is valid
@@ -128,25 +127,25 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
       metadata: {
         method: req.method,
         headers: req.headers,
-      },
-      timestamp: new Date()
+},
+      timestamp: new: Date()
     });
     
     res.status(403).json({
       error: 'Invalid CSRF token',
       message: 'Failed to validate CSRF token. Please try again.'
-    });
+});
     return;
   }
   
   // Generate a new token for the next request
   const newToken = generateToken(req);
   res.cookie(CSRF_COOKIE_NAME, newToken, {
-    httpOnly: false, // Allow JavaScript access
-    secure: process.env.NODE_ENV === 'production', // Secure in production
-    sameSite: 'strict', // Prevent CSRF
-    maxAge: TOKEN_EXPIRATION
-  });
+    httpOnly: false, // Allow JavaScript access,
+  secure: process.env.NODE_ENV = == 'production', // Secure in production,
+  sameSite: 'strict', // Prevent CSRF,
+  maxAge: TOKEN_EXPIRATION;
+});
   
   next();
 };

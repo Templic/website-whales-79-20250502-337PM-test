@@ -4,8 +4,8 @@
  * This file aggregates and exports all security-related routes.
  */
 
-import { Router } from 'express';
-import dashboardRoutes from './dashboard';
+import: { Router } from: 'express';
+import dashboardRoutes from: './dashboard';
 
 // Create a router for all security routes
 const securityRouter = Router();

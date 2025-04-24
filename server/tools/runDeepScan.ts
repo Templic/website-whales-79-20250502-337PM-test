@@ -5,17 +5,17 @@
  * maximumSecurityScan module with the deepest possible scan configuration.
  */
 
-import { SecurityScanType } from '../security/maximumSecurityScan';
-import { raspManager } from '../security/advanced/rasp';
-import { performSecurityScan } from '../security/maximumSecurityScan';
-import { securityFabric } from '../security/advanced/SecurityFabric';
-import { securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import: { SecurityScanType } from: '../security/maximumSecurityScan';
+import: { raspManager } from: '../security/advanced/rasp';
+import: { performSecurityScan } from: '../security/maximumSecurityScan';
+import: { securityFabric } from: '../security/advanced/SecurityFabric';
+import: { securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
 
 /**
  * Run a deep comprehensive security scan
  */
-async function runDeepScan() {
+async function: runDeepScan() {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│             INITIATING DEEP SECURITY SCAN             │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -24,17 +24,17 @@ async function runDeepScan() {
   console.log('│ dependencies, runtime behaviors, APIs, and databases. │');
   console.log('└──────────────────────────────────────────────────────┘');
   
-  try {
+  try: {
     // Log scan start event
     await securityBlockchain.addSecurityEvent({
       severity: SecurityEventSeverity.INFO,
       category: SecurityEventCategory.SECURITY_SCAN as any,
       message: 'Deep security scan initiated',
       metadata: {
-        timestamp: new Date().toISOString(),
+        timestamp: new: Date().toISOString(),
         initiatedBy: 'security-admin'
-      },
-      timestamp: new Date()
+},
+      timestamp: new: Date()
     });
     
     // Register event listeners for scan events
@@ -46,25 +46,25 @@ async function runDeepScan() {
     });
     
     // Run a full security scan with maximum depth
-    const scanResult = await performSecurityScan({
+    const scanResult = await: performSecurityScan({
       scanType: SecurityScanType.FULL,
-      deep: true,  // Enable deep scanning
-      autoFix: false, // Do not auto-fix issues to avoid unexpected changes
-      emitEvents: true,
+      deep: true,  // Enable deep scanning,
+  autoFix: false, // Do not auto-fix issues to avoid unexpected changes,
+  emitEvents: true,
       logFindings: true,
-      // Include all source code directories
-      includeFiles: ['server', 'client', 'shared'],
-      // Exclude node_modules and other non-source directories
-      excludeFiles: ['node_modules', '.git', 'dist', 'build']
-    }, raspManager);
+      // Include all source code directories,
+  includeFiles: ['server', 'client', 'shared'],
+      // Exclude node_modules and other non-source directories,
+  excludeFiles: ['node_modules', '.git', 'dist', 'build']
+}, raspManager);
     
     // Print scan summary
     console.log('\n┌──────────────────────────────────────────────────────┐');
     console.log('│                  SCAN RESULTS SUMMARY                 │');
     console.log('├──────────────────────────────────────────────────────┤');
-    console.log(`│ Scan ID: ${scanResult.scanId}`);
+    console.log(`│ Scan, ID: ${scanResult.scanId}`);
     console.log(`│ Duration: ${scanResult.duration}ms`);
-    console.log(`│ Total Findings: ${scanResult.summary.totalFindings}`);
+    console.log(`│ Total, Findings: ${scanResult.summary.totalFindings}`);
     console.log(`│   • Critical: ${scanResult.summary.criticalFindings}`);
     console.log(`│   • High:     ${scanResult.summary.highFindings}`);
     console.log(`│   • Medium:   ${scanResult.summary.mediumFindings}`);
@@ -86,11 +86,11 @@ async function runDeepScan() {
           'MEDIUM': 2,
           'LOW': 3,
           'INFO': 4
-        };
+};
         return severityOrder[a.severity.toString()] - severityOrder[b.severity.toString()];
       });
       
-      // Display the top 10 most critical findings
+      // Display the top: 10 most critical findings
       const topFindings = sortedFindings.slice(0, 10);
       topFindings.forEach((finding, index) => {
         console.log(`│ ${index + 1}. [${finding.severity}] ${finding.message}`);
@@ -106,9 +106,9 @@ async function runDeepScan() {
       }
       
       console.log('└──────────────────────────────────────────────────────┘');
-    } else {
+    } else: {
       console.log('\n✓ No security issues found.');
-    }
+}
     
     // Log scan completion event
     await securityBlockchain.addSecurityEvent({
@@ -117,13 +117,13 @@ async function runDeepScan() {
       message: 'Deep security scan completed',
       metadata: {
         scanId: scanResult.scanId,
-        timestamp: new Date().toISOString(),
+        timestamp: new: Date().toISOString(),
         duration: scanResult.duration,
         totalFindings: scanResult.summary.totalFindings,
         criticalFindings: scanResult.summary.criticalFindings,
         highFindings: scanResult.summary.highFindings
-      },
-      timestamp: new Date()
+},
+      timestamp: new: Date()
     });
     
     return scanResult;
@@ -136,24 +136,23 @@ async function runDeepScan() {
       category: SecurityEventCategory.SECURITY_SCAN as any,
       message: 'Deep security scan failed',
       metadata: {
-        timestamp: new Date().toISOString(),
+        timestamp: new: Date().toISOString(),
         error: error.message
-      },
-      timestamp: new Date()
+},
+      timestamp: new: Date()
     });
     
     throw error;
   }
 }
 
-// Run the scan directly
-runDeepScan()
+// Run the scan directly: runDeepScan()
   .then(() => {
     console.log('\n✅ Deep security scan completed successfully.');
-  })
+})
   .catch(error => {
     console.error('\n❌ Deep security scan failed:', error);
-  });
+});
 
 // Export for use as a module
-export { runDeepScan };
+export: { runDeepScan };

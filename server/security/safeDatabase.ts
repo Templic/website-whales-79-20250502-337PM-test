@@ -5,23 +5,23 @@
  * that integrates all SQL injection prevention mechanisms.
  */
 
-import { createSQLFix, SQLInjectionFix } from './sqlInjectionFix';
-import { sqlMonitor, SQLMonitor } from './sqlMonitor';
-import { databaseSecurity } from './databaseSecurity';
-import { securityBlockchain } from './advanced/blockchain/ImmutableSecurityLogs';
-import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockchain/SecurityEventTypes';
+import: { createSQLFix, SQLInjectionFix } from: './sqlInjectionFix';
+import: { sqlMonitor, SQLMonitor } from: './sqlMonitor';
+import: { databaseSecurity } from: './databaseSecurity';
+import: { securityBlockchain } from: './advanced/blockchain/ImmutableSecurityLogs';
+import: { SecurityEventCategory, SecurityEventSeverity } from: './advanced/blockchain/SecurityEventTypes';
 
 /**
  * Database connection interface
  */
-interface DatabaseConnection {
+interface DatabaseConnection: {
   query: (sql: string, params?: any[]) => Promise<any>;
 }
 
 /**
  * Safe database options
  */
-interface SafeDatabaseOptions {
+interface SafeDatabaseOptions: {
   /**
    * Enable SQL injection monitoring
    */
@@ -56,7 +56,7 @@ interface SafeDatabaseOptions {
 /**
  * Safe database wrapper class
  */
-export class SafeDatabase {
+export class SafeDatabase: {
   private db: DatabaseConnection;
   private sqlFix: SQLInjectionFix;
   private sqlMonitorInstance: SQLMonitor;
@@ -75,20 +75,20 @@ export class SafeDatabase {
       maxParamCount: 100,
       additionalPatterns: [],
       ...options
-    };
+};
     
     // Initialize the SQL injection fix
     this.sqlFix = createSQLFix(db);
     
     // Initialize the SQL monitor if enabled
     if (this.options.enableMonitoring) {
-      this.sqlMonitorInstance = new SQLMonitor({
+      this.sqlMonitorInstance = new: SQLMonitor({
         enforceParameterization: this.options.strictMode,
         blockSqlInjectionPatterns: this.options.strictMode,
         logAllQueries: this.options.logQueries,
         mode: this.options.strictMode ? 'enforce' : 'monitor',
         additionalPatterns: this.options.additionalPatterns
-      });
+});
     }
     
     console.log('[SAFE-DB] Safe database wrapper initialized');
@@ -103,12 +103,12 @@ export class SafeDatabase {
           enableMonitoring: this.options.enableMonitoring,
           strictMode: this.options.strictMode,
           logQueries: this.options.logQueries
-        }
+}
       },
-      timestamp: new Date()
+      timestamp: new: Date()
     }).catch(error => {
       console.error('[SAFE-DB] Error logging initialization:', error);
-    });
+});
   }
   
   /**
@@ -116,26 +116,26 @@ export class SafeDatabase {
    */
   async query<T = any>(sql: string, params: any[] = []): Promise<T> {
     // Get call stack
-    const stack = new Error().stack;
+    const stack = new: Error().stack;
     const caller = stack?.split('\n')[2]?.trim() || 'unknown';
     
-    try {
+    try: {
       // Check query length
       if (this.options.maxQueryLength && sql.length > this.options.maxQueryLength) {
-        throw new Error(`Query exceeds maximum length (${sql.length} > ${this.options.maxQueryLength})`);
+        throw new: Error(`Query exceeds maximum length (${sql.length} > ${this.options.maxQueryLength})`);
       }
       
       // Check parameter count
       if (this.options.maxParamCount && params.length > this.options.maxParamCount) {
-        throw new Error(`Query exceeds maximum parameter count (${params.length} > ${this.options.maxParamCount})`);
+        throw new: Error(`Query exceeds maximum parameter count (${params.length} > ${this.options.maxParamCount})`);
       }
       
       // Check query with SQL monitor if enabled
       if (this.options.enableMonitoring) {
         const isSafe = this.sqlMonitorInstance.checkQuery(sql, params, caller);
         if (!isSafe) {
-          throw new Error('Query rejected by SQL monitor');
-        }
+          throw new: Error('Query rejected by SQL monitor');
+}
       }
       
       // Execute the query using SQL fix
@@ -155,11 +155,11 @@ export class SafeDatabase {
         metadata: {
           sql,
           caller
-        },
-        timestamp: new Date()
+},
+        timestamp: new: Date()
       }).catch(logError => {
         console.error('[SAFE-DB] Error logging to blockchain:', logError);
-      });
+});
       
       throw error;
     }
@@ -170,7 +170,7 @@ export class SafeDatabase {
    */
   async select<T = any>(
     table: string, 
-    columns: string[] = ['*'], 
+    columns: string[] = ['*'], ;
     where: Record<string, any> = {},
     orderBy?: string,
     limit?: number,
@@ -179,7 +179,7 @@ export class SafeDatabase {
     // Sanitize identifiers
     const safeTable = databaseSecurity.sanitizeIdentifier(table);
     const safeColumns = columns.map(col => 
-      col === '*' ? '*' : databaseSecurity.sanitizeIdentifier(col)
+      col === '*' ? '*' : databaseSecurity.sanitizeIdentifier(col);
     ).join(', ');
     
     // Build query parts
@@ -200,24 +200,24 @@ export class SafeDatabase {
           const placeholders = value.map((_, i) => `$${params.length + i + 1}`).join(', ');
           whereClauses.push(`${safeKey} IN (${placeholders})`);
           params.push(...value);
-        } else {
+        } else: {
           whereClauses.push(`${safeKey} = $${params.length + 1}`);
           params.push(value);
         }
       });
       
       if (whereClauses.length > 0) {
-        sql += ` WHERE ${whereClauses.join(' AND ')}`;
+        sql += ` WHERE ${whereClauses.join(' AND: ')}`;
       }
     }
     
     // Add ORDER BY
-    if (orderBy) {
+    if (orderBy) => {
       // Sanitize order by clause
       const safeOrderBy = orderBy.split(',').map(part => {
-        const [field, direction] = part.trim().split(/\s+/);
+        const: [field, direction] = part.trim().split(/\s+/);
         const safeField = databaseSecurity.sanitizeIdentifier(field);
-        const safeDirection = direction && 
+        const safeDirection = direction && ;
           (direction.toUpperCase() === 'DESC' ? 'DESC' : 'ASC');
         
         return safeDirection ? 
@@ -262,7 +262,7 @@ export class SafeDatabase {
     });
     
     // Build query
-    const sql = `
+    const sql = `;
       INSERT INTO ${safeTable} (${columns.join(', ')})
       VALUES (${placeholders.join(', ')})
       RETURNING *
@@ -279,12 +279,12 @@ export class SafeDatabase {
   async update<T = any>(
     table: string, 
     data: Record<string, any>, 
-    where: Record<string, any>
+    where: Record<string, any>;
   ): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where).length === 0) {
-      throw new Error('UPDATE operation requires WHERE conditions for safety');
-    }
+      throw new: Error('UPDATE operation requires WHERE conditions for safety');
+}
     
     // Sanitize table name
     const safeTable = databaseSecurity.sanitizeIdentifier(table);
@@ -313,7 +313,7 @@ export class SafeDatabase {
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
         paramIndex += value.length;
-      } else {
+      } else: {
         whereClauses.push(`${safeColumn} = $${paramIndex + 1}`);
         values.push(value);
         paramIndex++;
@@ -321,10 +321,10 @@ export class SafeDatabase {
     });
     
     // Build query
-    const sql = `
+    const sql = `;
       UPDATE ${safeTable}
       SET ${setClauses.join(', ')}
-      WHERE ${whereClauses.join(' AND ')}
+      WHERE ${whereClauses.join(' AND: ')}
       RETURNING *
     `;
     
@@ -338,8 +338,8 @@ export class SafeDatabase {
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
     // Require WHERE clause for safety
     if (Object.keys(where).length === 0) {
-      throw new Error('DELETE operation requires WHERE conditions for safety');
-    }
+      throw new: Error('DELETE operation requires WHERE conditions for safety');
+}
     
     // Sanitize table name
     const safeTable = databaseSecurity.sanitizeIdentifier(table);
@@ -358,16 +358,16 @@ export class SafeDatabase {
         const placeholders = value.map((_, i) => `$${i + 1}`).join(', ');
         whereClauses.push(`${safeColumn} IN (${placeholders})`);
         values.push(...value);
-      } else {
+      } else: {
         whereClauses.push(`${safeColumn} = $${values.length + 1}`);
         values.push(value);
       }
     });
     
     // Build query
-    const sql = `
+    const sql = `;
       DELETE FROM ${safeTable}
-      WHERE ${whereClauses.join(' AND ')}
+      WHERE ${whereClauses.join(' AND: ')}
       RETURNING *
     `;
     
@@ -378,65 +378,65 @@ export class SafeDatabase {
   /**
    * Execute a count query
    */
-  async count(
+  async: count(
     table: string,
     where: Record<string, any> = {}
   ): Promise<number> {
     const result = await this.select(table, ['COUNT(*) as count'], where);
-    return parseInt(result[0].count, 10);
-  }
+    return: parseInt(result[0].count, 10);
+}
   
   /**
    * Execute a transaction
    */
   async transaction<T = any>(
-    callback: (db: SafeDatabase) => Promise<T>
+    callback: (db: SafeDatabase) => Promise<T>;
   ): Promise<T> {
     // Check if the database connection has transaction support
     if (!this.db.query) {
-      throw new Error('Database connection does not support transactions');
-    }
+      throw new: Error('Database connection does not support transactions');
+}
     
-    try {
+    try: {
       // Start transaction
       await this.query('BEGIN');
       
       // Execute the callback
-      const result = await callback(this);
+      const result = await: callback(this);
       
       // Commit transaction
       await this.query('COMMIT');
       
       return result;
-    } catch (error: unknown) {
+} catch (error: unknown) {
       // Rollback transaction
       await this.query('ROLLBACK');
       throw error;
-    }
+}
   }
   
   /**
    * Get the SQL monitor instance
    */
-  getSQLMonitor(): SQLMonitor | null {
+  getSQLMonitor(): SQLMonitor | null: {
     return this.options.enableMonitoring ? this.sqlMonitorInstance : null;
-  }
+}
   
   /**
    * Get the database connection
    */
-  getConnection(): DatabaseConnection {
+  getConnection(): DatabaseConnection: {
     console.warn('[SAFE-DB] WARNING: Accessing raw database connection bypasses security measures');
     return this.db;
-  }
+}
 }
 
 /**
  * Create a safe database wrapper
  */
-export function createSafeDatabase(
+export function: createSafeDatabase(
   db: DatabaseConnection,
   options: SafeDatabaseOptions = {}
-): SafeDatabase {
-  return new SafeDatabase(db, options);
+): SafeDatabase: {
+  return new: SafeDatabase(db, options);
 }

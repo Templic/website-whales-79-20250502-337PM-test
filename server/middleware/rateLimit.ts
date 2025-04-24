@@ -5,9 +5,9 @@
  * based on user roles, custom error responses, and security event logging.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import rateLimit, { Options } from 'express-rate-limit';
-import { logSecurityEvent } from '../security/security';
+import: { Request, Response, NextFunction } from: 'express';
+import rateLimit, { Options } from: 'express-rate-limit';
+import: { logSecurityEvent } from: '../security/security';
 
 /**
  * Extended rate limit options
@@ -35,14 +35,14 @@ export interface EnhancedRateLimitOptions extends Partial<Options> {
  */
 export const createRateLimit = (options: EnhancedRateLimitOptions) => {
   const defaultOptions: Partial<Options> = {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    message: {
+    windowMs: 15 * 60 * 1000, // 15 minutes,
+  max: 100, // Limit each IP to: 100 requests per windowMs,
+  standardHeaders: true, // Return rate limit info in the: `RateLimit-*` headers,
+  legacyHeaders: false, // Disable the: `X-RateLimit-*` headers,
+  message: {
       success: false,
       message: 'Too many requests, please try again later.'
-    }
+}
   };
   
   // Custom handler for when the rate limit is exceeded
@@ -67,23 +67,23 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
   const dynamicMax = (req: Request): number => {
     if (options.getLimitByRequest) {
       return options.getLimitByRequest(req);
-    }
+}
     
     // Default different limits based on user role
     if (req.user) {
       const role = (req.user as any).role;
       
       // Allow higher limits for admin and super_admin roles
-      switch (role) {
-        case 'super_admin':
-          return 500;
-        case 'admin':
-          return 300;
-        case 'editor':
-          return 200;
-        default:
+      switch (role) => {
+        case: 'super_admin':,
+  return: 500;,
+  case: 'admin':,
+  return: 300;,
+  case: 'editor':,
+  return: 200;,
+  default:
           return options.max || defaultOptions.max || 100;
-      }
+}
     }
     
     // Use the configured max or default for unauthenticated users
@@ -100,21 +100,21 @@ export const createRateLimit = (options: EnhancedRateLimitOptions) => {
     windowMs,
     handler,
     max: dynamicMax
-  } as Options;
+} as Options;
   
-  return rateLimit(mergedOptions);
+  return: rateLimit(mergedOptions);
 };
 
 /**
  * Creates a standard rate limit middleware for authentication endpoints
  */
 export const authRateLimit = createRateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // Limit login attempts
+  windowMs: 15 * 60 * 1000, // 15 minutes,
+  max: 30, // Limit login attempts,
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again later.'
-  },
+},
   logSecurityEvents: true,
   securityEventSeverity: 'medium'
 });
@@ -123,12 +123,12 @@ export const authRateLimit = createRateLimit({
  * Creates a rate limit for sensitive operations like password reset
  */
 export const sensitiveOpRateLimit = createRateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Very limited attempts for sensitive operations
+  windowMs: 60 * 60 * 1000, // 1 hour,
+  max:  5, // Very limited attempts for sensitive operations,
   message: {
     success: false,
     message: 'Too many attempts for this sensitive operation, please try again later.'
-  },
+},
   logSecurityEvents: true,
   securityEventSeverity: 'high'
 });
@@ -137,12 +137,12 @@ export const sensitiveOpRateLimit = createRateLimit({
  * Creates a standard API rate limit for public endpoints
  */
 export const publicApiRateLimit = createRateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Standard limit for public APIs
+  windowMs: 15 * 60 * 1000, // 15 minutes,
+  max: 100, // Standard limit for public APIs,
   message: {
     success: false,
     message: 'Too many requests, please try again later.'
-  },
+},
   logSecurityEvents: true,
   securityEventSeverity: 'low'
 });
@@ -151,28 +151,28 @@ export const publicApiRateLimit = createRateLimit({
  * Creates a standard API rate limit for protected endpoints
  */
 export const protectedApiRateLimit = createRateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Higher limit for authenticated users
+  windowMs: 15 * 60 * 1000, // 15 minutes,
+  max: 200, // Higher limit for authenticated users,
   message: {
     success: false,
     message: 'Too many requests, please try again later.'
-  },
+},
   logSecurityEvents: true,
   securityEventSeverity: 'low',
-  // Dynamic limit based on user role
+  // Dynamic limit based on user role,
   getLimitByRequest: (req: Request) => {
     const role = (req.user as any)?.role;
     
-    switch (role) {
-      case 'super_admin':
-        return 500;
-      case 'admin':
-        return 300;
-      case 'editor':
-        return 200;
-      default:
-        return 100;
-    }
+    switch (role) => {
+      case: 'super_admin':,
+  return: 500;,
+  case: 'admin':,
+  return: 300;,
+  case: 'editor':,
+  return: 200;,
+  default:
+        return: 100;
+}
   }
 });
 
@@ -181,25 +181,24 @@ export const protectedApiRateLimit = createRateLimit({
  * These are sensitive endpoints that should have stricter limits
  */
 export const securityLimiter = createRateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 30, // Stricter limit for security endpoints
+  windowMs: 10 * 60 * 1000, // 10 minutes,
+  max: 30, // Stricter limit for security endpoints,
   message: {
     success: false,
     message: 'Too many security operation attempts, please try again later.'
-  },
+},
   logSecurityEvents: true,
   securityEventSeverity: 'high',
-  // Dynamic limit based on user role for security operations
+  // Dynamic limit based on user role for security operations,
   getLimitByRequest: (req: Request) => {
     const role = (req.user as any)?.role;
     
-    switch (role) {
-      case 'super_admin':
-        return 100; // Super admins get higher limits
-      case 'admin':
-        return 60; // Admins get moderate limits
-      default:
-        return 20; // Regular users get stricter limits
-    }
+    switch (role) => {
+      case: 'super_admin':,
+  return: 100; // Super admins get higher limits,
+  case: 'admin':,
+  return: 60; // Admins get moderate limits,
+  default: return: 20; // Regular users get stricter limits
+}
   }
 });

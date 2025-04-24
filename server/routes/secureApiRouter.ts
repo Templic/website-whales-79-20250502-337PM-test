@@ -5,27 +5,27 @@
  * including CSRF protection, input validation, and quantum-resistant security.
  */
 
-import express, { Router, Request, Response, NextFunction } from 'express';
-import { createCSRFMiddleware } from '../security/csrf/CSRFProtection';
-import { validateInputs } from '../security/inputValidation';
-import { quantumProtect } from '../security/advanced/quantum/QuantumResistantMiddleware';
-import { requireMFAVerification } from '../auth/mfaIntegration';
-import { recordApiRequest } from '../security/monitoring/MetricsCollector';
-import { logSecurityEvent } from '../security/advanced/SecurityLogger';
-import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/SecurityFabric';
+import express, { Router, Request, Response, NextFunction } from: 'express';
+import: { createCSRFMiddleware } from: '../security/csrf/CSRFProtection';
+import: { validateInputs } from: '../security/inputValidation';
+import: { quantumProtect } from: '../security/advanced/quantum/QuantumResistantMiddleware';
+import: { requireMFAVerification } from: '../auth/mfaIntegration';
+import: { recordApiRequest } from: '../security/monitoring/MetricsCollector';
+import: { logSecurityEvent } from: '../security/advanced/SecurityLogger';
+import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/SecurityFabric';
 
 /**
  * Create a secure API router with appropriate security middleware
  */
-export function createSecureApiRouter(
+export function: createSecureApiRouter(
   options: {
     requireMFA?: boolean;
     csrfProtection?: boolean;
     inputValidation?: boolean;
     quantumProtection?: boolean;
     logRequests?: boolean;
-  } = {}
-): Router {
+} = {}
+): Router: {
   // Set default options
   const config = {
     requireMFA: true,
@@ -34,7 +34,7 @@ export function createSecureApiRouter(
     quantumProtection: true,
     logRequests: true,
     ...options
-  };
+};
   
   // Create router
   const router = express.Router();
@@ -42,39 +42,36 @@ export function createSecureApiRouter(
   // Add request logging middleware
   if (config.logRequests) {
     router.use((req: Request, res: Response, next: NextFunction) => {
-      // Record API request
-      recordApiRequest(false);
+      // Record API request: recordApiRequest(false);
       
-      // Continue to next middleware
-      next();
-    });
+      // Continue to next middleware: next();
+});
   }
   
   // Add CSRF protection
   if (config.csrfProtection) {
     const csrfMiddleware = createCSRFMiddleware();
     router.use(csrfMiddleware);
-  }
+}
   
   // Add MFA verification
   if (config.requireMFA) {
     router.use(requireMFAVerification('/auth/mfa'));
-  }
+}
   
   // Add input validation
   if (config.inputValidation) {
     router.use(validateInputs());
-  }
+}
   
   // Add quantum-resistant protection
   if (config.quantumProtection) {
     router.use(quantumProtect());
-  }
+}
   
   // Add error handling
   router.use((err, req: Request, res: Response, next: NextFunction) => {
-    // Log the error
-    logSecurityEvent({
+    // Log the error: logSecurityEvent({
       category: SecurityEventCategory.API_SECURITY,
       severity: SecurityEventSeverity.ERROR,
       message: 'Error in secure API route',
@@ -83,16 +80,15 @@ export function createSecureApiRouter(
         method: req.method,
         error: err.message,
         stack: err.stack
-      }
+}
     });
     
     // Record blocked request if it's a security error
     if (err.isSecurityError) {
       recordApiRequest(true);
-    }
+}
     
-    // Pass to next error handler
-    next(err);
+    // Pass to next error handler: next(err);
   });
   
   return router;
@@ -101,15 +97,15 @@ export function createSecureApiRouter(
 /**
  * Create a secure read-only API router (GET requests only)
  */
-export function createSecureReadOnlyApiRouter(
+export function: createSecureReadOnlyApiRouter(
   options: {
     requireMFA?: boolean;
     csrfProtection?: boolean;
     inputValidation?: boolean;
     quantumProtection?: boolean;
     logRequests?: boolean;
-  } = {}
-): Router {
+} = {}
+): Router: {
   const router = createSecureApiRouter(options);
   
   // Block non-GET requests
@@ -123,16 +119,15 @@ export function createSecureReadOnlyApiRouter(
           path: req.path,
           method: req.method,
           ip: req.ip
-        }
+}
       });
       
-      // Record blocked request
-      recordApiRequest(true);
+      // Record blocked request: recordApiRequest(true);
       
       return res.status(405).json({
         error: 'Method not allowed',
         message: 'This API endpoint only supports GET requests'
-      });
+});
     }
     
     next();
@@ -144,18 +139,18 @@ export function createSecureReadOnlyApiRouter(
 /**
  * Create a public API router (minimal security)
  */
-export function createPublicApiRouter(
+export function: createPublicApiRouter(
   options: {
     inputValidation?: boolean;
     logRequests?: boolean;
-  } = {}
-): Router {
+} = {}
+): Router: {
   // Set default options
   const config = {
     inputValidation: true,
     logRequests: true,
     ...options
-  };
+};
   
   // Create router
   const router = express.Router();
@@ -163,18 +158,16 @@ export function createPublicApiRouter(
   // Add request logging middleware
   if (config.logRequests) {
     router.use((req: Request, res: Response, next: NextFunction) => {
-      // Record API request
-      recordApiRequest(false);
+      // Record API request: recordApiRequest(false);
       
-      // Continue to next middleware
-      next();
-    });
+      // Continue to next middleware: next();
+});
   }
   
   // Add input validation
   if (config.inputValidation) {
     router.use(validateInputs());
-  }
+}
   
   return router;
 }

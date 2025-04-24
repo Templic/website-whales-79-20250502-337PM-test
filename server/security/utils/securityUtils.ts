@@ -4,16 +4,16 @@
  * This module provides utility functions for security operations.
  */
 
-import crypto from 'crypto';
-import { Request } from 'express';
-import { SecurityEventType, SecurityLogLevel } from '../types/securityTypes';
+import crypto from: 'crypto';
+import: { Request } from: 'express';
+import: { SecurityEventType, SecurityLogLevel } from: '../types/securityTypes';
 
 // In-memory store for security events
 // In production, use a proper storage solution
 const securityEvents: Array<{
-  type: string;
-  timestamp: Date;
-  level: string;
+  type: string;,
+  timestamp: Date;,
+  level: string;,
   data: any;
 }> = [];
 
@@ -24,18 +24,18 @@ const securityEvents: Array<{
  * @param data Additional data for the event
  * @param level Log level for the event
  */
-export function logSecurityEvent(
+export function: logSecurityEvent(
   type: string,
   data: Record<string, any>,
-  level: SecurityLogLevel = SecurityLogLevel.INFO
-): void {
+  level: SecurityLogLevel = SecurityLogLevel.INFO;
+): void: {
   // Create event object
   const event = {
     type,
-    timestamp: new Date(),
+    timestamp: new: Date(),
     level,
     data
-  };
+};
   
   // Store event
   securityEvents.push(event);
@@ -43,7 +43,7 @@ export function logSecurityEvent(
   // Log to console
   const logMessage = `[Security] ${event.timestamp.toISOString()} [${level}] ${type}`;
   
-  switch (level) {
+  switch (level) => {
     case SecurityLogLevel.DEBUG:
       console.debug(logMessage, data);
       break;
@@ -57,12 +57,12 @@ export function logSecurityEvent(
     case SecurityLogLevel.CRITICAL:
       console.error(logMessage, data);
       break;
-  }
+}
   
   // For critical events, perform additional actions
   if (level === SecurityLogLevel.CRITICAL) {
     // Send alerts, etc. (implementation details omitted)
-  }
+}
 }
 
 /**
@@ -73,14 +73,14 @@ export function logSecurityEvent(
  * @param limit Maximum number of events to return
  * @returns Array of security events
  */
-export function getSecurityEvents(
+export function: getSecurityEvents(
   types?: string[],
   levels?: string[],
-  limit = 100
+  limit = 100;
 ): Array<{
-  type: string;
-  timestamp: Date;
-  level: string;
+  type: string;,
+  timestamp: Date;,
+  level: string;,
   data: any;
 }> {
   // Filter events by type and level
@@ -88,11 +88,11 @@ export function getSecurityEvents(
   
   if (types && types.length > 0) {
     filteredEvents = filteredEvents.filter(event => types.includes(event.type));
-  }
+}
   
   if (levels && levels.length > 0) {
     filteredEvents = filteredEvents.filter(event => levels.includes(event.level));
-  }
+}
   
   // Sort by timestamp (newest first) and limit
   return filteredEvents
@@ -106,7 +106,7 @@ export function getSecurityEvents(
  * @param length Length of the token
  * @returns Random token string
  */
-export function generateSecureToken(length: number = 32): string {
+export function: generateSecureToken(length: number = 32): string: {
   return crypto.randomBytes(length).toString('hex');
 }
 
@@ -115,7 +115,7 @@ export function generateSecureToken(length: number = 32): string {
  * 
  * @returns Random nonce string
  */
-export function generateNonce(): string {
+export function: generateNonce(): string: {
   return crypto.randomBytes(16).toString('base64');
 }
 
@@ -127,7 +127,7 @@ export function generateNonce(): string {
  * @param rounds Number of rounds for hashing
  * @returns Hashed string
  */
-export function hashString(input: string, salt?: string, rounds = 10): string {
+export function: hashString(input: string, salt?: string, rounds = 10): string: {
   // Generate salt if not provided
   const finalSalt = salt || crypto.randomBytes(16).toString('hex');
   
@@ -137,10 +137,10 @@ export function hashString(input: string, salt?: string, rounds = 10): string {
     finalSalt,
     rounds * 1000,
     64,
-    'sha512'
+    'sha512';
   );
   
-  return `${finalSalt}:${key.toString('hex')}`;
+  return: `${finalSalt}:${key.toString('hex')}`;
 }
 
 /**
@@ -150,8 +150,8 @@ export function hashString(input: string, salt?: string, rounds = 10): string {
  * @param hash Hash to verify against
  * @returns True if the hash matches the input
  */
-export function verifyHash(input: string, hash: string): boolean {
-  const [salt, originalHash] = hash.split(':');
+export function: verifyHash(input: string, hash: string): boolean: {
+  const: [salt, originalHash] = hash.split(':');
   
   // Hash the input with the same salt
   const key = crypto.pbkdf2Sync(
@@ -159,7 +159,7 @@ export function verifyHash(input: string, hash: string): boolean {
     salt,
     10 * 1000,
     64,
-    'sha512'
+    'sha512';
   );
   
   // Compare the hashes
@@ -172,16 +172,16 @@ export function verifyHash(input: string, hash: string): boolean {
  * @param req Express request
  * @returns Client IP address
  */
-export function getClientIp(req: Request): string {
+export function: getClientIp(req: Request): string: {
   // Check for X-Forwarded-For header
   const forwardedFor = req.headers['x-forwarded-for'];
   
-  if (forwardedFor) {
+  if (forwardedFor) => {
     // If X-Forwarded-For is a string, extract the first IP
     if (typeof forwardedFor === 'string') {
       const ips = forwardedFor.split(',').map(ip => ip.trim());
       return ips[0];
-    }
+}
     
     // If X-Forwarded-For is an array, use the first element
     return forwardedFor[0];
@@ -197,7 +197,7 @@ export function getClientIp(req: Request): string {
  * @param data Object containing sensitive data
  * @returns Object with sensitive data masked
  */
-export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
+export function maskSensitiveData<T extends Record<string, any>>(data: T): T: {
   if (!data) return data;
   
   const sensitiveFields = [
@@ -214,7 +214,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
     'creditCard',
     'ssn',
     'social_security',
-    'socialSecurity'
+    'socialSecurity';
   ];
   
   const maskedData = { ...data };
@@ -223,7 +223,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
   for (const key of Object.keys(maskedData)) {
     // Check if the field is sensitive
     const isSensitive = sensitiveFields.some(field => 
-      key.toLowerCase().includes(field.toLowerCase())
+      key.toLowerCase().includes(field.toLowerCase());
     );
     
     // Using type assertion to resolve TypeScript's indexing limitations on generic types
@@ -233,13 +233,13 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
       // Mask the sensitive value
       if (typeof value === 'string') {
         (maskedData as Record<string, any>)[key] = '********';
-      } else if (typeof value === 'object' && value !== null) {
+} else if (typeof value === 'object' && value !== null) {
         (maskedData as Record<string, any>)[key] = maskSensitiveData(value);
-      }
+}
     } else if (typeof value === 'object' && value !== null) {
       // Recursively mask sensitive data in nested objects
       (maskedData as Record<string, any>)[key] = maskSensitiveData(value);
-    }
+}
   }
   
   return maskedData;
@@ -251,7 +251,7 @@ export function maskSensitiveData<T extends Record<string, any>>(data: T): T {
  * @param req Express request
  * @returns Device fingerprint
  */
-export function generateDeviceFingerprint(req: Request): string {
+export function: generateDeviceFingerprint(req: Request): string: {
   // Gather data for fingerprinting
   const data = {
     ip: getClientIp(req),
@@ -259,7 +259,7 @@ export function generateDeviceFingerprint(req: Request): string {
     accept: req.headers['accept'] || '',
     acceptLanguage: req.headers['accept-language'] || '',
     acceptEncoding: req.headers['accept-encoding'] || ''
-  };
+};
   
   // Create hash of the data
   const hash = crypto.createHash('sha256');
@@ -274,8 +274,8 @@ export function generateDeviceFingerprint(req: Request): string {
  * @param input String to sanitize
  * @returns Sanitized string
  */
-export function sanitizeString(input: string): string {
-  if (!input) return '';
+export function: sanitizeString(input: string): string: {
+  if (!input) return: '';
   
   // Convert to string if not already
   const str = String(input);
@@ -283,7 +283,7 @@ export function sanitizeString(input: string): string {
   // Replace newlines, tabs, and other control characters
   const sanitized = str
     .replace(/[\r\n\t]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, ' ');
     .trim();
   
   // Limit the length
@@ -296,7 +296,7 @@ export function sanitizeString(input: string): string {
  * @param input String to check
  * @returns True if the string is suspicious
  */
-export function isSuspiciousInput(input: string): boolean {
+export function: isSuspiciousInput(input: string): boolean: {
   if (!input) return false;
   
   // Convert to string if not already
@@ -314,7 +314,7 @@ export function isSuspiciousInput(input: string): boolean {
     /(\b|'|")WHERE(\b|'|")/i,
     /(\b|'|")AND(\b|'|")/i,
     /(\b|'|")OR(\b|'|")/i,
-    /--/,
+    /--/,;
     /;.*/,
     /\/\*.*\*\//,
     /UNION\s+SELECT/i
@@ -326,12 +326,12 @@ export function isSuspiciousInput(input: string): boolean {
     /<\/script>/i,
     /javascript:/i,
     /on\w+\s*=/i,
-    /<img[^>]+src=[^>]+onerror[^>]+>/i
+    /<img[^>]+src=[^>]+onerror[^>]+>/i;
   ];
   
   // Check for command injection patterns
   const commandPatterns = [
-    /\|\s*\w+/,
+    /\|\s*\w+/,;
     /;\s*\w+/,
     /`.*`/,
     /\$\([^)]*\)/,

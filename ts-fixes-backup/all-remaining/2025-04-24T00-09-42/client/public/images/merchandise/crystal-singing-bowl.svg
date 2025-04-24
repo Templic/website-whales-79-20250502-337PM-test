@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300" fill="none">
+  <defs>
+    <linearGradient id="bowlGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f5ff" stop-opacity="0.9"/>
+      <stop offset="50%" stop-color="#e6e6fa" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#d8d8f0" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="bowlGlow" cx="50%" cy="50%" r="60%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#e6e6fa" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#a076f9" stop-opacity="0.1"/>
+    </radialGradient>
+    <filter id="soundWaves" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="150" cy="150" r="110" fill="url(#bowlGradient)" opacity="0.1"/>
+  
+  <!-- Bowl Base -->
+  <ellipse cx="150" cy="200" rx="80" ry="20" fill="url(#bowlGradient)" opacity="0.8" stroke="#a076f9" stroke-width="1"/>
+  
+  <!-- Bowl Body (Side View) -->
+  <path d="M90 140 C 90 190, 210 190, 210 140" fill="none" stroke="#a076f9" stroke-width="2"/>
+  <path d="M90 140 C 90 100, 210 100, 210 140" fill="url(#bowlGradient)" opacity="0.7" stroke="#a076f9" stroke-width="2"/>
+  
+  <!-- Bowl Interior -->
+  <ellipse cx="150" cy="140" rx="60" ry="15" fill="url(#bowlGradient)" opacity="0.9" stroke="#a076f9" stroke-width="1"/>
+  
+  <!-- Bowl Rim Highlights -->
+  <ellipse cx="150" cy="140" rx="58" ry="13" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.7"/>
+  
+  <!-- Sound Waves Emanating -->
+  <g filter="url(#soundWaves)">
+    <ellipse cx="150" cy="140" rx="70" ry="20" fill="none" stroke="#a076f9" stroke-width="0.5" opacity="0.4"/>
+    <ellipse cx="150" cy="140" rx="85" ry="25" fill="none" stroke="#a076f9" stroke-width="0.5" opacity="0.3"/>
+    <ellipse cx="150" cy="140" rx="100" ry="30" fill="none" stroke="#a076f9" stroke-width="0.5" opacity="0.2"/>
+  </g>
+  
+  <!-- Striker -->
+  <g filter="url(#glow)">
+    <line x1="250" y1="140" x2="220" y2="140" stroke="#a076f9" stroke-width="1.5"/>
+    <circle cx="250" cy="140" r="8" fill="#f5f5ff" stroke="#a076f9" stroke-width="1"/>
+    <circle cx="250" cy="140" r="5" fill="#a076f9" opacity="0.3"/>
+  </g>
+  
+  <!-- Inner Bowl Glow -->
+  <ellipse cx="150" cy="140" rx="40" ry="10" fill="url(#bowlGlow)" opacity="0.4"/>
+  
+  <!-- Frequency Indicator -->
+  <text x="147" y="142" font-family="Arial" font-size="10" text-anchor="middle" fill="#a076f9" opacity="0.8">B</text>
+</svg>

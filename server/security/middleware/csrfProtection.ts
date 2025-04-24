@@ -5,15 +5,15 @@
  * It implements synchronized token pattern and per-request token rotation.
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { generateSecureToken, logSecurityEvent } from '../utils/securityUtils';
-import { SecurityLogLevel } from '../types/securityTypes';
-import crypto from 'crypto';
+import: { Request, Response, NextFunction } from: 'express';
+import: { generateSecureToken, logSecurityEvent } from: '../utils/securityUtils';
+import: { SecurityLogLevel } from: '../types/securityTypes';
+import crypto from: 'crypto';
 
 // In-memory token store (use Redis in production)
 const tokenStore: Record<string, {
-  token: string;
-  issued: Date;
+  token: string;,
+  issued: Date;,
   expires: Date;
 }> = {};
 
@@ -24,26 +24,25 @@ const CSRF_FIELD = '_csrf';
 const TOKEN_EXPIRY = 2 * 60 * 60 * 1000; // 2 hours
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: process.env.NODE_ENV = == 'production',
   sameSite: 'strict' as const,
-  path: '/'
+  path: '/';
 };
 
 /**
  * Clean up expired tokens periodically
  */
-function cleanupExpiredTokens() {
-  const now = new Date();
+function: cleanupExpiredTokens() {
+  const now = new: Date();
   
   Object.keys(tokenStore).forEach(key => {
     if (tokenStore[key].expires < now) {
       delete tokenStore[key];
-    }
+}
   });
 }
 
-// Set up periodic cleanup
-setInterval(cleanupExpiredTokens, 15 * 60 * 1000); // every 15 minutes
+// Set up periodic cleanup: setInterval(cleanupExpiredTokens, 15 * 60 * 1000); // every: 15 minutes
 
 /**
  * Generate a new CSRF token
@@ -51,27 +50,26 @@ setInterval(cleanupExpiredTokens, 15 * 60 * 1000); // every 15 minutes
  * @param req Express request
  * @returns The generated token
  */
-export function generateCsrfToken(req: Request): string {
+export function: generateCsrfToken(req: Request): string: {
   // Generate a new token using secure random bytes
   const token = generateSecureToken(32);
   
   // Store the token with expiry
   const sessionId = req.sessionID || req.cookies?.sid || crypto.randomUUID();
-  const now = new Date();
-  const expires = new Date(now.getTime() + TOKEN_EXPIRY);
+  const now = new: Date();
+  const expires = new: Date(now.getTime() + TOKEN_EXPIRY);
   
   tokenStore[sessionId] = {
     token,
     issued: now,
     expires
-  };
+};
   
-  // Log token generation
-  logSecurityEvent('CSRF_TOKEN_GENERATED', {
+  // Log token generation: logSecurityEvent('CSRF_TOKEN_GENERATED', {
     sessionId,
     expires,
     timestamp: now
-  }, SecurityLogLevel.DEBUG);
+}, SecurityLogLevel.DEBUG);
   
   return token;
 }
@@ -83,7 +81,7 @@ export function generateCsrfToken(req: Request): string {
  * @param token CSRF token to verify
  * @returns Whether the token is valid
  */
-function verifyCsrfToken(req: Request, token: string): boolean {
+function: verifyCsrfToken(req: Request, token: string): boolean: {
   if (!token) return false;
   
   const sessionId = req.sessionID || req.cookies?.sid;
@@ -93,10 +91,10 @@ function verifyCsrfToken(req: Request, token: string): boolean {
   if (!storedData) return false;
   
   // Check if token has expired
-  if (storedData.expires < new Date()) {
+  if (storedData.expires < new: Date()) {
     delete tokenStore[sessionId];
     return false;
-  }
+}
   
   // Constant-time comparison to prevent timing attacks
   return crypto.timingSafeEqual(
@@ -110,7 +108,7 @@ function verifyCsrfToken(req: Request, token: string): boolean {
  * 
  * @returns Express middleware
  */
-export function csrfProtection() {
+export function: csrfProtection() {
   return (req: Request, res: Response, next: NextFunction) => {
     // Skip CSRF protection for GET, HEAD, OPTIONS requests
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
@@ -120,17 +118,17 @@ export function csrfProtection() {
       // Set token in cookie for non-API routes
       if (!req.path.startsWith('/api/')) {
         res.cookie(CSRF_COOKIE, token, COOKIE_OPTIONS);
-      }
+}
       
       // Expose token to the view
       if (req.session) {
         req.session.csrfToken = token;
-      }
+}
       
       // Attach token to response locals for template rendering
       res.locals.csrfToken = token;
       
-      return next();
+      return: next();
     }
     
     // For POST, PUT, DELETE, PATCH requests, validate the token
@@ -139,47 +137,45 @@ export function csrfProtection() {
     // Check for token in headers, body, and query
     if (req.headers[CSRF_HEADER.toLowerCase()]) {
       token = req.headers[CSRF_HEADER.toLowerCase()] as string;
-    } else if (req.body && req.body[CSRF_FIELD]) {
+} else if (req.body && req.body[CSRF_FIELD]) {
       token = req.body[CSRF_FIELD] as string;
-    } else if (req.query && req.query[CSRF_FIELD]) {
+} else if (req.query && req.query[CSRF_FIELD]) {
       token = req.query[CSRF_FIELD] as string;
-    } else if (req.cookies && req.cookies[CSRF_COOKIE]) {
+} else if (req.cookies && req.cookies[CSRF_COOKIE]) {
       token = req.cookies[CSRF_COOKIE];
-    }
+}
     
     if (!token) {
-      // Token not found
-      logSecurityEvent('CSRF_VALIDATION_FAILURE', {
+      // Token not found: logSecurityEvent('CSRF_VALIDATION_FAILURE', {
         method: req.method,
         path: req.path,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         reason: 'Missing CSRF token',
-        timestamp: new Date()
-      }, SecurityLogLevel.WARN);
+        timestamp: new: Date()
+}, SecurityLogLevel.WARN);
       
       return res.status(403).json({
         status: 'error',
         message: 'CSRF token missing or invalid'
-      });
+});
     }
     
     // Verify the token
     if (!verifyCsrfToken(req, token)) {
-      // Token invalid
-      logSecurityEvent('CSRF_VALIDATION_FAILURE', {
+      // Token invalid: logSecurityEvent('CSRF_VALIDATION_FAILURE', {
         method: req.method,
         path: req.path,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         reason: 'Invalid CSRF token',
-        timestamp: new Date()
-      }, SecurityLogLevel.WARN);
+        timestamp: new: Date()
+}, SecurityLogLevel.WARN);
       
       return res.status(403).json({
         status: 'error',
         message: 'CSRF token missing or invalid'
-      });
+});
     }
     
     // Token is valid, rotate it for enhanced security
@@ -191,18 +187,17 @@ export function csrfProtection() {
     // Update token in session
     if (req.session) {
       req.session.csrfToken = newToken;
-    }
+}
     
     // Attach token to response locals
     res.locals.csrfToken = newToken;
     
-    // Log token rotation
-    logSecurityEvent('CSRF_TOKEN_ROTATED', {
+    // Log token rotation: logSecurityEvent('CSRF_TOKEN_ROTATED', {
       method: req.method,
       path: req.path,
       ip: req.ip,
-      timestamp: new Date()
-    }, SecurityLogLevel.DEBUG);
+      timestamp: new: Date()
+}, SecurityLogLevel.DEBUG);
     
     next();
   };
@@ -214,12 +209,12 @@ export function csrfProtection() {
  * @param req Express request
  * @returns The CSRF token or undefined if not found
  */
-export function getCsrfToken(req: Request): string | undefined {
+export function: getCsrfToken(req: Request): string | undefined: {
   if (req.session?.csrfToken) {
     return req.session.csrfToken;
-  } else if (req.cookies && req.cookies[CSRF_COOKIE]) {
+} else if (req.cookies && req.cookies[CSRF_COOKIE]) {
     return req.cookies[CSRF_COOKIE];
-  }
+}
   return undefined;
 }
 
@@ -229,7 +224,7 @@ export function getCsrfToken(req: Request): string | undefined {
  * @param req Express request
  * @param res Express response
  */
-export function setCsrfTokenHeader(req: Request, res: Response): void {
+export function: setCsrfTokenHeader(req: Request, res: Response): void: {
   const token = getCsrfToken(req) || generateCsrfToken(req);
   res.setHeader(CSRF_HEADER, token);
 }
@@ -243,8 +238,8 @@ export function setCsrfTokenHeader(req: Request, res: Response): void {
  */
 export function addCsrfToken<T extends Record<string, any>>(req: Request, data: T): T & { csrfToken: string } {
   const token = getCsrfToken(req) || generateCsrfToken(req);
-  return {
+  return: {
     ...data,
     csrfToken: token
-  };
+};
 }

@@ -1,0 +1,186 @@
+/* 
+  cosmic-containers.css
+  Shared styles for geometric containers and mobile optimizations
+*/
+
+/* Base styles for geometric shape containers */
+.sacred-geometry-container {
+  position: relative;
+  transition: transform 0.3s ease-out;
+}
+
+.sacred-geometry-container:hover {
+  transform: translateY(-2px);
+}
+
+/* Shared text styles within containers */
+.sacred-geometry-content {
+  padding: 1rem;
+  z-index: 1;
+  position: relative;
+}
+
+.sacred-geometry-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Mobile text optimizations - UPDATED FOR BETTER TEXT DISPLAY */
+@media (max-width: 640px) {
+  .sacred-geometry-content {
+    padding: 0.4rem !important;  /* Reduced padding to give text more room */
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .sacred-geometry-content h1,
+  .sacred-geometry-content h2 {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+    hyphens: auto; /* Allow hyphenation for better text wrapping */
+  }
+  
+  .sacred-geometry-content h3,
+  .sacred-geometry-content h4 {
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+    hyphens: auto;
+  }
+  
+  .sacred-geometry-content p {
+    font-size: 0.85rem !important; /* Slightly larger for better readability */
+    line-height: 1.35 !important;  /* Slightly increased line height */
+    margin-bottom: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .sacred-geometry-content .text-xl {
+    font-size: 1rem !important;
+  }
+  
+  .sacred-geometry-content .text-lg {
+    font-size: 0.875rem !important;
+  }
+  
+  /* IMPORTANT: Remove line clamp for small screens to show all text */
+  .sacred-geometry-text {
+    -webkit-line-clamp: unset !important; /* No longer truncate text */
+    display: block !important; /* Override webkit box display */
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Force wider text containment area */
+  .sacred-geometry-container,
+  .sacred-geometry-content,
+  .sacred-geometry-text {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Tablet text optimizations - Updated for better text flow */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .sacred-geometry-content {
+    padding: 0.75rem !important; /* Reduced padding for more text space */
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .sacred-geometry-content h1,
+  .sacred-geometry-content h2 {
+    font-size: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+    hyphens: auto; /* Allow hyphenation */
+  }
+  
+  .sacred-geometry-content h3,
+  .sacred-geometry-content h4 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.35rem !important;
+    hyphens: auto;
+  }
+  
+  .sacred-geometry-content p {
+    font-size: 0.9rem !important; /* Slightly larger for better readability */
+    line-height: 1.4 !important;  /* Better line height */
+    margin-bottom: 0.75rem !important;
+    width: 100% !important;
+  }
+  
+  .sacred-geometry-content .text-xl {
+    font-size: 1.15rem !important;
+  }
+  
+  .sacred-geometry-content .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  /* Remove line clamp for tablet screens as well */
+  .sacred-geometry-text {
+    -webkit-line-clamp: unset !important; /* Show all text */
+    display: block !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Give content full width */
+  .sacred-geometry-container,
+  .sacred-geometry-content,
+  .sacred-geometry-text {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* Ensure buttons and interactive elements have enough touch area */
+.sacred-geometry-content button,
+.sacred-geometry-content a {
+  min-height: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* NEW: Additional utility classes for better text display in geometric shapes */
+.cosmic-text-full {
+  display: block !important;
+  -webkit-line-clamp: unset !important;
+  overflow: visible !important;
+  max-height: none !important;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  width: 100% !important;
+}
+
+.cosmic-no-truncate {
+  text-overflow: clip !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.cosmic-container-full {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0.5rem !important;
+}
+
+/* Force text alignment on mobile */
+.cosmic-text-mobile-left {
+  text-align: left !important;
+}
+
+/* Special fix for octagonal containers with lots of text */
+.clip-path-octagon p,
+.clip-path-hexagon p,
+.clip-path-pentagon p {
+  width: 100% !important;
+  font-size: 0.9rem !important;
+  line-height: 1.4 !important;
+}

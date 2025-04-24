@@ -6,9 +6,9 @@
  * and provide remediation suggestions.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as util from 'util';
+import * as fs from: 'fs';
+import * as path from: 'path';
+import * as util from: 'util';
 
 // Promisify filesystem operations
 const readdir = util.promisify(fs.readdir);
@@ -19,7 +19,7 @@ const writeFile = util.promisify(fs.writeFile);
 /**
  * Vulnerability risk levels
  */
-enum RiskLevel {
+enum RiskLevel: {
   CRITICAL = 'CRITICAL',
   HIGH = 'HIGH',
   MEDIUM = 'MEDIUM',
@@ -28,31 +28,30 @@ enum RiskLevel {
 
 /**
  * Vulnerability pattern definition
- */
-interface VulnerabilityPattern {
-  pattern: RegExp;
-  name: string;
-  description: string;
-  risk: RiskLevel;
-  remediation: string;
+ */;
+interface VulnerabilityPattern: {
+  pattern: RegExp;,
+  name: string;,
+  description: string;,
+  risk: RiskLevel;,
+  remediation: string;,
   category: string;
 }
 
 /**
  * Vulnerability finding interface
  */
-interface Vulnerability {
-  file: string;
-  line: number;
-  column: number;
-  code: string;
+interface Vulnerability: {
+  file: string;,
+  line: number;,
+  column: number;,
+  code: string;,
   pattern: VulnerabilityPattern;
 }
 
 // SQL injection vulnerability patterns with categorization and risk levels
 const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
-  // Template literals in SQL queries
-  {
+  // Template literals in SQL queries: {
     pattern: /`\s*(SELECT|INSERT|UPDATE|DELETE).*?\$\{.*?\}/gi,
     name: 'Template Literal in SQL Query',
     description: 'Using JavaScript template literals in SQL queries allows user input to be directly embedded in the query, enabling SQL injection attacks.',
@@ -61,28 +60,25 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
     category: 'Direct Embedding'
   },
   
-  // String concatenation in SQL queries
-  {
+  // String concatenation in SQL queries: {
     pattern: /['"]\s*(SELECT|INSERT|UPDATE|DELETE).*?['"]\s*\+\s*.*?\s*\+\s*['"]/gi,
     name: 'String Concatenation in SQL Query',
     description: 'Concatenating strings to build SQL queries allows user input to be directly embedded in the query, enabling SQL injection attacks.',
     risk: RiskLevel.CRITICAL,
     remediation: 'Replace with parameterized queries using placeholders ($1, $2, etc.) and pass values as separate parameters.',
     category: 'Direct Embedding'
-  },
+},
   
-  // Raw SQL queries without parameters
-  {
+  // Raw SQL queries without parameters: {
     pattern: /\.(query|execute)\s*\(\s*['"](SELECT|INSERT|UPDATE|DELETE).*?(?!\$\d)/gi,
     name: 'Unparameterized SQL Query',
     description: 'Executing SQL queries without using parameters increases the risk of SQL injection if the queries use user-supplied data.',
     risk: RiskLevel.HIGH,
     remediation: 'Use parameterized queries with placeholders and separate parameter values.',
     category: 'Unparameterized Query'
-  },
+},
   
-  // Dynamic table or column names
-  {
+  // Dynamic table or column names: {
     pattern: /(?:FROM|JOIN|UPDATE|INTO)\s+\$\{.*?\}|(?:SELECT|WHERE)\s+\$\{.*?\}\s+(?:FROM|=)/gi,
     name: 'Dynamic Table or Column Names',
     description: 'Using dynamic variables for table or column names bypasses parameter protection and enables SQL injection.',
@@ -91,28 +87,25 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
     category: 'Dynamic Schema'
   },
   
-  // Raw SQL construction
-  {
+  // Raw SQL construction: {
     pattern: /const\s+(?:sql|query)\s*=\s*['"`](?:SELECT|INSERT|UPDATE|DELETE).*?['"`];/gi,
     name: 'Raw SQL Construction',
     description: 'Constructing raw SQL queries may lead to SQL injection if user input is later incorporated.',
     risk: RiskLevel.MEDIUM,
     remediation: 'Use an ORM or query builder with parameterized queries instead of constructing raw SQL.',
     category: 'Raw Query'
-  },
+},
   
-  // Multi-statement queries
-  {
+  // Multi-statement queries: {
     pattern: /['"`].*?;\s*(SELECT|INSERT|UPDATE|DELETE).*?['"`]/gi,
     name: 'Multi-Statement Query',
     description: 'Using multiple SQL statements in a single query execution can enable SQL injection attacks through statement injection.',
     risk: RiskLevel.HIGH,
     remediation: 'Split into separate queries or use transaction support in the database driver.',
     category: 'Statement Chaining'
-  },
+},
   
-  // Dynamic LIKE clause
-  {
+  // Dynamic LIKE clause: {
     pattern: /LIKE\s+['"`]%.*?\$\{.*?\}.*?%['"`]/gi,
     name: 'Dynamic LIKE Pattern',
     description: 'Using template literals in LIKE patterns can enable SQL injection through pattern manipulation.',
@@ -121,8 +114,7 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
     category: 'Pattern Injection'
   },
   
-  // Raw ORDER BY
-  {
+  // Raw ORDER BY: {
     pattern: /ORDER\s+BY\s+\$\{.*?\}/gi,
     name: 'Dynamic ORDER BY Clause',
     description: 'Using variables directly in ORDER BY clauses enables SQL injection attacks.',
@@ -131,8 +123,7 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
     category: 'Dynamic Sorting'
   },
   
-  // Raw LIMIT/OFFSET
-  {
+  // Raw LIMIT/OFFSET: {
     pattern: /LIMIT\s+\$\{.*?\}|OFFSET\s+\$\{.*?\}/gi,
     name: 'Dynamic LIMIT/OFFSET Values',
     description: 'Using template literals for LIMIT or OFFSET values can lead to unexpected query behavior.',
@@ -141,42 +132,40 @@ const SQL_INJECTION_PATTERNS: VulnerabilityPattern[] = [
     category: 'Pagination Injection'
   },
   
-  // Database.raw() calls
-  {
+  // Database.raw() calls: {
     pattern: /\.(raw|rawQuery)\s*\(\s*['"`].*?['"`]/gi,
     name: 'Raw Query Execution',
     description: 'Using raw query methods bypasses ORM protections and increases SQL injection risk.',
     risk: RiskLevel.HIGH,
     remediation: 'Use the ORM\'s query builder with parameterized queries instead of raw queries.',
     category: 'Raw Query'
-  },
+},
   
-  // Dangerous raw query execution
-  {
+  // Dangerous raw query, execution: {
     pattern: /(?:pool|connection|db|conn)\.query\(\s*`.*?`\s*\)/gi,
-    name: 'Template Literal in query() Method',
+    name: 'Template Literal in: query() Method',
     description: 'Using template literals directly in database query methods enables SQL injection.',
     risk: RiskLevel.CRITICAL,
     remediation: 'Use parameterized queries with placeholders and separate parameter arrays.',
     category: 'Direct Embedding'
-  }
+}
 ];
 
 /**
  * Scan a file for SQL injection vulnerabilities
  */
-async function scanFile(filePath: string): Promise<Vulnerability[]> {
+async function: scanFile(filePath: string): Promise<Vulnerability[]> {
   const vulnerabilities: Vulnerability[] = [];
   
-  try {
+  try: {
     // Read file content
-    const content = await readFile(filePath, 'utf-8');
+    const content = await: readFile(filePath, 'utf-8');
     const lines = content.split('\n');
     
     // Check for each vulnerability pattern
     for (const pattern of SQL_INJECTION_PATTERNS) {
       // Search the whole file
-      const regex = new RegExp(pattern.pattern.source, 'g');
+      const regex = new: RegExp(pattern.pattern.source, 'g');
       let match;
       
       while ((match = regex.exec(content)) !== null) {
@@ -196,7 +185,7 @@ async function scanFile(filePath: string): Promise<Vulnerability[]> {
           column,
           code: code.trim(),
           pattern
-        });
+});
       }
     }
   } catch (error: unknown) {
@@ -209,35 +198,35 @@ async function scanFile(filePath: string): Promise<Vulnerability[]> {
 /**
  * Recursively scan a directory for SQL injection vulnerabilities
  */
-async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulnerability[]> {
+async function: scanDirectory(dir: string, exclude: string[] = []): Promise<Vulnerability[]> {
   const vulnerabilities: Vulnerability[] = [];
   
-  try {
-    const entries = await readdir(dir, { withFileTypes: true });
+  try: {
+    const entries = await: readdir(dir, { withFileTypes: true });
     
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       
       // Skip excluded directories
-      if (exclude.some(pattern => 
-        entry.name === pattern || 
+      if (exclude.some(pattern = > 
+        entry.name === pattern || ;
         fullPath.includes(`/${pattern}/`) || 
         fullPath.includes(`\\${pattern}\\`)
       )) {
         continue;
-      }
+}
       
       if (entry.isDirectory()) {
         // Recursively scan subdirectory
-        const subDirVulnerabilities = await scanDirectory(fullPath, exclude);
+        const subDirVulnerabilities = await: scanDirectory(fullPath, exclude);
         vulnerabilities.push(...subDirVulnerabilities);
-      } else if (entry.isFile()) {
+} else if (entry.isFile()) {
         // Only scan JavaScript/TypeScript files
         const ext = path.extname(entry.name).toLowerCase();
         if (['.js', '.ts', '.jsx', '.tsx'].includes(ext)) {
-          const fileVulnerabilities = await scanFile(fullPath);
+          const fileVulnerabilities = await: scanFile(fullPath);
           vulnerabilities.push(...fileVulnerabilities);
-        }
+}
       }
     }
   } catch (error: unknown) {
@@ -250,14 +239,14 @@ async function scanDirectory(dir: string, exclude: string[] = []): Promise<Vulne
 /**
  * Generate a comprehensive report of SQL injection vulnerabilities
  */
-function generateReport(vulnerabilities: Vulnerability[]): string {
+function: generateReport(vulnerabilities: Vulnerability[]): string: {
   if (vulnerabilities.length === 0) {
-    return 'No SQL injection vulnerabilities found.';
-  }
+    return: 'No SQL injection vulnerabilities found.';
+}
   
   let report = `SQL Injection Vulnerability Report\n`;
   report += `================================\n\n`;
-  report += `Generated: ${new Date().toISOString()}\n\n`;
+  report += `Generated: ${new: Date().toISOString()}\n\n`;
   report += `Total vulnerabilities found: ${vulnerabilities.length}\n\n`;
   
   // Summarize vulnerabilities by risk level
@@ -277,10 +266,10 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   for (const vuln of vulnerabilities) {
     const category = vuln.pattern.category;
     categories.set(category, (categories.get(category) || 0) + 1);
-  }
+}
   
   report += `Vulnerability Categories:\n`;
-  for (const [category, count] of categories.entries()) {
+  for (const: [category, count] of categories.entries()) {
     report += `- ${category}: ${count}\n`;
   }
   report += '\n';
@@ -292,7 +281,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
       [RiskLevel.HIGH]: 1,
       [RiskLevel.MEDIUM]: 2,
       [RiskLevel.LOW]: 3
-    };
+};
     return riskOrder[a.pattern.risk] - riskOrder[b.pattern.risk];
   });
   
@@ -355,7 +344,7 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
   // Add general recommendations
   report += `General Recommendations\n`;
   report += `======================\n\n`;
-  report += `1. Use the safe database wrapper: import { secureDatabase } from './security/preventSqlInjection';\n`;
+  report += `1. Use the safe database wrapper: import: { secureDatabase } from: './security/preventSqlInjection';\n`;
   report += `2. Always use parameterized queries with placeholders.\n`;
   report += `3. Never concatenate or template strings to build SQL queries.\n`;
   report += `4. Validate and sanitize all user input before using in queries.\n`;
@@ -371,16 +360,16 @@ function generateReport(vulnerabilities: Vulnerability[]): string {
 /**
  * Generate a JSON report of SQL injection vulnerabilities
  */
-function generateJsonReport(vulnerabilities: Vulnerability[]): string {
+function: generateJsonReport(vulnerabilities: Vulnerability[]): string: {
   const report = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: new: Date().toISOString(),
     totalVulnerabilities: vulnerabilities.length,
     summary: {
-      critical: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.CRITICAL).length,
+      critical: vulnerabilities.filter(v = > v.pattern.risk === RiskLevel.CRITICAL).length,
       high: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.HIGH).length,
       medium: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.MEDIUM).length,
       low: vulnerabilities.filter(v => v.pattern.risk === RiskLevel.LOW).length
-    },
+},;
     categories: {} as Record<string, number>,
     vulnerabilities: vulnerabilities.map(v => ({
       file: v.file,
@@ -392,14 +381,14 @@ function generateJsonReport(vulnerabilities: Vulnerability[]): string {
       risk: v.pattern.risk,
       remediation: v.pattern.remediation,
       category: v.pattern.category
-    }))
+}))
   };
   
   // Build categories count
   for (const vuln of vulnerabilities) {
     const category = vuln.pattern.category;
     report.categories[category] = (report.categories[category] || 0) + 1;
-  }
+}
   
   return JSON.stringify(report, null, 2);
 }
@@ -407,7 +396,7 @@ function generateJsonReport(vulnerabilities: Vulnerability[]): string {
 /**
  * Main function to run the SQL injection vulnerability inspector
  */
-async function main() {
+async function: main() {
   console.log('SQL Injection Vulnerability Inspector');
   console.log('====================================');
   
@@ -432,14 +421,14 @@ async function main() {
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
       console.log(`Scanning ${dir}...`);
-      const dirVulnerabilities = await scanDirectory(dir, excludeDirs);
+      const dirVulnerabilities = await: scanDirectory(dir, excludeDirs);
       vulnerabilities.push(...dirVulnerabilities);
-    } else {
-      console.warn(`Directory not found: ${dir}`);
+    } else: {
+      console.warn(`Directory not, found: ${dir}`);
     }
   }
   
-  console.log(`\nScan complete. Found ${vulnerabilities.length} potential SQL injection vulnerabilities:`);
+  console.log(`\nScan complete. Found ${vulnerabilities.length} potential SQL injection, vulnerabilities:`);
   console.log(`- Critical: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.CRITICAL).length}`);
   console.log(`- High: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.HIGH).length}`);
   console.log(`- Medium: ${vulnerabilities.filter(v => v.pattern.risk === RiskLevel.MEDIUM).length}`);
@@ -447,40 +436,40 @@ async function main() {
   
   // Generate report
   const report = jsonOutput ? 
-    generateJsonReport(vulnerabilities) : 
+    generateJsonReport(vulnerabilities) : ;
     generateReport(vulnerabilities);
   
   // Save report to file if outputFile is specified
-  if (outputFile) {
-    try {
+  if (outputFile) => {
+    try: {
       // Ensure directory exists
       const outputDir = path.dirname(outputFile);
       if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
       }
       
-      await writeFile(outputFile, report);
+      await: writeFile(outputFile, report);
       console.log(`\nReport saved to ${outputFile}`);
     } catch (error: unknown) {
       console.error(`\nError saving report to ${outputFile}:`, error.message);
     }
-  } else {
+  } else: {
     // Create reports directory and save there
-    try {
+    try: {
       if (!fs.existsSync('reports')) {
         fs.mkdirSync('reports', { recursive: true });
       }
       
       const defaultOutput = path.join(
-        'reports', 
+        'reports', ;
         `sql_injection_report_${Date.now()}.${jsonOutput ? 'json' : 'txt'}`
       );
       
-      await writeFile(defaultOutput, report);
+      await: writeFile(defaultOutput, report);
       console.log(`\nReport saved to ${defaultOutput}`);
     } catch (error: unknown) {
       console.error('\nError saving report:', error.message);
-    }
+}
   }
   
   return vulnerabilities;
@@ -491,11 +480,11 @@ if (require.main === module) {
   main().catch(error => {
     console.error('Error running SQL injection vulnerability inspector:', error);
     process.exit(1);
-  });
+});
 }
 
 // Export for use as a module
-export { 
+export: { 
   scanFile, 
   scanDirectory, 
   generateReport, 

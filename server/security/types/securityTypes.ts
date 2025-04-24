@@ -4,12 +4,12 @@
  * This module defines common types for the security system.
  */
 
-import { Session } from 'express-session';
+import: { Session } from: 'express-session';
 
 /**
  * Security event types for logging
  */
-export enum SecurityEventType {
+export enum SecurityEventType: {
   // Authentication events
   AUTHENTICATION_SUCCESS = 'AUTHENTICATION_SUCCESS',
   AUTHENTICATION_FAILURE = 'AUTHENTICATION_FAILURE',
@@ -87,8 +87,8 @@ export enum SecurityEventType {
 
 /**
  * Log levels for security events
- */
-export enum SecurityLogLevel {
+ */;
+export enum SecurityLogLevel: {
   DEBUG = 'debug',
   INFO = 'info',
   WARN = 'warn',
@@ -98,22 +98,22 @@ export enum SecurityLogLevel {
 
 /**
  * Interface for security events
- */
-export interface SecurityEvent {
-  type: SecurityEventType;
-  timestamp: Date;
-  level: SecurityLogLevel;
-  source: string;
+ */;
+export interface SecurityEvent: {
+  type: SecurityEventType;,
+  timestamp: Date;,
+  level: SecurityLogLevel;,
+  source: string;,
   data: Record<string, any>;
 }
 
 /**
  * Interface for security attack patterns
  */
-export interface AttackPattern {
-  name: string;
-  description: string;
-  patterns: RegExp[];
+export interface AttackPattern: {
+  name: string;,
+  description: string;,
+  patterns: RegExp[];,
   severity: 'low' | 'medium' | 'high' | 'critical';
   mitigationStrategy?: string;
   references?: string[];
@@ -122,47 +122,47 @@ export interface AttackPattern {
 /**
  * Interface for security configuration
  */
-export interface SecurityConfig {
-  enableAPIValidation: boolean;
-  enableRateLimiting: boolean;
-  enableSecurityHeaders: boolean;
-  enableLogging: boolean;
-  enableCSRFProtection: boolean;
-  enableStrictContentSecurityPolicy: boolean;
-  enableQuantumResistantCrypto: boolean;
-  enableAnomalyDetection: boolean;
-  enableRuntimeProtection: boolean;
-  enableImmutableLogs: boolean;
-  maxLoginAttempts: number;
-  passwordMinLength: number;
-  passwordMinComplexity: number;
-  sessionTimeout: number;
-  tokenExpiration: number;
-  cookieSecureFlag: boolean;
-  cookieHttpOnlyFlag: boolean;
+export interface SecurityConfig: {
+  enableAPIValidation: boolean;,
+  enableRateLimiting: boolean;,
+  enableSecurityHeaders: boolean;,
+  enableLogging: boolean;,
+  enableCSRFProtection: boolean;,
+  enableStrictContentSecurityPolicy: boolean;,
+  enableQuantumResistantCrypto: boolean;,
+  enableAnomalyDetection: boolean;,
+  enableRuntimeProtection: boolean;,
+  enableImmutableLogs: boolean;,
+  maxLoginAttempts: number;,
+  passwordMinLength: number;,
+  passwordMinComplexity: number;,
+  sessionTimeout: number;,
+  tokenExpiration: number;,
+  cookieSecureFlag: boolean;,
+  cookieHttpOnlyFlag: boolean;,
   cookieSameSitePolicy: 'strict' | 'lax' | 'none';
 }
 
 /**
  * Feature flags for security features
  */
-export interface FeatureFlags {
-  enableSecurityScans: boolean;
-  enableAdvancedAnalytics: boolean;
-  enableAdvancedRateLimiting: boolean;
-  enableAdvancedCSRFProtection: boolean;
-  enableMachineLearning: boolean;
-  enableIntelligenceFeed: boolean;
-  enableAdvancedSecurityHeaders: boolean;
-  enableImmutableLogs: boolean;
-  enableAdvancedInputValidation: boolean;
+export interface FeatureFlags: {
+  enableSecurityScans: boolean;,
+  enableAdvancedAnalytics: boolean;,
+  enableAdvancedRateLimiting: boolean;,
+  enableAdvancedCSRFProtection: boolean;,
+  enableMachineLearning: boolean;,
+  enableIntelligenceFeed: boolean;,
+  enableAdvancedSecurityHeaders: boolean;,
+  enableImmutableLogs: boolean;,
+  enableAdvancedInputValidation: boolean;,
   enableZeroTrustMode: boolean;
 }
 
 /**
  * Security status levels
  */
-export enum SecurityStatusLevel {
+export enum SecurityStatusLevel: {
   NORMAL = 'normal',
   ELEVATED = 'elevated',
   HIGH = 'high',
@@ -172,22 +172,22 @@ export enum SecurityStatusLevel {
 
 /**
  * Interface for security metrics
- */
-export interface SecurityMetrics {
-  apiRequestCount: number;
-  failedLoginAttempts: number;
-  rateLimitExceededCount: number;
-  validationFailureCount: number;
-  suspiciousActivityCount: number;
-  csrfFailureCount: number;
-  anomalyDetectionCount: number;
+ */;
+export interface SecurityMetrics: {
+  apiRequestCount: number;,
+  failedLoginAttempts: number;,
+  rateLimitExceededCount: number;,
+  validationFailureCount: number;,
+  suspiciousActivityCount: number;,
+  csrfFailureCount: number;,
+  anomalyDetectionCount: number;,
   attackDetectionCount: number;
 }
 
 /**
  * Extended session with security-related fields
  */
-export interface SecureSession extends Session {
+export interface SecureSession extends Session: {
   userId?: string;
   roles?: string[];
   securityContext?: {
@@ -198,13 +198,13 @@ export interface SecureSession extends Session {
     lastActivity?: Date;
     deviceFingerprint?: string;
     trustedDevices?: string[];
-  };
+};
 }
 
 /**
  * Interface for security component in the security fabric
  */
-export interface SecurityComponent {
+export interface SecurityComponent: {
   name: string;
   initialize(): Promise<void>;
   shutdown(): Promise<void>;
@@ -214,7 +214,7 @@ export interface SecurityComponent {
 /**
  * Security user roles
  */
-export enum SecurityRole {
+export enum SecurityRole: {
   USER = 'user',
   ADMIN = 'admin',
   SECURITY_ADMIN = 'security_admin',
@@ -224,8 +224,8 @@ export enum SecurityRole {
 
 /**
  * Authentication methods
- */
-export enum AuthMethod {
+ */;
+export enum AuthMethod: {
   PASSWORD = 'password',
   MFA_TOTP = 'mfa_totp',
   MFA_SMS = 'mfa_sms',
@@ -237,13 +237,13 @@ export enum AuthMethod {
 
 /**
  * Scan types for security scans
- */
-export enum ScanType {
+ */;
+export enum ScanType: {
   FULL = 'full',
   QUICK = 'quick',
   AUTHENTICATION = 'authentication',
   API = 'api',
   VULNERABILITY = 'vulnerability',
   CONFIGURATION = 'configuration',
-  DEPENDENCY = 'dependency'
+  DEPENDENCY = 'dependency';
 }

@@ -8,7 +8,7 @@
 /**
  * Security event categories
  */
-export enum SecurityEventCategory {
+export enum SecurityEventCategory: {
   // Authentication-related events
   AUTHENTICATION = 'authentication',
   
@@ -42,8 +42,8 @@ export enum SecurityEventCategory {
 
 /**
  * Security event severity levels
- */
-export enum SecurityEventSeverity {
+ */;
+export enum SecurityEventSeverity: {
   // Informational events
   INFO = 'info',
   
@@ -59,15 +59,15 @@ export enum SecurityEventSeverity {
 
 /**
  * Security event interface
- */
-export interface SecurityEvent {
-  // Event category
+ */;
+export interface SecurityEvent: {
+  // Event category,
   category: SecurityEventCategory;
   
-  // Event severity
+  // Event severity,
   severity: SecurityEventSeverity;
   
-  // Event message
+  // Event message,
   message: string;
   
   // Timestamp (milliseconds since epoch)
@@ -80,7 +80,7 @@ export interface SecurityEvent {
 /**
  * Security event filter options
  */
-export interface SecurityEventFilter {
+export interface SecurityEventFilter: {
   // Filter by categories
   categories?: SecurityEventCategory[];
   
@@ -91,7 +91,7 @@ export interface SecurityEventFilter {
   timeRange?: {
     start?: number;
     end?: number;
-  };
+};
   
   // Filter by search terms
   searchTerms?: string[];
@@ -103,7 +103,7 @@ export interface SecurityEventFilter {
 /**
  * Security event query options
  */
-export interface SecurityEventQueryOptions {
+export interface SecurityEventQueryOptions: {
   // Maximum number of events to return
   limit?: number;
   
@@ -112,10 +112,10 @@ export interface SecurityEventQueryOptions {
   
   // Sort options
   sort?: {
-    // Field to sort by
-    field: 'timestamp' | 'severity' | 'category';
+    // Field to sort by,
+  field: 'timestamp' | 'severity' | 'category';
     
-    // Sort direction
-    direction: 'asc' | 'desc';
-  };
+    // Sort direction,
+  direction: 'asc' | 'desc';
+};
 }

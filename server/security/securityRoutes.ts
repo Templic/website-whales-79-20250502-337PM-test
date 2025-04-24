@@ -3,8 +3,8 @@
  * 
  * Routes for security-related API endpoints
  */
-import { Router } from 'express';
-import { getSettings, updateSetting, getStats, getLatestScan, runScan } from './securityController';
+import: { Router } from: 'express';
+import: { getSettings, updateSetting, getStats, getLatestScan, runScan } from: './securityController';
 
 const securityRouter = Router();
 
