@@ -1,36 +1,26 @@
 /**
- * Central Type Definitions Index
+ * Type Definitions Index
  * 
- * This file exports all type definitions from the various type categories,
- * providing a single entry point for importing types.
+ * This file exports all type definitions from across the application.
+ * It serves as a central entry point for importing types.
  */
 
-// Core Types
+// Core types
 export * from './core/error-types';
 export * from './core/security-types';
 export * from './core/common-types';
 
-// API Types
+// API types
 export * from './api/express-types';
+// export * from './api/request-types';
+// export * from './api/response-types';
 
-// Database Types
-export * from './database/db-types';
+// Database types (to be implemented)
+// export * from './database/db-types';
+// export * from './database/model-types';
+// export * from './database/query-types';
 
-// Component Types
-export * from './components/component-types';
-
-/**
- * @file index.d.ts
- * @description Central export for all TypeScript type definitions
- * 
- * This file provides a unified entry point for importing all type definitions
- * defined in the application. Instead of importing from individual files,
- * consumers can import from this central location.
- * 
- * Example:
- * ```typescript
- * import { BaseError, SecurityEvent, User } from '@server/types';
- * ```
- * 
- * This approach ensures consistency and makes it easier to manage type dependencies.
- */
+// Component types (to be implemented)
+// export * from './components/component-types';
+// export * from './components/event-types';
+// export * from './components/props-types';

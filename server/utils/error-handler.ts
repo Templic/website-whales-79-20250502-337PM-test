@@ -70,14 +70,20 @@ export function handleError(
   error: unknown, 
   defaultMessage = 'An unexpected error occurred'
 ): BaseError {
-  // Already a BaseError
+  // Handle Error instance by converting to BaseError
   if (error instanceof Error) {
-    const baseError: BaseError = error;
+    // Extract standard Error properties
+    const { name, message, stack } = error;
     
-    // Add default properties if not present
-    if (!baseError.code) baseError.code = 'ERR_UNKNOWN';
-    if (!baseError.statusCode) baseError.statusCode = 500;
-    if (!baseError.timestamp) baseError.timestamp = Date.now();
+    // Create a properly formed BaseError
+    const baseError: BaseError = {
+      name,
+      message,
+      stack,
+      code: (error as any).code || 'ERR_UNKNOWN',
+      statusCode: (error as any).statusCode || 500,
+      timestamp: (error as any).timestamp || Date.now()
+    };
     
     return baseError;
   }

@@ -178,7 +178,7 @@ function determineSeverity(category: ErrorCategory, message: string): ErrorSever
  * Extracts related types from an error message
  */
 function extractRelatedTypes(message: string): string[] {
-  const types = [];
+  const types: string[] = [];
   
   // Extract types from "X is not assignable to type Y" patterns
   const assignableMatch = message.match(/['"](.+)['"]\s+is not assignable to type\s+['"](.+)['"]/);

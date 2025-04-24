@@ -1,236 +1,344 @@
 /**
  * Common Type Definitions
  * 
- * This file contains common types used throughout the application.
+ * This file defines common types used throughout the application.
+ * These types provide consistent structures for basic functionality.
  */
 
 /**
- * Pagination parameters for list operations
+ * Pagination parameters for list requests
  */
-interface PaginationParams {
-  /** Page number, starting from 1 */
-  page?: number;
-  
-  /** Number of items per page */
-  limit?: number;
-  
-  /** Total number of items (for response) */
-  total?: number;
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+  totalItems?: number;
+  totalPages?: number;
 }
 
 /**
- * Sorting parameters for list operations
+ * Sorting parameters for list requests
  */
-interface SortingParams {
-  /** Field to sort by */
-  sortBy?: string;
-  
-  /** Sort direction */
-  sortDirection?: 'asc' | 'desc';
+export interface SortingParams {
+  field: string;
+  direction: 'asc' | 'desc';
 }
 
 /**
- * Filtering parameters for list operations
+ * Filtering parameters for list requests
  */
-interface FilterParams {
-  /** Field-value pairs for filtering */
-  [key: string]: string | number | boolean | Array<string | number | boolean> | null;
+export interface FilteringParams {
+  field: string;
+  operator: FilterOperator;
+  value: any;
 }
 
 /**
- * Response metadata
+ * Filter operators for query filtering
  */
-interface ResponseMetadata {
-  /** Response timestamp */
-  timestamp: number;
-  
-  /** Request ID for tracing */
-  requestId?: string;
-  
-  /** Response processing time in ms */
-  processingTime?: number;
-  
-  /** API version */
-  apiVersion?: string;
-  
-  /** Pagination information */
-  pagination?: PaginationParams;
+export type FilterOperator =
+  | 'eq'      // equals
+  | 'neq'     // not equals
+  | 'gt'      // greater than
+  | 'gte'     // greater than or equals
+  | 'lt'      // less than
+  | 'lte'     // less than or equals
+  | 'in'      // in array
+  | 'nin'     // not in array
+  | 'like'    // string contains
+  | 'nlike'   // string does not contain
+  | 'starts'  // string starts with
+  | 'ends'    // string ends with
+  | 'exists'  // field exists
+  | 'nexists'; // field does not exist
+
+/**
+ * Standard API request structure
+ */
+export interface ApiRequest<T = any> {
+  body?: T;
+  query?: Record<string, any>;
+  params?: Record<string, any>;
+  headers?: Record<string, string>;
+  user?: any;
 }
 
 /**
  * Standard API response structure
  */
-interface ApiResponse<T = any> {
-  /** Success flag */
+export interface ApiResponse<T = any> {
   success: boolean;
-  
-  /** Response data */
   data?: T;
-  
-  /** Error message if success is false */
-  error?: string;
-  
-  /** Error code if success is false */
-  errorCode?: string | number;
-  
-  /** Response metadata */
-  meta?: ResponseMetadata;
+  error?: {
+    message: string;
+    code: string | number;
+    details?: any;
+  };
+  meta?: {
+    pagination?: PaginationParams;
+    timestamp: number;
+    [key: string]: any;
+  };
 }
 
 /**
- * User session data
+ * Standard list response with pagination
  */
-interface SessionData {
-  /** User ID */
-  userId?: string;
-  
-  /** Username */
-  username?: string;
-  
-  /** User's email */
-  email?: string;
-  
-  /** User's roles */
-  roles?: string[];
-  
-  /** User's permissions */
-  permissions?: string[];
-  
-  /** Session expiration timestamp */
-  expiresAt?: number;
-  
-  /** Whether user is authenticated */
-  isAuthenticated?: boolean;
-  
-  /** CSRF token */
-  csrfToken?: string;
-  
-  /** Last activity timestamp */
-  lastActivity?: number;
-  
-  /** IP address */
-  ipAddress?: string;
-  
-  /** User agent */
-  userAgent?: string;
+export interface ListResponse<T = any> {
+  items: T[];
+  pagination: PaginationParams;
 }
 
 /**
- * Config entry
+ * Result object for async operations
  */
-interface ConfigEntry {
-  /** Configuration key */
-  key: string;
-  
-  /** Configuration value */
-  value: any;
-  
-  /** Environment the config applies to */
-  environment?: 'development' | 'testing' | 'production' | 'all';
-  
-  /** Whether the config is encrypted */
-  encrypted?: boolean;
-  
-  /** Last updated timestamp */
-  updatedAt?: number;
-  
-  /** User who last updated the config */
+export interface Result<T = any> {
+  success: boolean;
+  data?: T;
+  error?: Error;
+  meta?: Record<string, any>;
+}
+
+/**
+ * Base entity properties
+ */
+export interface BaseEntity {
+  id: string;
+  createdAt: number | Date;
+  updatedAt: number | Date;
+}
+
+/**
+ * Soft-deletable entity properties
+ */
+export interface SoftDeletableEntity extends BaseEntity {
+  deletedAt?: number | Date;
+  isDeleted: boolean;
+}
+
+/**
+ * Audit properties for entities
+ */
+export interface AuditableEntity extends BaseEntity {
+  createdBy?: string;
   updatedBy?: string;
 }
 
 /**
- * Logging level
+ * Versioned entity properties
  */
-type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+export interface VersionedEntity extends BaseEntity {
+  version: number;
+  versionHistory?: Array<{
+    version: number;
+    updatedAt: number | Date;
+    updatedBy?: string;
+    changes: Record<string, any>;
+  }>;
+}
 
 /**
- * Log entry
+ * Cache control settings
  */
-interface LogEntry {
-  /** Log timestamp */
+export interface CacheControl {
+  maxAge: number;
+  sMaxAge?: number;
+  staleWhileRevalidate?: number;
+  staleIfError?: number;
+  mustRevalidate?: boolean;
+  noCache?: boolean;
+  noStore?: boolean;
+  private?: boolean;
+  public?: boolean;
+}
+
+/**
+ * Webhook payload structure
+ */
+export interface WebhookPayload<T = any> {
+  event: string;
   timestamp: number;
-  
-  /** Log level */
-  level: LogLevel;
-  
-  /** Log message */
-  message: string;
-  
-  /** Additional log data */
-  data?: Record<string, unknown>;
-  
-  /** Source of the log */
-  source?: string;
-  
-  /** Associated request ID */
-  requestId?: string;
-  
-  /** Associated user ID */
-  userId?: string;
+  data: T;
+  signature?: string;
+  apiVersion?: string;
 }
 
 /**
- * Environment information
+ * Configuration for feature flags
  */
-interface EnvironmentInfo {
-  /** Current environment */
-  environment: 'development' | 'testing' | 'production';
-  
-  /** Node.js version */
-  nodeVersion: string;
-  
-  /** Server start time */
-  startTime: number;
-  
-  /** Host information */
-  host: {
-    hostname: string;
-    platform: string;
-    architecture: string;
-  };
-  
-  /** Memory usage information */
-  memory?: {
-    total: number;
-    free: number;
-    used: number;
+export interface FeatureFlag {
+  name: string;
+  enabled: boolean;
+  description?: string;
+  conditions?: {
+    userIds?: string[];
+    userRoles?: string[];
+    percentage?: number;
+    startDate?: number | Date;
+    endDate?: number | Date;
+    environments?: string[];
+    custom?: Record<string, any>;
   };
 }
 
 /**
- * Generic record with string keys and any values
+ * Health check status
  */
-type GenericRecord = Record<string, any>;
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  checks: Array<{
+    name: string;
+    status: 'pass' | 'warn' | 'fail';
+    message?: string;
+    timestamp: number;
+    duration?: number;
+    metadata?: Record<string, any>;
+  }>;
+  version?: string;
+  timestamp: number;
+}
 
 /**
- * Function with any parameters and any return type
+ * Job task configuration
  */
-type GenericFunction = (...args: any[]) => any;
+export interface JobTask {
+  id: string;
+  name: string;
+  type: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  priority: 'low' | 'normal' | 'high' | 'critical';
+  data: any;
+  options?: {
+    timeout?: number;
+    retries?: number;
+    backoff?: number;
+    removeOnComplete?: boolean;
+    removeOnFail?: boolean;
+  };
+  progress?: number;
+  result?: any;
+  error?: string;
+  createdAt: number;
+  startedAt?: number;
+  completedAt?: number;
+}
 
 /**
- * ID type used throughout the application
+ * Metadata for uploaded files
  */
-type ID = string;
+export interface FileMetadata {
+  id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  encoding: string;
+  size: number;
+  url?: string;
+  path?: string;
+  bucket?: string;
+  tags?: string[];
+  uploadedBy?: string;
+  uploadedAt: number;
+  metadata?: Record<string, any>;
+}
 
 /**
- * Timestamp type (milliseconds since epoch)
+ * Service response wrapper for consistent API
  */
-type Timestamp = number;
+export interface ServiceResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: Error;
+  meta?: Record<string, any>;
+}
 
-// Export types for use in other files
-export {
-  PaginationParams,
-  SortingParams,
-  FilterParams,
-  ResponseMetadata,
-  ApiResponse,
-  SessionData,
-  ConfigEntry,
-  LogLevel,
-  LogEntry,
-  EnvironmentInfo,
-  GenericRecord,
-  GenericFunction,
-  ID,
-  Timestamp
+/**
+ * User preference settings
+ */
+export interface UserPreferences {
+  userId: string;
+  theme?: 'light' | 'dark' | 'system';
+  language?: string;
+  timezone?: string;
+  dateFormat?: string;
+  timeFormat?: string;
+  emailNotifications?: boolean;
+  pushNotifications?: boolean;
+  smsNotifications?: boolean;
+  customPreferences?: Record<string, any>;
+}
+
+/**
+ * Type guards
+ */
+
+export function isPaginationParams(obj: unknown): obj is PaginationParams {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'page' in obj &&
+    'pageSize' in obj
+  );
+}
+
+export function isApiResponse<T = any>(obj: unknown): obj is ApiResponse<T> {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'success' in obj &&
+    typeof (obj as any).success === 'boolean'
+  );
+}
+
+export function isResult<T = any>(obj: unknown): obj is Result<T> {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'success' in obj &&
+    typeof (obj as any).success === 'boolean'
+  );
+}
+
+export function isBaseEntity(obj: unknown): obj is BaseEntity {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'createdAt' in obj &&
+    'updatedAt' in obj
+  );
+}
+
+/**
+ * Type utilities
+ */
+
+// Makes all properties in an object required and non-nullable
+export type Required<T> = {
+  [P in keyof T]-?: NonNullable<T[P]>;
 };
+
+// Makes all properties in an object optional
+export type Optional<T> = {
+  [P in keyof T]?: T[P];
+};
+
+// Creates a type with only the specified keys from another type
+export type Pick<T, K extends keyof T> = {
+  [P in K]: T[P];
+};
+
+// Removes specified keys from a type
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+
+// Deep partial type for nested objects
+export type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;
+
+// Converts all properties in an object to readonly
+export type Readonly<T> = {
+  readonly [P in keyof T]: T[P];
+};
+
+// Nullish value type
+export type Nullish<T> = T | null | undefined;

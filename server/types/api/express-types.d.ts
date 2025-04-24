@@ -1,166 +1,135 @@
 /**
- * Express Type Extensions
+ * Express Type Definitions
  * 
- * This file extends Express's Request, Response, and other types
- * to add custom properties and methods used in our application.
+ * Type definitions for Express applications and middleware.
+ * These extend the core Express types with additional properties
+ * specific to this application.
  */
 
-import { SessionData } from '../core/common-types';
-import { SecurityConfig } from '../core/security-types';
+import { AuthenticatedUser } from '../core/security-types';
 
-// Extend Express Request
+// Extend Express Request interface
 declare namespace Express {
-  export interface Request {
-    /** User session data */
-    session: {
-      /** Session ID */
-      id: string;
-      
-      /** Session data */
-      data: SessionData;
-      
-      /** Regenerate session */
-      regenerate(callback: (err: any) => void): void;
-      
-      /** Save session */
-      save(callback: (err: any) => void): void;
-      
-      /** Destroy session */
-      destroy(callback: (err: any) => void): void;
-      
-      /** Reset session max age */
-      touch(): void;
-      
-      /** Session cookie */
-      cookie: {
-        maxAge: number;
-        originalMaxAge: number;
-        expires: Date;
-        secure?: boolean;
-        httpOnly: boolean;
-        domain?: string;
-        path: string;
-        sameSite?: boolean | 'lax' | 'strict' | 'none';
-      };
-    };
-    
-    /** Authenticated user */
-    user?: {
-      id: string;
-      username: string;
-      email: string;
-      roles: string[];
-      permissions: string[];
-      isAdmin: boolean;
-    };
-    
-    /** CSRF token */
-    csrfToken(): string;
-    
-    /** Request start time for performance tracking */
+  interface Request {
+    user?: AuthenticatedUser;
+    csrfToken?: () => string;
     startTime?: number;
-    
-    /** Request ID for tracing */
-    requestId?: string;
-    
-    /** Security configuration */
-    securityConfig?: SecurityConfig;
-    
-    /** Original request IP (handles proxies) */
-    realIp?: string;
-    
-    /** Custom validation function */
-    validate?(schema: any): { valid: boolean; errors?: any };
-    
-    /** Rate limit information */
-    rateLimit?: {
-      limit: number;
-      current: number;
-      remaining: number;
-      resetTime: number;
+    correlationId?: string;
+    session?: {
+      id: string;
+      userId?: string;
+      createdAt: number;
+      expiresAt: number;
+      data: Record<string, any>;
+      regenerate: (callback: (err?: Error) => void) => void;
+      destroy: (callback: (err?: Error) => void) => void;
+      reload: (callback: (err?: Error) => void) => void;
+      save: (callback: (err?: Error) => void) => void;
+      touch: (callback: (err?: Error) => void) => void;
     };
-    
-    /** Check if request is authenticated */
-    isAuthenticated(): boolean;
-    
-    /** Check if user has specific permission */
-    hasPermission(permission: string): boolean;
-    
-    /** Check if user has specific role */
-    hasRole(role: string): boolean;
-    
-    /** Original URL before redirects */
-    originalUrl: string;
-    
-    /** Parse a query parameter as an integer */
-    parseIntParam(paramName: string, defaultValue?: number): number;
-    
-    /** Parse a query parameter as a boolean */
-    parseBoolParam(paramName: string, defaultValue?: boolean): boolean;
+    flash?: (type: string, message: string) => void;
+    isAuthenticated?: () => boolean;
   }
 
-  // Extend Express Response
-  export interface Response {
-    /** Send a successful response */
-    success<T>(data: T, status?: number): Response;
+  // Extend Express Response interface with typed methods
+  interface Response {
+    // Type safe response methods
+    success: <T>(data?: T, statusCode?: number, meta?: Record<string, any>) => Response;
+    error: (message: string, statusCode?: number, errorCode?: string | number, details?: any) => Response;
+    created: <T>(data?: T, meta?: Record<string, any>) => Response;
+    notFound: (message?: string, errorCode?: string | number) => Response;
+    badRequest: (message?: string, errorCode?: string | number, details?: any) => Response;
+    unauthorized: (message?: string, errorCode?: string | number) => Response;
+    forbidden: (message?: string, errorCode?: string | number) => Response;
+    tooManyRequests: (message?: string, resetTime?: number) => Response;
+    serverError: (message?: string, errorCode?: string | number, details?: any) => Response;
+    noContent: () => Response;
+    accepted: <T>(data?: T, meta?: Record<string, any>) => Response;
     
-    /** Send an error response */
-    error(message: string, statusCode?: number, errorCode?: string | number): Response;
+    // Cache control
+    withCache: (maxAgeSeconds: number, options?: {
+      public?: boolean;
+      private?: boolean;
+      noCache?: boolean;
+      noStore?: boolean;
+      mustRevalidate?: boolean;
+      proxyRevalidate?: boolean;
+      sMaxAgeSeconds?: number;
+    }) => Response;
     
-    /** Send a paginated response */
-    paginated<T>(data: T[], total: number, page: number, limit: number): Response;
+    // JSON format response with proper typing
+    json<T>(body: T): Response;
     
-    /** Set cache headers */
-    setCache(maxAge: number): Response;
-    
-    /** Send a no-content response */
-    noContent(): Response;
-    
-    /** Send a created response */
-    created<T>(data: T): Response;
-    
-    /** Set security headers */
-    setSecurityHeaders(): Response;
-    
-    /** Send a redirect with flash message */
-    redirectWithMessage(url: string, message: string, type?: 'success' | 'info' | 'warning' | 'error'): void;
-    
-    /** Set response headers for file download */
-    prepareDownload(filename: string, mimeType?: string): Response;
-    
-    /** Typed response */
-    json<T>(body?: T): TypedResponse<T>;
-    
-    /** Typed status */
-    status(code: number): TypedResponse<any>;
+    // Status with typing
+    status(code: number): Response;
   }
-
+  
   // Add TypedResponse to fix express response typing issues
-  export interface TypedResponse<T> extends Response {
-    /** Send JSON response with type */
-    json(body: T): TypedResponse<T>;
-    
-    /** Set response status code with type */
-    status(code: number): TypedResponse<T>;
-    
-    /** Send response with type */
-    send(body: T): TypedResponse<T>;
+  interface TypedResponse<ResBody> extends Response {
+    json(body: ResBody): TypedResponse<ResBody>;
+    status(code: number): TypedResponse<ResBody>;
   }
 }
 
-// Extend NextFunction
-declare namespace Express {
-  export interface NextFunction {
-    (err?: any): void;
-  }
+/**
+ * Middleware function type
+ */
+export type ExpressMiddleware = (
+  req: Express.Request, 
+  res: Express.Response, 
+  next: (error?: any) => void
+) => void | Promise<void>;
+
+/**
+ * Error handling middleware function type
+ */
+export type ExpressErrorMiddleware = (
+  err: any,
+  req: Express.Request, 
+  res: Express.Response, 
+  next: (error?: any) => void
+) => void | Promise<void>;
+
+/**
+ * Route handler function type
+ */
+export type ExpressRouteHandler = (
+  req: Express.Request, 
+  res: Express.Response
+) => void | Promise<void>;
+
+/**
+ * Express controller with route handlers
+ */
+export interface ExpressController {
+  [key: string]: ExpressRouteHandler;
 }
 
-// Extend Error
-declare namespace Express {
-  export interface ErrorRequestHandler {
-    (err: any, req: Request, res: Response, next: NextFunction): void;
-  }
+/**
+ * Route configuration
+ */
+export interface RouteConfig {
+  path: string;
+  method: 'get' | 'post' | 'put' | 'patch' | 'delete' | 'options' | 'head';
+  handler: ExpressRouteHandler;
+  middleware?: ExpressMiddleware[];
+  validate?: {
+    body?: any;
+    query?: any;
+    params?: any;
+    headers?: any;
+  };
+  description?: string;
+  isProtected?: boolean;
+  rateLimit?: {
+    windowMs: number;
+    max: number;
+  };
+  cache?: {
+    enabled: boolean;
+    duration: number;
+  };
 }
 
-// Need to export something to make it a module
+// Export this as a module
 export {};

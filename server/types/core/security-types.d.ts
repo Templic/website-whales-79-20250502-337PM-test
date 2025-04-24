@@ -1,233 +1,309 @@
 /**
- * Security-Related Type Definitions
+ * Security Type Definitions
  * 
- * This file defines security-related interfaces and types used throughout the application.
+ * This file defines security-related types used throughout the application.
+ * These types provide structure for security features like authentication,
+ * authorization, and audit logging.
  */
-
-import { SecurityError } from './error-types';
 
 /**
- * Security event data structure
+ * Security log entry for tracking security-related events
  */
-interface SecurityEvent {
-  /** Type of security event */
-  type: string;
-  
-  /** Security event message */
-  message: string;
-  
-  /** Timestamp when the event occurred */
+export interface SecurityLogEntry {
+  id?: string;
   timestamp: number;
-  
-  /** Severity of the security event */
-  severity: 'info' | 'warning' | 'error' | 'critical';
-  
-  /** Additional contextual data for the event */
-  data?: Record<string, unknown>;
-  
-  /** Source IP address */
-  sourceIp?: string;
-  
-  /** Associated user ID */
+  eventType: SecurityEventType;
+  severity: SecuritySeverity;
   userId?: string;
-  
-  /** Unique request identifier */
-  requestId?: string;
-  
-  /** Security scan that detected the event */
-  detector?: string;
-  
-  /** Hash of the event for verification */
-  eventHash?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  resourceType?: string;
+  resourceId?: string | number;
+  action: string;
+  outcome: 'success' | 'failure' | 'warning';
+  details?: Record<string, any>;
+  metadata?: Record<string, any>;
 }
 
 /**
- * Immutable security log store
+ * Security event types for categorizing security logs
  */
-interface ImmutableSecurityLogs {
-  /** Add a security event to the logs */
-  addSecurityEvent(event: SecurityEvent): void;
-  
-  /** Get all security events */
-  getEvents(): SecurityEvent[];
-  
-  /** Get events by specific type */
-  getEventsByType(type: string): SecurityEvent[];
-  
-  /** Get events by severity level */
-  getEventsBySeverity(severity: string): SecurityEvent[];
-  
-  /** Get events within a time range */
-  getEventsInTimeRange(start: number, end: number): SecurityEvent[];
-  
-  /** Clear all events (admin only) */
-  clear(): void;
-  
-  /** Export events in specified format */
-  export(format?: 'json' | 'csv'): string;
-  
-  /** Get the current number of events */
-  getSize(): number;
-  
-  /** Verify integrity of the log chain */
-  verifyIntegrity(): boolean;
-  
-  /** Get events related to a specific user */
-  getEventsByUser(userId: string): SecurityEvent[];
-  
-  /** Search events by keyword */
-  searchEvents(keyword: string): SecurityEvent[];
+export type SecurityEventType =
+  | 'authentication'
+  | 'authorization'
+  | 'data_access'
+  | 'data_modification'
+  | 'account_change'
+  | 'configuration_change'
+  | 'rate_limit'
+  | 'intrusion_attempt'
+  | 'suspicious_activity'
+  | 'security_control'
+  | 'other';
+
+/**
+ * Security severity levels
+ */
+export type SecuritySeverity = 'low' | 'medium' | 'high' | 'critical';
+
+/**
+ * Authenticated user session data
+ */
+export interface AuthenticatedUser {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+  permissions: string[];
+  isActive: boolean;
+  lastLogin?: number;
+  isTwoFactorEnabled?: boolean;
+  sessionExpiry: number;
+  metadata?: Record<string, any>;
 }
 
 /**
- * Security configuration options
+ * Permission definition
  */
-interface SecurityConfig {
-  /** Whether deep scanning is enabled */
-  deepScanningEnabled: boolean;
+export interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  resource: string;
+  action: 'create' | 'read' | 'update' | 'delete' | 'manage' | 'execute';
+  constraints?: Record<string, any>;
+}
+
+/**
+ * Role definition with associated permissions
+ */
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[] | Permission[];
+  isSystem?: boolean;
+}
+
+/**
+ * Security configuration for features and controls
+ */
+export interface SecurityConfig {
+  // Authentication settings
+  auth: {
+    allowedAuthMethods: ('password' | 'oauth' | 'mfa' | 'sso')[];
+    sessionDuration: number;
+    jwtSecret?: string;
+    jwtExpiresIn: string;
+    requireStrongPasswords: boolean;
+    passwordMinLength: number;
+    passwordRequireUppercase: boolean;
+    passwordRequireNumbers: boolean;
+    passwordRequireSpecialChars: boolean;
+    passwordHistoryLimit: number;
+    maxLoginAttempts: number;
+    lockoutDuration: number;
+    enableMfa: boolean;
+  };
   
-  /** Security log retention period in days */
-  logRetentionDays: number;
-  
-  /** Whether to use quantum-resistant algorithms */
-  useQuantumResistantAlgorithms: boolean;
-  
-  /** Rate limiting settings */
-  rateLimiting: {
+  // Rate limiting settings
+  rateLimit: {
     enabled: boolean;
+    windowMs: number;
     maxRequests: number;
-    timeWindowMs: number;
+    skipPaths?: string[];
+    skipMethods?: string[];
+    keyGenerator?: 'ip' | 'userId' | 'custom';
   };
   
-  /** CSRF protection settings */
-  csrfProtection: {
+  // CSRF protection
+  csrf: {
     enabled: boolean;
-    cookieName: string;
-    headerName: string;
+    tokenKey: string;
+    cookie: {
+      key: string;
+      path: string;
+      sameSite: boolean | 'lax' | 'strict' | 'none';
+      secure: boolean;
+      httpOnly: boolean;
+    };
   };
   
-  /** Content Security Policy settings */
-  contentSecurityPolicy: {
+  // Content security settings
+  contentSecurity: {
     enabled: boolean;
-    policy: Record<string, string>;
+    directives?: Record<string, string[]>;
+    reportOnly: boolean;
+  };
+  
+  // Audit logging
+  auditLog: {
+    enabled: boolean;
+    logLevel: 'none' | 'minimal' | 'standard' | 'verbose';
+    logStorage: 'database' | 'file' | 'external';
+    retentionDays: number;
+  };
+  
+  // Other security settings
+  cors: {
+    enabled: boolean;
+    allowedOrigins: string[];
+    allowCredentials: boolean;
+    allowedMethods: string[];
+    allowedHeaders: string[];
+  };
+  
+  sanitization: {
+    enabled: boolean;
+    sanitizeRequestBody: boolean;
+    sanitizeHeaders: boolean;
+    sanitizeParams: boolean;
+    sanitizeRequestQuery: boolean;
   };
 }
 
 /**
- * Feature flags related to security
+ * Token structure for authentication
  */
-interface FeatureFlags {
-  /** Whether security scans are enabled */
-  enableSecurityScans: boolean;
-  
-  /** Whether to enable blockchain logging */
-  enableBlockchainLogging: boolean;
-  
-  /** Whether to enable ML-based anomaly detection */
-  enableMlAnomalyDetection: boolean;
-}
-
-/**
- * Token data structure
- */
-interface Token {
-  /** The token value */
-  value: string;
-  
-  /** When the token expires */
+export interface AuthToken {
+  token: string;
+  type: 'access' | 'refresh' | 'reset' | 'verification';
+  issuedAt: number;
   expiresAt: number;
-  
-  /** Type of token */
-  type: 'access' | 'refresh' | 'csrf' | 'api';
-  
-  /** Associated user ID */
+  userId: string;
+  scopes?: string[];
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Two-factor authentication data
+ */
+export interface TwoFactorAuth {
+  userId: string;
+  secret: string;
+  verified: boolean;
+  method: 'totp' | 'sms' | 'email';
+  backupCodes?: string[];
+  lastUsed?: number;
+}
+
+/**
+ * Security challenge for additional verification
+ */
+export interface SecurityChallenge {
+  id: string;
+  userId: string;
+  type: 'captcha' | 'knowledge_question' | 'device_confirmation' | 'time_delay';
+  status: 'pending' | 'completed' | 'failed' | 'expired';
+  createdAt: number;
+  expiresAt: number;
+  attempts: number;
+  maxAttempts: number;
+  data?: Record<string, any>;
+}
+
+/**
+ * Security alert notification
+ */
+export interface SecurityAlert {
+  id: string;
   userId?: string;
-  
-  /** Token scope or permissions */
-  scope?: string[];
-  
-  /** Token issuer */
-  issuer?: string;
+  timestamp: number;
+  severity: SecuritySeverity;
+  title: string;
+  message: string;
+  sourceEvent?: string;
+  actionRequired: boolean;
+  actionLink?: string;
+  read: boolean;
+  resolved: boolean;
+  metadata?: Record<string, any>;
 }
 
 /**
- * Encryption options
+ * IP blocking rule
  */
-interface EncryptionOptions {
-  /** Encryption algorithm to use */
-  algorithm: string;
-  
-  /** Key size in bits */
-  keySize: number;
-  
-  /** Initialization vector */
-  iv?: Buffer;
-  
-  /** Iteration count for key derivation */
-  iterations?: number;
-  
-  /** Output encoding format */
-  outputEncoding?: 'hex' | 'base64';
+export interface IpBlockRule {
+  id: string;
+  ipAddress: string;
+  reason: string;
+  createdAt: number;
+  expiresAt?: number;
+  isActive: boolean;
+  createdBy?: string;
+  notes?: string;
 }
 
 /**
- * Hash algorithm options
+ * Security report summary
  */
-interface HashOptions {
-  /** Hash algorithm to use */
-  algorithm: string;
-  
-  /** Salt value */
-  salt?: Buffer | string;
-  
-  /** Key length in bytes */
-  keyLength?: number;
-  
-  /** Iteration count */
-  iterations?: number;
+export interface SecurityReport {
+  generatedAt: number;
+  period: 'day' | 'week' | 'month';
+  authFailures: number;
+  authSuccesses: number;
+  suspiciousActivities: number;
+  blockedIpAddresses: number;
+  totalSecurityEvents: number;
+  criticalEvents: number;
+  highSeverityEvents: number;
+  topIpAddresses: Array<{ip: string; count: number}>;
+  topResources: Array<{resource: string; count: number}>;
 }
 
 /**
- * Security scan result
+ * Authentication attempt record
  */
-interface SecurityScanResult {
-  /** Scan ID */
-  scanId: string;
-  
-  /** Timestamp when scan started */
-  startTime: number;
-  
-  /** Timestamp when scan completed */
-  endTime: number;
-  
-  /** Scan status */
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
-  
-  /** Detected vulnerabilities */
-  vulnerabilities: Array<{
-    id: string;
-    type: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
-    description: string;
-    location?: string;
-    remediation?: string;
-  }>;
-  
-  /** Number of files scanned */
-  filesScanned: number;
-  
-  /** Scan type */
-  scanType: 'quick' | 'standard' | 'deep';
+export interface AuthAttempt {
+  id: string;
+  userId?: string;
+  username?: string;
+  email?: string;
+  ipAddress: string;
+  userAgent?: string;
+  timestamp: number;
+  success: boolean;
+  failureReason?: string;
+  method: 'password' | 'oauth' | 'mfa' | 'sso';
+  metadata?: Record<string, any>;
 }
 
-// Export types for use in other files
-export {
-  SecurityEvent,
-  ImmutableSecurityLogs,
-  SecurityConfig,
-  FeatureFlags,
-  Token,
-  EncryptionOptions,
-  HashOptions,
-  SecurityScanResult
-};
+/**
+ * Type guards
+ */
+
+export function isAuthenticatedUser(obj: unknown): obj is AuthenticatedUser {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'username' in obj &&
+    'roles' in obj &&
+    'permissions' in obj &&
+    'isActive' in obj
+  );
+}
+
+export function isSecurityLogEntry(obj: unknown): obj is SecurityLogEntry {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'timestamp' in obj &&
+    'eventType' in obj &&
+    'severity' in obj &&
+    'action' in obj &&
+    'outcome' in obj
+  );
+}
+
+export function isAuthToken(obj: unknown): obj is AuthToken {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'token' in obj &&
+    'type' in obj &&
+    'issuedAt' in obj &&
+    'expiresAt' in obj &&
+    'userId' in obj
+  );
+}
