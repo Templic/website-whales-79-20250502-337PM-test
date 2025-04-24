@@ -67,7 +67,7 @@ export const ContactFormExample: React.FC<ContactFormExampleProps> = ({
       if (onSubmitSuccess) {
         onSubmitSuccess(data);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: 'Error',
         description: 'There was a problem sending your message. Please try again.',

@@ -7,8 +7,6 @@
  * @deprecated This component is deprecated. Please use MainFooter.tsx in the layout folder instead.
  * This file will be removed in a future update.
  */
-import React from "react";
-
 /**
  * cosmic-footer.tsx
  * 
@@ -20,7 +18,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState, useCallback } from "react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
@@ -117,7 +116,7 @@ export function CosmicFooter() {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         setSubscriptionStatus("success")
         setEmail("")
-      } catch (error: unknown) {
+      } catch (error) {
         setSubscriptionStatus("error")
         console.error("Subscription error:", error)
       } finally {
@@ -177,7 +176,7 @@ export function CosmicFooter() {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" aria-hidden="true">
-                    <circle cx={12} cy={12} r="3" fill="currentColor" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
                     <path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3z" fill="currentColor" />
                     <path d="M12 21a9 9 0 0 0 9-9h-3a6 6 0 0 1-6 6v3z" fill="currentColor" />
                   </svg>
@@ -256,9 +255,9 @@ export function CosmicFooter() {
                   <button
                     type="submit"
                     className="bg-cosmic-sea-500 hover:bg-cosmic-sea-600 text-white px-3 py-1 rounded-r-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ 
+                    style={{
                       clipPath: "polygon(0% 0%, 100% 0%, 95% 100%, 0% 100%)",
-                     }}
+                    }}
                     disabled={isSubmitting}
                     aria-label="Subscribe to newsletter"
                   >
@@ -363,7 +362,7 @@ function CosmicFooterOriginal() {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         setSubscriptionStatus("success")
         setEmail("")
-      } catch (error: unknown) {
+      } catch (error) {
         setSubscriptionStatus("error")
         console.error("Subscription error:", error)
       } finally {
@@ -423,7 +422,7 @@ function CosmicFooterOriginal() {
                 <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg viewBox="0 0 24 24" className="h-5 w-5 text-white" aria-hidden="true">
-                    <circle cx={12} cy={12} r="3" fill="currentColor" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" />
                     <path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3z" fill="currentColor" />
                     <path d="M12 21a9 9 0 0 0 9-9h-3a6 6 0 0 1-6 6v3z" fill="currentColor" />
                   </svg>
@@ -502,9 +501,9 @@ function CosmicFooterOriginal() {
                   <button
                     type="submit"
                     className="bg-cosmic-sea-500 hover:bg-cosmic-sea-600 text-white px-3 py-1 rounded-r-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ 
+                    style={{
                       clipPath: "polygon(0% 0%, 100% 0%, 95% 100%, 0% 100%)",
-                     }}
+                    }}
                     disabled={isSubmitting}
                     aria-label="Subscribe to newsletter"
                   >

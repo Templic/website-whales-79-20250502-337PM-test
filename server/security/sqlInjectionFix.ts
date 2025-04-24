@@ -8,19 +8,19 @@
 /**
  * Database connection interface - minimal definition for compatibility
  */
-interface DatabaseConnection: {
+interface DatabaseConnection {
   query: (sql: string, params?: any[]) => Promise<any>;
 }
 
 /**
  * SQL injection fix utilities
  */
-export class SQLInjectionFix: {
+export class SQLInjectionFix {
   private db: DatabaseConnection;
   
   constructor(db: DatabaseConnection) {
     this.db = db;
-}
+  }
   
   /**
    * Execute a parameterized query safely
@@ -33,10 +33,10 @@ export class SQLInjectionFix: {
     try {
       // Execute the parameterized query using the provided connection
       return await this.db.query(sql, params) as T;
-} catch (error: unknown) {
+    } catch (error) {
       console.error('SQL Error:', error.message);
       throw error;
-}
+    }
   }
   
   /**
@@ -46,10 +46,10 @@ export class SQLInjectionFix: {
    * @param identifier The identifier to escape
    * @returns Escaped identifier
    */
-  escapeIdentifier(identifier: string): string: {
+  escapeIdentifier(identifier: string): string {
     // Basic sanitization - remove anything that's not alphanumeric, underscore or dot
     return identifier.replace(/[^a-zA-Z0-9_\.]/g, '');
-}
+  }
   
   /**
    * Build a safe WHERE clause with parameters
@@ -80,7 +80,7 @@ export class SQLInjectionFix: {
     });
     
     return {
-      sql: clauses.length > 0 ? `WHERE ${clauses.join(' AND: ')}` : '',
+      sql: clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '',
       params
     };
   }
@@ -95,12 +95,12 @@ export class SQLInjectionFix: {
    */
   async select<T = any>(
     table: string, 
-    columns: string[] = ['*'], ;
+    columns: string[] = ['*'], 
     where: Record<string, any> = {}
   ): Promise<T[]> {
     const safeTable = this.escapeIdentifier(table);
     const safeColumns = columns.map(col => 
-      col === '*' ? '*' : this.escapeIdentifier(col);
+      col === '*' ? '*' : this.escapeIdentifier(col)
     ).join(', ');
     
     const whereClause = this.buildWhereClause(where);
@@ -130,7 +130,7 @@ export class SQLInjectionFix: {
       values.push(value);
     });
     
-    const sql = `;
+    const sql = `
       INSERT INTO ${safeTable} (${columns.join(', ')})
       VALUES (${placeholders.join(', ')})
       RETURNING *
@@ -151,11 +151,11 @@ export class SQLInjectionFix: {
   async update<T = any>(
     table: string, 
     data: Record<string, any>, 
-    where: Record<string, any>;
+    where: Record<string, any>
   ): Promise<T[]> {
     if (Object.keys(where).length === 0) {
       throw new Error('Update requires WHERE conditions for safety');
-}
+    }
     
     const safeTable = this.escapeIdentifier(table);
     const setClauses: string[] = [];
@@ -171,11 +171,11 @@ export class SQLInjectionFix: {
     const whereClause = this.buildWhereClause(where);
     // Adjust parameter indices for the WHERE clause
     const adjustedWhereSql = whereClause.sql.replace(
-      /\$(\d+)/g, ;
+      /\$(\d+)/g, 
       (_, num) => `$${parseInt(num) + values.length}`
     );
     
-    const sql = `;
+    const sql = `
       UPDATE ${safeTable}
       SET ${setClauses.join(', ')}
       ${adjustedWhereSql}
@@ -195,12 +195,12 @@ export class SQLInjectionFix: {
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
     if (Object.keys(where).length === 0) {
       throw new Error('Delete requires WHERE conditions for safety');
-}
+    }
     
     const safeTable = this.escapeIdentifier(table);
     const whereClause = this.buildWhereClause(where);
     
-    const sql = `;
+    const sql = `
       DELETE FROM ${safeTable}
       ${whereClause.sql}
       RETURNING *
@@ -213,6 +213,6 @@ export class SQLInjectionFix: {
 /**
  * Create a SQL injection fix utility with the provided database connection
  */
-export function createSQLFix(db: DatabaseConnection): SQLInjectionFix: {
-  return new: SQLInjectionFix(db);
+export function createSQLFix(db: DatabaseConnection): SQLInjectionFix {
+  return new SQLInjectionFix(db);
 }

@@ -26,7 +26,7 @@ export type RequestPart = 'body' | 'query' | 'params' | 'headers' | 'cookies';
 /**
  * Options for validation middleware
  */
-interface ValidationOptions: {
+interface ValidationOptions {
   stripUnknown?: boolean;
   abortEarly?: boolean;
   detailed?: boolean;
@@ -54,7 +54,7 @@ const defaultOptions: ValidationOptions = {
 export function validate(
   schema: AnyZodObject,
   part: RequestPart = 'body',
-  options: ValidationOptions = defaultOptions;
+  options: ValidationOptions = defaultOptions
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -74,58 +74,59 @@ export function validate(
       // If stripUnknown is true, replace the original request part with the validated data
       if (options.stripUnknown) {
         req[part] = validatedData;
-}
+      }
       
       next();
-    } catch (error: unknown) {
+    } catch (error) {
       // Handle Zod validation errors
       if (error instanceof ZodError) {
         const formattedErrors = error.errors.map(err => ({
           path: err.path.join('.'),
           code: err.code,
           message: err.message
-}));
+        }));
         
-        // Log the validation failure if logLevel is not: 'none'
+        // Log the validation failure if logLevel is not 'none'
         if (options.logLevel !== 'none') {
           const logMessage = `API validation failed for ${req.method} ${req.path} on ${part}`;
           
           switch (options.logLevel) {
-            case: 'error':
+            case 'error':
               logger.error(logMessage, {
                 errors: formattedErrors,
                 requestData: maskSensitiveData(req[part])
-});
+              });
               break;
-            case: 'warn':
+            case 'warn':
               logger.warn(logMessage, {
                 errors: formattedErrors,
                 requestData: maskSensitiveData(req[part])
-});
+              });
               break;
-            case: 'info':
+            case 'info':
               logger.info(logMessage, {
                 errors: formattedErrors,
                 requestData: maskSensitiveData(req[part])
-});
+              });
               break;
-            case: 'debug':
+            case 'debug':
               logger.debug(logMessage, {
                 errors: formattedErrors,
                 requestData: maskSensitiveData(req[part])
-});
+              });
               break;
           }
           
-          // Log as security event: logSecurityEvent('API_VALIDATION_FAILURE', {
+          // Log as security event
+          logSecurityEvent('API_VALIDATION_FAILURE', {
             method: req.method,
             path: req.path,
             part,
             errors: formattedErrors,
             ip: req.ip,
             userAgent: req.headers['user-agent'],
-            timestamp: new: Date()
-}, SecurityLogLevel.WARN);
+            timestamp: new Date()
+          }, SecurityLogLevel.WARN);
         }
         
         // Send the validation error response
@@ -133,7 +134,7 @@ export function validate(
           status: 'error',
           message: 'Validation failed',
           errors: options.detailed ? formattedErrors : undefined
-});
+        });
       }
       
       // Handle other errors
@@ -152,11 +153,11 @@ export function validate(
  */
 export function validateRequest(
   schemas: Partial<Record<RequestPart, AnyZodObject>>,
-  options: ValidationOptions = defaultOptions;
+  options: ValidationOptions = defaultOptions
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Process each schema in sequence
-    for (const: [part, schema] of Object.entries(schemas) as: [RequestPart, AnyZodObject][]) {
+    for (const [part, schema] of Object.entries(schemas) as [RequestPart, AnyZodObject][]) {
       try {
         const requestData = req[part];
         
@@ -173,15 +174,15 @@ export function validateRequest(
         // If stripUnknown is true, replace the original request part with the validated data
         if (options.stripUnknown) {
           req[part] = validatedData;
-}
-      } catch (error: unknown) {
+        }
+      } catch (error) {
         // Handle Zod validation errors
         if (error instanceof ZodError) {
           const formattedErrors = error.errors.map(err => ({
             path: err.path.join('.'),
             code: err.code,
             message: err.message
-}));
+          }));
           
           // Log the validation failure
           if (options.logLevel !== 'none') {
@@ -189,17 +190,18 @@ export function validateRequest(
             logger.warn(logMessage, {
               errors: formattedErrors,
               requestData: maskSensitiveData(req[part])
-});
+            });
             
-            // Log as security event: logSecurityEvent('API_VALIDATION_FAILURE', {
+            // Log as security event
+            logSecurityEvent('API_VALIDATION_FAILURE', {
               method: req.method,
               path: req.path,
               part,
               errors: formattedErrors,
               ip: req.ip,
               userAgent: req.headers['user-agent'],
-              timestamp: new: Date()
-}, SecurityLogLevel.WARN);
+              timestamp: new Date()
+            }, SecurityLogLevel.WARN);
           }
           
           // Send the validation error response
@@ -216,7 +218,8 @@ export function validateRequest(
       }
     }
     
-    // If all validations pass, continue: next();
+    // If all validations pass, continue
+    next();
   };
 }
 
@@ -235,7 +238,7 @@ export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
       if (!requestData) {
         // Skip sanitization if the data doesn't exist
         return next();
-}
+      }
       
       // Use the schema's shape to create a sanitized version
       const sanitizedData = {};
@@ -245,14 +248,14 @@ export function sanitize(schema: AnyZodObject, part: RequestPart = 'body') {
       for (const key in schemaShape) {
         if (key in requestData) {
           sanitizedData[key] = requestData[key];
-}
+        }
       }
       
       // Replace the original data with the sanitized version
       req[part] = sanitizedData;
       
       next();
-    } catch (error: unknown) {
+    } catch (error) {
       // Log sanitization failures but don't block the request
       logger.warn(`API sanitization failed for ${req.method} ${req.path} on ${part}`, { error });
       next();

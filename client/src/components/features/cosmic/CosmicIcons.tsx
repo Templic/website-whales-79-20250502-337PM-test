@@ -4,8 +4,6 @@
  * Component Type: cosmic
  * Migrated from imported components.
  */
-import React from "react";
-
 import {
   AudioWaveform as Waveform,
   Waves,
@@ -80,7 +78,7 @@ export function SoundWaveIcon({
   animated = true,
 }: { className?: string; size?: number; animated?: boolean }) {
   return (
-    <div className={cn("relative", className)} style={{  width: size, height: size  }}>
+    <div className={cn("relative", className)} style={{ width: size, height: size }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
@@ -131,8 +129,8 @@ export function ChakraIcon({ className, size = 24 }: { className?: string; size?
       strokeLinejoin="round"
       className={className}
     >
-      <circle cx={12} cy={12} r="10" />
-      <circle cx={12} cy={12} r="4" />
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
       <line x1="12" y1="2" x2="12" y2="22" />
       <line x1="2" y1="12" x2="22" y2="12" />
       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
@@ -163,7 +161,7 @@ export function SoundWaveIcon({
   animated = true,
 }: { className?: string; size?: number; animated?: boolean }) {
   return (
-    <div className={`relative ${className}`} style={{  width: size, height: size  }}>
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
@@ -214,8 +212,8 @@ export function ChakraIcon({ className, size = 24 }: { className?: string; size?
       strokeLinejoin="round"
       className={className}
     >
-      <circle cx={12} cy={12} r="10" />
-      <circle cx={12} cy={12} r="4" />
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
       <line x1="12" y1="2" x2="12" y2="22" />
       <line x1="2" y1="12" x2="22" y2="12" />
       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
@@ -248,7 +246,7 @@ export function SoundWaveIcon({
   animated = true,
 }: { className?: string; size?: number; animated?: boolean }) {
   return (
-    <div className={`relative ${className}`} style={{  width: size, height: size  }}>
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
@@ -299,8 +297,8 @@ export function ChakraIcon({ className, size = 24 }: { className?: string; size?
       strokeLinejoin="round"
       className={className}
     >
-      <circle cx={12} cy={12} r="10" />
-      <circle cx={12} cy={12} r="4" />
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="4" />
       <line x1="12" y1="2" x2="12" y2="22" />
       <line x1="2" y1="12" x2="22" y2="12" />
       <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />

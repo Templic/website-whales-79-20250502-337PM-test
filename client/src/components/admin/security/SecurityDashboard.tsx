@@ -128,7 +128,7 @@ const SecurityDashboard: React.FC = () => {
       await apiRequest('POST', '/api/security/scan/force', { level: 'deep' });
       // Refresh the data after a short delay to allow scan to start
       setTimeout(() => refetch(), 2000);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to initiate security scan:', error);
     }
   };

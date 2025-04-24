@@ -68,7 +68,7 @@ self.addEventListener('message', (event: MessageEvent<ComputationTask & { taskId
     };
     
     self.postMessage(response);
-  } catch (err: unknown) {
+  } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     
     // Send error back to main thread

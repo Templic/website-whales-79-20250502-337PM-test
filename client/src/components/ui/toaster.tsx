@@ -4,8 +4,6 @@
  * Component Type: common
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,

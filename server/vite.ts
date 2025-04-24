@@ -17,7 +17,7 @@ export function log(message: string, source = "express") {
     minute: "2-digit",
     second: "2-digit",
     hour12: true,
-});
+  });
 
   console.log(`${formattedTime} [${source}] ${message}`);
 }
@@ -37,7 +37,7 @@ export async function setupVite(app: Express, server: Server) {
       error: (msg, options) => {
         viteLogger.error(msg, options);
         process.exit(1);
-},
+      },
     },
     server: serverOptions,
     appType: "custom",
@@ -52,7 +52,7 @@ export async function setupVite(app: Express, server: Server) {
         __dirname,
         "..",
         "client",
-        "index.html"
+        "index.html",
       );
 
       // always reload the index.html file from disk incase it changes
@@ -63,10 +63,10 @@ export async function setupVite(app: Express, server: Server) {
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e: unknown) {
+    } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
-}
+    }
   });
 }
 
@@ -84,5 +84,5 @@ export function serveStatic(app: Express) {
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
-});
+  });
 }

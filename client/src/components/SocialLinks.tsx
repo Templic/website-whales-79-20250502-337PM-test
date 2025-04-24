@@ -1,4 +1,3 @@
-import React from "react";
 import { FaFacebook, FaInstagram, FaTwitter } from "react-icons/fa";
 
 export function SocialLinks() {

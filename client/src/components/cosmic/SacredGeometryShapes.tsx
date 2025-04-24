@@ -133,11 +133,11 @@ export const FlowerOfLife: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`flower-of-life ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {circles}
     </svg>
@@ -167,16 +167,16 @@ export const Metatron: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`metatron ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {/* Center circle */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="30"
         fill={colorScheme}
         fillOpacity={fillOpacity * 1.5}
@@ -216,13 +216,13 @@ export const Metatron: React.FC<GeometryShapeProps> = ({
       {/* Additional connections for high detail */}
       {shouldRenderExtras && (
         <>
-          <line x1="250" y1="100" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="120" y1="175" x2="380" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="120" y1="325" x2="380" y2="175" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="250" y1="100" x2="120" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="250" y1="100" x2="380" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="120" y1="175" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
-          <line x1="380" y1="175" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity={0.7} />
+          <line x1="250" y1="100" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="120" y1="175" x2="380" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="120" y1="325" x2="380" y2="175" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="250" y1="100" x2="120" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="250" y1="100" x2="380" y2="325" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="120" y1="175" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
+          <line x1="380" y1="175" x2="250" y2="400" stroke={colorScheme} strokeWidth={strokeWidth * 0.7} strokeOpacity="0.7" />
         </>
       )}
     </svg>
@@ -253,16 +253,16 @@ export const SriYantra: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`sri-yantra ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {/* Outer circle */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="200"
         fill="none"
         stroke={colorScheme}
@@ -271,8 +271,8 @@ export const SriYantra: React.FC<GeometryShapeProps> = ({
       
       {/* Lotus petals (simplified) */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="180"
         fill="none"
         stroke={colorScheme}
@@ -357,8 +357,8 @@ export const SriYantra: React.FC<GeometryShapeProps> = ({
           
           {/* Center dot (bindu) */}
           <circle
-            cx={250}
-            cy={250}
+            cx="250"
+            cy="250"
             r="10"
             fill={colorScheme}
             stroke="none"
@@ -403,8 +403,8 @@ export const Torus: React.FC<GeometryShapeProps> = ({
       elements.push(
         <ellipse
           key={`ring-${i}`}
-          cx={250}
-          cy={250}
+          cx="250"
+          cy="250"
           rx={ringWidth}
           ry={ringHeight}
           fill="none"
@@ -432,14 +432,14 @@ export const Torus: React.FC<GeometryShapeProps> = ({
       elements.push(
         <ellipse
           key={`vring-${i}`}
-          cx={250}
-          cy={250}
-          rx={50}
-          ry={160}
+          cx="250"
+          cy="250"
+          rx="50"
+          ry="160"
           fill="none"
           stroke={colorScheme}
           strokeWidth={strokeWidth}
-          opacity={0.4}
+          opacity="0.4"
           transform={transform}
         />
       );
@@ -452,11 +452,11 @@ export const Torus: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`torus ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {/* Main torus rings */}
       {rings}
@@ -466,8 +466,8 @@ export const Torus: React.FC<GeometryShapeProps> = ({
       
       {/* Center circle */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="20"
         fill={colorScheme}
         fillOpacity={fillOpacity * 2}
@@ -543,7 +543,7 @@ export const SacredSpiral: React.FC<GeometryShapeProps> = ({
           fill="none"
           stroke={colorScheme}
           strokeWidth={strokeWidth * 0.5}
-          opacity={0.3}
+          opacity="0.3"
         />
       );
       
@@ -568,11 +568,11 @@ export const SacredSpiral: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`sacred-spiral ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {/* Golden rectangles */}
       {goldenRectangles}
@@ -588,8 +588,8 @@ export const SacredSpiral: React.FC<GeometryShapeProps> = ({
       
       {/* Center dot */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="5"
         fill={colorScheme}
         stroke="none"
@@ -623,21 +623,21 @@ export const PlatonicsolidsSvg: React.FC<GeometryShapeProps> = ({
     <svg
       viewBox="0 0 500 500"
       className={`platonic-solids ${className}`}
-      style={{ 
+      style={{
         width,
         height,
         ...style,
-       }}
+      }}
     >
       {/* Container circle */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="200"
         fill="none"
         stroke={colorScheme}
         strokeWidth={strokeWidth * 0.5}
-        strokeOpacity={0.5}
+        strokeOpacity="0.5"
       />
       
       {/* Tetrahedron (Fire) - always rendered */}
@@ -667,10 +667,10 @@ export const PlatonicsolidsSvg: React.FC<GeometryShapeProps> = ({
       {solidCount >= 2 && (
         <>
           <rect
-            x={175}
-            y={175}
-            width={150}
-            height={150}
+            x="175"
+            y="175"
+            width="150"
+            height="150"
             fill={colorScheme}
             fillOpacity={fillOpacity}
             stroke={colorScheme}
@@ -685,7 +685,7 @@ export const PlatonicsolidsSvg: React.FC<GeometryShapeProps> = ({
             fill="none"
             stroke={colorScheme}
             strokeWidth={strokeWidth}
-            strokeOpacity={0.5}
+            strokeOpacity="0.5"
           />
         </>
       )}
@@ -761,11 +761,11 @@ export const PlatonicsolidsSvg: React.FC<GeometryShapeProps> = ({
       
       {/* Center circle */}
       <circle
-        cx={250}
-        cy={250}
+        cx="250"
+        cy="250"
         r="10"
         fill={colorScheme}
-        fillOpacity={0.8}
+        fillOpacity="0.8"
         stroke="none"
       />
     </svg>

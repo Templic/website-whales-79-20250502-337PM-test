@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * interactive-discography-map.tsx
  * 
@@ -18,7 +16,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -362,8 +361,8 @@ export function InteractiveDiscographyMap() {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width={24}
-                height={24}
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

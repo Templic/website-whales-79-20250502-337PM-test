@@ -1,4 +1,3 @@
-import React from "react";
 import { ReactNode, useEffect, useState } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe, Stripe, StripeElementsOptions } from '@stripe/stripe-js';

@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from 'react';
 import { SecureWebSocket, WebSocketMessage } from '../utils/secureWebSocket';
 
@@ -65,7 +64,7 @@ const WebSocketExample = () => {
       
       setInputMessage('');
       setError(null);
-    } catch (err: unknown) {
+    } catch (err) {
       setError(`Failed to send message: ${err instanceof Error ? err.message : String(err)}`);
     }
   };

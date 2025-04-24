@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useEffect } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import CollaborativeShoppingRoom from '@/components/shop/collaborative/CollaborativeShoppingRoom';

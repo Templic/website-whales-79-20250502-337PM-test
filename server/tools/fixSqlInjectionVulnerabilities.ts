@@ -13,7 +13,7 @@ import { fixDirectory, generateFixReport } from './sqlInjectionFixer';
 /**
  * Run the SQL Injection detection and remediation process
  */
-async function runSQLInjectionRemediation(fixAutomatically = false$2: {
+async function runSQLInjectionRemediation(fixAutomatically = false) {
   console.log('┌──────────────────────────────────────────────────────┐');
   console.log('│          SQL INJECTION REMEDIATION PROCESS           │');
   console.log('├──────────────────────────────────────────────────────┤');
@@ -24,15 +24,15 @@ async function runSQLInjectionRemediation(fixAutomatically = false$2: {
   // Set the directories to scan
   const dirsToScan = ['server', 'client', 'shared'];
   
-  // Step: 1: Detect vulnerabilities
-  console.log('\n[STEP: 1] Detecting SQL injection vulnerabilities...');
+  // Step 1: Detect vulnerabilities
+  console.log('\n[STEP 1] Detecting SQL injection vulnerabilities...');
   
   const vulnerabilities = [];
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
       const dirVulnerabilities = await scanDirectory(dir);
       vulnerabilities.push(...dirVulnerabilities);
-}
+    }
   }
   
   // Generate detection report
@@ -48,16 +48,16 @@ async function runSQLInjectionRemediation(fixAutomatically = false$2: {
     
     fs.writeFileSync(detectionReportPath, detectionReport);
     console.log(`Detection report saved to ${detectionReportPath}`);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error saving detection report:', error);
-}
+  }
   
   // Print vulnerability summary
   const highCount = vulnerabilities.filter(v => v.severity === 'HIGH').length;
   const mediumCount = vulnerabilities.filter(v => v.severity === 'MEDIUM').length;
   const lowCount = vulnerabilities.filter(v => v.severity === 'LOW').length;
   
-  console.log('\nVulnerability detection, summary:');
+  console.log('\nVulnerability detection summary:');
   console.log(`- HIGH: ${highCount}`);
   console.log(`- MEDIUM: ${mediumCount}`);
   console.log(`- LOW: ${lowCount}`);
@@ -67,17 +67,17 @@ async function runSQLInjectionRemediation(fixAutomatically = false$2: {
   if (vulnerabilities.length === 0) {
     console.log('\n✅ No SQL injection vulnerabilities detected!');
     return;
-}
+  }
   
-  // Step: 2: Run fixes in dry-run mode first to see what would change
-  console.log('\n[STEP: 2] Analyzing potential fixes (dry run)...');
+  // Step 2: Run fixes in dry-run mode first to see what would change
+  console.log('\n[STEP 2] Analyzing potential fixes (dry run)...');
   
   const dryRunResults = [];
   for (const dir of dirsToScan) {
     if (fs.existsSync(dir)) {
       const dirResults = await fixDirectory(dir, true);
       dryRunResults.push(...dirResults);
-}
+    }
   }
   
   // Generate dry run report
@@ -88,24 +88,24 @@ async function runSQLInjectionRemediation(fixAutomatically = false$2: {
   try {
     fs.writeFileSync(dryRunReportPath, dryRunReport);
     console.log(`Dry run report saved to ${dryRunReportPath}`);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error saving dry run report:', error);
-}
+  }
   
   // Print dry run summary
   const totalDryRunFixes = dryRunResults.reduce((sum, result) => sum + result.fixes.length, 0);
-  console.log(`\nDry run, summary: ${totalDryRunFixes} fixes would be applied to ${dryRunResults.length} files`);
+  console.log(`\nDry run summary: ${totalDryRunFixes} fixes would be applied to ${dryRunResults.length} files`);
   
-  // Step: 3: Apply fixes if automatic fixing is enabled
+  // Step 3: Apply fixes if automatic fixing is enabled
   if (fixAutomatically && totalDryRunFixes > 0) {
-    console.log('\n[STEP: 3] Applying fixes automatically...');
+    console.log('\n[STEP 3] Applying fixes automatically...');
     
     const fixResults = [];
     for (const dir of dirsToScan) {
       if (fs.existsSync(dir)) {
         const dirResults = await fixDirectory(dir, false);
         fixResults.push(...dirResults);
-}
+      }
     }
     
     // Generate fix report
@@ -116,20 +116,20 @@ async function runSQLInjectionRemediation(fixAutomatically = false$2: {
     try {
       fs.writeFileSync(fixReportPath, fixReport);
       console.log(`Fix report saved to ${fixReportPath}`);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error saving fix report:', error);
-}
+    }
     
     // Print fix summary
     const totalAppliedFixes = fixResults.reduce((sum, result) => sum + result.fixes.length, 0);
-    console.log(`\nFix, summary: ${totalAppliedFixes} fixes were applied to ${fixResults.length} files`);
+    console.log(`\nFix summary: ${totalAppliedFixes} fixes were applied to ${fixResults.length} files`);
     
     console.log('\n✅ SQL injection remediation process completed!');
-  } else if (fixAutomatically) => {
+  } else if (fixAutomatically) {
     console.log('\n✅ No fixes to apply!');
-} else {
+  } else {
     console.log('\n⚠️ Automatic fixing is disabled. Run again with fixAutomatically=true to apply fixes.');
-    console.log('To apply fixes manually, use the SQL Fix utility in your, code:');
+    console.log('To apply fixes manually, use the SQL Fix utility in your code:');
     console.log(`
 import { createSQLFix } from '../security/sqlInjectionFix';
 
@@ -159,7 +159,7 @@ if (require.main === module) {
   runSQLInjectionRemediation(fixAutomatically).catch(error => {
     console.error('Error running SQL injection remediation:', error);
     process.exit(1);
-});
+  });
 }
 
 // Export functionality for use as a module

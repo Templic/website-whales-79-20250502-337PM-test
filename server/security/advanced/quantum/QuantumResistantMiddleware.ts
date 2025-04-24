@@ -12,7 +12,7 @@ import { immutableSecurityLogs as securityBlockchain } from '../blockchain/Immut
 import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/SecurityEventTypes';
 
 // Define the quantum-resistant algorithm enum - matching our implementation
-export enum QuantumResistantAlgorithm: {
+export enum QuantumResistantAlgorithm {
   KYBER = 'kyber',
   DILITHIUM = 'dilithium',
   SPHINCS = 'sphincs',
@@ -24,8 +24,8 @@ export enum QuantumResistantAlgorithm: {
 
 /**
  * Configuration for quantum-resistant middleware
- */;
-export interface QuantumResistantMiddlewareConfig: {
+ */
+export interface QuantumResistantMiddlewareConfig {
   /**
    * Whether to encrypt response data
    */
@@ -69,8 +69,8 @@ export interface QuantumResistantMiddlewareConfig: {
 
 // Default configuration
 const DEFAULT_CONFIG: QuantumResistantMiddlewareConfig = {
-  encryptResponses: false, // Disabled by default as it requires client support,
-  verifyRequestSignatures: false, // Disabled by default as it requires client support,
+  encryptResponses: false, // Disabled by default as it requires client support
+  verifyRequestSignatures: false, // Disabled by default as it requires client support
   protectedPaths: [
     '/api/user',
     '/api/auth',
@@ -98,7 +98,7 @@ const DEFAULT_CONFIG: QuantumResistantMiddlewareConfig = {
 
 // Store key pairs for the middleware (in a real system, these would be stored securely)
 let serverKeyPair: {
-  publicKey: string;,
+  publicKey: string;
   privateKey: string;
 } | null = null;
 
@@ -106,7 +106,7 @@ let serverKeyPair: {
  * Generate a new key pair for the server
  */
 async function generateServerKeyPair(): Promise<{
-  publicKey: string;,
+  publicKey: string;
   privateKey: string;
 }> {
   try {
@@ -114,12 +114,12 @@ async function generateServerKeyPair(): Promise<{
     const generatedKeyPair = await qrc.generateKeyPair({
       algorithm: DEFAULT_CONFIG.encryptionAlgorithm as any,
       strength: 'high'
-});
+    });
     
     serverKeyPair = {
       publicKey: generatedKeyPair.publicKey,
       privateKey: generatedKeyPair.privateKey
-};
+    };
     
     // Log event to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -129,18 +129,18 @@ async function generateServerKeyPair(): Promise<{
       timestamp: Date.now(),
       metadata: {
         algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return serverKeyPair;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating quantum-resistant key pair:', error);
     // Create a fallback key pair for development purposes
     const fallbackKeyPair = {
       publicKey: 'FALLBACK_PUBLIC_KEY_FOR_DEVELOPMENT',
       privateKey: 'FALLBACK_PRIVATE_KEY_FOR_DEVELOPMENT'
-};
+    };
     
     serverKeyPair = fallbackKeyPair;
     return fallbackKeyPair;
@@ -153,7 +153,7 @@ async function generateServerKeyPair(): Promise<{
 export async function getServerPublicKey(): Promise<string> {
   if (!serverKeyPair) {
     await generateServerKeyPair();
-}
+  }
   
   return serverKeyPair!.publicKey;
 }
@@ -163,12 +163,12 @@ export async function getServerPublicKey(): Promise<string> {
  */
 export function createQuantumResistantMiddleware(
   config: Partial<QuantumResistantMiddlewareConfig> = {}
-): RequestHandler: {
+): RequestHandler {
   // Merge with default config
   const mergedConfig: QuantumResistantMiddlewareConfig = {
     ...DEFAULT_CONFIG,
     ...config
-};
+  };
   
   // Ensure server key pair is generated (async)
   generateServerKeyPair().catch(console.error);
@@ -182,8 +182,8 @@ export function createQuantumResistantMiddleware(
     metadata: {
       encryptResponses: mergedConfig.encryptResponses,
       verifyRequestSignatures: mergedConfig.verifyRequestSignatures,
-      timestamp: new: Date().toISOString()
-}
+      timestamp: new Date().toISOString()
+    }
   }).catch(console.error);
   
   // Return the middleware function
@@ -192,24 +192,24 @@ export function createQuantumResistantMiddleware(
     if (mergedConfig.bypassInDevelopment && process.env.NODE_ENV === 'development') {
       next();
       return;
-}
+    }
     
     // Check if the path is exempt
     const path = req.path;
     if (mergedConfig.exemptPaths.some(exemptPath => path.startsWith(exemptPath))) {
       next();
       return;
-}
+    }
     
     // Check if the path should be protected
     const shouldProtect = mergedConfig.protectedPaths.some(protectedPath => 
-      path.startsWith(protectedPath);
+      path.startsWith(protectedPath)
     );
     
     if (!shouldProtect) {
       next();
       return;
-}
+    }
     
     // Process the request
     try {
@@ -237,14 +237,14 @@ export function createQuantumResistantMiddleware(
                 path: req.path,
                 method: req.method,
                 reason: verificationResult.reason,
-                timestamp: new: Date().toISOString()
-}
+                timestamp: new Date().toISOString()
+              }
             });
             
             return res.status(403).json({
               error: 'Invalid signature',
               message: 'The request signature failed validation'
-});
+            });
           }
           
           // Log successful verification
@@ -256,10 +256,10 @@ export function createQuantumResistantMiddleware(
             metadata: {
               path: req.path,
               method: req.method,
-              timestamp: new: Date().toISOString()
-}
+              timestamp: new Date().toISOString()
+            }
           });
-        } catch (verifyError: unknown) {
+        } catch (verifyError) {
           // Log verification error
           await securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -270,14 +270,14 @@ export function createQuantumResistantMiddleware(
               path: req.path,
               method: req.method,
               error: verifyError instanceof Error ? verifyError.message : 'Unknown error',
-              timestamp: new: Date().toISOString()
-}
+              timestamp: new Date().toISOString()
+            }
           });
           
           return res.status(400).json({
             error: 'Signature verification error',
             message: 'An error occurred while verifying the request signature'
-});
+          });
         }
       }
       
@@ -285,17 +285,18 @@ export function createQuantumResistantMiddleware(
       if (mergedConfig.encryptResponses && clientPublicKey) {
         const originalJson = res.json;
         
-        res.json = function(body) => {
-          // Process the response body to encrypt sensitive fields: processResponseBody(
+        res.json = function(body) {
+          // Process the response body to encrypt sensitive fields
+          processResponseBody(
             body,
             clientPublicKey,
             mergedConfig.sensitiveResponseFields,
             mergedConfig.encryptionAlgorithm
           ).then(processedBody => {
             // Add the server's public key to the response headers
-            if (serverKeyPair) => {
+            if (serverKeyPair) {
               res.setHeader('X-Quantum-Public-Key', serverKeyPair.publicKey);
-}
+            }
             
             // Call the original json method with the processed body
             return originalJson.call(this, processedBody);
@@ -311,8 +312,8 @@ export function createQuantumResistantMiddleware(
                 path: req.path,
                 method: req.method,
                 error: error instanceof Error ? error.message : 'Unknown error',
-                timestamp: new: Date().toISOString()
-}
+                timestamp: new Date().toISOString()
+              }
             }).catch(console.error);
             
             // Send original unencrypted body
@@ -324,8 +325,9 @@ export function createQuantumResistantMiddleware(
         };
       }
       
-      // Continue to the next middleware: next();
-    } catch (error: unknown) {
+      // Continue to the next middleware
+      next();
+    } catch (error) {
       // Log the error
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.CRYPTOGRAPHY,
@@ -337,11 +339,12 @@ export function createQuantumResistantMiddleware(
           method: req.method,
           error: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new: Date().toISOString()
-}
+          timestamp: new Date().toISOString()
+        }
       }).catch(console.error);
       
-      // Pass the error to the next middleware: next(error);
+      // Pass the error to the next middleware
+      next(error);
     }
   };
 }
@@ -358,7 +361,7 @@ async function processResponseBody(
   // If body is not an object, return it as is
   if (typeof body !== 'object' || body === null) {
     return body;
-}
+  }
   
   // Create a copy of the body
   const result = Array.isArray(body) ? [...body] : { ...body };
@@ -374,7 +377,7 @@ async function processResponseBody(
           // Encrypt the value
           const encryptionResult = await qrc.encrypt(value, clientPublicKey, {
             algorithm: algorithm as any
-});
+          });
           
           // Replace the original value with the encrypted one
           if (Array.isArray(result)) {
@@ -382,16 +385,16 @@ async function processResponseBody(
               __encrypted: true,
               algorithm,
               value: encryptionResult
-};
+            };
           } else {
             result[key] = {
               __encrypted: true,
               algorithm,
               value: encryptionResult
-};
+            };
           }
-        } catch (error: unknown) {
-          console.error(`Error encrypting field: '${key}':`, error);
+        } catch (error) {
+          console.error(`Error encrypting field '${key}':`, error);
           // Keep the original value if encryption fails
         }
       }
@@ -399,9 +402,9 @@ async function processResponseBody(
       else if (typeof value === 'object' && value !== null) {
         if (Array.isArray(result)) {
           result[parseInt(key)] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
-} else {
+        } else {
           result[key] = await processResponseBody(value, clientPublicKey, sensitiveFields, algorithm);
-}
+        }
       }
     }
   }
@@ -412,26 +415,26 @@ async function processResponseBody(
 /**
  * Create a middleware that provides the server's public key
  */
-export function createPublicKeyEndpointMiddleware(): RequestHandler: {
+export function createPublicKeyEndpointMiddleware(): RequestHandler {
   return async (req: Request, res: Response): Promise<void> => {
     try {
       // Generate server key pair if needed
       if (!serverKeyPair) {
         await generateServerKeyPair();
-}
+      }
       
       // Return the server's public key
       res.json({
         publicKey: serverKeyPair!.publicKey,
         algorithm: DEFAULT_CONFIG.encryptionAlgorithm,
         signatureAlgorithm: DEFAULT_CONFIG.signatureAlgorithm
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error in public key endpoint:', error);
       res.status(500).json({
         error: 'Internal Server Error',
         message: 'An error occurred while retrieving the server public key'
-});
+      });
     }
   };
 }
@@ -443,4 +446,5 @@ export async function regenerateServerKeyPair(): Promise<typeof serverKeyPair> {
   return await generateServerKeyPair();
 }
 
-// Initialize the server key pair: generateServerKeyPair().catch(console.error);
+// Initialize the server key pair
+generateServerKeyPair().catch(console.error);

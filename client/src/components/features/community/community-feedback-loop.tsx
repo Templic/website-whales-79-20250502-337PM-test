@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * community-feedback-loop.tsx
  * 
@@ -18,7 +16,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
@@ -104,7 +103,7 @@ export function CommunityFeedbackLoop({
       setFeedbackContent("")
       setFeedbackCategory("feature")
       setActiveTab("browse")
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error submitting feedback:", error)
     } finally {
       setIsSubmitting(false)
@@ -486,7 +485,7 @@ function CommunityFeedbackLoopOriginal({
       setFeedbackContent("")
       setFeedbackCategory("feature")
       setActiveTab("browse")
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error submitting feedback:", error)
     } finally {
       setIsSubmitting(false)

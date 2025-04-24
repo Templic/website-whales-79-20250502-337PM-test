@@ -21,7 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { sql } from 'drizzle-orm';
 
 // Utility function to create URL-friendly slugs
-function slugify(text: string): string: {
+function slugify(text: string): string {
   return text
     .toString()
     .toLowerCase()
@@ -49,7 +49,7 @@ router.get('/products', async (req: Request, res: Response) => {
       sortBy,
       limit,
       offset
-} = req.query;
+    } = req.query;
 
     let query = db.select().from(products);
 
@@ -57,16 +57,16 @@ router.get('/products', async (req: Request, res: Response) => {
     const filters = [];
 
     // Category filter
-    if (category) => {
+    if (category) {
       const categoryIds = Array.isArray(category) 
-        ? category.map(c => parseInt(c as string)) ;
+        ? category.map(c => parseInt(c as string)) 
         : [parseInt(category as string)];
       
       filters.push(inArray(products.categoryId, categoryIds));
-}
+    }
 
     // Search filter
-    if (search) => {
+    if (search) {
       filters.push(
         or(
           like(products.name, `%${search}%`),
@@ -79,16 +79,16 @@ router.get('/products', async (req: Request, res: Response) => {
     // Price range filter
     if (minPrice && maxPrice) {
       filters.push(between(products.price, parseFloat(minPrice as string), parseFloat(maxPrice as string)));
-} else if (minPrice) => {
+    } else if (minPrice) {
       filters.push(gt(products.price, parseFloat(minPrice as string)));
-} else if (maxPrice) => {
+    } else if (maxPrice) {
       filters.push(lt(products.price, parseFloat(maxPrice as string)));
-}
+    }
 
     // In stock filter
     if (inStock === 'true') {
       filters.push(gt(products.inventory, 0));
-}
+    }
 
     // On sale filter
     if (onSale === 'true') {
@@ -98,12 +98,12 @@ router.get('/products', async (req: Request, res: Response) => {
           lt(products.salePrice, products.price)
         )
       );
-}
+    }
 
     // Featured filter
     if (featured === 'true') {
       filters.push(eq(products.featured, true));
-}
+    }
 
     // Only show published products
     filters.push(eq(products.published, true));
@@ -111,31 +111,31 @@ router.get('/products', async (req: Request, res: Response) => {
     // Apply all filters
     if (filters.length > 0) {
       query = query.where(and(...filters));
-}
+    }
 
     // Apply sorting
-    if (sortBy) => {
-      switch (sortBy) => {
-        case: 'price-low-high':
+    if (sortBy) {
+      switch (sortBy) {
+        case 'price-low-high':
           query = query.orderBy(asc(products.price));
           break;
-        case: 'price-high-low':
+        case 'price-high-low':
           query = query.orderBy(desc(products.price));
           break;
-        case: 'name-a-z':
+        case 'name-a-z':
           query = query.orderBy(asc(products.name));
           break;
-        case: 'name-z-a':
+        case 'name-z-a':
           query = query.orderBy(desc(products.name));
           break;
-        case: 'newest':,
-  default:
+        case 'newest':
+        default:
           query = query.orderBy(desc(products.createdAt));
-}
+      }
     } else {
       // Default sort by newest
       query = query.orderBy(desc(products.createdAt));
-}
+    }
 
     // Apply pagination
     const limitValue = limit ? parseInt(limit as string) : 20;
@@ -144,7 +144,7 @@ router.get('/products', async (req: Request, res: Response) => {
 
     const result = await query;
     res.json(result);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Failed to fetch products' });
   }
@@ -177,19 +177,19 @@ router.post('/products', async (req: Request, res: Response) => {
       inventory: productData.inventory || 0,
       categoryId: productData.categoryId || null,
       imageUrl: productData.imageUrl || null,
-      type productData.type || 'physical',
+      type: productData.type || 'physical',
       digitalFileUrl: productData.digitalFileUrl || null,
       featuredProduct: productData.featuredProduct || false,
       salePrice: productData.salePrice ? Math.round(parseFloat(productData.salePrice) * 100) : null,
       weight: productData.weight || null,
       dimensions: productData.dimensions || null,
       metadata: productData.metadata || null,
-      createdAt: new: Date(),
-      updatedAt: new: Date()
-}).returning();
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
     
     res.status(201).json(newProduct[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating product:', error);
     res.status(500).json({ message: 'Error creating product' });
   }
@@ -210,7 +210,7 @@ router.patch('/products/:id', async (req: Request, res: Response) => {
     const existingProduct = await db
       .select()
       .from(products)
-      .where(eq(products.id, productId));
+      .where(eq(products.id, productId))
       .limit(1);
       
     if (!existingProduct.length) {
@@ -218,25 +218,25 @@ router.patch('/products/:id', async (req: Request, res: Response) => {
     }
     
     // Process price fields to convert to cents
-    const updates: any = { ...updateData, updatedAt: new: Date() };
+    const updates: any = { ...updateData, updatedAt: new Date() };
     
     if (updates.price !== undefined) {
       updates.price = Math.round(parseFloat(updates.price) * 100);
-}
+    }
     
     if (updates.salePrice !== undefined && updates.salePrice !== null) {
       updates.salePrice = Math.round(parseFloat(updates.salePrice) * 100);
-}
+    }
     
     // Update the product
     const updatedProduct = await db
       .update(products)
       .set(updates)
-      .where(eq(products.id, productId));
+      .where(eq(products.id, productId))
       .returning();
       
     res.json(updatedProduct[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).json({ message: 'Error updating product' });
   }
@@ -256,7 +256,7 @@ router.delete('/products/:id', async (req: Request, res: Response) => {
     const existingProduct = await db
       .select()
       .from(products)
-      .where(eq(products.id, productId));
+      .where(eq(products.id, productId))
       .limit(1);
       
     if (!existingProduct.length) {
@@ -269,7 +269,7 @@ router.delete('/products/:id', async (req: Request, res: Response) => {
       .where(eq(products.id, productId));
       
     res.json({ message: 'Product deleted successfully' });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Error deleting product' });
   }
@@ -284,7 +284,7 @@ router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
     const isId = !isNaN(parseInt(idOrSlug));
     
     const result = isId
-      ? await db.select().from(products).where(eq(products.id, parseInt(idOrSlug))).limit(1);
+      ? await db.select().from(products).where(eq(products.id, parseInt(idOrSlug))).limit(1)
       : await db.select().from(products).where(eq(products.slug, idOrSlug)).limit(1);
     
     if (result.length === 0) {
@@ -292,7 +292,7 @@ router.get('/products/:idOrSlug', async (req: Request, res: Response) => {
     }
     
     res.json(result[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching product:', error);
     res.status(500).json({ error: 'Failed to fetch product' });
   }
@@ -303,7 +303,7 @@ router.get('/categories', async (req: Request, res: Response) => {
   try {
     const result = await db.select().from(productCategories);
     res.json(result);
-} catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching categories:', error);
     res.status(500).json({ error: 'Failed to fetch categories' });
   }
@@ -330,12 +330,12 @@ router.post('/categories', async (req: Request, res: Response) => {
       description,
       slug: slug || slugify(name),
       parentId: parentId || null,
-      createdAt: new: Date(),
-      updatedAt: new: Date()
-}).returning();
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }).returning();
     
     res.status(201).json(newCategory[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating product category:', error);
     res.status(500).json({ message: 'Error creating product category' });
   }
@@ -356,7 +356,7 @@ router.patch('/categories/:id', async (req: Request, res: Response) => {
     const existingCategory = await db
       .select()
       .from(productCategories)
-      .where(eq(productCategories.id, categoryId));
+      .where(eq(productCategories.id, categoryId))
       .limit(1);
       
     if (!existingCategory.length) {
@@ -365,16 +365,16 @@ router.patch('/categories/:id', async (req: Request, res: Response) => {
     
     // Update the category
     const updatedCategory = await db
-      .update(productCategories);
+      .update(productCategories)
       .set({
         ...updateData,
-        updatedAt: new: Date()
-})
+        updatedAt: new Date()
+      })
       .where(eq(productCategories.id, categoryId))
       .returning();
       
     res.json(updatedCategory[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error updating product category:', error);
     res.status(500).json({ message: 'Error updating product category' });
   }
@@ -394,7 +394,7 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
     const existingCategory = await db
       .select()
       .from(productCategories)
-      .where(eq(productCategories.id, categoryId));
+      .where(eq(productCategories.id, categoryId))
       .limit(1);
       
     if (!existingCategory.length) {
@@ -405,26 +405,26 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
     const productsInCategory = await db
       .select()
       .from(products)
-      .where(eq(products.categoryId, categoryId));
+      .where(eq(products.categoryId, categoryId))
       .limit(1);
       
     if (productsInCategory.length > 0) {
       return res.status(400).json({ 
         message: 'Cannot delete category with products. Remove products first or move them to another category.' 
-});
+      });
     }
     
     // Check if category has child categories
     const childCategories = await db
       .select()
       .from(productCategories)
-      .where(eq(productCategories.parentId, categoryId));
+      .where(eq(productCategories.parentId, categoryId))
       .limit(1);
       
     if (childCategories.length > 0) {
       return res.status(400).json({ 
         message: 'Cannot delete category with child categories. Remove child categories first.' 
-});
+      });
     }
     
     // Delete the category
@@ -433,7 +433,7 @@ router.delete('/categories/:id', async (req: Request, res: Response) => {
       .where(eq(productCategories.id, categoryId));
       
     res.json({ message: 'Category deleted successfully' });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error deleting product category:', error);
     res.status(500).json({ message: 'Error deleting product category' });
   }
@@ -448,7 +448,7 @@ router.get('/categories/:idOrSlug', async (req: Request, res: Response) => {
     const isId = !isNaN(parseInt(idOrSlug));
     
     const result = isId
-      ? await db.select().from(productCategories).where(eq(productCategories.id, parseInt(idOrSlug))).limit(1);
+      ? await db.select().from(productCategories).where(eq(productCategories.id, parseInt(idOrSlug))).limit(1)
       : await db.select().from(productCategories).where(eq(productCategories.slug, idOrSlug)).limit(1);
     
     if (result.length === 0) {
@@ -456,7 +456,7 @@ router.get('/categories/:idOrSlug', async (req: Request, res: Response) => {
     }
     
     res.json(result[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching category:', error);
     res.status(500).json({ error: 'Failed to fetch category' });
   }
@@ -472,7 +472,7 @@ router.get('/categories/:categoryId/products', async (req: Request, res: Respons
       .from(products)
       .where(and(
         eq(products.categoryId, parseInt(categoryId)),
-        eq(products.published, true);
+        eq(products.published, true)
       ));
     
     // Apply pagination
@@ -482,7 +482,7 @@ router.get('/categories/:categoryId/products', async (req: Request, res: Respons
     
     const result = await query;
     res.json(result);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching category products:', error);
     res.status(500).json({ error: 'Failed to fetch category products' });
   }
@@ -498,7 +498,7 @@ router.get('/cart', async (req: Request, res: Response) => {
     // Find existing cart for this session
     let cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     let cart = cartResult[0];
@@ -509,7 +509,7 @@ router.get('/cart', async (req: Request, res: Response) => {
       const result = await db.insert(carts).values({
         sessionId: req.session.id,
         userId: req.session.userId || null
-}).returning();
+      }).returning();
       
       cart = result[0];
     }
@@ -523,7 +523,7 @@ router.get('/cart', async (req: Request, res: Response) => {
       createdAt: cartItems.createdAt,
       updatedAt: cartItems.updatedAt,
       product: products
-})
+    })
     .from(cartItems)
     .innerJoin(products, eq(cartItems.productId, products.id))
     .where(eq(cartItems.cartId, cart.id));
@@ -531,8 +531,8 @@ router.get('/cart', async (req: Request, res: Response) => {
     res.json({
       cart,
       items: cartItemsResult
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error fetching cart:', error);
     res.status(500).json({ error: 'Failed to fetch cart' });
   }
@@ -547,16 +547,16 @@ router.post('/cart/items', async (req: Request, res: Response) => {
     
     // Validate request body
     const addToCartSchema = z.object({
-      (match) => match.replace(':', '')number(),
-      (match) => match.replace(':', '')number().min(1)
-});
+      productId: z.number(),
+      quantity: z.number().min(1)
+    });
     
     const validatedData = addToCartSchema.parse(req.body);
     
     // Find existing cart for this session
     let cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     let cart = cartResult[0];
@@ -567,7 +567,7 @@ router.post('/cart/items', async (req: Request, res: Response) => {
       const result = await db.insert(carts).values({
         sessionId: req.session.id,
         userId: req.session.userId || null
-}).returning();
+      }).returning();
       
       cart = result[0];
     }
@@ -575,7 +575,7 @@ router.post('/cart/items', async (req: Request, res: Response) => {
     // Check if product exists
     const productResult = await db.select()
       .from(products)
-      .where(eq(products.id, validatedData.productId));
+      .where(eq(products.id, validatedData.productId))
       .limit(1);
     
     if (productResult.length === 0) {
@@ -595,7 +595,7 @@ router.post('/cart/items', async (req: Request, res: Response) => {
       .where(and(
         eq(cartItems.cartId, cart.id),
         eq(cartItems.productId, validatedData.productId)
-      ));
+      ))
       .limit(1);
     
     if (existingItemResult.length > 0) {
@@ -611,15 +611,15 @@ router.post('/cart/items', async (req: Request, res: Response) => {
       await db.update(cartItems)
         .set({ 
           quantity: newQuantity,
-          updatedAt: new: Date()
-})
+          updatedAt: new Date()
+        })
         .where(eq(cartItems.id, existingItem.id));
       
       const updatedItem = {
         ...existingItem,
         quantity: newQuantity,
         product
-};
+      };
       
       // @ts-ignore - Response type issue
   return res.json(updatedItem);
@@ -630,15 +630,15 @@ router.post('/cart/items', async (req: Request, res: Response) => {
       cartId: cart.id,
       productId: validatedData.productId,
       quantity: validatedData.quantity
-}).returning();
+    }).returning();
     
     const newItem = {
       ...result[0],
       product
-};
+    };
     
     res.status(201).json(newItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error adding item to cart:', error);
     res.status(500).json({ error: 'Failed to add item to cart' });
   }
@@ -655,15 +655,15 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
     
     // Validate request body
     const updateCartItemSchema = z.object({
-      (match) => match.replace(':', '')number().min(1)
-});
+      quantity: z.number().min(1)
+    });
     
     const { quantity } = updateCartItemSchema.parse(req.body);
     
     // Get the cart for this session
     const cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     if (cartResult.length === 0) {
@@ -678,7 +678,7 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
       .where(and(
         eq(cartItems.id, parseInt(itemId)),
         eq(cartItems.cartId, cart.id)
-      ));
+      ))
       .limit(1);
     
     if (itemResult.length === 0) {
@@ -690,7 +690,7 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
     // Check if product has enough inventory
     const productResult = await db.select()
       .from(products)
-      .where(eq(products.id, item.productId));
+      .where(eq(products.id, item.productId))
       .limit(1);
     
     if (productResult.length === 0) {
@@ -707,18 +707,18 @@ router.patch('/cart/items/:itemId', async (req: Request, res: Response) => {
     await db.update(cartItems)
       .set({ 
         quantity,
-        updatedAt: new: Date()
-})
+        updatedAt: new Date()
+      })
       .where(eq(cartItems.id, item.id));
     
     const updatedItem = {
       ...item,
       quantity,
       product
-};
+    };
     
     res.json(updatedItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error updating cart item:', error);
     res.status(500).json({ error: 'Failed to update cart item' });
   }
@@ -736,7 +736,7 @@ router.delete('/cart/items/:itemId', async (req: Request, res: Response) => {
     // Get the cart for this session
     const cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     if (cartResult.length === 0) {
@@ -753,7 +753,7 @@ router.delete('/cart/items/:itemId', async (req: Request, res: Response) => {
       ));
     
     res.status(204).end();
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error removing item from cart:', error);
     res.status(500).json({ error: 'Failed to remove item from cart' });
   }
@@ -769,7 +769,7 @@ router.delete('/cart', async (req: Request, res: Response) => {
     // Get the cart for this session
     const cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     if (cartResult.length === 0) {
@@ -783,7 +783,7 @@ router.delete('/cart', async (req: Request, res: Response) => {
       .where(eq(cartItems.cartId, cart.id));
     
     res.status(204).end();
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error clearing cart:', error);
     res.status(500).json({ error: 'Failed to clear cart' });
   }
@@ -798,33 +798,33 @@ router.post('/orders', async (req: Request, res: Response) => {
     
     // Validate request body
     const createOrderSchema = z.object({
-      (match) => match.replace(':', '')object({
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(2),
+      billingAddress: z.object({
+        firstName: z.string().min(2),
+        lastName: z.string().min(2),
         address1: z.string().min(5),
         address2: z.string().optional(),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(3),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().email(),
-        (match) => match.replace(':', '')string().optional()
-}),
-      (match) => match.replace(':', '')object({
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(2),
+        city: z.string().min(2),
+        state: z.string().min(2),
+        postalCode: z.string().min(3),
+        country: z.string().min(2),
+        email: z.string().email(),
+        phone: z.string().optional()
+      }),
+      shippingAddress: z.object({
+        firstName: z.string().min(2),
+        lastName: z.string().min(2),
         address1: z.string().min(5),
         address2: z.string().optional(),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().min(3),
-        (match) => match.replace(':', '')string().min(2),
-        (match) => match.replace(':', '')string().email(),
-        (match) => match.replace(':', '')string().optional()
-}),
-      (match) => match.replace(':', '')string(),
-      (match) => match.replace(':', '')string().optional(),
-      (match) => match.replace(':', '')string().optional()
+        city: z.string().min(2),
+        state: z.string().min(2),
+        postalCode: z.string().min(3),
+        country: z.string().min(2),
+        email: z.string().email(),
+        phone: z.string().optional()
+      }),
+      paymentMethod: z.string(),
+      paymentId: z.string().optional(),
+      customerNote: z.string().optional()
     });
     
     const validatedData = createOrderSchema.parse(req.body);
@@ -832,7 +832,7 @@ router.post('/orders', async (req: Request, res: Response) => {
     // Get the cart for this session
     const cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     if (cartResult.length === 0) {
@@ -848,7 +848,7 @@ router.post('/orders', async (req: Request, res: Response) => {
       productId: cartItems.productId,
       quantity: cartItems.quantity,
       product: products
-})
+    })
     .from(cartItems)
     .innerJoin(products, eq(cartItems.productId, products.id))
     .where(eq(cartItems.cartId, cart.id));
@@ -861,7 +861,7 @@ router.post('/orders', async (req: Request, res: Response) => {
     const subtotal = cartItemsResult.reduce((total, item) => {
       const price = item.product.salePrice || item.product.price;
       return total + (Number(price) * item.quantity);
-}, 0);
+    }, 0);
     
     const shippingCost = 10.00; // Fixed shipping cost for demo
     const tax = subtotal * 0.08; // 8% tax for demo
@@ -881,7 +881,7 @@ router.post('/orders', async (req: Request, res: Response) => {
       paymentMethod: validatedData.paymentMethod,
       paymentId: validatedData.paymentId,
       customerNote: validatedData.customerNote
-}).returning();
+    }).returning();
     
     const order = orderResult[0];
     
@@ -893,7 +893,7 @@ router.post('/orders', async (req: Request, res: Response) => {
       productPrice: Number(item.product.salePrice || item.product.price),
       quantity: item.quantity,
       total: Number(item.product.salePrice || item.product.price) * item.quantity
-}));
+    }));
     
     await db.insert(orderItems).values(orderItemsToInsert);
     
@@ -905,10 +905,10 @@ router.post('/orders', async (req: Request, res: Response) => {
     const completeOrder = {
       ...order,
       items: await db.select().from(orderItems).where(eq(orderItems.orderId, order.id))
-};
+    };
     
     res.status(201).json(completeOrder);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ error: 'Failed to create order' });
   }
@@ -929,7 +929,7 @@ router.get('/orders/:orderId', async (req: Request, res: Response) => {
       .where(and(
         eq(orders.id, parseInt(orderId)),
         eq(orders.userId, req.session.userId)
-      ));
+      ))
       .limit(1);
     
     if (orderResult.length === 0) {
@@ -944,10 +944,10 @@ router.get('/orders/:orderId', async (req: Request, res: Response) => {
     const completeOrder = {
       ...order,
       items
-};
+    };
     
     res.json(completeOrder);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching order:', error);
     res.status(500).json({ error: 'Failed to fetch order' });
   }
@@ -963,11 +963,11 @@ router.get('/user/orders', async (req: Request, res: Response) => {
     // Get all orders for user
     const result = await db.select()
       .from(orders)
-      .where(eq(orders.userId, req.session.userId));
+      .where(eq(orders.userId, req.session.userId))
       .orderBy(desc(orders.createdAt));
     
     res.json(result);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching user orders:', error);
     res.status(500).json({ error: 'Failed to fetch user orders' });
   }
@@ -982,8 +982,8 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     
     // Validate request body
     const couponSchema = z.object({
-      (match) => match.replace(':', '')string()
-});
+      code: z.string()
+    });
     
     const { code } = couponSchema.parse(req.body);
     
@@ -993,7 +993,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
       .where(and(
         eq(coupons.code, code),
         eq(coupons.active, true)
-      ));
+      ))
       .limit(1);
     
     if (couponResult.length === 0) {
@@ -1003,7 +1003,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     const coupon = couponResult[0];
     
     // Check if coupon is valid (dates)
-    const now = new: Date();
+    const now = new Date();
     if (coupon.startDate > now) {
       return res.status(400).json({ error: 'Coupon is not yet active' });
     }
@@ -1020,7 +1020,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     // Get the cart
     const cartResult = await db.select()
       .from(carts)
-      .where(eq(carts.sessionId, req.session.id));
+      .where(eq(carts.sessionId, req.session.id))
       .limit(1);
     
     if (cartResult.length === 0) {
@@ -1036,7 +1036,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
       productId: cartItems.productId,
       quantity: cartItems.quantity,
       product: products
-})
+    })
     .from(cartItems)
     .innerJoin(products, eq(cartItems.productId, products.id))
     .where(eq(cartItems.cartId, cart.id));
@@ -1049,7 +1049,7 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     const subtotal = cartItemsResult.reduce((total, item) => {
       const price = item.product.salePrice || item.product.price;
       return total + (Number(price) * item.quantity);
-}, 0);
+    }, 0);
     
     // Check minimum amount if applicable
     if (coupon.minimumAmount && subtotal < coupon.minimumAmount) {
@@ -1062,14 +1062,14 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
     let discount = 0;
     if (coupon.discountType === 'percentage') {
       discount = subtotal * (coupon.discountValue / 100);
-} else {
+    } else {
       discount = coupon.discountValue;
-}
+    }
     
     // Don't allow discount greater than subtotal
     if (discount > subtotal) {
       discount = subtotal;
-}
+    }
     
     // Increment usage count
     await db.update(coupons)
@@ -1082,8 +1082,8 @@ router.post('/cart/coupon', async (req: Request, res: Response) => {
       discount,
       subtotal,
       total: subtotal - discount
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error applying coupon:', error);
     res.status(500).json({ error: 'Failed to apply coupon' });
   }

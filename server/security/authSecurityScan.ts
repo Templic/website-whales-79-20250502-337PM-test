@@ -11,21 +11,21 @@ import { v4 as uuidv4 } from 'uuid';
 import { log } from '../vite';
 
 // Interfaces for vulnerability tracking
-interface AuthVulnerability: {
-  id: string;,
-  severity: 'low' | 'medium' | 'high' | 'critical';,
+interface AuthVulnerability {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   description: string;
   location?: string;
   recommendation?: string;
 }
 
-interface ScanResult: {
-  timestamp: string;,
-  totalIssues: number;,
-  criticalIssues: number;,
-  highIssues: number;,
-  mediumIssues: number;,
-  lowIssues: number;,
+interface ScanResult {
+  timestamp: string;
+  totalIssues: number;
+  criticalIssues: number;
+  highIssues: number;
+  mediumIssues: number;
+  lowIssues: number;
   vulnerabilities: AuthVulnerability[];
 }
 
@@ -57,7 +57,8 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
     const mediumIssues = vulnerabilities.filter(v => v.severity === 'medium').length;
     const lowIssues = vulnerabilities.filter(v => v.severity === 'low').length;
     
-    // Log summary: log(`Authentication security scan complete. Found ${vulnerabilities.length} issues.`, 'security');
+    // Log summary
+    log(`Authentication security scan complete. Found ${vulnerabilities.length} issues.`, 'security');
     
     if (vulnerabilities.length > 0) {
       log(`Issues by severity: ${criticalIssues} critical, ${highIssues} high, ${mediumIssues} medium, ${lowIssues} low`, 'security');
@@ -71,27 +72,27 @@ export async function runAuthSecurityScan(): Promise<ScanResult> {
     
     // Return results
     return {
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       totalIssues: vulnerabilities.length,
       criticalIssues,
       highIssues,
       mediumIssues,
       lowIssues,
       vulnerabilities
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     log(`Error during authentication security scan: ${error}`, 'error');
     
     // Return minimal result on error
     return {
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       totalIssues: 0,
       criticalIssues: 0,
       highIssues: 0,
       mediumIssues: 0,
       lowIssues: 0,
       vulnerabilities: []
-};
+    };
   }
 }
 
@@ -106,7 +107,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'auth.ts'),
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
-      path.join(process.cwd(), 'server', 'security', 'password.ts');
+      path.join(process.cwd(), 'server', 'security', 'password.ts')
     ];
     
     let foundSecureHashing = false;
@@ -125,7 +126,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
           content.includes('pbkdf2')
         ) {
           foundSecureHashing = true;
-}
+        }
         
         // Check for timing-safe comparison to prevent timing attacks
         if (
@@ -134,7 +135,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
           content.includes('constantTimeCompare')
         ) {
           foundTimingSafeComparison = true;
-}
+        }
       }
     }
     
@@ -145,7 +146,7 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
         severity: 'critical',
         description: 'No secure password hashing algorithm detected',
         recommendation: 'Implement bcrypt, argon2, or scrypt for password hashing'
-});
+      });
     }
     
     if (!foundTimingSafeComparison) {
@@ -154,11 +155,11 @@ async function checkPasswordHashing(vulnerabilities: AuthVulnerability[]): Promi
         severity: 'high',
         description: 'No timing-safe password comparison detected',
         recommendation: 'Use timingSafeEqual from crypto to prevent timing attacks'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking password hashing:', error);
-}
+  }
 }
 
 /**
@@ -172,7 +173,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
       path.join(process.cwd(), 'server', 'middleware', 'rateLimit.ts'),
-      path.join(process.cwd(), 'server', 'security', 'bruteForce.ts');
+      path.join(process.cwd(), 'server', 'security', 'bruteForce.ts')
     ];
     
     let foundRateLimiting = false;
@@ -190,7 +191,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
           content.includes('express-rate-limit')
         ) {
           foundRateLimiting = true;
-}
+        }
         
         // Check for account lockout
         if (
@@ -199,7 +200,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
           content.includes('maxAttempts')
         ) {
           foundAccountLockout = true;
-}
+        }
       }
     }
     
@@ -210,7 +211,7 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
         severity: 'high',
         description: 'No rate limiting detected for authentication endpoints',
         recommendation: 'Implement rate limiting to prevent brute force attacks'
-});
+      });
     }
     
     if (!foundAccountLockout) {
@@ -219,11 +220,11 @@ async function checkBruteForceProtection(vulnerabilities: AuthVulnerability[]): 
         severity: 'medium',
         description: 'No account lockout mechanism detected',
         recommendation: 'Implement temporary account lockout after multiple failed login attempts'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking brute force protection:', error);
-}
+  }
 }
 
 /**
@@ -237,7 +238,7 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
       path.join(process.cwd(), 'server', 'security', 'twoFactorAuth.ts'),
-      path.join(process.cwd(), 'shared', 'schema.ts');
+      path.join(process.cwd(), 'shared', 'schema.ts')
     ];
     
     let foundTwoFactorAuth = false;
@@ -248,7 +249,7 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
       if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf8');
         
-        // Check for: 2FA
+        // Check for 2FA
         if (
           content.includes('twoFactor') || 
           content.includes('2fa') || 
@@ -256,12 +257,12 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
           content.includes('authenticator')
         ) {
           foundTwoFactorAuth = true;
-}
+        }
         
         // Check for backup codes
         if (content.includes('backupCodes') || content.includes('recovery')) {
           foundBackupCodes = true;
-}
+        }
       }
     }
     
@@ -272,7 +273,7 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
         severity: 'medium',
         description: 'No multi-factor authentication implementation detected',
         recommendation: 'Implement TOTP-based two-factor authentication'
-});
+      });
     }
     
     if (foundTwoFactorAuth && !foundBackupCodes) {
@@ -281,11 +282,11 @@ async function checkMultiFactorAuth(vulnerabilities: AuthVulnerability[]): Promi
         severity: 'low',
         description: '2FA implemented but no backup/recovery codes detected',
         recommendation: 'Implement backup codes for account recovery'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking multi-factor authentication:', error);
-}
+  }
 }
 
 /**
@@ -300,7 +301,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
       path.join(process.cwd(), 'server', 'security', 'password.ts'),
       path.join(process.cwd(), 'shared', 'schema.ts'),
-      path.join(process.cwd(), 'client', 'src', 'pages', 'AuthPage.tsx');
+      path.join(process.cwd(), 'client', 'src', 'pages', 'AuthPage.tsx')
     ];
     
     let foundComplexityRequirements = false;
@@ -320,7 +321,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
           (content.includes('password') && content.includes('strength'))
         ) {
           foundComplexityRequirements = true;
-}
+        }
         
         // Check for password expiry
         if (
@@ -329,7 +330,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
           content.includes('mustChangePassword')
         ) {
           foundPasswordExpiry = true;
-}
+        }
         
         // Check for password history
         if (
@@ -337,7 +338,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
           content.includes('previousPasswords')
         ) {
           foundPasswordHistoryCheck = true;
-}
+        }
       }
     }
     
@@ -348,7 +349,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         severity: 'medium',
         description: 'No password complexity requirements detected',
         recommendation: 'Implement password complexity requirements (length, mixed case, special characters)'
-});
+      });
     }
     
     if (!foundPasswordExpiry) {
@@ -357,7 +358,7 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         severity: 'low',
         description: 'No password expiration policy detected',
         recommendation: 'Implement password expiration and forced password changes'
-});
+      });
     }
     
     if (!foundPasswordHistoryCheck) {
@@ -366,11 +367,11 @@ async function checkPasswordPolicy(vulnerabilities: AuthVulnerability[]): Promis
         severity: 'low',
         description: 'No password history/reuse prevention detected',
         recommendation: 'Implement password history to prevent reuse of previous passwords'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking password policy:', error);
-}
+  }
 }
 
 /**
@@ -384,7 +385,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'auth.ts'),
       path.join(process.cwd(), 'server', 'security', 'sessionMonitor.ts'),
-      path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts');
+      path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts')
     ];
     
     let foundSecureCookies = false;
@@ -403,7 +404,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
           content.includes('sameSite')
         ) {
           foundSecureCookies = true;
-}
+        }
         
         // Check for session timeout
         if (
@@ -412,7 +413,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
           content.includes('expiresIn')
         ) {
           foundSessionTimeout = true;
-}
+        }
         
         // Check for session invalidation
         if (
@@ -421,7 +422,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
           (content.includes('session') && content.includes('destroy'))
         ) {
           foundSessionInvalidation = true;
-}
+        }
       }
     }
     
@@ -432,7 +433,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
         severity: 'high',
         description: 'No secure cookie settings detected for sessions',
         recommendation: 'Set secure, httpOnly, and sameSite flags on session cookies'
-});
+      });
     }
     
     if (!foundSessionTimeout) {
@@ -441,7 +442,7 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
         severity: 'medium',
         description: 'No session timeout settings detected',
         recommendation: 'Set appropriate session expiration time'
-});
+      });
     }
     
     if (!foundSessionInvalidation) {
@@ -450,11 +451,11 @@ async function checkSessionManagement(vulnerabilities: AuthVulnerability[]): Pro
         severity: 'medium',
         description: 'No session invalidation mechanism detected',
         recommendation: 'Implement proper session invalidation on logout and security events'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking session management:', error);
-}
+  }
 }
 
 /**
@@ -468,7 +469,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes.ts'),
       path.join(process.cwd(), 'server', 'middleware', 'auth.ts'),
-      path.join(process.cwd(), 'server', 'middleware', 'jwtAuth.ts');
+      path.join(process.cwd(), 'server', 'middleware', 'jwtAuth.ts')
     ];
     
     let foundAuthChecks = false;
@@ -487,7 +488,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
           content.includes('authenticateJwt')
         ) {
           foundAuthChecks = true;
-}
+        }
         
         // Check for role-based access control
         if (
@@ -496,7 +497,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
           content.includes('authorizeJwtRole')
         ) {
           foundRoleChecks = true;
-}
+        }
         
         // Check for CSRF protection
         if (
@@ -505,7 +506,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
           content.includes('csrfToken')
         ) {
           foundCSRFProtection = true;
-}
+        }
       }
     }
     
@@ -516,7 +517,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
         severity: 'critical',
         description: 'No authentication middleware checks detected',
         recommendation: 'Implement proper authentication middleware for protected routes'
-});
+      });
     }
     
     if (!foundRoleChecks) {
@@ -525,7 +526,7 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
         severity: 'high',
         description: 'No role-based access control detected',
         recommendation: 'Implement role checks to prevent unauthorized access'
-});
+      });
     }
     
     if (!foundCSRFProtection) {
@@ -534,11 +535,11 @@ async function checkBypassVulnerabilities(vulnerabilities: AuthVulnerability[]):
         severity: 'high',
         description: 'No CSRF protection detected',
         recommendation: 'Implement CSRF token verification for state-changing operations'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking authentication bypass vulnerabilities:', error);
-}
+  }
 }
 
 /**
@@ -551,7 +552,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'routes', 'authRoutes.ts'),
-      path.join(process.cwd(), 'server', 'routes', 'jwtAuthRoutes.ts');
+      path.join(process.cwd(), 'server', 'routes', 'jwtAuthRoutes.ts')
     ];
     
     let foundSessionDestroy = false;
@@ -568,7 +569,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
           (content.includes('logout') && content.includes('req.session.destroy'))
         ) {
           foundSessionDestroy = true;
-}
+        }
         
         // Check for token revocation
         if (
@@ -576,7 +577,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
           (content.includes('logout') && content.includes('blacklist'))
         ) {
           foundTokenRevocation = true;
-}
+        }
       }
     }
     
@@ -587,7 +588,7 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
         severity: 'medium',
         description: 'No proper session destruction on logout detected',
         recommendation: 'Ensure sessions are properly destroyed on logout'
-});
+      });
     }
     
     if (!foundTokenRevocation) {
@@ -596,11 +597,11 @@ async function checkLogout(vulnerabilities: AuthVulnerability[]): Promise<void> 
         severity: 'medium',
         description: 'No token revocation on logout detected',
         recommendation: 'Implement token revocation/blacklisting for JWT-based authentication'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking logout implementation:', error);
-}
+  }
 }
 
 /**
@@ -613,7 +614,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
     // Define file paths to check
     const filesToCheck = [
       path.join(process.cwd(), 'server', 'security', 'jwt.ts'),
-      path.join(process.cwd(), 'server', 'middleware', 'jwtAuth.ts');
+      path.join(process.cwd(), 'server', 'middleware', 'jwtAuth.ts')
     ];
     
     let foundStrongAlgorithm = false;
@@ -632,7 +633,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
           content.includes('HS512')
         ) {
           foundStrongAlgorithm = true;
-}
+        }
         
         // Check for token expiry
         if (
@@ -640,7 +641,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
           content.includes('expiry')
         ) {
           foundTokenExpiry = true;
-}
+        }
         
         // Check for revocation mechanism
         if (
@@ -649,7 +650,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
           content.includes('invalidate')
         ) {
           foundRevocationMechanism = true;
-}
+        }
       }
     }
     
@@ -660,7 +661,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
         severity: 'high',
         description: 'No strong JWT signing algorithm detected',
         recommendation: 'Use RS256, ES256, or HS512 for JWT signing'
-});
+      });
     }
     
     if (!foundTokenExpiry) {
@@ -669,7 +670,7 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
         severity: 'medium',
         description: 'No JWT token expiration detected',
         recommendation: 'Set short expiration times for JWT tokens'
-});
+      });
     }
     
     if (!foundRevocationMechanism) {
@@ -678,9 +679,9 @@ async function checkJwtSecurity(vulnerabilities: AuthVulnerability[]): Promise<v
         severity: 'medium',
         description: 'No JWT token revocation mechanism detected',
         recommendation: 'Implement token blacklisting or revocation'
-});
+      });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error checking JWT security:', error);
-}
+  }
 }

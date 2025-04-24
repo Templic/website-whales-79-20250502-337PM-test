@@ -9,7 +9,7 @@ import { SecurityPosture } from '../SecurityFabric';
 /**
  * Security configuration options
  */
-export interface SecurityConfig: {
+export interface SecurityConfig {
   /**
    * Initial security posture
    */
@@ -88,7 +88,7 @@ export interface SecurityConfig: {
      * Window size in milliseconds
      */
     windowMs?: number;
-};
+  };
   
   /**
    * Content Security Policy options
@@ -103,7 +103,7 @@ export interface SecurityConfig: {
      * Whether to set CSP in report-only mode
      */
     reportOnly?: boolean;
-};
+  };
   
   /**
    * HTTP Strict Transport Security options
@@ -128,7 +128,7 @@ export interface SecurityConfig: {
      * Whether to preload
      */
     preload?: boolean;
-};
+  };
   
   /**
    * Anomaly detection options
@@ -153,7 +153,7 @@ export interface SecurityConfig: {
      * Baseline update interval in hours
      */
     baselineUpdateInterval?: number;
-};
+  };
   
   /**
    * Zero-trust options
@@ -173,7 +173,7 @@ export interface SecurityConfig: {
      * Whether to challenge users for additional verification
      */
     enableChallenges?: boolean;
-};
+  };
   
   /**
    * Database security options
@@ -193,7 +193,7 @@ export interface SecurityConfig: {
      * Maximum query length to analyze
      */
     maxQueryLength?: number;
-};
+  };
 }
 
 /**
@@ -217,36 +217,36 @@ export const DEFAULT_SECURITY_CONFIG: SecurityConfig = {
   rateLimiting: {
     maxRequests: 100,
     windowMs: 60 * 1000 // 1 minute
-},
+  },
   
   csp: {
     enabled: true,
     reportOnly: false
-},
+  },
   
   hsts: {
     enabled: true,
-    maxAge: 31536000, // 1 year,
-  includeSubDomains: true,
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
     preload: true
-},
+  },
   
   anomalyDetection: {
     mode: 'enhanced',
     minConfidence: 0.7,
     learningPeriod: 7,
     baselineUpdateInterval: 24
-},
+  },
   
   zeroTrust: {
     defaultMinTrustScore: 0.6,
     defaultMaxRiskScore: 0.3,
     enableChallenges: true
-},
+  },
   
   databaseSecurity: {
     analyzeAllQueries: true,
     logAllQueries: false,
     maxQueryLength: 10000
-}
+  }
 };

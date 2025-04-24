@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import Stars from "@/components/cosmic/Stars";
-import { CosmicHeading } from "@/components/imported/ui/CosmicHeading";
-import { CosmicCard } from "@/components/imported/ui/CosmicCard";
-import { CosmicButton } from "@/components/imported/ui/CosmicButton";
-import { CosmicSection } from "@/components/imported/ui/CosmicSection";
-import { CosmicText } from "@/components/imported/ui/CosmicText";
+import Stars from '../../../components/cosmic/Stars';
+import { CosmicHeading } from '../../../components/imported/ui/CosmicHeading';
+import { CosmicCard } from '../../../components/imported/ui/CosmicCard';
+import { CosmicButton } from '../../../components/imported/ui/CosmicButton';
+import { CosmicSection } from '../../../components/imported/ui/CosmicSection';
+import { CosmicText } from '../../../components/imported/ui/CosmicText';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AccessibilityControls } from "@/components/imported/AccessibilityControls";
+import { AccessibilityControls } from '../../../components/imported/AccessibilityControls';
 import {
   Settings, Code, Music, Palette, Filter, Sliders, Box, 
   Headphones, Compass, Layers, Aperture

@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * music-player.tsx
  * 
@@ -119,7 +117,7 @@ export function MusicPlayer() {
       try {
         const silentUrl = generateSilentAudio()
         setSilentAudioUrl(silentUrl)
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Failed to generate silent audio:", error)
       }
 
@@ -417,7 +415,7 @@ function MusicPlayerOriginal() {
       try {
         const silentUrl = generateSilentAudio()
         setSilentAudioUrl(silentUrl)
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Failed to generate silent audio:", error)
       }
 

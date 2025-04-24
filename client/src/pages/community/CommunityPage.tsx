@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { CommunityFeedbackLoop } from "@/components/community/CommunityFeedbackLoop";
 import { useToast } from "@/hooks/use-toast";

@@ -7,8 +7,6 @@
  * Created: 2025-04-05 - Updated with enhancements
  * Latest Update: Added sacred geometry elements and improved staggered navigation
  */
-import React from "react";
-
 
 import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -172,7 +170,7 @@ export function MainHeader() {
         {/* FIRST SET - Sacred geometry circles on outer edges */}
         {/* Left circle foreground - first set */}
         <div className="absolute top-1/2 left-[8%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={90} 
@@ -185,7 +183,7 @@ export function MainHeader() {
 
         {/* Left circle background/shadow - first set */}
         <div className="absolute top-[52%] left-[7%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={100} 
@@ -198,7 +196,7 @@ export function MainHeader() {
         
         {/* Right circle foreground - first set */}
         <div className="absolute top-1/2 right-[8%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-20">
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={90} 
@@ -211,7 +209,7 @@ export function MainHeader() {
         
         {/* Right circle background/shadow - first set */}
         <div className="absolute top-[52%] right-[7%] transform translate-x-1/2 -translate-y-1/2 hidden md:block z-10 opacity-50 blur-sm">
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={100} 
@@ -224,8 +222,8 @@ export function MainHeader() {
         
         {/* SECOND SET - Slightly below and toward center - in absolute foreground */}
         {/* Left circle foreground - second set */}
-        <div className="absolute top-[60%] left-[12%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{  zIndex: 100  }}>
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+        <div className="absolute top-[60%] left-[12%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ zIndex: 100 }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={75} 
@@ -237,8 +235,8 @@ export function MainHeader() {
         </div>
 
         {/* Left circle background/shadow - second set */}
-        <div className="absolute top-[62%] left-[11%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{  zIndex: 99  }}>
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+        <div className="absolute top-[62%] left-[11%] transform -translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{ zIndex: 99 }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={85} 
@@ -250,8 +248,8 @@ export function MainHeader() {
         </div>
         
         {/* Right circle foreground - second set */}
-        <div className="absolute top-[60%] right-[12%] transform translate-x-1/2 -translate-y-1/2 hidden md:block" style={{  zIndex: 100  }}>
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+        <div className="absolute top-[60%] right-[12%] transform translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ zIndex: 100 }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={75} 
@@ -263,8 +261,8 @@ export function MainHeader() {
         </div>
         
         {/* Right circle background/shadow - second set */}
-        <div className="absolute top-[62%] right-[11%] transform translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{  zIndex: 99  }}>
-          <div className="animate-spin-very-slow" style={{  animationDuration: '15s'  }}>
+        <div className="absolute top-[62%] right-[11%] transform translate-x-1/2 -translate-y-1/2 hidden md:block opacity-50 blur-sm" style={{ zIndex: 99 }}>
+          <div className="animate-spin-very-slow" style={{ animationDuration: '15s' }}>
             <SacredGeometry 
               variant="merkaba" 
               size={85} 
@@ -320,7 +318,7 @@ export function MainHeader() {
         
         {/* Cosmic Glow Effects */}
         <div className="absolute inset-x-0 -top-10 h-10 bg-gradient-to-b from-cyan-500/20 to-transparent"></div>
-        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/20 via-purple-500/10 to-cyan-500/20 blur-xl opacity-50 group-hover:opacity-100 animate-pulse" style={{  animationDuration: '4s'  }}></div>
+        <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-cyan-500/20 via-purple-500/10 to-cyan-500/20 blur-xl opacity-50 group-hover:opacity-100 animate-pulse" style={{ animationDuration: '4s' }}></div>
         
         {/* Main Content Container */}
         <div className="relative z-20 py-2">
@@ -609,8 +607,8 @@ export function MainHeader() {
           </div>
 
           {/* Five-pointed star for mobile view - behind everything except page background */}
-          <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`} style={{  zIndex: 5  }}>
-            <div className="animate-spin-very-slow animate-pulse" style={{  animationDuration: '25s'  }}>
+          <div className={`fixed top-1/4 left-1/2 transform -translate-x-1/2 transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0'}`} style={{ zIndex: 5 }}>
+            <div className="animate-spin-very-slow animate-pulse" style={{ animationDuration: '25s' }}>
               <SacredGeometry 
                 variant="star" 
                 size={180} 
@@ -795,7 +793,7 @@ export function MainHeader() {
       </div>
       
       {/* Five-pointed star positioned behind content for mobile view */}
-      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 md:hidden" style={{  zIndex: 5  }}>
+      <div className="absolute right-2 top-1/2 transform -translate-y-1/2 md:hidden" style={{ zIndex: 5 }}>
         <SacredGeometry 
           variant="star" 
           size={110} 
@@ -806,7 +804,7 @@ export function MainHeader() {
       </div>
 
       {/* Media query based five-pointed star (fallback for very small screens) */}
-      <div className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 md:hidden max-[340px]:hidden" style={{  zIndex: 3  }}>
+      <div className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 md:hidden max-[340px]:hidden" style={{ zIndex: 3 }}>
         <SacredGeometry 
           variant="star" 
           size={110} 
@@ -822,7 +820,7 @@ export function MainHeader() {
           <path 
             d="M0 4C150 4 150 7 300 7C450 7 450 1 600 1C750 1 750 4 900 4C1050 4 1050 7 1200 7"
             stroke="url(#paint0_linear)" 
-            strokeOpacity={0.5} 
+            strokeOpacity="0.5" 
             strokeWidth="1.5"
           >
             <animate attributeName="d" 
@@ -836,11 +834,11 @@ export function MainHeader() {
           </path>
           <defs>
             <linearGradient id="paint0_linear" x1="0" y1="4" x2="1200" y2="4" gradientUnits="userSpaceOnUse">
-              <stop stopColor="#00EBD4" stopOpacity={0} />
+              <stop stopColor="#00EBD4" stopOpacity="0" />
               <stop offset="0.2" stopColor="#00EBD4" />
               <stop offset="0.5" stopColor="#BF5AF2" />
               <stop offset="0.8" stopColor="#00EBD4" />
-              <stop offset="1" stopColor="#00EBD4" stopOpacity={0} />
+              <stop offset="1" stopColor="#00EBD4" stopOpacity="0" />
             </linearGradient>
           </defs>
         </svg>

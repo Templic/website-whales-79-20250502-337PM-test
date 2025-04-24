@@ -1,4 +1,3 @@
-import React from "react";
 
 /**
  * @deprecated This component is deprecated. Please use MainHeader.tsx in the layout folder instead.

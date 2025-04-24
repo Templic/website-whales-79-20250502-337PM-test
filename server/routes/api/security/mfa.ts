@@ -30,7 +30,7 @@ router.get('/status', (req, res) => {
   res.json({
     enabled: true,
     methods: [MFAType.TOTP, MFAType.RECOVERY]
-});
+  });
 });
 
 /**
@@ -50,7 +50,7 @@ router.post('/totp/setup', async (req, res) => {
     const totpSetup = await mfaManager.generateTOTPSecret(userId, {
       issuer: 'SecureApp',
       label: username
-});
+    });
     
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
@@ -62,8 +62,8 @@ router.post('/totp/setup', async (req, res) => {
     res.json({
       secret: totpSetup.secret,
       qrCode: totpSetup.qrCode
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -99,7 +99,7 @@ router.post('/totp/verify', async (req, res) => {
       // TOTP verification successful, save the secret
       const success = await completeMFASetup(userId, MFAType.TOTP, secret);
       
-      if (success) => {
+      if (success) {
         // Generate recovery codes
         const recoveryCodes = mfaManager.generateRecoveryCodes();
         const hashedCodes = await mfaManager.hashRecoveryCodes(recoveryCodes);
@@ -118,11 +118,12 @@ router.post('/totp/verify', async (req, res) => {
   return res.json({
           success: true,
           recoveryCodes
-});
+        });
       }
     }
     
-    // Verification failed: logSecurityEvent({
+    // Verification failed
+    logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.WARNING,
       message: `TOTP verification failed for user ${userId}`,
@@ -131,11 +132,11 @@ router.post('/totp/verify', async (req, res) => {
     
     res.status(400).json({
       success: false,
-      error: status = == MFAVerificationStatus.THROTTLED
+      error: status === MFAVerificationStatus.THROTTLED
         ? 'Too many failed attempts. Please try again later.'
-        : 'Invalid verification code. Please try again.';
-});
-  } catch (error: unknown) {
+        : 'Invalid verification code. Please try again.'
+    });
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -166,7 +167,7 @@ router.post('/recovery/generate', async (req, res) => {
     // Save recovery codes
     const success = await completeMFASetup(userId, MFAType.RECOVERY, undefined, hashedCodes);
     
-    if (success) => {
+    if (success) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.INFO,
@@ -178,11 +179,11 @@ router.post('/recovery/generate', async (req, res) => {
   return res.json({
         success: true,
         recoveryCodes
-});
+      });
     }
     
     res.status(500).json({ error: 'Failed to save recovery codes' });
-  } catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,
@@ -206,7 +207,9 @@ router.post('/disable', async (req, res) => {
   const userId = (req.user as any).id;
   
   try {
-    // In a real application, this would disable MFA for the user in the database: logSecurityEvent({
+    // In a real application, this would disable MFA for the user in the database
+    
+    logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.WARNING,
       message: `MFA disabled for user ${userId}`,
@@ -214,7 +217,7 @@ router.post('/disable', async (req, res) => {
     });
     
     res.json({ success: true });
-  } catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.AUTHENTICATION,
       severity: SecurityEventSeverity.ERROR,

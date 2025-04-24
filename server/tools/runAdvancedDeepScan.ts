@@ -37,10 +37,10 @@ async function runAdvancedDeepScan() {
       category: SecurityEventCategory.SECURITY_SCAN as any,
       message: 'Advanced deep security scan initiated',
       metadata: {
-        timestamp: new: Date().toISOString(),
+        timestamp: new Date().toISOString(),
         initiatedBy: 'security-admin'
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     });
     
     // Start the deep scan
@@ -53,35 +53,35 @@ async function runAdvancedDeepScan() {
     let isComplete = false;
     
     while (!isComplete) {
-      // Wait for: 2 seconds between checks
-      await new: Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for 2 seconds between checks
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Get scan result
       const result = deepScanEngine.getScanById(scanId);
       
-      if (result) => {
+      if (result) {
         scanResult = result;
         
         // Check if scan is complete
         if (result.endTime.getTime() > result.startTime.getTime()) {
           isComplete = true;
-}
+        }
       }
     }
     
     if (!scanResult) {
       throw new Error('Scan completed but no results were found');
-}
+    }
     
     // Print scan summary
     console.log('\n┌──────────────────────────────────────────────────────┐');
     console.log('│               DEEP SCAN RESULTS SUMMARY               │');
     console.log('├──────────────────────────────────────────────────────┤');
-    console.log(`│ Scan, ID: ${scanResult.scanId}`);
+    console.log(`│ Scan ID: ${scanResult.scanId}`);
     console.log(`│ Duration: ${scanResult.duration}ms`);
-    console.log(`│ Files, Scanned: ${scanResult.summary.filesScanned}`);
-    console.log(`│ Lines of, Code: ${scanResult.summary.linesScanned}`);
-    console.log(`│ Total, Findings: ${scanResult.summary.totalFindings}`);
+    console.log(`│ Files Scanned: ${scanResult.summary.filesScanned}`);
+    console.log(`│ Lines of Code: ${scanResult.summary.linesScanned}`);
+    console.log(`│ Total Findings: ${scanResult.summary.totalFindings}`);
     console.log(`│   • Critical: ${scanResult.summary.criticalFindings}`);
     console.log(`│   • High:     ${scanResult.summary.highFindings}`);
     console.log(`│   • Medium:   ${scanResult.summary.mediumFindings}`);
@@ -103,7 +103,7 @@ async function runAdvancedDeepScan() {
           'medium': 2,
           'low': 3,
           'info': 4
-};
+        };
         return severityOrder[a.severity.toString()] - severityOrder[b.severity.toString()];
       });
       
@@ -113,7 +113,7 @@ async function runAdvancedDeepScan() {
       const mediumFindings = sortedFindings.filter(f => f.severity === 'medium').slice(0, 3);
       
       if (criticalFindings.length > 0) {
-        console.log('│ CRITICAL, FINDINGS:');
+        console.log('│ CRITICAL FINDINGS:');
         criticalFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
@@ -123,7 +123,7 @@ async function runAdvancedDeepScan() {
       }
       
       if (highFindings.length > 0) {
-        console.log('│ HIGH, FINDINGS:');
+        console.log('│ HIGH FINDINGS:');
         highFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
@@ -133,7 +133,7 @@ async function runAdvancedDeepScan() {
       }
       
       if (mediumFindings.length > 0) {
-        console.log('│ MEDIUM, FINDINGS:');
+        console.log('│ MEDIUM FINDINGS:');
         mediumFindings.forEach((finding, index) => {
           console.log(`│ ${index + 1}. ${finding.description}`);
           console.log(`│    Location: ${finding.location}`);
@@ -150,7 +150,7 @@ async function runAdvancedDeepScan() {
       console.log('└──────────────────────────────────────────────────────┘');
     } else {
       console.log('\n✓ No security issues found.');
-}
+    }
     
     // Log scan completion event
     await securityBlockchain.addSecurityEvent({
@@ -159,17 +159,17 @@ async function runAdvancedDeepScan() {
       message: 'Advanced deep security scan completed',
       metadata: {
         scanId: scanResult.scanId,
-        timestamp: new: Date().toISOString(),
+        timestamp: new Date().toISOString(),
         duration: scanResult.duration,
         totalFindings: scanResult.summary.totalFindings,
         criticalFindings: scanResult.summary.criticalFindings,
         highFindings: scanResult.summary.highFindings
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     });
     
     return scanResult;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('\n❌ Error running advanced deep security scan:', error);
     
     // Log scan error event
@@ -178,23 +178,24 @@ async function runAdvancedDeepScan() {
       category: SecurityEventCategory.SECURITY_SCAN as any,
       message: 'Advanced deep security scan failed',
       metadata: {
-        timestamp: new: Date().toISOString(),
+        timestamp: new Date().toISOString(),
         error: error.message
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     });
     
     throw error;
   }
 }
 
-// Run the scan: runAdvancedDeepScan()
+// Run the scan
+runAdvancedDeepScan()
   .then(() => {
     console.log('\n✅ Advanced deep security scan completed successfully.');
-})
+  })
   .catch(error => {
     console.error('\n❌ Advanced deep security scan failed:', error);
-});
+  });
 
 // Export for use as a module
 export { runAdvancedDeepScan };

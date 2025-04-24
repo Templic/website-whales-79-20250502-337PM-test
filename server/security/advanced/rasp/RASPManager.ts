@@ -15,7 +15,7 @@ import { z, ZodError } from 'zod';
 /**
  * RASP protection level
  */
-export enum RASPProtectionLevel: {
+export enum RASPProtectionLevel {
   /**
    * Only monitoring, no protection
    */
@@ -34,8 +34,8 @@ export enum RASPProtectionLevel: {
 
 /**
  * RASP protection categories
- */;
-export enum RASPProtectionCategory: {
+ */
+export enum RASPProtectionCategory {
   /**
    * Input validation (SQL injection, XSS, etc.)
    */
@@ -74,8 +74,8 @@ export enum RASPProtectionCategory: {
 
 /**
  * RASP middleware options
- */;
-export interface RASPMiddlewareOptions: {
+ */
+export interface RASPMiddlewareOptions {
   /**
    * Protection level
    */
@@ -110,7 +110,7 @@ export interface RASPMiddlewareOptions: {
 /**
  * RASP Manager class
  */
-export class RASPManager: {
+export class RASPManager {
   /**
    * Protection level
    */
@@ -146,45 +146,45 @@ export class RASPManager: {
     this.excludePaths = options.excludePaths || [];
     
     // Initialize enabled categories with defaults
-    this.enabledCategories = new: Set([
+    this.enabledCategories = new Set([
       RASPProtectionCategory.INPUT_VALIDATION,
       RASPProtectionCategory.COMMAND_INJECTION,
       RASPProtectionCategory.PATH_TRAVERSAL,
       RASPProtectionCategory.AUTHENTICATION,
       RASPProtectionCategory.API_SECURITY,
       RASPProtectionCategory.MEMORY_PROTECTION,
-      RASPProtectionCategory.MALICIOUS_PAYLOAD;
+      RASPProtectionCategory.MALICIOUS_PAYLOAD
     ]);
     
     // Add additional categories
     if (options.enableCategories) {
       options.enableCategories.forEach(category => {
         this.enabledCategories.add(category);
-});
+      });
     }
     
     // Remove disabled categories
     if (options.disableCategories) {
       options.disableCategories.forEach(category => {
         this.enabledCategories.delete(category);
-});
+      });
     }
   }
   
   /**
    * Check if a path is excluded from protection
    */
-  private: isExcludedPath(path: string): boolean: {
+  private isExcludedPath(path: string): boolean {
     return this.excludePaths.some(excludePath => {
       // Check exact match
       if (excludePath === path) {
         return true;
-}
+      }
       
       // Check for wildcard (*) at the end
       if (excludePath.endsWith('*') && path.startsWith(excludePath.slice(0, -1))) {
         return true;
-}
+      }
       
       return false;
     });
@@ -193,19 +193,19 @@ export class RASPManager: {
   /**
    * Check if a protection category is enabled
    */
-  private: isProtectionCategoryEnabled(category: RASPProtectionCategory): boolean: {
+  private isProtectionCategoryEnabled(category: RASPProtectionCategory): boolean {
     return this.enabledCategories.has(category);
-}
+  }
   
   /**
    * Create a RASP middleware instance
    */
-  public: createMiddleware(): express.RequestHandler: {
+  public createMiddleware(): express.RequestHandler {
     return (req, res, next) => {
       // Skip excluded paths
       if (this.isExcludedPath(req.path)) {
         return next();
-}
+      }
       
       // Create protection context
       const protectionContext = {
@@ -219,13 +219,13 @@ export class RASPManager: {
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         contentType: req.headers['content-type'],
-        timestamp: new: Date(),
+        timestamp: new Date(),
         protectionLevel: this.protectionLevel,
         blockRequests: this.blockRequests,
         detected: false,
         detectionCategory: null as RASPProtectionCategory | null,
         detectionDetails: null as any,
-};
+      };
       
       // Apply protections
       this.applyProtections(protectionContext);
@@ -244,10 +244,10 @@ export class RASPManager: {
               method: req.method,
               protection: protectionContext.detectionCategory,
               details: protectionContext.detectionDetails
-}
+            }
           }).catch(error => {
             console.error('[RASP] Error logging security event:', error);
-});
+          });
           
           // Emit security event
           securityFabric.emit('security:rasp:blocked', {
@@ -255,65 +255,66 @@ export class RASPManager: {
             method: req.method,
             ip: req.ip,
             category: protectionContext.detectionCategory,
-            timestamp: new: Date()
-});
+            timestamp: new Date()
+          });
         }
         
         // Return error response
         return res.status(403).json({
           error: 'Forbidden',
           message: 'Request blocked by security protection'
-});
+        });
       }
       
-      // Continue to next middleware: next();
+      // Continue to next middleware
+      next();
     };
   }
   
   /**
    * Apply all protection mechanisms
    */
-  private: applyProtections(context): void: {
+  private applyProtections(context): void {
     // Apply input validation protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.INPUT_VALIDATION)) {
       this.applyInputValidationProtection(context);
-}
+    }
     
     // Apply command injection protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.COMMAND_INJECTION)) {
       this.applyCommandInjectionProtection(context);
-}
+    }
     
     // Apply path traversal protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.PATH_TRAVERSAL)) {
       this.applyPathTraversalProtection(context);
-}
+    }
     
     // Apply API security protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.API_SECURITY)) {
       this.applyApiSecurityProtection(context);
-}
+    }
     
     // Apply malicious payload protection
     if (this.isProtectionCategoryEnabled(RASPProtectionCategory.MALICIOUS_PAYLOAD)) {
       this.applyMaliciousPayloadProtection(context);
-}
+    }
   }
   
   /**
    * Apply input validation protection
    */
-  private: applyInputValidationProtection(context): void: {
+  private applyInputValidationProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
-}
+    }
     
     const { body, query } = context;
     
     // Check for SQL injection patterns
     const sqlInjectionPatterns = [
-      /('|").*\s+(OR|AND)\s+('|").*(=|<|>)/i,;
+      /('|").*\s+(OR|AND)\s+('|").*(=|<|>)/i,
       /;\s*DROP\s+TABLE/i,
       /;\s*DELETE\s+FROM/i,
       /UNION\s+SELECT/i,
@@ -325,7 +326,7 @@ export class RASPManager: {
     const xssPatterns = [
       /<script[\s\S]*?>[\s\S]*?<\/script>/i,
       /javascript:[^\s]*/i,
-      /on\w+\s*=\s*["']?[^"']*["']?/i,;
+      /on\w+\s*=\s*["']?[^"']*["']?/i,
       /<\s*img[^>]*src\s*=\s*["']?data:image\/[^;]*;base64/i
     ];
     
@@ -349,7 +350,7 @@ export class RASPManager: {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
-}
+          }
         }
       }
       
@@ -362,10 +363,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
       context.detectionDetails = {
-        type 'sql-injection',
+        type: 'sql-injection',
         location: 'body',
         value: sqlBodyCheck.value
-};
+      };
       return;
     }
     
@@ -375,10 +376,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
       context.detectionDetails = {
-        type 'sql-injection',
+        type: 'sql-injection',
         location: 'query',
         value: sqlQueryCheck.value
-};
+      };
       return;
     }
     
@@ -388,10 +389,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
       context.detectionDetails = {
-        type 'xss',
+        type: 'xss',
         location: 'body',
         value: xssBodyCheck.value
-};
+      };
       return;
     }
     
@@ -401,10 +402,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.INPUT_VALIDATION;
       context.detectionDetails = {
-        type 'xss',
+        type: 'xss',
         location: 'query',
         value: xssQueryCheck.value
-};
+      };
       return;
     }
   }
@@ -412,17 +413,17 @@ export class RASPManager: {
   /**
    * Apply command injection protection
    */
-  private: applyCommandInjectionProtection(context): void: {
+  private applyCommandInjectionProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
-}
+    }
     
     const { body, query } = context;
     
     // Check for command injection patterns
     const commandInjectionPatterns = [
-      /\s*\|\s*\w+/i, // Pipe operator;
+      /\s*\|\s*\w+/i, // Pipe operator
       /\s*;\s*\w+/i, // Semicolon
       /\s*&&\s*\w+/i, // AND operator
       /\s*\|\|\s*\w+/i, // OR operator
@@ -452,7 +453,7 @@ export class RASPManager: {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
-}
+          }
         }
       }
       
@@ -465,10 +466,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
       context.detectionDetails = {
-        type 'command-injection',
+        type: 'command-injection',
         location: 'body',
         value: commandBodyCheck.value
-};
+      };
       return;
     }
     
@@ -478,10 +479,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.COMMAND_INJECTION;
       context.detectionDetails = {
-        type 'command-injection',
+        type: 'command-injection',
         location: 'query',
         value: commandQueryCheck.value
-};
+      };
       return;
     }
   }
@@ -489,11 +490,11 @@ export class RASPManager: {
   /**
    * Apply path traversal protection
    */
-  private: applyPathTraversalProtection(context): void: {
+  private applyPathTraversalProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
-}
+    }
     
     const { body, query, path } = context;
     
@@ -509,7 +510,7 @@ export class RASPManager: {
       /etc\/passwd/i, // etc/passwd
       /etc\/shadow/i, // etc/shadow
       /proc\/self/i, // proc/self
-      /\/\.\.\/\.\./i // /../..;
+      /\/\.\.\/\.\./i // /../..
     ];
     
     // Check path for traversal
@@ -518,10 +519,10 @@ export class RASPManager: {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
         context.detectionDetails = {
-          type 'path-traversal',
+          type: 'path-traversal',
           location: 'path',
           value: path
-};
+        };
         return;
       }
     }
@@ -546,7 +547,7 @@ export class RASPManager: {
           const result = checkObjectForPatterns(obj[key], patterns);
           if (result.found) {
             return result;
-}
+          }
         }
       }
       
@@ -559,10 +560,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
       context.detectionDetails = {
-        type 'path-traversal',
+        type: 'path-traversal',
         location: 'body',
         value: traversalBodyCheck.value
-};
+      };
       return;
     }
     
@@ -572,10 +573,10 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.PATH_TRAVERSAL;
       context.detectionDetails = {
-        type 'path-traversal',
+        type: 'path-traversal',
         location: 'query',
         value: traversalQueryCheck.value
-};
+      };
       return;
     }
   }
@@ -583,11 +584,11 @@ export class RASPManager: {
   /**
    * Apply API security protection
    */
-  private: applyApiSecurityProtection(context): void: {
+  private applyApiSecurityProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
-}
+    }
     
     const { method, path, headers, request, body, query } = context;
     
@@ -595,27 +596,27 @@ export class RASPManager: {
     if (path.startsWith('/api/')) {
       // Check for API methods requiring authentication
       if (
-        (method = == 'POST' || method === 'PUT' || method === 'DELETE') && 
+        (method === 'POST' || method === 'PUT' || method === 'DELETE') && 
         !headers.authorization && 
         !path.includes('/auth/') &&
         !path.includes('/login') &&
-        !path.includes('/register');
+        !path.includes('/register')
       ) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.API_SECURITY;
         context.detectionDetails = {
-          type 'missing-auth',
+          type: 'missing-auth',
           location: 'headers',
           value: 'No authorization header found for protected method'
-};
+        };
         this.logSecurityEvent({
-          type 'api-security-violation',
+          type: 'api-security-violation',
           category: 'missing-auth',
           details: 'No authorization header found for protected method',
           method,
           path,
-          timestamp: new: Date().toISOString()
-});
+          timestamp: new Date().toISOString()
+        });
         return;
       }
       
@@ -624,18 +625,18 @@ export class RASPManager: {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.API_SECURITY;
         context.detectionDetails = {
-          type 'missing-content-type',
+          type: 'missing-content-type',
           location: 'headers',
           value: 'No content-type header found for POST/PUT request'
-};
+        };
         this.logSecurityEvent({
-          type 'api-security-violation',
+          type: 'api-security-violation',
           category: 'missing-content-type',
           details: 'No content-type header found for POST/PUT request',
           method,
           path,
-          timestamp: new: Date().toISOString()
-});
+          timestamp: new Date().toISOString()
+        });
         return;
       }
       
@@ -650,18 +651,18 @@ export class RASPManager: {
             context.detected = true;
             context.detectionCategory = RASPProtectionCategory.API_SECURITY;
             context.detectionDetails = {
-              type 'missing-csrf-token',
+              type: 'missing-csrf-token',
               location: 'headers',
               value: 'No CSRF token found for state-changing operation'
-};
+            };
             this.logSecurityEvent({
-              type 'api-security-violation',
+              type: 'api-security-violation',
               category: 'missing-csrf-token',
               details: 'No CSRF token found for state-changing operation',
               method,
               path,
-              timestamp: new: Date().toISOString()
-});
+              timestamp: new Date().toISOString()
+            });
             return;
           }
         }
@@ -669,17 +670,17 @@ export class RASPManager: {
       
       // Check for suspicious combinations of headers or parameters
       const suspiciousPatterns = this.detectSuspiciousAPIPatterns(headers, method, path);
-      if (suspiciousPatterns) => {
+      if (suspiciousPatterns) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.API_SECURITY;
         context.detectionDetails = suspiciousPatterns;
         this.logSecurityEvent({
-          type 'api-security-violation',
+          type: 'api-security-violation',
           category: 'suspicious-pattern',
           details: `Suspicious API pattern detected: ${suspiciousPatterns.type}`,
           method,
           path,
-          timestamp: new: Date().toISOString()
+          timestamp: new Date().toISOString()
         });
         return;
       }
@@ -689,7 +690,7 @@ export class RASPManager: {
   /**
    * Detect suspicious API usage patterns
    */
-  private: detectSuspiciousAPIPatterns(headers, method: string, path: string): any | null: {
+  private detectSuspiciousAPIPatterns(headers, method: string, path: string): any | null {
     // Check for inconsistent content types
     if (
       headers['content-type'] && 
@@ -699,28 +700,28 @@ export class RASPManager: {
       !headers['accept'].includes('*/*')
     ) {
       return {
-        type 'inconsistent-content-types',
+        type: 'inconsistent-content-types',
         location: 'headers',
         value: `Content-Type is JSON but Accept does not include JSON`
-};
+      };
     }
     
     // Check for API version skipping (potential security bypass)
     if (path.match(/\/api\/v\d+/) && !path.match(/\/api\/v[1-9]/)) {
       return {
-        type 'api-version-bypass',
+        type: 'api-version-bypass',
         location: 'path',
         value: `Potential API version bypass attempt detected`
-};
+      };
     }
     
     // Check for known API abuse patterns
     if (headers['x-forwarded-for'] && headers['x-forwarded-for'].includes(',')) {
       return {
-        type 'ip-spoofing',
+        type: 'ip-spoofing',
         location: 'headers',
         value: `Potential IP spoofing detected with multiple X-Forwarded-For values`
-};
+      };
     }
     
     return null;
@@ -729,11 +730,11 @@ export class RASPManager: {
   /**
    * Apply malicious payload protection
    */
-  private: applyMaliciousPayloadProtection(context): void: {
+  private applyMaliciousPayloadProtection(context): void {
     // Skip if already detected
     if (context.detected) {
       return;
-}
+    }
     
     const { body, headers, method, path } = context;
     
@@ -748,7 +749,7 @@ export class RASPManager: {
       )
     ) {
       return;
-}
+    }
     
     // Check for excessively large payloads
     const jsonSize = JSON.stringify(body).length;
@@ -756,17 +757,17 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
       context.detectionDetails = {
-        type 'oversized-payload',
+        type: 'oversized-payload',
         location: 'body',
         value: `Payload size (${jsonSize} bytes) exceeds maximum allowed size`
       };
       this.logSecurityEvent({
-        type 'malicious-payload-detection',
+        type: 'malicious-payload-detection',
         category: 'oversized-payload',
         details: `Payload size (${jsonSize} bytes) exceeds maximum allowed size`,
         method, 
         path,
-        timestamp: new: Date().toISOString()
+        timestamp: new Date().toISOString()
       });
       return;
     }
@@ -775,18 +776,18 @@ export class RASPManager: {
     const checkObjectDepth = (obj, currentDepth = 0): number => {
       if (currentDepth > 20) { // Too deep, early exit
         return currentDepth;
-}
+      }
       
       if (!obj || typeof obj !== 'object') {
         return currentDepth;
-}
+      }
       
       let maxDepth = currentDepth;
       
       for (const key in obj) {
         const depth = checkObjectDepth(obj[key], currentDepth + 1);
         maxDepth = Math.max(maxDepth, depth);
-}
+      }
       
       return maxDepth;
     };
@@ -796,37 +797,41 @@ export class RASPManager: {
       context.detected = true;
       context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
       context.detectionDetails = {
-        type 'deep-nesting',
+        type: 'deep-nesting',
         location: 'body',
         value: `Object nesting depth (${depth}) exceeds maximum allowed depth`
       };
       this.logSecurityEvent({
-        type 'malicious-payload-detection',
+        type: 'malicious-payload-detection',
         category: 'deep-nesting',
         details: `Object nesting depth (${depth}) exceeds maximum allowed depth`,
         method,
         path,
-        timestamp: new: Date().toISOString()
+        timestamp: new Date().toISOString()
       });
       return;
     }
     
     // Advanced suspicious field detection
     const suspiciousFieldNames = [
-      // JavaScript code execution: 'eval', 'setTimeout', 'setInterval', 'Function',
+      // JavaScript code execution
+      'eval', 'setTimeout', 'setInterval', 'Function',
       'constructor', 'prototype', '__proto__', '__defineGetter__',
       '__defineSetter__', '__lookupGetter__', '__lookupSetter__',
       
-      // JSON Injection: '$where', '$regex', '$ne', '$gt', '$lt', '$gte', '$lte',
+      // JSON Injection
+      '$where', '$regex', '$ne', '$gt', '$lt', '$gte', '$lte',
       
-      // NoSQL Injection: '$or', '$and', '$exists', '$elemMatch',
+      // NoSQL Injection
+      '$or', '$and', '$exists', '$elemMatch',
       
-      // Prototype Pollution: 'constructor.prototype', '__proto__.constructor';
+      // Prototype Pollution
+      'constructor.prototype', '__proto__.constructor'
     ];
     
     // Suspicious JSON patterns
     const suspiciousJsonPatterns = [
-      /"__proto__"\s*:/, /"constructor"\s*:/, /"prototype"\s*:/;
+      /"__proto__"\s*:/, /"constructor"\s*:/, /"prototype"\s*:/
     ];
     
     // Check for JSON pattern in stringified body
@@ -836,16 +841,16 @@ export class RASPManager: {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
-          type 'suspicious-json-pattern',
+          type: 'suspicious-json-pattern',
           pattern: pattern.toString()
-};
+        };
         this.logSecurityEvent({
-          type 'malicious-payload-detection',
+          type: 'malicious-payload-detection',
           category: 'suspicious-json-pattern',
-          details: `Suspicious JSON pattern, detected: ${pattern.toString()}`,
+          details: `Suspicious JSON pattern detected: ${pattern.toString()}`,
           method,
           path,
-          timestamp: new: Date().toISOString()
+          timestamp: new Date().toISOString()
         });
         return;
       }
@@ -855,13 +860,13 @@ export class RASPManager: {
     const checkForSuspiciousKeys = (obj, path: string = ''): boolean => {
       if (!obj || typeof obj !== 'object') {
         return false;
-}
+      }
       
       if (Array.isArray(obj)) {
         for (let i = 0; i < obj.length; i++) {
           if (checkForSuspiciousKeys(obj[i], `${path}[${i}]`)) {
             return true;
-}
+          }
         }
         return false;
       }
@@ -871,16 +876,16 @@ export class RASPManager: {
           context.detected = true;
           context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
           context.detectionDetails = {
-            type 'suspicious-field',
+            type: 'suspicious-field',
             field: `${path}.${key}`
           };
           this.logSecurityEvent({
-            type 'malicious-payload-detection',
+            type: 'malicious-payload-detection',
             category: 'suspicious-field',
             details: `Suspicious field name detected: ${path}.${key}`,
             method,
             path,
-            timestamp: new: Date().toISOString()
+            timestamp: new Date().toISOString()
           });
           return true;
         }
@@ -891,7 +896,7 @@ export class RASPManager: {
           const codeInjectionPatterns = [
             /\beval\s*\(/, /\bnew\s+Function\b/, /\bsetTimeout\s*\(/,
             /\bdocument\.\s*cookie/, /\blocation\.\s*href/,
-            /\bwindow\.\s*location/, /\bnavigator\.\s*/, /\bexec\s*\(/;
+            /\bwindow\.\s*location/, /\bnavigator\.\s*/, /\bexec\s*\(/
           ];
           
           for (const pattern of codeInjectionPatterns) {
@@ -899,18 +904,18 @@ export class RASPManager: {
               context.detected = true;
               context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
               context.detectionDetails = {
-                type 'potential-code-injection',
+                type: 'potential-code-injection',
                 field: `${path}.${key}`,
                 pattern: pattern.toString()
               };
               this.logSecurityEvent({
-                type 'malicious-payload-detection',
+                type: 'malicious-payload-detection',
                 category: 'potential-code-injection',
                 details: `Potential code injection detected in field: ${path}.${key}`,
                 pattern: pattern.toString(),
                 method,
                 path,
-                timestamp: new: Date().toISOString()
+                timestamp: new Date().toISOString()
               });
               return true;
             }
@@ -920,7 +925,7 @@ export class RASPManager: {
         if (typeof obj[key] === 'object' && obj[key] !== null) {
           if (checkForSuspiciousKeys(obj[key], `${path}.${key}`)) {
             return true;
-}
+          }
         }
       }
       
@@ -928,24 +933,24 @@ export class RASPManager: {
     };
     
     // Check for circular references (potential DoS vector)
-    const checkForCircular = (obj, seen = new: WeakSet()): boolean => {
+    const checkForCircular = (obj, seen = new WeakSet()): boolean => {
       if (obj === null || typeof obj !== 'object') return false;
       
       if (seen.has(obj)) {
         context.detected = true;
         context.detectionCategory = RASPProtectionCategory.MALICIOUS_PAYLOAD;
         context.detectionDetails = {
-          type 'circular-reference',
+          type: 'circular-reference',
           description: 'Detected circular reference in request payload'
-};
+        };
         this.logSecurityEvent({
-          type 'malicious-payload-detection',
+          type: 'malicious-payload-detection',
           category: 'circular-reference',
           details: 'Detected circular reference in request payload',
           method,
           path,
-          timestamp: new: Date().toISOString()
-});
+          timestamp: new Date().toISOString()
+        });
         return true;
       }
       
@@ -955,39 +960,40 @@ export class RASPManager: {
         for (const item of obj) {
           if (typeof item === 'object' && item !== null) {
             if (checkForCircular(item, seen)) return true;
-}
+          }
         }
       } else {
         for (const key in obj) {
           if (typeof obj[key] === 'object' && obj[key] !== null) {
             if (checkForCircular(obj[key], seen)) return true;
-}
+          }
         }
       }
       
       return false;
     };
     
-    // Run checks: checkForSuspiciousKeys(body);
+    // Run checks
+    checkForSuspiciousKeys(body);
     checkForCircular(body);
   }
   
   /**
    * Log security events for future analysis
    */
-  private: logSecurityEvent(event): void: {
+  private logSecurityEvent(event): void {
     // This could be extended to send events to a centralized monitoring system
     console.log(`[RASP SECURITY EVENT] ${JSON.stringify(event)}`);
     
     // Store events for pattern analysis
     if (!global.raspSecurityEvents) {
       global.raspSecurityEvents = [];
-}
+    }
     
-    // Keep a limited history of events (last: 1000)
+    // Keep a limited history of events (last 1000)
     if (global.raspSecurityEvents.length >= 1000) {
       global.raspSecurityEvents.shift();
-}
+    }
     
     global.raspSecurityEvents.push(event);
     
@@ -999,13 +1005,13 @@ export class RASPManager: {
 /**
  * Singleton RASP manager instance
  */
-const raspManager = new: RASPManager();
+const raspManager = new RASPManager();
 
 /**
  * Create a RASP middleware with custom options
  */
-export function createRASPMiddleware(options: RASPMiddlewareOptions = {}): express.RequestHandler: {
-  const manager = new: RASPManager(options);
+export function createRASPMiddleware(options: RASPMiddlewareOptions = {}): express.RequestHandler {
+  const manager = new RASPManager(options);
   return manager.createMiddleware();
 }
 

@@ -96,7 +96,7 @@ const SecurityDashboard: React.FC = () => {
       if (response.settings) {
         setSettings(response.settings);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to fetch security settings:', error);
       toast({
         title: 'Error',
@@ -114,7 +114,7 @@ const SecurityDashboard: React.FC = () => {
       if (response.stats) {
         setStats(response.stats);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to fetch security stats:', error);
       toast({
         title: 'Error',
@@ -132,7 +132,7 @@ const SecurityDashboard: React.FC = () => {
       if (response.result) {
         setScanResult(response.result);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to fetch security scan results:', error);
       // Silently fail as this could be a first run with no scan results yet
     }
@@ -152,7 +152,7 @@ const SecurityDashboard: React.FC = () => {
           variant: response.result.criticalIssues > 0 ? 'destructive' : 'default'
         });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to run security scan:', error);
       toast({
         title: 'Error',
@@ -182,7 +182,7 @@ const SecurityDashboard: React.FC = () => {
           variant: 'default'
         });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to update security setting:', error);
       toast({
         title: 'Error',

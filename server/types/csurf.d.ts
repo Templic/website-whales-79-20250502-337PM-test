@@ -1,8 +1,8 @@
 // Type definitions for csurf
-declare module: 'csurf' {
+declare module 'csurf' {
   import { RequestHandler } from 'express';
 
-  interface CsurfOptions: {
+  interface CsurfOptions {
     value?: (req) => string;
     cookie?: boolean | {
       key?: string;
@@ -12,7 +12,7 @@ declare module: 'csurf' {
       maxAge?: number;
       httpOnly?: boolean;
       sameSite?: boolean | 'strict' | 'lax' | 'none';
-};
+    };
     ignoreMethods?: string[];
     sessionKey?: string;
   }
@@ -23,12 +23,12 @@ declare module: 'csurf' {
 }
 
 // Extend Express Request to include csrfToken method
-declare namespace Express: {
-  interface Request: {
+declare namespace Express {
+  interface Request {
     csrfToken(): string;
+  }
 }
-}
-declare module: 'csurf' {
+declare module 'csurf' {
   import { RequestHandler } from 'express';
   
   function csurf(options?: {
@@ -36,7 +36,7 @@ declare module: 'csurf' {
     ignoreMethods?: string[];
     sessionKey?: string;
     value?: (req) => string;
-}): RequestHandler;
+  }): RequestHandler;
   
   export = csurf;
 }

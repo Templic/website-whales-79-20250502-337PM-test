@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -483,8 +482,8 @@ export default function CartPage() {
                       <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                         <span className="inline-block w-6 h-6">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect width={20} height={16} x={2} y={4} rx={2} />
-                            <circle cx={12} cy={12} r="4" />
+                            <rect width="20" height="16" x="2" y="4" rx="2" />
+                            <circle cx="12" cy="12" r="4" />
                           </svg>
                         </span>
                         <span>Secure payment processing</span>

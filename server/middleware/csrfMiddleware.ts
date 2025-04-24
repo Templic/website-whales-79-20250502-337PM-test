@@ -4,10 +4,10 @@
  * Provides middleware functions for handling CSRF protection
  * using modern best practices including:
  * - Double Submit Cookie pattern
- * - SameSite = Strict cookies
+ * - SameSite=Strict cookies
  * - Custom HTTP header validation
  */
-;
+
 import { Request, Response, NextFunction } from 'express';
 import { randomBytes } from 'crypto';
 import { logSecurityEvent } from '../security/security';
@@ -16,19 +16,20 @@ import { logSecurityEvent } from '../security/security';
 // In a production environment with multiple servers, this would need to be stored in a shared cache like Redis
 const tokenCache = new Map<string, { token: string, expires: number }>();
 
-// Clean expired tokens periodically: setInterval(() => {
+// Clean expired tokens periodically
+setInterval(() => {
   const now = Date.now();
-  for (const: [sessionId, data] of tokenCache.entries()) {
+  for (const [sessionId, data] of tokenCache.entries()) {
     if (data.expires < now) {
       tokenCache.delete(sessionId);
-}
+    }
   }
 }, 60 * 60 * 1000); // Clean every hour
 
 /**
  * Generate a new CSRF token for the current session
  */
-export function generateCsrfToken(req: Request, res: Response): string: {
+export function generateCsrfToken(req: Request, res: Response): string {
   // Generate a random token
   const token = randomBytes(32).toString('hex');
   
@@ -37,17 +38,17 @@ export function generateCsrfToken(req: Request, res: Response): string: {
     tokenCache.set(req.session.id, {
       token,
       expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours expiry
-});
+    });
   }
   
   // Set the CSRF cookie with secure attributes
   res.cookie('XSRF-TOKEN', token, {
-    httpOnly: false, // Must be accessible to JS for the frontend to read,
-  secure: process.env.NODE_ENV = == 'production',
+    httpOnly: false, // Must be accessible to JS for the frontend to read
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours;
-});
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  });
   
   return token;
 }
@@ -60,9 +61,9 @@ export function generateCsrfToken(req: Request, res: Response): string: {
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>> {
   // Skip CSRF check for GET, HEAD, OPTIONS
   const safeMethod = /^(GET|HEAD|OPTIONS)$/i.test(req.method);
-  if (safeMethod) => {
+  if (safeMethod) {
     return next();
-}
+  }
   
   // Get token from header
   const headerToken = req.headers['x-csrf-token'] || req.headers['x-xsrf-token'];
@@ -70,33 +71,33 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   // No token provided
   if (!headerToken || typeof headerToken !== 'string') {
     logSecurityEvent({
-      type 'CSRF_PROTECTION_FAILURE',
+      type: 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'Missing CSRF token in request header',
       severity: 'high'
-});
+    });
     
     return res.status(403).json({
       success: false,
       message: 'CSRF token missing'
-});
+    });
   }
   
   // No session ID
   if (!req.session?.id) {
     logSecurityEvent({
-      type 'CSRF_PROTECTION_FAILURE',
+      type: 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'No session ID found when validating CSRF token',
       severity: 'high'
-});
+    });
     
     return res.status(403).json({
       success: false,
       message: 'Invalid session'
-});
+    });
   }
   
   // Get stored token
@@ -105,17 +106,17 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   // No stored token
   if (!cachedData) {
     logSecurityEvent({
-      type 'CSRF_PROTECTION_FAILURE',
+      type: 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'No stored CSRF token found for session',
       severity: 'high'
-});
+    });
     
     return res.status(403).json({
       success: false,
       message: 'Invalid session'
-});
+    });
   }
   
   // Token expired
@@ -123,36 +124,37 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
     tokenCache.delete(req.session.id);
     
     logSecurityEvent({
-      type 'CSRF_PROTECTION_FAILURE',
+      type: 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'Expired CSRF token',
       severity: 'medium'
-});
+    });
     
     return res.status(403).json({
       success: false,
       message: 'CSRF token expired'
-});
+    });
   }
   
   // Token mismatch
   if (cachedData.token !== headerToken) {
     logSecurityEvent({
-      type 'CSRF_PROTECTION_FAILURE',
+      type: 'CSRF_PROTECTION_FAILURE',
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'CSRF token mismatch',
       severity: 'high'
-});
+    });
     
     return res.status(403).json({
       success: false,
       message: 'Invalid CSRF token'
-});
+    });
   }
   
-  // Token validated successfully: next();
+  // Token validated successfully
+  next();
 }
 
 /**
@@ -167,13 +169,14 @@ export function csrfTokenRoute(req: Request, res: Response): void | Response<any
  * Middleware to rotate the CSRF token after authentication changes (login/logout)
  * This should be called after login and logout operations
  */
-export function rotateCsrfToken(req: Request, res: Response, next: NextFunction): void: {
+export function rotateCsrfToken(req: Request, res: Response, next: NextFunction): void {
   if (req.session?.id) {
     // Delete any existing token
     tokenCache.delete(req.session.id);
     
-    // Generate a new token: generateCsrfToken(req, res);
-}
+    // Generate a new token
+    generateCsrfToken(req, res);
+  }
   
   next();
 }

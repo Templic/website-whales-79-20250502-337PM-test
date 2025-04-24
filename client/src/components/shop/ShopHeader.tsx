@@ -113,7 +113,7 @@ const ShopHeader: React.FC<ShopHeaderProps> = ({
 
         // Set as any to bypass TypeScript type checking as these are incompatible types
         setRecognition(recognitionInstance as any);
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error initializing speech recognition:', error);
       }
     } else {

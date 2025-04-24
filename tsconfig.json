@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "target": "ES2021",
+    "module": "esnext",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -13,70 +13,10 @@
     "declaration": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": [
-        "./client/src/*"
-      ],
-      "@/components/*": [
-        "./client/src/components/*"
-      ],
-      "@/lib/*": [
-        "./client/src/lib/*"
-      ],
-      "@/utils/*": [
-        "./client/src/utils/*"
-      ],
-      "@/hooks/*": [
-        "./client/src/hooks/*"
-      ],
-      "@/context/*": [
-        "./client/src/context/*"
-      ],
-      "@/store/*": [
-        "./client/src/store/*"
-      ],
-      "@/types/*": [
-        "./client/src/types/*"
-      ],
-      "@/styles/*": [
-        "./client/src/styles/*"
-      ],
-      "@/assets/*": [
-        "./client/src/assets/*"
-      ],
-      "@/features/*": [
-        "./client/src/features/*"
-      ],
       "@shared/*": [
         "./shared/*"
-      ],
-      "@components/*": [
-        "./client/src/components/*"
-      ],
-      "@lib/*": [
-        "./client/src/lib/*"
-      ],
-      "@utils/*": [
-        "./client/src/utils/*"
       ]
-    },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./server/types"
-    ],
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "baseUrl": ".",
-    "useDefineForClassFields": true,
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noFallthroughCasesInSwitch": true
+    }
   },
   "include": [
     "*.ts",

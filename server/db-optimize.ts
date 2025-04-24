@@ -26,19 +26,19 @@ function setupLogging() {
 // Setup monitors lazily to avoid slowing down startup
 async function setupMonitoring() {
   // Dynamically import pg-monitor only when needed
-  const { default pgMonitor } = await import('pg-monitor');
+  const { default: pgMonitor } = await import('pg-monitor');
   
   // Configure pg-monitor for basic logging
   pgMonitor.attach({});
-  pgMonitor.setTheme('matrix'); // or: 'dark', 'bright', etc.
+  pgMonitor.setTheme('matrix'); // or 'dark', 'bright', etc.
   
   // Set pg-monitor log destination to file in production
   if (process.env.NODE_ENV === 'production') {
     const stream = setupLogging();
-    if (stream) => {
+    if (stream) {
       pgMonitor.setLog((msg, info) => {
         // Log query performance metrics to file
-        const logEntry = `[${new: Date().toISOString()}] ${info.event}: ${msg}\n`;
+        const logEntry = `[${new Date().toISOString()}] ${info.event}: ${msg}\n`;
         stream.write(logEntry);
       });
     }
@@ -46,44 +46,48 @@ async function setupMonitoring() {
 }
 
 // Initialize task queue for background optimization
-let boss: any; // Using: 'any' temporarily to avoid type issues
+let boss: any; // Using 'any' temporarily to avoid type issues
 
 export async function initDatabaseOptimization() {
   try {
-    // Start the monitoring asynchronously - doesn't block initialization: setupMonitoring().catch(err => {
+    // Start the monitoring asynchronously - doesn't block initialization
+    setupMonitoring().catch(err => {
       console.warn('Failed to set up database monitoring:', err);
-});
+    });
     
     // Lazy load PgBoss only when needed
-    const { default PgBossConstructor } = await import('pg-boss');
+    const { default: PgBossConstructor } = await import('pg-boss');
     
     // Initialize PgBoss for background job processing
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL environment variable is not set');
-}
+    }
     
     // Configure connection pool with optimal settings for startup
-    boss = new: PgBossConstructor({
+    boss = new PgBossConstructor({
       connectionString: process.env.DATABASE_URL,
-      max: 3, // Limit connections during startup,
-  deleteAfterDays: 7 // Only keep completed jobs, for: 7 days
-});
+      max: 3, // Limit connections during startup
+      deleteAfterDays: 7 // Only keep completed jobs for 7 days
+    });
     
     await boss.start();
     
     // Register maintenance tasks in the background with a delay
-    // to avoid blocking the application startup: setTimeout(async () => {
+    // to avoid blocking the application startup
+    setTimeout(async () => {
       try {
         await setupMaintenanceTasks();
-} catch (err: unknown) {
+      } catch (err) {
         console.error('Error during delayed maintenance setup:', err);
-}
-    }, 3000); // 3 second delay: log('Database optimization initialized', 'db-optimize');
+      }
+    }, 3000); // 3 second delay
+    
+    log('Database optimization initialized', 'db-optimize');
     return true;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to initialize database optimization:', error);
     return false;
-}
+  }
 }
 
 async function setupMaintenanceTasks() {
@@ -99,7 +103,7 @@ async function setupMaintenanceTasks() {
     await boss.send('analyze-slow-queries', {});
     
     // Schedule regular VACUUM
-    await boss.schedule('vacuum-analyze', '0: 3 * * *'); // Every day at: 3am
+    await boss.schedule('vacuum-analyze', '0 3 * * *'); // Every day at 3am
     await boss.work('vacuum-analyze', async () => {
       try {
         // VACUUM ANALYZE is a PostgreSQL system command for maintenance
@@ -108,18 +112,18 @@ async function setupMaintenanceTasks() {
         await pgPool.query('VACUUM ANALYZE');
         log('VACUUM ANALYZE completed successfully', 'db-maintenance');
         return { success: true };
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('VACUUM ANALYZE failed:', error);
         return { success: false, error };
       }
     });
     
     // Schedule regular index optimization
-    await boss.schedule('reindex-database', '0: 4 * * 0'); // Every Sunday at: 4am
+    await boss.schedule('reindex-database', '0 4 * * 0'); // Every Sunday at 4am
     await boss.work('reindex-database', async () => {
       try {
         // First get the current database name using a safe system function
-        const dbNameResult = await pgPool.query('SELECT: current_database()');
+        const dbNameResult = await pgPool.query('SELECT current_database()');
         const dbName = dbNameResult.rows[0].current_database;
         
         // Reindex tables one by one to avoid locks
@@ -127,15 +131,15 @@ async function setupMaintenanceTasks() {
         const tablesResult = await pgPool.query(`
           SELECT tablename 
           FROM pg_tables 
-          WHERE schemaname = $1;
+          WHERE schemaname = $1
         `, ['public']);
         
         // Function to validate tablename to prevent SQL injection
-        function isValidTableName(name: string): boolean: {
+        function isValidTableName(name: string): boolean {
           // Only allow alphanumeric characters, underscores and hyphens
           const tableNamePattern = /^[a-zA-Z0-9_-]+$/;
           return tableNamePattern.test(name);
-}
+        }
 
         for (const row of tablesResult.rows) {
           if (!isValidTableName(row.tablename)) {
@@ -150,7 +154,7 @@ async function setupMaintenanceTasks() {
           // Double check tablename meets the strict validation rules before executing
           if (isValidTableName(row.tablename)) {
             // Safe to use with proper double-quoting for PostgreSQL identifiers
-            const reindexQuery = `REINDEX TABLE: "${row.tablename}"`;
+            const reindexQuery = `REINDEX TABLE "${row.tablename}"`;
             
             // Analyze the query using our SQL injection prevention
             const analysisResult = sqlInjectionPrevention.analyzeQuery(reindexQuery);
@@ -168,7 +172,7 @@ async function setupMaintenanceTasks() {
         
         log('Database reindexing completed', 'db-maintenance');
         return { success: true, tablesReindexed: tablesResult.rows.length };
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Database reindexing failed:', error);
         return { success: false, error };
       }
@@ -179,8 +183,8 @@ async function setupMaintenanceTasks() {
       try {
         // Check if pg_stat_statements extension exists with parameterized query
         const checkExtension = await pgPool.query(`
-          SELECT: exists(
-            SELECT: 1 FROM pg_extension WHERE extname = $1;
+          SELECT exists(
+            SELECT 1 FROM pg_extension WHERE extname = $1
           );
         `, ['pg_stat_statements']);
         
@@ -190,7 +194,7 @@ async function setupMaintenanceTasks() {
           const result = await pgPool.query(`
             SELECT query, calls, total_time, mean_time, rows
             FROM pg_stat_statements
-            ORDER BY mean_time DESC;
+            ORDER BY mean_time DESC
             LIMIT $1;
           `, [queryLimit]);
           
@@ -206,21 +210,22 @@ async function setupMaintenanceTasks() {
                   idx_scan, 
                   idx_tup_fetch
             FROM pg_stat_user_tables
-            ORDER BY seq_scan DESC;
+            ORDER BY seq_scan DESC
             LIMIT $1;
           `, [queryLimit]);
           
-          // Log basic query stats: log('Basic query stats analysis completed', 'db-performance');
+          // Log basic query stats
+          log('Basic query stats analysis completed', 'db-performance');
           return { success: true, basicQueryStats: result.rows };
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Slow query analysis failed:', error);
         return { success: false, error };
       }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error setting up maintenance tasks:', error);
-}
+  }
 }
 
 // Import SQLInjectionPrevention module
@@ -250,33 +255,33 @@ export async function executeOptimizedQuery(query: string, params?: any[], retry
     const result = await pgPool.query(query, params);
     const duration = Date.now() - start;
     
-    // Log performance details only if query takes more than: 100ms
+    // Log performance details only if query takes more than 100ms
     if (duration > 100) {
-      // Truncate query for logging to avoid exposing sensitive details: log(`Slow query (${duration}ms): ${query.substring(0, 100)}...`, 'db-performance');
+      // Truncate query for logging to avoid exposing sensitive details
+      log(`Slow query (${duration}ms): ${query.substring(0, 100)}...`, 'db-performance');
     }
     
     return result;
-  } catch (error: unknown) {
+  } catch (error) {
     const duration = Date.now() - start;
     
     // Check if this is a connection error that we should retry
-    const pgError = error as any; // Type assertion for PostgreSQL error object
-    const isConnectionError = pgError.code === '57P01' || // admin shutdown
-                            pgError.code === '08006' || // connection terminated
-                            pgError.code === '08001' || // connection refused
-                            pgError.code === '08004' || // rejected connection
-                            pgError.code === 'ECONNRESET' || // connection reset by peer
-                            pgError.code === 'ETIMEDOUT' || // connection timeout;
-                            pgError.message?.includes('Connection terminated');
+    const isConnectionError = error.code === '57P01' || // admin shutdown
+                            error.code === '08006' || // connection terminated
+                            error.code === '08001' || // connection refused
+                            error.code === '08004' || // rejected connection
+                            error.code === 'ECONNRESET' || // connection reset by peer
+                            error.code === 'ETIMEDOUT' || // connection timeout
+                            error.message?.includes('Connection terminated');
     
     if (isConnectionError && retryCount < MAX_RETRY_ATTEMPTS) {
       // Calculate exponential backoff delay
       const retryDelay = BASE_RETRY_DELAY * Math.pow(2, retryCount);
       
-      log(`Database connection error (${pgError.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
+      log(`Database connection error (${error.code}), retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})`, 'db-connection');
       
       // Wait before retrying
-      await new: Promise(resolve => setTimeout(resolve, retryDelay));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
       
       // Retry the query with incremented retry count
       return executeOptimizedQuery(query, params, retryCount + 1);
@@ -295,32 +300,32 @@ export async function getConnectionPoolStats(retryCount = 0) {
   try {
     // Use the optimized query function to leverage SQL injection prevention and retry logic
     const result = await executeOptimizedQuery(`
-      SELECT: count(*) as total,
+      SELECT count(*) as total,
              count(*) FILTER (WHERE state = $1) as active,
              count(*) FILTER (WHERE state = $2) as idle,
              count(*) FILTER (WHERE state = $3) as idle_in_transaction,
              count(*) FILTER (WHERE wait_event IS NOT NULL) as waiting
       FROM pg_stat_activity 
-      WHERE datname = current_database();
+      WHERE datname = current_database()
         AND pid <> pg_backend_pid();
     `, ['active', 'idle', 'idle in transaction']);
     
     const stats = result.rows[0] || {};
     
     // Safely parse integer values with validation
-    function safeParseInt(value: any, defaultValue: number = 0): number: {
+    function safeParseInt(value, defaultValue: number = 0): number {
       if (value === undefined || value === null) return defaultValue;
       const parsed = parseInt(value);
       return isNaN(parsed) ? defaultValue : parsed;
-}
+    }
     
     return {
       total: safeParseInt(stats.total),
       active: safeParseInt(stats.active),
       idle: safeParseInt(stats.idle),
       waiting: safeParseInt(stats.waiting),
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     console.error('Failed to get connection pool stats:', error);
     
     // Return default values instead of error to prevent frontend from crashing
@@ -330,24 +335,24 @@ export async function getConnectionPoolStats(retryCount = 0) {
       idle: 0,
       waiting: 0,
       error: error instanceof Error ? error.message : String(error)
-};
+    };
   }
 }
 
 // API to trigger manual optimization tasks
 export async function triggerDatabaseMaintenance(task: 'vacuum' | 'reindex' | 'analyze') {
   try {
-    switch (task) => {
-      case: 'vacuum':
+    switch (task) {
+      case 'vacuum':
         return boss.send('vacuum-analyze', {});
-      case: 'reindex':
+      case 'reindex':
         return boss.send('reindex-database', {});
-      case: 'analyze':
+      case 'analyze':
         return boss.send('analyze-slow-queries', {});
       default:
-        throw new Error(`Unknown maintenance, task: ${task}`);
+        throw new Error(`Unknown maintenance task: ${task}`);
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Failed to trigger ${task} task:`, error);
     throw error;
   }

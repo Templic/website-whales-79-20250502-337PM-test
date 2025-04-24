@@ -15,7 +15,7 @@ import { createCustomSecurityMiddleware } from '../../middleware/securityMiddlew
 /**
  * Security level presets
  */
-export enum SecurityLevel: {
+export enum SecurityLevel {
   BASIC = 'basic',
   STANDARD = 'standard',
   HIGH = 'high',
@@ -24,14 +24,14 @@ export enum SecurityLevel: {
 
 /**
  * Security profile configuration
- */;
-export interface SecurityProfile: {
-  level: SecurityLevel;,
-  enableAnomalyDetection: boolean;,
-  enableBlockchainLogging: boolean;,
-  enableRuntimeProtection: boolean;,
-  blockHighRiskRequests: boolean;,
-  anomalyThreshold: number;,
+ */
+export interface SecurityProfile {
+  level: SecurityLevel;
+  enableAnomalyDetection: boolean;
+  enableBlockchainLogging: boolean;
+  enableRuntimeProtection: boolean;
+  blockHighRiskRequests: boolean;
+  anomalyThreshold: number;
   rateLimit: 'default' | 'strict' | 'public' | 'none';
   customSettings?: Record<string, any>;
 }
@@ -48,7 +48,7 @@ const securityProfiles: Record<SecurityLevel, SecurityProfile> = {
     blockHighRiskRequests: false,
     anomalyThreshold: 0.9,
     rateLimit: 'default'
-},
+  },
   [SecurityLevel.STANDARD]: {
     level: SecurityLevel.STANDARD,
     enableAnomalyDetection: true,
@@ -57,7 +57,7 @@ const securityProfiles: Record<SecurityLevel, SecurityProfile> = {
     blockHighRiskRequests: false,
     anomalyThreshold: 0.8,
     rateLimit: 'default'
-},
+  },
   [SecurityLevel.HIGH]: {
     level: SecurityLevel.HIGH,
     enableAnomalyDetection: true,
@@ -66,7 +66,7 @@ const securityProfiles: Record<SecurityLevel, SecurityProfile> = {
     blockHighRiskRequests: true,
     anomalyThreshold: 0.7,
     rateLimit: 'strict'
-},
+  },
   [SecurityLevel.MAXIMUM]: {
     level: SecurityLevel.MAXIMUM,
     enableAnomalyDetection: true,
@@ -75,13 +75,13 @@ const securityProfiles: Record<SecurityLevel, SecurityProfile> = {
     blockHighRiskRequests: true,
     anomalyThreshold: 0.6,
     rateLimit: 'strict'
-}
+  }
 };
 
 /**
  * Security Toolkit class providing simplified access to security features
  */
-export class SecurityToolkit: {
+export class SecurityToolkit {
   private profile: SecurityProfile;
   
   /**
@@ -92,9 +92,9 @@ export class SecurityToolkit: {
   constructor(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD) {
     if (typeof level === 'string') {
       this.profile = securityProfiles[level];
-} else {
+    } else {
       this.profile = level;
-}
+    }
     
     console.log(`[SECURITY] Initializing security toolkit with ${this.profile.level} profile`);
   }
@@ -104,13 +104,13 @@ export class SecurityToolkit: {
    * 
    * @returns Express middleware
    */
-  public: createMiddleware(): RequestHandler: {
+  public createMiddleware(): RequestHandler {
     // Create base security middleware
     const baseMiddleware = createCustomSecurityMiddleware({
       enableMlDetection: this.profile.enableAnomalyDetection,
       enableBlockchainLogging: this.profile.enableBlockchainLogging,
       enableRuntimeProtection: this.profile.enableRuntimeProtection
-});
+    });
     
     // Create anomaly detection middleware if enabled
     let anomalyMiddleware: RequestHandler | null = null;
@@ -133,11 +133,11 @@ export class SecurityToolkit: {
     return (req: Request, res: Response, next: NextFunction) => {
       baseMiddleware(req, res, (err?: any) => {
         if (err) return next(err);
-        if (anomalyMiddleware) => {
+        if (anomalyMiddleware) {
           anomalyMiddleware(req, res, next);
-} else {
+        } else {
           next();
-}
+        }
       });
     };
   }
@@ -147,14 +147,14 @@ export class SecurityToolkit: {
    * 
    * @returns Express middleware
    */
-  public: protectRoute(): RequestHandler: {
+  public protectRoute(): RequestHandler {
     return (req: Request, res: Response, next: NextFunction) => {
       // Check if user is authenticated
       if (!req.isAuthenticated || !req.isAuthenticated()) {
         return res.status(401).json({
           success: false,
           error: 'Authentication required'
-});
+        });
       }
       
       // Apply security middleware
@@ -170,7 +170,7 @@ export class SecurityToolkit: {
    * @param message Event message
    * @param metadata Additional metadata
    */
-  public: logSecurityEvent(
+  public logSecurityEvent(
     category: SecurityEventCategory,
     severity: SecurityEventSeverity,
     message: string,
@@ -183,8 +183,8 @@ export class SecurityToolkit: {
       timestamp: Date.now(),
       metadata: {
         ...metadata,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
   }
   
@@ -193,9 +193,9 @@ export class SecurityToolkit: {
    * 
    * @returns Promise resolving to a boolean indicating if the chain is valid
    */
-  public: verifySecurityIntegrity(): Promise<boolean> {
+  public verifySecurityIntegrity(): Promise<boolean> {
     return Promise.resolve(securityBlockchain.verifyChain());
-}
+  }
   
   /**
    * Get security health status
@@ -207,12 +207,12 @@ export class SecurityToolkit: {
     
     return {
       profile: this.profile.level,
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       components: {
         anomalyDetection: this.profile.enableAnomalyDetection ? 'active' : 'disabled',
         blockchainLogging: this.profile.enableBlockchainLogging ? 'active' : 'disabled',
         runtimeProtection: this.profile.enableRuntimeProtection ? 'active' : 'disabled'
-},
+      },
       chainIntegrity,
       blockCount: securityBlockchain.getBlocks().length
     };
@@ -225,9 +225,9 @@ export class SecurityToolkit: {
  * @param level Security level
  * @returns SecurityToolkit instance
  */
-export function createSecurityToolkit(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD): SecurityToolkit: {
-  return new: SecurityToolkit(level);
+export function createSecurityToolkit(level: SecurityLevel | SecurityProfile = SecurityLevel.STANDARD): SecurityToolkit {
+  return new SecurityToolkit(level);
 }
 
 // Export default instance with standard security level
-export default new: SecurityToolkit(SecurityLevel.STANDARD);
+export default new SecurityToolkit(SecurityLevel.STANDARD);

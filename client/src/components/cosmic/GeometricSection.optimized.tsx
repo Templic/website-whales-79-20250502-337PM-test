@@ -6,7 +6,6 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { registerComponent, checkComponentLeaks, clearAllRegistrations, useMemoryLeakDetection } from "@/lib/memory-leak-detector";
 
 // SVG Shapes
 import { 
@@ -268,7 +267,7 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
   const renderShape = () => {
     // If not visible and we're using visibility-based rendering, render a placeholder
     if (!isVisible && minimalRendering) {
-      return <div className="geometric-placeholder" style={{  width: size, height: size  }} />;
+      return <div className="geometric-placeholder" style={{ width: size, height: size }} />;
     }
     
     // Measure shape rendering time
@@ -278,8 +277,8 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         className: `sacred-geometry-shape ${clickEffect ? 'click-effect' : ''}`,
         style: {
           transform: `rotate(${rotation}deg) scale(${scale})`,
-          width: 100,
-          height: 100,
+          width: '100%',
+          height: '100%',
           boxShadow: glowEffect,
           transition: clickEffect ? 'transform 0.3s ease-out' : undefined,
         }
@@ -315,13 +314,13 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
         }
       }}
       className={`geometric-section ${className} ${isHovered ? 'hovered' : ''}`}
-      style={{  
+      style={{ 
         backgroundColor,
         color: textColor,
         padding: '4rem 2rem',
         position: 'relative',
         overflow: 'hidden',
-       }}
+      }}
     >
       <div className="container mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -341,12 +340,12 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
             <div
               ref={shapeRef}
               className="shape-wrapper relative"
-              style={{  
+              style={{ 
                 width: size, 
                 height: size, 
                 maxWidth: '100%',
                 cursor: interactivity !== 'none' ? 'pointer' : 'default',
-               }}
+              }}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               onClick={handleClick}

@@ -4,8 +4,6 @@
  * This component handles the verification step when MFA is required during login.
  * It supports different MFA methods (TOTP, email, SMS, recovery codes).
  */
-import React from "react";
-
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -124,7 +122,7 @@ export function MFAChallenge({
 
       // Notify parent component
       onComplete(true);
-    } catch (error: unknown) {
+    } catch (error) {
       setError((error as Error).message || 'Verification failed. Please try again.');
       setState(ChallengeState.ERROR);
     } finally {
@@ -162,7 +160,7 @@ export function MFAChallenge({
 
       // Notify parent component
       onComplete(true);
-    } catch (error: unknown) {
+    } catch (error) {
       setError((error as Error).message || 'Verification failed. Please try again.');
       setState(ChallengeState.ERROR);
     } finally {
@@ -193,7 +191,7 @@ export function MFAChallenge({
       } else {
         throw new Error('Failed to send a new code');
       }
-    } catch (error: unknown) {
+    } catch (error) {
       setError((error as Error).message || 'Failed to send a new code');
     } finally {
       setIsLoading(false);

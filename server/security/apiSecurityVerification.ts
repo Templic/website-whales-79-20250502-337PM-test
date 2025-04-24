@@ -18,21 +18,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Interface for API security check results
-export interface ApiSecurityCheckResult: {
-  id: string;,
-  name: string;,
-  description: string;,
+export interface ApiSecurityCheckResult {
+  id: string;
+  name: string;
+  description: string;
   status: 'pass' | 'fail' | 'warning' | 'info';
   details?: string;
   recommendation?: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';,
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
   timestamp: string;
 }
 
 // Interface for API endpoint meta information
-interface ApiEndpoint: {
-  path: string;,
-  method: string;,
+interface ApiEndpoint {
+  path: string;
+  method: string;
   requiresAuth: boolean;
   requiredRoles?: string[];
   rateLimitType?: string;
@@ -98,8 +98,8 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       details: 'No protected API endpoints were found',
       recommendation: 'Ensure sensitive operations require authentication',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
     
     return results;
   }
@@ -120,14 +120,14 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       const response = await axios({
         method: endpoint.method as any,
         url: `${baseUrl}${endpoint.path}`,
-        validateStatus: () => true, // Don't throw on: 4xx/5xx
+        validateStatus: () => true, // Don't throw on 4xx/5xx
       });
       
       // Check if access was properly denied
       if (response.status === 401 || response.status === 403) {
         totalPassed++;
-} else {
-        // If we received anything other than: 401/403, that's a security issue
+      } else {
+        // If we received anything other than 401/403, that's a security issue
         results.push({
           id: 'API-AUTH-02',
           name: 'Protected Endpoint Access Control',
@@ -136,10 +136,10 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
           details: `Endpoint returned ${response.status} without authentication`,
           recommendation: 'Ensure the endpoint properly rejects unauthenticated requests',
           severity: 'high',
-          timestamp: new: Date().toISOString()
+          timestamp: new Date().toISOString()
         });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error(`[API Security] Error checking authentication for ${endpoint.path}:`, error);
     }
   }
@@ -155,7 +155,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       status: 'pass',
       details: `All ${totalChecked} sampled endpoints properly enforce authentication`,
       severity: 'info',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   } else if (authEnforcementRate >= 0.8) {
     results.push({
@@ -166,7 +166,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       details: `${totalPassed} out of ${totalChecked} sampled endpoints enforce authentication`,
       recommendation: 'Ensure all protected endpoints properly reject unauthenticated requests',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   } else {
     results.push({
@@ -177,7 +177,7 @@ async function verifyApiAuthentication(baseUrl: string, endpoints: ApiEndpoint[]
       details: `Only ${totalPassed} out of ${totalChecked} sampled endpoints enforce authentication`,
       recommendation: 'Implement proper authentication checks on all protected endpoints',
       severity: 'critical',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -212,13 +212,13 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
       if (response.status === 429) {
         rateLimited = true;
         break;
-}
+      }
       
       // Small delay to avoid overwhelming the server
-      await new: Promise(resolve => setTimeout(resolve, 10));
+      await new Promise(resolve => setTimeout(resolve, 10));
     }
     
-    if (rateLimited) => {
+    if (rateLimited) {
       results.push({
         id: 'API-RATE-01',
         name: 'API Rate Limiting',
@@ -226,8 +226,8 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
         status: 'pass',
         details: 'Rate limiting is properly implemented',
         severity: 'info',
-        timestamp: new: Date().toISOString()
-});
+        timestamp: new Date().toISOString()
+      });
     } else {
       results.push({
         id: 'API-RATE-01',
@@ -237,10 +237,10 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
         details: `Could not trigger rate limiting after ${maxRequests} requests`,
         recommendation: 'Ensure rate limiting is implemented for all API endpoints',
         severity: 'medium',
-        timestamp: new: Date().toISOString()
+        timestamp: new Date().toISOString()
       });
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[API Security] Error testing rate limiting:', error);
     
     results.push({
@@ -251,8 +251,8 @@ async function verifyApiRateLimiting(baseUrl: string, endpoints: ApiEndpoint[]):
       details: 'Error occurred while testing rate limiting',
       recommendation: 'Manually verify rate limiting implementation',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
   }
   
   return results;
@@ -268,7 +268,7 @@ async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[])
   
   // Find endpoints with role requirements
   const roleRestrictedEndpoints = endpoints.filter(endpoint => 
-    endpoint.requiresAuth && endpoint.requiredRoles && endpoint.requiredRoles.length > 0;
+    endpoint.requiresAuth && endpoint.requiredRoles && endpoint.requiredRoles.length > 0
   );
   
   if (roleRestrictedEndpoints.length === 0) {
@@ -280,8 +280,8 @@ async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[])
       details: 'No endpoints with role restrictions were found',
       recommendation: 'Implement role-based access control for sensitive operations',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
     
     return results;
   }
@@ -296,12 +296,12 @@ async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[])
     status: 'pass',
     details: `${roleRestrictedEndpoints.length} endpoints implement role-based access control`,
     severity: 'info',
-    timestamp: new: Date().toISOString()
+    timestamp: new Date().toISOString()
   });
   
   // Check if there are admin-only endpoints
   const adminEndpoints = roleRestrictedEndpoints.filter(endpoint => 
-    endpoint.requiredRoles!.includes('admin') || endpoint.requiredRoles!.includes('super_admin');
+    endpoint.requiredRoles!.includes('admin') || endpoint.requiredRoles!.includes('super_admin')
   );
   
   if (adminEndpoints.length > 0) {
@@ -312,7 +312,7 @@ async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[])
       status: 'pass',
       details: `${adminEndpoints.length} endpoints are restricted to admin roles`,
       severity: 'info',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   } else {
     results.push({
@@ -323,8 +323,8 @@ async function verifyApiAuthorization(baseUrl: string, endpoints: ApiEndpoint[])
       details: 'No admin-only endpoints were found',
       recommendation: 'Ensure administrative operations are properly restricted',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
   }
   
   return results;
@@ -350,15 +350,15 @@ async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[
       details: 'No endpoints with input validation schemas were found',
       recommendation: 'Implement input validation for all endpoints accepting user input',
       severity: 'high',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
     
     return results;
   }
   
   // Calculate coverage percentage
   const postPutPatchEndpoints = endpoints.filter(endpoint => 
-    ['POST', 'PUT', 'PATCH'].includes(endpoint.method.toUpperCase());
+    ['POST', 'PUT', 'PATCH'].includes(endpoint.method.toUpperCase())
   );
   
   if (postPutPatchEndpoints.length === 0) {
@@ -369,8 +369,8 @@ async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[
       status: 'info',
       details: 'No POST, PUT, or PATCH endpoints were found',
       severity: 'info',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
     
     return results;
   }
@@ -385,8 +385,8 @@ async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[
       status: 'pass',
       details: 'All endpoints accepting user input implement input validation',
       severity: 'info',
-      timestamp: new: Date().toISOString()
-});
+      timestamp: new Date().toISOString()
+    });
   } else if (validationCoverage >= 0.8) {
     results.push({
       id: 'API-VALID-01',
@@ -396,7 +396,7 @@ async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[
       details: `${Math.round(validationCoverage * 100)}% of endpoints implement input validation`,
       recommendation: 'Implement input validation for all remaining endpoints',
       severity: 'medium',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   } else {
     results.push({
@@ -407,7 +407,7 @@ async function verifyApiInputValidation(baseUrl: string, endpoints: ApiEndpoint[
       details: `Only ${Math.round(validationCoverage * 100)}% of endpoints implement input validation`,
       recommendation: 'Implement comprehensive input validation across all endpoints',
       severity: 'high',
-      timestamp: new: Date().toISOString()
+      timestamp: new Date().toISOString()
     });
   }
   
@@ -448,14 +448,14 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
     
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir);
-}
+    }
     
     if (!fs.existsSync(apiSecurityDir)) {
       fs.mkdirSync(apiSecurityDir);
-}
+    }
     
     // Generate report filename with timestamp
-    const timestamp = new: Date().toISOString().replace(/:/g, '-');
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
     const reportPath = path.join(apiSecurityDir, `api-security-report-${timestamp}.json`);
     
     // Write the report
@@ -471,20 +471,21 @@ async function generateApiSecurityReport(results: ApiSecurityCheckResult[]): Pro
     
     console.log(`[API Security] Summary report generated at ${markdownPath}`);
     
-    // Log event: logSecurityEvent({
-      type 'API_SECURITY_VERIFICATION_COMPLETED',
+    // Log event
+    logSecurityEvent({
+      type: 'API_SECURITY_VERIFICATION_COMPLETED',
       details: `Generated API security report with ${results.length} checks`,
       severity: 'low'
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[API Security] Error generating report:', error);
-}
+  }
 }
 
 /**
  * Generate markdown report from results
  */
-function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
+function generateMarkdownReport(results: ApiSecurityCheckResult[]): string {
   // Group results by status
   const passed = results.filter(r => r.status === 'pass');
   const warnings = results.filter(r => r.status === 'warning');
@@ -497,7 +498,7 @@ function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   
   // Generate report
   let report = `# API Security Verification Report\n\n`;
-  report += `Generated: ${new: Date().toISOString()}\n\n`;
+  report += `Generated: ${new Date().toISOString()}\n\n`;
   
   report += `## Summary\n\n`;
   report += `- Total Checks: ${totalChecks}\n`;
@@ -509,7 +510,7 @@ function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Failed Checks\n\n`;
   if (failures.length === 0) {
     report += `No failures found.\n\n`;
-} else {
+  } else {
     failures.forEach(failure => {
       report += `### ${failure.id}: ${failure.name}\n\n`;
       report += `**Severity:** ${failure.severity}\n\n`;
@@ -527,7 +528,7 @@ function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Warnings\n\n`;
   if (warnings.length === 0) {
     report += `No warnings found.\n\n`;
-} else {
+  } else {
     warnings.forEach(warning => {
       report += `### ${warning.id}: ${warning.name}\n\n`;
       report += `**Severity:** ${warning.severity}\n\n`;
@@ -545,7 +546,7 @@ function generateMarkdownReport(results: ApiSecurityCheckResult[]): string: {
   report += `## Passed Checks\n\n`;
   if (passed.length === 0) {
     report += `No passed checks found.\n\n`;
-} else {
+  } else {
     passed.forEach(pass => {
       report += `### ${pass.id}: ${pass.name}\n\n`;
       report += `**Description:** ${pass.description}\n\n`;

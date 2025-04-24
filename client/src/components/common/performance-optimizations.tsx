@@ -4,8 +4,6 @@
  * Component Type: common
  * Migrated from imported components.
  */
-import React from "react";
-
 /**
  * performance-optimizations.tsx
  * 
@@ -17,7 +15,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"

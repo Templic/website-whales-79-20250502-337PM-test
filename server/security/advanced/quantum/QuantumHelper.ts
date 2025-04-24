@@ -11,7 +11,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/Secu
 
 // Store key pairs for different security levels
 const keyPairCache: Record<string, {
-  keyPair: qrc.KeyPair;,
+  keyPair: qrc.KeyPair;
   timestamp: number;
 }> = {};
 
@@ -35,7 +35,7 @@ export async function getKeyPair(
   // Check if we have a cached key that hasn't expired
   if (keyPairCache[cacheKey] && (now - keyPairCache[cacheKey].timestamp) < KEY_CACHE_EXPIRATION) {
     return keyPairCache[cacheKey].keyPair;
-}
+  }
   
   // Generate a new key pair
   const keyPair = await qrc.generateKeyPair({ algorithm, strength });
@@ -44,7 +44,7 @@ export async function getKeyPair(
   keyPairCache[cacheKey] = {
     keyPair,
     timestamp: now
-};
+  };
   
   return keyPair;
 }
@@ -66,7 +66,7 @@ export async function secureData(
     algorithm?: qrc.QRCOptions['algorithm'];
     strength?: qrc.QRCOptions['strength'];
     encoding?: qrc.QRCOptions['encoding'];
-} = {}
+  } = {}
 ): Promise<{
   encryptedData: qrc.EncryptionResult;
   signature?: string;
@@ -85,7 +85,7 @@ export async function secureData(
     let signature;
     let publicKey;
     
-    if (sign) => {
+    if (sign) {
       // Get a key pair for signing
       const keyPair = await getKeyPair(algorithm, strength);
       
@@ -106,16 +106,16 @@ export async function secureData(
         algorithm,
         strength,
         signed: sign,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {
       encryptedData,
       signature,
       publicKey
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -127,11 +127,11 @@ export async function secureData(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Failed to secure, data: ${error.message}`);
+    throw new Error(`Failed to secure data: ${error.message}`);
   }
 }
 
@@ -154,9 +154,9 @@ export async function processSecuredData(
     algorithm?: qrc.QRCOptions['algorithm'];
     strength?: qrc.QRCOptions['strength'];
     encoding?: qrc.QRCOptions['encoding'];
-} = {}
+  } = {}
 ): Promise<{
-  data: string;,
+  data: string;
   verified: boolean;
   verificationReason?: string;
 }> {
@@ -166,8 +166,8 @@ export async function processSecuredData(
     requireSignature = false,
     algorithm = 'kyber', 
     strength = 'high', 
-    encoding = 'base64' ;
-} = options;
+    encoding = 'base64' 
+  } = options;
   
   try {
     // Decrypt the data
@@ -187,11 +187,11 @@ export async function processSecuredData(
       
       // If signature verification is required and failed, throw an error
       if (requireSignature && !verified) {
-        throw new Error(`Signature verification, failed: ${verificationReason}`);
+        throw new Error(`Signature verification failed: ${verificationReason}`);
       }
-    } else if (requireSignature) => {
+    } else if (requireSignature) {
       throw new Error('Signature required but not provided');
-}
+    }
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
@@ -204,16 +204,16 @@ export async function processSecuredData(
         strength,
         signatureProvided: !!signature,
         signatureVerified: verified,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {
       data: dataStr,
       verified,
       verificationReason
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -225,11 +225,11 @@ export async function processSecuredData(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Failed to process secured, data: ${error.message}`);
+    throw new Error(`Failed to process secured data: ${error.message}`);
   }
 }
 
@@ -246,14 +246,14 @@ export async function secureHash(
     algorithm?: qrc.QRCOptions['algorithm'];
     strength?: qrc.QRCOptions['strength'];
     encoding?: qrc.QRCOptions['encoding'];
-} = {}
+  } = {}
 ): Promise<string> {
   const { algorithm = 'kyber', strength = 'high', encoding = 'base64' } = options;
   
   try {
     // Convert data to appropriate format
     const dataToHash = typeof data === 'string' ? data :
-                       Buffer.isBuffer(data) ? data :;
+                       Buffer.isBuffer(data) ? data :
                        JSON.stringify(data);
     
     // Create hash
@@ -268,12 +268,12 @@ export async function secureHash(
       metadata: {
         algorithm,
         strength,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return hash;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -285,11 +285,11 @@ export async function secureHash(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Failed to hash, data: ${error.message}`);
+    throw new Error(`Failed to hash data: ${error.message}`);
   }
 }
 
@@ -309,14 +309,14 @@ export async function createSecureToken(
     algorithm?: qrc.QRCOptions['algorithm'];
     strength?: qrc.QRCOptions['strength'];
     encoding?: qrc.QRCOptions['encoding'];
-} = {}
+  } = {}
 ): Promise<string> {
   const { 
     expiresIn = 3600000, // 1 hour default
     algorithm = 'kyber', 
     strength = 'high', 
-    encoding = 'base64' ;
-} = options;
+    encoding = 'base64' 
+  } = options;
   
   try {
     // Add expiration to payload
@@ -324,7 +324,7 @@ export async function createSecureToken(
       ...payload,
       exp: Date.now() + expiresIn,
       iat: Date.now()
-};
+    };
     
     // Convert payload to string
     const payloadStr = JSON.stringify(tokenPayload);
@@ -339,7 +339,7 @@ export async function createSecureToken(
       publicKey: signResult.publicKey,
       algorithm,
       strength
-})).toString('base64');
+    })).toString('base64');
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
@@ -351,12 +351,12 @@ export async function createSecureToken(
         algorithm,
         strength,
         expiresIn,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return token;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -368,11 +368,11 @@ export async function createSecureToken(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Failed to create secure, token: ${error.message}`);
+    throw new Error(`Failed to create secure token: ${error.message}`);
   }
 }
 
@@ -390,7 +390,7 @@ export async function verifySecureToken(
     algorithm?: qrc.QRCOptions['algorithm'];
     strength?: qrc.QRCOptions['strength'];
     encoding?: qrc.QRCOptions['encoding'];
-} = {}
+  } = {}
 ): Promise<{
   payload: Record<string, any>;
   valid: boolean;
@@ -401,8 +401,8 @@ export async function verifySecureToken(
     checkExpiration = true,
     algorithm = 'kyber', 
     strength = 'high', 
-    encoding = 'base64' ;
-} = options;
+    encoding = 'base64' 
+  } = options;
   
   try {
     // Decode token
@@ -420,13 +420,13 @@ export async function verifySecureToken(
       algorithm: tokenData.algorithm || algorithm,
       strength: tokenData.strength || strength,
       encoding
-});
+    });
     
     // Check expiration if requested
     let expired = false;
     if (checkExpiration && payload.exp && payload.exp < Date.now()) {
       expired = true;
-}
+    }
     
     // Log the operation
     await securityBlockchain.addSecurityEvent({
@@ -440,8 +440,8 @@ export async function verifySecureToken(
         valid: verificationResult.valid,
         expired,
         reason: verificationResult.reason,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {
@@ -449,8 +449,8 @@ export async function verifySecureToken(
       valid: verificationResult.valid && !expired,
       expired,
       reason: expired ? 'Token expired' : verificationResult.reason
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     // Log the error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -462,8 +462,8 @@ export async function verifySecureToken(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {

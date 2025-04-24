@@ -72,7 +72,7 @@ export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
   activeSecurityFeatures = {
     ...activeSecurityFeatures,
     ...features
-};
+  };
   
   // Log the changes
   logSecurityEvent({
@@ -90,11 +90,14 @@ export function enableMaximumSecurity(): void {
   try {
     console.log('[SECURITY] Enabling maximum security mode');
     
-    // Set all security features to maximum: setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
+    // Set all security features to maximum
+    setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
     
-    // Start collecting security metrics: startMetricsCollection(30000); // Collect metrics every: 30 seconds
+    // Start collecting security metrics
+    startMetricsCollection(30000); // Collect metrics every 30 seconds
     
-    // Initialize events collector: initializeEventsCollector();
+    // Initialize events collector
+    initializeEventsCollector();
     
     // Initialize all security components (if any)
     const components = securityFabric.getAllComponents();
@@ -119,14 +122,21 @@ export function enableMaximumSecurity(): void {
     }
     
     // Log the maximum security mode activation
-    console.log('[SECURITY] Maximum security mode activated', activeSecurityFeatures);
-  } catch (error: unknown) {
+    logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: 'Maximum security mode activated',
+      data: { features: activeSecurityFeatures }
+    });
+  } catch (error) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
     // Log the error
-    console.error('[SECURITY] Detailed error:', { 
-      errorMessage: (error as Error).message, 
-      stack: (error as Error).stack 
+    logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.ERROR,
+      message: 'Error enabling maximum security mode',
+      data: { error: (error as Error).message, stack: (error as Error).stack }
     });
     
     throw error;

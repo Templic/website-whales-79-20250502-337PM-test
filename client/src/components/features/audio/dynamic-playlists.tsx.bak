@@ -4,9 +4,7 @@
  * Component Type: audio
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
- */import React from "react";
-import React from "react";
-
+ */
 /**
  * dynamic-playlists.tsx
  * 
@@ -19,14 +17,13 @@ import React from "react";
 "use client"
 
 import { useState, useEffect } from "react"
-// Remove Next.js Image import
+import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import CosmicCard from "@/components/features/cosmic/cosmic-card"
-import { CosmicButton } from "@/components/features/cosmic/cosmic-button"
-import CosmicHeading from "@/components/features/cosmic/cosmic-heading"
-// Comment out missing imports until implemented
-// import { CosmicIcon } from "@/components/features/cosmic/cosmic-icon"
-import { CosmicReveal } from "@/components/features/cosmic/CosmicReveal"
+import { CosmicCard } from "@/components/features/cosmic/CosmicCard"
+import { CosmicButton } from "@/components/features/cosmic/CosmicButton"
+import { CosmicHeading } from "@/components/features/cosmic/CosmicHeading"
+import { CosmicIcon } from "@/components/features/cosmic/CosmicIcon"
+import { CosmicReveal } from "@/components/features/cosmic/CosmicInteractiveEffects"
 import { Button } from "@/components/ui/button"
 import { Play } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -119,10 +116,10 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
+                      <Image
                         src={playlist.coverArt || "/placeholder.svg"}
                         alt={playlist.title}
-                        
+                        fill
                         className="object-cover"
                       />
                     </div>
@@ -151,10 +148,10 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                 <CosmicCard className="p-0 overflow-hidden">
                   {/* Playlist header */}
                   <div className="relative h-48 md:h-64">
-                    <img
+                    <Image
                       src={activePlaylist.coverArt || "/placeholder.svg"}
                       alt={activePlaylist.title}
-                      
+                      fill
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent">
@@ -201,10 +198,10 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                         >
                           <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 rounded overflow-hidden flex-shrink-0">
-                              <img
+                              <Image
                                 src={track.coverArt || "/placeholder.svg"}
                                 alt={track.title}
-                                
+                                fill
                                 className="object-cover"
                               />
                             </div>
@@ -219,7 +216,7 @@ export function DynamicPlaylists({ playlists, onPlay, className }: DynamicPlayli
                               variant="ghost"
                               size="sm"
                               onClick={() => onPlay && onPlay(track.id)}
-                              icon={<Play size={16} />}
+                              icon={<CosmicIcon name="play" size={16} />}
                             >
                               Play
                             </CosmicButton>
@@ -266,10 +263,10 @@ export function RecommendedPlaylists({
           <CosmicReveal key={playlist.id} delay={index * 0.1}>
             <CosmicCard className="p-0 overflow-hidden h-full">
               <div className="relative aspect-square">
-                <img
+                <Image
                   src={playlist.coverArt || "/placeholder.svg"}
                   alt={playlist.title}
-                  
+                  fill
                   className="object-cover transition-transform hover:scale-105 duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -277,7 +274,7 @@ export function RecommendedPlaylists({
                     variant="primary"
                     size="sm"
                     onClick={() => onSelect && onSelect(playlist)}
-                    icon={<Play size={16} />}
+                    icon={<CosmicIcon name="play" size={16} />}
                   >
                     Play
                   </CosmicButton>
@@ -362,10 +359,10 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
+                      <Image
                         src={playlist.coverArt || "/placeholder.svg"}
                         alt={playlist.title}
-                        
+                        fill
                         className="object-cover"
                       />
                     </div>
@@ -394,10 +391,10 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
                 <CosmicCard className="p-0 overflow-hidden">
                   {/* Playlist header */}
                   <div className="relative h-48 md:h-64">
-                    <img
+                    <Image
                       src={activePlaylist.coverArt || "/placeholder.svg"}
                       alt={activePlaylist.title}
-                      
+                      fill
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent">
@@ -444,10 +441,10 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
                         >
                           <div className="flex items-center gap-3">
                             <div className="relative h-10 w-10 rounded overflow-hidden flex-shrink-0">
-                              <img
+                              <Image
                                 src={track.coverArt || "/placeholder.svg"}
                                 alt={track.title}
-                                
+                                fill
                                 className="object-cover"
                               />
                             </div>
@@ -462,7 +459,7 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
                               variant="ghost"
                               size="sm"
                               onClick={() => onPlay && onPlay(track.id)}
-                              icon={<Play size={16} />}
+                              icon={<CosmicIcon name="play" size={16} />}
                             >
                               Play
                             </CosmicButton>
@@ -493,11 +490,8 @@ function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlayl
   )
 }
 
-/**
- * Original RecommendedPlaylists component merged from: client/src/components/common/dynamic-playlists.tsx
- * Merge date: 2025-04-05
- */
-function RecommendedPlaylistsOriginal({
+// Recommended playlists component
+export function RecommendedPlaylists({
   playlists,
   onSelect,
 }: { playlists: Playlist[]; onSelect?: (playlist: Playlist) => void }) {
@@ -512,10 +506,10 @@ function RecommendedPlaylistsOriginal({
           <CosmicReveal key={playlist.id} delay={index * 0.1}>
             <CosmicCard className="p-0 overflow-hidden h-full">
               <div className="relative aspect-square">
-                <img
+                <Image
                   src={playlist.coverArt || "/placeholder.svg"}
                   alt={playlist.title}
-                  
+                  fill
                   className="object-cover transition-transform hover:scale-105 duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -523,7 +517,7 @@ function RecommendedPlaylistsOriginal({
                     variant="primary"
                     size="sm"
                     onClick={() => onSelect && onSelect(playlist)}
-                    icon={<Play size={16} />}
+                    icon={<CosmicIcon name="play" size={16} />}
                   >
                     Play
                   </CosmicButton>
@@ -547,7 +541,7 @@ function RecommendedPlaylistsOriginal({
  * Original DynamicPlaylists component merged from: client/src/components/music/DynamicPlaylists.tsx
  * Merge date: 2025-04-05
  */
-function DynamicPlaylistsSecondOriginal({ playlists, onPlay, className }: DynamicPlaylistsProps) {
+function DynamicPlaylistsOriginal({ playlists, onPlay, className }: DynamicPlaylistsProps) {
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -738,11 +732,8 @@ function DynamicPlaylistsSecondOriginal({ playlists, onPlay, className }: Dynami
   );
 }
 
-/**
- * Second original RecommendedPlaylists component from another source
- * Merge date: 2025-04-05
- */
-function RecommendedPlaylistsSecondOriginal({
+// Recommended playlists component
+export function RecommendedPlaylists({
   playlists,
   onSelect,
 }: {

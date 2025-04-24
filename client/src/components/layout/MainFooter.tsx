@@ -7,8 +7,6 @@
  * 
  * Created: 2025-04-05
  */
-import React from "react";
-
 
 import { useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
@@ -153,7 +151,7 @@ export function MainFooter() {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setSubscriptionStatus("success");
         setEmail("");
-      } catch (error: unknown) {
+      } catch (error) {
         setSubscriptionStatus("error");
         console.error("Subscription error:", error);
       } finally {

@@ -7,8 +7,6 @@
  * @deprecated This component is deprecated. Please use MainHeader.tsx in the layout folder instead.
  * This file will be removed in a future update.
  */
-import React from "react";
-
 /**
  * site-header.tsx
  * 
@@ -96,7 +94,7 @@ export function SiteHeader() {
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cosmic-sea-500 to-cosmic-sunset-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="h-5 w-5 text-white">
-                  <circle cx={12} cy={12} r="3" fill="currentColor" />
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
                   <path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3z" fill="currentColor" />
                   <path d="M12 21a9 9 0 0 0 9-9h-3a6 6 0 0 1-6 6v3z" fill="currentColor" />
                 </svg>
@@ -148,10 +146,10 @@ export function SiteHeader() {
           <Button
             variant="ghost"
             className="hidden md:flex border border-cosmic-sea-800/30 text-white hover:bg-cosmic-sea-900/20 hover:text-cosmic-sea-300 relative overflow-hidden group"
-            style={{ 
+            style={{
               clipPath: "polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)",
               borderRadius: "0.5rem",
-             }}
+            }}
           >
             <span className="relative z-10">Connect</span>
             <span className="absolute inset-0 bg-gradient-to-r from-cosmic-sea-600/20 to-cosmic-sunset-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -163,10 +161,10 @@ export function SiteHeader() {
             size="icon"
             className="md:hidden relative"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{ 
+            style={{
               backgroundColor: "rgba(0, 0, 0, 0.3)",
               backdropFilter: "blur(8px)",
-             }}
+            }}
           >
             <AnimatePresence mode="wait">
               {isMenuOpen ? (
@@ -205,10 +203,10 @@ export function SiteHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            style={{ 
+            style={{
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               backdropFilter: "blur(12px)",
-             }}
+            }}
           >
             <div className="container py-4 space-y-1">
               {routes.map((route, index) => (
@@ -227,10 +225,10 @@ export function SiteHeader() {
                         : "text-white/70 hover:bg-cosmic-sea-900/10 hover:text-cosmic-sea-300",
                     )}
                     onClick={() => setIsMenuOpen(false)}
-                    style={{ 
+                    style={{
                       clipPath: "polygon(0% 0%, 100% 0%, 97% 90%, 100% 100%, 3% 100%, 0% 90%)",
                       borderRadius: "0.5rem",
-                     }}
+                    }}
                   >
                     {route.icon}
                     {route.name}
@@ -246,10 +244,10 @@ export function SiteHeader() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start border border-cosmic-sea-800/30 text-white hover:bg-cosmic-sea-900/20 hover:text-cosmic-sea-300 relative overflow-hidden group"
-                  style={{ 
+                  style={{
                     clipPath: "polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)",
                     borderRadius: "0.5rem",
-                   }}
+                  }}
                 >
                   <span className="relative z-10">Connect</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-cosmic-sea-600/20 to-cosmic-sunset-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -338,7 +336,7 @@ function SiteHeaderOriginal() {
               <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cosmic-sea-500 to-cosmic-sunset-600 blur-md opacity-50 group-hover:opacity-80 transition-all duration-500 group-hover:scale-110"></div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <svg viewBox="0 0 24 24" className="h-5 w-5 text-white">
-                  <circle cx={12} cy={12} r="3" fill="currentColor" />
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
                   <path d="M12 3a9 9 0 0 0-9 9h3a6 6 0 0 1 6-6V3z" fill="currentColor" />
                   <path d="M12 21a9 9 0 0 0 9-9h-3a6 6 0 0 1-6 6v3z" fill="currentColor" />
                 </svg>
@@ -390,10 +388,10 @@ function SiteHeaderOriginal() {
           <Button
             variant="ghost"
             className="hidden md:flex border border-cosmic-sea-800/30 text-white hover:bg-cosmic-sea-900/20 hover:text-cosmic-sea-300 relative overflow-hidden group"
-            style={{ 
+            style={{
               clipPath: "polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)",
               borderRadius: "0.5rem",
-             }}
+            }}
           >
             <span className="relative z-10">Connect</span>
             <span className="absolute inset-0 bg-gradient-to-r from-cosmic-sea-600/20 to-cosmic-sunset-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
@@ -405,10 +403,10 @@ function SiteHeaderOriginal() {
             size="icon"
             className="md:hidden relative"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{ 
+            style={{
               backgroundColor: "rgba(0, 0, 0, 0.3)",
               backdropFilter: "blur(8px)",
-             }}
+            }}
           >
             <AnimatePresence mode="wait">
               {isMenuOpen ? (
@@ -447,10 +445,10 @@ function SiteHeaderOriginal() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            style={{ 
+            style={{
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               backdropFilter: "blur(12px)",
-             }}
+            }}
           >
             <div className="container py-4 space-y-1">
               {routes.map((route, index) => (
@@ -469,10 +467,10 @@ function SiteHeaderOriginal() {
                         : "text-white/70 hover:bg-cosmic-sea-900/10 hover:text-cosmic-sea-300",
                     )}
                     onClick={() => setIsMenuOpen(false)}
-                    style={{ 
+                    style={{
                       clipPath: "polygon(0% 0%, 100% 0%, 97% 90%, 100% 100%, 3% 100%, 0% 90%)",
                       borderRadius: "0.5rem",
-                     }}
+                    }}
                   >
                     {route.icon}
                     {route.name}
@@ -488,10 +486,10 @@ function SiteHeaderOriginal() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start border border-cosmic-sea-800/30 text-white hover:bg-cosmic-sea-900/20 hover:text-cosmic-sea-300 relative overflow-hidden group"
-                  style={{ 
+                  style={{
                     clipPath: "polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)",
                     borderRadius: "0.5rem",
-                   }}
+                  }}
                 >
                   <span className="relative z-10">Connect</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-cosmic-sea-600/20 to-cosmic-sunset-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>

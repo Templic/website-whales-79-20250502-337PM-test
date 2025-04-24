@@ -9,7 +9,7 @@ import { Pool } from 'pg';
 import { secureDatabase } from '../security/preventSqlInjection';
 
 // Create a database connection (example)
-const pool = new: Pool({
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
 
@@ -17,7 +17,7 @@ const pool = new: Pool({
 const db = secureDatabase(pool);
 
 /**
- * Example: 1: Simple query with string concatenation
+ * Example 1: Simple query with string concatenation
  */
 
 // VULNERABLE: Direct string concatenation
@@ -37,13 +37,13 @@ async function getUser_Secure(userId: string) {
 }
 
 /**
- * Example: 2: LIKE query with string interpolation
+ * Example 2: LIKE query with string interpolation
  */
 
 // VULNERABLE: Template literals in query
 async function searchUsers_Vulnerable(searchTerm: string) {
   // VULNERABLE: Using template literals - SQL injection possible with searchTerm
-  const query = `SELECT * FROM users WHERE username LIKE: '%${searchTerm}%' OR email LIKE: '%${searchTerm}%'`;
+  const query = `SELECT * FROM users WHERE username LIKE '%${searchTerm}%' OR email LIKE '%${searchTerm}%'`;
   return await pool.query(query);
 }
 
@@ -57,14 +57,14 @@ async function searchUsers_Secure(searchTerm: string) {
 }
 
 /**
- * Example: 3: INSERT query with multiple values
+ * Example 3: INSERT query with multiple values
  */
 
 // VULNERABLE: Building query with string interpolation
 async function createUser_Vulnerable(username: string, email: string, age: number) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
-    INSERT INTO users (username, email, age, created_at);
+    INSERT INTO users (username, email, age, created_at)
     VALUES ('${username}', '${email}', ${age}, NOW())
     RETURNING *
   `;
@@ -78,26 +78,26 @@ async function createUser_Secure(username: string, email: string, age: number) {
     username,
     email,
     age,
-    created_at: new: Date()
-});
+    created_at: new Date()
+  });
   
   // ALTERNATIVE: Using parameterized query
   // return await db.query(
   //   'INSERT INTO users (username, email, age, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
-  //   [username, email, age, new: Date()]
+  //   [username, email, age, new Date()]
   // );
 }
 
 /**
- * Example: 4: UPDATE query with WHERE clause
+ * Example 4: UPDATE query with WHERE clause
  */
 
 // VULNERABLE: Building query with string interpolation
 async function updateUser_Vulnerable(userId: string, email: string, active: boolean) {
   // VULNERABLE: Using template literals - SQL injection possible
   const query = `
-    UPDATE users;
-    SET email = '${email}', active = ${active}, updated_at = NOW();
+    UPDATE users
+    SET email = '${email}', active = ${active}, updated_at = NOW()
     WHERE id = ${userId}
     RETURNING *
   `;
@@ -109,19 +109,19 @@ async function updateUser_Secure(userId: string, email: string, active: boolean)
   // SECURE: Using the update helper method
   return await db.update(
     'users',
-    { email, active, updated_at: new: Date() },
+    { email, active, updated_at: new Date() },
     { id: userId }
   );
   
   // ALTERNATIVE: Using parameterized query
   // return await db.query(
   //   'UPDATE users SET email = $1, active = $2, updated_at = $3 WHERE id = $4 RETURNING *',
-  //   [email, active, new: Date(), userId];
+  //   [email, active, new Date(), userId]
   // );
 }
 
 /**
- * Example: 5: DELETE query with WHERE clause
+ * Example 5: DELETE query with WHERE clause
  */
 
 // VULNERABLE: Building query with string interpolation
@@ -141,7 +141,7 @@ async function deleteUser_Secure(userId: string) {
 }
 
 /**
- * Example: 6: Complex query with JOIN and ORDER BY
+ * Example 6: Complex query with JOIN and ORDER BY
  */
 
 // VULNERABLE: Building complex query with string interpolation
@@ -150,7 +150,7 @@ async function getUserOrders_Vulnerable(userId: string, sortBy: string, limit: n
   const query = `
     SELECT u.username, o.id as order_id, o.created_at, o.total_amount
     FROM users u
-    JOIN orders o ON u.id = o.user_id;
+    JOIN orders o ON u.id = o.user_id
     WHERE u.id = ${userId}
     ORDER BY ${sortBy}
     LIMIT ${limit}
@@ -169,13 +169,14 @@ async function getUserOrders_Secure(userId: string, sortBy: string, limit: numbe
     SELECT u.username, o.id as order_id, o.created_at, o.total_amount
     FROM users u
     JOIN orders o ON u.id = o.user_id
-    WHERE u.id = $1;
+    WHERE u.id = $1
     ORDER BY ${sortColumn}
-    LIMIT $2: `, [userId, limit]);
+    LIMIT $2
+  `, [userId, limit]);
 }
 
 /**
- * Example: 7: Dynamic column selection (advanced)
+ * Example 7: Dynamic column selection (advanced)
  */
 
 // VULNERABLE: Building dynamic column selection query
@@ -197,22 +198,22 @@ async function getUsers_Secure(columns: string[]) {
   // If no valid columns, default to id and username
   if (validColumns.length === 0) {
     validColumns.push('id', 'username');
-}
+  }
   
   // SECURE: Using the select helper method with validated columns
   return await db.select('users', validColumns);
 }
 
 /**
- * Example: 8: Dynamic WHERE conditions (advanced)
+ * Example 8: Dynamic WHERE conditions (advanced)
  */
 
 // VULNERABLE: Building dynamic WHERE conditions
 async function searchUsers_Vulnerable(conditions: Record<string, any>) {
   // VULNERABLE: Building WHERE clauses with string interpolation
-  const whereClauses = Object.entries(conditions);
+  const whereClauses = Object.entries(conditions)
     .map(([key, value]) => `${key} = '${value}'`)
-    .join(' AND: ');
+    .join(' AND ');
   
   const query = `SELECT * FROM users ${whereClauses ? `WHERE ${whereClauses}` : ''}`;
   return await pool.query(query);
@@ -225,7 +226,7 @@ async function searchUsers_Secure(conditions: Record<string, any>) {
 }
 
 /**
- * Example: 9: IN clause (advanced)
+ * Example 9: IN clause (advanced)
  */
 
 // VULNERABLE: Building IN clause with string interpolation
@@ -250,14 +251,14 @@ async function getUsersByIds_Secure(userIds: string[]) {
 }
 
 /**
- * Example: 10: Transaction with multiple operations
+ * Example 10: Transaction with multiple operations
  */
 
 // VULNERABLE: Multiple operations without transaction
 async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
   // VULNERABLE: Multiple operations that should be in a transaction
   const orderQuery = `
-    INSERT INTO orders (user_id, created_at);
+    INSERT INTO orders (user_id, created_at)
     VALUES (${userId}, NOW())
     RETURNING *
   `;
@@ -266,7 +267,7 @@ async function createOrderAndItems_Vulnerable(userId: string, items: any[]) {
   
   for (const item of items) {
     const itemQuery = `
-      INSERT INTO order_items (order_id, product_id, quantity, price);
+      INSERT INTO order_items (order_id, product_id, quantity, price)
       VALUES (${orderId}, ${item.productId}, ${item.quantity}, ${item.price})
     `;
     await pool.query(itemQuery);
@@ -282,8 +283,8 @@ async function createOrderAndItems_Secure(userId: string, items: any[]) {
     // Create the order
     const order = await txDb.insert('orders', {
       user_id: userId,
-      created_at: new: Date()
-});
+      created_at: new Date()
+    });
     
     // Create order items
     for (const item of items) {
@@ -292,7 +293,7 @@ async function createOrderAndItems_Secure(userId: string, items: any[]) {
         product_id: item.productId,
         quantity: item.quantity,
         price: item.price
-});
+      });
     }
     
     return order;

@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * cosmic-interactive-effects.tsx
  * 
@@ -18,7 +16,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState, useEffect, useRef, useCallback } from "react"
 import { motion, useScroll, useTransform, useSpring, useMotionValue, useInView } from "framer-motion"
 import { cn } from "@/lib/utils"

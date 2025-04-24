@@ -27,7 +27,7 @@ import { createInputValidationMiddleware } from './inputValidation';
 /**
  * API Protection options
  */
-export interface ApiProtectionOptions: {
+export interface ApiProtectionOptions {
   /**
    * Enable RASP protection
    */
@@ -77,16 +77,16 @@ export interface ApiProtectionOptions: {
    * Rate limit options (requests per window)
    */
   rateLimit?: {
-    windowMs: number;,
-  max: number;
+    windowMs: number;
+    max: number;
     message?: string;
-};
+  };
 }
 
 /**
  * Protect API routes with security middleware
  */
-export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {}): void: {
+export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {}): void {
   const {
     enableRASP = true,
     enableApiSecurity = true,
@@ -102,12 +102,12 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
       '/api/external-callbacks',
       '/api/stripe-webhook'
     ],
-    additionalMiddlewares = [],;
+    additionalMiddlewares = [],
     rateLimit: rateLimitOptions = {
-      windowMs: 15 * 60 * 1000, // 15 minutes,
-  max: 100, // 100 requests per windowMs,
-  message: 'Too many requests from this IP, please try again later.'
-}
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // 100 requests per windowMs
+      message: 'Too many requests from this IP, please try again later.'
+    }
   } = options;
   
   // Log protection options
@@ -121,7 +121,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     enableBlockchainAudit,
     excludePaths: excludePaths.join(', '),
     additionalMiddlewares: additionalMiddlewares.length
-});
+  });
   
   // Middleware for audit logging
   const auditMiddleware = async (req, res, next) => {
@@ -135,7 +135,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     const originalEnd = res.end;
     
     // Override the end method
-    res.end = function(chunk, encoding) => {
+    res.end = function(chunk, encoding) {
       // Get response time
       const responseTime = Date.now() - requestStartTime;
       
@@ -146,7 +146,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
       res.end(chunk, encoding);
       
       // Log the request to blockchain if enabled
-      if (enableBlockchainAudit) => {
+      if (enableBlockchainAudit) {
         securityBlockchain.addSecurityEvent({
           category: SecurityEventCategory.API,
           severity: SecurityEventSeverity.INFO,
@@ -159,11 +159,11 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
             responseTime,
             ip,
             userAgent,
-            timestamp: new: Date().toISOString()
-}
+            timestamp: new Date().toISOString()
+          }
         }).catch(error => {
           console.error('Error logging API request:', error);
-});
+        });
       }
     };
     
@@ -175,34 +175,35 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
     // Skip excluded paths
     if (excludePaths.some(path => req.path.startsWith(path))) {
       return next();
-}
+    }
     
-    // Continue to next middleware: next();
+    // Continue to next middleware
+    next();
   });
   
   // Apply audit logging middleware to all API routes
   app.use('/api', auditMiddleware);
   
   // Apply rate limiting if enabled
-  if (enableRateLimiting) => {
+  if (enableRateLimiting) {
     app.use('/api', rateLimit({
       windowMs: rateLimitOptions.windowMs,
       max: rateLimitOptions.max,
       message: rateLimitOptions.message,
       standardHeaders: true,
       legacyHeaders: false,
-}));
+    }));
     console.log('[API-PROTECTION] Rate limiting enabled');
   }
   
   // Apply RASP protection if enabled
-  if (enableRASP) => {
+  if (enableRASP) {
     // Apply RASP protection middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
-}
+      }
       
       try {
         // Apply RASP protections
@@ -220,34 +221,34 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
               path: req.path,
               method: req.method,
               ip: req.ip || req.connection.remoteAddress
-}
+            }
           }).catch(console.error);
           
           return res.status(403).json({
             error: 'Access Denied',
             message: 'This request has been blocked for security reasons.'
-});
+          });
         }
         
         next();
-      } catch (error: unknown) {
+      } catch (error) {
         // Continue in case of RASP error to avoid blocking legitimate requests
         console.error('RASP error:', error);
         next();
-}
+      }
     });
     
     console.log('[API-PROTECTION] RASP protection enabled');
   }
   
   // Apply API security checks if enabled
-  if (enableApiSecurity) => {
+  if (enableApiSecurity) {
     // Apply security policy enforcer middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
-}
+      }
       
       try {
         const securityResult = securityPolicyEnforcer.checkRequest(req);
@@ -264,54 +265,55 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
               path: req.path,
               method: req.method,
               ip: req.ip || req.connection.remoteAddress
-}
+            }
           }).catch(console.error);
           
           return res.status(403).json({
             error: 'Security Violation',
             message: 'This request violates security policies.'
-});
+          });
         }
         
         next();
-      } catch (error: unknown) {
+      } catch (error) {
         // Log the error but allow the request to continue
         console.error('API security check error:', error);
         next();
-}
+      }
     });
     
     console.log('[API-PROTECTION] API security checks enabled');
   }
   
   // Apply default input validation if enabled
-  if (enableDefaultValidation) => {
+  if (enableDefaultValidation) {
     // Apply input validation middleware to all API routes except excluded paths
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
-}
+      }
       
       try {
         // Apply appropriate validation based on endpoint
         const validationMiddleware = createInputValidationMiddleware({
           thorough: enableSensitiveProcedures
-});
+        });
         
-        // Call the validation middleware: validationMiddleware(req, res, next);
-      } catch (error: unknown) {
+        // Call the validation middleware
+        validationMiddleware(req, res, next);
+      } catch (error) {
         // Log the error but allow the request to continue
         console.error('Input validation error:', error);
         next();
-}
+      }
     });
     
     console.log('[API-PROTECTION] Default input validation enabled');
   }
   
   // Apply quantum-resistant cryptography middleware if enabled
-  if (enableQuantumResistance) => {
+  if (enableQuantumResistance) {
     // Create and apply quantum-resistant middleware
     const quantumMiddleware = createQuantumResistantMiddleware({
       protectedPaths: [
@@ -324,8 +326,8 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
       exemptPaths: excludePaths,
       encryptResponses: true,
       verifyRequestSignatures: true,
-      bypassInDevelopment: process.env.NODE_ENV = == 'development';
-});
+      bypassInDevelopment: process.env.NODE_ENV === 'development'
+    });
     
     // Apply the middleware
     app.use('/api', quantumMiddleware);
@@ -337,31 +339,31 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
           .then(module => {
             const middleware = module.createPublicKeyEndpointMiddleware();
             middleware(req, res, next);
-})
+          })
           .catch(error => {
             console.error('Error loading quantum middleware:', error);
             res.status(500).json({
               error: 'Internal Server Error',
               message: 'Failed to provide quantum key'
-});
+            });
           });
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error in quantum key endpoint:', error);
         next(error);
-}
+      }
     });
     
     console.log('[API-PROTECTION] Quantum-resistant protection enabled');
   }
   
   // Apply sensitive procedures if enabled
-  if (enableSensitiveProcedures) => {
+  if (enableSensitiveProcedures) {
     // Apply sensitive procedures middleware
     app.use('/api', (req, res, next) => {
       // Skip excluded paths
       if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
-}
+      }
       
       // Add additional security headers
       res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -370,7 +372,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
       res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
       
       // Implement content security policy
-      res.setHeader('Content-Security-Policy', "default-src: 'self'; script-src: 'self'; object-src: 'none'");
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; object-src 'none'");
       
       // Implement additional security checks for sensitive endpoints
       if (req.path.includes('/api/admin') || req.path.includes('/api/security') || req.path.includes('/api/payment')) {
@@ -385,7 +387,7 @@ export function protectApiRoutes(app: Express, options: ApiProtectionOptions = {
             method: req.method,
             ip: req.ip || req.connection.remoteAddress,
             userAgent: req.headers['user-agent']
-}
+          }
         }).catch(console.error);
       }
       

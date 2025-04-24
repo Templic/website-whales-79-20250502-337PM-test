@@ -33,9 +33,9 @@ router.get('/pci-compliance-check', async (req: Request, res: Response) => {
   return res.json({
       success: true,
       report: reportContent
-});
-  } catch (error: unknown) {
-    logger.error(`Error running PCI compliance, check: ${error}`);
+    });
+  } catch (error) {
+    logger.error(`Error running PCI compliance check: ${error}`);
     return res.status(500).json({ error: 'Failed to run compliance check' });
   }
 });
@@ -63,10 +63,10 @@ router.post('/audit-log-hash', async (req: Request, res: Response) => {
       logPath,
       hash,
       registered
-});
-  } catch (error: unknown) {
-    logger.error(`Error creating audit log, hash: ${error}`);
-    return res.status(500).json({ error: `Failed to create log, hash: ${error.message}` });
+    });
+  } catch (error) {
+    logger.error(`Error creating audit log hash: ${error}`);
+    return res.status(500).json({ error: `Failed to create log hash: ${error.message}` });
   }
 });
 
@@ -86,11 +86,11 @@ router.post('/record-log-review', async (req: Request, res: Response) => {
     
     return res.json({
       success,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
-    logger.error(`Error recording log, review: ${error}`);
-    return res.status(500).json({ error: `Failed to record log, review: ${error.message}` });
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error(`Error recording log review: ${error}`);
+    return res.status(500).json({ error: `Failed to record log review: ${error.message}` });
   }
 });
 
@@ -112,7 +112,7 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
     const results = {};
     let allValid = true;
     
-    for (const: [logPath, entry] of Object.entries(logHashes)) {
+    for (const [logPath, entry] of Object.entries(logHashes)) {
       try {
         // Compute a fresh hash
         const currentHash = pciComplianceChecker.createLogIntegrityHash(logPath);
@@ -123,19 +123,19 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
         
         if (!isValid) {
           allValid = false;
-}
+        }
         
         results[logPath] = {
           isValid,
           storedHash,
           currentHash,
-          lastVerified: new: Date().toISOString()
-};
-      } catch (error: unknown) {
+          lastVerified: new Date().toISOString()
+        };
+      } catch (error) {
         results[logPath] = {
           isValid: false,
           error: error.message
-};
+        };
         allValid = false;
       }
     }
@@ -145,10 +145,10 @@ router.get('/verify-log-integrity', async (req: Request, res: Response) => {
       success: true,
       allValid,
       results
-});
-  } catch (error: unknown) {
-    logger.error(`Error verifying log, integrity: ${error}`);
-    return res.status(500).json({ error: `Failed to verify log, integrity: ${error.message}` });
+    });
+  } catch (error) {
+    logger.error(`Error verifying log integrity: ${error}`);
+    return res.status(500).json({ error: `Failed to verify log integrity: ${error.message}` });
   }
 });
 

@@ -31,7 +31,7 @@ const secureRequestMiddleware = [raspMiddleware];
 /**
  * Security system initialization options
  */
-export interface SecurityInitializationOptions: {
+export interface SecurityInitializationOptions {
   /**
    * Whether to enable advanced security features
    */
@@ -103,15 +103,15 @@ export async function initializeSecurity(app: express.Application, options?: Sec
     securityFabric.registerComponent({
       name: 'RASP',
       description: 'Runtime Application Self-Protection',
-      async processEvent(event) => {
-        console.log(`[RASP] Processing security, event: ${event.message}`);
+      async processEvent(event) {
+        console.log(`[RASP] Processing security event: ${event.message}`);
       },
       async getStatus() {
         return {
           enabled: true,
           protectionLevel: config.raspProtectionLevel,
           rules: 'Multiple protection rules active'
-};
+        };
       }
     });
     
@@ -124,7 +124,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
         mode: config.mode,
         advanced: config.advanced,
         rasp: config.enableRASP
-}
+      }
     });
     
     // Initialize components through security fabric
@@ -149,7 +149,7 @@ export async function initializeSecurity(app: express.Application, options?: Sec
           // Full protection
           app.use(raspMiddleware);
           break;
-}
+      }
     }
     
     // Apply CSRF protection middleware on all non-API routes
@@ -164,19 +164,20 @@ export async function initializeSecurity(app: express.Application, options?: Sec
         // Skip CSRF protection for API routes with token authentication
         if (req.path.startsWith('/api/') && req.headers.authorization) {
           return next();
-}
+        }
         
         // Skip for non-state-changing methods
         if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
           return next();
-}
+        }
         
         // Skip for auth routes
         if (req.path.includes('/auth/') || req.path.includes('/login') || req.path.includes('/register')) {
           return next();
-}
+        }
         
-        // Apply CSRF middleware: csrfMiddleware(req, res, next);
+        // Apply CSRF middleware
+        csrfMiddleware(req, res, next);
       });
       
       // Log initialization
@@ -186,11 +187,11 @@ export async function initializeSecurity(app: express.Application, options?: Sec
         message: 'CSRF protection enabled',
         metadata: {
           protection: 'maximum',
-          type 'double-submit-cookie'
-}
+          type: 'double-submit-cookie'
+        }
       }).catch(error => {
         console.error('[Security] Error logging CSRF initialization:', error);
-});
+      });
     }
     
     // Log all requests if enabled
@@ -205,17 +206,17 @@ export async function initializeSecurity(app: express.Application, options?: Sec
             method: req.method,
             url: req.originalUrl,
             userAgent: req.headers['user-agent']
-}
+          }
         }).catch(error => {
           console.error('[Security] Error logging request:', error);
-});
+        });
         
         next();
       });
     }
     
     console.log('[Security] Security system initialized successfully');
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[Security] Error initializing security system:', error);
     
     // Log initialization error
@@ -242,7 +243,7 @@ export async function shutdownSecurity(): Promise<void> {
       severity: SecurityEventSeverity.INFO,
       category: SecurityEventCategory.SYSTEM,
       message: 'Security system shutdown initiated'
-});
+    });
     
     // Shut down components through security fabric
     await securityFabric.shutdownComponents();
@@ -251,10 +252,10 @@ export async function shutdownSecurity(): Promise<void> {
     await securityBlockchain.shutdown();
     
     console.log('[Security] Security system shut down successfully');
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[Security] Error shutting down security system:', error);
     throw error;
-}
+  }
 }
 
 // Export security components

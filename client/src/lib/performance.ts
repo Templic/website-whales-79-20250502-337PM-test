@@ -56,7 +56,7 @@ export interface PerformanceProfilerProps {
   /** Whether to log metrics to console */
   logToConsole?: boolean;
   /** Custom metrics callback */
-  onMetrics?: (metrics) => void;
+  onMetrics?: (metrics: any) => void;
   /** Whether to show a visual indicator */
   showVisualIndicator?: boolean;
 }
@@ -126,7 +126,7 @@ export const PerformanceProfiler: FC<PerformanceProfilerProps> = ({
             right: 0,
             backgroundColor: isSlow ? 'rgba(255, 0, 0, 0.5)' : 'rgba(0, 255, 0, 0.5)',
             color: 'white',
-            fontSize: 10,
+            fontSize: '10px',
             padding: '2px 4px',
             borderRadius: '2px',
             pointerEvents: 'none',
@@ -358,7 +358,7 @@ export function createPerformanceMarker(name: string, metadata?: Record<string, 
       if (typeof performance !== 'undefined' && performance.measure) {
         try {
           performance.measure(name, `${name}-start`);
-        } catch (e: unknown) {
+        } catch (e) {
           // Some browsers might throw if the mark doesn't exist
         }
       }
@@ -530,7 +530,7 @@ export function PerformanceMonitor({ visible = true }: { visible?: boolean }) {
       color: 'white',
       padding: '10px',
       fontFamily: 'monospace',
-      fontSize: 12,
+      fontSize: '12px',
       maxHeight: '300px',
       overflow: 'auto',
       zIndex: 9999,
@@ -704,7 +704,7 @@ export function processInChunks<T, R>(
       } else if (onComplete) {
         onComplete(results);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       if (onError) {
         onError(error as Error);
       } else {

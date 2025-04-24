@@ -17,24 +17,24 @@ const writeFile = util.promisify(fs.writeFile);
 /**
  * Fix info interface
  */
-interface FixInfo: {
-  file: string;,
-  originalLines: string[];,
-  fixedLines: string[];,
-  vulnerabilities: SQLInjectionVulnerability[];,
+interface FixInfo {
+  file: string;
+  originalLines: string[];
+  fixedLines: string[];
+  vulnerabilities: SQLInjectionVulnerability[];
   dryRun: boolean;
 }
 
 /**
  * Fix result interface
  */
-interface FixResult: {
+interface FixResult {
   file: string;
   fixes: {
-    line: number;,
-  original: string;,
-  fixed: string;
-}[];
+    line: number;
+    original: string;
+    fixed: string;
+  }[];
   success: boolean;
   error?: string;
 }
@@ -66,7 +66,7 @@ async function fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabil
         const suggestedFix = generateFix(vuln);
         
         // Only apply the fix if it's meaningful
-        if (suggestedFix && !suggestedFix.includes('Use: ')) {
+        if (suggestedFix && !suggestedFix.includes('Use ')) {
           // Simple replacement - in a real implementation, this would need to be smarter
           // and handle more complex code structures
           const fixedLine = applyFixToLine(originalLine, vuln, suggestedFix);
@@ -79,7 +79,7 @@ async function fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabil
               line: vuln.line,
               original: originalLine,
               fixed: fixedLine
-});
+            });
           }
         }
       }
@@ -88,33 +88,33 @@ async function fixFile(filePath: string, vulnerabilities: SQLInjectionVulnerabil
     // If not a dry run and we have fixes, write the changes back to the file
     if (!dryRun && fixes.length > 0) {
       await writeFile(filePath, fixedLines.join('\n'));
-}
+    }
     
     return {
       file: filePath,
       fixes,
       success: true
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     return {
       file: filePath,
       fixes: [],
       success: false,
       error: error.message
-};
+    };
   }
 }
 
 /**
  * Apply a fix to a line of code
  */
-function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, suggestedFix: string): string: {
+function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, suggestedFix: string): string {
   // Look for common SQL query patterns and apply appropriate fixes
   
   // Match template literals
   if (vulnerability.pattern.includes('Template literal')) {
     const templateMatch = line.match(/`([^`]+)`/);
-    if (templateMatch) => {
+    if (templateMatch) {
       // Extract the template and determine its position in the line
       const template = templateMatch[0];
       const startPos = line.indexOf(template);
@@ -122,7 +122,7 @@ function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, 
       
       // Determine if this is part of a query call
       const queryMatch = line.match(/(\w+)\.query\(`/);
-      if (queryMatch) => {
+      if (queryMatch) {
         // Extract the variable name before .query
         const dbVar = queryMatch[1];
         
@@ -144,7 +144,7 @@ function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, 
   if (vulnerability.pattern.includes('String concatenation')) {
     // Find query pattern
     const queryMatch = line.match(/(\w+)\.query\(([^)]+)\)/);
-    if (queryMatch) => {
+    if (queryMatch) {
       const dbVar = queryMatch[1];
       const queryContent = queryMatch[2];
       
@@ -158,20 +158,20 @@ function applyFixToLine(line: string, vulnerability: SQLInjectionVulnerability, 
       const paramMatches = queryContent.match(/["']\s*\+\s*([^+]+?)\s*\+\s*["']/g);
       const params: string[] = [];
       
-      if (paramMatches) => {
+      if (paramMatches) {
         for (const paramMatch of paramMatches) {
           // Extract the variable between + and +
           const param = paramMatch.match(/["']\s*\+\s*([^+]+?)\s*\+\s*["']/);
           if (param && param[1]) {
             params.push(param[1].trim());
-}
+          }
         }
       }
       
       // Replace the concatenation with placeholders
       let sqlQuery = queryContent;
       for (let i = 0; i < params.length; i++) {
-        const paramPattern = new: RegExp(`["']\\s*\\+\\s*${params[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\+\\s*["']`, 'g');
+        const paramPattern = new RegExp(`["']\\s*\\+\\s*${params[i].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\+\\s*["']`, 'g');
         sqlQuery = sqlQuery.replace(paramPattern, `$${i + 1}`);
       }
       
@@ -200,7 +200,7 @@ async function fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
   for (const vuln of vulnerabilities) {
     if (!fileGroups[vuln.file]) {
       fileGroups[vuln.file] = [];
-}
+    }
     fileGroups[vuln.file].push(vuln);
   }
   
@@ -211,7 +211,7 @@ async function fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
     const fileVulnerabilities = fileGroups[file];
     const result = await fixFile(file, fileVulnerabilities, dryRun);
     results.push(result);
-}
+  }
   
   return results;
 }
@@ -219,10 +219,10 @@ async function fixDirectory(dir: string, dryRun = true): Promise<FixResult[]> {
 /**
  * Generate a report of the fixes applied
  */
-function generateFixReport(results: FixResult[]): string: {
+function generateFixReport(results: FixResult[]): string {
   if (results.length === 0) {
     return 'No files processed.';
-}
+  }
   
   const successCount = results.filter(r => r.success).length;
   const failCount = results.length - successCount;
@@ -247,7 +247,7 @@ function generateFixReport(results: FixResult[]): string: {
     if (result.fixes.length === 0) {
       report += `  No fixes applied\n`;
       continue;
-}
+    }
     
     report += `  Applied ${result.fixes.length} fixes:\n`;
     
@@ -273,9 +273,9 @@ async function main() {
   const dryRunArg = args.find(arg => arg === '--dry-run' || arg === '-d');
   const dryRun = dryRunArg !== undefined;
   
-  if (dryRun) => {
+  if (dryRun) {
     console.log('Running in dry-run mode, no changes will be made');
-}
+  }
   
   // Set the directories to scan
   const dirsToScan = ['server', 'client', 'shared'];
@@ -289,7 +289,7 @@ async function main() {
     if (fs.existsSync(dir)) {
       const results = await fixDirectory(dir, dryRun);
       allResults.push(...results);
-}
+    }
   }
   
   // Generate and print the report
@@ -307,13 +307,13 @@ async function main() {
     
     fs.writeFileSync(reportPath, report);
     console.log(`Report saved to ${reportPath}`);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error saving report:', error);
-}
+  }
   
   // Print summary
   const totalFixes = allResults.reduce((sum, result) => sum + result.fixes.length, 0);
-  console.log(`\nFix, summary: ${totalFixes} fixes ${dryRun ? 'would be' : 'were'} applied to ${allResults.length} files`);
+  console.log(`\nFix summary: ${totalFixes} fixes ${dryRun ? 'would be' : 'were'} applied to ${allResults.length} files`);
   
   return allResults;
 }
@@ -323,7 +323,7 @@ if (require.main === module) {
   main().catch(error => {
     console.error('Error running SQL injection fixer:', error);
     process.exit(1);
-});
+  });
 }
 
 // Export functionality for use as a module

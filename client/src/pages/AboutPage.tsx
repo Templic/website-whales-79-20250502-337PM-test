@@ -3,8 +3,6 @@
  * 
  * Revamped with sacred geometry and sound themes.
  */
-import React from "react";
-
 import { useEffect, useState } from "react";
 import { SpotlightEffect } from "@/components/SpotlightEffect";
 import SacredGeometry from "@/components/cosmic/SacredGeometry";
@@ -61,7 +59,7 @@ export default function AboutPage() {
           {/* Specifically designed to fill the hexagon shape with a layout that conforms to its contours */}
           <div className="relative pt-2 pb-4">
             {/* Central large image with cosmic overlay */}
-            <div className="mx-auto mb-6 px-4 relative" style={{  maxWidth: "min(85%, 700px)"  }}>
+            <div className="mx-auto mb-6 px-4 relative" style={{ maxWidth: "min(85%, 700px)" }}>
               <div className="absolute -top-5 -left-2 z-10">
                 <SacredGeometry 
                   type="pentagon-star" 
@@ -90,22 +88,22 @@ export default function AboutPage() {
 
                 {/* Audio waveform visualization (simulated) */}
                 <div className="absolute bottom-0 left-0 right-0 h-8 flex items-end justify-center z-10 px-4">
-                  <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{ width: 3 }}></div>
-                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{ width: 3 }}></div>
+                  <div className={cn("audio-bar h-1 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-3 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-5 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-1" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-7 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-2" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-2 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-3" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-4 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-4" : "")} style={{width: "3px"}}></div>
+                  <div className={cn("audio-bar h-6 bg-[#00ebd6] mx-0.5 rounded-full", audioPlaying ? "animate-sound-bar-5" : "")} style={{width: "3px"}}></div>
                 </div>
               </div>
             </div>
 
             {/* Biography text shaped to flow with hexagon */}
-            <div className="px-8 space-y-4 mx-auto" style={{  maxWidth: "min(90%, 900px)"  }}>
+            <div className="px-8 space-y-4 mx-auto" style={{ maxWidth: "min(90%, 900px)" }}>
               <div className="flex items-center justify-center mb-3">
                 <Music className="w-7 h-7 text-[#00ebd6] mr-3" />
                 <h3 className="cosmic-heading-responsive-sm font-bold text-[#00ebd6]">Sonic Explorer</h3>

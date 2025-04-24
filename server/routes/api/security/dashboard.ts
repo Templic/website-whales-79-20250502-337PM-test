@@ -22,7 +22,7 @@ router.get('/metrics', async (req, res) => {
   try {
     const metrics = await getLatestSecurityMetrics();
     res.json(metrics);
-} catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -48,7 +48,7 @@ router.get('/events', async (req, res) => {
     
     const events = await getSecurityEventsHistory(timeRange, category, type, limit);
     res.json(events);
-} catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -75,26 +75,26 @@ router.get('/config', (req, res) => {
         requireNumbers: true,
         requireUppercase: true,
         requireLowercase: true
-},
-      sessionTimeout: 30, // minutes,
-  ipWhitelist: ['192.168.1.0/24', '10.0.0.1'],
+      },
+      sessionTimeout: 30, // minutes
+      ipWhitelist: ['192.168.1.0/24', '10.0.0.1'],
       quantumProtection: 'high', // 'low', 'medium', 'high'
       apiRateLimiting: {
         enabled: true,
         requestsPerMinute: 100
-},
+      },
       blockTor: true,
       blockVPNs: false,
       anomalyDetection: {
         sensitivity: 'medium', // 'low', 'medium', 'high'
         autoBlock: true,
         alertThreshold: 'medium' // 'low', 'medium', 'high'
-},
+      },
       securityScanSchedule: 'daily' // 'hourly', 'daily', 'weekly'
     };
     
     res.json(securityConfig);
-  } catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -114,7 +114,9 @@ router.post('/config', (req, res) => {
   try {
     const newConfig = req.body;
     
-    // In a real application, this would validate and update the security configuration: logSecurityEvent({
+    // In a real application, this would validate and update the security configuration
+    
+    logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Security configuration updated',
@@ -122,7 +124,7 @@ router.post('/config', (req, res) => {
     });
     
     res.json({ success: true, message: 'Security configuration updated' });
-  } catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,
@@ -142,7 +144,8 @@ router.post('/scan', async (req, res) => {
   try {
     // In a real application, this would initiate a security scan
     
-    // Log the scan initiation: logSecurityEvent({
+    // Log the scan initiation
+    logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Security scan initiated',
@@ -150,9 +153,10 @@ router.post('/scan', async (req, res) => {
     });
     
     // Simulate a scan delay
-    await new: Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Log the scan completion: logSecurityEvent({
+    // Log the scan completion
+    logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
       message: 'Security scan completed',
@@ -160,7 +164,7 @@ router.post('/scan', async (req, res) => {
         duration: '2.1s',
         threats: 0,
         warnings: 3
-}
+      }
     });
     
     res.json({
@@ -171,13 +175,13 @@ router.post('/scan', async (req, res) => {
         threats: 0,
         warnings: 3,
         details: [
-          { type 'warning', message: 'Session timeout is less than recommended: 60 minutes' },
-          { type 'warning', message: 'Some API endpoints lack rate limiting' },
-          { type 'warning', message: 'CORS configuration allows multiple origins' }
+          { type: 'warning', message: 'Session timeout is less than recommended 60 minutes' },
+          { type: 'warning', message: 'Some API endpoints lack rate limiting' },
+          { type: 'warning', message: 'CORS configuration allows multiple origins' }
         ]
       }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     logSecurityEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.ERROR,

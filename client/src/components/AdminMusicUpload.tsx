@@ -1,4 +1,3 @@
-import React from "react";
 import { useState } from 'react';
 import axios from 'axios';
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +28,7 @@ export default function AdminMusicUpload() {
         title: "Success",
         description: "File uploaded successfully"
       });
-    } catch (err: unknown) {
+    } catch (err) {
       toast({
         title: "Error",
         description: "Failed to upload file",

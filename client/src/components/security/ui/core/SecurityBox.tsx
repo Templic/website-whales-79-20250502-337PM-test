@@ -142,8 +142,8 @@ export const SecurityBox = forwardRef<HTMLDivElement, SecurityBoxProps>(
       
       // Status indicator styles
       statusIndicator: {
-        width: 8,
-        height: 8,
+        width: '8px',
+        height: '8px',
         borderRadius: '50%',
         position: 'absolute' as const,
         top: '16px',

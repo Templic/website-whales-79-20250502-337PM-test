@@ -35,33 +35,33 @@ router.get('/content', requireAuth, async (req, res) => {
     // Build the query based on filters
     let query = db.select()
       .from(contentItems)
-      .limit(limit);
+      .limit(limit)
       .offset(offset);
     
     // Add filtering conditions
-    if (status) => {
+    if (status) {
       query = query.where(eq(contentItems.status, status));
-}
+    }
     
-    if (search) => {
+    if (search) {
       query = query.where(like(contentItems.title, `%${search}%`));
     }
     
     // If not admin, only show content created by the user
     if (!isAdmin) {
       query = query.where(eq(contentItems.createdBy, userId));
-}
+    }
     
     // Add sorting
     if (sortBy === 'createdAt') {
       query = query.orderBy(sortOrder(contentItems.createdAt));
-} else if (sortBy === 'updatedAt') {
+    } else if (sortBy === 'updatedAt') {
       query = query.orderBy(sortOrder(contentItems.updatedAt));
-} else if (sortBy === 'title') {
+    } else if (sortBy === 'title') {
       query = query.orderBy(sortOrder(contentItems.title));
-} else {
+    } else {
       query = query.orderBy(desc(contentItems.updatedAt)); // Default sorting
-}
+    }
     
     // Execute the query
     const contentList = await query;
@@ -82,9 +82,9 @@ router.get('/content', requireAuth, async (req, res) => {
         limit,
         totalCount,
         totalPages: Math.ceil(totalCount / limit)
-}
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting content list:', error);
     res.status(500).json({ error: 'Failed to get content list' });
   }
@@ -100,7 +100,7 @@ router.get('/content/:id', requireAuth, async (req, res) => {
     // Get content item
     const content = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!content.length) {
@@ -115,21 +115,21 @@ router.get('/content/:id', requireAuth, async (req, res) => {
     // Get content versions
     const versions = await db.select()
       .from(contentVersions)
-      .where(eq(contentVersions.contentId, contentId));
+      .where(eq(contentVersions.contentId, contentId))
       .orderBy(desc(contentVersions.version));
     
     // Get workflow history
     const workflowHistory = await db.select()
       .from(contentWorkflowHistory)
-      .where(eq(contentWorkflowHistory.contentId, contentId));
+      .where(eq(contentWorkflowHistory.contentId, contentId))
       .orderBy(desc(contentWorkflowHistory.createdAt));
     
     res.json({
       content: content[0],
       versions,
       workflowHistory
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     logger.error('Error getting content details:', error);
     res.status(500).json({ error: 'Failed to get content details' });
   }
@@ -146,7 +146,7 @@ router.post('/content', requireAuth, async (req, res) => {
       type,
       scheduledPublishAt,
       expirationDate
-} = req.body;
+    } = req.body;
     
     // Validate required fields
     if (!title || !content || !section || !type) {
@@ -154,11 +154,11 @@ router.post('/content', requireAuth, async (req, res) => {
     }
     
     // Convert date strings to Date objects if provided
-    const scheduledDate = scheduledPublishAt ? new: Date(scheduledPublishAt) : null;
-    const expirationDateObj = expirationDate ? new: Date(expirationDate) : null;
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
     
     // Create new content item
-    const: [newContent] = await db.insert(contentItems)
+    const [newContent] = await db.insert(contentItems)
       .values({
         title,
         content,
@@ -167,8 +167,8 @@ router.post('/content', requireAuth, async (req, res) => {
         status: 'draft',
         version: 1,
         createdBy: userId,
-        createdAt: new: Date(),
-        updatedAt: new: Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         scheduledPublishAt: scheduledDate,
         expirationDate: expirationDateObj,
         key: `content_${Date.now()}_${Math.floor(Math.random() * 1000)}`
@@ -182,8 +182,8 @@ router.post('/content', requireAuth, async (req, res) => {
         version: 1,
         content: content,
         createdBy: userId,
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
     // Create workflow history entry
     await db.insert(contentWorkflowHistory)
@@ -192,12 +192,12 @@ router.post('/content', requireAuth, async (req, res) => {
         userId: userId,
         action: 'created',
         comments: 'Initial creation',
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`New content, created: ${newContent.id} by user ${userId}`);
+    logger.info(`New content created: ${newContent.id} by user ${userId}`);
     res.status(201).json(newContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error creating content:', error);
     res.status(500).json({ error: 'Failed to create content' });
   }
@@ -213,7 +213,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -230,7 +230,7 @@ router.put('/content/:id', requireAuth, async (req, res) => {
     if (!allowUpdateStates.includes(existingContent[0].status)) {
       return res.status(400).json({ 
         error: 'Cannot update content in its current state. Content must be in draft or changes_requested state.' 
-});
+      });
     }
     
     const {
@@ -240,29 +240,29 @@ router.put('/content/:id', requireAuth, async (req, res) => {
       type,
       scheduledPublishAt,
       expirationDate
-} = req.body;
+    } = req.body;
     
     // Convert date strings to Date objects if provided
-    const scheduledDate = scheduledPublishAt ? new: Date(scheduledPublishAt) : null;
-    const expirationDateObj = expirationDate ? new: Date(expirationDate) : null;
+    const scheduledDate = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+    const expirationDateObj = expirationDate ? new Date(expirationDate) : null;
     
     // Increment version number
     const newVersion = existingContent[0].version + 1;
     
     // Update content
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         title: title || existingContent[0].title,
         content: content || existingContent[0].content,
         section: section || existingContent[0].section,
-        type type || existingContent[0].type,
+        type: type || existingContent[0].type,
         version: newVersion,
-        status: 'draft', // Reset to draft when updated,
-  updatedAt: new: Date(),
+        status: 'draft', // Reset to draft when updated
+        updatedAt: new Date(),
         lastModifiedBy: userId,
         scheduledPublishAt: scheduledDate,
         expirationDate: expirationDateObj
-})
+      })
       .where(eq(contentItems.id, contentId))
       .returning();
     
@@ -273,8 +273,8 @@ router.put('/content/:id', requireAuth, async (req, res) => {
         version: newVersion,
         content: content || existingContent[0].content,
         createdBy: userId,
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
     // Create workflow history entry
     await db.insert(contentWorkflowHistory)
@@ -283,12 +283,12 @@ router.put('/content/:id', requireAuth, async (req, res) => {
         userId: userId,
         action: 'updated',
         comments: req.body.comments || 'Content updated',
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`Content, updated: ${contentId} by user ${userId}`);
+    logger.info(`Content updated: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error updating content:', error);
     res.status(500).json({ error: 'Failed to update content' });
   }
@@ -304,7 +304,7 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -321,16 +321,16 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
     if (!allowSubmitStates.includes(existingContent[0].status)) {
       return res.status(400).json({ 
         error: 'Cannot submit content in its current state. Content must be in draft or changes_requested state.' 
-});
+      });
     }
     
     // Update content status
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'review',
-        updatedAt: new: Date(),
+        updatedAt: new Date(),
         lastModifiedBy: userId
-})
+      })
       .where(eq(contentItems.id, contentId))
       .returning();
     
@@ -341,12 +341,12 @@ router.post('/submit/:id', requireAuth, async (req, res) => {
         userId: userId,
         action: 'submitted',
         comments: req.body.comments || 'Submitted for review',
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`Content submitted for, review: ${contentId} by user ${userId}`);
+    logger.info(`Content submitted for review: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error submitting content for review:', error);
     res.status(500).json({ error: 'Failed to submit content for review' });
   }
@@ -361,7 +361,7 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -372,21 +372,21 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
     if (existingContent[0].status !== 'review') {
       return res.status(400).json({ 
         error: 'Cannot approve content in its current state. Content must be in review state.' 
-});
+      });
     }
     
     // Check if should be published immediately or scheduled
-    const shouldPublishNow = !existingContent[0].scheduledPublishAt ;
-      || new: Date(existingContent[0].scheduledPublishAt) <= new: Date();
+    const shouldPublishNow = !existingContent[0].scheduledPublishAt 
+      || new Date(existingContent[0].scheduledPublishAt) <= new Date();
     
     // Update content status
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: shouldPublishNow ? 'published' : 'approved',
-        updatedAt: new: Date(),
+        updatedAt: new Date(),
         lastModifiedBy: userId,
         // If publishing now, set publishedAt
-        ...(shouldPublishNow && { publishedAt: new: Date() })
+        ...(shouldPublishNow && { publishedAt: new Date() })
       })
       .where(eq(contentItems.id, contentId))
       .returning();
@@ -398,12 +398,12 @@ router.post('/approve/:id', requireAuth, requireRole(['admin', 'super_admin']), 
         userId: userId,
         action: shouldPublishNow ? 'published' : 'approved',
         comments: req.body.comments || (shouldPublishNow ? 'Published immediately' : 'Approved for scheduled publishing'),
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
     logger.info(`Content ${shouldPublishNow ? 'published' : 'approved'}: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error approving content:', error);
     res.status(500).json({ error: 'Failed to approve content' });
   }
@@ -418,7 +418,7 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -429,16 +429,16 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
     if (existingContent[0].status !== 'review') {
       return res.status(400).json({ 
         error: 'Cannot reject content in its current state. Content must be in review state.' 
-});
+      });
     }
     
     // Update content status
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
-        status: 'draft', // Reset to draft when rejected,
-  updatedAt: new: Date(),
+        status: 'draft', // Reset to draft when rejected
+        updatedAt: new Date(),
         lastModifiedBy: userId
-})
+      })
       .where(eq(contentItems.id, contentId))
       .returning();
     
@@ -449,12 +449,12 @@ router.post('/reject/:id', requireAuth, requireRole(['admin', 'super_admin']), a
         userId: userId,
         action: 'rejected',
         comments: req.body.comments || 'Content rejected',
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`Content, rejected: ${contentId} by user ${userId}`);
+    logger.info(`Content rejected: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error rejecting content:', error);
     res.status(500).json({ error: 'Failed to reject content' });
   }
@@ -474,7 +474,7 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -485,16 +485,16 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
     if (existingContent[0].status !== 'review') {
       return res.status(400).json({ 
         error: 'Cannot request changes in its current state. Content must be in review state.' 
-});
+      });
     }
     
     // Update content status
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'changes_requested',
-        updatedAt: new: Date(),
+        updatedAt: new Date(),
         lastModifiedBy: userId
-})
+      })
       .where(eq(contentItems.id, contentId))
       .returning();
     
@@ -505,12 +505,12 @@ router.post('/request-changes/:id', requireAuth, requireRole(['admin', 'super_ad
         userId: userId,
         action: 'requested_changes',
         comments: req.body.comments,
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`Changes requested for, content: ${contentId} by user ${userId}`);
+    logger.info(`Changes requested for content: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error requesting changes:', error);
     res.status(500).json({ error: 'Failed to request changes' });
   }
@@ -526,7 +526,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
     // Get content item to check permissions
     const content = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!content.length) {
@@ -542,7 +542,7 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
     // This eliminates the risk of SQL injection by using the ORM's parameterized queries
     
     // First, get the workflow history entries
-    const workflowHistoryEntries = await db;
+    const workflowHistoryEntries = await db
       .select({
         id: contentWorkflowHistory.id,
         contentId: contentWorkflowHistory.contentId,
@@ -550,19 +550,19 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
         action: contentWorkflowHistory.action,
         comments: contentWorkflowHistory.comments,
         timestamp: contentWorkflowHistory.createdAt
-})
+      })
       .from(contentWorkflowHistory)
       .where(eq(contentWorkflowHistory.contentId, contentId))
       .orderBy(desc(contentWorkflowHistory.createdAt));
     
     // Then, for each entry, fetch the associated username
-    const result = await Promise.all(;
+    const result = await Promise.all(
       workflowHistoryEntries.map(async (entry) => {
         if (!entry.userId) {
           return { ...entry, username: null };
         }
         
-        const user = await db;
+        const user = await db
           .select({ username: users.username })
           .from(users)
           .where(eq(users.id, entry.userId))
@@ -571,13 +571,13 @@ router.get('/review-history/:id', requireAuth, async (req, res) => {
         return {
           ...entry,
           username: user[0]?.username || null
-};
+        };
       })
     );
     
     // Return the array of workflow history entries with usernames
     res.json(result);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting review history:', error);
     res.status(500).json({ error: 'Failed to get review history' });
   }
@@ -593,7 +593,7 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
     // Get existing content
     const existingContent = await db.select()
       .from(contentItems)
-      .where(eq(contentItems.id, contentId));
+      .where(eq(contentItems.id, contentId))
       .limit(1);
     
     if (!existingContent.length) {
@@ -606,14 +606,14 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
     }
     
     // Update content status
-    const: [updatedContent] = await db.update(contentItems)
+    const [updatedContent] = await db.update(contentItems)
       .set({
         status: 'archived',
-        updatedAt: new: Date(),
+        updatedAt: new Date(),
         lastModifiedBy: userId,
-        archivedAt: new: Date(),
+        archivedAt: new Date(),
         archiveReason: req.body.reason || 'Manually archived'
-})
+      })
       .where(eq(contentItems.id, contentId))
       .returning();
     
@@ -624,12 +624,12 @@ router.post('/archive/:id', requireAuth, async (req, res) => {
         userId: userId,
         action: 'archived',
         comments: req.body.reason || 'Content archived',
-        createdAt: new: Date()
-});
+        createdAt: new Date()
+      });
     
-    logger.info(`Content, archived: ${contentId} by user ${userId}`);
+    logger.info(`Content archived: ${contentId} by user ${userId}`);
     res.json(updatedContent);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error archiving content:', error);
     res.status(500).json({ error: 'Failed to archive content' });
   }
@@ -648,8 +648,8 @@ router.post('/scheduler/run', requireAuth, requireRole(['admin', 'super_admin'])
       success: true,
       message: 'Content scheduler executed successfully',
       metrics
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     logger.error('Error running content scheduler:', error);
     res.status(500).json({ error: 'Failed to run content scheduler' });
   }
@@ -660,7 +660,7 @@ router.get('/scheduler/metrics', requireAuth, requireRole(['admin', 'super_admin
   try {
     const metrics = getSchedulingMetrics();
     res.json(metrics);
-} catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting scheduler metrics:', error);
     res.status(500).json({ error: 'Failed to get scheduler metrics' });
   }
@@ -673,8 +673,8 @@ router.post('/scheduler/reset-metrics', requireAuth, requireRole(['admin', 'supe
     res.json({
       success: true,
       message: 'Scheduler metrics reset successfully'
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     logger.error('Error resetting scheduler metrics:', error);
     res.status(500).json({ error: 'Failed to reset scheduler metrics' });
   }
@@ -685,7 +685,7 @@ router.get('/upcoming', requireAuth, async (req, res) => {
   try {
     const scheduledContent = await getUpcomingScheduledContent();
     res.json(scheduledContent);
-} catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting upcoming scheduled content:', error);
     res.status(500).json({ error: 'Failed to get upcoming scheduled content' });
   }
@@ -696,7 +696,7 @@ router.get('/expiring', requireAuth, async (req, res) => {
   try {
     const expiringContent = await getExpiringContent();
     res.json(expiringContent);
-} catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting expiring content:', error);
     res.status(500).json({ error: 'Failed to get expiring content' });
   }
@@ -708,20 +708,20 @@ router.get('/analytics', requireAuth, requireRole(['admin', 'super_admin']), asy
     const startDateStr = req.query.start as string;
     const endDateStr = req.query.end as string;
     
-    // Use provided dates or default to last: 30 days
+    // Use provided dates or default to last 30 days
     let startDate, endDate;
     
     if (startDateStr && endDateStr) {
       startDate = startOfDay(parseISO(startDateStr));
       endDate = endOfDay(parseISO(endDateStr));
-} else {
-      endDate = endOfDay(new: Date());
+    } else {
+      endDate = endOfDay(new Date());
       startDate = startOfDay(subDays(endDate, 30));
-}
+    }
     
     const analytics = await getAllContentAnalytics();
     res.json(analytics);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting content analytics:', error);
     res.status(500).json({ error: 'Failed to get content analytics' });
   }

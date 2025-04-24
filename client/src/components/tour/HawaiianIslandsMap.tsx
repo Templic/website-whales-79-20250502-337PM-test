@@ -170,7 +170,7 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          style={{  transition: isDragging ? 'none' : 'viewBox 0.7s ease'  }}
+          style={{ transition: isDragging ? 'none' : 'viewBox 0.7s ease' }}
         >
           {/* Map outline */}
           <g fill="#2A5F7B" stroke="#3A7091" strokeWidth="0.5">
@@ -199,12 +199,12 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
           {/* Island name labels (visible only in all view) */}
           {zoomLevel === 'all' && (
             <>
-              <text x={12} y={18} fontSize={2.5} fill="#fff" textAnchor="middle">Kauai</text>
-              <text x={35} y={33} fontSize={2.5} fill="#fff" textAnchor="middle">Oahu</text>
-              <text x={48} y={25} fontSize={2.5} fill="#fff" textAnchor="middle">Molokai</text>
-              <text x={48} y={33} fontSize={2.5} fill="#fff" textAnchor="middle">Lanai</text>
-              <text x={60} y={30} fontSize={2.5} fill="#fff" textAnchor="middle">Maui</text>
-              <text x={76} y={42} fontSize={2.5} fill="#fff" textAnchor="middle">Hawaii</text>
+              <text x="12" y="18" fontSize="2.5" fill="#fff" textAnchor="middle">Kauai</text>
+              <text x="35" y="33" fontSize="2.5" fill="#fff" textAnchor="middle">Oahu</text>
+              <text x="48" y="25" fontSize="2.5" fill="#fff" textAnchor="middle">Molokai</text>
+              <text x="48" y="33" fontSize="2.5" fill="#fff" textAnchor="middle">Lanai</text>
+              <text x="60" y="30" fontSize="2.5" fill="#fff" textAnchor="middle">Maui</text>
+              <text x="76" y="42" fontSize="2.5" fill="#fff" textAnchor="middle">Hawaii</text>
             </>
           )}
           
@@ -217,7 +217,7 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
               transform={`translate(${event.coordinates.x}, ${event.coordinates.y})`}
             >
               {/* Pulsing circle effect */}
-              <circle r="2" fill={event.color} opacity={0.2} className="animate-ping">
+              <circle r="2" fill={event.color} opacity="0.2" className="animate-ping">
                 <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" />
               </circle>
               
@@ -226,9 +226,9 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
               
               {/* Location name */}
               <text 
-                x={0} 
-                y={4} 
-                fontSize={2} 
+                x="0" 
+                y="4" 
+                fontSize="2" 
                 fill="#fff" 
                 textAnchor="middle" 
                 className="pointer-events-none"
@@ -292,7 +292,7 @@ const HawaiianIslandsMap: React.FC<HawaiianIslandsMapProps> = ({ className }) =>
             ✕
           </button>
           
-          <h3 className="text-base sm:text-lg font-bold mb-2" style={{  color: selectedEvent.color  }}>
+          <h3 className="text-base sm:text-lg font-bold mb-2" style={{ color: selectedEvent.color }}>
             {selectedEvent.name}
           </h3>
           

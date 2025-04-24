@@ -32,7 +32,7 @@ export default function StripeConfigDialog() {
       
       setMessage('Stripe configuration updated successfully');
       (e.target as HTMLFormElement).reset();
-    } catch (err: unknown) {
+    } catch (err) {
       setError('Failed to update Stripe configuration. Please try again.');
     }
   };

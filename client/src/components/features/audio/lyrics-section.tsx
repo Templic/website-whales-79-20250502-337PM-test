@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * lyrics-section.tsx
  * 

@@ -231,7 +231,7 @@ class PaymentSecurityService {
         log(`WARNING: ${criticalIssues} critical PCI compliance issues found!`, 'security');
         // In a real application, we would send alerts here
       }
-    } catch (error: unknown) {
+    } catch (error) {
       log(`Error running PCI compliance scan: ${error}`, 'error');
     }
   }
@@ -239,7 +239,7 @@ class PaymentSecurityService {
   /**
    * Set up automated compliance scanning schedule
    * 
-   * @param intervalHours Hours between scans (default 24)
+   * @param intervalHours Hours between scans (default: 24)
    */
   public scheduleComplianceScans(intervalHours = 24): void {
     const intervalMs = intervalHours * 60 * 60 * 1000;
@@ -277,7 +277,7 @@ class PaymentSecurityService {
     }
     
     // Log to console
-    log(`Payment security event: [${severity}]: ${eventType}`, 'security');
+    log(`Payment security event [${severity}]: ${eventType}`, 'security');
     
     // For critical events, we would send alerts in a real system
     if (severity === 'critical') {
@@ -290,7 +290,7 @@ class PaymentSecurityService {
       eventType === 'payment_success' || 
       eventType === 'payment_failure'
     ) {
-      const transactionType = eventType === 'payment_success' ? 'captured' :
+      const transactionType = eventType === 'payment_success' ? 'captured' : 
         eventType === 'payment_failure' ? 'failed' : 'intent_created';
       
       paymentTransactionLogger.logTransaction({
@@ -394,7 +394,7 @@ export async function runPaymentSecurityScan(): Promise<PaymentSecurityScanResul
     log(`Payment security scan completed. Found ${results.length} checks.`, 'security');
     
     return results;
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error in payment security scan: ${error}`, 'error');
     
     // Return error result

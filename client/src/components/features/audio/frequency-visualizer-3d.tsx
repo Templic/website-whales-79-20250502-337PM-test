@@ -1,10 +1,4 @@
-import * as THREE from "three";
-import React from "react";
-
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { RefreshCw, Upload, Mic, Settings, ChevronDown } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -30,25 +24,17 @@ import { useRef, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-// Removed duplicate lucide-react import
-// Removed duplicate THREE import
-// Removed duplicate TextGeometry import
-// Removed duplicate FontLoader import
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCw, Disc, Zap, Wand2 } from "lucide-react"
+import * as THREE from "three"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 import { cn } from "@/lib/utils"
 
 interface FrequencyVisualizer3DProps {
-  audioUrl?: string;
-  height?: number;
-  width?: number;
-  className?: string;
-  visualizationType?: 'bars' | 'wave' | 'particles' | 'terrain' | 'sphere';
-  colorScheme?: string;
-  showControls?: boolean;
-  autoPlay?: boolean;
-  useMicrophone?: boolean;
-  sensitivity?: number;
-  customSettings?: Record<string, any>;
+  audioSrc?: string
+  title?: string
+  frequency?: number
+  chakra?: string
+  chakraColor?: string
 }
 
 export function FrequencyVisualizer3D({
@@ -839,7 +825,7 @@ function FrequencyVisualizer3DOriginal({
           });
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error initializing audio:", error);
     }
 
@@ -991,7 +977,7 @@ function FrequencyVisualizer3DOriginal({
       audioSource.connect(analyserRef.current);
       sourceRef.current = audioSource;
 
-    } catch (err: unknown) {
+    } catch (err) {
       console.warn('Audio source already connected, using existing connection');
     }
   };
@@ -1017,7 +1003,7 @@ function FrequencyVisualizer3DOriginal({
 
       sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
       sourceRef.current.connect(analyserRef.current);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error accessing microphone:", error);
       setIsUsingMic(false);
     }
@@ -2347,7 +2333,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
           });
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error initializing audio:", error);
     }
 
@@ -2499,7 +2485,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
       audioSource.connect(analyserRef.current);
       sourceRef.current = audioSource;
 
-    } catch (err: unknown) {
+    } catch (err) {
       console.warn('Audio source already connected, using existing connection');
     }
   };
@@ -2525,7 +2511,7 @@ function FrequencyVisualizer3DFeaturesOriginal({
 
       sourceRef.current = audioContextRef.current.createMediaStreamSource(stream);
       sourceRef.current.connect(analyserRef.current);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error accessing microphone:", error);
       setIsUsingMic(false);
     }

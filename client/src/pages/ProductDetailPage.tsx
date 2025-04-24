@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";

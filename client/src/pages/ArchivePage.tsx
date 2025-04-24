@@ -1,4 +1,3 @@
-import React from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { AlbumShowcase } from "@/components/music/AlbumShowcase";
 import { DynamicPlaylists, RecommendedPlaylists } from "@/components/music/DynamicPlaylists";

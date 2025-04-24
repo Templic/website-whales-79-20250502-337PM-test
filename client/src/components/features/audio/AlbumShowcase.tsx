@@ -5,8 +5,6 @@
  * Migrated from: imported components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 import { useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"

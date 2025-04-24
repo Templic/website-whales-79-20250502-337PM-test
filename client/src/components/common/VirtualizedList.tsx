@@ -612,7 +612,7 @@ function VirtualizedList<T>({
       }
     : { 
         width: totalSize, 
-        height: 100, 
+        height: '100%', 
         position: 'relative',
         pointerEvents: state.isScrolling ? 'none' : 'auto',
       };
@@ -625,8 +625,8 @@ function VirtualizedList<T>({
         className={`virtualized-list ${className}`}
         style={outerStyle}
       >
-        <InnerElementType ref={innerRef} style={{  height: estimatedItemHeight * items.length  }}>
-          <div style={{  padding: '4px', textAlign: 'center'  }}>Loading...</div>
+        <InnerElementType ref={innerRef} style={{ height: estimatedItemHeight * items.length }}>
+          <div style={{ padding: '4px', textAlign: 'center' }}>Loading...</div>
         </InnerElementType>
       </OuterElementType>
     );

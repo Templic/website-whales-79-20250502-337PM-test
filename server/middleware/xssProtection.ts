@@ -12,7 +12,7 @@ import { securityFabric, SecurityEventCategory, SecurityEventSeverity } from '..
 import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
 
 // Initialize DOMPurify with JSDOM
-const window = new: JSDOM('').window;
+const window = new JSDOM('').window;
 const purify = DOMPurify(window);
 
 // Default purify config (stricter than default)
@@ -38,17 +38,18 @@ const DEFAULT_PURIFY_CONFIG = {
 // Add additional hooks to DOMPurify
 purify.addHook('beforeSanitizeElements', (node) => {
   if (node.textContent && node.textContent.match(/javascript|eval|Function|document\.cookie|alert|confirm|prompt/i)) {
-    // Log potential XSS attack: logXssAttempt({
-      type 'suspicious_content',
+    // Log potential XSS attack
+    logXssAttempt({
+      type: 'suspicious_content',
       content: node.textContent.substring(0, 50),
       node_name: node.nodeName
-});
+    });
   }
   return node;
 });
 
 // Configure specific sanitization profiles
-export enum SanitizationProfile: {
+export enum SanitizationProfile {
   STRICT = 'strict',
   BASIC = 'basic',
   BLOG = 'blog',
@@ -56,13 +57,13 @@ export enum SanitizationProfile: {
   EMAIL = 'email'
 }
 
-// Purify configs for different profiles;
+// Purify configs for different profiles
 const PURIFY_CONFIGS = {
   [SanitizationProfile.STRICT]: {
     ...DEFAULT_PURIFY_CONFIG,
     ALLOWED_TAGS: ['a', 'b', 'br', 'div', 'em', 'i', 'p', 'span', 'strong'],
     ALLOWED_ATTR: ['class', 'href', 'id', 'target']
-},
+  },
   [SanitizationProfile.BASIC]: DEFAULT_PURIFY_CONFIG,
   [SanitizationProfile.BLOG]: {
     ...DEFAULT_PURIFY_CONFIG,
@@ -74,12 +75,12 @@ const PURIFY_CONFIGS = {
       ...DEFAULT_PURIFY_CONFIG.ALLOWED_ATTR,
       'alt', 'title'
     ]
-},
+  },
   [SanitizationProfile.COMMENT]: {
     ...DEFAULT_PURIFY_CONFIG,
     ALLOWED_TAGS: ['a', 'b', 'br', 'em', 'i', 'p', 'strong'],
     ALLOWED_ATTR: ['href', 'target']
-},
+  },
   [SanitizationProfile.EMAIL]: {
     ...DEFAULT_PURIFY_CONFIG,
     ALLOWED_TAGS: [
@@ -90,14 +91,14 @@ const PURIFY_CONFIGS = {
       ...DEFAULT_PURIFY_CONFIG.ALLOWED_ATTR,
       'alt', 'title'
     ]
-}
+  }
 };
 
 // Function to sanitize HTML content
-export function sanitizeHtml(html: string, profile: SanitizationProfile = SanitizationProfile.BASIC): string: {
+export function sanitizeHtml(html: string, profile: SanitizationProfile = SanitizationProfile.BASIC): string {
   if (!html) {
     return '';
-}
+  }
   
   // Get profile-specific config
   const config = PURIFY_CONFIGS[profile] || DEFAULT_PURIFY_CONFIG;
@@ -108,11 +109,12 @@ export function sanitizeHtml(html: string, profile: SanitizationProfile = Saniti
     html.match(/<script|<img|<iframe|<object|<embed|<form|<input|<button/i) ||
     html.match(/onerror|onload|onclick|onmouseover|onunload/i)
   ) {
-    // Log potential XSS attack: logXssAttempt({
-      type 'pattern_match',
+    // Log potential XSS attack
+    logXssAttempt({
+      type: 'pattern_match',
       content: html.substring(0, 100),
       profile
-});
+    });
   }
   
   // Sanitize and return
@@ -135,8 +137,8 @@ export function xssProtectionMiddleware(options: {
     sanitizeQuery = true,
     profile = SanitizationProfile.BASIC,
     securityHeaders = true,
-    excludePaths = [];
-} = options;
+    excludePaths = []
+  } = options;
   
   // Return middleware function
   return (req: Request, res: Response, next: NextFunction) => {
@@ -144,32 +146,32 @@ export function xssProtectionMiddleware(options: {
       // Check if path is excluded
       if (excludePaths.some(path => req.path.startsWith(path))) {
         return next();
-}
+      }
       
       // Add security headers
-      if (securityHeaders) => {
+      if (securityHeaders) {
         res.setHeader('X-XSS-Protection', '1; mode=block');
-        res.setHeader('Content-Security-Policy', "default-src: 'self'; script-src: 'self'; object-src: 'none'");
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; object-src 'none'");
         res.setHeader('X-Content-Type-Options', 'nosniff');
-}
+      }
       
       // Sanitize request body
       if (sanitizeBody && req.body) {
         sanitizeObject(req.body, profile);
-}
+      }
       
       // Sanitize URL parameters
       if (sanitizeParams && req.params) {
         sanitizeObject(req.params, profile);
-}
+      }
       
       // Sanitize query parameters
       if (sanitizeQuery && req.query) {
         sanitizeObject(req.query, profile);
-}
+      }
       
       next();
-    } catch (error: unknown) {
+    } catch (error) {
       // Log error
       console.error('[XSS-PROTECTION] Error in XSS protection middleware:', error);
       
@@ -183,19 +185,20 @@ export function xssProtectionMiddleware(options: {
           stack: (error as Error).stack,
           path: req.path,
           method: req.method
-}
+        }
       });
       
-      // Continue despite error: next();
+      // Continue despite error
+      next();
     }
   };
 }
 
 // Function to sanitize object (recursively)
-function sanitizeObject(obj, profile: SanitizationProfile): void: {
+function sanitizeObject(obj, profile: SanitizationProfile): void {
   if (!obj || typeof obj !== 'object') {
     return;
-}
+  }
   
   for (const key in obj) {
     if (typeof obj[key] === 'string') {
@@ -205,20 +208,20 @@ function sanitizeObject(obj, profile: SanitizationProfile): void: {
       // Log if content was modified
       if (original !== obj[key]) {
         logXssAttempt({
-          type 'sanitized_field',
+          type: 'sanitized_field',
           field: key,
           original: original.substring(0, 50),
           sanitized: obj[key].substring(0, 50)
-});
+        });
       }
     } else if (typeof obj[key] === 'object' && obj[key] !== null) {
       sanitizeObject(obj[key], profile);
-}
+    }
   }
 }
 
 // Function to log XSS attempt
-function logXssAttempt(data: any): void: {
+function logXssAttempt(data): void {
   // Log to console
   console.warn('[XSS-PROTECTION] Potential XSS attempt detected:', data);
   
@@ -239,12 +242,12 @@ function logXssAttempt(data: any): void: {
       timestamp: Date.now(),
       metadata: {
         ...data,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[XSS-PROTECTION] Error logging to blockchain:', error);
-}
+  }
 }
 
 // Export default middleware with basic configuration

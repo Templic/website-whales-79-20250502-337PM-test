@@ -1,4 +1,3 @@
-import React from "react";
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -100,10 +99,10 @@ export function CosmicPortal({
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
       onClick={activatePortal}
-      style={{ 
+      style={{
         clipPath: "polygon(0% 0%, 100% 0%, 95% 95%, 0% 100%)",
         borderRadius: "0.75rem",
-       }}
+      }}
     >
       {/* Portal background with glow effect */}
       <div
@@ -146,13 +145,13 @@ export function CosmicPortal({
           <svg
             viewBox="0 0 100 100"
             className="w-3/4 h-3/4 text-white"
-            style={{ 
+            style={{
               filter: "drop-shadow(0 0 8px rgba(255,255,255,0.5))",
-             }}
+            }}
           >
-            <circle cx={50} cy={50} r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path d="M50,5 L95,50 L50,95 L5,50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path
               d="M26.8,26.8 L73.2,26.8 L73.2,73.2 L26.8,73.2 Z"
@@ -171,9 +170,9 @@ export function CosmicPortal({
               fill="none"
               stroke="currentColor"
               strokeWidth="0.5"
-              opacity={0.7}
+              opacity="0.7"
             />
-            <circle cx={50} cy={50} r="5" fill="currentColor" opacity={0.7} />
+            <circle cx="50" cy="50" r="5" fill="currentColor" opacity="0.7" />
           </svg>
         </div>
       </div>
@@ -289,10 +288,10 @@ function CosmicPortalOriginal({
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
       onClick={activatePortal}
-      style={{ 
+      style={{
         clipPath: "polygon(0% 0%, 100% 0%, 95% 95%, 0% 100%)",
         borderRadius: "0.75rem",
-       }}
+      }}
     >
       {/* Portal background with glow effect */}
       <div
@@ -336,13 +335,13 @@ function CosmicPortalOriginal({
           <svg
             viewBox="0 0 100 100"
             className="w-3/4 h-3/4 text-white"
-            style={{ 
+            style={{
               filter: "drop-shadow(0 0 8px rgba(255,255,255,0.5))",
-             }}
+            }}
           >
-            <circle cx={50} cy={50} r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path d="M50,5 L95,50 L50,95 L5,50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path
               d="M26.8,26.8 L73.2,26.8 L73.2,73.2 L26.8,73.2 Z"
@@ -361,9 +360,9 @@ function CosmicPortalOriginal({
               fill="none"
               stroke="currentColor"
               strokeWidth="0.5"
-              opacity={0.7}
+              opacity="0.7"
             />
-            <circle cx={50} cy={50} r="5" fill="currentColor" opacity={0.7} />
+            <circle cx="50" cy="50" r="5" fill="currentColor" opacity="0.7" />
           </svg>
         </div>
       </div>
@@ -481,10 +480,10 @@ function CosmicPortalOriginal({
       onMouseLeave={() => setIsHovering(false)}
       onMouseMove={handleMouseMove}
       onClick={activatePortal}
-      style={{ 
+      style={{
         clipPath: "polygon(0% 0%, 100% 0%, 95% 95%, 0% 100%)",
         borderRadius: "0.75rem",
-       }}
+      }}
     >
       {/* Portal background with glow effect */}
       <div
@@ -528,13 +527,13 @@ function CosmicPortalOriginal({
           <svg
             viewBox="0 0 100 100"
             className="w-3/4 h-3/4 text-white"
-            style={{ 
+            style={{
               filter: "drop-shadow(0 0 8px rgba(255,255,255,0.5))",
-             }}
+            }}
           >
-            <circle cx={50} cy={50} r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            <circle cx={50} cy={50} r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="15" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path d="M50,5 L95,50 L50,95 L5,50 Z" fill="none" stroke="currentColor" strokeWidth="0.5" />
             <path
               d="M26.8,26.8 L73.2,26.8 L73.2,73.2 L26.8,73.2 Z"
@@ -553,9 +552,9 @@ function CosmicPortalOriginal({
               fill="none"
               stroke="currentColor"
               strokeWidth="0.5"
-              opacity={0.7}
+              opacity="0.7"
             />
-            <circle cx={50} cy={50} r="5" fill="currentColor" opacity={0.7} />
+            <circle cx="50" cy="50" r="5" fill="currentColor" opacity="0.7" />
           </svg>
         </div>
       </div>

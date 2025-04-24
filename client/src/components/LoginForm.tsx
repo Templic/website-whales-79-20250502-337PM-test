@@ -12,7 +12,7 @@ export const LoginForm: React.FC = () => {
       const tokens = await authHelper.login(username, password);
       authHelper.setTokens(tokens);
       // Redirect or update UI state
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Login failed:', error);
     }
   };

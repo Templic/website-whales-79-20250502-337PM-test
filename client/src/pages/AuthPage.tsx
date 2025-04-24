@@ -3,8 +3,6 @@
  * 
  * Authentication page for login, registration, and two-factor authentication.
  */
-import React from "react";
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
@@ -103,7 +101,7 @@ export default function AuthPage() {
         // Direct login endpoint is at /api/login (not /api/auth/login)
         const result = await apiRequest('POST', '/api/login', data);
         return result;
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Login failed:', error);
         throw error;
       }
@@ -153,7 +151,7 @@ export default function AuthPage() {
         window.location.href = '/';
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       // Handle login error
       console.error('Login failed:', error);
       
@@ -198,7 +196,7 @@ export default function AuthPage() {
     setPasswordStrength(calculatePasswordStrength(password));
   };
 
-  const handle2FASuccess = (userData) => {
+  const handle2FASuccess = (userData: any) => {
     // The user is now fully authenticated
     console.log("2FA verification successful", userData);
     
@@ -350,7 +348,7 @@ export default function AuthPage() {
                 
                 // Reset the form
                 registerForm.reset();
-              } catch (error: unknown) {
+              } catch (error) {
                 console.error('Registration failed:', error);
                 alert('Registration failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
               }

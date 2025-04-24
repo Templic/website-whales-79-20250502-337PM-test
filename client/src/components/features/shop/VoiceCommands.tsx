@@ -4,8 +4,6 @@
  * Component Type: feature
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useState, useEffect, useCallback } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -172,7 +170,7 @@ function VoiceCommandsOriginal({
       });
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       console.log(`Voice command detected: ${transcript}`);
       processVoiceCommand(transcript);
@@ -182,7 +180,7 @@ function VoiceCommandsOriginal({
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
       toast({
@@ -363,7 +361,7 @@ export default function VoiceCommands({
       });
     };
 
-    recognition.onresult = (event) => {
+    recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       console.log(`Voice command detected: ${transcript}`);
       processVoiceCommand(transcript);
@@ -373,7 +371,7 @@ export default function VoiceCommands({
       setIsListening(false);
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: any) => {
       console.error('Speech recognition error', event.error);
       setIsListening(false);
       toast({

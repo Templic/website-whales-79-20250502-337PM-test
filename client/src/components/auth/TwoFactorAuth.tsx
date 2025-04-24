@@ -4,8 +4,6 @@
  * Component for handling two-factor authentication verification.
  * This is displayed when a user logs in and two-factor authentication is required.
  */
-import React from "react";
-
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -43,7 +41,7 @@ type TwoFactorForm = z.infer<typeof twoFactorSchema>;
 type BackupCodeForm = z.infer<typeof backupCodeSchema>;
 
 interface TwoFactorAuthProps {
-  onSuccess?: (userData) => void;
+  onSuccess?: (userData: any) => void;
   onCancel?: () => void;
 }
 
@@ -69,7 +67,7 @@ export function TwoFactorAuth({ onSuccess, onCancel }: TwoFactorAuthProps) {
     try {
       const userData = await verify2FAMutation.mutateAsync(data);
       if (onSuccess) onSuccess(userData);
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };
@@ -78,7 +76,7 @@ export function TwoFactorAuth({ onSuccess, onCancel }: TwoFactorAuthProps) {
     try {
       const userData = await verifyBackupCodeMutation.mutateAsync(data);
       if (onSuccess) onSuccess(userData);
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };

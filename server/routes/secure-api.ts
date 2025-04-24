@@ -28,8 +28,8 @@ router.get('/status', async (req: Request, res: Response) => {
       metadata: {
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return security status
@@ -38,21 +38,21 @@ router.get('/status', async (req: Request, res: Response) => {
       version: '2.0.0',
       quantumProtectionEnabled: true,
       blockchainLoggingEnabled: true,
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       components: {
         quantumResistantCrypto: 'active',
         blockchainLogging: 'active',
         anomalyDetection: 'active',
         inputValidation: 'active',
         apiSecurity: 'active'
-}
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in security status endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve security status'
-});
+    });
   }
 });
 
@@ -74,11 +74,11 @@ router.get('/info', async (req: Request, res: Response) => {
         'Security fabric for inter-component communication'
       ],
       quantumAlgorithms: [
-        { name: 'Kyber', type 'Key Exchange' },
-        { name: 'Dilithium', type 'Digital Signature' },
-        { name: 'SPHINCS+', type 'Digital Signature' },
-        { name: 'NewHope', type 'Key Exchange' },
-        { name: 'FrodoKEM', type 'Key Exchange' }
+        { name: 'Kyber', type: 'Key Exchange' },
+        { name: 'Dilithium', type: 'Digital Signature' },
+        { name: 'SPHINCS+', type: 'Digital Signature' },
+        { name: 'NewHope', type: 'Key Exchange' },
+        { name: 'FrodoKEM', type: 'Key Exchange' }
       ],
       blockchainFeatures: [
         'Immutable event storage',
@@ -87,12 +87,12 @@ router.get('/info', async (req: Request, res: Response) => {
         'Tamper-evident logging'
       ]
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in security info endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to retrieve security information'
-});
+    });
   }
 });
 
@@ -108,7 +108,7 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
     const keyPair = await qrc.generateKeyPair({
       algorithm,
       strength
-});
+    });
     
     // Log key generation to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -121,21 +121,21 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
         strength,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return key pair
     res.json({
       publicKey: keyPair.publicKey,
       privateKey: keyPair.privateKey
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error generating quantum-resistant key pair:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to generate quantum-resistant key pair'
-});
+    });
   }
 });
 
@@ -151,14 +151,14 @@ router.post('/encrypt', async (req: Request, res: Response) => {
     if (!data || !publicKey) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Missing required, parameters: data and publicKey'
-});
+        message: 'Missing required parameters: data and publicKey'
+      });
     }
     
     // Encrypt data
     const encrypted = await qrc.encrypt(data, publicKey, {
       algorithm
-});
+    });
     
     // Log encryption to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -170,22 +170,22 @@ router.post('/encrypt', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data = == 'string' ? data.length : JSON.stringify(data).length,
-        timestamp: new: Date().toISOString()
-};
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return encrypted data
     res.json({
       encrypted,
       algorithm
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error encrypting data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt data'
-});
+    });
   }
 });
 
@@ -201,14 +201,14 @@ router.post('/decrypt', async (req: Request, res: Response) => {
     if (!encrypted || !privateKey) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Missing required, parameters: encrypted and privateKey'
-});
+        message: 'Missing required parameters: encrypted and privateKey'
+      });
     }
     
     // Decrypt data
     const decrypted = await qrc.decrypt(encrypted, privateKey, {
       algorithm
-});
+    });
     
     // Log decryption to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -220,21 +220,21 @@ router.post('/decrypt', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return decrypted data
     res.json({
       decrypted,
       algorithm
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error decrypting data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt data'
-});
+    });
   }
 });
 
@@ -250,14 +250,14 @@ router.post('/sign', async (req: Request, res: Response) => {
     if (!data || !privateKey) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Missing required, parameters: data and privateKey'
-});
+        message: 'Missing required parameters: data and privateKey'
+      });
     }
     
     // Sign data
     const signature = await qrc.sign(data, privateKey, {
       algorithm
-});
+    });
     
     // Log signing to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -269,22 +269,22 @@ router.post('/sign', async (req: Request, res: Response) => {
         algorithm,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data = == 'string' ? data.length : JSON.stringify(data).length,
-        timestamp: new: Date().toISOString()
-};
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return signature
     res.json({
       signature,
       algorithm
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error signing data:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to sign data'
-});
+    });
   }
 });
 
@@ -301,13 +301,13 @@ router.post('/verify', async (req: Request, res: Response) => {
       return res.status(400).json({
         error: 'Bad Request',
         message: 'Missing required parameters: data, signature, and publicKey'
-});
+      });
     }
     
     // Verify signature
     const result = await qrc.verify(data, signature, publicKey, {
       algorithm
-});
+    });
     
     // Log verification to blockchain
     await securityBlockchain.addSecurityEvent({
@@ -321,9 +321,9 @@ router.post('/verify', async (req: Request, res: Response) => {
         reason: result.reason,
         user: req.user?.id || 'anonymous',
         ip: req.ip || req.connection.remoteAddress,
-        dataSize: typeof data = == 'string' ? data.length : JSON.stringify(data).length,
-        timestamp: new: Date().toISOString()
-};
+        dataSize: typeof data === 'string' ? data.length : JSON.stringify(data).length,
+        timestamp: new Date().toISOString()
+      }
     });
     
     // Return verification result
@@ -331,13 +331,13 @@ router.post('/verify', async (req: Request, res: Response) => {
       valid: result.valid,
       reason: result.reason,
       algorithm
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error verifying signature:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to verify signature'
-});
+    });
   }
 });
 

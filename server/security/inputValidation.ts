@@ -20,7 +20,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from './advanced/blockch
 /**
  * Input validation options
  */
-export interface InputValidationOptions: {
+export interface InputValidationOptions {
   /**
    * Whether to perform thorough validation
    */
@@ -50,7 +50,7 @@ export interface InputValidationOptions: {
 /**
  * Validation error
  */
-interface ValidationError: {
+interface ValidationError {
   /**
    * Field path
    */
@@ -70,7 +70,7 @@ interface ValidationError: {
 /**
  * Validation result
  */
-interface ValidationResult: {
+interface ValidationResult {
   /**
    * Whether the validation passed
    */
@@ -91,40 +91,40 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     maxDepth = 10,
     maxArrayLength = 1000,
     maxStringLength = 100000,
-    sanitize = true;
-} = options;
+    sanitize = true
+  } = options;
   
   /**
    * Validate request parameters
    */
-  function validateParameters(req: Request): ValidationResult: {
+  function validateParameters(req: Request): ValidationResult {
     // Initialize the validation result
     const result: ValidationResult = {
       valid: true,
       errors: []
-};
+    };
     
     try {
       // Validate query parameters
       if (req.query) {
         validateObject('query', req.query, 0, result);
-}
+      }
       
       // Validate URL parameters
       if (req.params) {
         validateObject('params', req.params, 0, result);
-}
+      }
       
       // Validate body
       if (req.body) {
         validateObject('body', req.body, 0, result);
-}
+      }
       
       // Set valid flag to false if there are errors
       if (result.errors.length > 0) {
         result.valid = false;
-}
-    } catch (error: unknown) {
+      }
+    } catch (error) {
       // Add unexpected error
       result.valid = false;
       result.errors.push({
@@ -144,7 +144,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           stack: error instanceof Error ? error.stack : undefined,
           path: req.path,
           method: req.method
-}
+        }
       }).catch(console.error);
     }
     
@@ -154,7 +154,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   /**
    * Validate an object recursively
    */
-  function validateObject(path: string, obj, depth: number, result: ValidationResult): void: {
+  function validateObject(path: string, obj, depth: number, result: ValidationResult): void {
     // Check for maximum depth
     if (depth > maxDepth) {
       result.errors.push({
@@ -169,7 +169,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
     if (obj === null || typeof obj !== 'object') {
       validateValue(path, obj, result);
       return;
-}
+    }
     
     // Check if it's an array
     if (Array.isArray(obj)) {
@@ -202,7 +202,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   /**
    * Validate a primitive value
    */
-  function validateValue(path: string, value, result: ValidationResult): void: {
+  function validateValue(path: string, value, result: ValidationResult): void {
     // Check string length
     if (typeof value === 'string' && value.length > maxStringLength) {
       result.errors.push({
@@ -220,7 +220,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           path,
           message: 'Potential SQL injection detected',
           severity: 'error'
-});
+        });
       }
       
       // Check for XSS patterns
@@ -229,7 +229,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           path,
           message: 'Potential XSS attack detected',
           severity: 'error'
-});
+        });
       }
       
       // Check for path traversal
@@ -238,7 +238,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           path,
           message: 'Potential path traversal attack detected',
           severity: 'error'
-});
+        });
       }
       
       // Check for command injection
@@ -247,18 +247,18 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           path,
           message: 'Potential code injection attack detected',
           severity: 'error'
-});
+        });
       }
       
       // Additional checks for thorough validation
-      if (thorough) => {
+      if (thorough) {
         // Check for SSRF patterns
         if (/^(https?|ftp|file|data|javascript):/i.test(value)) {
           result.errors.push({
             path,
             message: 'Potential SSRF attack detected',
             severity: 'warning'
-});
+          });
         }
         
         // Check for LDAP injection
@@ -267,7 +267,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
             path,
             message: 'Potential LDAP injection detected',
             severity: 'warning'
-});
+          });
         }
         
         // Check for template injection
@@ -276,7 +276,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
             path,
             message: 'Potential template injection detected',
             severity: 'warning'
-});
+          });
         }
       }
     }
@@ -285,39 +285,39 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   /**
    * Sanitize a request object in-place
    */
-  function sanitizeRequest(req: Request): void: {
+  function sanitizeRequest(req: Request): void {
     // Sanitize query parameters
     if (req.query) {
       sanitizeObject(req.query);
-}
+    }
     
     // Sanitize URL parameters
     if (req.params) {
       sanitizeObject(req.params);
-}
+    }
     
     // Sanitize body
     if (req.body) {
       sanitizeObject(req.body);
-}
+    }
   }
   
   /**
    * Sanitize an object in-place
    */
-  function sanitizeObject(obj: void: {
+  function sanitizeObject(obj): void {
     if (obj === null || typeof obj !== 'object') {
       return;
-}
+    }
     
     // Handle arrays
     if (Array.isArray(obj)) {
       for (let i = 0; i < obj.length; i++) {
         if (typeof obj[i] === 'string') {
           obj[i] = sanitizeString(obj[i]);
-} else if (typeof obj[i] === 'object' && obj[i] !== null) {
+        } else if (typeof obj[i] === 'object' && obj[i] !== null) {
           sanitizeObject(obj[i]);
-}
+        }
       }
       return;
     }
@@ -327,9 +327,9 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         if (typeof obj[key] === 'string') {
           obj[key] = sanitizeString(obj[key]);
-} else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        } else if (typeof obj[key] === 'object' && obj[key] !== null) {
           sanitizeObject(obj[key]);
-}
+        }
       }
     }
   }
@@ -337,7 +337,7 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
   /**
    * Sanitize a string
    */
-  function sanitizeString(str: string): string: {
+  function sanitizeString(str: string): string {
     // HTML encoding - replace potentially dangerous characters
     return str
       .replace(/&/g, '&amp;')
@@ -346,15 +346,15 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#x27;')
       .replace(/\//g, '&#x2F;');
-}
+  }
   
   // Return the middleware function
-  return function inputValidationMiddleware(req: Request, res: Response, next: NextFunction): void: {
+  return function inputValidationMiddleware(req: Request, res: Response, next: NextFunction): void {
     try {
       // Sanitize request if enabled
-      if (sanitize) => {
+      if (sanitize) {
         sanitizeRequest(req);
-}
+      }
       
       // Validate request parameters
       const validationResult = validateParameters(req);
@@ -372,10 +372,10 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
             method: req.method,
             errors: validationResult.errors,
             ip: req.ip || req.connection.remoteAddress
-}
+          }
         }).catch(console.error);
         
-        // Only return errors with severity: 'error'
+        // Only return errors with severity 'error'
         const criticalErrors = validationResult.errors.filter(error => error.severity === 'error');
         
         // If there are critical errors, reject the request
@@ -386,13 +386,14 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
             details: criticalErrors.map(error => ({
               path: error.path,
               message: error.message
-}))
+            }))
           });
         }
       }
       
-      // Continue to next middleware: next();
-    } catch (error: unknown) {
+      // Continue to next middleware
+      next();
+    } catch (error) {
       // Log error to blockchain
       securityBlockchain.addSecurityEvent({
         category: SecurityEventCategory.API,
@@ -404,10 +405,11 @@ export function createInputValidationMiddleware(options: InputValidationOptions 
           stack: error instanceof Error ? error.stack : undefined,
           path: req.path,
           method: req.method
-}
+        }
       }).catch(console.error);
       
-      // Continue to next middleware to avoid breaking the request pipeline: next();
+      // Continue to next middleware to avoid breaking the request pipeline
+      next();
     }
   };
 }

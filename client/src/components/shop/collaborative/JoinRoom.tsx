@@ -1,4 +1,3 @@
-import React from "react";
 import { useState } from 'react';
 import { Room, RoomJoinHandler } from './types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

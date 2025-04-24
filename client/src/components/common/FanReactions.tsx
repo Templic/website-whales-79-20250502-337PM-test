@@ -1,4 +1,3 @@
-import React from "react";
 import { FaQuoteLeft, FaQuoteRight, FaStar } from 'react-icons/fa';
 import SacredGeometry from "@/components/ui/sacred-geometry";
 

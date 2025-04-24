@@ -7,8 +7,6 @@
  * - Cosmic Dark (deep space blues - main theme)
  * - Cosmic Blackout (true void with purple accents)
  */
-import React from "react";
-
 import { CircleDot, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";

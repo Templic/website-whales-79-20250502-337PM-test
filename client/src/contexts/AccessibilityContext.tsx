@@ -75,7 +75,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         if (parsed.voiceEnabled !== undefined) setVoiceEnabledState(parsed.voiceEnabled);
         if (parsed.autoHideNav !== undefined) setAutoHideNavState(parsed.autoHideNav);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to load accessibility settings:', error);
     }
   }, []);
@@ -90,7 +90,7 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
         voiceEnabled,
         autoHideNav,
       }));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to save accessibility settings:', error);
     }
   }, [textSize, contrast, reducedMotion, voiceEnabled, autoHideNav]);

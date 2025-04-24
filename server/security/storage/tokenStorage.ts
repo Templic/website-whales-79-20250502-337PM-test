@@ -15,8 +15,8 @@ import { SecurityLogLevel } from '../types/securityTypes';
 export type TokenStoreType = 'memory' | 'redis';
 
 // Token data interface
-interface TokenData: {
-  token: string;,
+interface TokenData {
+  token: string;
   expires: Date;
   nonce?: string;
 }
@@ -28,7 +28,7 @@ interface TokenData: {
  * @param nonce Optional nonce for additional verification
  * @returns Serialized token data
  */
-export function serializeTokenData(token: string, nonce?: string): string: {
+export function serializeTokenData(token: string, nonce?: string): string {
   if (!nonce) return token;
   return `${token}.${nonce}`;
 }
@@ -42,14 +42,14 @@ export function serializeTokenData(token: string, nonce?: string): string: {
 export function deserializeTokenData(serialized: string): { token: string; nonce?: string } {
   if (!serialized.includes('.')) return { token: serialized };
   
-  const: [token, nonce] = serialized.split('.');
+  const [token, nonce] = serialized.split('.');
   return { token, nonce };
 }
 
 /**
  * Interface for token storage providers
  */
-interface TokenStore: {
+interface TokenStore {
   getToken(sessionId: string): TokenData | null;
   setToken(sessionId: string, token: string, expires: Date, nonce?: string): void;
   deleteToken(sessionId: string): void;
@@ -59,31 +59,32 @@ interface TokenStore: {
 /**
  * In-memory implementation of token storage
  */
-class MemoryTokenStore implements TokenStore: {
+class MemoryTokenStore implements TokenStore {
   private store: Record<string, TokenData> = {};
   
   constructor() {
-    // Set up periodic cleanup: setInterval(() => this.cleanupExpiredTokens(), 15 * 60 * 1000);
-}
+    // Set up periodic cleanup
+    setInterval(() => this.cleanupExpiredTokens(), 15 * 60 * 1000);
+  }
   
-  getToken(sessionId: string): TokenData | null: {
+  getToken(sessionId: string): TokenData | null {
     return this.store[sessionId] || null;
-}
+  }
   
-  setToken(sessionId: string, token: string, expires: Date, nonce?: string): void: {
+  setToken(sessionId: string, token: string, expires: Date, nonce?: string): void {
     this.store[sessionId] = { token, expires, nonce };
   }
   
-  deleteToken(sessionId: string): void: {
+  deleteToken(sessionId: string): void {
     delete this.store[sessionId];
-}
+  }
   
-  cleanupExpiredTokens(): void: {
-    const now = new: Date();
+  cleanupExpiredTokens(): void {
+    const now = new Date();
     Object.keys(this.store).forEach(key => {
       if (this.store[key].expires < now) {
         delete this.store[key];
-}
+      }
     });
   }
 }
@@ -92,55 +93,57 @@ class MemoryTokenStore implements TokenStore: {
  * Redis implementation of token storage
  * Uses Redis for distributed token storage in multi-server environments
  */
-class RedisTokenStore implements TokenStore: {
+class RedisTokenStore implements TokenStore {
   private client: any; // Redis client
   private prefix: string = 'csrf:token:';
   private isConnected: boolean = false;
   
   constructor() {
     try {
-      // Dynamic import for Redis to avoid dependency when not using Redis: import('redis').then(redis => {
+      // Dynamic import for Redis to avoid dependency when not using Redis
+      import('redis').then(redis => {
         const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
         
         this.client = redis.createClient({
           url: redisUrl
-});
+        });
         
         this.client.on('error', (err: Error) => {
           console.error('Redis connection error:', err);
           logSecurityEvent('REDIS_CONNECTION_ERROR', {
             error: err.message,
-            timestamp: new: Date()
-}, SecurityLogLevel.ERROR);
+            timestamp: new Date()
+          }, SecurityLogLevel.ERROR);
           this.isConnected = false;
         });
         
         this.client.on('connect', () => {
           this.isConnected = true;
           logSecurityEvent('REDIS_CONNECTED', {
-            timestamp: new: Date()
-}, SecurityLogLevel.INFO);
+            timestamp: new Date()
+          }, SecurityLogLevel.INFO);
         });
         
         this.client.connect().catch((err: Error) => {
           console.error('Failed to connect to Redis:', err);
           logSecurityEvent('REDIS_CONNECTION_FAILED', {
             error: err.message,
-            timestamp: new: Date()
-}, SecurityLogLevel.ERROR);
+            timestamp: new Date()
+          }, SecurityLogLevel.ERROR);
         });
         
-        // Set up periodic cleanup: setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
+        // Set up periodic cleanup
+        setInterval(() => this.cleanupExpiredTokens(), 30 * 60 * 1000);
       }).catch(err => {
         console.error('Failed to import Redis module:', err);
         logSecurityEvent('REDIS_IMPORT_FAILED', {
           error: err.message,
-          timestamp: new: Date()
-}, SecurityLogLevel.ERROR);
+          timestamp: new Date()
+        }, SecurityLogLevel.ERROR);
       });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error initializing Redis token store:', error);
-}
+    }
   }
   
   /**
@@ -149,7 +152,7 @@ class RedisTokenStore implements TokenStore: {
   async getToken(sessionId: string): Promise<TokenData | null> {
     if (!this.isConnected || !this.client) {
       return null;
-}
+    }
     
     try {
       const key = this.prefix + sessionId;
@@ -158,10 +161,10 @@ class RedisTokenStore implements TokenStore: {
       if (!data) return null;
       
       return JSON.parse(data);
-} catch (error: unknown) {
+    } catch (error) {
       console.error('Error getting token from Redis:', error);
       return null;
-}
+    }
   }
   
   /**
@@ -170,7 +173,7 @@ class RedisTokenStore implements TokenStore: {
   async setToken(sessionId: string, token: string, expires: Date, nonce?: string): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
-}
+    }
     
     try {
       const key = this.prefix + sessionId;
@@ -182,9 +185,9 @@ class RedisTokenStore implements TokenStore: {
       if (ttl <= 0) return; // Don't store expired tokens
       
       await this.client.set(key, data, { EX: ttl });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error setting token in Redis:', error);
-}
+    }
   }
   
   /**
@@ -193,14 +196,14 @@ class RedisTokenStore implements TokenStore: {
   async deleteToken(sessionId: string): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
-}
+    }
     
     try {
       const key = this.prefix + sessionId;
       await this.client.del(key);
-} catch (error: unknown) {
+    } catch (error) {
       console.error('Error deleting token from Redis:', error);
-}
+    }
   }
   
   /**
@@ -209,35 +212,35 @@ class RedisTokenStore implements TokenStore: {
   async cleanupExpiredTokens(): Promise<void> {
     if (!this.isConnected || !this.client) {
       return;
-}
+    }
     
     try {
       let cursor = '0';
       const pattern = `${this.prefix}*`;
-      const now = new: Date();
+      const now = new Date();
       
-      do: {
-        const: [nextCursor, keys] = await this.client.scan(cursor, {
+      do {
+        const [nextCursor, keys] = await this.client.scan(cursor, {
           MATCH: pattern,
           COUNT: 100
-});
+        });
         
         cursor = nextCursor;
         
         // Process keys in batches
         for (const key of keys) {
           const data = await this.client.get(key);
-          if (data) => {
+          if (data) {
             const tokenData = JSON.parse(data);
-            if (new: Date(tokenData.expires) < now) {
+            if (new Date(tokenData.expires) < now) {
               await this.client.del(key);
-}
+            }
           }
         }
       } while (cursor !== '0');
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error cleaning up tokens in Redis:', error);
-}
+    }
   }
 }
 
@@ -250,18 +253,18 @@ let redisStoreInstance: RedisTokenStore | null = null;
  * 
  * @returns Token store instance
  */
-export function getDistributedTokenStore(): TokenStore: {
+export function getDistributedTokenStore(): TokenStore {
   const useRedis = process.env.USE_DISTRIBUTED_TOKEN_STORAGE === 'true';
   
-  if (useRedis) => {
+  if (useRedis) {
     if (!redisStoreInstance) {
-      redisStoreInstance = new: RedisTokenStore();
-}
+      redisStoreInstance = new RedisTokenStore();
+    }
     return redisStoreInstance;
   } else {
     if (!memoryStoreInstance) {
-      memoryStoreInstance = new: MemoryTokenStore();
-}
+      memoryStoreInstance = new MemoryTokenStore();
+    }
     return memoryStoreInstance;
   }
 }
@@ -271,6 +274,6 @@ export function getDistributedTokenStore(): TokenStore: {
  * 
  * @returns A cryptographically secure random token
  */
-export function generateSecureToken(): string: {
+export function generateSecureToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }

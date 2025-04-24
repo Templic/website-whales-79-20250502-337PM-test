@@ -3,8 +3,6 @@
  * 
  * Advanced shop management page for admin users
  */
-import React from "react";
-
 import { Suspense } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import ShopManagement from "@/components/features/admin/ShopManagement";

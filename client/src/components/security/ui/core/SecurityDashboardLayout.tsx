@@ -74,8 +74,8 @@ export function SecurityDashboardLayout({
     container: {
       display: 'flex' as const,
       flexDirection: 'column' as const,
-      height: 100,
-      width: 100,
+      height: '100%',
+      width: '100%',
       backgroundColor: theme.colors.background.default,
       color: theme.colors.text.primary,
       fontFamily: theme.typography.fontFamily,
@@ -111,26 +111,26 @@ export function SecurityDashboardLayout({
     content: {
       display: 'flex' as const,
       flexGrow: 1,
-      height: 100,
+      height: '100%',
       overflow: 'hidden' as const,
     },
     mainContent: {
       flexGrow: 1,
       padding: theme.spacing.lg,
       overflowY: 'auto' as const,
-      height: 100,
+      height: '100%',
     },
     sidebarContainer: {
       width: sidebarExpanded ? '300px' : '60px',
       borderRight: `${theme.shape.borderWidth.thin} solid ${theme.colors.text.disabled}`,
       backgroundColor: theme.colors.background.paper,
       transition: 'width 0.3s ease-in-out',
-      height: 100,
+      height: '100%',
       overflow: 'hidden' as const,
     },
     sidebarContent: {
-      width: 300, // Keep content width fixed
-      height: 100,
+      width: '300px', // Keep content width fixed
+      height: '100%',
       overflowY: 'auto' as const,
       padding: sidebarExpanded ? theme.spacing.md : `${theme.spacing.md} 0`,
       transition: 'padding 0.3s ease-in-out',
@@ -144,7 +144,7 @@ export function SecurityDashboardLayout({
       display: 'flex' as const,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      width: 100,
+      width: '100%',
       borderTop: `${theme.shape.borderWidth.thin} solid ${theme.colors.text.disabled}`,
     },
   };

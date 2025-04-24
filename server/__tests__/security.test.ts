@@ -10,11 +10,11 @@ describe('Security Features', () => {
   beforeAll(async () => {
     const response = await request(app).get('/api/csrf-token');
     csrfToken = response.body.csrfToken;
-});
+  });
 
   test('CSRF Protection - Should reject requests without token', async () => {
     const response = await request(app)
-      .post('/api/auth/login');
+      .post('/api/auth/login')
       .send({ username: 'test', password: 'test' });
     
     expect(response.status).toBe(403);
@@ -31,7 +31,7 @@ describe('Security Features', () => {
 
   test('Protected Route - Should require valid JWT', async () => {
     const response = await request(app)
-      .get('/api/protected');
+      .get('/api/protected')
       .set('Authorization', `Bearer ${accessToken}`);
     
     expect(response.status).toBe(200);

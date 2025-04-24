@@ -45,7 +45,7 @@ export function useComplexCalculation(
       const endTime = performance.now();
       setProcessingTime(endTime - startTimeRef.current);
       return result;
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       throw error;
@@ -104,7 +104,7 @@ export function useMatrixOperation(
       const endTime = performance.now();
       setProcessingTime(endTime - startTimeRef.current);
       return result;
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       throw error;
@@ -163,7 +163,7 @@ export function useDataProcessing<T = any>(
       const endTime = performance.now();
       setProcessingTime(endTime - startTimeRef.current);
       return result;
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       throw error;
@@ -222,7 +222,7 @@ export function useImageProcessing(
       const endTime = performance.now();
       setProcessingTime(endTime - startTimeRef.current);
       return result;
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       throw error;
@@ -284,7 +284,7 @@ export function useAudioProcessing(
       const endTime = performance.now();
       setProcessingTime(endTime - startTimeRef.current);
       return result;
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       throw error;
@@ -333,7 +333,7 @@ export function useWorkerManager() {
       await workerManager.initialize();
       setInitialized(true);
       setStats(workerManager.getStats());
-    } catch (err: unknown) {
+    } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
     } finally {

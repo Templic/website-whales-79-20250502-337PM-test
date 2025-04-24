@@ -33,7 +33,7 @@ export function generateSrcSet(
         return `${responsiveSrc} ${width}w`;
       })
       .join(', ');
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating srcSet:', error);
     return '';
   }
@@ -68,7 +68,7 @@ export function generatePlaceholder(src: string, width: number = 20): string {
     const extension = src.substring(src.lastIndexOf('.'));
     
     return `${srcWithoutExtension}-placeholder-${width}w${extension}`;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating placeholder:', error);
     return '';
   }

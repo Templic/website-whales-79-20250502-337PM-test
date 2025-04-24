@@ -21,22 +21,22 @@ import {
 type AsyncHandler = (req: Request, res: Response) => Promise<void>;
 
 // Security settings management
-export interface SecuritySettings: {
-  enforceStrictTransportSecurity: boolean;,
-  enableContentSecurityPolicy: boolean;,
-  enableRateLimiting: boolean;,
-  enableCSRFProtection: boolean;,
-  enableSQLInjectionProtection: boolean;,
-  enableXSSProtection: boolean;,
-  enableSecurityHeaders: boolean;,
-  enableSanitization: boolean;,
-  logSecurityEvents: boolean;,
-  autoRunSecurityScans: boolean;,
-  preventCredentialExposure: boolean;,
-  requireStrongPasswords: boolean;,
-  lockAccountAfterFailedAttempts: boolean;,
-  requireMFA: boolean;,
-  sessionTimeout: number; // in minutes,
+export interface SecuritySettings {
+  enforceStrictTransportSecurity: boolean;
+  enableContentSecurityPolicy: boolean;
+  enableRateLimiting: boolean;
+  enableCSRFProtection: boolean;
+  enableSQLInjectionProtection: boolean;
+  enableXSSProtection: boolean;
+  enableSecurityHeaders: boolean;
+  enableSanitization: boolean;
+  logSecurityEvents: boolean;
+  autoRunSecurityScans: boolean;
+  preventCredentialExposure: boolean;
+  requireStrongPasswords: boolean;
+  lockAccountAfterFailedAttempts: boolean;
+  requireMFA: boolean;
+  sessionTimeout: number; // in minutes
   passwordExpiryDays: number; // 0 means never expire
 }
 
@@ -55,13 +55,14 @@ export const defaultSecuritySettings: SecuritySettings = {
   preventCredentialExposure: true,
   requireStrongPasswords: true,
   lockAccountAfterFailedAttempts: true,
-  requireMFA: false, // Off by default as it requires implementation,
+  requireMFA: false, // Off by default as it requires implementation
   sessionTimeout: 60,
   passwordExpiryDays: 90
 };
 
 // Security log event types
-export type SecurityEventType = | 'LOGIN_SUCCESS'
+export type SecurityEventType =
+  | 'LOGIN_SUCCESS'
   | 'LOGIN_FAILURE'
   | 'LOGOUT'
   | 'PASSWORD_CHANGE'
@@ -82,12 +83,12 @@ export type SecurityEventType = | 'LOGIN_SUCCESS'
   | 'SECURITY_SETTING_CHANGED'
   | 'SECURITY_SCAN_STARTED'
   | 'SECURITY_SCAN_COMPLETED'
-  | 'SECURITY_VULNERABILITY_DETECTED';
+  | 'SECURITY_VULNERABILITY_DETECTED'
   | 'SECURITY_SETTING_VALIDATION_FAILED';
 
 // Security event data interface
-export interface SecurityEventData: {
-  type SecurityEventType;
+export interface SecurityEventData {
+  type: SecurityEventType;
   timestamp?: string;
   userId?: string;
   userRole?: string;
@@ -127,11 +128,11 @@ try {
   if (fs.existsSync(SECURITY_SETTINGS_FILE)) {
     const settingsData = fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8');
     securitySettings = JSON.parse(settingsData);
-} else {
+  } else {
     securitySettings = { ...defaultSecuritySettings };
     fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   }
-} catch (error: unknown) {
+} catch (error) {
   console.error('Error initializing security settings:', error);
   securitySettings = { ...defaultSecuritySettings };
 }
@@ -140,13 +141,13 @@ try {
  * Log a security event
  * @param event The security event to log
  */
-export function logSecurityEvent(event: SecurityEventData): void: {
+export function logSecurityEvent(event: SecurityEventData): void {
   try {
     if (!securitySettings.logSecurityEvents) {
       return;
-}
+    }
     
-    const timestamp = new: Date().toISOString();
+    const timestamp = new Date().toISOString();
     const eventWithTimestamp = { ...event, timestamp: timestamp };
     const logEntry = `${timestamp} [${event.severity.toUpperCase()}] [${event.type}] ${JSON.stringify(eventWithTimestamp)}\n`;
     
@@ -157,9 +158,9 @@ export function logSecurityEvent(event: SecurityEventData): void: {
     if (event.severity === 'critical' || event.severity === 'high') {
       console.warn(`[SECURITY] ${event.type}: ${event.details}`);
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to log security event:', error);
-}
+  }
 }
 
 /**
@@ -167,7 +168,7 @@ export function logSecurityEvent(event: SecurityEventData): void: {
  */
 export const getSecuritySettings: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
   logSecurityEvent({
-    type 'SECURITY_SETTING_CHANGED',
+    type: 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -176,7 +177,7 @@ export const getSecuritySettings: AsyncHandler = asyncHandler(async (req: Reques
     method: req.method,
     details: 'Security settings viewed',
     severity: 'low'
-});
+  });
   
   res.json({ success: true, settings: securitySettings });
 });
@@ -190,7 +191,7 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
   // Validate the setting exists
   if (!(setting in securitySettings)) {
     logSecurityEvent({
-      type 'SECURITY_SETTING_VALIDATION_FAILED',
+      type: 'SECURITY_SETTING_VALIDATION_FAILED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -204,7 +205,7 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
     return res.status(400).json({ 
       success: false, 
       message: 'Invalid security setting' 
-});
+    });
   }
   
   // Update the setting
@@ -215,14 +216,14 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   
   logSecurityEvent({
-    type 'SECURITY_SETTING_CHANGED',
+    type: 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
     userAgent: req.headers['user-agent'],
     path: req.path,
     method: req.method,
-    details: `Security setting: "${setting}" changed from ${oldValue} to ${value}`,
+    details: `Security setting "${setting}" changed from ${oldValue} to ${value}`,
     severity: 'medium',
     metadata: { setting, oldValue, newValue: value }
   });
@@ -232,7 +233,7 @@ export const updateSecuritySetting: AsyncHandler = asyncHandler(async (req: Requ
     message: 'Security setting updated successfully', 
     setting, 
     value 
-});
+  });
 });
 
 /**
@@ -243,7 +244,7 @@ export const resetSecuritySettings: AsyncHandler = asyncHandler(async (req: Requ
   fs.writeFileSync(SECURITY_SETTINGS_FILE, JSON.stringify(securitySettings, null, 2));
   
   logSecurityEvent({
-    type 'SECURITY_SETTING_CHANGED',
+    type: 'SECURITY_SETTING_CHANGED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -252,13 +253,13 @@ export const resetSecuritySettings: AsyncHandler = asyncHandler(async (req: Requ
     method: req.method,
     details: 'Security settings reset to defaults',
     severity: 'medium'
-});
+  });
   
   res.json({ 
     success: true, 
     message: 'Security settings reset to defaults', 
     settings: securitySettings 
-});
+  });
 });
 
 /**
@@ -285,35 +286,35 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
         const jsonStartIndex = line.indexOf('{');
         const jsonData = line.substring(jsonStartIndex);
         return JSON.parse(jsonData);
-} catch (error: unknown) {
+      } catch (error) {
         return null;
-}
+      }
     }).filter(log => log !== null);
     
     // Apply filters if provided
-    if (severity) => {
+    if (severity) {
       logs = logs.filter(log => log.severity === severity);
-}
+    }
     
-    if (type) => {
+    if (type) {
       logs = logs.filter(log => log.type === type);
-}
+    }
     
-    if (startDate) => {
-      const startDateTime = new: Date(startDate as string).getTime();
-      logs = logs.filter(log => new: Date(log.timestamp).getTime() >= startDateTime);
-}
+    if (startDate) {
+      const startDateTime = new Date(startDate as string).getTime();
+      logs = logs.filter(log => new Date(log.timestamp).getTime() >= startDateTime);
+    }
     
-    if (endDate) => {
-      const endDateTime = new: Date(endDate as string).getTime();
-      logs = logs.filter(log => new: Date(log.timestamp).getTime() <= endDateTime);
-}
+    if (endDate) {
+      const endDateTime = new Date(endDate as string).getTime();
+      logs = logs.filter(log => new Date(log.timestamp).getTime() <= endDateTime);
+    }
     
     // Limit the number of logs returned
     logs = logs.slice(-parseInt(limit as string));
     
     logSecurityEvent({
-      type 'SECURITY_SETTING_CHANGED',
+      type: 'SECURITY_SETTING_CHANGED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -322,15 +323,15 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
       method: req.method,
       details: 'Security logs viewed',
       severity: 'low'
-});
+    });
     
     res.json({ success: true, logs });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error getting security logs:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error retrieving security logs' 
-});
+    });
   }
 });
 
@@ -339,7 +340,7 @@ export const getSecurityLogs: AsyncHandler = asyncHandler(async (req: Request, r
  */
 export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, res: Response) => {
   logSecurityEvent({
-    type 'SECURITY_SCAN_STARTED',
+    type: 'SECURITY_SCAN_STARTED',
     userId: req.session?.user?.id,
     userRole: req.session?.user?.role,
     ip: req.ip,
@@ -348,7 +349,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     method: req.method,
     details: 'Manual security scan initiated',
     severity: 'low'
-});
+  });
   
   try {
     // Run the security scan
@@ -363,7 +364,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     // Merge vulnerabilities
     const allVulnerabilities = [
       ...scanResults.vulnerabilities,
-      ...commonIssues;
+      ...commonIssues
     ];
     
     // Calculate risk metrics
@@ -375,11 +376,11 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
       vulnerabilities: allVulnerabilities,
       securityPackages: packageInfo,
       riskMetrics,
-      timestamp: new: Date().toISOString()
-};
+      timestamp: new Date().toISOString()
+    };
     
     // Save scan results
-    const scanTimestamp = new: Date().toISOString().replace(/:/g, '-');
+    const scanTimestamp = new Date().toISOString().replace(/:/g, '-');
     const scanResultFile = path.join(SCAN_RESULTS_DIR, `scan-${scanTimestamp}.json`);
     fs.writeFileSync(scanResultFile, JSON.stringify(enhancedResults, null, 2));
     
@@ -388,7 +389,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
     await generateSecurityReport(allVulnerabilities, reportFile);
     
     logSecurityEvent({
-      type 'SECURITY_SCAN_COMPLETED',
+      type: 'SECURITY_SCAN_COMPLETED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -404,7 +405,7 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
         lowIssues: scanResults.lowIssues,
         scanResultFile,
         reportFile
-}
+      }
     });
     
     res.json({
@@ -412,14 +413,14 @@ export const runSecurityScan: AsyncHandler = asyncHandler(async (req: Request, r
       message: 'Security scan completed',
       results: enhancedResults,
       reportFile
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error running security scan:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error running security scan',
       error: (error as Error).message
-});
+    });
   }
 });
 
@@ -434,12 +435,12 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
         success: true, 
         message: 'No scan results found', 
         results: null 
-});
+      });
     }
     
     // Get list of scan result files
     const files = fs.readdirSync(SCAN_RESULTS_DIR)
-      .filter(file => file.startsWith('scan-') && file.endsWith('.json'));
+      .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
       .sort();
     
     if (files.length === 0) {
@@ -448,7 +449,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
         success: true, 
         message: 'No scan results found', 
         results: null 
-});
+      });
     }
     
     // Get the most recent scan
@@ -457,7 +458,7 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
     const scanResults = JSON.parse(scanData);
     
     logSecurityEvent({
-      type 'SECURITY_SETTING_CHANGED',
+      type: 'SECURITY_SETTING_CHANGED',
       userId: req.session?.user?.id,
       userRole: req.session?.user?.role,
       ip: req.ip,
@@ -466,18 +467,18 @@ export const getLatestScanResults: AsyncHandler = asyncHandler(async (req: Reque
       method: req.method,
       details: 'Security scan results viewed',
       severity: 'low'
-});
+    });
     
     res.json({ 
       success: true, 
       results: scanResults 
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error getting scan results:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error retrieving scan results' 
-});
+    });
   }
 });
 
@@ -505,7 +506,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
         else if (line.includes('[HIGH]')) highCount++;
         else if (line.includes('[MEDIUM]')) mediumCount++;
         else if (line.includes('[LOW]')) lowCount++;
-}
+      }
     }
     
     // Get latest scan results if available
@@ -514,7 +515,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
     
     if (fs.existsSync(SCAN_RESULTS_DIR)) {
       const files = fs.readdirSync(SCAN_RESULTS_DIR)
-        .filter(file => file.startsWith('scan-') && file.endsWith('.json'));
+        .filter(file => file.startsWith('scan-') && file.endsWith('.json'))
         .sort();
       
       if (files.length > 0) {
@@ -525,15 +526,15 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
         // Get security score from scan if available
         if (latestScan.riskMetrics && typeof latestScan.riskMetrics.securityScore === 'number') {
           securityScore = latestScan.riskMetrics.securityScore;
-} else {
+        } else {
           // Calculate score based on vulnerabilities
           const totalIssues = latestScan.totalIssues || 0;
           const criticalIssues = latestScan.criticalIssues || 0;
           const highIssues = latestScan.highIssues || 0;
           
-          // Formula: Start with: 100, subtract weighted issues
+          // Formula: Start with 100, subtract weighted issues
           securityScore = Math.max(0, 100 - (criticalIssues * 10) - (highIssues * 5) - (totalIssues - criticalIssues - highIssues));
-}
+        }
       }
     }
     
@@ -547,7 +548,7 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
           highCount,
           mediumCount,
           lowCount
-},
+        },
         latestScanTimestamp: latestScan ? latestScan.timestamp : null,
         vulnerabilities: latestScan ? {
           total: latestScan.totalIssues,
@@ -555,17 +556,17 @@ export const getSecurityStats: AsyncHandler = asyncHandler(async (req: Request, 
           high: latestScan.highIssues,
           medium: latestScan.mediumIssues,
           low: latestScan.lowIssues
-} : null,
+        } : null,
         settingsEnabled: Object.entries(securitySettings)
-          .filter(([key, value]) => typeof value = == 'boolean' && value === true)
+          .filter(([key, value]) => typeof value === 'boolean' && value === true)
           .map(([key]) => key)
-      };
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error getting security stats:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error retrieving security statistics' 
-});
+    });
   }
 });

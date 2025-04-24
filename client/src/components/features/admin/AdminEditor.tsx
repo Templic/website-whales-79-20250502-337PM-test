@@ -190,7 +190,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({
         description: "Your changes have been saved successfully.",
         variant: "default",
       });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error saving content:", error);
       
       toast({

@@ -1,4 +1,3 @@
-import React from "react";
 
 import { useQuery } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ export default function MusicPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tracks?.map((track) => (
+              {tracks?.map((track: any) => (
                 <TableRow key={track.id}>
                   <TableCell>{track.title}</TableCell>
                   <TableCell>{track.artist}</TableCell>

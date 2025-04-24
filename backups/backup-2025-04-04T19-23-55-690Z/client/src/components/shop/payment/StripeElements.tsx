@@ -53,7 +53,7 @@ export default function StripeElements({ onSubmit }: StripeElementsProps) {
       } else {
         setError('Payment failed. Please try again.');
       }
-    } catch (err$2 {
+    } catch (err: any) {
       console.error('Payment error:', err);
       setError(err.message || 'An unexpected error occurred');
     } finally {

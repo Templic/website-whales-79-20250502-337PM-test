@@ -527,8 +527,8 @@ export function BinauralBeatGenerator({
             >
               {showPulseDetection ? (
                 <>
-                  <video ref={videoRef} className="hidden" width={320} height={240} muted playsInline />
-                  <canvas ref={canvasRef} width={320} height={160} className="w-full h-full" />
+                  <video ref={videoRef} className="hidden" width="320" height="240" muted playsInline />
+                  <canvas ref={canvasRef} width="320" height="160" className="w-full h-full" />
                 </>
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">

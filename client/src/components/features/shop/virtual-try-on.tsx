@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * virtual-try-on.tsx
  * 
@@ -81,7 +79,7 @@ export function VirtualTryOn({
         videoRef.current.srcObject = stream
         setCameraActive(true)
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error accessing camera:", err)
       alert("Unable to access camera. Please make sure you've granted camera permissions.")
     }
@@ -670,7 +668,7 @@ function VirtualTryOnOriginal({
         videoRef.current.srcObject = stream
         setCameraActive(true)
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error("Error accessing camera:", err)
       alert("Unable to access camera. Please make sure you've granted camera permissions.")
     }

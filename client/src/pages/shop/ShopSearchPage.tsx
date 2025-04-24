@@ -98,7 +98,7 @@ export default function ShopSearchPage() {
           const data = await response.json();
           setCategoryList(data);
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error fetching categories:', error);
       }
     }

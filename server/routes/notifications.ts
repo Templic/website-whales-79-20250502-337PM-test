@@ -19,11 +19,11 @@ router.get('/workflow', isAuthenticated, async (req, res) => {
       where: eq(workflowNotifications.userId, userId),
       orderBy: [desc(workflowNotifications.createdAt)],
       limit: 20,
-});
+    });
     
     // @ts-ignore - Response type issue
   return res.json(notifications);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching workflow notifications:', error);
     return res.status(500).json({ error: 'Failed to fetch notifications' });
   }
@@ -42,7 +42,7 @@ router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
     // Find notification
     const notification = await db.query.workflowNotifications.findFirst({
       where: eq(workflowNotifications.id, notificationId)
-});
+    });
     
     if (!notification) {
       return res.status(404).json({ error: 'Notification not found' });
@@ -60,7 +60,7 @@ router.post('/workflow/:id/read', isAuthenticated, async (req, res) => {
       
     // @ts-ignore - Response type issue
   return res.json({ success: true });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error marking notification as read:', error);
     return res.status(500).json({ error: 'Failed to update notification' });
   }
@@ -75,7 +75,7 @@ router.post('/workflow', isAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    const notification = await db.insert(workflowNotifications);
+    const notification = await db.insert(workflowNotifications)
       .values({
         title,
         message,
@@ -84,11 +84,11 @@ router.post('/workflow', isAdmin, async (req, res) => {
         contentTitle,
         userId,
         isRead: false
-})
+      })
       .returning();
       
     return res.status(201).json(notification[0]);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating workflow notification:', error);
     return res.status(500).json({ error: 'Failed to create notification' });
   }

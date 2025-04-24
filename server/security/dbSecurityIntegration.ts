@@ -10,7 +10,7 @@ import { createSQLFix } from './sqlInjectionFix';
 /**
  * Database connection interface
  */
-interface DatabaseConnection: {
+interface DatabaseConnection {
   query: (sql: string, params?: any[]) => Promise<any>;
 }
 
@@ -19,14 +19,14 @@ interface DatabaseConnection: {
  * 
  * This class wraps a database connection with security measures.
  */
-export class SecureDatabase: {
+export class SecureDatabase {
   private db: DatabaseConnection;
   private sqlFix: any;
   
   constructor(db: DatabaseConnection) {
     this.db = db;
     this.sqlFix = createSQLFix(db);
-}
+  }
   
   /**
    * Execute a secure parameterized query
@@ -37,7 +37,7 @@ export class SecureDatabase: {
    */
   async query<T = any>(sql: string, params: any[] = []): Promise<T> {
     return this.sqlFix.query<T>(sql, params);
-}
+  }
   
   /**
    * Securely select records from a table
@@ -49,11 +49,11 @@ export class SecureDatabase: {
    */
   async select<T = any>(
     table: string, 
-    columns: string[] = ['*'], ;
+    columns: string[] = ['*'], 
     where: Record<string, any> = {}
   ): Promise<T[]> {
     return this.sqlFix.select<T[]>(table, columns, where);
-}
+  }
   
   /**
    * Securely insert a record into a table
@@ -64,7 +64,7 @@ export class SecureDatabase: {
    */
   async insert<T = any>(table: string, data: Record<string, any>): Promise<T> {
     return this.sqlFix.insert<T>(table, data);
-}
+  }
   
   /**
    * Securely update records in a table
@@ -77,10 +77,10 @@ export class SecureDatabase: {
   async update<T = any>(
     table: string, 
     data: Record<string, any>, 
-    where: Record<string, any>;
+    where: Record<string, any>
   ): Promise<T[]> {
     return this.sqlFix.update<T[]>(table, data, where);
-}
+  }
   
   /**
    * Securely delete records from a table
@@ -91,23 +91,23 @@ export class SecureDatabase: {
    */
   async delete<T = any>(table: string, where: Record<string, any>): Promise<T[]> {
     return this.sqlFix.delete<T[]>(table, where);
-}
+  }
   
   /**
    * Get direct access to the underlying database connection
    * WARNING: Use with caution, as this bypasses security measures
    */
-  getConnection(): DatabaseConnection: {
+  getConnection(): DatabaseConnection {
     console.warn('[SECURITY WARNING] Accessing raw database connection bypasses security measures');
     return this.db;
-}
+  }
 }
 
 /**
  * Create a secure database wrapper for the provided connection
  */
-export function createSecureDatabase(db: DatabaseConnection): SecureDatabase: {
-  return new: SecureDatabase(db);
+export function createSecureDatabase(db: DatabaseConnection): SecureDatabase {
+  return new SecureDatabase(db);
 }
 
 /**
@@ -116,19 +116,19 @@ export function createSecureDatabase(db: DatabaseConnection): SecureDatabase: {
  * WARNING: This approach is more invasive and should be used with caution.
  * It's better to use the SecureDatabase wrapper if possible.
  */
-export function patchDatabaseModule(db$2: void: {
+export function patchDatabaseModule(db): void {
   const originalQuery = db.query;
   const sqlFix = createSQLFix(db);
   
   // Replace the query method with a secure version
   db.query = async function(sql: string, params: any: any[] = []): Promise<any> {
     // Check if this is a potentially unsafe query
-    const hasDynamicContent = typeof sql === 'string' && ;
+    const hasDynamicContent = typeof sql === 'string' && 
       (sql.includes('${') || sql.includes('+') || sql.includes('concat'));
     
-    if (hasDynamicContent) => {
+    if (hasDynamicContent) {
       console.warn('[SECURITY WARNING] Potentially unsafe query detected, consider using parameterized queries');
-}
+    }
     
     // Use the SQL fix utility for the query
     return sqlFix.query(sql, params);
@@ -137,33 +137,33 @@ export function patchDatabaseModule(db$2: void: {
   // Add convenience methods
   db.selectSecure = async function<T = any>(
     table: string, 
-    columns: string[] = ['*'], ;
+    columns: string[] = ['*'], 
     where: Record<string, any> = {}
   ): Promise<T[]> {
     return sqlFix.select<T[]>(table, columns, where);
-};
+  };
   
   db.insertSecure = async function<T = any>(
     table: string, 
-    data: Record<string, any>;
+    data: Record<string, any>
   ): Promise<T> {
     return sqlFix.insert<T>(table, data);
-};
+  };
   
   db.updateSecure = async function<T = any>(
     table: string, 
     data: Record<string, any>, 
-    where: Record<string, any>;
+    where: Record<string, any>
   ): Promise<T[]> {
     return sqlFix.update<T[]>(table, data, where);
-};
+  };
   
   db.deleteSecure = async function<T = any>(
     table: string, 
-    where: Record<string, any>;
+    where: Record<string, any>
   ): Promise<T[]> {
     return sqlFix.delete<T[]>(table, where);
-};
+  };
   
   console.log('[DATABASE-SECURITY] Database module patched with secure query methods');
 }
@@ -172,7 +172,7 @@ export function patchDatabaseModule(db$2: void: {
  * Examples of using the database security integration
  */
 /*
-// Example: 1: Creating a secure database wrapper
+// Example 1: Creating a secure database wrapper
 import { createSecureDatabase } from './security/dbSecurityIntegration';
 import { pool } from './database';
 
@@ -185,9 +185,9 @@ const users = await db.query('SELECT * FROM users WHERE role = $1', ['admin']);
 const activeUsers = await db.select('users', ['id', 'username'], { active: true });
 const newUser = await db.insert('users', { username: 'john', email: 'john@example.com' });
 const updatedUsers = await db.update('users', { active: false }, { last_login_at: null });
-const deletedUsers = await db.delete('users', { deactivated_at: { '<': new: Date() } });
+const deletedUsers = await db.delete('users', { deactivated_at: { '<': new Date() } });
 
-// Example: 2: Patching an existing database module
+// Example 2: Patching an existing database module
 import { patchDatabaseModule } from './security/dbSecurityIntegration';
 import * as db from './database';
 

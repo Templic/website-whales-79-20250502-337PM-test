@@ -4,8 +4,6 @@
  * Component Type: feature
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import type { ReactNode } from "react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"

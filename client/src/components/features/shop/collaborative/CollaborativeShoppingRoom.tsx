@@ -1,5 +1,4 @@
 // Assuming this is within a React component or similar framework
-import React from "react";
 function CollaborativeShopping() {
   // ... other component code ...
 

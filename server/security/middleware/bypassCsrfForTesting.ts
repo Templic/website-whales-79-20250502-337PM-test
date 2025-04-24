@@ -19,7 +19,7 @@ export function bypassCsrfForTesting() {
     Object.defineProperty(req, '_csrf', {
       value: 'test-bypass-token',
       configurable: true
-});
+    });
     
     // Provide a fake csrfToken method to the request
     req.csrfToken = () => 'test-bypass-token';

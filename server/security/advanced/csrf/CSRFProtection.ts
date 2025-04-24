@@ -11,13 +11,13 @@ import { securityBlockchain } from '../blockchain/ImmutableSecurityLogs';
 import { SecurityEventSeverity, SecurityEventCategory } from '../blockchain/ImmutableSecurityLogs';
 
 // Declare session property on Express Request
-declare global: {
-  namespace Express: {
-    interface Request: {
+declare global {
+  namespace Express {
+    interface Request {
       session?: {
         id?: string;
         [key: string]: any;
-};
+      };
     }
   }
 }
@@ -25,29 +25,29 @@ declare global: {
 /**
  * CSRF configuration options
  */
-export interface CSRFOptions: {
+export interface CSRFOptions {
   /**
-   * The name of the CSRF token cookie (default '_csrf')
+   * The name of the CSRF token cookie (default: '_csrf')
    */
   cookieName?: string;
   
   /**
-   * The name of the CSRF token header (default 'x-csrf-token')
+   * The name of the CSRF token header (default: 'x-csrf-token')
    */
   headerName?: string;
   
   /**
-   * The expiration time of the CSRF token in milliseconds (default 24 hours)
+   * The expiration time of the CSRF token in milliseconds (default: 24 hours)
    */
   expiryTime?: number;
   
   /**
-   * Routes to exclude from CSRF protection (default [])
+   * Routes to exclude from CSRF protection (default: [])
    */
   excludeRoutes?: string[];
   
   /**
-   * Whether to enable double-submit verification (default true)
+   * Whether to enable double-submit verification (default: true)
    */
   doubleSubmitVerification?: boolean;
 }
@@ -58,7 +58,7 @@ export interface CSRFOptions: {
 const defaultOptions: CSRFOptions = {
   cookieName: '_csrf',
   headerName: 'x-csrf-token',
-  expiryTime: 24 * 60 * 60 * 1000, // 24 hours,
+  expiryTime: 24 * 60 * 60 * 1000, // 24 hours
   excludeRoutes: [],
   doubleSubmitVerification: true
 };
@@ -66,8 +66,8 @@ const defaultOptions: CSRFOptions = {
 /**
  * CSRF token data
  */
-interface CSRFTokenData: {
-  token: string;,
+interface CSRFTokenData {
+  token: string;
   expires: number;
   /**
    * Unique identifier for this token for tracking purposes
@@ -94,7 +94,7 @@ interface CSRFTokenData: {
 /**
  * CSRF protection class
  */
-export class CSRFProtection: {
+export class CSRFProtection {
   /**
    * CSRF options
    */
@@ -112,9 +112,9 @@ export class CSRFProtection: {
    * @param sessionId Optional session ID to associate with the token
    * @param route Optional route this token is for (for per-route tokens)
    */
-  public: generateToken(sessionId?: string, route?: string): CSRFTokenData: {
+  public generateToken(sessionId?: string, route?: string): CSRFTokenData {
     const token = crypto.randomBytes(32).toString('hex');
-    const expiryTime = this.options.expiryTime ?? defaultOptions.expiryTime ?? 24 * 60 * 60 * 1000; // Default to: 24 hours
+    const expiryTime = this.options.expiryTime ?? defaultOptions.expiryTime ?? 24 * 60 * 60 * 1000; // Default to 24 hours
     const expires = Date.now() + expiryTime;
     const created = Date.now();
     const id = crypto.randomBytes(8).toString('hex');
@@ -127,7 +127,7 @@ export class CSRFProtection: {
       sessionId,
       route,
       used: false
-};
+    };
   }
   
   /**
@@ -136,7 +136,7 @@ export class CSRFProtection: {
    * @param route Optional route to validate the token against (for per-route tokens)
    * @returns A validation result with boolean success and potential reason for failure
    */
-  public: validateToken(request: Request, route?: string): { valid: boolean; reason?: string } {
+  public validateToken(request: Request, route?: string): { valid: boolean; reason?: string } {
     const cookieName = this.options.cookieName || defaultOptions.cookieName;
     const headerName = this.options.headerName || defaultOptions.headerName;
     
@@ -202,7 +202,7 @@ export class CSRFProtection: {
       cookieTokenData.used = true;
       
       return { valid: true };
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error validating CSRF token:', error);
       return { valid: false, reason: 'Invalid CSRF token format' };
     }
@@ -211,22 +211,22 @@ export class CSRFProtection: {
   /**
    * Set CSRF token cookie and return the token
    */
-  public: setTokenCookie(response: Response): string: {
+  public setTokenCookie(response: Response): string {
     const cookieName = this.options.cookieName || defaultOptions.cookieName;
     const tokenData = this.generateToken();
     const maxAge = this.options.expiryTime || defaultOptions.expiryTime;
     
     if (!cookieName) {
       throw new Error('CSRF cookie name is undefined');
-}
+    }
     
     // Set cookie
     response.cookie(cookieName, Buffer.from(JSON.stringify(tokenData)).toString('base64'), {
       httpOnly: true,
-      secure: process.env.NODE_ENV = == 'production',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge;
-});
+      maxAge
+    });
     
     return tokenData.token;
   }
@@ -234,19 +234,19 @@ export class CSRFProtection: {
   /**
    * Create CSRF protection middleware
    */
-  public: createMiddleware(): (req: Request, res: Response, next: NextFunction) => void: {
+  public createMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       // Skip for non-state-changing methods
       if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
         return next();
-}
+      }
       
       // Skip for excluded routes
       const excludeRoutes = this.options.excludeRoutes || [];
       for (const route of excludeRoutes) {
         if (req.path.startsWith(route)) {
           return next();
-}
+        }
       }
       
       // Validate token
@@ -264,23 +264,23 @@ export class CSRFProtection: {
             path: req.path,
             reason: validationResult.reason,
             userAgent: req.headers['user-agent']
-}
+          }
         }).catch(error => {
           console.error('Error logging CSRF validation failure:', error);
-});
+        });
         
         return res.status(403).json({
           error: 'Invalid CSRF token',
           message: 'CSRF validation failed',
           reason: validationResult.reason || 'Token validation failed'
-});
+        });
       }
       
       // On successful validation, generate a new token for the next request
       // This implements per-request tokens for maximum security
       const newToken = this.generateToken(
         req.session?.id, // Use session ID if available 
-        req.path        // Use current path for route-specific tokens;
+        req.path        // Use current path for route-specific tokens
       );
       
       // Set the new token in the response
@@ -288,15 +288,15 @@ export class CSRFProtection: {
       if (!cookieName) {
         console.error('CSRF cookie name is undefined');
         return next();
-}
+      }
       
       const cookieValue = Buffer.from(JSON.stringify(newToken)).toString('base64');
       const cookieOptions = {
         httpOnly: true,
-        secure: process.env.NODE_ENV = == 'production',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax' as const,
-        maxAge: this.options.expiryTime || defaultOptions.expiryTime;
-};
+        maxAge: this.options.expiryTime || defaultOptions.expiryTime
+      };
       
       res.cookie(cookieName, cookieValue, cookieOptions);
       
@@ -310,21 +310,21 @@ export class CSRFProtection: {
   /**
    * Create middleware to set CSRF token
    */
-  public: createTokenMiddleware(): (req: Request, res: Response, next: NextFunction) => void: {
+  public createTokenMiddleware(): (req: Request, res: Response, next: NextFunction) => void {
     return (req: Request, res: Response, next: NextFunction) => {
       // Set token cookie and expose token in header
       const token = this.setTokenCookie(res);
       res.setHeader('X-CSRF-Token', token);
       
       next();
-};
+    };
   }
 }
 
 /**
  * Default CSRF protection instance
  */
-export const csrfProtection = new: CSRFProtection();
+export const csrfProtection = new CSRFProtection();
 
 /**
  * Default CSRF protection middleware

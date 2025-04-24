@@ -1,4 +1,3 @@
-import { registerComponent, checkComponentLeaks, clearAllRegistrations, useMemoryLeakDetection } from "@/lib/memory-leak-detector";
 /**
  * Memory Leak Detector
  * 
@@ -107,7 +106,7 @@ export function attemptGarbageCollection(): void {
         // @ts-ignore
         window.gc();
       }
-    } catch (e: unknown) {
+    } catch (e) {
       console.log('Manual GC not available');
     }
   }

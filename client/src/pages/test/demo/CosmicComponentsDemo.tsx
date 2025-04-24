@@ -1,42 +1,42 @@
 import React, { useState } from 'react';
-import CosmicButton from "@/components/ui/cosmic-button";
-import { Button } from "@/components/ui/button";
+import CosmicButton from '../../../components/ui/cosmic-button';
+import { Button } from '../../../components/ui/button';
 import { Link } from 'wouter';
-import TestNav from "@/components/cosmic/TestNav";
-import SacredGeometry from "@/components/ui/sacred-geometry";
-import Stars from "@/components/cosmic/Stars";
-import CosmicCard from "@/components/ui/cosmic-card";
-import CosmicHeading from "@/components/ui/cosmic-heading";
-import CosmicContainer from "@/components/ui/cosmic-container";
-import CosmicLink from "@/components/ui/cosmic-link";
-import CosmicInput from "@/components/ui/cosmic-input";
-import CosmicBadge from "@/components/ui/cosmic-badge";
-import CosmicAlert from "@/components/ui/cosmic-alert";
-import CosmicDrawer from "@/components/ui/cosmic-drawer";
-import CosmicTabs from "@/components/ui/cosmic-tabs";
-import CosmicAvatar from "@/components/ui/cosmic-avatar";
-import CosmicProgressBar from "@/components/ui/cosmic-progress-bar";
-import CosmicTooltip from "@/components/ui/cosmic-tooltip";
-import CosmicDropdown from "@/components/ui/cosmic-dropdown";
-import CosmicCarousel from "@/components/ui/cosmic-carousel";
-import CosmicModal from "@/components/ui/cosmic-modal";
-import CosmicSelect from "@/components/ui/cosmic-select";
-import CosmicCheckbox from "@/components/ui/cosmic-checkbox";
-import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from "@/components/ui/cosmic-radio";
-import CosmicToggle from "@/components/ui/cosmic-toggle";
-import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from "@/components/features/cosmic/cosmic-toast";
-import { CosmicSlider } from "@/components/ui/cosmic-slider";
-import { CosmicSidebar } from "@/components/ui/cosmic-sidebar";
-import { CosmicMediaPlayer } from "@/components/ui/cosmic-media-player";
-import CosmicMarkdown from "@/components/ui/cosmic-markdown";
-import { CosmicMasonry, CosmicMasonryItem } from "@/components/ui/cosmic-masonry";
-import CosmicStepper from "@/components/ui/cosmic-stepper";
+import TestNav from '../../../components/cosmic/TestNav';
+import SacredGeometry from '../../../components/ui/sacred-geometry';
+import Stars from '../../../components/cosmic/Stars';
+import CosmicCard from '../../../components/ui/cosmic-card';
+import CosmicHeading from '../../../components/ui/cosmic-heading';
+import CosmicContainer from '../../../components/ui/cosmic-container';
+import CosmicLink from '../../../components/ui/cosmic-link';
+import CosmicInput from '../../../components/ui/cosmic-input';
+import CosmicBadge from '../../../components/ui/cosmic-badge';
+import CosmicAlert from '../../../components/ui/cosmic-alert';
+import CosmicDrawer from '../../../components/ui/cosmic-drawer';
+import CosmicTabs from '../../../components/ui/cosmic-tabs';
+import CosmicAvatar from '../../../components/ui/cosmic-avatar';
+import CosmicProgressBar from '../../../components/ui/cosmic-progress-bar';
+import CosmicTooltip from '../../../components/ui/cosmic-tooltip';
+import CosmicDropdown from '../../../components/ui/cosmic-dropdown';
+import CosmicCarousel from '../../../components/ui/cosmic-carousel';
+import CosmicModal from '../../../components/ui/cosmic-modal';
+import CosmicSelect from '../../../components/ui/cosmic-select';
+import CosmicCheckbox from '../../../components/ui/cosmic-checkbox';
+import { CosmicRadio, CosmicRadioGroup, CosmicRadioCard } from '../../../components/ui/cosmic-radio';
+import CosmicToggle from '../../../components/ui/cosmic-toggle';
+import { CosmicToast, ToastManager, showSuccessToast, showErrorToast, showInfoToast, showWarningToast, showCosmicToast } from '../../../components/features/cosmic/cosmic-toast';
+import { CosmicSlider } from '../../../components/ui/cosmic-slider';
+import { CosmicSidebar } from '../../../components/ui/cosmic-sidebar';
+import { CosmicMediaPlayer } from '../../../components/ui/cosmic-media-player';
+import CosmicMarkdown from '../../../components/ui/cosmic-markdown';
+import { CosmicMasonry, CosmicMasonryItem } from '../../../components/ui/cosmic-masonry';
+import CosmicStepper from '../../../components/ui/cosmic-stepper';
 import { 
   CosmicForm, 
   CosmicFormGroup, 
   CosmicFormLabel, 
   CosmicFormHelperText 
-} from "@/components/features/cosmic/cosmic-form";
+} from '../../../components/features/cosmic/cosmic-form';
 import { 
   CosmicTable, 
   CosmicTableContainer, 
@@ -46,13 +46,13 @@ import {
   CosmicTableRow,
   CosmicTableCell,
   CosmicTableHeadCell 
-} from "@/components/ui/cosmic-table";
+} from '../../../components/ui/cosmic-table';
 import {
   CosmicAccordion,
   CosmicAccordionItem,
   CosmicAccordionTrigger,
   CosmicAccordionContent
-} from "@/components/ui/cosmic-accordion";
+} from '../../../components/ui/cosmic-accordion';
 import { 
   Search, Mail, Info, AlertTriangle, CheckCircle, X, 
   Settings, User, LogOut, Home, Music, Star, HelpCircle,
@@ -238,7 +238,7 @@ export default function CosmicComponentsDemo() {
               <input
                 type="range"
                 min="50"
-                max={500}
+                max="500"
                 value={starSettings.count}
                 onChange={(e) => setStarSettings({...starSettings, count: Number(e.target.value)})}
                 className="w-full"
@@ -252,7 +252,7 @@ export default function CosmicComponentsDemo() {
               <input
                 type="range"
                 min="0.1"
-                max={2}
+                max="2"
                 step="0.1"
                 value={starSettings.speed}
                 onChange={(e) => setStarSettings({...starSettings, speed: Number(e.target.value)})}
@@ -279,7 +279,7 @@ export default function CosmicComponentsDemo() {
               <input
                 type="range"
                 min="1"
-                max={5}
+                max="5"
                 step="0.5"
                 value={starSettings.maxSize}
                 onChange={(e) => setStarSettings({...starSettings, maxSize: Number(e.target.value)})}

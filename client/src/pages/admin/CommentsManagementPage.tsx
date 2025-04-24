@@ -3,8 +3,6 @@
  * 
  * Page for managing and moderating comments for admin users
  */
-import React from "react";
-
 import { Suspense } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { CommentManagement } from "@/components/features/admin/CommentManagement";

@@ -3,11 +3,11 @@ import path from 'path';
 import { logSecurityEvent } from './security/security';
 
 // Define security settings and their default values
-export interface SecuritySettings: {
-  CONTENT_SECURITY_POLICY: boolean;,
-  HTTPS_ENFORCEMENT: boolean;,
-  AUDIO_DOWNLOAD_PROTECTION: boolean;,
-  ADVANCED_BOT_PROTECTION: boolean;,
+export interface SecuritySettings {
+  CONTENT_SECURITY_POLICY: boolean;
+  HTTPS_ENFORCEMENT: boolean;
+  AUDIO_DOWNLOAD_PROTECTION: boolean;
+  ADVANCED_BOT_PROTECTION: boolean;
   TWO_FACTOR_AUTHENTICATION: boolean;
 }
 
@@ -30,7 +30,7 @@ if (!fs.existsSync(configDir)) {
 }
 
 // Get current security settings
-export function getSecuritySettings(): SecuritySettings: {
+export function getSecuritySettings(): SecuritySettings {
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
       const settingsData = fs.readFileSync(SETTINGS_FILE, 'utf8');
@@ -42,22 +42,22 @@ export function getSecuritySettings(): SecuritySettings: {
       // If file doesn't exist, create with default settings
       fs.writeFileSync(SETTINGS_FILE, JSON.stringify(DEFAULT_SECURITY_SETTINGS, null, 2));
       return DEFAULT_SECURITY_SETTINGS;
-}
-  } catch (error: unknown) {
+    }
+  } catch (error) {
     console.error('Error reading security settings:', error);
     return DEFAULT_SECURITY_SETTINGS;
-}
+  }
 }
 
 // Update a security setting
-export function updateSecuritySetting(setting: keyof SecuritySettings, value: boolean, userId?: number, userRole?: string): boolean: {
+export function updateSecuritySetting(setting: keyof SecuritySettings, value: boolean, userId?: number, userRole?: string): boolean {
   try {
     const currentSettings = getSecuritySettings();
     
     // Check if setting exists
     if (!(setting in currentSettings)) {
       return false;
-}
+    }
     
     // Update the setting
     currentSettings[setting] = value;
@@ -65,17 +65,18 @@ export function updateSecuritySetting(setting: keyof SecuritySettings, value: bo
     // Write updated settings to file
     fs.writeFileSync(SETTINGS_FILE, JSON.stringify(currentSettings, null, 2));
     
-    // Log the security event: logSecurityEvent({
-      type 'SECURITY_SETTING_CHANGED',
+    // Log the security event
+    logSecurityEvent({
+      type: 'SECURITY_SETTING_CHANGED',
       setting,
       value,
       userId,
       userRole,
-});
+    });
     
     return true;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error updating security setting:', error);
     return false;
-}
+  }
 }

@@ -5,9 +5,8 @@
  * Migrated as part of the repository reorganization.
  */
 import React, { useState, createContext, useContext } from 'react';
-import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from 'class-variance-authority';
-
+import { cn } from '../../lib/utils';
 import { ChevronDown } from 'lucide-react';
 
 // Define variants for the accordion container

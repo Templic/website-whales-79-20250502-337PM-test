@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
@@ -112,7 +111,7 @@ export default function AdminPortalPage() {
       });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['adminStats'] });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: 'Action Failed',
         description: `Could not ${action} user`,
@@ -128,7 +127,7 @@ export default function AdminPortalPage() {
         title: "Success",
         description: "Logged out successfully"
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to logout",

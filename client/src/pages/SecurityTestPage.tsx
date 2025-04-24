@@ -6,8 +6,6 @@
  * 
  * WARNING: This page is for TESTING PURPOSES ONLY and should not be used in production!
  */
-import React from "react";
-
 
 import QuantumCryptoTester from "@/components/security/QuantumCryptoTester";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

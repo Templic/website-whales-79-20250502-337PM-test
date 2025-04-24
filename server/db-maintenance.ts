@@ -35,13 +35,13 @@ export async function scheduleIntelligentMaintenance(): Promise<void> {
   if (!config.features.enableDatabaseOptimization || !config.database.enableOptimization) {
     log('Database optimization is disabled, skipping maintenance scheduling', 'db-maintenance');
     return;
-}
+  }
 
   // Run maintenance immediately if it's the first run
   if (lastMaintenanceRun === null) {
     log('Initial database maintenance run scheduled', 'db-maintenance');
     await runIntelligentMaintenance();
-}
+  }
 
   // Schedule regular maintenance
   const interval = config.database.maintenanceInterval;
@@ -68,7 +68,8 @@ export async function runIntelligentMaintenance(): Promise<void> {
     const vacuumCandidates = identifyVacuumCandidates(tableStats);
     const analyzeCandidates = identifyAnalyzeCandidates(tableStats);
 
-    // Log what we're going to do: log(`Found ${vacuumCandidates.length} tables needing VACUUM`, 'db-maintenance');
+    // Log what we're going to do
+    log(`Found ${vacuumCandidates.length} tables needing VACUUM`, 'db-maintenance');
     log(`Found ${analyzeCandidates.length} tables needing ANALYZE`, 'db-maintenance');
 
     // Run VACUUM on tables needing it
@@ -94,10 +95,10 @@ export async function runIntelligentMaintenance(): Promise<void> {
       log(`- ANALYZE performed on ${analyzeCandidates.length} tables`, 'db-maintenance');
     } else {
       log('No tables required maintenance at this time', 'db-maintenance');
-}
+    }
     
     return;
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error during database maintenance: ${error}`, 'db-maintenance');
     console.error('Database maintenance error:', error);
   }
@@ -123,7 +124,7 @@ async function getTableStatistics(): Promise<TableStats[]> {
       FROM pg_stat_user_tables s
       JOIN pg_class c ON s.relname = c.relname
       WHERE s.schemaname = $1
-      ORDER BY s.relname;
+      ORDER BY s.relname
     `;
 
     const client = await pgPool.connect();
@@ -140,8 +141,8 @@ async function getTableStatistics(): Promise<TableStats[]> {
       lastAnalyze: row.last_analyze,
       lastAutoVacuum: row.last_autovacuum,
       lastAutoAnalyze: row.last_autoanalyze
-}));
-  } catch (error: unknown) {
+    }));
+  } catch (error) {
     log(`Error fetching table statistics: ${error}`, 'db-maintenance');
     return [];
   }
@@ -158,18 +159,18 @@ function identifyVacuumCandidates(tableStats: TableStats[]): string[] {
     // Skip excluded tables
     if (excludeTables.includes(stats.tableName)) {
       continue;
-}
+    }
 
     // Only check specific tables if specified
     if (targetTables.length > 0 && !targetTables.includes(stats.tableName)) {
       continue;
-}
+    }
 
     // Vacuum if dead tuples exceed threshold or if it's never been vacuumed
     if (stats.deadTuples >= vacuumThreshold || 
         (!stats.lastVacuum && !stats.lastAutoVacuum && stats.rowCount > 0)) {
       candidates.push(stats.tableName);
-}
+    }
   }
 
   return candidates;
@@ -186,18 +187,18 @@ function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
     // Skip excluded tables
     if (excludeTables.includes(stats.tableName)) {
       continue;
-}
+    }
 
     // Only check specific tables if specified
     if (targetTables.length > 0 && !targetTables.includes(stats.tableName)) {
       continue;
-}
+    }
 
     // Analyze if modified tuples exceed threshold or if it's never been analyzed
     if (stats.modifiedTuples >= analyzeThreshold ||
         (!stats.lastAnalyze && !stats.lastAutoAnalyze && stats.rowCount > 0)) {
       candidates.push(stats.tableName);
-}
+    }
   }
 
   return candidates;
@@ -225,12 +226,12 @@ async function runVacuum(tables: string[]): Promise<void> {
     for (const table of tables) {
       // Security: Validate table name before running operation
       if (!isValidTableName(table)) {
-        log(`Security warning: Invalid table name: '${table}' - skipping VACUUM`, 'db-maintenance');
+        log(`Security warning: Invalid table name '${table}' - skipping VACUUM`, 'db-maintenance');
         continue;
       }
       
       const startTime = Date.now();
-      log(`Running VACUUM on table: '${table}'...`, 'db-maintenance');
+      log(`Running VACUUM on table '${table}'...`, 'db-maintenance');
       
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
@@ -239,11 +240,11 @@ async function runVacuum(tables: string[]): Promise<void> {
       await client.query(query);
       
       const duration = Date.now() - startTime;
-      log(`VACUUM on: '${table}' completed in ${duration}ms`, 'db-maintenance');
+      log(`VACUUM on '${table}' completed in ${duration}ms`, 'db-maintenance');
     }
 
     client.release();
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error during VACUUM: ${error}`, 'db-maintenance');
   }
 }
@@ -260,12 +261,12 @@ async function runAnalyze(tables: string[]): Promise<void> {
     for (const table of tables) {
       // Security: Validate table name before running operation
       if (!isValidTableName(table)) {
-        log(`Security warning: Invalid table name: '${table}' - skipping ANALYZE`, 'db-maintenance');
+        log(`Security warning: Invalid table name '${table}' - skipping ANALYZE`, 'db-maintenance');
         continue;
       }
       
       const startTime = Date.now();
-      log(`Running ANALYZE on table: '${table}'...`, 'db-maintenance');
+      log(`Running ANALYZE on table '${table}'...`, 'db-maintenance');
       
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
@@ -274,11 +275,11 @@ async function runAnalyze(tables: string[]): Promise<void> {
       await client.query(query);
       
       const duration = Date.now() - startTime;
-      log(`ANALYZE on: '${table}' completed in ${duration}ms`, 'db-maintenance');
+      log(`ANALYZE on '${table}' completed in ${duration}ms`, 'db-maintenance');
     }
 
     client.release();
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error during ANALYZE: ${error}`, 'db-maintenance');
   }
 }
@@ -299,7 +300,7 @@ export async function forceFullMaintenance(): Promise<void> {
       SELECT tablename
       FROM pg_tables
       WHERE schemaname = $1
-      ORDER BY tablename;
+      ORDER BY tablename
     `;
     
     const result = await client.query(tablesQuery, ['public']);
@@ -315,12 +316,12 @@ export async function forceFullMaintenance(): Promise<void> {
     for (const table of tablesToMaintain) {
       // Security: Validate table name before running operation
       if (!isValidTableName(table)) {
-        log(`Security warning: Invalid table name: '${table}' - skipping maintenance`, 'db-maintenance');
+        log(`Security warning: Invalid table name '${table}' - skipping maintenance`, 'db-maintenance');
         continue;
       }
       
       const tableStartTime = Date.now();
-      log(`Running VACUUM ANALYZE on table: '${table}'...`, 'db-maintenance');
+      log(`Running VACUUM ANALYZE on table '${table}'...`, 'db-maintenance');
       
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
@@ -329,7 +330,7 @@ export async function forceFullMaintenance(): Promise<void> {
       await client.query(query);
       
       const tableDuration = Date.now() - tableStartTime;
-      log(`Maintenance on: '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
+      log(`Maintenance on '${table}' completed in ${tableDuration}ms`, 'db-maintenance');
     }
     
     client.release();
@@ -339,7 +340,7 @@ export async function forceFullMaintenance(): Promise<void> {
     const duration = lastMaintenanceRun - startTime;
     
     log(`Full database maintenance completed in ${duration}ms`, 'db-maintenance');
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error during full database maintenance: ${error}`, 'db-maintenance');
     console.error('Full database maintenance error:', error);
   }

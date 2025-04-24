@@ -4,8 +4,6 @@
  * Component Type: cosmic
  * Migrated from imported components.
  */
-import React from "react";
-
 "use client"
 
 import type { ReactNode } from "react"
@@ -99,7 +97,7 @@ export function CosmicHeading({
           <motion.div
             className="absolute -bottom-2 left-0 h-[3px] bg-gradient-to-r from-purple-500 to-transparent"
             initial={{ width: 0 }}
-            animate={{ width: 40 }}
+            animate={{ width: "40%" }}
             transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
           />
         )}
@@ -190,7 +188,7 @@ function CosmicHeadingOriginal({
           <motion.div
             className="absolute -bottom-2 left-0 h-[3px] bg-gradient-to-r from-purple-500 to-transparent"
             initial={{ width: 0 }}
-            animate={{ width: 40 }}
+            animate={{ width: "40%" }}
             transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
           />
         )}

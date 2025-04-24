@@ -33,7 +33,7 @@ export default function PostsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {posts?.map((post$2 => (
+              {posts?.map((post: any) => (
                 <TableRow key={post.id}>
                   <TableCell>{post.title}</TableCell>
                   <TableCell>{post.author}</TableCell>

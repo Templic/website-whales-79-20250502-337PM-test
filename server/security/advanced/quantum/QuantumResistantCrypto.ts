@@ -17,29 +17,29 @@ import { immutableSecurityLogs as securityBlockchain } from '../blockchain/Immut
 import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/SecurityEventTypes';
 
 // Type definitions
-export interface EncryptionResult: {
-  ciphertext: string;,
+export interface EncryptionResult {
+  ciphertext: string;
   iv: string;
   authTag?: string;
   encapsulatedKey?: string;
 }
 
-export interface SignatureResult: {
-  signature: string;,
+export interface SignatureResult {
+  signature: string;
   publicKey: string;
 }
 
-export interface VerificationResult: {
+export interface VerificationResult {
   valid: boolean;
   reason?: string;
 }
 
-export interface KeyPair: {
-  publicKey: string;,
+export interface KeyPair {
+  publicKey: string;
   privateKey: string;
 }
 
-export interface QRCOptions: {
+export interface QRCOptions {
   algorithm?: 'kyber' | 'dilithium' | 'sphincs' | 'newhope' | 'frodo';
   strength?: 'standard' | 'high' | 'paranoid';
   encoding?: 'base64' | 'hex';
@@ -105,8 +105,8 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
       metadata: {
         algorithm,
         strength,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
@@ -119,13 +119,13 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: keyConfig.keySize,
       publicKeyEncoding: {
-        type 'spki',
+        type: 'spki',
         format: 'pem'
-},
+      },
       privateKeyEncoding: {
-        type 'pkcs8',
+        type: 'pkcs8',
         format: 'pem'
-}
+      }
     });
     
     // Log success
@@ -137,12 +137,12 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
       metadata: {
         algorithm,
         strength,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return { publicKey, privateKey };
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -154,11 +154,11 @@ export async function generateKeyPair(options: QRCOptions = {}): Promise<KeyPair
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Quantum-resistant key pair generation, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant key pair generation failed: ${error.message}`);
   }
 }
 
@@ -192,8 +192,8 @@ export async function encrypt(
         algorithm,
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
@@ -205,13 +205,13 @@ export async function encrypt(
     // Create cipher
     const cipher = crypto.createCipheriv('aes-256-gcm', 
       crypto.randomBytes(32), // Placeholder for a proper key derivation
-      iv;
+      iv
     );
     
     // Encrypt data
     const encryptedData = Buffer.concat([
       cipher.update(dataBuffer),
-      cipher.final();
+      cipher.final()
     ]);
     
     // Get authentication tag
@@ -223,7 +223,7 @@ export async function encrypt(
       ciphertext: encryptedData[encodeFn](encoding),
       iv: iv[encodeFn](encoding),
       authTag: authTag[encodeFn](encoding)
-};
+    };
     
     // Log success
     await securityBlockchain.addSecurityEvent({
@@ -235,12 +235,12 @@ export async function encrypt(
         algorithm,
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return encryptionResult;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -252,11 +252,11 @@ export async function encrypt(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Quantum-resistant encryption, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant encryption failed: ${error.message}`);
   }
 }
 
@@ -286,8 +286,8 @@ export async function decrypt(
       metadata: {
         algorithm,
         strength,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
@@ -302,7 +302,7 @@ export async function decrypt(
     // Create decipher
     const decipher = crypto.createDecipheriv('aes-256-gcm', 
       crypto.randomBytes(32), // Placeholder for a proper key derivation
-      iv;
+      iv
     );
     
     // Set authentication tag
@@ -311,7 +311,7 @@ export async function decrypt(
     // Decrypt data
     const decryptedData = Buffer.concat([
       decipher.update(ciphertext),
-      decipher.final();
+      decipher.final()
     ]);
     
     // Log success
@@ -324,12 +324,12 @@ export async function decrypt(
         algorithm,
         strength,
         dataSize: decryptedData.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return decryptedData;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -341,11 +341,11 @@ export async function decrypt(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Quantum-resistant decryption, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant decryption failed: ${error.message}`);
   }
 }
 
@@ -379,8 +379,8 @@ export async function sign(
         algorithm,
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
@@ -397,7 +397,7 @@ export async function sign(
       key: privateKey,
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: 32
-});
+    });
     
     // Extract public key from private key (for demonstration)
     // In a real implementation, this would be done properly
@@ -413,15 +413,15 @@ export async function sign(
         algorithm,
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {
       signature: signature.toString(encoding),
       publicKey
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -433,11 +433,11 @@ export async function sign(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Quantum-resistant signing, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant signing failed: ${error.message}`);
   }
 }
 
@@ -476,8 +476,8 @@ export async function verify(
         algorithm,
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
@@ -494,16 +494,16 @@ export async function verify(
       key: publicKey,
       padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
       saltLength: 32
-}, signatureBuffer);
+    }, signatureBuffer);
     
     // Create result
     const result: VerificationResult = {
       valid: isValid
-};
+    };
     
     if (!isValid) {
       result.reason = 'Invalid signature';
-}
+    }
     
     // Log result
     await securityBlockchain.addSecurityEvent({
@@ -516,12 +516,12 @@ export async function verify(
         strength,
         valid: isValid,
         reason: result.reason,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return result;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -533,8 +533,8 @@ export async function verify(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return {
@@ -571,15 +571,16 @@ export async function hash(
       metadata: {
         strength,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     // For now, we'll use traditional crypto as a placeholder
     // In a real implementation, this would use actual quantum-resistant hash functions
     
     // Choose hash algorithm based on strength
-    const hashAlgorithm = strength === 'paranoid' ? 'sha512' :;
+    const hashAlgorithm = 
+      strength === 'paranoid' ? 'sha512' :
       strength === 'high' ? 'sha384' : 'sha256';
     
     // Hash data
@@ -595,12 +596,12 @@ export async function hash(
         strength,
         hashAlgorithm,
         dataSize: dataBuffer.length,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
     return hash;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.CRYPTOGRAPHY as any,
@@ -611,11 +612,11 @@ export async function hash(
         strength,
         error: error.message,
         stack: error.stack,
-        timestamp: new: Date().toISOString()
-}
+        timestamp: new Date().toISOString()
+      }
     });
     
-    throw new Error(`Quantum-resistant hashing, failed: ${error.message}`);
+    throw new Error(`Quantum-resistant hashing failed: ${error.message}`);
   }
 }
 
@@ -630,8 +631,10 @@ async function extractPublicKey(privateKey: string): Promise<string> {
   // This is a placeholder that would be implemented properly in a real system
   // For now, just return a fake public key
   return `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvYq0zcxPd/QQvYfgVWFS: 7e6t0+Ej5SdR9XIUKzHgO/KLr0X79cGsmQSYJx6YtQSk4JGvJElLDLQbX5/RUfRD
-nHGfYD+CwzQDFxSvH8zy0O0MJhofh5+zzlWxvEHCnKFUMvC/36aLPKYmahIurTPi: 3rcZ5WcaC9YwV2MVpP3RvGQbKYlQPKdpNP/EBl0epP/xK5PxXe7lJEzLFGd53xKu
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvYq0zcxPd/QQvYfgVWFS
+7e6t0+Ej5SdR9XIUKzHgO/KLr0X79cGsmQSYJx6YtQSk4JGvJElLDLQbX5/RUfRD
+nHGfYD+CwzQDFxSvH8zy0O0MJhofh5+zzlWxvEHCnKFUMvC/36aLPKYmahIurTPi
+3rcZ5WcaC9YwV2MVpP3RvGQbKYlQPKdpNP/EBl0epP/xK5PxXe7lJEzLFGd53xKu
 m5vQn/Bm5UVdJjYzFxDzlI0G0n0PYT8RkYzkYRqh0JR6Q4Eq3pgfdBwGt2UbKnIh
 +XM4rPoRs9cUHV1GbTVy7FfGJFV9n9p1dsz02+n/rKPG/lKQlvYZ0l9K9cKdw/9p
 AwIDAQAB

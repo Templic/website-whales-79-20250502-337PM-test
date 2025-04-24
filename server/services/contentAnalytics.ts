@@ -7,71 +7,71 @@ import { ContentSchedulingMetrics } from './contentScheduler';
 /**
  * Interface for content throughput statistics
  */
-export interface ContentThroughputMetrics: {
+export interface ContentThroughputMetrics {
   last24Hours: {
-    totalCreated: number;,
-  totalPublished: number;,
-  totalUpdated: number;,
-  totalArchived: number;
-};
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
   last7Days: {
-    totalCreated: number;,
-  totalPublished: number;,
-  totalUpdated: number;,
-  totalArchived: number;
-};
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
   last30Days: {
-    totalCreated: number;,
-  totalPublished: number;,
-  totalUpdated: number;,
-  totalArchived: number;
-};
+    totalCreated: number;
+    totalPublished: number;
+    totalUpdated: number;
+    totalArchived: number;
+  };
 }
 
 /**
  * Interface for workflow statistics
  */
-export interface WorkflowMetrics: {
-  avgTimeToApproval: number; // In hours,
-  avgTimeToPublish: number; // In hours,
-  approvalRate: number; // Percentage,
-  rejectionRate: number; // Percentage,
-  totalInDraft: number;,
-  totalInReview: number;,
-  totalApproved: number;,
-  totalPublished: number;,
+export interface WorkflowMetrics {
+  avgTimeToApproval: number; // In hours
+  avgTimeToPublish: number; // In hours
+  approvalRate: number; // Percentage
+  rejectionRate: number; // Percentage
+  totalInDraft: number;
+  totalInReview: number;
+  totalApproved: number;
+  totalPublished: number;
   totalArchived: number;
 }
 
 /**
  * Interface for scheduling statistics
  */
-export interface SchedulingMetrics extends ContentSchedulingMetrics: {
-  upcomingPublications: number;,
+export interface SchedulingMetrics extends ContentSchedulingMetrics {
+  upcomingPublications: number;
   soonExpiring: number;
 }
 
 /**
  * Interface for content that is expiring soon
  */
-export interface ExpiringContentItem: {
-  id: string | number;,
-  title: string;,
-  section: string;,
-  type string;,
-  expirationDate: string | Date;,
-  publishedAt: string | Date;,
+export interface ExpiringContentItem {
+  id: string | number;
+  title: string;
+  section: string;
+  type: string;
+  expirationDate: string | Date;
+  publishedAt: string | Date;
   createdBy: string;
 }
 
 /**
  * Interface for combined analytics
  */
-export interface ContentAnalytics: {
-  throughput: ContentThroughputMetrics;,
-  workflow: WorkflowMetrics;,
-  scheduling: SchedulingMetrics;,
-  expiringContent: ExpiringContentItem[];,
+export interface ContentAnalytics {
+  throughput: ContentThroughputMetrics;
+  workflow: WorkflowMetrics;
+  scheduling: SchedulingMetrics;
+  expiringContent: ExpiringContentItem[];
   lastUpdated: Date;
 }
 
@@ -80,32 +80,32 @@ export interface ContentAnalytics: {
  */
 export async function getContentThroughputMetrics(): Promise<ContentThroughputMetrics> {
   try {
-    const now = new: Date();
-    const yesterday = new: Date(now);
+    const now = new Date();
+    const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    const lastWeek = new: Date(now);
+    const lastWeek = new Date(now);
     lastWeek.setDate(lastWeek.getDate() - 7);
     
-    const lastMonth = new: Date(now);
+    const lastMonth = new Date(now);
     lastMonth.setDate(lastMonth.getDate() - 30);
     
     // Get created counts
     const createdLast24Hours = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(gte(contentItems.createdAt, yesterday));
     
     const createdLast7Days = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(gte(contentItems.createdAt, lastWeek));
     
     const createdLast30Days = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(gte(contentItems.createdAt, lastMonth));
     
@@ -113,30 +113,30 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     // Since we're dealing with a potentially complex database structure, we'll use SQL template literals
     // with parameter binding for the date values which ensures safety from SQL injection
     const publishedLast24Hours = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'published' ;
+      WHERE status = 'published' 
       AND (published_at >= ${yesterday} OR updated_at >= ${yesterday})
     `);
     
     const publishedLast7Days = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'published' ;
+      WHERE status = 'published' 
       AND (published_at >= ${lastWeek} OR updated_at >= ${lastWeek})
     `);
     
     const publishedLast30Days = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'published' ;
+      WHERE status = 'published' 
       AND (published_at >= ${lastMonth} OR updated_at >= ${lastMonth})
     `);
     
     // Get updated counts
     const updatedLast24Hours = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(
       and(
@@ -147,7 +147,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     
     const updatedLast7Days = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(
       and(
@@ -158,7 +158,7 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     
     const updatedLast30Days = await db.select({
       count: count()
-})
+    })
     .from(contentItems)
     .where(
       and(
@@ -169,23 +169,23 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
     
     // Get archived counts using raw SQL since we don't have an archivedAt column in the schema
     const archivedLast24Hours = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'archived' ;
+      WHERE status = 'archived' 
       AND archived_at >= ${yesterday}
     `);
     
     const archivedLast7Days = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'archived' ;
+      WHERE status = 'archived' 
       AND archived_at >= ${lastWeek}
     `);
     
     const archivedLast30Days = await db.execute(sql`
-      SELECT: COUNT(*) 
+      SELECT COUNT(*) 
       FROM content_items 
-      WHERE status = 'archived' ;
+      WHERE status = 'archived' 
       AND archived_at >= ${lastMonth}
     `);
     
@@ -195,21 +195,21 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
         totalPublished: parseInt(publishedLast24Hours.rows[0]?.count?.toString() || '0', 10),
         totalUpdated: parseInt(updatedLast24Hours[0]?.count?.toString() || '0', 10),
         totalArchived: parseInt(archivedLast24Hours.rows[0]?.count?.toString() || '0', 10)
-},
+      },
       last7Days: {
         totalCreated: parseInt(createdLast7Days[0]?.count?.toString() || '0', 10),
         totalPublished: parseInt(publishedLast7Days.rows[0]?.count?.toString() || '0', 10),
         totalUpdated: parseInt(updatedLast7Days[0]?.count?.toString() || '0', 10),
         totalArchived: parseInt(archivedLast7Days.rows[0]?.count?.toString() || '0', 10)
-},
+      },
       last30Days: {
         totalCreated: parseInt(createdLast30Days[0]?.count?.toString() || '0', 10),
         totalPublished: parseInt(publishedLast30Days.rows[0]?.count?.toString() || '0', 10),
         totalUpdated: parseInt(updatedLast30Days[0]?.count?.toString() || '0', 10),
         totalArchived: parseInt(archivedLast30Days.rows[0]?.count?.toString() || '0', 10)
-}
+      }
     };
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error getting content throughput metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -218,19 +218,19 @@ export async function getContentThroughputMetrics(): Promise<ContentThroughputMe
         totalPublished: 0,
         totalUpdated: 0,
         totalArchived: 0
-},
+      },
       last7Days: {
         totalCreated: 0,
         totalPublished: 0,
         totalUpdated: 0,
         totalArchived: 0
-},
+      },
       last30Days: {
         totalCreated: 0,
         totalPublished: 0,
         totalUpdated: 0,
         totalArchived: 0
-}
+      }
     };
   }
 }
@@ -248,36 +248,39 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
         status,
         COUNT(*) as count
       FROM content_items
-      GROUP BY status;
+      GROUP BY status
     `);
     
     // Calculate average time from draft to approval with parameterized query
-    // Using explicit: 'approved' and: 'published' strings as parameters
+    // Using explicit 'approved' and 'published' strings as parameters
     const approvedStatuses = ['approved', 'published'];
     const avgTimeToApproval = await db.execute(sql`
-      SELECT: AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) as avg_time
-      FROM content_items;
+      SELECT AVG(EXTRACT(EPOCH FROM (approved_at - created_at))/3600) as avg_time
+      FROM content_items
       WHERE status IN (${approvedStatuses})
-      AND approved_at IS NOT NULL: `);
+      AND approved_at IS NOT NULL
+    `);
     
     // Calculate average time from approval to publish with parameterized query
     // Using the published status as a parameter
     const publishedStatus = 'published';
     const avgTimeToPublish = await db.execute(sql`
-      SELECT: AVG(EXTRACT(EPOCH FROM (published_at - approved_at))/3600) as avg_time
-      FROM content_items;
+      SELECT AVG(EXTRACT(EPOCH FROM (published_at - approved_at))/3600) as avg_time
+      FROM content_items
       WHERE status = ${publishedStatus}
       AND published_at IS NOT NULL
-      AND approved_at IS NOT NULL: `);
+      AND approved_at IS NOT NULL
+    `);
     
     // Calculate approval and rejection rates with parameterized query
     // Using all status values as parameters
     const statusValues = ['approved', 'published', 'changes_requested', 'archived'];
     const approvalRejectionStats = await db.execute(sql`
-      SELECT: SUM(CASE WHEN status IN ('approved', 'published') THEN: 1 ELSE: 0 END) as approved_count,
-        SUM(CASE WHEN status = 'changes_requested' THEN: 1, ELSE: 0 END) as rejected_count,
+      SELECT 
+        SUM(CASE WHEN status IN ('approved', 'published') THEN 1 ELSE 0 END) as approved_count,
+        SUM(CASE WHEN status = 'changes_requested' THEN 1 ELSE 0 END) as rejected_count,
         COUNT(*) as total_reviewed
-      FROM content_items;
+      FROM content_items
       WHERE status IN (${statusValues})
     `);
     
@@ -285,7 +288,7 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
     const statusMap: Record<string, number> = {};
     statusCounts.rows.forEach((row) => {
       statusMap[row.status] = parseInt(row.count, 10);
-});
+    });
     
     const approvedCount = parseInt(approvalRejectionStats.rows[0]?.approved_count?.toString() || '0', 10);
     const rejectedCount = parseInt(approvalRejectionStats.rows[0]?.rejected_count?.toString() || '0', 10);
@@ -305,8 +308,8 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
       totalApproved: statusMap['approved'] || 0,
       totalPublished: statusMap['published'] || 0,
       totalArchived: statusMap['archived'] || 0
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     logger.error('Error getting workflow metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -319,7 +322,7 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
       totalApproved: 0,
       totalPublished: 0,
       totalArchived: 0
-};
+    };
   }
 }
 
@@ -328,7 +331,7 @@ export async function getWorkflowMetrics(): Promise<WorkflowMetrics> {
  */
 export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
   try {
-    const now = new: Date();
+    const now = new Date();
     // Get base metrics from scheduler using a safe require
     // This avoids potential directory traversal or path manipulation attacks
     // by using a specific relative path rather than user input
@@ -338,20 +341,20 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
     // Using approved status as parameter and current date
     const approvedStatus = 'approved';
     const upcomingPublications = await db.execute(sql`
-      SELECT: COUNT(*) 
-      FROM content_items ;
+      SELECT COUNT(*) 
+      FROM content_items 
       WHERE status = ${approvedStatus}
       AND scheduled_publish_at IS NOT NULL
       AND scheduled_publish_at > ${now}
     `);
     
-    // Count content expiring in next: 7 days with parameterized query
+    // Count content expiring in next 7 days with parameterized query
     // Using published status as parameter, current date and expiration date
     const publishedStatus = 'published';
-    const oneWeekLater = new: Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const soonExpiring = await db.execute(sql`
-      SELECT: COUNT(*) 
-      FROM content_items ;
+      SELECT COUNT(*) 
+      FROM content_items 
       WHERE status = ${publishedStatus}
       AND expiration_date IS NOT NULL
       AND expiration_date > ${now}
@@ -362,8 +365,8 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
       ...baseMetrics,
       upcomingPublications: parseInt(upcomingPublications.rows[0]?.count?.toString() || '0', 10),
       soonExpiring: parseInt(soonExpiring.rows[0]?.count?.toString() || '0', 10)
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     logger.error('Error getting scheduling metrics:', error);
     // Return empty metrics in case of error
     return {
@@ -372,10 +375,10 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
       failedPublications: 0,
       upcomingExpiring: 0,
       successRate: 0,
-      lastRunAt: new: Date(),
+      lastRunAt: new Date(),
       upcomingPublications: 0,
       soonExpiring: 0
-};
+    };
   }
 }
 
@@ -384,7 +387,7 @@ export async function getSchedulingMetrics(): Promise<SchedulingMetrics> {
  */
 export async function getUpcomingScheduledContent() {
   try {
-    const now = new: Date();
+    const now = new Date();
     
     // Using parameterized query with explicit status value
     // to prevent SQL injection in the status parameter
@@ -398,11 +401,12 @@ export async function getUpcomingScheduledContent() {
         scheduled_publish_at,
         created_by,
         created_at
-      FROM content_items ;
+      FROM content_items 
       WHERE status = ${approvedStatus}
       AND scheduled_publish_at IS NOT NULL
       AND scheduled_publish_at > ${now}
-      ORDER BY scheduled_publish_at, ASC: `);
+      ORDER BY scheduled_publish_at ASC
+    `);
     
     // Use safe property access with optional chaining and explicitly type conversion
     // This prevents issues with malformed data from affecting application logic
@@ -410,15 +414,15 @@ export async function getUpcomingScheduledContent() {
       id: row.id ? Number(row.id) : null,
       title: String(row.title || ''),
       section: String(row.section || ''),
-      type String(row.type || ''),
+      type: String(row.type || ''),
       scheduledPublishAt: row.scheduled_publish_at instanceof Date ? row.scheduled_publish_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null,
       createdAt: row.created_at instanceof Date ? row.created_at : null
-}));
-  } catch (error: unknown) {
+    }));
+  } catch (error) {
     logger.error('Error getting upcoming scheduled content:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -426,8 +430,8 @@ export async function getUpcomingScheduledContent() {
  */
 export async function getExpiringContent() {
   try {
-    const now = new: Date();
-    const oneWeekLater = new: Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const oneWeekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     
     // Using parameterized query with status value as parameter
     // This prevents SQL injection by ensuring the status is properly escaped
@@ -441,12 +445,13 @@ export async function getExpiringContent() {
         expiration_date,
         published_at,
         created_by
-      FROM content_items ;
+      FROM content_items 
       WHERE status = ${publishedStatus}
       AND expiration_date IS NOT NULL
       AND expiration_date > ${now}
       AND expiration_date <= ${oneWeekLater}
-      ORDER BY expiration_date, ASC: `);
+      ORDER BY expiration_date ASC
+    `);
     
     // Use safe data transformation with type checking and null safety
     // This prevents potential XSS vulnerabilities by sanitizing the output
@@ -455,17 +460,17 @@ export async function getExpiringContent() {
       id: row.id ? Number(row.id) : null,
       title: String(row.title || ''),
       section: String(row.section || ''),
-      type String(row.type || ''),
+      type: String(row.type || ''),
       expirationDate: row.expiration_date instanceof Date ? row.expiration_date : null,
       publishedAt: row.published_at instanceof Date ? row.published_at : null,
       createdBy: row.created_by ? Number(row.created_by) : null
-}));
-  } catch (error: unknown) {
+    }));
+  } catch (error) {
     // Use detailed error logging but avoid exposing sensitive information
     // in error messages that could aid in crafting exploits
     logger.error('Error getting expiring content:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -481,7 +486,7 @@ export async function getAllContentAnalytics(): Promise<ContentAnalytics> {
     throughput,
     workflow,
     scheduling,
-    expiringContent, // Include expiring content in the response,
-  lastUpdated: new: Date()
-};
+    expiringContent, // Include expiring content in the response
+    lastUpdated: new Date()
+  };
 }

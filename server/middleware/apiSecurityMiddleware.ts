@@ -22,7 +22,7 @@ import { logSecurityEvent } from '../security/security';
 import { RASPManager } from '../security/advanced/rasp/RASPManager';
 
 // Initialize RASP Manager
-const raspManager = new: RASPManager();
+const raspManager = new RASPManager();
 
 /**
  * Creates a comprehensive API security middleware that includes:
@@ -35,7 +35,8 @@ const raspManager = new: RASPManager();
  */
 export function apiSecurityMiddleware() {
   return [
-    // Apply basic security headers using Helmet: helmet({
+    // Apply basic security headers using Helmet
+    helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
@@ -47,7 +48,7 @@ export function apiSecurityMiddleware() {
           frameSrc: ["'self'", 'https://js.stripe.com', 'https://hooks.stripe.com'],
           objectSrc: ["'none'"],
           upgradeInsecurityRequests: []
-}
+        }
       },
       noSniff: true,
       xssFilter: true,
@@ -55,10 +56,11 @@ export function apiSecurityMiddleware() {
         maxAge: 31536000,
         includeSubDomains: true,
         preload: true
-}
+      }
     }),
     
-    // Apply CSRF protection: enhancedCsrfProtection({
+    // Apply CSRF protection
+    enhancedCsrfProtection({
       exemptRoutes: [
         '/api/health',
         '/api/webhooks',
@@ -68,14 +70,15 @@ export function apiSecurityMiddleware() {
       useNonce: true,
       cookieOptions: {
         httpOnly: true,
-        secure: process.env.NODE_ENV = == 'production',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict'
-}
+      }
     }),
     
-    // Apply security validation for input attacks: securityValidation(),
+    // Apply security validation for input attacks
+    securityValidation(),
     
-    // Apply RASP for runtime protection;
+    // Apply RASP for runtime protection
     (req: Request, res: Response, next: NextFunction) => {
       // Use RASP to detect anomalies during the request
       const raspContext = raspManager.protectApiRequest(req);
@@ -83,23 +86,23 @@ export function apiSecurityMiddleware() {
       // If RASP detects a security issue, block the request
       if (raspContext.detected) {
         logSecurityEvent({
-          type 'rasp-detection',
+          type: 'rasp-detection',
           category: 'api-security',
           details: {
             endpoint: req.path,
             method: req.method,
             raspCategory: raspContext.detectionCategory,
             raspDetails: raspContext.detectionDetails
-},
-          timestamp: new: Date().toISOString()
+          },
+          timestamp: new Date().toISOString()
         });
         
         return res.status(403).json({
           success: false,
           message: 'Request blocked by security system',
-          // Do not expose detailed security information to client,
-  code: 'SECURITY_VIOLATION'
-});
+          // Do not expose detailed security information to client
+          code: 'SECURITY_VIOLATION'
+        });
       }
       
       next();
@@ -122,8 +125,10 @@ export function sensitiveProceduresMiddleware() {
       // like password changes, email changes, etc.
       
       // Track sensitive operations per user/IP to detect unusual patterns
-      // Implement additional checks for sensitive operations: next();
-}
+      // Implement additional checks for sensitive operations
+      
+      next();
+    }
   ];
 }
 
@@ -133,7 +138,7 @@ export function sensitiveProceduresMiddleware() {
 export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'body' | 'query' | 'params' = 'body') {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      const data = target === 'body' ? req.body : ;
+      const data = target === 'body' ? req.body : 
                    target === 'query' ? req.query : req.params;
       
       // Validate data against schema
@@ -142,25 +147,26 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
       // Replace data with validated data
       if (target === 'body') {
         req.body = validatedData;
-} else if (target === 'query') {
+      } else if (target === 'query') {
         req.query = validatedData;
-} else {
+      } else {
         req.params = validatedData as any;
-}
+      }
       
       next();
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof z.ZodError) {
-        // Log validation failure: logSecurityEvent({
-          type 'input-validation-failure',
+        // Log validation failure
+        logSecurityEvent({
+          type: 'input-validation-failure',
           category: 'api-security',
           details: {
             endpoint: req.path,
             method: req.method,
             target,
             errors: error.errors
-},
-          timestamp: new: Date().toISOString()
+          },
+          timestamp: new Date().toISOString()
         });
         
         // Return validation error
@@ -170,7 +176,7 @@ export function validateEndpoint<T extends AnyZodObject>(schema: T, target: 'bod
           errors: error.errors.map(err => ({
             path: err.path.join('.'),
             message: err.message
-}))
+          }))
         });
       }
       
@@ -192,15 +198,15 @@ export function validateApiRequest<T extends AnyZodObject>(data, schema: T): {
     return {
       success: true,
       data: validatedData
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return {
         success: false,
         errors: error.errors.map(err => ({
           path: err.path.join('.'),
           message: err.message
-}))
+        }))
       };
     }
     

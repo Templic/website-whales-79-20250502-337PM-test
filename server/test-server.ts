@@ -25,7 +25,7 @@ testApp.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
-}
+  }
   next();
 });
 
@@ -52,13 +52,13 @@ testRouter.post('/quantum/generate-keys', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in test quantum key generation endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to generate test quantum-resistant key pair',
       isTestEndpoint: true
-});
+    });
   }
 });
 
@@ -73,7 +73,7 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
         error: 'Bad Request',
         message: 'Missing required parameters: data and publicKey',
         isTestEndpoint: true
-});
+      });
     }
     
     // Return simulated response
@@ -84,13 +84,13 @@ testRouter.post('/quantum/encrypt', async (req, res) => {
       message: "This is a test response - not using real cryptography",
       originalDataHash: Buffer.from(JSON.stringify(data)).toString('base64').substring(0, 10) + '...'
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in test quantum encryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to encrypt test data',
       isTestEndpoint: true
-});
+    });
   }
 });
 
@@ -105,7 +105,7 @@ testRouter.post('/quantum/decrypt', async (req, res) => {
         error: 'Bad Request',
         message: 'Missing required parameters: encrypted and privateKey',
         isTestEndpoint: true
-});
+      });
     }
     
     // Return simulated response
@@ -115,13 +115,13 @@ testRouter.post('/quantum/decrypt', async (req, res) => {
       isTestEndpoint: true,
       message: "This is a test response - not using real cryptography"
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error in test quantum decryption endpoint:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to decrypt test data',
       isTestEndpoint: true
-});
+    });
   }
 });
 
@@ -135,14 +135,14 @@ testApp.get('/', (req, res) => {
       <head>
         <title>TEST API SERVER - SECURITY WARNING</title>
         <style>
-          body: { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-          .warning: { background-color: #ffdddd; border-left: 6px solid #f44336; padding: 10px; margin-bottom: 20px; }
-          h1: { color: #f44336; }
-          code: { background-color: #f5f5f5; padding: 2px: 4px; border-radius: 4px; }
+          body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          .warning { background-color: #ffdddd; border-left: 6px solid #f44336; padding: 10px; margin-bottom: 20px; }
+          h1 { color: #f44336; }
+          code { background-color: #f5f5f5; padding: 2px 4px; border-radius: 4px; }
         </style>
       </head>
       <body>
-        <div class = "warning">
+        <div class="warning">
           <h1>⚠️ SECURITY WARNING ⚠️</h1>
           <p>This is a test-only API server with <strong>NO CSRF PROTECTION</strong>.</p>
           <p>These endpoints are for testing purposes only and should <strong>NEVER</strong> be used in production.</p>
@@ -158,8 +158,8 @@ testApp.get('/', (req, res) => {
         <h2>Testing Example:</h2>
         <pre>
 curl -X POST http://localhost:5001/api/test-only/quantum/generate-keys \\
-  -H: "Content-Type: application/json" \\;
-  -d: '{"algorithm": "kyber", "strength": "high"}'
+  -H "Content-Type: application/json" \\
+  -d '{"algorithm": "kyber", "strength": "high"}'
         </pre>
       </body>
     </html>
@@ -173,7 +173,7 @@ testApp.use((err, req: express.Request, res: express.Response, next: express.Nex
     error: 'Internal Server Error',
     message: err.message || 'Something went wrong in the test API server',
     stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined
-});
+  });
 });
 
 // Create HTTP server
@@ -183,12 +183,12 @@ const testServer = createServer(testApp);
 const TEST_PORT = process.env.TEST_PORT || 5001;
 
 // Always start the server when this file is executed
-// ES modules don't have a direct equivalent of require.main = == module;
+// ES modules don't have a direct equivalent of require.main === module
 testServer.listen(TEST_PORT, () => {
   console.log(`
 ⚠️  TEST API SERVER RUNNING ON PORT ${TEST_PORT} ⚠️
 WARNING: This server has NO CSRF protection and is for TESTING ONLY!
-Available, at: http://localhost:${TEST_PORT}/api/test-only/*
+Available at: http://localhost:${TEST_PORT}/api/test-only/*
   `);
 });
 

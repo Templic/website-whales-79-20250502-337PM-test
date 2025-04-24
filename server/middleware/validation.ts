@@ -14,7 +14,7 @@ import { logSecurityEvent } from '../security/security';
 /**
  * Options for validation middleware
  */
-export interface ValidationOptions: {
+export interface ValidationOptions {
   /**
    * Whether to add the validated data to req.validatedData
    */
@@ -48,7 +48,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
         // Log validation failure as security event if enabled
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type 'VALIDATION_FAILURE',
+            type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -63,13 +63,13 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
           success: false,
           message: options.errorMessage || 'Invalid request data',
           errors: validationError.details || validationError.message
-});
+        });
       }
       
       // Add validated data to request if enabled
       if (options.addValidatedData) {
         (req as any).validatedData = result.data;
-}
+      }
       
       return next();
     } catch (error: unknown) {
@@ -77,7 +77,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type 'VALIDATION_ERROR',
+          type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -91,7 +91,7 @@ export const validateBody = (schema: ZodSchema, options: ValidationOptions = {})
       return res.status(500).json({
         success: false,
         message: 'An error occurred during request validation'
-});
+      });
     }
   };
 };
@@ -109,7 +109,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
         
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type 'VALIDATION_FAILURE',
+            type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -124,12 +124,12 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
           success: false,
           message: options.errorMessage || 'Invalid query parameters',
           errors: validationError.details || validationError.message
-});
+        });
       }
       
       if (options.addValidatedData) {
         (req as any).validatedQuery = result.data;
-}
+      }
       
       return next();
     } catch (error: unknown) {
@@ -137,7 +137,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type 'VALIDATION_ERROR',
+          type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -151,7 +151,7 @@ export const validateQuery = (schema: ZodSchema, options: ValidationOptions = {}
       return res.status(500).json({
         success: false,
         message: 'An error occurred during query parameter validation'
-});
+      });
     }
   };
 };
@@ -169,7 +169,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
         
         if (options.logSecurityEvents) {
           logSecurityEvent({
-            type 'VALIDATION_FAILURE',
+            type: 'VALIDATION_FAILURE',
             ip: req.ip,
             userAgent: req.headers['user-agent']?.toString(),
             userId: (req.user as any)?.id,
@@ -184,12 +184,12 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
           success: false,
           message: options.errorMessage || 'Invalid URL parameters',
           errors: validationError.details || validationError.message
-});
+        });
       }
       
       if (options.addValidatedData) {
         (req as any).validatedParams = result.data;
-}
+      }
       
       return next();
     } catch (error: unknown) {
@@ -197,7 +197,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       
       if (options.logSecurityEvents) {
         logSecurityEvent({
-          type 'VALIDATION_ERROR',
+          type: 'VALIDATION_ERROR',
           ip: req.ip,
           userAgent: req.headers['user-agent']?.toString(),
           userId: (req.user as any)?.id,
@@ -211,7 +211,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
       return res.status(500).json({
         success: false,
         message: 'An error occurred during URL parameter validation'
-});
+      });
     }
   };
 };
@@ -220,7 +220,7 @@ export const validateParams = (schema: ZodSchema, options: ValidationOptions = {
  * Common schema for ID parameters
  */
 export const idParamSchema = z.object({
-  (match) => match.replace(':', '')string().refine(
+  id: z.string().refine(
     (val) => !isNaN(parseInt(val)) && parseInt(val) > 0,
     { message: 'ID must be a positive integer' }
   )
@@ -230,24 +230,24 @@ export const idParamSchema = z.object({
  * Common schema for pagination query parameters
  */
 export const paginationSchema = z.object({
-  (match) => match.replace(':', '')string().optional()
+  page: z.string().optional()
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1), 
       { message: 'Page must be a positive integer' })
-    .transform(val = > val ? parseInt(val) : 1),
-  (match) => match.replace(':', '')string().optional();
+    .transform(val => val ? parseInt(val) : 1),
+  limit: z.string().optional()
     .refine(val => !val || (!isNaN(parseInt(val)) && parseInt(val) >= 1 && parseInt(val) <= 100), 
-      { message: 'Limit must be a positive integer between: 1 and: 100' })
-    .transform(val = > val ? parseInt(val) : 10);
+      { message: 'Limit must be a positive integer between 1 and 100' })
+    .transform(val => val ? parseInt(val) : 10)
 });
 
 /**
  * Common schema for date range query parameters
  */
 export const dateRangeSchema = z.object({
-  (match) => match.replace(':', '')string().optional()
+  fromDate: z.string().optional()
     .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid fromDate format' }),
-  (match) => match.replace(':', '')string().optional()
+  toDate: z.string().optional()
     .refine(val => !val || !isNaN(Date.parse(val)), 
       { message: 'Invalid toDate format' })
 });

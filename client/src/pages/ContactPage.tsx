@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -53,7 +51,7 @@ export default function ContactPage() {
       });
 
       form.reset();
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: error.message || "Failed to send message",

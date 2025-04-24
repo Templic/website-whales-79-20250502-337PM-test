@@ -5,13 +5,12 @@
  * Migrated from imported components.
  */
 import React, { useState } from "react"
-import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Sparkles, Disc, Star, Music, ShoppingCart, Gift, ArrowRight } from "lucide-react"
-
+import { cn } from "../../../lib/utils"
 import { CosmicCard } from "./CosmicCard"
 import { CosmicButton } from "@/components/features/cosmic/CosmicButton"
-import { Button } from "@/components/ui/button"
+import { Button } from "../../../components/ui/button"
 
 
 interface CollectibleAttribute {
@@ -80,7 +79,7 @@ export function CosmicCollectible({
     try {
       await onClaim(id)
       setClaimState("success")
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error claiming collectible:", error)
       setClaimState("error")
     }
@@ -333,7 +332,7 @@ function CosmicCollectibleOriginal({
     try {
       await onClaim(id)
       setClaimState("success")
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error claiming collectible:", error)
       setClaimState("error")
     }

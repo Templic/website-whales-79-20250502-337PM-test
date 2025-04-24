@@ -4,7 +4,8 @@
  * A reusable calendar component based on the shadcn UI components.
  * Used by the date-picker component for date selection.
  */
-import React from "react";
+
+import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { cn } from "@/lib/utils";

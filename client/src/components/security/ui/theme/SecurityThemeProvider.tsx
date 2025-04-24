@@ -273,7 +273,7 @@ const typography: SecurityTypography = {
     lineHeight: 1.4,
   },
   body: {
-    fontSize: 1,
+    fontSize: '1rem',
     fontWeight: 400,
     lineHeight: 1.5,
   },

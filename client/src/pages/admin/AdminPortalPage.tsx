@@ -3,8 +3,6 @@
  * 
  * Enhanced Admin Portal Dashboard with modern UI and functionality
  */
-import React from "react";
-
 import { useEffect, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";

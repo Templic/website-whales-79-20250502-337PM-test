@@ -155,11 +155,11 @@ const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
                     const parent = (e.target as HTMLImageElement).parentElement;
                     if (parent) {
                       if (media.mimeType.startsWith('video/')) {
-                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x={1} y={5} width={15} height={14} rx={2} ry={2}></rect></svg></div>';
+                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg></div>';
                       } else if (media.mimeType.startsWith('audio/')) {
-                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M9 18V5l12-2v13"></path><circle cx={6} cy={18} r="3"></circle><circle cx={18} cy={16} r="3"></circle></svg></div>';
+                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>';
                       } else {
-                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
+                        parent.innerHTML = '<div class="flex items-center justify-center h-full bg-black/5"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
                       }
                     }
                   }}
@@ -304,11 +304,11 @@ const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
                   const parent = (e.target as HTMLImageElement).parentElement;
                   if (parent) {
                     if (media.mimeType.startsWith('video/')) {
-                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x={1} y={5} width={15} height={14} rx={2} ry={2}></rect></svg></div>';
+                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg></div>';
                     } else if (media.mimeType.startsWith('audio/')) {
-                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M9 18V5l12-2v13"></path><circle cx={6} cy={18} r="3"></circle><circle cx={18} cy={16} r="3"></circle></svg></div>';
+                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>';
                     } else {
-                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
+                      parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-muted"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
                     }
                   }
                 }}
@@ -461,14 +461,14 @@ const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
               className="absolute left-2 top-1/2 transform -translate-y-1/2 h-12 w-12 rounded-full bg-black/40 text-white hover:bg-black/60"
               onClick={() => setCurrentSlideIndex((prev) => (prev === 0 ? mediaFiles.length - 1 : prev - 1))}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </Button>
             <Button
               variant="ghost"
               className="absolute right-2 top-1/2 transform -translate-y-1/2 h-12 w-12 rounded-full bg-black/40 text-white hover:bg-black/60"
               onClick={() => setCurrentSlideIndex((prev) => (prev === mediaFiles.length - 1 ? 0 : prev + 1))}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </Button>
           </>
         )}
@@ -533,11 +533,11 @@ const MediaGalleryView: React.FC<MediaGalleryViewProps> = ({
                           const parent = (e.target as HTMLImageElement).parentElement;
                           if (parent) {
                             if (media.mimeType.startsWith('video/')) {
-                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x={1} y={5} width={15} height={14} rx={2} ry={2}></rect></svg></div>';
+                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg></div>';
                             } else if (media.mimeType.startsWith('audio/')) {
-                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><path d="M9 18V5l12-2v13"></path><circle cx={6} cy={18} r="3"></circle><circle cx={18} cy={16} r="3"></circle></svg></div>';
+                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></div>';
                             } else {
-                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={2} stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
+                              parent.innerHTML = '<div class="flex items-center justify-center h-full w-full bg-black/60"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white/80"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></div>';
                             }
                           }
                         }}

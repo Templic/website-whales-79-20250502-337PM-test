@@ -5,9 +5,8 @@
  * Migrated as part of the repository reorganization.
  */
 import React, { useState, useEffect } from 'react';
-import { cn } from "@/lib/utils"
 import { createPortal } from 'react-dom';
-
+import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 
 export interface CosmicDrawerProps {

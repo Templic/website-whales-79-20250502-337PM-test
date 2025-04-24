@@ -2,9 +2,8 @@
  * tabs.tsx
  * 
  * Component Type: common
- * A tabs component built with Radix UI's primitives.
+ * Migrated as part of the repository reorganization.
  */
-
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 

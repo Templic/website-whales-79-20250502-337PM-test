@@ -36,8 +36,8 @@ app.use(createQuantumMiddleware({
 app.get('/api/public', (req, res) => {
   res.json({
     message: 'This is a public endpoint with quantum protection',
-    timestamp: new: Date().toISOString()
-});
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Route demonstrating key generation
@@ -47,18 +47,18 @@ app.get('/api/keys/generate', async (req, res) => {
     const keyPair = await generateKeyPair({
       algorithm: 'kyber',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Quantum-resistant key pair generated successfully',
       publicKey: keyPair.publicKey,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to generate key pair',
       message: error.message
-});
+    });
   }
 });
 
@@ -71,25 +71,25 @@ app.post('/api/encrypt', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'Both data and publicKey are required'
-});
+      });
     }
     
     // Encrypt the data
     const encryptedData = await encrypt(data, publicKey, {
       algorithm: 'kyber',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Data encrypted successfully',
       encryptedData,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to encrypt data',
       message: error.message
-});
+    });
   }
 });
 
@@ -102,25 +102,25 @@ app.post('/api/decrypt', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'Both encryptedData and privateKey are required'
-});
+      });
     }
     
     // Decrypt the data
     const decryptedData = await decrypt(encryptedData, privateKey, {
       algorithm: 'kyber',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Data decrypted successfully',
       decryptedData: decryptedData.toString(),
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to decrypt data',
       message: error.message
-});
+    });
   }
 });
 
@@ -133,26 +133,26 @@ app.post('/api/sign', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'Both data and privateKey are required'
-});
+      });
     }
     
     // Sign the data
     const signatureResult = await sign(data, privateKey, {
       algorithm: 'dilithium',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Data signed successfully',
       signature: signatureResult.signature,
       publicKey: signatureResult.publicKey,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to sign data',
       message: error.message
-});
+    });
   }
 });
 
@@ -165,26 +165,26 @@ app.post('/api/verify', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'data, signature, and publicKey are all required'
-});
+      });
     }
     
     // Verify the signature
     const verificationResult = await verify(data, signature, publicKey, {
       algorithm: 'dilithium',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Signature verification completed',
       valid: verificationResult.valid,
       reason: verificationResult.reason,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to verify signature',
       message: error.message
-});
+    });
   }
 });
 
@@ -197,24 +197,24 @@ app.post('/api/hash', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'data is required'
-});
+      });
     }
     
     // Hash the data
     const hashedData = await hash(data, {
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Data hashed successfully',
       hash: hashedData,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to hash data',
       message: error.message
-});
+    });
   }
 });
 
@@ -227,32 +227,32 @@ app.post('/api/tokens/create', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'payload is required'
-});
+      });
     }
     
     // Generate a key pair for token signing
     const keyPair = await generateKeyPair({
       algorithm: 'dilithium',
       strength: 'high'
-});
+    });
     
     // Create a secure token
     const token = await createSecureToken(payload, keyPair.privateKey, {
-      expiresIn: 3600000, // 1 hour,
-  algorithm: 'dilithium',
+      expiresIn: 3600000, // 1 hour
+      algorithm: 'dilithium',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Secure token created successfully',
       token,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to create token',
       message: error.message
-});
+    });
   }
 });
 
@@ -265,7 +265,7 @@ app.post('/api/tokens/verify', async (req, res) => {
       return res.status(400).json({
         error: 'Missing required fields',
         message: 'token is required'
-});
+      });
     }
     
     // Verify the secure token
@@ -273,7 +273,7 @@ app.post('/api/tokens/verify', async (req, res) => {
       checkExpiration: true,
       algorithm: 'dilithium',
       strength: 'high'
-});
+    });
     
     res.json({
       message: 'Token verification completed',
@@ -281,13 +281,13 @@ app.post('/api/tokens/verify', async (req, res) => {
       expired: verificationResult.expired,
       reason: verificationResult.reason,
       payload: verificationResult.payload,
-      timestamp: new: Date().toISOString()
-});
-  } catch (error: unknown) {
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     res.status(500).json({
       error: 'Failed to verify token',
       message: error.message
-});
+    });
   }
 });
 
@@ -296,16 +296,16 @@ if (require.main === module) {
   const port = 3003;
   app.listen(port, () => {
     console.log(`Quantum cryptography example running on port ${port}`);
-    console.log(`Try these, endpoints:`);
-    console.log(`- GET, http://localhost:${port}/api/public`);
-    console.log(`- GET, http://localhost:${port}/api/keys/generate`);
-    console.log(`- POST, http://localhost:${port}/api/encrypt`);
-    console.log(`- POST, http://localhost:${port}/api/decrypt`);
-    console.log(`- POST, http://localhost:${port}/api/sign`);
-    console.log(`- POST, http://localhost:${port}/api/verify`);
-    console.log(`- POST, http://localhost:${port}/api/hash`);
-    console.log(`- POST, http://localhost:${port}/api/tokens/create`);
-    console.log(`- POST, http://localhost:${port}/api/tokens/verify`);
+    console.log(`Try these endpoints:`);
+    console.log(`- GET http://localhost:${port}/api/public`);
+    console.log(`- GET http://localhost:${port}/api/keys/generate`);
+    console.log(`- POST http://localhost:${port}/api/encrypt`);
+    console.log(`- POST http://localhost:${port}/api/decrypt`);
+    console.log(`- POST http://localhost:${port}/api/sign`);
+    console.log(`- POST http://localhost:${port}/api/verify`);
+    console.log(`- POST http://localhost:${port}/api/hash`);
+    console.log(`- POST http://localhost:${port}/api/tokens/create`);
+    console.log(`- POST http://localhost:${port}/api/tokens/verify`);
   });
 }
 

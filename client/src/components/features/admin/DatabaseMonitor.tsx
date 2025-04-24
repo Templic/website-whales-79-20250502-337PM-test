@@ -4,8 +4,6 @@
  * Component Type: feature
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useState, useEffect } from 'react';
 
 // Add named export for backward compatibility

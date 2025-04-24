@@ -2,42 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./client/src/*"
-      ],
-      "@/components/*": [
-        "./client/src/components/*"
-      ],
-      "@/lib/*": [
-        "./client/src/lib/*"
-      ],
-      "@/utils/*": [
-        "./client/src/utils/*"
-      ],
-      "@/hooks/*": [
-        "./client/src/hooks/*"
-      ],
-      "@/context/*": [
-        "./client/src/context/*"
-      ],
-      "@/store/*": [
-        "./client/src/store/*"
-      ],
-      "@/types/*": [
-        "./client/src/types/*"
-      ],
-      "@/styles/*": [
-        "./client/src/styles/*"
-      ],
-      "@/assets/*": [
-        "./client/src/assets/*"
-      ],
-      "@/features/*": [
-        "./client/src/features/*"
-      ],
-      "@shared/*": [
-        "./shared/*"
-      ]
+      "@/*": ["./src/*"],
+      "@server/*": ["./server/*"],
+      "@client/*": ["./client/*"],
+      "@shared/*": ["./shared/*"],
+      "@components/*": ["./components/*"],
+      "@utils/*": ["./utils/*"],
+      "@lib/*": ["./lib/*"]
     }
   }
 }

@@ -8,24 +8,24 @@ import { scanProject } from './security/securityScan';
 import { User } from '../shared/schema';
 
 // Add the user property to express-session
-declare module: 'express-session' {
-  interface SessionData: {
+declare module 'express-session' {
+  interface SessionData {
     user?: User; // Add user property to session using the User type from schema.ts
-}
+  }
 }
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define user roles and permissions
-enum UserRole: {
+enum UserRole {
   USER = 'user',
   ADMIN = 'admin',
   SUPER_ADMIN = 'super_admin'
 }
 
-// Define security permission actions;
-enum SecurityPermission: {
+// Define security permission actions
+enum SecurityPermission {
   VIEW_SETTINGS = 'view_security_settings',
   MODIFY_SETTINGS = 'modify_security_settings',
   VIEW_LOGS = 'view_security_logs',
@@ -33,7 +33,7 @@ enum SecurityPermission: {
   VIEW_SCAN_RESULTS = 'view_scan_results'
 }
 
-// Role-based permission matrix;
+// Role-based permission matrix
 const rolePermissions: Record<UserRole, SecurityPermission[]> = {
   [UserRole.USER]: [],
   [UserRole.ADMIN]: [
@@ -56,7 +56,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
     // Check if user is authenticated using Passport.js's req.user
     if (!req.isAuthenticated() || !req.user) {
       logSecurityEvent({
-        type 'UNAUTHORIZED_ATTEMPT',
+        type: 'UNAUTHORIZED_ATTEMPT',
         details: `Unauthenticated user attempted to access ${req.path}`,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
@@ -75,7 +75,7 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
     
     if (!hasPermission) {
       logSecurityEvent({
-        type 'PERMISSION_DENIED',
+        type: 'PERMISSION_DENIED',
         details: `User with role ${userRole} attempted to access resource requiring ${requiredPermission}`,
         userId: req.user.id,
         userRole,
@@ -89,7 +89,8 @@ const checkPermission = (requiredPermission: SecurityPermission) => {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
     
-    // User has required permission, proceed: next();
+    // User has required permission, proceed
+    next();
   };
 };
 
@@ -129,20 +130,20 @@ const initializeSecuritySettings = () => {
       console.log(`Security settings file created at ${SECURITY_SETTINGS_FILE}`);
     }
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to initialize security settings:', error);
     return defaultSecuritySettings;
-}
+  }
 };
 
 // Get current security settings
 const getSecuritySettings = () => {
   try {
     return JSON.parse(fs.readFileSync(SECURITY_SETTINGS_FILE, 'utf8'));
-} catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to read security settings:', error);
     return defaultSecuritySettings;
-}
+  }
 };
 
 // Update security settings
@@ -156,10 +157,10 @@ const updateSecuritySettings = (newSettings) => {
       'utf8'
     );
     return updatedSettings;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to update security settings:', error);
     throw error;
-}
+  }
 };
 
 // Parse and get security events from log file
@@ -183,10 +184,10 @@ const getSecurityStats = () => {
         const jsonStart = line.indexOf('- ') + 2;
         const jsonContent = line.substring(jsonStart);
         return JSON.parse(jsonContent);
-} catch (e: unknown) {
+      } catch (e) {
         console.error('Failed to parse security log line:', e);
         return null;
-}
+      }
     }).filter(event => event !== null);
 
     // Count events by type
@@ -196,19 +197,19 @@ const getSecurityStats = () => {
     events.forEach(event => {
       if (event && event.type) {
         byType[event.type] = (byType[event.type] || 0) + 1;
-}
+      }
       if (event && event.setting) {
         bySetting[event.setting] = (bySetting[event.setting] || 0) + 1;
-}
+      }
     });
 
     return {
       total: events.length,
       byType,
       bySetting,
-      recentEvents: events.slice(-50).reverse() // Get last: 50 events in reverse chronological order
-};
-  } catch (error: unknown) {
+      recentEvents: events.slice(-50).reverse() // Get last 50 events in reverse chronological order
+    };
+  } catch (error) {
     console.error('Failed to get security stats:', error);
     return { 
       total: 0,
@@ -236,16 +237,17 @@ securityRouter.get(
     try {
       const settings = getSecuritySettings();
       
-      // Log successful access: logSecurityEvent({
-        type 'SECURITY_SETTINGS_ACCESS',
+      // Log successful access
+      logSecurityEvent({
+        type: 'SECURITY_SETTINGS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security settings accessed',
         severity: 'low'
-});
+      });
       
       res.json({ message: 'Security settings retrieved successfully', settings });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error retrieving security settings:', error);
       res.status(500).json({ message: 'Failed to retrieve security settings' });
     }
@@ -263,27 +265,28 @@ securityRouter.post(
       
       // Enhanced input validation with more strict requirements
       const schema = z.object({
-        (match) => match.replace(':', '')string()
-          .min(3, 'Setting name must be at, least: 3 characters')
-          .max(100, 'Setting name must be at, most: 100 characters')
+        setting: z.string()
+          .min(3, 'Setting name must be at least 3 characters')
+          .max(100, 'Setting name must be at most 100 characters')
           .refine(
             (val) => Object.keys(defaultSecuritySettings).includes(val),
             { message: 'Invalid security setting name' }
           ),
-        (match) => match.replace(':', '')boolean({ 
+        value: z.boolean({ 
           required_error: 'Value must be a boolean', 
           invalid_type_error: 'Value must be a boolean'
-})
+        })
       });
       
       const validationResult = schema.safeParse(req.body);
       
       if (!validationResult.success) {
-        // Log validation failure: logSecurityEvent({
-          type 'SECURITY_SETTING_VALIDATION_FAILED',
+        // Log validation failure
+        logSecurityEvent({
+          type: 'SECURITY_SETTING_VALIDATION_FAILED',
           userId,
           userRole,
-          details: `Input validation, failed: ${JSON.stringify(validationResult.error.errors)}`,
+          details: `Input validation failed: ${JSON.stringify(validationResult.error.errors)}`,
           ip: req.ip,
           userAgent: req.headers['user-agent'],
           path: req.path,
@@ -294,7 +297,7 @@ securityRouter.post(
         return res.status(400).json({ 
           message: 'Invalid input', 
           errors: validationResult.error.errors 
-});
+        });
       }
       
       const { setting, value } = validationResult.data;
@@ -303,25 +306,27 @@ securityRouter.post(
       const newSettings = { [setting]: value };
       const updatedSettings = updateSecuritySettings(newSettings);
       
-      // Log the change: logSecurityEvent({
-        type 'SECURITY_SETTING_CHANGED',
+      // Log the change
+      logSecurityEvent({
+        type: 'SECURITY_SETTING_CHANGED',
         setting,
         value,
         userId,
         userRole,
-        details: `Security setting: "${setting}" was ${value ? 'enabled' : 'disabled'}`,
-        severity: setting = == 'TWO_FACTOR_AUTHENTICATION' ? 'high' : 'medium';
+        details: `Security setting "${setting}" was ${value ? 'enabled' : 'disabled'}`,
+        severity: setting === 'TWO_FACTOR_AUTHENTICATION' ? 'high' : 'medium'
       });
       
       res.json({ 
         message: 'Security setting updated successfully',
         settings: updatedSettings
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error updating security setting:', error);
       
-      // Log the error: logSecurityEvent({
-        type 'SECURITY_SETTING_UPDATE_ERROR',
+      // Log the error
+      logSecurityEvent({
+        type: 'SECURITY_SETTING_UPDATE_ERROR',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Error updating security setting: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -341,16 +346,17 @@ securityRouter.get(
     try {
       const stats = getSecurityStats();
       
-      // Log access: logSecurityEvent({
-        type 'SECURITY_STATS_ACCESS',
+      // Log access
+      logSecurityEvent({
+        type: 'SECURITY_STATS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security statistics accessed',
         severity: 'low'
-});
+      });
       
       res.json({ message: 'Security statistics retrieved successfully', stats });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error retrieving security stats:', error);
       res.status(500).json({ message: 'Failed to retrieve security statistics' });
     }
@@ -367,7 +373,7 @@ securityRouter.post(
       const SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
       const now = Date.now();
       const lastScanTime = latestScanResult?.timestamp 
-        ? new: Date(latestScanResult.timestamp).getTime() ;
+        ? new Date(latestScanResult.timestamp).getTime() 
         : 0;
       
       if (now - lastScanTime < SCAN_COOLDOWN_MS) {
@@ -381,8 +387,9 @@ securityRouter.post(
       const scanResult = await scanProject();
       latestScanResult = scanResult;
       
-      // Log the scan event: logSecurityEvent({
-        type 'SECURITY_SCAN',
+      // Log the scan event
+      logSecurityEvent({
+        type: 'SECURITY_SCAN',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Security scan completed with ${scanResult.totalIssues} issues found`,
@@ -394,12 +401,13 @@ securityRouter.post(
       res.json({ 
         message: 'Security scan completed successfully',
         result: scanResult
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error running security scan:', error);
       
-      // Log error: logSecurityEvent({
-        type 'SECURITY_SCAN_ERROR',
+      // Log error
+      logSecurityEvent({
+        type: 'SECURITY_SCAN_ERROR',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: `Error running security scan: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -417,21 +425,23 @@ securityRouter.get(
   checkPermission(SecurityPermission.VIEW_SCAN_RESULTS),
   async (req: Request, res: Response) => {
     try {
-      // Log access: logSecurityEvent({
-        type 'SECURITY_SCAN_RESULTS_ACCESS',
+      // Log access
+      logSecurityEvent({
+        type: 'SECURITY_SCAN_RESULTS_ACCESS',
         userId: req.user?.id || undefined,
         userRole: req.user?.role || undefined,
         details: 'Security scan results accessed',
         severity: 'low'
-});
+      });
       
       if (!latestScanResult) {
         // Run a new scan if none available but only if user has permission
         if (req.user && rolePermissions[req.user.role as UserRole]?.includes(SecurityPermission.RUN_SCAN)) {
           latestScanResult = await scanProject();
           
-          // Log the scan event: logSecurityEvent({
-            type 'SECURITY_SCAN',
+          // Log the scan event
+          logSecurityEvent({
+            type: 'SECURITY_SCAN',
             userId: req.user.id,
             userRole: req.user.role,
             details: `Automatic security scan completed with ${latestScanResult.totalIssues} issues found`,
@@ -447,8 +457,8 @@ securityRouter.get(
       res.json({ 
         message: 'Latest security scan results retrieved successfully',
         result: latestScanResult
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error retrieving latest security scan results:', error);
       res.status(500).json({ message: 'Failed to retrieve latest security scan results' });
     }
@@ -470,57 +480,57 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         name: 'CSRF Protection',
         status: 'active',
         description: 'Cross-Site Request Forgery protection is enabled'
-},
+      },
       {
         name: 'Content Security Policy',
         status: 'active',
         description: 'CSP headers are properly configured'
-},
+      },
       {
         name: 'Rate Limiting',
         status: 'active',
         description: 'API rate limiting is active to prevent abuse'
-},
+      },
       {
         name: 'Input Validation',
         status: 'active',
         description: 'All user input is validated before processing'
-},
+      },
       {
         name: 'HTTPS/TLS',
         status: 'active',
         description: 'Secure HTTPS connections are enforced'
-}
+      }
     ];
     
     // Add more detailed measures for admins
-    if (isAdmin) => {
+    if (isAdmin) {
       securityMeasures.push(
         {
           name: 'Security Scanning',
           status: 'active',
           description: 'Automatic vulnerability scanning is enabled'
-},
+        },
         {
           name: 'Error Handling',
           status: 'active',
           description: 'Secure error handling prevents information leakage'
-},
+        },
         {
           name: 'Database Protection',
           status: 'active',
           description: 'Database is protected against SQL injection'
-},
+        },
         {
           name: 'Session Management',
           status: 'active',
           description: 'Secure session management with proper expiration'
-},
+        },
         {
           name: 'Authentication',
           status: 'active',
           description: 'Strong authentication mechanisms are in place'
-}
+        }
       );
     }
     
@@ -529,7 +539,7 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
     const score = Math.round((activeMeasures / securityMeasures.length) * 100);
     
     res.json({
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       score,
       measures: securityMeasures,
       // Detailed data only for admins
@@ -537,36 +547,36 @@ securityRouter.get('/status', async (req: Request, res: Response) => {
         recentScans: [
           {
             id: 'scan-001',
-            timestamp: new: Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
             findings: 3,
             status: 'completed'
-},
+          },
           {
             id: 'scan-002',
-            timestamp: new: Date().toISOString(),
+            timestamp: new Date().toISOString(),
             findings: 2,
             status: 'completed'
-}
+          }
         ],
         securityEvents: [
           {
             id: 'event-001',
-            type 'LOGIN_FAILURE',
-            timestamp: new: Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
+            type: 'LOGIN_FAILURE',
+            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.1',
             severity: 'medium'
-},
+          },
           {
             id: 'event-002',
-            type 'RATE_LIMIT_EXCEEDED',
-            timestamp: new: Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+            type: 'RATE_LIMIT_EXCEEDED',
+            timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
             sourceIp: '192.168.1.2',
             severity: 'low'
-}
+          }
         ]
       })
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error getting security status:', error);
     res.status(500).json({ error: 'Failed to get security status' });
   }
@@ -590,10 +600,11 @@ testSecurityRouter.get('/security/scan', async (req, res) => {
     const scanResult = await scanProject();
     latestScanResult = scanResult;
     
-    // Log the scan event: logSecurityEvent({
-      type 'SECURITY_SCAN',
+    // Log the scan event
+    logSecurityEvent({
+      type: 'SECURITY_SCAN',
       ...scanResult
-});
+    });
     
     res.json({ 
       message: 'Security scan completed successfully',
@@ -604,10 +615,10 @@ testSecurityRouter.get('/security/scan', async (req, res) => {
         highIssues: scanResult.highIssues,
         mediumIssues: scanResult.mediumIssues,
         lowIssues: scanResult.lowIssues
-},
+      },
       vulnerabilities: scanResult.vulnerabilities
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error running security scan:', error);
     res.status(500).json({ message: 'Failed to run security scan' });
   }
@@ -616,17 +627,18 @@ testSecurityRouter.get('/security/scan', async (req, res) => {
 // Test endpoint to simulate an unauthorized access event for testing
 testSecurityRouter.get('/security/simulate-unauthorized', (req, res) => {
   logSecurityEvent({
-    type 'UNAUTHORIZED_ATTEMPT',
+    type: 'UNAUTHORIZED_ATTEMPT',
     setting: 'API_ACCESS',
     ip: req.ip,
     userAgent: req.headers['user-agent'],
     path: req.path,
     method: req.method
-});
+  });
   
   res.json({ message: 'Unauthorized access event logged successfully' });
 });
 
-// Initialize security settings on module load: initializeSecuritySettings();
+// Initialize security settings on module load
+initializeSecuritySettings();
 
 export { securityRouter, testSecurityRouter };

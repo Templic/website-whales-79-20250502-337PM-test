@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { Post, Comment, insertCommentSchema } from "@shared/schema";
@@ -144,8 +142,8 @@ export default function BlogPostPage() {
       >
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          width={16} 
-          height={16} 
+          width="16" 
+          height="16" 
           viewBox="0 0 24 24" 
           fill="none" 
           stroke="currentColor" 
@@ -187,7 +185,7 @@ export default function BlogPostPage() {
           {/* Content container with internal padding to keep text away from edges */}
           <div className="relative z-10 p-8 md:p-12">
             {/* Using a constrained width container inside the octagon */}
-            <div className="prose prose-invert max-w-none text-lg mx-auto" style={{  width: 90  }}>
+            <div className="prose prose-invert max-w-none text-lg mx-auto" style={{ width: '90%' }}>
               {post.content ? (
                 post.content
                   .replace(/<p>/g, '')

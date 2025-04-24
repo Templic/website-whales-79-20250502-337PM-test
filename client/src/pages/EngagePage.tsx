@@ -6,8 +6,6 @@
  * FeaturedMerchandise component moved to the bottom of the page.
  * Revamped with cosmic-ocean aesthetic and sacred geometry elements.
  */
-import React from "react";
-
 
 import { useEffect, useState } from "react";
 import { Link } from "wouter";

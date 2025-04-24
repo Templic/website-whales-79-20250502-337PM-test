@@ -5,8 +5,6 @@
  * Migrated from: v0 components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * FanRemixContest.tsx
  * 
@@ -18,7 +16,8 @@ import React from "react";
  */
 "use client"
 
-// Removed duplicate type React import
+import type React from "react"
+
 import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"

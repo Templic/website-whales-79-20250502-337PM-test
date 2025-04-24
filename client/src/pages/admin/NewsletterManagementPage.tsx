@@ -3,8 +3,6 @@
  * 
  * Advanced newsletter management page for admin users
  */
-import React from "react";
-
 import { Suspense } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import NewsletterManagement from "@/components/features/admin/NewsletterManagement";

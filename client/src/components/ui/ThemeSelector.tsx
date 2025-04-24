@@ -4,8 +4,6 @@
  * Component Type: ui
  * A visual theme selector that allows users to choose between light, dark, and blackout themes
  */
-import React from "react";
-
 import { CircleDot, Moon, Sun, Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "./button";

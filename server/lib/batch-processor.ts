@@ -23,19 +23,19 @@ export async function processBatches<T, R>(
     onProgress?: (processedCount: number, totalCount: number) => void;
     abortSignal?: AbortSignal;
     label?: string;
-} = {}
+  } = {}
 ): Promise<R[]> {
   const { 
     onBatchComplete, 
     onProgress, 
     abortSignal,
-    label = 'Batch Process' ;
-} = options;
+    label = 'Batch Process' 
+  } = options;
   
   // Handle empty array case
   if (!items.length) {
     return [];
-}
+  }
   
   const start = process.hrtime();
   const totalItems = items.length;
@@ -73,20 +73,20 @@ export async function processBatches<T, R>(
       processedItems += batch.length;
       
       // Report progress
-      if (onProgress) => {
+      if (onProgress) {
         onProgress(processedItems, totalItems);
-}
+      }
       
       // Callback for batch completion
-      if (onBatchComplete) => {
+      if (onBatchComplete) {
         onBatchComplete(batchResults, i);
-}
+      }
       
       console.log(
         `[${label}] Batch ${i + 1}/${batchCount} completed in ${batchTime.toFixed(2)}ms` +
         ` (${processedItems}/${totalItems} items, ${((processedItems / totalItems) * 100).toFixed(1)}%)`
       );
-    } catch (error: unknown) {
+    } catch (error) {
       console.error(`[${label}] Error processing batch ${i + 1}:`, error);
       throw error;
     }
@@ -113,7 +113,7 @@ export function chunkArray<T>(array: T[], size: number): T[][] {
   
   for (let i = 0; i < array.length; i += size) {
     chunks.push(array.slice(i, i + size));
-}
+  }
   
   return chunks;
 }
@@ -134,23 +134,23 @@ export async function processTasksWithConcurrency<T>(
     onProgress?: (completedCount: number, totalCount: number) => void;
     abortSignal?: AbortSignal;
     label?: string;
-} = {}
+  } = {}
 ): Promise<T[]> {
   const { 
     onTaskComplete, 
     onProgress,
     abortSignal,
-    label = 'Task Process' ;
-} = options;
+    label = 'Task Process' 
+  } = options;
   
   // Handle empty tasks array
   if (!tasks.length) {
     return [];
-}
+  }
   
   const start = process.hrtime();
   const totalTasks = tasks.length;
-  const results: T[] = new: Array(totalTasks);
+  const results: T[] = new Array(totalTasks);
   let completedTasks = 0;
   let nextTaskIndex = 0;
   
@@ -162,7 +162,7 @@ export async function processTasksWithConcurrency<T>(
       // Check for abort signal
       if (abortSignal && abortSignal.aborted) {
         return;
-}
+      }
       
       // Execute the task
       const taskStart = process.hrtime();
@@ -185,20 +185,20 @@ export async function processTasksWithConcurrency<T>(
       );
       
       // Call task completion callback
-      if (onTaskComplete) => {
+      if (onTaskComplete) {
         onTaskComplete(result, index);
-}
+      }
       
       // Call progress callback
-      if (onProgress) => {
+      if (onProgress) {
         onProgress(completedTasks, totalTasks);
-}
+      }
       
       // If there are more tasks to process, start the next one
       if (nextTaskIndex < totalTasks) {
         await runTaskAtIndex(nextTaskIndex++);
-}
-    } catch (error: unknown) {
+      }
+    } catch (error) {
       console.error(`[${label}] Error processing task ${index + 1}:`, error);
       throw error;
     }
@@ -210,7 +210,7 @@ export async function processTasksWithConcurrency<T>(
   
   for (let i = 0; i < initialBatchSize; i++) {
     initialPromises.push(runTaskAtIndex(nextTaskIndex++));
-}
+  }
   
   // Wait for all tasks to complete
   await Promise.all(initialPromises);
@@ -241,7 +241,7 @@ export async function retry<T>(
     retryableErrors?: (Error | string)[];
     onRetry?: (error: Error, retryCount: number, delay: number) => void;
     label?: string;
-} = {}
+  } = {}
 ): Promise<T> {
   const {
     maxRetries = 3,
@@ -250,8 +250,8 @@ export async function retry<T>(
     backoffFactor = 2,
     retryableErrors,
     onRetry,
-    label = 'Retry';
-} = options;
+    label = 'Retry'
+  } = options;
   
   let retryCount = 0;
   let delay = initialDelay;
@@ -261,22 +261,22 @@ export async function retry<T>(
     // If no specific errors are specified, all errors are retryable
     if (!retryableErrors || retryableErrors.length === 0) {
       return true;
-}
+    }
     
     // Check if error matches any of the retryable errors
     return retryableErrors.some(retryableError => {
       if (typeof retryableError === 'string') {
         return error.message.includes(retryableError);
-}
-      return error.name = == retryableError.name || ;
+      }
+      return error.name === retryableError.name || 
              error.message === retryableError.message;
     });
   };
   
-  while (true) => {
+  while (true) {
     try {
       return await fn();
-} catch (error: unknown) {
+    } catch (error) {
       // Cast to Error for better type safety
       const err = error instanceof Error ? error : new Error(String(error));
       
@@ -298,12 +298,12 @@ export async function retry<T>(
       );
       
       // Call retry callback if provided
-      if (onRetry) => {
+      if (onRetry) {
         onRetry(err, retryCount, delay);
-}
+      }
       
       // Wait before next attempt
-      await new: Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
       
       // Increase delay for next retry (with maximum limit)
       delay = Math.min(delay * backoffFactor, maxDelay);

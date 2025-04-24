@@ -51,7 +51,7 @@ import {
 function createSafeUser(user: User | null | undefined) {
   if (!user) {
     return null;
-}
+  }
   
   // Log input and output for debugging
   console.log("Creating safe user from:", user.username);
@@ -67,7 +67,7 @@ function createSafeUser(user: User | null | undefined) {
     lastLogin: user.lastLogin,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
-};
+  };
   
   console.log("Returning safe user:", safeUser.username);
   return safeUser;
@@ -100,11 +100,11 @@ import { protectApiRoutes } from './security/apiRoutesProtector';
 const transporter = createTransport({
   host: process.env.SMTP_HOST || 'smtp.example.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE  === 'true',
+  secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''
-}
+  }
 });
 
 // CSRF protection middleware is already imported at the top of the file
@@ -122,12 +122,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   // Apply CSRF protection with exemptions
   app.use(enhancedCsrfProtection({
     exemptRoutes: csrfExemptRoutes,
-    useNonce: true, // Use nonce for additional security,
-  cookieOptions: {
+    useNonce: true, // Use nonce for additional security
+    cookieOptions: {
       httpOnly: true,
-      secure: process.env.NODE_ENV  === 'production',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict'
-  }
+    }
   }));
   
   // Simple health check endpoint
@@ -163,7 +163,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       return res.status(403).json({ 
         success: false, 
         message: 'Admin access required' 
-});
+      });
     }
     
     try {
@@ -174,13 +174,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         success: true,
         results: results,
         timestamp: new Date().toISOString()
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error running API security verification:', error);
       res.status(500).json({ 
         success: false, 
         message: 'Error running API security verification'
-});
+      });
     }
   });
 
@@ -190,7 +190,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Use the safe user creator to return only non-sensitive fields
       const safeUser = createSafeUser(req.user);
       res.json(safeUser);
-} else {
+    } else {
       res.status(401).json({ message: 'Not authenticated' });
     }
   });
@@ -213,15 +213,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         
         if (userRows.length > 0) {
           fullUserRecord = userRows[0];
-}
-      } catch (dbError: unknown) {
+        }
+      } catch (dbError) {
         console.error("Database query error:", dbError);
-}
+      }
       
       // If we didn't find the user with direct query, try the storage method
       if (!fullUserRecord) {
         fullUserRecord = await storage.getUserByUsername(username);
-}
+      }
       
       // User exists in database
       if (fullUserRecord) {
@@ -229,7 +229,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         
         // For demo purposes, using hardcoded password verification
         // In a real app, we'd use bcrypt to compare against stored hash
-        if ((username  === 'admin' && password === 'admin123') || 
+        if ((username === 'admin' && password === 'admin123') || 
             (username === 'superadmin' && password === 'superadmin123') || 
             (username === 'user' && password === 'user123')) {
           
@@ -244,7 +244,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             lastLogin: fullUserRecord.lastLogin,
             createdAt: fullUserRecord.createdAt,
             updatedAt: fullUserRecord.updatedAt
-};
+          };
           
           console.log("Sanitized login response for:", sanitizedUser.username);
           
@@ -252,7 +252,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           if (req.session) {
             console.log("Setting user in session");
             req.session.user = sanitizedUser;
-}
+          }
           
           // Return sanitized user data
           // @ts-ignore - Response type issue
@@ -271,7 +271,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             isBanned: false,
             twoFactorEnabled: false,
             createdAt: new Date().toISOString()
-},
+          },
           'superadmin': {
             id: 2,
             username: 'superadmin',
@@ -280,7 +280,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             isBanned: false,
             twoFactorEnabled: false,
             createdAt: new Date().toISOString()
-},
+          },
           'user': {
             id: 3,
             username: 'user',
@@ -289,26 +289,26 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
             isBanned: false,
             twoFactorEnabled: false,
             createdAt: new Date().toISOString()
-}
+          }
         };
         
         // Simple test account validation
         if (username === 'admin' && password === 'admin123') {
           if (req.session) {
             req.session.user = mockUsers.admin;
-}
+          }
           // @ts-ignore - Response type issue
   return res.json(mockUsers.admin);
         } else if (username === 'superadmin' && password === 'superadmin123') {
           if (req.session) {
             req.session.user = mockUsers.superadmin;
-}
+          }
           // @ts-ignore - Response type issue
   return res.json(mockUsers.superadmin);
         } else if (username === 'user' && password === 'user123') {
           if (req.session) {
             req.session.user = mockUsers.user;
-}
+          }
           // @ts-ignore - Response type issue
   return res.json(mockUsers.user);
         }
@@ -316,7 +316,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       
       // Incorrect credentials
       res.status(401).json({ message: 'Invalid username or password' });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'An error occurred during login' });
     }
@@ -338,7 +338,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const subscribers = await storage.getAllSubscribers();
       console.log("Found subscribers:", subscribers);
       res.json(subscribers);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching subscribers:", error);
       res.status(500).json({ message: "Error fetching subscribers" });
     }
@@ -367,14 +367,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const tracks = await storage.getAllTracks();
       const products = await storage.getAllProducts();
       
-      // Calculate active users - users who have logged in within the last: 30 days
+      // Calculate active users - users who have logged in within the last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const activeUsers = users.filter(user => 
         user.lastLogin && new Date(user.lastLogin) > thirtyDaysAgo
       ).length;
 
-      // Calculate new users - registered within the last: 30 days
+      // Calculate new users - registered within the last 30 days
       const newUsers = users.filter(user => 
         user.createdAt && new Date(user.createdAt) > thirtyDaysAgo
       ).length;
@@ -384,7 +384,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         user: users.filter(user => user.role === 'user').length,
         admin: users.filter(user => user.role === 'admin').length,
         super_admin: users.filter(user => user.role === 'super_admin').length
-};
+      };
 
       // Get total pending reviews (comments + posts)
       const pendingReviews = pendingComments.length + pendingPosts.length;
@@ -409,9 +409,9 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       let systemHealth = "Optimal";
       if (pendingReviews > 50) {
         systemHealth = "Critical";
-} else if (pendingReviews > 20) {
+      } else if (pendingReviews > 20) {
         systemHealth = "Warning";
-}
+      }
 
       // Generate recent activities (placeholder for now)
       const recentActivities = [];
@@ -427,7 +427,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           action: 'User Registration',
           timestamp: user.createdAt || new Date().toISOString(),
           user: user.username
-});
+        });
       });
 
       // Return consolidated stats with all fields needed by frontend
@@ -444,10 +444,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         totalMusic: tracks.length,
         userRolesDistribution,
         recentActivities
-});
+      });
       
       console.log('Admin stats successfully retrieved');
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ message: "Error fetching admin stats" });
     }
@@ -463,7 +463,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Map each user to a safe user object without sensitive fields
       const safeUsers = users.map(user => createSafeUser(user));
       res.json(safeUsers);
-} catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error fetching users" });
     }
   });
@@ -563,7 +563,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         default:
           return res.status(400).json({ message: "Invalid action" });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ message: "Failed to update user" });
     }
@@ -590,11 +590,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
                 <h2 style="color: #4A90E2; text-align: center;">Welcome to the Cosmic Journey, ${data.name}! 🐋</h2>
                 <p style="font-size: 16px; line-height: 1.5;">Thank you for joining Dale the Whale's musical universe! Get ready for an extraordinary journey through sound and spirit.</p>
                 <h3 style="color: #4A90E2; margin-top: 20px;">What to Expect:</h3>
-                <ul style="list-style-type none; padding: 0;">
-                  <li style="margin: 10px: 0; padding-left: 20px;">🎵 First access to new releases and exclusive tracks</li>
-                  <li style="margin: 10px: 0; padding-left: 20px;">🎪 Early announcements about upcoming shows and events</li>
-                  <li style="margin: 10px: 0; padding-left: 20px;">🌟 Behind-the-scenes content and personal stories</li>
-                  <li style="margin: 10px: 0; padding-left: 20px;">🎁 Special subscriber-only offers and experiences</li>
+                <ul style="list-style-type: none; padding: 0;">
+                  <li style="margin: 10px 0; padding-left: 20px;">🎵 First access to new releases and exclusive tracks</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎪 Early announcements about upcoming shows and events</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🌟 Behind-the-scenes content and personal stories</li>
+                  <li style="margin: 10px 0; padding-left: 20px;">🎁 Special subscriber-only offers and experiences</li>
                 </ul>
                 <p style="font-size: 16px; line-height: 1.5; margin-top: 20px;">Stay tuned for your first newsletter, coming soon with some cosmic vibes!</p>
                 <div style="text-align: center; margin-top: 30px; font-style: italic; color: #666;">
@@ -604,17 +604,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
               </div>
             `
           });
-        } catch (emailError: unknown) {
+        } catch (emailError) {
           console.error("Failed to send welcome email:", emailError);
-}
+        }
       }
 
       res.json({ 
         message: "Successfully subscribed!", 
         subscriber 
-});
+      });
 
-    } catch (error: unknown) {
+    } catch (error) {
       if (error.code === '23505') { // PostgreSQL unique violation
         res.status(400).json({ message: "This email is already subscribed" });
       } else if (error.errors) { // Zod validation error
@@ -637,13 +637,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         return res.status(400).json({ 
           message: "Invalid email format",
           exists: false
-});
+        });
       }
       
       // Use the ORM's parameterized query to prevent SQL injection
       const subscriber = await storage.findSubscriberByEmail(email);
       res.json({ exists: !!subscriber });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error checking subscriber:", error);
       res.status(500).json({ message: "Error checking subscriber" });
     }
@@ -666,18 +666,18 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         try {
           const author = await storage.getUser(post.authorId);
           authorName = author?.username || 'Unknown';
-} catch (error: unknown) {
+        } catch (error) {
           console.error(`Error fetching author for post ${post.id}:`, error);
         }
 
         return {
           ...post,
           authorName
-};
+        };
       }));
 
       res.json(enhancedPosts);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching unapproved posts:", error);
       res.status(500).json({ message: "Error fetching unapproved posts" });
     }
@@ -693,7 +693,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const newsletters = await storage.getAllNewsletters();
       res.json(newsletters);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching newsletters:", error);
       res.status(500).json({ message: "Error fetching newsletters" });
     }
@@ -704,7 +704,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const newsletters = await storage.getAllNewsletters();
       res.json(newsletters);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching newsletters:", error);
       res.status(500).json({ message: "Error fetching newsletters" });
     }
@@ -728,14 +728,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         isBanned: user.isBanned,
         twoFactorEnabled: user.twoFactorEnabled,
         createdAt: user.createdAt
-};
+      };
       
       // Return both the full user (for debugging) and safe user
       res.json({
         fullUser: user,
         safeUser
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error("Error fetching safe user:", error);
       res.status(500).json({ message: "Error fetching safe user" });
     }
@@ -748,8 +748,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({ 
         message: "Security settings initialized successfully",
         settings
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error("Error initializing security settings:", error);
       res.status(500).json({ message: "Error initializing security settings" });
     }
@@ -775,7 +775,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const success = updateSecuritySetting(
         setting as keyof SecuritySettings, 
         enabled,
-        999, // Fake user ID for, testing: 'super_admin' // Fake role for testing
+        999, // Fake user ID for testing
+        'super_admin' // Fake role for testing
       );
 
       if (!success) {
@@ -787,8 +788,8 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         setting,
         enabled,
         settings: getSecuritySettings()
-      })
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
     }
@@ -801,13 +802,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.json({
         message: 'Security settings retrieved successfully',
         settings
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error retrieving security settings:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security settings', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-})
+      });
     }
   });
 
@@ -828,13 +829,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(401).json({
         message: 'Unauthorized access attempt logged successfully',
         details: 'This endpoint simulates an unauthorized access attempt to test security logging'
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error simulating unauthorized access:', error);
       res.status(500).json({ 
         message: 'Failed to simulate unauthorized access', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-})
+      });
     }
   });
 
@@ -898,7 +899,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .map(line => {
           try {
             return JSON.parse(line);
-} catch (err: unknown) {
+          } catch (err) {
             return { rawLog: line, parseError: true };
           }
         });
@@ -908,7 +909,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         total: logEntries.length,
         byType: {},
         bySetting: {},
-        recentEvents: logEntries.slice(-5).reverse() // Get the: 5 most recent events
+        recentEvents: logEntries.slice(-5).reverse() // Get the 5 most recent events
       };
 
       // Count events by type and setting
@@ -917,31 +918,31 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         const type = entry.type || 'UNKNOWN';
         if (!stats.byType[type]) {
           stats.byType[type] = 1;
-} else {
+        } else {
           stats.byType[type]++;
-}
+        }
 
         // Count by setting
         if (entry.setting) {
           const setting = entry.setting;
           if (!stats.bySetting[setting]) {
             stats.bySetting[setting] = 1;
-} else {
+          } else {
             stats.bySetting[setting]++;
-}
+          }
         }
       });
 
       res.json({ 
         message: 'Security statistics retrieved successfully',
         stats
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error retrieving security statistics:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security statistics', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-})
+      });
     }
   });
 
@@ -965,7 +966,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           message: 'Security log file created',
           logs: [],
           count: 0
-});
+        });
       }
 
       // Read the log file
@@ -978,7 +979,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           message: 'Security log file is empty',
           logs: [],
           count: 0
-});
+        });
       }
 
       // Parse the log entries and format them
@@ -988,7 +989,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .map(line => {
           try {
             return JSON.parse(line);
-} catch (err: unknown) {
+          } catch (err) {
             return { rawLog: line, parseError: true };
           }
         });
@@ -997,13 +998,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         message: 'Security logs retrieved successfully',
         logs: logEntries,
         count: logEntries.length
-});
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error retrieving security logs:', error);
       res.status(500).json({ 
         message: 'Failed to retrieve security logs', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-})
+      });
     }
   });
 
@@ -1018,7 +1019,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         userAgent: req.headers['user-agent'] || 'Unknown',
         path: '/api/security/scan',
         method: 'GET'
-});
+      });
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -1034,15 +1035,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           highIssues: scanResults.highIssues,
           mediumIssues: scanResults.mediumIssues,
           lowIssues: scanResults.lowIssues
-},
+        },
         vulnerabilities: scanResults.vulnerabilities
       });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error running security scan:', error);
       res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
   
@@ -1057,7 +1058,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         userAgent: req.headers['user-agent'] || 'Unknown',
         path: '/api/security/auth-scan',
         method: 'GET'
-});
+      });
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -1073,17 +1074,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           highIssues: authScanResults.highIssues,
           mediumIssues: authScanResults.mediumIssues,
           lowIssues: authScanResults.lowIssues
-},
+        },
         vulnerabilities: authScanResults.vulnerabilities,
-        securityRating: authScanResults.criticalIssues  === 0 ? 
+        securityRating: authScanResults.criticalIssues === 0 ? 
           (authScanResults.highIssues === 0 ? 'A' : 'B') : 'C'
-      })
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error running authentication security scan:', error);
       res.status(500).json({
         message: 'Failed to run authentication security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -1101,15 +1102,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           highIssues: scanResults.highIssues,
           mediumIssues: scanResults.mediumIssues,
           lowIssues: scanResults.lowIssues
-},
+        },
         vulnerabilities: scanResults.vulnerabilities
       });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error running security scan:', error);
       res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -1128,7 +1129,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
 
       res.json(newsletter);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error(`Error fetching newsletter:`, error);
       res.status(500).json({ message: "Error fetching newsletter" });
     }
@@ -1143,9 +1144,10 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
       next();
     },
-    // Basic validation using express-validator: body('title').trim().notEmpty().withMessage('Title is required').isLength({ min: 3, max: 100 }).withMessage('Title must be between: 3, and: 100 characters').escape(),
-    body('content').trim().notEmpty().withMessage('Content is required').isLength({ min: 50 }).withMessage('Content must be at, least: 50 characters'),
-    body('subject').trim().notEmpty().withMessage('Subject is required').isLength({ min: 3, max: 100 }).withMessage('Subject must be between: 3, and: 100 characters').escape(),
+    // Basic validation using express-validator
+    body('title').trim().notEmpty().withMessage('Title is required').isLength({ min: 3, max: 100 }).withMessage('Title must be between 3 and 100 characters').escape(),
+    body('content').trim().notEmpty().withMessage('Content is required').isLength({ min: 50 }).withMessage('Content must be at least 50 characters'),
+    body('subject').trim().notEmpty().withMessage('Subject is required').isLength({ min: 3, max: 100 }).withMessage('Subject must be between 3 and 100 characters').escape(),
     validate
   ], async (req, res) => {
     try {
@@ -1154,7 +1156,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const newsletter = await storage.createNewsletter(data);
 
       res.status(201).json(newsletter);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error creating newsletter:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: "Invalid newsletter data", details: error.message });
@@ -1186,7 +1188,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
       const updatedNewsletter = await storage.updateNewsletter(id, data);
       res.json(updatedNewsletter);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error updating newsletter:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: "Invalid newsletter data", details: error.message });
@@ -1229,11 +1231,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           // Send newsletter (just to the first subscriber for demo purposes)
           await transporter.sendMail({
             from: process.env.SMTP_FROM || 'noreply@example.com',
-            to: activeSubscribers[0].email, // In production, use BCC for all subscribers,
+            to: activeSubscribers[0].email, // In production, use BCC for all subscribers
             subject: newsletter.title,
             html: newsletter.content
-});
-        } catch (emailError: unknown) {
+          });
+        } catch (emailError) {
           console.error("Failed to send newsletter:", emailError);
           return res.status(500).json({ message: "Failed to send newsletter email" });
         }
@@ -1242,7 +1244,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Update newsletter status to sent
       const sentNewsletter = await storage.sendNewsletter(id);
       res.json({ message: "Newsletter sent successfully", newsletter: sentNewsletter });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error sending newsletter:", error);
       res.status(500).json({ message: "Error sending newsletter" });
     }
@@ -1265,14 +1267,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         try {
           const author = await storage.getUser(comment.authorId);
           authorName = author?.username || 'Unknown';
-} catch (error: unknown) {
+        } catch (error) {
           console.error(`Error fetching author for comment ${comment.id}:`, error);
         }
 
         try {
           const post = await storage.getPostById(comment.postId);
           postTitle = post?.title || 'Unknown Post';
-} catch (error: unknown) {
+        } catch (error) {
           console.error(`Error fetching post for comment ${comment.id}:`, error);
         }
 
@@ -1280,11 +1282,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           ...comment,
           authorName,
           postTitle
-};
+        };
       }));
 
       res.json(enhancedComments);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
@@ -1299,7 +1301,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const tracks = await storage.getTracks();
 
-      // Sort tracks by creation date (newest first) and take the most recent: 10
+      // Sort tracks by creation date (newest first) and take the most recent 10
       const recentTracks = [...tracks]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 10);
@@ -1312,7 +1314,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           try {
             const uploader = await storage.getUser(track.uploadedById);
             uploadedByName = uploader?.username || 'Unknown';
-} catch (error: unknown) {
+          } catch (error) {
             console.error(`Error fetching uploader for track ${track.id}:`, error);
           }
         }
@@ -1320,11 +1322,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         return {
           ...track,
           uploadedByName
-};
+        };
       }));
 
       res.json(enhancedTracks);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching recent tracks:", error);
       res.status(500).json({ message: "Error fetching recent tracks" });
     }
@@ -1340,7 +1342,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const postId = parseInt(req.params.postId);
       const approvedPost = await storage.approvePost(postId);
       res.json(approvedPost);
-} catch (error: unknown) {
+    } catch (error) {
       console.error(`Error approving post:`, error);
       res.status(500).json({ message: "Error approving post" });
     }
@@ -1356,7 +1358,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const commentId = parseInt(req.params.commentId);
       const approvedComment = await storage.approveComment(commentId);
       res.json(approvedComment);
-} catch (error: unknown) {
+    } catch (error) {
       console.error(`Error approving comment:`, error);
       res.status(500).json({ message: "Error approving comment" });
     }
@@ -1372,7 +1374,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const commentId = parseInt(req.params.commentId);
       const rejectedComment = await storage.rejectComment(commentId);
       res.json(rejectedComment);
-} catch (error: unknown) {
+    } catch (error) {
       console.error(`Error rejecting comment:`, error);
       res.status(500).json({ message: "Error rejecting comment" });
     }
@@ -1388,7 +1390,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const trackId = parseInt(req.params.trackId);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ success: true, message: "Track deleted successfully" });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error(`Error deleting track:`, error);
       res.status(500).json({ message: "Error deleting track" });
     }
@@ -1415,12 +1417,12 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         : posts;
 
       res.json(filteredPosts);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching posts:", error);
       res.status(500).json({ 
         message: "Error fetching posts",
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -1440,7 +1442,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const posts = await storage.getUnapprovedPosts();
       res.json(posts);
-} catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error fetching unapproved posts" });
     }
   });
@@ -1452,7 +1454,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const post = await storage.approvePost(Number(req.params.id));
       res.json(post);
-} catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error approving post" });
     }
   });
@@ -1468,7 +1470,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         return res.status(404).json({ message: "Post not found" });
       }
       res.json(post);
-    } catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error fetching post" });
     }
   });
@@ -1479,7 +1481,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const data = insertPostSchema.parse(req.body);
       const post = await storage.createPost(data);
       res.json(post);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error creating post:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: "Invalid post data", details: error.message });
@@ -1515,7 +1517,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const updatedData = req.body;
       const updatedPost = await storage.updatePost(postId, updatedData);
       res.json(updatedPost);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error updating post:", error);
       res.status(500).json({ message: "Error updating post" });
     }
@@ -1546,7 +1548,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Delete the post
       await storage.deletePost(postId);
       res.json({ success: true, message: "Post deleted successfully" });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error deleting post:", error);
       res.status(500).json({ message: "Error deleting post" });
     }
@@ -1557,7 +1559,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const categories = await storage.getCategories();
       res.json(categories);
-} catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error fetching categories" });
     }
   });
@@ -1568,7 +1570,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const data = insertCategorySchema.parse(req.body);
       const category = await storage.createCategory(data);
       res.json(category);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error creating category:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: "Invalid category data", details: error.message });
@@ -1589,19 +1591,19 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         ...req.body,
         postId: Number(req.params.postId),
         approved: isAdmin // Auto-approve if admin
-});
+      });
 
       console.log("Creating comment with data:", data);
       const comment = await storage.createComment(data);
       console.log("Created comment:", comment);
       res.json(comment);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error creating comment:", error);
       if (error instanceof Error) {
         res.status(400).json({ 
           message: "Invalid comment data", 
           details: error.message 
-});
+        });
       } else {
         res.status(400).json({ message: "Invalid comment data" });
       }
@@ -1618,7 +1620,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const comments = await storage.getCommentsByPostId(postId, onlyApproved);
       console.log(`Returning ${comments.length} comments for post ${postId}`);
       res.json(comments);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching comments:", error);
       res.status(500).json({ message: "Error fetching comments" });
     }
@@ -1634,7 +1636,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const comments = await storage.getUnapprovedComments();
       console.log("Found unapproved comments:", comments);
       res.json(comments);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching unapproved comments:", error);
       res.status(500).json({ message: "Error fetching unapproved comments" });
     }
@@ -1647,7 +1649,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     try {
       const comment = await storage.approveComment(Number(req.params.id));
       res.json(comment);
-} catch (error: unknown) {
+    } catch (error) {
       res.status(500).json({ message: "Error approving comment" });
     }
   });
@@ -1665,17 +1667,17 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     res.json({ 
       message: "Message sent successfully!", 
       data: message[0] 
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error("Contact form error:", error);
     if (error instanceof Error) {
       res.status(400).json({ 
         message: error.message || "Failed to send message" 
-});
+      });
     } else {
       res.status(400).json({ 
         message: "Failed to send message" 
-});
+      });
     }
   }
 });
@@ -1687,7 +1689,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     try {
       const comment = await storage.rejectComment(Number(req.params.id));
       res.json(comment);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error rejecting comment:", error);
       res.status(500).json({ message: "Error rejecting comment" });
     }
@@ -1717,12 +1719,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         html: `
           <p>Click the link below to reset your password:</p>
           <p><a href="${resetLink}">Reset Password</a></p>
-          <p>This link will expire in: 1 hour.</p>
+          <p>This link will expire in 1 hour.</p>
         `,
       });
 
       res.json({ message: "If an account exists with this email, you will receive a recovery link." });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Password recovery error:", error);
       res.status(500).json({ message: "Failed to process recovery request" });
     }
@@ -1742,13 +1744,13 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       await storage.updateUserPassword(user.id, hashedPassword);
 
       res.json({ message: "Password updated successfully" });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Password reset error:", error);
       if (error instanceof Error) {
         res.status(500).json({ 
           message: "Failed to reset password",
           details: error.message 
-});
+        });
       } else {
         res.status(500).json({ message: "Failed to reset password" });
       }
@@ -1783,7 +1785,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     // Validate file size (50MB limit)
     const maxSize = 50 * 1024 * 1024; // 50MB in bytes
     if (file.size > maxSize) {
-      return res.status(400).json({ message: "File too large. Maximum, size: 50MB" });
+      return res.status(400).json({ message: "File too large. Maximum size: 50MB" });
     }
 
     // Validate MIME type
@@ -1802,9 +1804,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         targetPage: targetPage,
         uploadedBy: req.user.id,
         userRole: req.user.role as 'admin' | 'super_admin'
-});
+      });
       res.json(result);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error uploading music file:", error);
       res.status(500).json({ message: "Failed to upload file" });
     }
@@ -1815,12 +1817,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     try {
       const tracks = await storage.getTracks();
       res.json(tracks);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching tracks:", error);
       res.status(500).json({ 
         message: "Error fetching tracks",
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -1828,12 +1830,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     try {
       const albums = await storage.getAlbums();
       res.json(albums);
-} catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching albums:", error);
       res.status(500).json({ 
         message: "Error fetching albums",
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -1847,10 +1849,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       const trackId = Number(req.params.id);
       await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ message: "Track deleted successfully" });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error deleting track:", error);
-      res.status(error.message  === 'Track not found' ? 404 : 500)
-        .json({ message: error.message || "Failed to delete track" })
+      res.status(error.message === 'Track not found' ? 404 : 500)
+        .json({ message: error.message || "Failed to delete track" });
     }
   });
 
@@ -1881,14 +1883,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       try {
         analyticsData = await storage.getAdminAnalytics(fromDate, toDate);
         console.log('Base analytics data retrieved:', analyticsData);
-} catch (analyticError: unknown) {
+      } catch (analyticError) {
         console.error('Error retrieving base analytics:', analyticError);
         analyticsData = {
           activeUsers: 0,
           newRegistrations: 0,
           contentReports: 0,
           systemHealth: 'Error'
-};
+        };
       }
 
       // Generate time-series data from database if possible, otherwise use realistic patterns
@@ -1907,7 +1909,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           Math.max(0, Math.floor(baseActiveUsers * 0.95)),
           baseActiveUsers
         ];
-}
+      }
 
       if (analyticsData && analyticsData.newRegistrations) {
         // Generate realistic data patterns based on current metrics
@@ -1920,14 +1922,14 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           Math.max(0, Math.floor(baseNewRegistrations * 0.8)),
           baseNewRegistrations
         ];
-}
+      }
 
       // User role distribution with error handling
       let userRolesDistribution = {
         user: 0,
         admin: 0,
         super_admin: 0
-};
+      };
 
       try {
         // Fetch users to calculate user role distribution
@@ -1938,43 +1940,43 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         users.forEach(user => {
           if (user.role && user.role in userRolesDistribution) {
             userRolesDistribution[user.role as keyof typeof userRolesDistribution]++;
-}
+          }
         });
-      } catch (userError: unknown) {
+      } catch (userError) {
         console.error('Error retrieving user data:', userError);
-}
+      }
 
       // Content distribution with error handling
       let contentDistribution = {
         posts: 0,
         comments: 0,
         tracks: 0
-};
+      };
 
       try {
         // Get content counts
         const posts = await storage.getPosts();
         contentDistribution.posts = posts.length;
         console.log(`Retrieved ${posts.length} posts`);
-      } catch (postsError: unknown) {
+      } catch (postsError) {
         console.error('Error retrieving posts:', postsError);
-}
+      }
 
       try {
         const comments = await storage.getUnapprovedComments();
         contentDistribution.comments = comments.length;
         console.log(`Retrieved ${comments.length} comments`);
-      } catch (commentsError: unknown) {
+      } catch (commentsError) {
         console.error('Error retrieving comments:', commentsError);
-}
+      }
 
       try {
         const tracks = await storage.getTracks();
         contentDistribution.tracks = tracks.length;
         console.log(`Retrieved ${tracks.length} tracks`);
-      } catch (tracksError: unknown) {
+      } catch (tracksError) {
         console.error('Error retrieving tracks:', tracksError);
-}
+      }
 
       // Build the complete response
       const response = {
@@ -1983,16 +1985,16 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         newRegistrationsOverTime,
         contentDistribution,
         userRolesDistribution
-};
+      };
 
       console.log('Sending analytics response:', JSON.stringify(response));
       res.json(response);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching analytics data:", error);
       res.status(500).json({ 
         message: "Error fetching analytics data",
         error: error instanceof Error ? error.message : 'Unknown error' 
-})
+      });
     }
   });
 
@@ -2027,12 +2029,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Forward /api/products to /api/shop/products for compatibility
   app.get('/api/products', (req, res, next) => {
     res.redirect('/api/shop/products');
-});
+  });
   
   // Test page route
   app.get('/test-shop', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'test-page.html'));
-});
+  });
 
   app.use('/api/shop', shopRoutes);
   app.use('/api/payments', paymentRoutes);
@@ -2049,10 +2051,8 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   
   // Import test API routes (these bypass CSRF protection for testing)
   // These routes are explicitly mounted WITHOUT any CSRF protection
-  try {
-    // For simplicity, instead of dynamic import, we'll use a placeholder
-    const testApiRoutes = express.Router();
-    
+  import('./routes/test-api').then(module => {
+    const testApiRoutes = module.default;
     // Test-only routes that bypass CSRF (only active in non-production)
     if (process.env.NODE_ENV !== 'production') {
       // Create a special router just for test routes
@@ -2068,9 +2068,9 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         next();
       }, testApiRoutes);
     }
-  } catch (error) {
+  }).catch(error => {
     console.error('Failed to load test API routes:', error);
-  }
+  });
   
   // Quantum-resistant security API routes
   app.use('/api/security/quantum', secureApiRoutes);
@@ -2093,7 +2093,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       '/api/external-callbacks',
       '/api/stripe-webhook'
     ]
-});
+  });
   */
   
   // Log API protection status
@@ -2112,10 +2112,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         name,
         email, 
         message
-});
+      });
 
       res.json({ success: true });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to save contact form:', error);
       res.status(500).json({ error: 'Failed to save contact form' });
     }
@@ -2124,15 +2124,16 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
   // Security log endpoint
   app.post('/api/security/log', (req, res) => {
     try {
-      // Log the security event from the request body: logSecurityEvent(req.body);
+      // Log the security event from the request body
+      logSecurityEvent(req.body);
       res.json({ success: true, message: 'Security event logged successfully' });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error logging security event:', error);
       res.status(500).json({ 
         success: false, 
         message: 'Failed to log security event',
         error: error instanceof Error ? error.message : 'Unknown error'
-})
+      });
     }
   });
 
@@ -2145,7 +2146,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
     try {
       const settings = getSecuritySettings();
       res.json(settings);
-} catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching security settings:', error);
       res.status(500).json({ message: 'Failed to fetch security settings' });
     }
@@ -2187,8 +2188,8 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
         setting,
         enabled
-      })
-    } catch (error: unknown) {
+      });
+    } catch (error) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
     }
@@ -2212,7 +2213,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       // Apply status filter if provided
       if (statusFilter && statusFilter !== 'all') {
         contentItems = contentItems.filter(item => item.status === statusFilter);
-}
+      }
       
       // Enhance content items with user information
       const users = await storage.getAllUsers();
@@ -2224,11 +2225,11 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           ...item,
           createdByName: createdByUser ? createdByUser.username : undefined,
           reviewerName: reviewerUser ? reviewerUser.username : undefined
-}
+        };
       });
       
       res.json(enhancedItems);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching admin content items:", error);
       res.status(500).json({ message: "Error fetching content items" });
     }
@@ -2255,11 +2256,11 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         return {
           ...entry,
           actorName: actor ? actor.username : undefined
-}
+        };
       });
       
       res.json(enhancedHistory);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error fetching content workflow history:", error);
       res.status(500).json({ message: "Error fetching workflow history" });
     }
@@ -2285,7 +2286,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       // Update content item status
       const updatedContent = await storage.updateContentStatus(
         contentId, 
-        status,
+        status, 
         req.user.id, 
         { 
           reviewNotes,
@@ -2295,7 +2296,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       );
       
       res.json(updatedContent);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error updating content status:", error);
       res.status(500).json({ message: "Error updating content status" });
     }
@@ -2323,27 +2324,27 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         .map(line => {
           try {
             return JSON.parse(line);
-} catch (e: unknown) {
+          } catch (e) {
             return { raw: line, error: 'Failed to parse log entry' };
           }
         });
 
       res.json({ logs });
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching security logs:', error);
       res.status(500).json({ message: 'Failed to fetch security logs' });
     }
   });
 
-  // Schedule periodic security log rotation (every: 24 hours)
+  // Schedule periodic security log rotation (every 24 hours)
   setInterval(() => {
     try {
       // Temporary implementation until proper security logs module is fixed
       console.log('Security logs rotation scheduled (temporarily disabled)');
-      // TODO: Re-implement: rotateSecurityLogs() from security module
-} catch (error: unknown) {
+      // TODO: Re-implement rotateSecurityLogs() from security module
+    } catch (error) {
       console.error('Error rotating security logs:', error);
-}
+    }
   }, 24 * 60 * 60 * 1000);
 
   // Let Vite handle frontend routes in development mode

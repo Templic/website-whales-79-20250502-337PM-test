@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +21,7 @@ export default function UserPortal() {
         title: "Logout successful",
         description: "You have been logged out successfully.",
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Logout failed",
         description: "There was an error logging out.",

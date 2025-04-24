@@ -134,7 +134,7 @@ export function SpatialAudioExperience({
       }
 
       setIsInitialized(true)
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error initializing spatial audio:', error)
     }
   }
@@ -311,7 +311,7 @@ export function SpatialAudioExperience({
             console.log('Device orientation permission denied')
             setHeadTracking(false)
           }
-        } catch (error: unknown) {
+        } catch (error) {
           console.error('Error requesting device orientation permission:', error)
           setHeadTracking(false)
         }
@@ -876,7 +876,7 @@ function SpatialAudioExperienceOriginal({
       }
 
       setIsInitialized(true)
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error initializing spatial audio:', error)
     }
   }

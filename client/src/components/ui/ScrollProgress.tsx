@@ -4,8 +4,6 @@
  * Component Type: common
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useEffect, useState } from "react";
 
 export function ScrollProgress() {

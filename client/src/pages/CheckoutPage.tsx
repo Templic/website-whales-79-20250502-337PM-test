@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -285,7 +284,7 @@ export default function CheckoutPage() {
       setTimeout(() => {
         setLocation(`/shop/order/${orderId}`);
       }, 3000);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Payment error:', error);
       toast({
         title: "Payment failed",

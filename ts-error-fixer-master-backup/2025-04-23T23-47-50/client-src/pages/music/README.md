@@ -1,3 +1,0 @@
-# music
-
-Music-related pages

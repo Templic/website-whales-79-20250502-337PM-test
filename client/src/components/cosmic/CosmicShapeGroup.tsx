@@ -83,7 +83,7 @@ export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, clas
                     fill="none"
                     stroke={shape.glowColor}
                     strokeWidth="3"
-                    strokeOpacity={0.2}
+                    strokeOpacity="0.2"
                     filter="blur(5px)"
                     className="cosmic-shape-glow"
                   />
@@ -120,7 +120,7 @@ export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({ shapes, clas
                     fill="none"
                     stroke={shape.glowColor}
                     strokeWidth="3"
-                    strokeOpacity={0.2}
+                    strokeOpacity="0.2"
                     filter="blur(5px)"
                     className="cosmic-shape-glow"
                   />

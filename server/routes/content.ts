@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
     const contentItems = await storage.getAllContentItems();
     // @ts-ignore - Response type issue
   return res.json(contentItems);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching content items:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -50,7 +50,7 @@ router.get('/:id', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(contentItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error fetching content item by ID ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -72,7 +72,7 @@ router.get('/key/:key', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(contentItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error fetching content item by key ${req.params.key}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -95,7 +95,7 @@ router.get('/page/:page', async (req, res) => {
 
     // @ts-ignore - Response type issue
   return res.json(pageContentItems);
-} catch (error: unknown) {
+  } catch (error) {
     console.error(`Error fetching content items for page ${req.params.page}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -125,21 +125,21 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ 
         message: 'Invalid data', 
         errors: validation.error.errors 
-});
+      });
     }
 
     // Create the content item
     const contentItem = await storage.createContentItem(validation.data);
     
     // Log the action differently based on the source
-    if (isAutoCreation) => {
-      console.info(`Auto-created content item with, key: ${contentItem.key}`);
+    if (isAutoCreation) {
+      console.info(`Auto-created content item with key: ${contentItem.key}`);
     } else {
-      console.info(`Admin created content item with, key: ${contentItem.key}`);
+      console.info(`Admin created content item with key: ${contentItem.key}`);
     }
     
     return res.status(201).json(contentItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating content item:', error);
     
     // Check for duplicate key error
@@ -175,7 +175,7 @@ router.put('/:id', async (req, res) => {
     // Check for duplicate key if the key is being updated
     if (req.body.key && req.body.key !== existingItem.key) {
       const itemWithSameKey = await storage.getContentItemByKey(req.body.key);
-      if (itemWithSameKey) => {
+      if (itemWithSameKey) {
         return res.status(400).json({ message: 'A content item with this key already exists' });
       }
     }
@@ -185,12 +185,12 @@ router.put('/:id', async (req, res) => {
       id: contentId,
       ...req.body,
       version: existingItem.version + 1
-};
+    };
     
     const updatedItem = await storage.updateContentItem(updateData);
     // @ts-ignore - Response type issue
   return res.json(updatedItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error updating content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -220,7 +220,7 @@ router.delete('/:id', async (req, res) => {
     // Delete the content item
     await storage.deleteContentItem(contentId);
     return res.status(200).json({ message: 'Content item deleted successfully' });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error deleting content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -251,7 +251,7 @@ router.get('/:id/history', async (req, res) => {
     const history = await storage.getContentHistory(contentId);
     // @ts-ignore - Response type issue
   return res.json(history);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error fetching content history for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -284,11 +284,11 @@ router.post('/:id/version', async (req, res) => {
       contentId, 
       null, // version data is taken from current content
       user.id, 
-      changeDescription;
+      changeDescription
     );
     
     return res.status(201).json(version);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error creating content version for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -313,7 +313,7 @@ router.post('/history/:historyId/restore', async (req, res) => {
     const restoredItem = await storage.restoreContentVersion(historyId);
     // @ts-ignore - Response type issue
   return res.json(restoredItem);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error restoring content from history ID ${req.params.historyId}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -342,7 +342,7 @@ router.post('/:id/usage', async (req, res) => {
     // Record usage
     const usage = await storage.recordContentUsage(contentId, location, path);
     return res.status(201).json(usage);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error recording content usage for item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -366,7 +366,7 @@ router.post('/:id/view', async (req, res) => {
     // Increment view
     await storage.incrementContentViews(contentId);
     return res.status(200).json({ message: 'View recorded successfully' });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error incrementing view for content item ${req.params.id}:`, error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -389,7 +389,7 @@ router.get('/report/usage', async (req, res) => {
     const report = await storage.getContentUsageReport(contentId);
     // @ts-ignore - Response type issue
   return res.json(report);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating content usage report:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -1,5 +1,3 @@
-
-
 import { ReactNode } from "react"
 
 import { motion } from "framer-motion"
@@ -86,6 +84,7 @@ CosmicCard.displayName = 'CosmicCard';
 
 export { CosmicCard };
 
+
 /**
  * Original CosmicCard component merged from: client/src/components/common/cosmic-card.tsx
  * Merge date: 2025-04-05
@@ -139,6 +138,10 @@ function CosmicCardOriginal({
   )
 }
 
+
+
+
+
 /**
  * Original CosmicCard component merged from: client/src/components/cosmic/ui/cosmic-card.tsx
  * Merge date: 2025-04-05
@@ -166,6 +169,8 @@ function CosmicCardSecondOriginal({
     </div>
   );
 }
+
+
 
 /**
  * Original CosmicCard component merged from: client/src/components/features/cosmic/CosmicCard.tsx

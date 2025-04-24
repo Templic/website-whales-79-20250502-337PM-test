@@ -18,7 +18,7 @@ const logStream = fs.createWriteStream(logFile, { flags: 'a' });
 
 // Helper to log both to console and file
 function logBackground(message: string, level: 'info' | 'error' = 'info') {
-  const timestamp = new: Date().toISOString();
+  const timestamp = new Date().toISOString();
   const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}\n`;
   
   logStream.write(logEntry);
@@ -26,7 +26,7 @@ function logBackground(message: string, level: 'info' | 'error' = 'info') {
     console.error(`[bg-db] ${message}`);
   } else {
     log(message, 'bg-db');
-}
+  }
 }
 
 export async function initBackgroundServices() {
@@ -34,10 +34,10 @@ export async function initBackgroundServices() {
     // Initialize PgBoss with the connection string
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL environment variable is not set');
-}
-    boss = new: PgBoss({
+    }
+    boss = new PgBoss({
       connectionString: process.env.DATABASE_URL
-});
+    });
     
     // Handle startup events
     boss.on('error', error => {
@@ -45,7 +45,7 @@ export async function initBackgroundServices() {
     });
     
     boss.on('maintenance', notice => {
-      logBackground(`PgBoss, maintenance: ${notice.message}`);
+      logBackground(`PgBoss maintenance: ${notice.message}`);
     });
     
     // Start the job processor
@@ -59,10 +59,10 @@ export async function initBackgroundServices() {
     await scheduleRecurringJobs();
     
     return true;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Failed to initialize database background services:', error);
     return false;
-}
+  }
 }
 
 async function registerWorkers() {
@@ -73,14 +73,14 @@ async function registerWorkers() {
     try {
       // Use parameterized query with SQL template literal for safety
       const result = await pgPool.query(`
-        DELETE FROM: "session"
-        WHERE expire < $1;
-      `, [new: Date()]);
+        DELETE FROM "session"
+        WHERE expire < $1
+      `, [new Date()]);
       
       logBackground(`Cleaned up ${result.rowCount} expired sessions`);
       return { success: true, cleanedCount: result.rowCount };
-    } catch (error: unknown) {
-      logBackground(`Session cleanup, failed: ${(error as Error).message}`, 'error');
+    } catch (error) {
+      logBackground(`Session cleanup failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
   });
@@ -90,8 +90,9 @@ async function registerWorkers() {
     try {
       // Get database size
       const sizeResult = await pgPool.query(`
-        SELECT: pg_database_size(current_database()) as db_size_bytes,
-          current_database() as db_name;
+        SELECT 
+          pg_database_size(current_database()) as db_size_bytes,
+          current_database() as db_name
       `);
       
       // Get table counts
@@ -100,7 +101,7 @@ async function registerWorkers() {
           schemaname,
           relname as table_name,
           n_live_tup as row_count
-        FROM pg_stat_user_tables;
+        FROM pg_stat_user_tables
       `);
       
       // Insert the statistics into our metrics table
@@ -108,7 +109,7 @@ async function registerWorkers() {
       await pgPool.query(`
         CREATE TABLE IF NOT EXISTS db_metrics (
           id SERIAL PRIMARY KEY,
-          collected_at TIMESTAMP WITH TIME ZONE, DEFAULT: NOW(),
+          collected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
           db_size_bytes BIGINT,
           metrics JSONB
         )
@@ -122,20 +123,21 @@ async function registerWorkers() {
         sizeResult.rows[0].db_size_bytes,
         JSON.stringify({
           tables: tableCounts.rows,
-          timestamp: new: Date().toISOString()
-})
+          timestamp: new Date().toISOString()
+        })
       ]);
       
-      // Cleanup old metrics (keep only, last: 30 days)
+      // Cleanup old metrics (keep only last 30 days)
       // Use parameterized query for safety
       await pgPool.query(`
         DELETE FROM db_metrics
-        WHERE collected_at < NOW() - INTERVAL $1: `, ['30 days']);
+        WHERE collected_at < NOW() - INTERVAL $1
+      `, ['30 days']);
       
       logBackground('Database metrics collected successfully');
       return { success: true };
-    } catch (error: unknown) {
-      logBackground(`Database metrics collection, failed: ${(error as Error).message}`, 'error');
+    } catch (error) {
+      logBackground(`Database metrics collection failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
   });
@@ -157,14 +159,14 @@ async function registerWorkers() {
         logBackground(`Running VACUUM ANALYZE on table ${table}`);
         // Using identifier escaping with double quotes provides some protection, 
         // but adding regex validation above as additional security
-        await pgPool.query(`VACUUM, ANALYZE: "${table}"`);
+        await pgPool.query(`VACUUM ANALYZE "${table}"`);
         results.push({ table, status: 'success' });
       }
       
       logBackground(`Auto-vacuum completed for ${tables.length} tables`);
       return { success: true, results };
-    } catch (error: unknown) {
-      logBackground(`Auto-vacuum, failed: ${(error as Error).message}`, 'error');
+    } catch (error) {
+      logBackground(`Auto-vacuum failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
   });
@@ -186,16 +188,16 @@ async function scheduleRecurringJobs() {
     await boss.send('identify-large-tables', {});
     
     // Schedule session cleanup (daily)
-    await boss.schedule('cleanup-sessions', '0: 2 * * *'); // Every day at: 2am
+    await boss.schedule('cleanup-sessions', '0 2 * * *'); // Every day at 2am
     
     // Schedule database metrics collection (hourly)
     await boss.schedule('collect-db-stats', '5 * * * *'); // 5 minutes past every hour
     
     // Schedule auto-vacuum for large tables (weekly)
-    await boss.schedule('identify-large-tables', '0: 1 * * 0'); // Every Sunday at: 1am
-  } catch (error: unknown) {
+    await boss.schedule('identify-large-tables', '0 1 * * 0'); // Every Sunday at 1am
+  } catch (error) {
     console.error('Error scheduling recurring jobs:', error);
-}
+  }
   
   // Register worker to identify large tables that need vacuuming
   await boss?.work('identify-large-tables', async () => {
@@ -209,7 +211,7 @@ async function scheduleRecurringJobs() {
           (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100)::numeric(10, 2) as dead_tuple_pct
         FROM pg_stat_user_tables
         WHERE (n_dead_tup::float / GREATEST(n_live_tup, 1) * 100) > 10
-        ORDER BY dead_tuple_pct DESC;
+        ORDER BY dead_tuple_pct DESC
       `);
       
       if (result.rows.length > 0) {
@@ -220,11 +222,11 @@ async function scheduleRecurringJobs() {
         await boss?.send('auto-vacuum-analyze', { tables });
       } else {
         logBackground('No tables require vacuuming at this time');
-}
+      }
       
       return { success: true, tablesIdentified: result.rows.length };
-    } catch (error: unknown) {
-      logBackground(`Large table identification, failed: ${(error as Error).message}`, 'error');
+    } catch (error) {
+      logBackground(`Large table identification failed: ${(error as Error).message}`, 'error');
       return { success: false, error: (error as Error).message };
     }
   });
@@ -236,7 +238,7 @@ async function scheduleRecurringJobs() {
 export async function triggerBackgroundJob(jobName: string, data?: any) {
   if (!boss) {
     throw new Error('Background services not initialized');
-}
+  }
   
   return await boss.send(jobName, data || {});
 }
@@ -245,19 +247,19 @@ export async function triggerBackgroundJob(jobName: string, data?: any) {
 export async function getJobStatus(jobId: string) {
   if (!boss) {
     throw new Error('Background services not initialized');
-}
+  }
   
-  // PgBoss: 7.x expects different parameters than what TS types indicate
+  // PgBoss 7.x expects different parameters than what TS types indicate
   // @ts-ignore - Type definitions don't match actual implementation
   return await boss.getJobById(jobId);
 }
 
 // Graceful shutdown
 export async function shutdownBackgroundServices() {
-  if (boss) => {
+  if (boss) {
     await boss.stop();
     logBackground('Background database services stopped');
-}
+  }
   
   // Close the log stream
   logStream.end();

@@ -4,8 +4,6 @@
  * Component Type: audio
  * Migrated from imported components.
  */
-import React from "react";
-
 /**
  * spatial-audio-experience.tsx
  * 
@@ -569,7 +567,7 @@ export function SpatialAudioExperience({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{  backgroundColor: getChakraColor(currentTrack.chakra)  }}
+            style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
           >
             <Headphones className="h-4 w-4 text-white" />
           </div>
@@ -668,7 +666,7 @@ export function SpatialAudioExperience({
                   >
                     <div
                       className="absolute right-0 h-2 w-2 rounded-full"
-                      style={{  backgroundColor: getChakraColor(currentTrack.chakra)  }}
+                      style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
                     ></div>
                   </div>
 
@@ -745,8 +743,8 @@ export function SpatialAudioExperience({
                   <Button variant="ghost" size="icon" onClick={prevTrack} className="text-white hover:bg-white/10">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width={24}
-                      height={24}
+                      width="24"
+                      height="24"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -772,8 +770,8 @@ export function SpatialAudioExperience({
                   <Button variant="ghost" size="icon" onClick={nextTrack} className="text-white hover:bg-white/10">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      width={24}
-                      height={24}
+                      width="24"
+                      height="24"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"

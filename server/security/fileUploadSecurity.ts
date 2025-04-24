@@ -28,96 +28,103 @@ import { fileTypeFromBuffer } from 'file-type';
 import fileUpload from 'express-fileupload';
 
 // Security interface declarations
-export interface SecurityFileMetadata: {
-  hash: string;                 // SHA-256 hash of file contents,
-  fileSize: number;             // File size in bytes,
-  mimeType: string;             // Detected MIME type,
-  extension: string;            // File extension,
-  uploadedAt: Date;             // Upload timestamp,
+export interface SecurityFileMetadata {
+  hash: string;                 // SHA-256 hash of file contents
+  fileSize: number;             // File size in bytes
+  mimeType: string;             // Detected MIME type
+  extension: string;            // File extension
+  uploadedAt: Date;             // Upload timestamp
   securityChecks: {             // Results of security checks
-    contentVerified: boolean;   // Content matches declared type,
-  malwareScanResult: string;  // 'clean', 'infected', or: 'skipped',
-  sensitiveContentDetected: boolean; // If applicable
-};
+    contentVerified: boolean;   // Content matches declared type
+    malwareScanResult: string;  // 'clean', 'infected', or 'skipped'
+    sensitiveContentDetected: boolean; // If applicable
+  };
 }
 
 // Rate limiting and quota interface
-export interface UploadQuotaConfig: {
-  maxDailyUploads: number;      // Maximum uploads per day per user,
-  maxWeeklyStorageBytes: number; // Maximum bytes per week per user,
-  cooldownPeriodMs: number;     // Milliseconds between uploads,
-  burstLimit: number;           // Max uploads in a short time period,
+export interface UploadQuotaConfig {
+  maxDailyUploads: number;      // Maximum uploads per day per user
+  maxWeeklyStorageBytes: number; // Maximum bytes per week per user
+  cooldownPeriodMs: number;     // Milliseconds between uploads
+  burstLimit: number;           // Max uploads in a short time period
   burstWindowMs: number;        // Window for burst detection
 }
 
 // Enhanced security configuration
-interface FileUploadSecurityConfig: {
-  maxFileSize: number;          // Maximum file size in bytes,
-  minFileSize: number;          // Minimum file size in bytes,
+interface FileUploadSecurityConfig {
+  maxFileSize: number;          // Maximum file size in bytes
+  minFileSize: number;          // Minimum file size in bytes
   allowedFileTypes: {           // Allowed file types by category
-    image: string[];            // Allowed image MIME types,
-  video: string[];            // Allowed video MIME types,
-  audio: string[];            // Allowed audio MIME types,
-  document: string[];         // Allowed document MIME types,
-  other: string[];            // Allowed other MIME types
-};
-  allowedExtensions: {          // Allowed file extensions by category,
-  image: string[];            // Allowed image extensions,
-  video: string[];            // Allowed video extensions,
-  audio: string[];            // Allowed audio extensions,
-  document: string[];         // Allowed document extensions,
-  other: string[];            // Allowed other extensions
-};
-  disallowedPatterns: string[]; // Regex patterns to block in filenames,
+    image: string[];            // Allowed image MIME types
+    video: string[];            // Allowed video MIME types
+    audio: string[];            // Allowed audio MIME types
+    document: string[];         // Allowed document MIME types
+    other: string[];            // Allowed other MIME types
+  };
+  allowedExtensions: {          // Allowed file extensions by category
+    image: string[];            // Allowed image extensions
+    video: string[];            // Allowed video extensions
+    audio: string[];            // Allowed audio extensions
+    document: string[];         // Allowed document extensions
+    other: string[];            // Allowed other extensions
+  };
+  disallowedPatterns: string[]; // Regex patterns to block in filenames
   scanForMalware: boolean;      // Whether to scan for malware
-  clamAVScanEndpoint?: string;  // ClamAV scanning endpoint,
-  validateSvgContent: boolean;  // Deep inspection of SVG files,
-  validateImageMetadata: boolean; // Check for EXIF metadata issues,
-  sanitizePdfs: boolean;        // Remove scripts from PDFs,
-  secureRandomFilenames: boolean; // Use crypto-secure random names,
-  logAllUploads: boolean;       // Log all uploads for auditing,
-  quarantineSuspiciousFiles: boolean; // Move suspicious files to quarantine,
-  quotaConfig: UploadQuotaConfig; // Rate limiting configuration,
+  clamAVScanEndpoint?: string;  // ClamAV scanning endpoint
+  validateSvgContent: boolean;  // Deep inspection of SVG files
+  validateImageMetadata: boolean; // Check for EXIF metadata issues
+  sanitizePdfs: boolean;        // Remove scripts from PDFs
+  secureRandomFilenames: boolean; // Use crypto-secure random names
+  logAllUploads: boolean;       // Log all uploads for auditing
+  quarantineSuspiciousFiles: boolean; // Move suspicious files to quarantine
+  quotaConfig: UploadQuotaConfig; // Rate limiting configuration
   tempFileCleanupAgeSecs: number; // Age in seconds to clean temporary files
 }
 
 // Default configuration
 const defaultConfig: FileUploadSecurityConfig = {
-  maxFileSize: 50 * 1024 * 1024, // 50MB,
-  minFileSize:  1, // 1 byte minimum (prevent empty files)
+  maxFileSize: 50 * 1024 * 1024, // 50MB
+  minFileSize: 1, // 1 byte minimum (prevent empty files)
   allowedFileTypes: {
     image: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
     video: ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/x-ms-wmv'],
     audio: ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/aac', 'audio/flac', 'audio/x-ms-wma'],
     document: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     other: []
-},
+  },
   allowedExtensions: {
     image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
     video: ['mp4', 'mpeg', 'mov', 'avi', 'wmv'],
     audio: ['mp3', 'mp4', 'wav', 'aac', 'flac', 'wma'],
     document: ['pdf', 'doc', 'docx'],
     other: []
-},
+  },
   disallowedPatterns: [
-    '\\.\\.',           // Path traversal attempts: '\0',              // Null byte injection: '^\\.htaccess$',   // Apache config file: '\\.php$',         // PHP files: '\\.phtml$',       // PHP template files: '\\.exe$',         // Executable files: '\\.sh$',          // Shell scripts: '^\\.env$'         // Environment files
+    '\\.\\.',           // Path traversal attempts
+    '\0',              // Null byte injection
+    '^\\.htaccess$',   // Apache config file
+    '\\.php$',         // PHP files
+    '\\.phtml$',       // PHP template files
+    '\\.exe$',         // Executable files
+    '\\.sh$',          // Shell scripts
+    '^\\.env$'         // Environment files
   ],
   scanForMalware: true,
-  clamAVScanEndpoint: 'http://localhost:3310/scan', // Default ClamAV endpoint,
-  validateSvgContent: true,  // Enable SVG content validation,
-  validateImageMetadata: true, // Check image metadata,
-  sanitizePdfs: true,        // Sanitize PDFs,
-  secureRandomFilenames: true, // Use secure random filenames,
-  logAllUploads: true,       // Log all uploads,
-  quarantineSuspiciousFiles: true, // Quarantine suspicious files,
+  clamAVScanEndpoint: 'http://localhost:3310/scan', // Default ClamAV endpoint
+  validateSvgContent: true,  // Enable SVG content validation
+  validateImageMetadata: true, // Check image metadata
+  sanitizePdfs: true,        // Sanitize PDFs
+  secureRandomFilenames: true, // Use secure random filenames
+  logAllUploads: true,       // Log all uploads
+  quarantineSuspiciousFiles: true, // Quarantine suspicious files
   quotaConfig: {
-    maxDailyUploads: 100,     // 100 uploads per day,
-  maxWeeklyStorageBytes: 1024 * 1024 * 1024, // 1GB per week,
-  cooldownPeriodMs: 1000,   // 1 second between uploads,
-  burstLimit: 10,           // 10 uploads in burst window,
-  burstWindowMs: 60000      // 1 minute burst window
-},
-  tempFileCleanupAgeSecs: 3600 // Clean temporary files after: 1 hour
+    maxDailyUploads: 100,     // 100 uploads per day
+    maxWeeklyStorageBytes: 1024 * 1024 * 1024, // 1GB per week
+    cooldownPeriodMs: 1000,   // 1 second between uploads
+    burstLimit: 10,           // 10 uploads in burst window
+    burstWindowMs: 60000      // 1 minute burst window
+  },
+  tempFileCleanupAgeSecs: 3600 // Clean temporary files after 1 hour
 };
 
 // Configuration instance
@@ -127,7 +134,7 @@ let config = { ...defaultConfig };
  * Set the configuration for file upload security
  * @param userConfig User-defined configuration
  */
-export function setFileUploadSecurityConfig(userConfig: Partial<FileUploadSecurityConfig>): void: {
+export function setFileUploadSecurityConfig(userConfig: Partial<FileUploadSecurityConfig>): void {
   config = { ...defaultConfig, ...userConfig };
   log('File upload security configuration updated', 'security');
 }
@@ -137,7 +144,7 @@ export function setFileUploadSecurityConfig(userConfig: Partial<FileUploadSecuri
  * @param file The uploaded file
  * @throws Error if file size is outside allowed limits
  */
-export function validateFileSize(file: fileUpload.UploadedFile): void: {
+export function validateFileSize(file: fileUpload.UploadedFile): void {
   // Check minimum size
   if (file.size < config.minFileSize) {
     throw new Error(`File size (${file.size} bytes) is below minimum allowed size (${config.minFileSize} bytes)`);
@@ -165,32 +172,32 @@ export async function validateFileType(
   
   // Validate file extension
   const isExtensionValid = allowedCategories.some(category => 
-    config.allowedExtensions[category].includes(fileExtension);
+    config.allowedExtensions[category].includes(fileExtension)
   );
   
   if (!isExtensionValid) {
-    throw new Error(`File, extension: '${fileExtension}' is not allowed`);
+    throw new Error(`File extension '${fileExtension}' is not allowed`);
   }
   
   // Validate file MIME type
   const declaredMimeType = file.mimetype;
   const isTypeDeclaredValid = allowedCategories.some(category => 
-    config.allowedFileTypes[category].includes(declaredMimeType);
+    config.allowedFileTypes[category].includes(declaredMimeType)
   );
   
   if (!isTypeDeclaredValid) {
-    throw new Error(`File, type '${declaredMimeType}' is not allowed`);
+    throw new Error(`File type '${declaredMimeType}' is not allowed`);
   }
   
   // For extra security, verify file content matches extension and MIME type
   try {
-    const buffer = file.data.slice(0, 4100); // Get first: 4100 bytes for type detection
+    const buffer = file.data.slice(0, 4100); // Get first 4100 bytes for type detection
     const fileTypeResult = await fileTypeFromBuffer(buffer);
     
-    if (fileTypeResult) => {
+    if (fileTypeResult) {
       const actualMimeType = fileTypeResult.mime;
       const isTypeActualValid = allowedCategories.some(category => 
-        config.allowedFileTypes[category].includes(actualMimeType);
+        config.allowedFileTypes[category].includes(actualMimeType)
       );
       
       if (!isTypeActualValid) {
@@ -204,11 +211,12 @@ export async function validateFileType(
     }
     // If fileTypeResult is null, it might be a text file or unsupported format
     // In that case, rely on the declared MIME type (already validated above)
-  } catch (error: unknown) {
+  } catch (error) {
     if (error instanceof Error && error.message.includes('File contents')) {
       throw error;
-}
-    // If error occurs during detection, log it but continue with validation: log(`Error during file content type validation: ${error instanceof Error ? error.message : error}`, 'error');
+    }
+    // If error occurs during detection, log it but continue with validation
+    log(`Error during file content type validation: ${error instanceof Error ? error.message : error}`, 'error');
   }
 }
 
@@ -218,21 +226,21 @@ export async function validateFileType(
  * @returns Sanitized filename
  * @throws Error if filename matches a disallowed pattern
  */
-export function sanitizeFileName(filename: string): string: {
+export function sanitizeFileName(filename: string): string {
   if (!filename || filename.trim() === '') {
     throw new Error('Filename cannot be empty');
-}
+  }
   
   // Check for null bytes (can cause path truncation vulnerabilities)
   if (filename.includes('\0')) {
     throw new Error('Filename contains null bytes');
-}
+  }
   
   // Check against disallowed patterns
   for (const pattern of config.disallowedPatterns) {
-    const regex = new: RegExp(pattern);
+    const regex = new RegExp(pattern);
     if (regex.test(filename)) {
-      throw new Error(`Filename matches disallowed, pattern: ${pattern}`);
+      throw new Error(`Filename matches disallowed pattern: ${pattern}`);
     }
   }
   
@@ -266,47 +274,48 @@ export function sanitizeFileName(filename: string): string: {
 export async function scanFileForMalware(file: fileUpload.UploadedFile): Promise<void> {
   if (!config.scanForMalware) {
     return; // Scanning is disabled
-}
+  }
   
   try {
     // Check if ClamAV endpoint is configured
     if (!config.clamAVScanEndpoint) {
       log('ClamAV scan endpoint not configured, skipping malware scan', 'warning');
       return;
-}
+    }
     
     log(`Scanning file ${file.name} for malware...`, 'security');
     
     // Prepare the request to ClamAV
-    const formData = new: FormData();
-    const blob = new: Blob([file.data], { type file.mimetype });
+    const formData = new FormData();
+    const blob = new Blob([file.data], { type: file.mimetype });
     formData.append('file', blob, file.name);
     
     // Send file to ClamAV for scanning
     const response = await fetch(config.clamAVScanEndpoint, {
       method: 'POST',
       body: formData,
-});
+    });
     
     if (!response.ok) {
-      throw new Error(`ClamAV scan, failed: ${response.statusText}`);
+      throw new Error(`ClamAV scan failed: ${response.statusText}`);
     }
     
     const result = await response.json();
     
     // Check scan result
     if (result.isInfected) {
-      throw new Error(`Malware detected in, file: ${result.malwareName || 'Unknown malware'}`);
+      throw new Error(`Malware detected in file: ${result.malwareName || 'Unknown malware'}`);
     }
     
     log(`File ${file.name} scanned, no malware detected`, 'security');
-  } catch (error: unknown) {
+  } catch (error) {
     // If error is related to malware detection, rethrow it
     if (error instanceof Error && error.message.includes('Malware detected')) {
       throw error;
-}
+    }
     
-    // For other errors, log warning but don't block the upload: log(`Error during malware scanning: ${error instanceof Error ? error.message : error}`, 'warning');
+    // For other errors, log warning but don't block the upload
+    log(`Error during malware scanning: ${error instanceof Error ? error.message : error}`, 'warning');
     log('Continuing without malware scanning', 'warning');
   }
 }
@@ -317,7 +326,7 @@ export async function scanFileForMalware(file: fileUpload.UploadedFile): Promise
  * @param baseDir Base directory
  * @returns Whether the path is safe
  */
-export function isPathSafe(filePath: string, baseDir: string): boolean: {
+export function isPathSafe(filePath: string, baseDir: string): boolean {
   const normalizedPath = path.normalize(filePath);
   const resolvedPath = path.resolve(baseDir, normalizedPath);
   return resolvedPath.startsWith(path.resolve(baseDir));
@@ -336,17 +345,18 @@ export async function validateUploadedFile(
     skipMalwareScan?: boolean;
     userId?: number | string;
     context?: string;
-} = {}
+  } = {}
 ): Promise<{ sanitizedFileName: string; fileMetadata: SecurityFileMetadata }> {
   // Start tracking security checks
   const securityChecks = {
     contentVerified: false,
     malwareScanResult: 'skipped',
     sensitiveContentDetected: false
-};
+  };
 
   try {
-    // Validate file size: validateFileSize(file);
+    // Validate file size
+    validateFileSize(file);
     
     // Validate file type
     await validateFileType(file, options.allowedCategories);
@@ -359,11 +369,11 @@ export async function validateUploadedFile(
     if (config.scanForMalware && !options.skipMalwareScan) {
       await scanFileForMalware(file);
       securityChecks.malwareScanResult = 'clean';
-}
+    }
 
     // Calculate file hash for integrity and deduplication
     const fileHash = crypto.createHash('sha256')
-      .update(file.data);
+      .update(file.data)
       .digest('hex');
     
     // Create file metadata for tracking and auditing
@@ -372,9 +382,9 @@ export async function validateUploadedFile(
       fileSize: file.size,
       mimeType: file.mimetype,
       extension: path.extname(file.name).substring(1).toLowerCase(),
-      uploadedAt: new: Date(),
+      uploadedAt: new Date(),
       securityChecks
-};
+    };
     
     // Log the security validation if configured
     if (config.logAllUploads) {
@@ -383,8 +393,9 @@ export async function validateUploadedFile(
     }
     
     return { sanitizedFileName, fileMetadata };
-  } catch (error: unknown) {
-    // Log the security failure: log(`File security validation failed: ${file.name} - ${error instanceof Error ? error.message : error}`, 'security');
+  } catch (error) {
+    // Log the security failure
+    log(`File security validation failed: ${file.name} - ${error instanceof Error ? error.message : error}`, 'security');
     
     // Rethrow the error
     throw error;
@@ -425,10 +436,10 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
           cleanedCount++;
           
           if (config.logAllUploads) {
-            log(`Cleaned up temporary, file: ${filePath} (age: ${Math.round(fileAgeMs / 1000)} seconds)`, 'security');
+            log(`Cleaned up temporary file: ${filePath} (age: ${Math.round(fileAgeMs / 1000)} seconds)`, 'security');
           }
         }
-      } catch (fileError: unknown) {
+      } catch (fileError) {
         log(`Error cleaning up file: ${file} - ${fileError instanceof Error ? fileError.message : fileError}`, 'error');
       }
     }
@@ -438,7 +449,7 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
     }
     
     return cleanedCount;
-  } catch (error: unknown) {
+  } catch (error) {
     log(`Error during temporary file cleanup: ${error instanceof Error ? error.message : error}`, 'error');
     return 0;
   }
@@ -447,16 +458,18 @@ export async function cleanupTempFiles(tempDir: string): Promise<number> {
 /**
  * Initialize the file upload security module
  */
-export function initFileUploadSecurity(): void: {
+export function initFileUploadSecurity(): void {
   log('File upload security module initialized', 'security');
   
   // Schedule regular temporary file cleanup
   const cleanupIntervalMs = Math.min(
-    config.tempFileCleanupAgeSecs * 500, // Half the age in, ms: 3600000 // But max once per hour;
+    config.tempFileCleanupAgeSecs * 500, // Half the age in ms
+    3600000 // But max once per hour
   );
   
-  // Setup regular cleanup: setInterval(() => {
+  // Setup regular cleanup
+  setInterval(() => {
     cleanupTempFiles('./tmp');
     cleanupTempFiles('./uploads/tmp');
-}, cleanupIntervalMs);
+  }, cleanupIntervalMs);
 }

@@ -7,7 +7,7 @@
 
 // Placeholder for actual blockchain logging
 // In a real implementation, this would import from the blockchain module
-function recordSecurityEvent(event$2: void: {
+function recordSecurityEvent(event): void {
   console.log(`[BLOCKCHAIN-SECURITY] ${event.level || 'INFO'} - ${event.message || event.type}`, 
                event.details || {});
 }
@@ -15,7 +15,7 @@ function recordSecurityEvent(event$2: void: {
 /**
  * Security event severity levels
  */
-export enum LogLevel: {
+export enum LogLevel {
   DEBUG = 'DEBUG',
   INFO = 'INFO',
   WARN = 'WARN',
@@ -25,8 +25,8 @@ export enum LogLevel: {
 
 /**
  * Security event types
- */;
-export enum SecurityEventType: {
+ */
+export enum SecurityEventType {
   CRYPTO_OPERATION_SUCCESS = 'CRYPTO_OPERATION_SUCCESS',
   CRYPTO_OPERATION_FAILURE = 'CRYPTO_OPERATION_FAILURE',
   KEY_MANAGEMENT = 'KEY_MANAGEMENT',
@@ -44,8 +44,8 @@ export enum SecurityEventType: {
 
 /**
  * Interface for security logging
- */;
-export interface ISecurityLogger: {
+ */
+export interface ISecurityLogger {
   debug(message: string, metadata?: Record<string, any>): void;
   info(message: string, metadata?: Record<string, any>): void;
   warn(message: string, metadata?: Record<string, any>): void;
@@ -59,7 +59,7 @@ export interface ISecurityLogger: {
  * This class provides a structured logging interface that integrates with
  * the blockchain-based immutable logging system.
  */
-export class ImmutableSecurityLogger implements ISecurityLogger: {
+export class ImmutableSecurityLogger implements ISecurityLogger {
   private readonly component: string;
   
   /**
@@ -69,53 +69,53 @@ export class ImmutableSecurityLogger implements ISecurityLogger: {
    */
   constructor(component: string) {
     this.component = component;
-}
+  }
   
   /**
    * Log a debug message
    */
-  public: debug(message: string, metadata: Record<string, any> = {}): void: {
+  public debug(message: string, metadata: Record<string, any> = {}): void {
     this.log(LogLevel.DEBUG, message, metadata);
-}
+  }
   
   /**
    * Log an informational message
    */
-  public: info(message: string, metadata: Record<string, any> = {}): void: {
+  public info(message: string, metadata: Record<string, any> = {}): void {
     this.log(LogLevel.INFO, message, metadata);
-}
+  }
   
   /**
    * Log a warning message
    */
-  public: warn(message: string, metadata: Record<string, any> = {}): void: {
+  public warn(message: string, metadata: Record<string, any> = {}): void {
     this.log(LogLevel.WARN, message, metadata);
-}
+  }
   
   /**
    * Log an error message
    */
-  public: error(message: string, metadata: Record<string, any> = {}): void: {
+  public error(message: string, metadata: Record<string, any> = {}): void {
     this.log(LogLevel.ERROR, message, metadata);
-}
+  }
   
   /**
    * Log a critical message
    */
-  public: critical(message: string, metadata: Record<string, any> = {}): void: {
+  public critical(message: string, metadata: Record<string, any> = {}): void {
     this.log(LogLevel.CRITICAL, message, metadata);
-}
+  }
   
   /**
    * Internal logging method
    */
-  private: log(level: LogLevel, message: string, metadata: Record<string, any>): void: {
+  private log(level: LogLevel, message: string, metadata: Record<string, any>): void {
     const timestamp = Date.now();
     
     // Ensure metadata has a timestamp
     if (!metadata.timestamp) {
       metadata.timestamp = timestamp;
-}
+    }
     
     // Add component to metadata
     metadata.component = this.component;
@@ -123,14 +123,15 @@ export class ImmutableSecurityLogger implements ISecurityLogger: {
     // Determine the security event type based on the metadata
     const eventType = this.determineEventType(metadata);
     
-    // Record the security event to the blockchain: recordSecurityEvent({
+    // Record the security event to the blockchain
+    recordSecurityEvent({
       timestamp,
       level,
       message,
       component: this.component,
-      type eventType,
+      type: eventType,
       details: metadata
-});
+    });
     
     // Also log to console for debugging (can be disabled in production)
     console.log(`[${level}] [${this.component}] ${message}`, metadata);
@@ -139,39 +140,39 @@ export class ImmutableSecurityLogger implements ISecurityLogger: {
   /**
    * Determine the security event type based on metadata
    */
-  private: determineEventType(metadata: Record<string, any>): SecurityEventType: {
+  private determineEventType(metadata: Record<string, any>): SecurityEventType {
     // If the metadata explicitly includes an event type, use that
     if (metadata.eventType && Object.values(SecurityEventType).includes(metadata.eventType)) {
       return metadata.eventType as SecurityEventType;
-}
+    }
     
     // Otherwise, try to infer the type from the metadata
-    if (metadata.operation = == 'ENCRYPTION' || metadata.operation === 'DECRYPTION' || ;
+    if (metadata.operation === 'ENCRYPTION' || metadata.operation === 'DECRYPTION' || 
         metadata.operation === 'SIGNATURE' || metadata.operation === 'KEY_GENERATION') {
       return metadata.error ? 
         SecurityEventType.CRYPTO_OPERATION_FAILURE : 
         SecurityEventType.CRYPTO_OPERATION_SUCCESS;
-}
+    }
     
     if (metadata.anomalyScore !== undefined) {
       return SecurityEventType.ANOMALY_DETECTED;
-}
+    }
     
     if (metadata.isValid !== undefined && metadata.signature !== undefined) {
       return SecurityEventType.SIGNATURE_VERIFICATION;
-}
+    }
     
     if (metadata.isValid !== undefined && metadata.share !== undefined) {
       return SecurityEventType.SHARE_VERIFICATION;
-}
+    }
     
     if (metadata.period !== undefined) {
       return SecurityEventType.FORWARD_SECURE;
-}
+    }
     
     if (metadata.range !== undefined) {
       return SecurityEventType.ZERO_KNOWLEDGE;
-}
+    }
     
     // Default to API security for unclassified events
     return SecurityEventType.API_SECURITY;

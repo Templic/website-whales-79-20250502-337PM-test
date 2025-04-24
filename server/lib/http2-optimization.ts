@@ -9,16 +9,18 @@
  * - Dependency tree management for optimal resource loading
  */
 
-import express, { Request, Response, NextFunction } from 'express';
-import * as fs from 'fs';
+import { Request, Response, NextFunction } from 'express';
+import { parse as parseUrl } from 'url';
 import * as path from 'path';
+import * as fs from 'fs';
 
+// Types for resource hints
 export type ResourceHintType = 'preload' | 'prefetch' | 'preconnect' | 'dns-prefetch';
 export type ResourceAsType = 'style' | 'script' | 'font' | 'image' | 'fetch' | 'document' | 'audio' | 'video';
 
 export interface ResourceHint {
   url: string;
-  type ResourceHintType;
+  type: ResourceHintType;
   as?: ResourceAsType;
   crossorigin?: boolean;
   importance?: 'high' | 'low' | 'auto';
@@ -57,52 +59,68 @@ export interface Http2OptimizationOptions {
   optimizeStreaming?: boolean;
 }
 
-// In-memory cache for resource hints
-const resourceHintsCache = new Map<string, string>();
-
+// Default options
 const defaultOptions: Http2OptimizationOptions = {
-  staticPath: '/public',
+  staticPath: 'public',
   enablePush: true,
   globalPreloads: [],
   globalPrefetch: [],
   globalPreconnect: [],
+  criticalCss: {},
   optimizeHpack: true,
   setDefaultPriorities: true,
-  resourceHintsCacheTime: 3600,
+  resourceHintsCacheTime: 86400, // 1 day
   includeHintsInHeaders: true,
-  optimizeStreaming: false,
+  optimizeStreaming: true,
 };
 
+// Cache for resource hints
+const resourceHintsCache = new Map<string, string>();
+
 /**
- * HTTP/2 optimization middleware
- * @param options HTTP/2 optimization options
+ * Middleware for HTTP/2 optimization
+ * @param options Configuration options
  * @returns Express middleware
  */
-export function http2OptimizationMiddleware(options: Http2OptimizationOptions = {}): express.RequestHandler {
+export function http2OptimizationMiddleware(options: Http2OptimizationOptions = {}) {
+  // Merge options with defaults
   const config = { ...defaultOptions, ...options };
   
-  return function(req: Request, res: Response, next: NextFunction): void {
-    // Add resource hint convenience methods
+  return function(req: Request, res: Response, next: NextFunction) {
+    // Skip for non-HTML requests
+    const acceptHeader = req.headers.accept || '';
+    if (!acceptHeader.includes('text/html')) {
+      return next();
+    }
+    
+    // Add resource hint methods to response object
+    const originalSend = res.send;
+    
+    // Extend response to include resource hint capabilities
+    (res as any).preload = (url: string, as?: ResourceAsType, crossorigin?: boolean) => {
+      addResourceHint(res, { url, type: 'preload', as, crossorigin });
+      return res;
+    };
+    
+    (res as any).prefetch = (url: string, as?: ResourceAsType) => {
+      addResourceHint(res, { url, type: 'prefetch', as });
+      return res;
+    };
+    
+    (res as any).preconnect = (url: string, crossorigin?: boolean) => {
+      addResourceHint(res, { url, type: 'preconnect', crossorigin });
+      return res;
+    };
+    
+    (res as any).dnsPrefetch = (url: string) => {
+      addResourceHint(res, { url, type: 'dns-prefetch' });
+      return res;
+    };
+    
+    // Track added hints to avoid duplicates
     const addedHints = new Set<string>();
     
-    (res as any).preload = (url: string, as?: ResourceAsType, crossorigin?: boolean): void => {
-      addResourceHint(res, { 
-        url, 
-        type: 'preload', 
-        as, 
-        crossorigin 
-      }, addedHints);
-    };
-    
-    (res as any).prefetch = (url: string, as?: ResourceAsType): void => {
-      addResourceHint(res, { 
-        url, 
-        type: 'prefetch', 
-        as 
-      }, addedHints);
-    };
-    
-    // Apply global resource hints
+    // Add global hints
     config.globalPreloads?.forEach(hint => {
       addResourceHint(res, hint, addedHints);
     });
@@ -116,8 +134,7 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
     });
     
     // Override send to add resource hints to HTML responses
-    const originalSend = res.send;
-    res.send = function(body): Response {
+    res.send = function(body) {
       // Only modify HTML responses
       if (typeof body === 'string' && isHtmlResponse(res)) {
         // Add resource hints as <link> tags
@@ -129,8 +146,7 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
         }
       }
       
-      // Call original send
-      return originalSend.call(res, body);
+      return originalSend.call(this, body);
     };
     
     next();
@@ -138,142 +154,137 @@ export function http2OptimizationMiddleware(options: Http2OptimizationOptions = 
 }
 
 /**
- * Check if response is HTML
+ * Check if the response is HTML
  * @param res Express response
- * @returns Whether response is HTML
+ * @returns Whether the response is HTML
  */
 function isHtmlResponse(res: Response): boolean {
-  const contentType = res.getHeader('content-type');
-  return typeof contentType === 'string' && 
-         contentType.toLowerCase().includes('text/html');
+  const contentType = res.get('Content-Type') || '';
+  return contentType.includes('text/html');
 }
 
 /**
- * Check if request uses HTTP/2
+ * Check if the request is using HTTP/2
  * @param req Express request
- * @returns Whether request uses HTTP/2
+ * @returns Whether the request is using HTTP/2
  */
 function isHttp2(req: Request): boolean {
-  const proto = req.get('x-forwarded-proto') || req.protocol;
-  return proto === 'h2' || Boolean(req.get('_http2'));
+  // Check if HTTP/2 is available (using Express or Node.js HTTP/2 APIs)
+  return !!(req.httpVersion === '2.0' || (req as any).socket?.alpnProtocol === 'h2');
 }
 
 /**
  * Add a resource hint to the response
  * @param res Express response
- * @param hint Resource hint
- * @param addedHints Set of added hints
+ * @param hint Resource hint to add
+ * @param addedHints Set of already added hints to avoid duplicates
  */
-function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<string>): void {
-  // Skip if already added
-  if (addedHints && addedHints.has(hint.url)) {
+function addResourceHint(res: Response, hint: ResourceHint, addedHints?: Set<string>) {
+  const hintKey = `${hint.type}:${hint.url}:${hint.as || ''}`;
+  
+  // Skip duplicates
+  if (addedHints?.has(hintKey)) {
     return;
   }
   
-  // Add to response headers
-  let linkHeader = res.getHeader('Link') as string | string[] | undefined;
-  let hintValue = `<${hint.url}>; rel=${hint.type}`;
+  // Track added hints
+  addedHints?.add(hintKey);
   
+  // Get existing Link header
+  let linkHeader = res.get('Link') || '';
+  
+  // Create link rel value
+  let linkValue = `<${hint.url}>; rel="${hint.type}"`;
+  
+  // Add optional attributes
   if (hint.as) {
-    hintValue += `; as=${hint.as}`;
+    linkValue += `; as="${hint.as}"`;
   }
   
   if (hint.crossorigin) {
-    hintValue += '; crossorigin';
+    linkValue += '; crossorigin';
   }
   
   if (hint.importance) {
-    hintValue += `; importance=${hint.importance}`;
+    linkValue += `; importance=${hint.importance}`;
   }
   
+  // Append to existing Link header if present
   if (linkHeader) {
-    if (Array.isArray(linkHeader)) {
-      linkHeader.push(hintValue);
-    } else {
-      linkHeader = [linkHeader, hintValue];
-    }
+    linkHeader += ', ' + linkValue;
   } else {
-    linkHeader = hintValue;
+    linkHeader = linkValue;
   }
   
-  res.setHeader('Link', linkHeader);
+  // Set the Link header
+  res.set('Link', linkHeader);
   
-  // Mark as added
-  if (addedHints) {
-    addedHints.add(hint.url);
+  // Store hints in response locals for later use when modifying HTML
+  if (!res.locals.resourceHints) {
+    res.locals.resourceHints = [];
   }
+  
+  res.locals.resourceHints.push(hint);
 }
 
 /**
- * Add resource hints to HTML
- * @param html HTML content
+ * Add resource hints to HTML as <link> tags
+ * @param html HTML string
  * @param res Express response
- * @returns HTML with resource hints
+ * @returns Modified HTML with resource hints
  */
 function addResourceHintsToHtml(html: string, res: Response): string {
-  const linkHeader = res.getHeader('Link');
-  
-  if (!linkHeader) {
+  // Skip if no hints or already cache
+  const hints: ResourceHint[] = res.locals.resourceHints || [];
+  if (hints.length === 0) {
     return html;
   }
   
-  const links: string[] = Array.isArray(linkHeader) 
-    ? linkHeader 
-    : [linkHeader as string];
+  // Create unique cache key based on the URL and hints
+  const cacheKey = res.locals.requestUrl + ':' + JSON.stringify(hints);
   
-  const headTagEnd = html.indexOf('</head>');
-  
-  if (headTagEnd === -1) {
-    return html;
+  // Try to get from cache
+  const cachedHtml = resourceHintsCache.get(cacheKey);
+  if (cachedHtml) {
+    return cachedHtml;
   }
   
-  // HTML tags for resource hints
-  const linkTags = links
-    .map(link => {
-      const matches = link.match(/<([^>]+)>;\s*rel=([^;]+)(?:;\s*as=([^;]+))?(?:;\s*crossorigin)?(?:;\s*importance=([^;]+))?/);
-      
-      if (!matches) {
-        return '';
-      }
-      
-      const [, url, rel, as, importance] = matches;
-      let tag = `<link rel="${rel.replace(/"/g, '')}" href="${url}"`;
-      
-      if (as) {
-        tag += ` as="${as.replace(/"/g, '')}"`;
-      }
-      
-      if (link.includes('crossorigin')) {
-        tag += ' crossorigin';
-      }
-      
-      if (importance) {
-        tag += ` importance="${importance.replace(/"/g, '')}"`;
-      }
-      
-      return tag + '>';
-    })
-    .filter(Boolean)
-    .join('\n');
+  // Generate hint tags
+  const hintTags = hints.map(hint => {
+    let tag = `<link rel="${hint.type}" href="${hint.url}"`;
+    
+    if (hint.as) {
+      tag += ` as="${hint.as}"`;
+    }
+    
+    if (hint.crossorigin) {
+      tag += ' crossorigin';
+    }
+    
+    if (hint.importance) {
+      tag += ` importance="${hint.importance}"`;
+    }
+    
+    tag += '>';
+    return tag;
+  }).join('\n');
   
-  // Insert resource hints before </head>
-  return html.slice(0, headTagEnd) + 
-         '\n' + linkTags + '\n' + 
-         html.slice(headTagEnd);
+  // Insert hint tags after <head> tag
+  const modifiedHtml = html.replace(/<head>/i, '<head>\n' + hintTags);
+  
+  // Cache the result
+  resourceHintsCache.set(cacheKey, modifiedHtml);
+  
+  return modifiedHtml;
 }
 
 /**
- * Push resources to client using HTTP/2 server push
- * @param req Request object
- * @param res Response object
- * @param html HTML content to extract resources from
+ * Push resources using HTTP/2 server push
+ * @param req Express request
+ * @param res Express response
+ * @param html HTML content
  */
-function pushResources(req: Request, res: Response, html: string): void {
-  // If not HTML or not serving HTML, no need to modify
-  if (!isHtmlResponse(res) || !html) {
-    return;
-  }
-  
+function pushResources(req: Request, res: Response, html: string) {
   // Extract resources to push from HTML
   const resourcesToPush = extractResourcesToPush(html);
   
@@ -283,14 +294,13 @@ function pushResources(req: Request, res: Response, html: string): void {
   }
   
   // Check if response has push capability
-  const push = req.get('_http2_push');
-  
+  const push = (res as any).push;
   if (typeof push !== 'function') {
     return;
   }
   
   // Push resources
-  resourcesToPush.forEach((resource: PushResource) => {
+  resourcesToPush.forEach(resource => {
     try {
       const pushStream = push(resource.path, {
         request: {
@@ -313,7 +323,7 @@ function pushResources(req: Request, res: Response, html: string): void {
 
 /**
  * Get content type based on file extension
- * @param filePath File path
+ * @param path File path
  * @param defaultType Default content type
  * @returns Content type string
  */
@@ -350,9 +360,9 @@ function getContentType(filePath: string, defaultType?: string): string {
 /**
  * Serve a resource from disk
  * @param stream HTTP/2 push stream
- * @param resourcePath Resource path
+ * @param path Resource path
  */
-function serveResource(stream: any, resourcePath: string): void {
+function serveResource(stream, resourcePath: string) {
   // Resolve the file path relative to static directory
   const filePath = path.resolve(process.cwd(), 'public', resourcePath.replace(/^\//, ''));
   
@@ -381,7 +391,7 @@ function extractResourcesToPush(html: string): PushResource[] {
   const linkRegex = /<link[^>]+href="([^"]+)"[^>]*>/g;
   let linkMatch;
   
-  while ((linkMatch = linkRegex.exec(html)) !== null) {
+  while (linkMatch = linkRegex.exec(html)) {
     const href = linkMatch[1];
     if (isLocalResource(href)) {
       const asMatch = linkMatch[0].match(/as="([^"]+)"/);
@@ -397,7 +407,7 @@ function extractResourcesToPush(html: string): PushResource[] {
   const scriptRegex = /<script[^>]+src="([^"]+)"[^>]*>/g;
   let scriptMatch;
   
-  while ((scriptMatch = scriptRegex.exec(html)) !== null) {
+  while (scriptMatch = scriptRegex.exec(html)) {
     const src = scriptMatch[1];
     if (isLocalResource(src)) {
       resources.push({ path: src, as: 'script' });
@@ -408,7 +418,7 @@ function extractResourcesToPush(html: string): PushResource[] {
   const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
   let imgMatch;
   
-  while ((imgMatch = imgRegex.exec(html)) !== null) {
+  while (imgMatch = imgRegex.exec(html)) {
     const src = imgMatch[1];
     if (isLocalResource(src)) {
       resources.push({ path: src, as: 'image' });

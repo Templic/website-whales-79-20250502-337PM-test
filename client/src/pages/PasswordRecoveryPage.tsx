@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,7 +45,7 @@ export default function PasswordRecoveryPage() {
         title: "Recovery email sent",
         description: "Please check your email for further instructions.",
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to send recovery email. Please try again.",

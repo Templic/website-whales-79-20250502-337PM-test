@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -99,7 +98,7 @@ export function ContentAnalyticsDashboard() {
   const getPublishingPerformance = () => {
     if (!analyticsData || !analyticsData.dailyMetrics) return [];
     
-    return analyticsData.dailyMetrics.map((metric) => ({
+    return analyticsData.dailyMetrics.map((metric: any) => ({
       date: format(new Date(metric.date), 'MMM dd'),
       scheduled: metric.scheduled || 0,
       published: metric.published || 0,
@@ -294,7 +293,7 @@ export function ContentAnalyticsDashboard() {
                       <YAxis />
                       <YAxis yAxisId={1} orientation="right" domain={[0, 100]} unit="%" />
                       <Tooltip 
-                        formatter={(value, name: string) => {
+                        formatter={(value: any, name: string) => {
                           if (name === 'successRate') return [`${value}%`, 'Success Rate'];
                           return [value, name.charAt(0).toUpperCase() + name.slice(1)];
                         }}
@@ -342,7 +341,7 @@ export function ContentAnalyticsDashboard() {
                       </Pie>
                       <Legend />
                       <Tooltip 
-                        formatter={(value) => [`${value} items`, 'Count']}
+                        formatter={(value: any) => [`${value} items`, 'Count']}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -369,7 +368,7 @@ export function ContentAnalyticsDashboard() {
                       <XAxis type="number" unit="h" />
                       <YAxis dataKey="name" type="category" />
                       <Tooltip 
-                        formatter={(value) => [`${value} hours`, 'Time']}
+                        formatter={(value: any) => [`${value} hours`, 'Time']}
                       />
                       <Bar dataKey="hours" fill="#8884d8">
                         {getWorkflowTimeMetrics().map((entry, index) => (
@@ -392,7 +391,7 @@ export function ContentAnalyticsDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {analyticsData.attentionItems?.length > 0 ? (
-                    analyticsData.attentionItems.map((item, index: number) => (
+                    analyticsData.attentionItems.map((item: any, index: number) => (
                       <div key={index} className="flex items-start border-b pb-3 last:border-0">
                         {item.type === 'review_needed' ? (
                           <Clock className="h-5 w-5 text-amber-500 mr-2 mt-0.5" />

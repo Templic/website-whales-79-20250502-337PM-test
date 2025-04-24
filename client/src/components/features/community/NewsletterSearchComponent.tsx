@@ -312,7 +312,7 @@ const NewsletterSearchComponent: React.FC<NewsletterSearchComponentProps> = ({
                           <input
                             type="range"
                             min="0"
-                            max={100}
+                            max="100"
                             value={openRate[0]}
                             onChange={(e) => setOpenRate([parseInt(e.target.value), openRate[1]])}
                             className="w-full"
@@ -320,7 +320,7 @@ const NewsletterSearchComponent: React.FC<NewsletterSearchComponentProps> = ({
                           <input
                             type="range"
                             min="0"
-                            max={100}
+                            max="100"
                             value={openRate[1]}
                             onChange={(e) => setOpenRate([openRate[0], parseInt(e.target.value)])}
                             className="w-full"
@@ -417,7 +417,7 @@ const NewsletterSearchComponent: React.FC<NewsletterSearchComponentProps> = ({
                 Newsletters
               </div>
               <ul>
-                {previewResults.slice(0, 3).map((newsletter) => (
+                {previewResults.slice(0, 3).map((newsletter: any) => (
                   <li key={newsletter.id}>
                     <a
                       href={isAdminView ? `/admin/newsletters/${newsletter.id}` : `/newsletters/${newsletter.id}`}

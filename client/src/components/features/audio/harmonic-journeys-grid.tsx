@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * harmonic-journeys-grid.tsx
  * 
@@ -165,7 +163,7 @@ export function HarmonicJourneysGrid({
             setPlayingFrequency(null)
           }
         }, 30000)
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Error playing frequency:", error)
       }
     }
@@ -511,7 +509,7 @@ function HarmonicJourneysGridOriginal({
             setPlayingFrequency(null)
           }
         }, 30000)
-      } catch (error: unknown) {
+      } catch (error) {
         console.error("Error playing frequency:", error)
       }
     }

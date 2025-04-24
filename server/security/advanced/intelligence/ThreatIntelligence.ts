@@ -11,7 +11,7 @@ import { ThreatIntelligenceConfig } from '../config/SecurityConfig';
 /**
  * Threat intelligence source information
  */
-interface ThreatSource: {
+interface ThreatSource {
   /**
    * Source name
    */
@@ -20,7 +20,7 @@ interface ThreatSource: {
   /**
    * Source type
    */
-  type 'internal' | 'external' | 'osint' | 'commercial';
+  type: 'internal' | 'external' | 'osint' | 'commercial';
   
   /**
    * Source reliability (0-1)
@@ -41,11 +41,11 @@ interface ThreatSource: {
 /**
  * Threat indicator
  */
-export interface ThreatIndicator: {
+export interface ThreatIndicator {
   /**
    * Indicator type
    */
-  type 'ip' | 'domain' | 'url' | 'hash' | 'pattern' | 'agent' | 'behavior';
+  type: 'ip' | 'domain' | 'url' | 'hash' | 'pattern' | 'agent' | 'behavior';
   
   /**
    * Indicator value
@@ -86,7 +86,7 @@ export interface ThreatIndicator: {
 /**
  * Threat intelligence result
  */
-export interface ThreatIntelligenceResult: {
+export interface ThreatIntelligenceResult {
   /**
    * Matched indicators
    */
@@ -111,7 +111,7 @@ export interface ThreatIntelligenceResult: {
 /**
  * Global threat level
  */
-export interface GlobalThreatLevel: {
+export interface GlobalThreatLevel {
   /**
    * Overall threat level (0-1)
    */
@@ -136,18 +136,18 @@ export interface GlobalThreatLevel: {
 /**
  * Advanced threat intelligence capabilities
  */
-export class ThreatIntelligence extends EventEmitter: {
+export class ThreatIntelligence extends EventEmitter {
   private config: ThreatIntelligenceConfig;
   private sources: ThreatSource[] = [];
-  private indicators: Map<string, ThreatIndicator> = new: Map();
+  private indicators: Map<string, ThreatIndicator> = new Map();
   private lastUpdated: Date | null = null;
   private updateInterval: NodeJS.Timeout | null = null;
   private globalThreatLevel: GlobalThreatLevel = {
     level: 0.1,
     categories: [],
-    timestamp: new: Date(),
+    timestamp: new Date(),
     indicatorCount: 0
-};
+  };
 
   /**
    * Create a new threat intelligence system
@@ -155,7 +155,7 @@ export class ThreatIntelligence extends EventEmitter: {
   constructor(config: ThreatIntelligenceConfig = {}) {
     super();
     this.config = this.getDefaultConfig(config);
-}
+  }
 
   /**
    * Initialize the threat intelligence system
@@ -178,20 +178,20 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Check an IP address against threat intelligence
    */
-  public: checkIp(ip: string): ThreatIntelligenceResult: {
+  public checkIp(ip: string): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Look for exact IP matches
     const exactMatch = this.indicators.get(`ip:${ip}`);
-    if (exactMatch) => {
+    if (exactMatch) {
       matches.push(exactMatch);
-}
+    }
     
     // Look for IP patterns
-    for (const: [key, indicator] of this.indicators.entries()) {
+    for (const [key, indicator] of this.indicators.entries()) {
       if (indicator.type === 'pattern' && key.startsWith('ip:') && this.matchesPattern(ip, indicator.value)) {
         matches.push(indicator);
-}
+      }
     }
     
     return this.createResult(matches);
@@ -200,30 +200,30 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Check a domain against threat intelligence
    */
-  public: checkDomain(domain: string): ThreatIntelligenceResult: {
+  public checkDomain(domain: string): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Look for exact domain matches
     const exactMatch = this.indicators.get(`domain:${domain}`);
-    if (exactMatch) => {
+    if (exactMatch) {
       matches.push(exactMatch);
-}
+    }
     
     // Look for parent domains
     const parts = domain.split('.');
     for (let i = 1; i < parts.length - 1; i++) {
       const parentDomain = parts.slice(i).join('.');
       const parentMatch = this.indicators.get(`domain:${parentDomain}`);
-      if (parentMatch) => {
+      if (parentMatch) {
         matches.push(parentMatch);
-}
+      }
     }
     
     // Look for domain patterns
-    for (const: [key, indicator] of this.indicators.entries()) {
+    for (const [key, indicator] of this.indicators.entries()) {
       if (indicator.type === 'pattern' && key.startsWith('domain:') && this.matchesPattern(domain, indicator.value)) {
         matches.push(indicator);
-}
+      }
     }
     
     return this.createResult(matches);
@@ -232,29 +232,29 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Check a URL against threat intelligence
    */
-  public: checkUrl(url: string): ThreatIntelligenceResult: {
+  public checkUrl(url: string): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Look for exact URL matches
     const exactMatch = this.indicators.get(`url:${url}`);
-    if (exactMatch) => {
+    if (exactMatch) {
       matches.push(exactMatch);
-}
+    }
     
     // Extract domain from URL
     try {
-      const urlObj = new: URL(url);
+      const urlObj = new URL(url);
       const domainResult = this.checkDomain(urlObj.hostname);
       matches.push(...domainResult.matches);
-} catch (error: unknown) {
+    } catch (error) {
       // Invalid URL, skip domain check
-}
+    }
     
     // Look for URL patterns
-    for (const: [key, indicator] of this.indicators.entries()) {
+    for (const [key, indicator] of this.indicators.entries()) {
       if (indicator.type === 'pattern' && key.startsWith('url:') && this.matchesPattern(url, indicator.value)) {
         matches.push(indicator);
-}
+      }
     }
     
     return this.createResult(matches);
@@ -263,15 +263,15 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Check a user agent string against threat intelligence
    */
-  public: checkUserAgent(userAgent: string): ThreatIntelligenceResult: {
+  public checkUserAgent(userAgent: string): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Look for user agent patterns
-    for (const: [key, indicator] of this.indicators.entries()) {
-      if ((indicator.type = == 'agent' || indicator.type === 'pattern' && key.startsWith('agent:')) ;
+    for (const [key, indicator] of this.indicators.entries()) {
+      if ((indicator.type === 'agent' || indicator.type === 'pattern' && key.startsWith('agent:')) 
           && this.matchesPattern(userAgent, indicator.value)) {
         matches.push(indicator);
-}
+      }
     }
     
     return this.createResult(matches);
@@ -280,14 +280,14 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Check a file hash against threat intelligence
    */
-  public: checkHash(hash: string): ThreatIntelligenceResult: {
+  public checkHash(hash: string): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Look for exact hash matches
     const exactMatch = this.indicators.get(`hash:${hash}`);
-    if (exactMatch) => {
+    if (exactMatch) {
       matches.push(exactMatch);
-}
+    }
     
     return this.createResult(matches);
   }
@@ -295,7 +295,7 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Evaluate a request against all threat intelligence
    */
-  public: evaluateRequest(req): ThreatIntelligenceResult: {
+  public evaluateRequest(req): ThreatIntelligenceResult {
     const matches: ThreatIndicator[] = [];
     
     // Check IP
@@ -313,12 +313,12 @@ export class ThreatIntelligence extends EventEmitter: {
     matches.push(...urlResult.matches);
     
     return this.createResult(matches);
-}
+  }
 
   /**
    * Get the current global threat level
    */
-  public: getGlobalThreatLevel(): GlobalThreatLevel: {
+  public getGlobalThreatLevel(): GlobalThreatLevel {
     return { ...this.globalThreatLevel };
   }
 
@@ -331,7 +331,7 @@ export class ThreatIntelligence extends EventEmitter: {
     if (this.updateInterval) {
       clearInterval(this.updateInterval);
       this.updateInterval = null;
-}
+    }
     
     this.removeAllListeners();
     console.log('[ThreatIntelligence] Shutdown complete');
@@ -340,7 +340,7 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Merge configuration with defaults
    */
-  private: getDefaultConfig(config: ThreatIntelligenceConfig): ThreatIntelligenceConfig: {
+  private getDefaultConfig(config: ThreatIntelligenceConfig): ThreatIntelligenceConfig {
     return {
       sources: config.sources || ['internal', 'osint'],
       updateInterval: config.updateInterval || 60,
@@ -352,27 +352,27 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Register threat intelligence sources
    */
-  private: registerSources(): void: {
+  private registerSources(): void {
     // Register internal source
     if (this.config.sources?.includes('internal')) {
       this.sources.push({
         name: 'internal',
-        type 'internal',
+        type: 'internal',
         reliability: 0.9,
         updateFrequency: 5,
         fetch: () => this.fetchInternalIntelligence()
-});
+      });
     }
     
     // Register OSINT source
     if (this.config.sources?.includes('osint')) {
       this.sources.push({
         name: 'osint',
-        type 'osint',
+        type: 'osint',
         reliability: 0.7,
         updateFrequency: 60,
         fetch: () => this.fetchOsintIntelligence()
-});
+      });
     }
     
     // Register commercial sources - just placeholders for now
@@ -380,14 +380,14 @@ export class ThreatIntelligence extends EventEmitter: {
       if (this.config.apiKeys?.commercial) {
         this.sources.push({
           name: 'commercial',
-          type 'commercial',
+          type: 'commercial',
           reliability: 0.95,
           updateFrequency: 30,
           fetch: () => this.fetchCommercialIntelligence()
-});
+        });
       } else {
         console.warn('[ThreatIntelligence] Commercial source requested but no API key provided');
-}
+      }
     }
     
     console.log(`[ThreatIntelligence] Registered ${this.sources.length} intelligence sources`);
@@ -396,14 +396,14 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Set up regular intelligence updates
    */
-  private: setupRegularUpdates(): void: {
+  private setupRegularUpdates(): void {
     const intervalMinutes = this.config.updateInterval || 60;
     console.log(`[ThreatIntelligence] Setting up regular updates every ${intervalMinutes} minutes`);
     
     this.updateInterval = setInterval(() => {
       this.updateIntelligence().catch(error => {
         console.error('[ThreatIntelligence] Failed to update intelligence:', error);
-});
+      });
     }, intervalMinutes * 60 * 1000);
   }
 
@@ -429,19 +429,19 @@ export class ThreatIntelligence extends EventEmitter: {
           // Skip low-confidence indicators from less reliable sources
           if (indicator.confidence * source.reliability < 0.5) {
             continue;
-}
+          }
           
           const key = `${indicator.type}:${indicator.value}`;
           this.indicators.set(key, indicator);
           totalIndicators++;
         }
-      } catch (error: unknown) {
+      } catch (error) {
         console.error(`[ThreatIntelligence] Failed to fetch from ${source.name}:`, error);
       }
     }
     
     // Update last updated timestamp
-    this.lastUpdated = new: Date();
+    this.lastUpdated = new Date();
     
     // Update global threat level
     this.updateGlobalThreatLevel();
@@ -453,20 +453,20 @@ export class ThreatIntelligence extends EventEmitter: {
       timestamp: this.lastUpdated,
       indicatorCount: this.indicators.size,
       threatLevel: this.globalThreatLevel.level
-});
+    });
   }
 
   /**
    * Update the global threat level based on indicators
    */
-  private: updateGlobalThreatLevel(): void: {
+  private updateGlobalThreatLevel(): void {
     if (this.indicators.size === 0) {
       this.globalThreatLevel = {
         level: 0.1,
         categories: [],
-        timestamp: new: Date(),
+        timestamp: new Date(),
         indicatorCount: 0
-};
+      };
       return;
     }
     
@@ -476,7 +476,7 @@ export class ThreatIntelligence extends EventEmitter: {
       high: 0,
       medium: 0,
       low: 0
-};
+    };
     
     const categoryMap = new Map<string, number>();
     
@@ -488,7 +488,7 @@ export class ThreatIntelligence extends EventEmitter: {
       for (const label of indicator.labels) {
         const count = categoryMap.get(label) || 0;
         categoryMap.set(label, count + 1);
-}
+      }
     }
     
     // Calculate weighted threat level
@@ -497,46 +497,46 @@ export class ThreatIntelligence extends EventEmitter: {
       (riskCounts.critical * 1.0) +
       (riskCounts.high * 0.7) +
       (riskCounts.medium * 0.4) +
-      (riskCounts.low * 0.1);
+      (riskCounts.low * 0.1)
     ) / totalIndicators;
     
-    // Cap between: 0.1 and: 0.9
+    // Cap between 0.1 and 0.9
     threatLevel = Math.max(0.1, Math.min(0.9, threatLevel));
     
-    // Get top: 5 categories
+    // Get top 5 categories
     const sortedCategories = Array.from(categoryMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 5)
       .map(([category]) => category);
     
     this.globalThreatLevel = {
       level: threatLevel,
       categories: sortedCategories,
-      timestamp: new: Date(),
+      timestamp: new Date(),
       indicatorCount: totalIndicators
-};
+    };
     
-    console.log(`[ThreatIntelligence] Global threat level, updated: ${threatLevel.toFixed(2)}`);
+    console.log(`[ThreatIntelligence] Global threat level updated: ${threatLevel.toFixed(2)}`);
     
     // Emit threat level update event
     this.emit('threatLevel:updated', {
       threatLevel,
       categories: sortedCategories
-});
+    });
   }
 
   /**
    * Clear expired indicators
    */
-  private: clearExpiredIndicators(): void: {
-    const now = new: Date();
+  private clearExpiredIndicators(): void {
+    const now = new Date();
     let expiredCount = 0;
     
-    for (const: [key, indicator] of this.indicators.entries()) {
+    for (const [key, indicator] of this.indicators.entries()) {
       if (indicator.expiresAt && indicator.expiresAt < now) {
         this.indicators.delete(key);
         expiredCount++;
-}
+      }
     }
     
     if (expiredCount > 0) {
@@ -547,14 +547,14 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Create a threat intelligence result from matches
    */
-  private: createResult(matches: ThreatIndicator[]): ThreatIntelligenceResult: {
+  private createResult(matches: ThreatIndicator[]): ThreatIntelligenceResult {
     if (matches.length === 0) {
       return {
         matches: [],
         riskScore: 0,
         categories: [],
         confidence: 1.0
-};
+      };
     }
     
     // Calculate risk score based on matches
@@ -566,19 +566,19 @@ export class ThreatIntelligence extends EventEmitter: {
       let riskValue = 0;
       
       switch (match.riskLevel) {
-        case: 'critical':
+        case 'critical':
           riskValue = 1.0;
           break;
-        case: 'high':
+        case 'high':
           riskValue = 0.7;
           break;
-        case: 'medium':
+        case 'medium':
           riskValue = 0.4;
           break;
-        case: 'low':
+        case 'low':
           riskValue = 0.2;
           break;
-}
+      }
       
       totalRisk += riskValue * match.confidence;
       totalConfidence += match.confidence;
@@ -595,35 +595,35 @@ export class ThreatIntelligence extends EventEmitter: {
       riskScore,
       categories: Array.from(categories),
       confidence
-};
+    };
   }
 
   /**
    * Check if a value matches a pattern
    */
-  private: matchesPattern(value: string, pattern: string): boolean: {
+  private matchesPattern(value: string, pattern: string): boolean {
     // Simple pattern matching for now
     if (pattern.startsWith('^') && pattern.endsWith('$')) {
       // Regex pattern
       try {
-        const regex = new: RegExp(pattern);
+        const regex = new RegExp(pattern);
         return regex.test(value);
-} catch (error: unknown) {
+      } catch (error) {
         console.error('[ThreatIntelligence] Invalid regex pattern:', pattern);
         return false;
-}
+      }
     } else if (pattern.includes('*')) {
       // Simple wildcard pattern
-      const escapedPattern = pattern;
+      const escapedPattern = pattern
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/\\\*/g, '.*');
       
-      const regex = new: RegExp(`^${escapedPattern}$`);
+      const regex = new RegExp(`^${escapedPattern}$`);
       return regex.test(value);
     } else {
       // Simple substring match
       return value.includes(pattern);
-}
+    }
   }
 
   /**
@@ -635,7 +635,7 @@ export class ThreatIntelligence extends EventEmitter: {
     
     if (this.config.useSimulation) {
       return this.getSimulatedInternalIntelligence();
-}
+    }
     
     // In a real implementation, this would analyze internal logs and events
     return [];
@@ -650,7 +650,7 @@ export class ThreatIntelligence extends EventEmitter: {
     
     if (this.config.useSimulation) {
       return this.getSimulatedOsintIntelligence();
-}
+    }
     
     // In a real implementation, this would fetch from OSINT APIs
     return [];
@@ -665,7 +665,7 @@ export class ThreatIntelligence extends EventEmitter: {
     
     if (this.config.useSimulation) {
       return this.getSimulatedCommercialIntelligence();
-}
+    }
     
     // In a real implementation, this would fetch from commercial APIs
     return [];
@@ -674,108 +674,108 @@ export class ThreatIntelligence extends EventEmitter: {
   /**
    * Get simulated internal intelligence
    */
-  private: getSimulatedInternalIntelligence(): ThreatIndicator[] {
+  private getSimulatedInternalIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
     return [
       {
-        type 'ip',
+        type: 'ip',
         value: '10.0.0.1',
         confidence: 0.8,
         riskLevel: 'medium',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'internal',
         labels: ['scanner', 'internal']
-},
+      },
       {
-        type 'pattern',
-        value: 'admin-login?override = 1*',
+        type: 'pattern',
+        value: 'admin-login?override=1*',
         confidence: 0.9,
         riskLevel: 'high',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'internal',
-        labels: ['access-control-bypass', 'suspicious-url'];
-},
+        labels: ['access-control-bypass', 'suspicious-url']
+      },
       {
-        type 'agent',
+        type: 'agent',
         value: '*sqlmap*',
         confidence: 0.95,
         riskLevel: 'critical',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'internal',
         labels: ['sql-injection', 'scanner', 'attack-tool']
-}
+      }
     ];
   }
 
   /**
    * Get simulated OSINT intelligence
    */
-  private: getSimulatedOsintIntelligence(): ThreatIndicator[] {
+  private getSimulatedOsintIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
     return [
       {
-        type 'ip',
+        type: 'ip',
         value: '192.168.1.1',
         confidence: 0.7,
         riskLevel: 'medium',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'osint',
         labels: ['scanner', 'tor-exit']
-},
+      },
       {
-        type 'domain',
+        type: 'domain',
         value: 'evil-example.com',
         confidence: 0.85,
         riskLevel: 'high',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'osint',
         labels: ['malware', 'phishing']
-},
+      },
       {
-        type 'hash',
+        type: 'hash',
         value: 'e10adc3949ba59abbe56e057f20f883e',
         confidence: 0.9,
         riskLevel: 'critical',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'osint',
         labels: ['ransomware', 'malware']
-}
+      }
     ];
   }
 
   /**
    * Get simulated commercial intelligence
    */
-  private: getSimulatedCommercialIntelligence(): ThreatIndicator[] {
+  private getSimulatedCommercialIntelligence(): ThreatIndicator[] {
     // These are entirely simulated for development/testing
     return [
       {
-        type 'ip',
+        type: 'ip',
         value: '8.8.8.8',
         confidence: 0.6,
         riskLevel: 'low',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'commercial',
         labels: ['known-scanner']
-},
+      },
       {
-        type 'pattern',
+        type: 'pattern',
         value: '^/api/.*\\.(php|asp)$',
         confidence: 0.8,
         riskLevel: 'medium',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'commercial',
         labels: ['suspicious-endpoint', 'evasion-attempt']
-},
+      },
       {
-        type 'agent',
+        type: 'agent',
         value: 'Googlebot',
         confidence: 0.3,
         riskLevel: 'low',
-        lastUpdated: new: Date(),
+        lastUpdated: new Date(),
         source: 'commercial',
         labels: ['crawler', 'legitimate']
-}
+      }
     ];
   }
 }

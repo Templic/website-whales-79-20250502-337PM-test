@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,7 +101,7 @@ export const CartSummary = ({
           variant: 'destructive',
         });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: 'Error applying coupon',
         description: 'There was an error applying your coupon. Please try again.',

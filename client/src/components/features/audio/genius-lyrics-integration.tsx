@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * genius-lyrics-integration.tsx
  * 
@@ -135,8 +133,8 @@ export function GeniusLyricsIntegration({
           <div className="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width={16}
-              height={16}
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -554,8 +552,8 @@ function GeniusLyricsIntegrationOriginal({
           <div className="h-8 w-8 rounded-full bg-yellow-500 flex items-center justify-center">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width={16}
-              height={16}
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

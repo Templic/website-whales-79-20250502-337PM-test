@@ -50,8 +50,8 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({
             } as React.CSSProperties}
           >
             <circle
-              cx={50}
-              cy={50}
+              cx="50"
+              cy="50"
               r="45"
               fill={color}
               fillOpacity={fillOpacity}
@@ -77,10 +77,10 @@ const CosmicShape: React.FC<CosmicShapeProps> = ({
             } as React.CSSProperties}
           >
             <ellipse
-              cx={50}
-              cy={35}
-              rx={45}
-              ry={30}
+              cx="50"
+              cy="35"
+              rx="45"
+              ry="30"
               fill={color}
               fillOpacity={fillOpacity}
               stroke={color}
@@ -251,13 +251,13 @@ export const CosmicShapeGroup: React.FC<CosmicShapeGroupProps> = ({
           <div 
             key={index}
             className="absolute"
-            style={{ 
+            style={{
               top: position?.top,
               left: position?.left,
               right: position?.right,
               bottom: position?.bottom,
               transform: position?.transform,
-             }}
+            }}
           >
             <CosmicShape {...shapeProps} />
           </div>

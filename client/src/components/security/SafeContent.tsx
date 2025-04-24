@@ -90,7 +90,7 @@ export function EmbeddedContent({
   title,
   type = 'iframe',
   width = '100%',
-  height={315},
+  height = '315',
   className,
   allowFullscreen = true,
   allowScripts = true,

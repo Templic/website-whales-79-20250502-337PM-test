@@ -3,8 +3,6 @@
  * 
  * A component that displays featured merchandise items for purchase.
  */
-import React from "react";
-
 export default function FeaturedMerchandise() {
   return (
     <div className="featured-merchandise bg-[rgba(10,50,92,0.6)] p-8 rounded-xl shadow-lg backdrop-blur-sm">

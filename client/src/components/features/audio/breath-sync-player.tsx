@@ -5,8 +5,6 @@
  * Migrated from: lovable components
  * Migration Date: 2025-04-05
  */
-import React from "react";
-
 /**
  * breath-sync-player.tsx
  * 
@@ -588,7 +586,7 @@ export function BreathSyncPlayer({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{  backgroundColor: getChakraColor(currentTrack.chakra)  }}
+            style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -643,8 +641,8 @@ export function BreathSyncPlayer({
                       <div
                         className="rounded-full"
                         style={{
-                          width: 70,
-                          height: 70,
+                          width: "70%",
+                          height: "70%",
                           backgroundColor: `${currentPattern.color}40`,
                         }}
                       ></div>
@@ -652,7 +650,7 @@ export function BreathSyncPlayer({
 
                     {/* Breath instruction */}
                     <div className="absolute bottom-8 left-0 right-0 text-center">
-                      <h3 className="text-2xl font-bold" style={{  color: currentPattern.color  }}>
+                      <h3 className="text-2xl font-bold" style={{ color: currentPattern.color }}>
                         {getBreathInstruction()}
                       </h3>
                       <p className="text-white/70">
@@ -662,7 +660,7 @@ export function BreathSyncPlayer({
 
                     {/* Pattern name */}
                     <div className="absolute top-4 left-0 right-0 text-center">
-                      <p className="text-sm font-medium" style={{  color: currentPattern.color  }}>
+                      <p className="text-sm font-medium" style={{ color: currentPattern.color }}>
                         {currentPattern.name}
                       </p>
                     </div>
@@ -819,7 +817,7 @@ export function BreathSyncPlayer({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium" style={{  color: pattern.color  }}>
+                          <h3 className="font-medium" style={{ color: pattern.color }}>
                             {pattern.name}
                           </h3>
                           <p className="text-xs text-white/60">{pattern.description}</p>
@@ -828,7 +826,7 @@ export function BreathSyncPlayer({
                           className="h-8 w-8 rounded-full flex items-center justify-center"
                           style={{ backgroundColor: `${pattern.color}20` }}
                         >
-                          <Lungs className="h-4 w-4" style={{  color: pattern.color  }} />
+                          <Lungs className="h-4 w-4" style={{ color: pattern.color }} />
                         </div>
                       </div>
 
@@ -866,7 +864,7 @@ export function BreathSyncPlayer({
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h3 className="font-medium" style={{  color: customPattern.color  }}>
+                        <h3 className="font-medium" style={{ color: customPattern.color }}>
                           Custom Pattern
                         </h3>
                         <p className="text-xs text-white/60">Create your own breathing pattern</p>
@@ -1487,7 +1485,7 @@ function BreathSyncPlayerAudioOriginal({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{  backgroundColor: "#00e6e6"  }}
+            style={{ backgroundColor: "#00e6e6" }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -1529,8 +1527,8 @@ function BreathSyncPlayerAudioOriginal({
               <div
                 className="rounded-full animate-pulse transition-colors"
                 style={{
-                  width: 180,
-                  height: 180,
+                  width: "180px",
+                  height: "180px",
                   backgroundColor: `${currentPattern.color}30`,
                   boxShadow: `0 0 40px ${currentPattern.color}30`,
                 }}
@@ -2171,7 +2169,7 @@ function BreathSyncPlayerOriginalKebabCase({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{  backgroundColor: getChakraColor(currentTrack.chakra)  }}
+            style={{ backgroundColor: getChakraColor(currentTrack.chakra) }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -2226,8 +2224,8 @@ function BreathSyncPlayerOriginalKebabCase({
                       <div
                         className="rounded-full"
                         style={{
-                          width: 70,
-                          height: 70,
+                          width: "70%",
+                          height: "70%",
                           backgroundColor: `${currentPattern.color}40`,
                         }}
                       ></div>
@@ -2235,7 +2233,7 @@ function BreathSyncPlayerOriginalKebabCase({
 
                     {/* Breath instruction */}
                     <div className="absolute bottom-8 left-0 right-0 text-center">
-                      <h3 className="text-2xl font-bold" style={{  color: currentPattern.color  }}>
+                      <h3 className="text-2xl font-bold" style={{ color: currentPattern.color }}>
                         {getBreathInstruction()}
                       </h3>
                       <p className="text-white/70">
@@ -2245,7 +2243,7 @@ function BreathSyncPlayerOriginalKebabCase({
 
                     {/* Pattern name */}
                     <div className="absolute top-4 left-0 right-0 text-center">
-                      <p className="text-sm font-medium" style={{  color: currentPattern.color  }}>
+                      <p className="text-sm font-medium" style={{ color: currentPattern.color }}>
                         {currentPattern.name}
                       </p>
                     </div>
@@ -2402,7 +2400,7 @@ function BreathSyncPlayerOriginalKebabCase({
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium" style={{  color: pattern.color  }}>
+                          <h3 className="font-medium" style={{ color: pattern.color }}>
                             {pattern.name}
                           </h3>
                           <p className="text-xs text-white/60">{pattern.description}</p>
@@ -2411,7 +2409,7 @@ function BreathSyncPlayerOriginalKebabCase({
                           className="h-8 w-8 rounded-full flex items-center justify-center"
                           style={{ backgroundColor: `${pattern.color}20` }}
                         >
-                          <Lungs className="h-4 w-4" style={{  color: pattern.color  }} />
+                          <Lungs className="h-4 w-4" style={{ color: pattern.color }} />
                         </div>
                       </div>
 
@@ -2449,7 +2447,7 @@ function BreathSyncPlayerOriginalKebabCase({
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h3 className="font-medium" style={{  color: customPattern.color  }}>
+                        <h3 className="font-medium" style={{ color: customPattern.color }}>
                           Custom Pattern
                         </h3>
                         <p className="text-xs text-white/60">Create your own breathing pattern</p>
@@ -3234,7 +3232,7 @@ function BreathSyncPlayerOriginalPascalCase({
         <div className="flex items-center gap-2">
           <div
             className="h-8 w-8 rounded-full flex items-center justify-center"
-            style={{  backgroundColor: currentTrack.chakra ? getChakraColor(currentTrack.chakra) : "#00e6e6"  }}
+            style={{ backgroundColor: currentTrack.chakra ? getChakraColor(currentTrack.chakra) : "#00e6e6" }}
           >
             <Lungs className="h-4 w-4 text-white" />
           </div>
@@ -3320,8 +3318,8 @@ function BreathSyncPlayerOriginalPascalCase({
               <div
                 className="rounded-full transition-colors"
                 style={{
-                  width: 180,
-                  height: 180,
+                  width: "180px",
+                  height: "180px",
                   backgroundColor: currentTrack.chakra 
                     ? `${getChakraColor(currentTrack.chakra)}20`
                     : `${currentPattern.color}20`,
@@ -3358,10 +3356,10 @@ function BreathSyncPlayerOriginalPascalCase({
             
             <div 
               className="absolute inset-0 flex items-center justify-center text-white font-medium transition-all"
-              style={{ 
+              style={{
                 fontSize: isBreathSyncActive ? '1.75rem' : '1.25rem',
                 opacity: isBreathSyncActive ? 1 : 0.6,
-               }}
+              }}
             >
               {isBreathSyncActive ? getBreathInstruction() : "Press 'Start Sync' to begin"}
             </div>
@@ -3372,7 +3370,7 @@ function BreathSyncPlayerOriginalPascalCase({
             </div>
             
             {currentTrack.chakra && currentTrack.frequency && (
-              <div className="absolute top-4 right-4 bg-black/40 px-2 py-1 rounded text-xs" style={{  color: getChakraColor(currentTrack.chakra)  }}>
+              <div className="absolute top-4 right-4 bg-black/40 px-2 py-1 rounded text-xs" style={{ color: getChakraColor(currentTrack.chakra) }}>
                 {currentTrack.chakra} • {currentTrack.frequency} Hz
               </div>
             )}
@@ -3436,7 +3434,7 @@ function BreathSyncPlayerOriginalPascalCase({
             
             <TabsContent value="custom" className="space-y-6 mt-4">
               <div>
-                <h3 className="font-medium" style={{  color: customPattern.color  }}>Custom Pattern Settings</h3>
+                <h3 className="font-medium" style={{ color: customPattern.color }}>Custom Pattern Settings</h3>
                 <p className="text-white/60 text-xs mt-1 mb-4">
                   Customize your own breathing pattern with the controls below
                 </p>

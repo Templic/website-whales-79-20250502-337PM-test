@@ -17,52 +17,52 @@ const __dirname = path.dirname(__filename);
 export type StartupPriority = 'quickstart' | 'minimal' | 'standard' | 'full';
 
 export interface DatabaseConfig {
-  enableOptimization: boolean,
-  maintenanceInterval: number; // in milliseconds,
-  targetTables: string[],
-  excludeTables: string[],
-  vacuumThreshold: number; // in rows,
+  enableOptimization: boolean;
+  maintenanceInterval: number; // in milliseconds
+  targetTables: string[];
+  excludeTables: string[];
+  vacuumThreshold: number; // in rows
   analyzeThreshold: number; // in rows
 }
 
 export interface SecurityConfig {
-  enableScans: boolean,
-  scanInterval: number; // in milliseconds,
-  enableRateLimiting: boolean,
-  csrfProtection: boolean,
+  enableScans: boolean;
+  scanInterval: number; // in milliseconds
+  enableRateLimiting: boolean;
+  csrfProtection: boolean;
   maxPayloadSize: string;
 }
 
 export interface FeatureFlags {
-  enableDatabaseOptimization: boolean,
-  enableSecurityScans: boolean,
-  enableBackgroundTasks: boolean,
-  enableWebSockets: boolean,
-  enableRateLimiting: boolean,
-  enableExtraLogging: boolean,
+  enableDatabaseOptimization: boolean;
+  enableSecurityScans: boolean;
+  enableBackgroundTasks: boolean;
+  enableWebSockets: boolean;
+  enableRateLimiting: boolean;
+  enableExtraLogging: boolean;
   enableContentScheduling: boolean;
 }
 
 export interface ServerConfig {
-  port: number,
-  host: string,
-  startupPriority: StartupPriority,
-  deferBackgroundServices: boolean,
-  enableHttps: boolean,
-  environment: string,
-  enableCompression: boolean,
+  port: number;
+  host: string;
+  startupPriority: StartupPriority;
+  deferBackgroundServices: boolean;
+  enableHttps: boolean;
+  environment: string;
+  enableCompression: boolean;
   csrfProtection: boolean;
   
   // Delay times for deferred initialization (in ms)
-  maintenanceDelay: number,
-  backgroundServicesDelay: number,
+  maintenanceDelay: number;
+  backgroundServicesDelay: number;
   securityScanDelay: number;
   
-  // Feature flags,
+  // Feature flags
   features: FeatureFlags;
   
-  // Specific configurations,
-  database: DatabaseConfig,
+  // Specific configurations
+  database: DatabaseConfig;
   security: SecurityConfig;
 }
 
@@ -78,12 +78,12 @@ const startupModes = {
       enableRateLimiting: false,
       enableExtraLogging: false,
       enableContentScheduling: false
-},
-    maintenanceDelay: 300000, // 5 minutes,
-  backgroundServicesDelay: 120000, // 2 minutes,
-  securityScanDelay: 900000, // 15 minutes,
-  enableCompression: false, // Disable compression initially for faster startup,
-  csrfProtection: false // Disable CSRF initially for faster startup
+    },
+    maintenanceDelay: 300000, // 5 minutes
+    backgroundServicesDelay: 120000, // 2 minutes
+    securityScanDelay: 900000, // 15 minutes
+    enableCompression: false, // Disable compression initially for faster startup
+    csrfProtection: false // Disable CSRF initially for faster startup
   },
   minimal: {
     deferBackgroundServices: true,
@@ -95,10 +95,10 @@ const startupModes = {
       enableRateLimiting: false,
       enableExtraLogging: false,
       enableContentScheduling: false
-},
-    maintenanceDelay: 60000, // 1 minute,
-  backgroundServicesDelay: 30000, // 30 seconds,
-  securityScanDelay: 120000 // 2 minutes
+    },
+    maintenanceDelay: 60000, // 1 minute
+    backgroundServicesDelay: 30000, // 30 seconds
+    securityScanDelay: 120000 // 2 minutes
   },
   standard: {
     deferBackgroundServices: true,
@@ -110,10 +110,10 @@ const startupModes = {
       enableRateLimiting: true,
       enableExtraLogging: false,
       enableContentScheduling: true
-},
-    maintenanceDelay: 10000, // 10 seconds,
-  backgroundServicesDelay: 5000, // 5 seconds,
-  securityScanDelay: 30000 // 30 seconds
+    },
+    maintenanceDelay: 10000, // 10 seconds
+    backgroundServicesDelay: 5000, // 5 seconds
+    securityScanDelay: 30000 // 30 seconds
   },
   full: {
     deferBackgroundServices: false,
@@ -125,10 +125,10 @@ const startupModes = {
       enableRateLimiting: true,
       enableExtraLogging: true,
       enableContentScheduling: true
-},
-    maintenanceDelay: 0, // immediate,
-  backgroundServicesDelay:  0, // immediate,
-  securityScanDelay: 0 // immediate
+    },
+    maintenanceDelay: 0, // immediate
+    backgroundServicesDelay: 0, // immediate
+    securityScanDelay: 0 // immediate
   }
 };
 
@@ -143,9 +143,9 @@ const defaultConfig: ServerConfig = {
   enableCompression: true,
   csrfProtection: true,
   
-  // Delay times for deferred services,
-  maintenanceDelay: 10000, // 10 seconds,
-  backgroundServicesDelay: 5000, // 5 seconds,
+  // Delay times for deferred services
+  maintenanceDelay: 10000, // 10 seconds
+  backgroundServicesDelay: 5000, // 5 seconds
   securityScanDelay: 30000, // 30 seconds
   
   // Feature flags
@@ -157,26 +157,26 @@ const defaultConfig: ServerConfig = {
     enableRateLimiting: true,
     enableExtraLogging: process.env.EXTRA_LOGGING === 'true',
     enableContentScheduling: true
-},
+  },
   
   // Database configuration
   database: {
     enableOptimization: true,
-    maintenanceInterval: 24 * 60 * 60 * 1000, // 24 hours,
-  targetTables: [], // Empty array means all tables,
-  excludeTables: ['_migrations', 'pg_stat_statements'],
-    vacuumThreshold: 1000, // rows,
-  analyzeThreshold: 500 // rows
-},
+    maintenanceInterval: 24 * 60 * 60 * 1000, // 24 hours
+    targetTables: [], // Empty array means all tables
+    excludeTables: ['_migrations', 'pg_stat_statements'],
+    vacuumThreshold: 1000, // rows
+    analyzeThreshold: 500 // rows
+  },
   
-  // Security configuration,
+  // Security configuration
   security: {
     enableScans: true,
-    scanInterval: 12 * 60 * 60 * 1000, // 12 hours,
-  enableRateLimiting: true,
+    scanInterval: 12 * 60 * 60 * 1000, // 12 hours
+    enableRateLimiting: true,
     csrfProtection: true,
     maxPayloadSize: '50mb'
-}
+  }
 };
 
 /**
@@ -185,7 +185,7 @@ const defaultConfig: ServerConfig = {
  */
 export function loadConfig(): ServerConfig {
   try {
-    // Get startup priority from env var or default to: 'full'
+    // Get startup priority from env var or default to 'full'
     const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'full';
     
     // Apply the startup mode configurations
@@ -209,7 +209,7 @@ export function loadConfig(): ServerConfig {
     else if (fs.existsSync(envConfigPath)) {
       const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
       config = mergeConfigs(config, envConfig);
-      console.log(`Loaded environment-specific configuration, for: ${config.environment}`);
+      console.log(`Loaded environment-specific configuration for: ${config.environment}`);
     } else {
       console.log(`No environment-specific configuration found for: ${config.environment}, using defaults`);
     }
@@ -228,7 +228,7 @@ export function loadConfig(): ServerConfig {
     }
     
     return config;
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error loading configuration:', error);
     return defaultConfig;
   }

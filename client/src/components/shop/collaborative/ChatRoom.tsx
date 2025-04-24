@@ -1,4 +1,3 @@
-import React from "react";
 import { RoomMessage, RoomParticipant, MessageHandler, ProductViewHandler } from './types';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';

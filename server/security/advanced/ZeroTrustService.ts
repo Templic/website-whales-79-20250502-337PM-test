@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyContext } from './context/SecurityContext';
 
-export class ZeroTrustService: {
+export class ZeroTrustService {
   async verifyRequest(req: Request, res: Response, next: NextFunction) {
     const contextScore = await this.calculateContextScore(req);
     
@@ -19,5 +19,5 @@ export class ZeroTrustService: {
     const behaviorScore = this.evaluateBehavior(req);
     
     return (deviceScore + locationScore + behaviorScore) / 3;
-}
+  }
 }

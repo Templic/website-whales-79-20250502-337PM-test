@@ -430,10 +430,10 @@ export const TouchOptimizer: React.FC<TouchOptimizerProps> = ({
       {feedback === 'ripple' && showRipple && (
         <div 
           className="touch-ripple"
-          style={{ 
+          style={{
             position: 'absolute',
-            width: 140,
-            height: 140,
+            width: '140px',
+            height: '140px',
             borderRadius: '50%',
             background: 'rgba(0,0,0,0.15)',
             transform: 'translate(-50%, -50%) scale(0)',
@@ -441,7 +441,7 @@ export const TouchOptimizer: React.FC<TouchOptimizerProps> = ({
             top: touchPosition.y - (containerRef.current?.getBoundingClientRect().top || 0),
             left: touchPosition.x - (containerRef.current?.getBoundingClientRect().left || 0),
             pointerEvents: 'none',
-           }}
+          }}
         />
       )}
       
@@ -449,16 +449,16 @@ export const TouchOptimizer: React.FC<TouchOptimizerProps> = ({
       {debug && (
         <div 
           className="touch-debug" 
-          style={{ 
+          style={{
             position: 'absolute',
             top: 0,
             right: 0,
             background: 'rgba(0,0,0,0.8)',
             color: 'white',
             padding: '4px',
-            fontSize: 10,
+            fontSize: '10px',
             pointerEvents: 'none',
-           }}
+          }}
         >
           Touch: {isTouching ? 'Yes' : 'No'}<br />
           X: {touchPosition.x}<br />

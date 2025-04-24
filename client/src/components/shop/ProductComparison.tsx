@@ -25,7 +25,7 @@ interface Product {
 // Props interface
 interface ProductComparisonProps {
   products?: any[];
-  onAddToCart?: (product) => void;
+  onAddToCart?: (product: any) => void;
 }
 
 // Products data for comparison
@@ -240,7 +240,7 @@ const ProductComparison: React.FC<ProductComparisonProps> = ({ products: externa
 };
 
 // Comparison table component
-const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product) => void }> = ({ products, onAddToCart }) => {
+const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product: any) => void }> = ({ products, onAddToCart }) => {
   // Get all unique feature keys from all products
   const allFeatures = Array.from(
     new Set(
@@ -332,7 +332,7 @@ const ComparisonTable: React.FC<{ products: Product[], onAddToCart?: (product) =
 };
 
 // Helper function to render feature values appropriately
-const renderFeatureValue = (value) => {
+const renderFeatureValue = (value: any) => {
   if (value === undefined) {
     return <HelpCircle className="h-5 w-5 text-muted-foreground mx-auto" />;
   }

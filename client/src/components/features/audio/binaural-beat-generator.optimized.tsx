@@ -146,7 +146,7 @@ const BinauralBeatGenerator: React.FC = () => {
           ...prev,
           audioInitialized: true
         }));
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Failed to initialize audio:', error);
       }
     },
@@ -200,7 +200,7 @@ const BinauralBeatGenerator: React.FC = () => {
           ...prev,
           audioInitialized: false
         }));
-      } catch (error: unknown) {
+      } catch (error) {
         console.error('Error cleaning up audio:', error);
       }
     },
@@ -626,7 +626,7 @@ const BinauralBeatGenerator: React.FC = () => {
               <input
                 type="range"
                 min="20"
-                max={500}
+                max="500"
                 value={state.frequencies.left}
                 onChange={handleLeftFrequencyChange}
                 className="w-full"
@@ -638,7 +638,7 @@ const BinauralBeatGenerator: React.FC = () => {
               <input
                 type="range"
                 min="20"
-                max={500}
+                max="500"
                 value={state.frequencies.right}
                 onChange={handleRightFrequencyChange}
                 className="w-full"
@@ -675,7 +675,7 @@ const BinauralBeatGenerator: React.FC = () => {
               <input
                 type="range"
                 min="0"
-                max={1}
+                max="1"
                 step="0.01"
                 value={state.audioSettings.volume}
                 onChange={handleVolumeChange}

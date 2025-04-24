@@ -75,7 +75,7 @@ const NewsletterManagement: React.FC = () => {
         const res = await fetch('/api/admin/subscribers');
         if (!res.ok) throw new Error('Failed to fetch subscribers');
         return res.json();
-      } catch (err: unknown) {
+      } catch (err) {
         console.error('Error fetching subscribers:', err);
         return [];
       }
@@ -95,7 +95,7 @@ const NewsletterManagement: React.FC = () => {
         const res = await fetch('/api/admin/newsletters');
         if (!res.ok) throw new Error('Failed to fetch newsletters');
         return res.json();
-      } catch (err: unknown) {
+      } catch (err) {
         console.error('Error fetching newsletters:', err);
         return [];
       }

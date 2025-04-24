@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
@@ -29,7 +28,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
       ]);
       setTracks(tracksRes.data);
       setAlbums(albumsRes.data);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching music:', error);
     }
   };
@@ -42,7 +41,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
         title: "Success",
         description: "Track deleted successfully"
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete track",
@@ -59,7 +58,7 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
         title: "Success",
         description: "Album deleted successfully"
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete album",
@@ -128,10 +127,10 @@ export default function MusicArchivePage({}: MusicArchivePageProps) {
                   <audio
                     controls
                     className="w-full focus:outline-none"
-                    style={{ 
-                      height: 40,
+                    style={{
+                      height: '40px',
                       filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
-                     }}
+                    }}
                   >
                     <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                     Your browser does not support the audio element.

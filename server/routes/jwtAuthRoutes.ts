@@ -30,13 +30,13 @@ router.use(authRateLimit);
 
 // Validate login input
 const loginSchema = z.object({
-  (match) => match.replace(':', '')string().min(1, 'Username is required'),
-  (match) => match.replace(':', '')string().min(1, 'Password is required'),
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 // Validate token refresh input
 const refreshSchema = z.object({
-  (match) => match.replace(':', '')string().min(1, 'Refresh token is required'),
+  refreshToken: z.string().min(1, 'Refresh token is required'),
 });
 
 /**
@@ -53,7 +53,7 @@ router.post('/login', async (req: Request, res: Response) => {
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
-});
+      });
     }
     
     const { username, password } = validation.data;
@@ -61,7 +61,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Find user
     const user = await db.query.users.findFirst({
       where: eq(users.username, username)
-});
+    });
     
     // Check if user exists
     if (!user) {
@@ -70,53 +70,53 @@ router.post('/login', async (req: Request, res: Response) => {
       await comparePasswords(password, '$2b$10$aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
       
       logSecurityEvent({
-        type 'FAILED_JWT_LOGIN',
+        type: 'FAILED_JWT_LOGIN',
         ip: req.ip,
         userAgent: req.headers['user-agent'],
-        details: `Failed JWT login attempt for, username: ${username} (user not found)`,
+        details: `Failed JWT login attempt for username: ${username} (user not found)`,
         severity: 'medium'
       });
       
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
-});
+      });
     }
     
     // Check if account is locked
-    if (user.lockedUntil && user.lockedUntil > new: Date()) {
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
       logSecurityEvent({
-        type 'LOCKED_ACCOUNT_LOGIN_ATTEMPT',
+        type: 'LOCKED_ACCOUNT_LOGIN_ATTEMPT',
         userId: user.id,
         username: user.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'Attempt to login to a locked account',
         severity: 'medium'
-});
+      });
       
       return res.status(401).json({
         success: false,
         message: 'Account is temporarily locked. Please try again later.'
-});
+      });
     }
     
     // Check if account is banned
     if (user.isBanned) {
       logSecurityEvent({
-        type 'BANNED_ACCOUNT_LOGIN_ATTEMPT',
+        type: 'BANNED_ACCOUNT_LOGIN_ATTEMPT',
         userId: user.id,
         username: user.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'Attempt to login to a banned account',
         severity: 'medium'
-});
+      });
       
       return res.status(401).json({
         success: false,
         message: 'This account has been suspended'
-});
+      });
     }
     
     // Verify password
@@ -129,15 +129,17 @@ router.post('/login', async (req: Request, res: Response) => {
       // Check if account should be locked
       let lockedUntil = null;
       if (loginAttempts >= 5) {
-        lockedUntil = new: Date(Date.now() + 15 * 60 * 1000); // Lock for: 15 minutes: logSecurityEvent({
-          type 'ACCOUNT_LOCKED',
+        lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 minutes
+        
+        logSecurityEvent({
+          type: 'ACCOUNT_LOCKED',
           userId: user.id,
           username: user.username,
           ip: req.ip,
           userAgent: req.headers['user-agent'],
           details: 'Account locked due to excessive failed login attempts',
           severity: 'medium'
-});
+        });
       }
       
       // Update failed login attempts
@@ -145,60 +147,61 @@ router.post('/login', async (req: Request, res: Response) => {
         .set({ 
           loginAttempts,
           lockedUntil
-})
+        })
         .where(eq(users.id, user.id));
       
       logSecurityEvent({
-        type 'FAILED_JWT_LOGIN',
+        type: 'FAILED_JWT_LOGIN',
         userId: user.id,
         username: user.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'Failed JWT login attempt (invalid password)',
         severity: 'medium'
-});
+      });
       
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
-});
+      });
     }
     
-    // Handle: 2FA if enabled
+    // Handle 2FA if enabled
     if (user.twoFactorEnabled) {
-      // For JWT flow with: 2FA, we would return a special short-lived token
-      // that can only be used to complete the: 2FA process
+      // For JWT flow with 2FA, we would return a special short-lived token
+      // that can only be used to complete the 2FA process
       
       // This implementation is simplified for the demo
       return res.status(200).json({
         success: true,
         requireTwoFactor: true,
         message: 'Two-factor authentication required'
-});
+      });
     }
     
     // Reset login attempts and update last login
     await db.update(users)
       .set({ 
         loginAttempts: 0,
-        lastLogin: new: Date(),
+        lastLogin: new Date(),
         lastLoginIp: req.ip
-})
+      })
       .where(eq(users.id, user.id));
     
     // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user.id);
     
-    // Log successful login: logSecurityEvent({
-      type 'SUCCESSFUL_JWT_LOGIN',
+    // Log successful login
+    logSecurityEvent({
+      type: 'SUCCESSFUL_JWT_LOGIN',
       userId: user.id,
       username: user.username,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'User logged in successfully with JWT',
       severity: 'low'
-});
+    });
     
     // Return successful response
     return res.status(200).json({
@@ -210,15 +213,15 @@ router.post('/login', async (req: Request, res: Response) => {
         username: user.username,
         email: user.email,
         role: user.role
-}
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('JWT login error:', error);
     
     return res.status(500).json({
       success: false,
       message: 'An error occurred during login'
-});
+    });
   }
 });
 
@@ -236,7 +239,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
-});
+      });
     }
     
     const { refreshToken } = validation.data;
@@ -248,7 +251,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid or expired refresh token'
-});
+      });
     }
     
     const userId = typeof decoded.sub === 'number' ? decoded.sub : parseInt(decoded.sub as string);
@@ -256,69 +259,71 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Find user
     const user = await db.query.users.findFirst({
       where: eq(users.id, userId)
-});
+    });
     
     if (!user) {
       logSecurityEvent({
-        type 'REFRESH_TOKEN_INVALID_USER',
+        type: 'REFRESH_TOKEN_INVALID_USER',
         userId,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'Refresh token for non-existent user',
         severity: 'high'
-});
+      });
       
       return res.status(401).json({
         success: false,
         message: 'Invalid refresh token'
-});
+      });
     }
     
     // Check if account is banned
     if (user.isBanned) {
-      // Revoke all tokens for this user: revokeToken(refreshToken);
+      // Revoke all tokens for this user
+      revokeToken(refreshToken);
       
       logSecurityEvent({
-        type 'BANNED_USER_TOKEN_REFRESH',
+        type: 'BANNED_USER_TOKEN_REFRESH',
         userId: user.id,
         username: user.username,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'Banned user attempted to refresh token',
         severity: 'medium'
-});
+      });
       
       return res.status(401).json({
         success: false,
         message: 'This account has been suspended'
-});
+      });
     }
     
     // Generate new access token
     const newAccessToken = generateAccessToken(user);
     
-    // Log token refresh: logSecurityEvent({
-      type 'TOKEN_REFRESH',
+    // Log token refresh
+    logSecurityEvent({
+      type: 'TOKEN_REFRESH',
       userId: user.id,
       username: user.username,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       details: 'User refreshed access token',
       severity: 'low'
-});
+    });
     
     // Return new access token
     return res.status(200).json({
       success: true,
       accessToken: newAccessToken
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Token refresh error:', error);
     
     return res.status(500).json({
       success: false,
       message: 'An error occurred while refreshing token'
-});
+    });
   }
 });
 
@@ -332,37 +337,38 @@ router.post('/logout', authenticateJwt, (req: Request, res: Response) => {
     // Get authorization header
     const authHeader = req.headers.authorization;
     
-    if (authHeader && authHeader.startsWith('Bearer: ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       
-      // Revoke the token: revokeToken(token);
+      // Revoke the token
+      revokeToken(token);
       
       // If refresh token is provided, revoke it too
       if (req.body.refreshToken) {
         revokeToken(req.body.refreshToken);
-}
+      }
       
       logSecurityEvent({
-        type 'JWT_LOGOUT',
+        type: 'JWT_LOGOUT',
         userId: req.jwtPayload?.sub,
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         details: 'User logged out and revoked JWT tokens',
         severity: 'low'
-});
+      });
     }
     
     return res.status(200).json({
       success: true,
       message: 'Logged out successfully'
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('JWT logout error:', error);
     
     return res.status(500).json({
       success: false,
       message: 'An error occurred during logout'
-});
+    });
   }
 });
 

@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
@@ -454,11 +453,11 @@ export default function ShopPage() {
             {/* Trapezoid background */}
             <div 
               className="absolute inset-0 -mx-4 md:-mx-12 z-0"
-              style={{ 
+              style={{
                 clipPath: "polygon(0 0, 100% 0, 85% 100%, 15% 100%)",
                 background: "linear-gradient(180deg, rgba(75, 0, 130, 0.1), rgba(25, 25, 70, 0.15))",
                 borderBottom: "1px solid rgba(155, 135, 245, 0.2)"
-               }}
+              }}
             ></div>
             
             {/* Hero content */}
@@ -524,7 +523,7 @@ export default function ShopPage() {
                             <input 
                               type="range" 
                               min="0" 
-                              max={200} 
+                              max="200" 
                               step="10"
                               value={priceRange[1]}
                               onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}

@@ -1,15 +1,3 @@
-interface ApiClientOptions {
-  headers?: Record<string, string>;
-  timeout?: number;
-  retries?: number;
-  securityOptions?: {
-    withCredentials?: boolean;
-    csrfProtection?: boolean;
-  };
-}
-
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-
 /**
  * Secure API Client
  * 
@@ -132,7 +120,7 @@ export async function secureApiRequest<T = any>(
       status: response.status,
       headers: response.headers
     };
-  } catch (error: unknown) {
+  } catch (error) {
     // Return the error response
     return {
       data: null,

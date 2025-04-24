@@ -1,4 +1,3 @@
-import React from "react";
 "use client"
 
 import { useState, useRef, useEffect } from "react";
@@ -234,7 +233,7 @@ export function MultidimensionalSoundJourney() {
       try {
         oscillatorsRef.current[index]!.stop();
         oscillatorsRef.current[index]!.disconnect();
-      } catch (e: unknown) {
+      } catch (e) {
         // Oscillator might have already been stopped
       }
       oscillatorsRef.current[index] = null;

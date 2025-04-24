@@ -5,9 +5,8 @@
  * Migrated as part of the repository reorganization.
  */
 import React from 'react';
-import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from 'class-variance-authority';
-
+import { cn } from '../../../lib/utils';
 
 const progressContainerVariants = cva(
   'relative w-full overflow-hidden rounded-full',

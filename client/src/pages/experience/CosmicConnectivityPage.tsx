@@ -4,8 +4,6 @@
  * Reengineered & Optimized - 2025-04-05
  * Merged tab-based components into a single unified cosmic experience
  */
-import React from "react";
-
 import { useState, useEffect, useMemo } from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { SacredGeometryVisualizer } from "@/components/features/cosmic/sacred-geometry-visualizer";
@@ -68,7 +66,7 @@ export default function CosmicConnectivityPage() {
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAudioError = (err) => {
+  const handleAudioError = (err: any) => {
     console.error('Audio playback failed:', err);
     setError('Failed to play audio. Please try again.');
   };

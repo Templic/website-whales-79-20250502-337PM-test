@@ -4,8 +4,6 @@
  * Migrated as part of the repository reorganization.
  * Updated to include New Music content (merged from MusicReleasePage).
  */
-import React from "react";
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Track, Album } from "@shared/schema";
@@ -52,7 +50,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
       ]);
       setTracks(tracksRes.data);
       setAlbums(albumsRes.data);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching music:', error);
     }
   };
@@ -65,7 +63,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         title: "Success",
         description: "Track deleted successfully"
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete track",
@@ -82,7 +80,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
         title: "Success",
         description: "Album deleted successfully"
       });
-    } catch (error: unknown) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete album",
@@ -117,7 +115,7 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                   src="https://www.youtube.com/embed/jzpvkq3Krjg?rel=0&showinfo=0&controls=1"
                   title="Feels So Good - Music Video"
                   className="absolute inset-0 w-full h-full rounded-lg"
-                  frameBorder={0}
+                  frameBorder="0"
                   loading="lazy"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -161,10 +159,10 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
           />
           
           {/* Sacred geometry overlays */}
-          <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{  animationDuration: '30s'  }}>
+          <div className="absolute top-10 right-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '30s' }}>
             <SacredGeometry variant="merkaba" size={120} animated={false} intensity="medium" />
           </div>
-          <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{  animationDuration: '25s', animationDirection: 'reverse'  }}>
+          <div className="absolute bottom-10 left-10 opacity-30 animate-spin-very-slow" style={{ animationDuration: '25s', animationDirection: 'reverse' }}>
             <SacredGeometry variant="octagon" size={100} animated={false} intensity="medium" />
           </div>
         </div>
@@ -308,10 +306,10 @@ export default function ArchivedMusic({}: ArchivedMusicProps) {
                       <audio
                         controls
                         className="w-full focus:outline-none"
-                        style={{ 
-                          height: 40,
+                        style={{
+                          height: '40px',
                           filter: 'invert(85%) hue-rotate(175deg) brightness(1.1)'
-                         }}
+                        }}
                       >
                         <source src={`/uploads/${track.audioUrl}`} type="audio/mpeg" />
                         Your browser does not support the audio element.

@@ -1,4 +1,3 @@
-import React from "react";
 import { useState } from "react"
 import { CosmicHeading } from "../../components/features/cosmic/CosmicHeading"
 import { CosmicText } from "../../components/features/cosmic/CosmicText"

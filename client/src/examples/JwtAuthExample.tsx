@@ -38,7 +38,7 @@ export function JwtAuthExample() {
       try {
         const token = await getCsrfToken();
         setCsrfToken(token);
-      } catch (err: unknown) {
+      } catch (err) {
         console.error('Failed to get CSRF token:', err);
         setError('Failed to get CSRF token');
       }
@@ -63,7 +63,7 @@ export function JwtAuthExample() {
       if (success) {
         setPassword(''); // Clear password field after successful login
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       setError(err.message || 'Login failed');
     }
   };
@@ -75,7 +75,7 @@ export function JwtAuthExample() {
     
     try {
       await logout();
-    } catch (err: unknown) {
+    } catch (err: any) {
       setError(err.message || 'Logout failed');
     }
   };
@@ -104,7 +104,7 @@ export function JwtAuthExample() {
       
       const data = await response.json();
       setApiResponse(JSON.stringify(data, null, 2));
-    } catch (err: unknown) {
+    } catch (err: any) {
       setError(err.message || 'API request failed');
     }
   };
@@ -137,7 +137,7 @@ export function JwtAuthExample() {
       
       const data = await response.json();
       setApiResponse(JSON.stringify(data, null, 2));
-    } catch (err: unknown) {
+    } catch (err: any) {
       setError(err.message || 'Protected action failed');
     }
   };
@@ -271,7 +271,7 @@ export function JwtAuthExample() {
                     className="h-6 ml-2" 
                     title="Refresh CSRF Token"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-refresh-cw"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-refresh-cw"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                   </Button>
                 </Label>
                 <div className="flex items-center">

@@ -4,7 +4,7 @@
  * Component Type: common
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
+import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
 

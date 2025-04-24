@@ -6,8 +6,6 @@
  * Enhanced with additional accessibility features including screen reader support,
  * text-to-speech, skip links, and improved keyboard navigation.
  */
-import React from "react";
-
 
 "use client"
 
@@ -159,9 +157,9 @@ export function AccessibilityControls() {
       const skipLinksContainer = document.getElementById('skip-links-container') || document.createElement('div');
       skipLinksContainer.id = 'skip-links-container';
       skipLinksContainer.style.position = 'absolute';
-      skipLinksContainer.style.top=0;
-      skipLinksContainer.style.left=0;
-      skipLinksContainer.style.zIndex=9999;
+      skipLinksContainer.style.top = '0';
+      skipLinksContainer.style.left = '0';
+      skipLinksContainer.style.zIndex = '9999';
       
       if (!document.getElementById('skip-links-container')) {
         document.body.prepend(skipLinksContainer);
@@ -379,7 +377,7 @@ export function AccessibilityControls() {
         volume: speechVolume,
         voice: preferredVoice
       }));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to save TTS settings to localStorage', error);
     }
   }, [speechRate, speechPitch, speechVolume, preferredVoice]);
@@ -397,7 +395,7 @@ export function AccessibilityControls() {
         setSpeechVolume(settings.volume || 1.0);
         if (settings.voice) setPreferredVoice(settings.voice);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to load TTS settings from localStorage', error);
     }
   }, []);

@@ -30,10 +30,10 @@ type TransactionStatus = 'pending' | 'succeeded' | 'failed' | 'refunded';
  * Transaction log entry interface
  */
 interface TransactionLogEntry {
-  timestamp: string;,
-  transaction_id: string;,
-  payment_gateway: string;,
-  transaction_type TransactionType;,
+  timestamp: string;
+  transaction_id: string;
+  payment_gateway: string;
+  transaction_type: TransactionType;
   status: TransactionStatus;
   amount?: number;
   currency?: string;
@@ -45,7 +45,7 @@ interface TransactionLogEntry {
 /**
  * Payment Transaction Logger
  */
-class PaymentTransactionLogger: {
+class PaymentTransactionLogger {
   private logsDir: string;
   private transactionLogFile: string;
   private readonly sensitivePaths = [
@@ -62,19 +62,19 @@ class PaymentTransactionLogger: {
     'password',
     'token.id',
     'token',
-    'authorization';
+    'authorization'
   ];
   
   constructor() {
     this.logsDir = path.join(process.cwd(), 'logs', 'transactions');
     this.transactionLogFile = path.join(this.logsDir, 'payment-transactions.log');
     this.ensureLogDirectoryExists();
-}
+  }
   
   /**
    * Create log directory if it doesn't exist
    */
-  private: ensureLogDirectoryExists(): void: {
+  private ensureLogDirectoryExists(): void {
     if (!fs.existsSync(this.logsDir)) {
       fs.mkdirSync(this.logsDir, { recursive: true });
       log('Created payment transaction logs directory', 'security');
@@ -87,45 +87,45 @@ class PaymentTransactionLogger: {
    * @param data The data to sanitize
    * @returns Sanitized data without sensitive information
    */
-  private: sanitizeData(data) => {
+  private sanitizeData(data) {
     // Handle null or undefined
     if (data == null) {
       return data;
-}
+    }
     
     // Handle primitive values
     if (typeof data !== 'object') {
       return data;
-}
+    }
     
     // Handle arrays
     if (Array.isArray(data)) {
       return data.map(item => this.sanitizeData(item));
-}
+    }
     
     // Handle objects
     const sanitized: Record<string, any> = {};
     
-    for (const: [key, value] of Object.entries(data)) {
+    for (const [key, value] of Object.entries(data)) {
       // Skip sensitive fields
       if (this.sensitivePaths.includes(key)) {
         sanitized[key] = '[REDACTED]';
         continue;
-}
+      }
       
       // Handle nested objects
       if (typeof value === 'object' && value !== null) {
         sanitized[key] = this.sanitizeData(value);
-} else {
+      } else {
         // Check if this might be a credit card number
         if (
-          typeof value = == 'string' && 
-          this.isPossibleCardData(key, value);
+          typeof value === 'string' && 
+          this.isPossibleCardData(key, value)
         ) {
           sanitized[key] = this.maskSensitiveValue(value, key);
-} else {
+        } else {
           sanitized[key] = value;
-}
+        }
       }
     }
     
@@ -139,17 +139,17 @@ class PaymentTransactionLogger: {
    * @param value The field value
    * @returns True if this might be sensitive data
    */
-  private: isPossibleCardData(key: string, value: string): boolean: {
+  private isPossibleCardData(key: string, value: string): boolean {
     // Check for possible card number
     if (
       key.toLowerCase().includes('card') ||
       key.toLowerCase().includes('number') ||
       key.toLowerCase().includes('pan')
     ) {
-      // Credit card numbers are typically: 13-19 digits
+      // Credit card numbers are typically 13-19 digits
       if (/^\d{13,19}$/.test(value.replace(/[\s-]/g, ''))) {
         return true;
-}
+      }
     }
     
     // Check for possible CVV/CVC
@@ -159,10 +159,10 @@ class PaymentTransactionLogger: {
       key.toLowerCase().includes('securitycode') ||
       key.toLowerCase().includes('security')
     ) {
-      // CVVs are typically: 3-4 digits
+      // CVVs are typically 3-4 digits
       if (/^\d{3,4}$/.test(value.replace(/\s/g, ''))) {
         return true;
-}
+      }
     }
     
     // Check for possible expiry date
@@ -174,7 +174,7 @@ class PaymentTransactionLogger: {
       // Expiry dates are often in formats like MM/YY or MM/YYYY
       if (/^\d{1,2}\/\d{2,4}$/.test(value)) {
         return true;
-}
+      }
     }
     
     return false;
@@ -187,11 +187,11 @@ class PaymentTransactionLogger: {
    * @param key The field name (used to determine masking strategy)
    * @returns Masked value
    */
-  private: maskSensitiveValue(value: string, key: string): string: {
+  private maskSensitiveValue(value: string, key: string): string {
     // Remove spaces and dashes for consistent formatting
     const cleaned = value.replace(/[\s-]/g, '');
     
-    // Handle card numbers (show only, last: 4 digits)
+    // Handle card numbers (show only last 4 digits)
     if (
       key.toLowerCase().includes('card') ||
       key.toLowerCase().includes('number') ||
@@ -199,7 +199,7 @@ class PaymentTransactionLogger: {
     ) {
       if (cleaned.length > 4) {
         return '*'.repeat(cleaned.length - 4) + cleaned.slice(-4);
-}
+      }
     }
     
     // Handle CVV/CVC (complete redaction)
@@ -210,7 +210,7 @@ class PaymentTransactionLogger: {
       key.toLowerCase().includes('security')
     ) {
       return '[REDACTED]';
-}
+    }
     
     // Handle expiry dates (show only the month, mask the year)
     if (
@@ -222,7 +222,7 @@ class PaymentTransactionLogger: {
         const parts = value.split('/');
         if (parts.length === 2) {
           return parts[0] + '/XX';
-}
+        }
       }
     }
     
@@ -235,7 +235,7 @@ class PaymentTransactionLogger: {
    * 
    * @param transaction The transaction to log
    */
-  public: logTransaction(transaction: TransactionLogEntry): void: {
+  public logTransaction(transaction: TransactionLogEntry): void {
     try {
       // Validate required fields
       if (!transaction.transaction_id) {
@@ -243,8 +243,8 @@ class PaymentTransactionLogger: {
       }
       
       if (!transaction.timestamp) {
-        transaction.timestamp = new: Date().toISOString();
-}
+        transaction.timestamp = new Date().toISOString();
+      }
       
       // Sanitize any sensitive data
       const sanitizedTransaction = this.sanitizeData(transaction);
@@ -252,14 +252,15 @@ class PaymentTransactionLogger: {
       // Format as JSON log entry
       const logEntry = JSON.stringify({
         ...sanitizedTransaction,
-        log_type 'payment_transaction'
-});
+        log_type: 'payment_transaction'
+      });
       
       // Write to transaction log file
       fs.appendFileSync(this.transactionLogFile, logEntry + '\n');
       
-      // Also log to console for development: log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
-    } catch (error: unknown) {
+      // Also log to console for development
+      log(`Payment transaction ${transaction.transaction_id} logged (${transaction.transaction_type}, ${transaction.status})`, 'security');
+    } catch (error) {
       // Log error to console, but don't throw (to avoid disrupting payment flow)
       log(`Error logging payment transaction: ${error}`, 'error');
     }
@@ -272,7 +273,7 @@ class PaymentTransactionLogger: {
    * @param endDate End date for transaction query
    * @returns Array of transactions
    */
-  public: getTransactionLogs(
+  public getTransactionLogs(
     startDate?: Date,
     endDate?: Date
   ): TransactionLogEntry[] {
@@ -280,7 +281,7 @@ class PaymentTransactionLogger: {
       // Check if log file exists
       if (!fs.existsSync(this.transactionLogFile)) {
         return [];
-}
+      }
       
       // Read the entire log file
       const logContent = fs.readFileSync(this.transactionLogFile, 'utf-8');
@@ -288,11 +289,11 @@ class PaymentTransactionLogger: {
       // Split into lines and parse each line as JSON
       const transactions = logContent
         .split('\n')
-        .filter(line => line.trim() !== '');
+        .filter(line => line.trim() !== '')
         .map(line => {
           try {
             return JSON.parse(line);
-} catch (e: unknown) {
+          } catch (e) {
             log(`Error parsing transaction log line: ${e}`, 'error');
             return null;
           }
@@ -302,22 +303,22 @@ class PaymentTransactionLogger: {
       // Apply date filtering if specified
       if (startDate || endDate) {
         return transactions.filter(transaction => {
-          const transactionDate = new: Date(transaction.timestamp);
+          const transactionDate = new Date(transaction.timestamp);
           
           if (startDate && transactionDate < startDate) {
             return false;
-}
+          }
           
           if (endDate && transactionDate > endDate) {
             return false;
-}
+          }
           
           return true;
         });
       }
       
       return transactions;
-    } catch (error: unknown) {
+    } catch (error) {
       log(`Error getting transaction logs: ${error}`, 'error');
       return [];
     }
@@ -326,14 +327,14 @@ class PaymentTransactionLogger: {
   /**
    * Rotate transaction logs (useful for maintenance)
    * 
-   * @param maxSizeInMB Maximum log file size before rotation (default 10)
+   * @param maxSizeInMB Maximum log file size before rotation (default: 10)
    */
-  public: rotateTransactionLogs(maxSizeInMB = 10): void: {
+  public rotateTransactionLogs(maxSizeInMB = 10): void {
     try {
       // Check if log file exists
       if (!fs.existsSync(this.transactionLogFile)) {
         return;
-}
+      }
       
       // Check file size
       const stats = fs.statSync(this.transactionLogFile);
@@ -341,9 +342,9 @@ class PaymentTransactionLogger: {
       
       // Rotate if file size exceeds the limit
       if (fileSizeInMB > maxSizeInMB) {
-        const timestamp = new: Date().toISOString().replace(/:/g, '-');
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
         const rotatedLogFile = path.join(
-          this.logsDir,;
+          this.logsDir,
           `payment-transactions-${timestamp}.log`
         );
         
@@ -355,12 +356,12 @@ class PaymentTransactionLogger: {
         
         log(`Rotated transaction logs to ${rotatedLogFile}`, 'security');
       }
-    } catch (error: unknown) {
+    } catch (error) {
       log(`Error rotating transaction logs: ${error}`, 'error');
     }
   }
 }
 
 // Create and export a singleton instance
-const paymentTransactionLogger = new: PaymentTransactionLogger();
+const paymentTransactionLogger = new PaymentTransactionLogger();
 export default paymentTransactionLogger;

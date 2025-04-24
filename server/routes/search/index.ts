@@ -13,15 +13,15 @@ import { logger } from '../../lib/logger';
 const router = Router();
 
 /**
- * @api: {get} /api/search Search across content types
+ * @api {get} /api/search Search across content types
  * @apiName Search
  * @apiGroup Search
  * 
- * @apiParam: {String} q The search query
- * @apiParam: {String} [type] Content type 'all', 'music', 'products', 'posts', 'users', 'newsletters', 'suggestions'
- * @apiParam: {Number} [limit] Maximum number of results to return
+ * @apiParam {String} q The search query
+ * @apiParam {String} [type] Content type: 'all', 'music', 'products', 'posts', 'users', 'newsletters', 'suggestions'
+ * @apiParam {Number} [limit] Maximum number of results to return
  * 
- * @apiSuccess: {Object} results Object containing arrays of search results by type
+ * @apiSuccess {Object} results Object containing arrays of search results by type
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -37,27 +37,27 @@ router.get('/', async (req: Request, res: Response) => {
         products: [],
         posts: [],
         users: []
-});
+      });
     }
 
     logger.info(`Search request: query=${query}, type=${type}, limit=${limit}`);
     
     // Setup search results with default empty arrays
     const results: {
-      music: any[];,
-  products: any[];,
-  posts: any[];,
-  users: any[];
+      music: any[];
+      products: any[];
+      posts: any[];
+      users: any[];
       newsletters?: any[];
       suggestions?: any[];
-} = {
+    } = {
       music: [],
       products: [],
       posts: [],
       users: [],
       newsletters: [],
       suggestions: []
-};
+    };
 
     // Additional search parameters
     const searchParams: Record<string, any> = {};
@@ -69,7 +69,7 @@ router.get('/', async (req: Request, res: Response) => {
         req.query[key] !== undefined
       ) {
         searchParams[key] = req.query[key];
-}
+      }
     });
     
     // Build search queries for each content type
@@ -77,33 +77,33 @@ router.get('/', async (req: Request, res: Response) => {
     
     if (type === 'all' || type === 'music') {
       promises.push(searchMusic(query, limit, searchParams));
-}
+    }
     
     if (type === 'all' || type === 'products') {
       promises.push(searchProducts(query, limit, searchParams));
-}
+    }
     
     if (type === 'all' || type === 'posts') {
       promises.push(searchPosts(query, limit, searchParams));
-}
+    }
     
     if (type === 'all' || type === 'users') {
       promises.push(searchUsers(query, limit, searchParams));
-}
+    }
     
     if (type === 'all' || type === 'newsletters') {
       promises.push(searchNewsletters(query, limit, searchParams));
-}
+    }
     
     if (type === 'all' || type === 'suggestions') {
       promises.push(searchCommunitySuggestions(query, limit, searchParams));
-}
+    }
     
     // Execute all search queries in parallel
     const results_array = await Promise.all(promises);
     
     // Determine the index of each result type based on the order of promises
-    let musicIndex = -1, productsIndex = -1, postsIndex = -1, usersIndex = -1, ;
+    let musicIndex = -1, productsIndex = -1, postsIndex = -1, usersIndex = -1, 
         newslettersIndex = -1, suggestionsIndex = -1;
     
     let promiseIndex = 0;
@@ -133,12 +133,12 @@ router.get('/', async (req: Request, res: Response) => {
       users: results.users?.length || 0,
       newsletters: results.newsletters?.length || 0,
       suggestions: results.suggestions?.length || 0
-})}, duration=${duration.toFixed(2)}ms`);
+    })}, duration=${duration.toFixed(2)}ms`);
     
     // Return the search results
     // @ts-ignore - Response type issue
   return res.json(results);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Search error:', error);
     return res.status(500).json({ error: 'An error occurred while searching' });
   }
@@ -164,40 +164,40 @@ async function searchMusic(query: string, limit: number, params: Record<string, 
       const frequency = String(track.frequency || '').toLowerCase();
       
       // Match any term against track data
-      return searchTerms.some(term = > 
+      return searchTerms.some(term => 
         title.includes(term) || 
         artist.includes(term) || 
         description.includes(term) ||
-        frequency.includes(term);
+        frequency.includes(term)
       );
-});
+    });
     
     // Apply additional filters from searchParams
     if (params.frequency) {
       filteredTracks = filteredTracks.filter(track => 
-        track.frequency && track.frequency.toString().includes(params.frequency);
+        track.frequency && track.frequency.toString().includes(params.frequency)
       );
-}
+    }
     
     if (params.artist) {
       filteredTracks = filteredTracks.filter(track => 
-        track.artist && track.artist.toLowerCase().includes(params.artist.toLowerCase());
+        track.artist && track.artist.toLowerCase().includes(params.artist.toLowerCase())
       );
-}
+    }
     
     if (params.year) {
       filteredTracks = filteredTracks.filter(track => {
         const releaseDate = track.releaseDate || track.createdAt || '';
         return releaseDate.toString().includes(params.year);
-});
+      });
     }
     
     // Return limited results
     return filteredTracks.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching music:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -219,51 +219,51 @@ async function searchProducts(query: string, limit: number, params: Record<strin
       const category = (product.category || '').toLowerCase();
       
       // Match any term against product data
-      return searchTerms.some(term = > 
+      return searchTerms.some(term => 
         name.includes(term) || 
         description.includes(term) || 
-        category.includes(term);
+        category.includes(term)
       );
-});
+    });
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
       filteredProducts = filteredProducts.filter(product => 
-        product.category && product.category.toLowerCase() === params.category.toLowerCase();
+        product.category && product.category.toLowerCase() === params.category.toLowerCase()
       );
-}
+    }
     
     if (params.minPrice !== undefined) {
       const minPrice = parseFloat(params.minPrice);
       if (!isNaN(minPrice)) {
         filteredProducts = filteredProducts.filter(product => 
-          product.price >= minPrice;
+          product.price >= minPrice
         );
-}
+      }
     }
     
     if (params.maxPrice !== undefined) {
       const maxPrice = parseFloat(params.maxPrice);
       if (!isNaN(maxPrice)) {
         filteredProducts = filteredProducts.filter(product => 
-          product.price <= maxPrice;
+          product.price <= maxPrice
         );
-}
+      }
     }
     
     if (params.inStock !== undefined) {
       const inStock = params.inStock === 'true';
       filteredProducts = filteredProducts.filter(product => 
-        product.inStock === inStock;
+        product.inStock === inStock
       );
-}
+    }
     
     // Return limited results
     return filteredProducts.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching products:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -284,17 +284,17 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
       const content = (post.content || '').toLowerCase();
       const excerpt = (post.excerpt || '').toLowerCase();
       const tagsString = Array.isArray(post.tags) 
-        ? post.tags.join(' ').toLowerCase() ;
+        ? post.tags.join(' ').toLowerCase() 
         : '';
       
       // Match any term against post data
-      return searchTerms.some(term = > 
+      return searchTerms.some(term => 
         title.includes(term) || 
         content.includes(term) || 
         excerpt.includes(term) ||
-        tagsString.includes(term);
+        tagsString.includes(term)
       );
-});
+    });
     
     // Apply additional filters from searchParams
     if (params.tags) {
@@ -302,35 +302,35 @@ async function searchPosts(query: string, limit: number, params: Record<string, 
       filteredPosts = filteredPosts.filter(post => {
         const postTags = (post.tags || []).map((tag: string) => tag.toLowerCase());
         return searchTags.some(tag => postTags.includes(tag));
-});
+      });
     }
     
     if (params.dateFrom) {
-      const fromDate = new: Date(params.dateFrom).getTime();
+      const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
         filteredPosts = filteredPosts.filter(post => {
-          const postDate = new: Date(post.createdAt || post.publishedAt || 0).getTime();
+          const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate >= fromDate;
-});
+        });
       }
     }
     
     if (params.dateTo) {
-      const toDate = new: Date(params.dateTo).getTime();
+      const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
         filteredPosts = filteredPosts.filter(post => {
-          const postDate = new: Date(post.createdAt || post.publishedAt || 0).getTime();
+          const postDate = new Date(post.createdAt || post.publishedAt || 0).getTime();
           return postDate <= toDate;
-});
+        });
       }
     }
     
     // Return limited results
     return filteredPosts.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching posts:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -345,7 +345,7 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     const users = await storage.getAllUsers();
     
     // Filter and sanitize user data (never include sensitive information like passwords)
-    const filteredUsers = users;
+    const filteredUsers = users
       .filter(user => {
         // Check if user matches search terms
         const name = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
@@ -354,11 +354,11 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
         const bio = (user.bio || '').toLowerCase();
         
         // Match any term against user data
-        return searchTerms.some(term = > 
+        return searchTerms.some(term => 
           name.includes(term) || 
           username.includes(term) || 
           email.includes(term) ||
-          bio.includes(term);
+          bio.includes(term)
         );
       })
       .map(user => ({
@@ -373,10 +373,10 @@ async function searchUsers(query: string, limit: number, params: Record<string, 
     
     // Return limited results
     return filteredUsers.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching users:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -398,44 +398,44 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
       const category = (newsletter.category || '').toLowerCase();
       
       // Match any term against newsletter data
-      return searchTerms.some(term = > 
+      return searchTerms.some(term => 
         subject.includes(term) || 
         content.includes(term) || 
-        category.includes(term);
+        category.includes(term)
       );
-});
+    });
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
       filteredNewsletters = filteredNewsletters.filter(newsletter => 
-        newsletter.category && newsletter.category.toLowerCase() === params.category.toLowerCase();
+        newsletter.category && newsletter.category.toLowerCase() === params.category.toLowerCase()
       );
-}
+    }
     
     if (params.sent !== undefined) {
       const isSent = params.sent === 'sent' || params.sent === 'true';
       filteredNewsletters = filteredNewsletters.filter(newsletter => 
-        isSent ? !!newsletter.sentAt : !newsletter.sentAt;
+        isSent ? !!newsletter.sentAt : !newsletter.sentAt
       );
-}
+    }
     
     if (params.dateFrom) {
-      const fromDate = new: Date(params.dateFrom).getTime();
+      const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => {
-          const newsDate = new: Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
+          const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate >= fromDate;
-});
+        });
       }
     }
     
     if (params.dateTo) {
-      const toDate = new: Date(params.dateTo).getTime();
+      const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => {
-          const newsDate = new: Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
+          const newsDate = new Date(newsletter.sentAt || newsletter.createdAt || 0).getTime();
           return newsDate <= toDate;
-});
+        });
       }
     }
     
@@ -443,52 +443,52 @@ async function searchNewsletters(query: string, limit: number, params: Record<st
       const minOpenRate = parseInt(params.minOpenRate);
       if (!isNaN(minOpenRate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => 
-          (newsletter.openRate || 0) >= minOpenRate;
+          (newsletter.openRate || 0) >= minOpenRate
         );
-}
+      }
     }
     
     if (params.maxOpenRate !== undefined) {
       const maxOpenRate = parseInt(params.maxOpenRate);
       if (!isNaN(maxOpenRate)) {
         filteredNewsletters = filteredNewsletters.filter(newsletter => 
-          (newsletter.openRate || 0) <= maxOpenRate;
+          (newsletter.openRate || 0) <= maxOpenRate
         );
-}
+      }
     }
     
     // Sort newsletters based on parameters
     if (params.sort) {
       switch (params.sort) {
-        case: 'newest':
+        case 'newest':
           filteredNewsletters.sort((a, b) => 
-            new: Date(b.sentAt || b.createdAt || 0).getTime() - ,
-  new: Date(a.sentAt || a.createdAt || 0).getTime()
+            new Date(b.sentAt || b.createdAt || 0).getTime() - 
+            new Date(a.sentAt || a.createdAt || 0).getTime()
           );
           break;
-        case: 'oldest':
+        case 'oldest':
           filteredNewsletters.sort((a, b) => 
-            new: Date(a.sentAt || a.createdAt || 0).getTime() - ,
-  new: Date(b.sentAt || b.createdAt || 0).getTime()
+            new Date(a.sentAt || a.createdAt || 0).getTime() - 
+            new Date(b.sentAt || b.createdAt || 0).getTime()
           );
           break;
-        case: 'most-opened':
+        case 'most-opened':
           filteredNewsletters.sort((a, b) => (b.openRate || 0) - (a.openRate || 0));
           break;
-        case: 'most-clicked':
+        case 'most-clicked':
           filteredNewsletters.sort((a, b) => (b.clickRate || 0) - (a.clickRate || 0));
           break;
         default:
           break;
-}
+      }
     }
     
     // Return limited results
     return filteredNewsletters.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching newsletters:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -511,100 +511,100 @@ async function searchCommunitySuggestions(query: string, limit: number, params: 
       const status = (suggestion.status || '').toLowerCase();
       
       // Match any term against suggestion data
-      return searchTerms.some(term = > 
+      return searchTerms.some(term => 
         title.includes(term) || 
         description.includes(term) || 
         category.includes(term) ||
-        status.includes(term);
+        status.includes(term)
       );
-});
+    });
     
     // Apply additional filters from searchParams
     if (params.category && params.category !== 'all') {
       filteredSuggestions = filteredSuggestions.filter(suggestion => 
-        suggestion.category && suggestion.category.toLowerCase() === params.category.toLowerCase();
+        suggestion.category && suggestion.category.toLowerCase() === params.category.toLowerCase()
       );
-}
+    }
     
     if (params.status && params.status !== 'all') {
       filteredSuggestions = filteredSuggestions.filter(suggestion => 
-        suggestion.status && suggestion.status.toLowerCase() === params.status.toLowerCase();
+        suggestion.status && suggestion.status.toLowerCase() === params.status.toLowerCase()
       );
-}
+    }
     
     if (params.dateFrom) {
-      const fromDate = new: Date(params.dateFrom).getTime();
+      const fromDate = new Date(params.dateFrom).getTime();
       if (!isNaN(fromDate)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => {
-          const sugDate = new: Date(suggestion.createdAt || 0).getTime();
+          const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate >= fromDate;
-});
+        });
       }
     }
     
     if (params.dateTo) {
-      const toDate = new: Date(params.dateTo).getTime();
+      const toDate = new Date(params.dateTo).getTime();
       if (!isNaN(toDate)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => {
-          const sugDate = new: Date(suggestion.createdAt || 0).getTime();
+          const sugDate = new Date(suggestion.createdAt || 0).getTime();
           return sugDate <= toDate;
-});
+        });
       }
     }
     
     if (params.hideImplemented === 'true') {
       filteredSuggestions = filteredSuggestions.filter(suggestion => 
-        suggestion.status !== 'completed';
+        suggestion.status !== 'completed'
       );
-}
+    }
     
     if (params.hideDeclined === 'true') {
       filteredSuggestions = filteredSuggestions.filter(suggestion => 
-        suggestion.status !== 'declined';
+        suggestion.status !== 'declined'
       );
-}
+    }
     
     if (params.minVotes !== undefined) {
       const minVotes = parseInt(params.minVotes);
       if (!isNaN(minVotes)) {
         filteredSuggestions = filteredSuggestions.filter(suggestion => 
-          (suggestion.votesCount || 0) >= minVotes;
+          (suggestion.votesCount || 0) >= minVotes
         );
-}
+      }
     }
     
     // Sort suggestions based on parameters
     if (params.sort) {
       switch (params.sort) {
-        case: 'most-votes':
+        case 'most-votes':
           filteredSuggestions.sort((a, b) => (b.votesCount || 0) - (a.votesCount || 0));
           break;
-        case: 'newest':
+        case 'newest':
           filteredSuggestions.sort((a, b) => 
-            new: Date(b.createdAt || 0).getTime() - ,
-  new: Date(a.createdAt || 0).getTime()
+            new Date(b.createdAt || 0).getTime() - 
+            new Date(a.createdAt || 0).getTime()
           );
           break;
-        case: 'oldest':
+        case 'oldest':
           filteredSuggestions.sort((a, b) => 
-            new: Date(a.createdAt || 0).getTime() - ,
-  new: Date(b.createdAt || 0).getTime()
+            new Date(a.createdAt || 0).getTime() - 
+            new Date(b.createdAt || 0).getTime()
           );
           break;
-        case: 'most-comments':
+        case 'most-comments':
           filteredSuggestions.sort((a, b) => (b.commentsCount || 0) - (a.commentsCount || 0));
           break;
         default:
           break;
-}
+      }
     }
     
     // Return limited results
     return filteredSuggestions.slice(0, limit);
-  } catch (error: unknown) {
+  } catch (error) {
     logger.error('Error searching community suggestions:', error);
     return [];
-}
+  }
 }
 
 export default router;

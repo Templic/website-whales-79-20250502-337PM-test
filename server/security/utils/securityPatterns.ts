@@ -33,7 +33,7 @@ export function secureRoute(schema: AnyZodObject, handler: (req: Request, res: R
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-});
+        });
       }
       
       return handler(req, res, next);
@@ -58,7 +58,7 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-});
+        });
       }
       
       if (!hasRole(req, 'admin')) {
@@ -67,13 +67,13 @@ export function secureAdminRoute(schema: AnyZodObject, handler: (req: Request, r
           path: req.path,
           userId: (req.session as any)?.userId,
           reason: 'Missing admin role',
-          timestamp: new: Date()
-});
+          timestamp: new Date()
+        });
         
         return res.status(403).json({
           status: 'error',
           message: 'Admin access required'
-});
+        });
       }
       
       return handler(req, res, next);
@@ -131,14 +131,15 @@ export function securePasswordRoute(schema: AnyZodObject, handler: (req: Request
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required'
-});
+        });
       }
       
-      // Log password change attempt: logSecurityEvent('PASSWORD_CHANGE_ATTEMPTED', {
+      // Log password change attempt
+      logSecurityEvent('PASSWORD_CHANGE_ATTEMPTED', {
         ip: req.ip,
         userId: (req.session as any)?.userId,
-        timestamp: new: Date()
-});
+        timestamp: new Date()
+      });
       
       return handler(req, res, next);
     }
@@ -161,7 +162,7 @@ export function secureResponse(res: Response, data, status = 200) {
   return res.status(status).json({
     status: status >= 200 && status < 300 ? 'success' : 'error',
     data
-});
+  });
 }
 
 /**
@@ -178,7 +179,7 @@ export function secureErrorResponse(
   message: string, 
   status = 400,
   errorCode?: string,
-  details?: any;
+  details?: any
 ) {
   // Apply security headers if they haven't been applied yet
   if (!res.headersSent) {
@@ -188,15 +189,15 @@ export function secureErrorResponse(
   const response: any = {
     status: 'error',
     message
-};
+  };
   
-  if (errorCode) => {
+  if (errorCode) {
     response.code = errorCode;
-}
+  }
   
-  if (details) => {
+  if (details) {
     response.details = details;
-}
+  }
   
   return res.status(status).json(response);
 }
@@ -216,29 +217,30 @@ export function secureErrorHandler(err, req: Request, res: Response, next: NextF
   // Don't expose error details in production
   const isProduction = process.env.NODE_ENV === 'production';
   const errorMessage = isProduction 
-    ? 'An unexpected error occurred' ;
+    ? 'An unexpected error occurred' 
     : (err.message || 'Unknown error');
   
   // Log as security event if it might be security-related
-  if (err.name = == 'UnauthorizedError' || 
+  if (err.name === 'UnauthorizedError' || 
       err.name === 'JsonWebTokenError' || 
-      err.message?.includes('security') ||;
+      err.message?.includes('security') ||
       err.message?.includes('auth')) {
     logSecurityEvent('SERVER_SECURITY_ERROR', {
       ip: req.ip,
       path: req.path,
       errorName: err.name,
       errorMessage: err.message,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
   }
   
   // If headers already sent, let Express handle it
   if (res.headersSent) {
     return next(err);
-}
+  }
   
-  // Send a secure error response: secureErrorResponse(
+  // Send a secure error response
+  secureErrorResponse(
     res,
     errorMessage,
     err.status || 500,
@@ -258,7 +260,7 @@ export function apiUsageTracker(req: Request, res: Response, next: NextFunction)
   // Skip for non-API routes
   if (!req.path.startsWith('/api/')) {
     return next();
-}
+  }
   
   // Record start time
   const startTime = Date.now();
@@ -277,15 +279,15 @@ export function apiUsageTracker(req: Request, res: Response, next: NextFunction)
         ip: req.ip,
         userAgent: req.headers['user-agent'],
         userId: (req.session as any)?.userId || 'anonymous',
-        timestamp: new: Date()
-};
+        timestamp: new Date()
+      };
       
       // Log slow or error responses
       if (res.statusCode >= 400) {
         logSecurityEvent('API_ERROR_RESPONSE', data);
-} else if (duration > 1000) {
+      } else if (duration > 1000) {
         logSecurityEvent('API_SLOW_RESPONSE', data);
-}
+      }
     }
   });
   

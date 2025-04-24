@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import EnhancedShoppingExperience from "../../components/shop/EnhancedShoppingExperience";

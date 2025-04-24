@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 
 import { useQuery } from "@tanstack/react-query";
 import { Post } from "@shared/schema";

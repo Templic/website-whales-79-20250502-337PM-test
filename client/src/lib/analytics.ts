@@ -12,7 +12,7 @@ export const initializeGA = () => {
     } else {
       console.warn('Analytics disabled: No GA Measurement ID');
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.warn('Analytics initialization failed:', error);
   }
 };

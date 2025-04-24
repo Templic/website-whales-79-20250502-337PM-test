@@ -9,7 +9,7 @@ import { motion } from "framer-motion"
 import { Sparkles, Disc } from "lucide-react"
 import { cn } from "../../../lib/utils"
 import { CosmicCard } from "./CosmicCard"
-import { Button } from "@/components/ui/button"
+import { Button } from "../../../components/ui/button"
 
 interface CollectibleAttribute {
   name: string

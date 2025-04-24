@@ -30,7 +30,8 @@ const requireSecurityAdmin = (req: Request, res: Response, next: NextFunction) =
     return res.status(403).json({ error: 'Security administrator access required' });
   }
   
-  // Allow access: next();
+  // Allow access
+  next();
 };
 
 // Apply security admin middleware to all routes
@@ -40,13 +41,13 @@ router.use(requireSecurityAdmin);
  * Get security events
  * 
  * Optional query parameters:
- * - limit: Maximum number of events to return (default 50)
- * - offset: Offset for pagination (default 0)
+ * - limit: Maximum number of events to return (default: 50)
+ * - offset: Offset for pagination (default: 0)
  * - severity: Filter by severity (comma-separated list)
  * - category: Filter by category (comma-separated list)
- * - from Filter by start timestamp (ISO string or Unix timestamp)
+ * - from: Filter by start timestamp (ISO string or Unix timestamp)
  * - to: Filter by end timestamp (ISO string or Unix timestamp)
- * - sort: Sort order ('asc' or: 'desc', default 'desc')
+ * - sort: Sort order ('asc' or 'desc', default: 'desc')
  */
 router.get('/events', async (req: Request, res: Response) => {
   try {
@@ -55,8 +56,8 @@ router.get('/events', async (req: Request, res: Response) => {
     const offset = parseInt(req.query.offset as string) || 0;
     const severities = req.query.severity ? (req.query.severity as string).split(',') : [];
     const categories = req.query.category ? (req.query.category as string).split(',') : [];
-    const from = req.query.from ? new: Date(req.query.from as string).getTime() : undefined;
-    const to = req.query.to ? new: Date(req.query.to as string).getTime() : undefined;
+    const from = req.query.from ? new Date(req.query.from as string).getTime() : undefined;
+    const to = req.query.to ? new Date(req.query.to as string).getTime() : undefined;
     const sort = (req.query.sort as string || 'desc').toLowerCase();
     
     // Build filter object
@@ -64,22 +65,22 @@ router.get('/events', async (req: Request, res: Response) => {
     
     if (severities.length > 0) {
       filter.severity = severities;
-}
+    }
     
     if (categories.length > 0) {
       filter.category = categories;
-}
+    }
     
     if (from !== undefined || to !== undefined) {
       filter.timestamp = {};
       
       if (from !== undefined) {
         filter.timestamp.gte = from;
-}
+      }
       
       if (to !== undefined) {
         filter.timestamp.lte = to;
-}
+      }
     }
     
     // Fetch events from blockchain
@@ -87,8 +88,8 @@ router.get('/events', async (req: Request, res: Response) => {
       filter,
       limit,
       offset,
-      sort: sort = == 'asc' ? 'ASC' : 'DESC';
-});
+      sort: sort === 'asc' ? 'ASC' : 'DESC'
+    });
     
     // Return events as JSON
     res.json({
@@ -96,8 +97,8 @@ router.get('/events', async (req: Request, res: Response) => {
       total: await securityBlockchain.countSecurityEvents(filter),
       limit,
       offset
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error fetching security events:', error);
     res.status(500).json({ error: 'Failed to fetch security events' });
   }
@@ -119,7 +120,7 @@ router.get('/events/:id', async (req: Request, res: Response) => {
     
     // Return event as JSON
     res.json(event);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching security event:', error);
     res.status(500).json({ error: 'Failed to fetch security event' });
   }
@@ -146,19 +147,19 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
         error: 'Event already acknowledged',
         acknowledgedBy: event.acknowledgedBy,
         acknowledgedAt: event.acknowledgedAt
-});
+      });
     }
     
     // Acknowledge event
     const acknowledgedEvent = await securityBlockchain.acknowledgeSecurityEvent(
       eventId,
       user.id,
-      user.username || user.email;
+      user.username || user.email
     );
     
     // Return updated event as JSON
     res.json(acknowledgedEvent);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error acknowledging security event:', error);
     res.status(500).json({ error: 'Failed to acknowledge security event' });
   }
@@ -170,42 +171,42 @@ router.post('/events/:id/acknowledge', async (req: Request, res: Response) => {
 router.get('/metrics', async (req: Request, res: Response) => {
   try {
     // Get time range for metrics
-    const to = new: Date();
-    const from = new: Date(to.getTime() - 24 * 60 * 60 * 1000); // Last: 24 hours
+    const to = new Date();
+    const from = new Date(to.getTime() - 24 * 60 * 60 * 1000); // Last 24 hours
     
     // Get event counts by severity
-    const eventCountsBySeverity = await Promise.all(;
+    const eventCountsBySeverity = await Promise.all(
       Object.values(SecurityEventSeverity).map(async (severity) => {
         const count = await securityBlockchain.countSecurityEvents({
           severity,
           timestamp: {
             gte: from.getTime(),
             lte: to.getTime()
-}
+          }
         });
         
         return {
           severity,
           count
-};
+        };
       })
     );
     
     // Get event counts by category
-    const eventCountsByCategory = await Promise.all(;
+    const eventCountsByCategory = await Promise.all(
       Object.values(SecurityEventCategory).map(async (category) => {
         const count = await securityBlockchain.countSecurityEvents({
           category,
           timestamp: {
             gte: from.getTime(),
             lte: to.getTime()
-}
+          }
         });
         
         return {
           category,
           count
-};
+        };
       })
     );
     
@@ -216,7 +217,7 @@ router.get('/metrics', async (req: Request, res: Response) => {
     const weightedEvents = eventCountsBySeverity.reduce((sum, { severity, count }) => {
       let weight = 0;
       
-      switch (severity) => {
+      switch (severity) {
         case SecurityEventSeverity.CRITICAL:
           weight = 10;
           break;
@@ -232,13 +233,13 @@ router.get('/metrics', async (req: Request, res: Response) => {
         default:
           weight = 0;
           break;
-}
+      }
       
       return sum + (count * weight);
     }, 0);
     
     const securityHealth = totalEvents > 0
-      ? Math.max(0, Math.min(100, 100 - (weightedEvents / totalEvents * 10)));
+      ? Math.max(0, Math.min(100, 100 - (weightedEvents / totalEvents * 10)))
       : 100;
     
     // Get last scan information
@@ -253,9 +254,9 @@ router.get('/metrics', async (req: Request, res: Response) => {
           medium: 1,
           low: 2,
           info: 5
-}
+        }
       };
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching last scan info:', error);
       lastScanInfo = { timestamp: null, result: 'Unknown' };
     }
@@ -265,26 +266,26 @@ router.get('/metrics', async (req: Request, res: Response) => {
       totalBlocks: await securityBlockchain.getBlockCount(),
       verified: true,
       lastVerifiedAt: Date.now()
-};
+    };
     
     // Return metrics as JSON
     res.json({
       timeRange: {
-        from from.toISOString(),
+        from: from.toISOString(),
         to: to.toISOString()
-},
+      },
       eventCountsBySeverity,
       eventCountsByCategory,
       securityHealth,
       lastScan: lastScanInfo,
       blockchain: blockchainInfo,
       anomalies: {
-        lastDay: 3, // placeholder,
-  lastWeek: 12, // placeholder,
-  trend: 'stable' // placeholder
-}
+        lastDay: 3, // placeholder
+        lastWeek: 12, // placeholder
+        trend: 'stable' // placeholder
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching security metrics:', error);
     res.status(500).json({ error: 'Failed to fetch security metrics' });
   }
@@ -307,29 +308,29 @@ router.post('/scan', async (req: Request, res: Response) => {
     
     // Create scan
     const scanId = scanner.createScan({
-      scanType: type = == 'full' ? SecurityScanType.FULL :
+      scanType: type === 'full' ? SecurityScanType.FULL :
                 type === 'api' ? SecurityScanType.API :
                 type === 'auth' ? SecurityScanType.AUTHENTICATION :
                 type === 'db' ? SecurityScanType.DATABASE :
                 SecurityScanType.FULL,
       deep,
       emitEvents: true,
-      logFindings: true;
-});
+      logFindings: true
+    });
     
     // Start scan in background
     scanner.startScan(scanId).catch(error => {
       console.error('Error running security scan:', error);
-});
+    });
     
     // Return scan ID
     res.status(202).json({
       scanId,
       message: 'Security scan started',
-      type type || 'full',
+      type: type || 'full',
       deep
-});
-  } catch (error: unknown) {
+    });
+  } catch (error) {
     console.error('Error starting security scan:', error);
     res.status(500).json({ error: 'Failed to start security scan' });
   }
@@ -358,7 +359,7 @@ router.get('/scan/:id', async (req: Request, res: Response) => {
     
     // Return scan results
     res.json(scanResults);
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching scan results:', error);
     res.status(500).json({ error: 'Failed to fetch scan results' });
   }

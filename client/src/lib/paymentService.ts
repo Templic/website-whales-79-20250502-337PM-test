@@ -21,7 +21,7 @@ export async function createPaymentIntent(paymentInfo: PaymentInfo): Promise<Pay
     });
     
     return response as PaymentIntentResponse;
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error creating payment intent:', error);
     throw new Error(error.message || 'Failed to create payment intent');
   }
@@ -44,7 +44,7 @@ export async function confirmPayment(
     });
     
     return response;
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error confirming payment:', error);
     throw new Error(error.message || 'Failed to confirm payment');
   }
@@ -54,7 +54,7 @@ export async function confirmPayment(
  * Processes a complete order with payment
  */
 export async function processOrder(
-  orderData, 
+  orderData: any, 
   paymentMethodId: string
 ): Promise<{ success: boolean; orderId: string }> {
   try {
@@ -67,7 +67,7 @@ export async function processOrder(
     });
     
     return response;
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Error processing order:', error);
     throw new Error(error.message || 'Failed to process order');
   }

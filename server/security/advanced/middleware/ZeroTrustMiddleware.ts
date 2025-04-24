@@ -11,7 +11,7 @@ import { SecurityContext } from '../context/SecurityContext';
 import { AnomalyDetection } from '../analytics/AnomalyDetection';
 import { securityFabric } from '../SecurityFabric';
 
-export interface ZeroTrustOptions: {
+export interface ZeroTrustOptions {
   /**
    * Minimum trust score required for access (0-1)
    * Higher values are more restrictive
@@ -60,7 +60,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
   const mergedOptions: ZeroTrustOptions = {
     ...DEFAULT_OPTIONS,
     ...options
-};
+  };
   
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -72,17 +72,17 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       
       // Set resource information
       securityContext.setResource({
-        type 'api',
+        type: 'api',
         id: req.originalUrl,
         sensitivityLevel: mergedOptions.resourceSensitivity || 50,
         requiredPermissions: mergedOptions.requiredPermissions || []
-});
+      });
       
       // Get anomaly detection component
       const anomalyDetection = securityFabric.getComponent<AnomalyDetection>('anomalyDetection');
       
       // Perform behavioral analysis if anomaly detection is available
-      if (anomalyDetection) => {
+      if (anomalyDetection) {
         const anomalyResult = anomalyDetection.analyzeRequest(req, securityContext);
         
         // Add behavioral analysis to security context
@@ -90,10 +90,10 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           anomalyScore: anomalyResult.anomalyScore,
           confidence: anomalyResult.confidence,
           anomalies: anomalyResult.featureContributions
-            .filter(f = > f.contribution > 0.5)
+            .filter(f => f.contribution > 0.5)
             .map(f => f.feature),
-          patternMatchScore: 1 - anomalyResult.anomalyScore;
-});
+          patternMatchScore: 1 - anomalyResult.anomalyScore
+        });
         
         // If high confidence anomaly, log it
         if (anomalyResult.isAnomaly && anomalyResult.confidence > 0.7) {
@@ -105,17 +105,17 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const threatIntelligence = securityFabric.getComponent('threatIntelligence');
       
       // Perform threat assessment if threat intelligence is available
-      if (threatIntelligence) => {
+      if (threatIntelligence) {
         const threatResult = threatIntelligence.evaluateRequest(req);
         
         // Add threat assessment to security context
         securityContext.setThreatAssessment({
           riskScore: threatResult.riskScore,
           indicators: threatResult.categories,
-          ipReputation: 0, // Not implemented yet,
-  deviceReputation:  0, // Not implemented yet,
-  maliciousPatterns: threatResult.matches.map(m = > m.value);
-});
+          ipReputation: 0, // Not implemented yet
+          deviceReputation: 0, // Not implemented yet
+          maliciousPatterns: threatResult.matches.map(m => m.value)
+        });
       }
       
       // Calculate trust and risk scores
@@ -128,20 +128,20 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       let adjustedMaxRiskScore = mergedOptions.maxRiskScore || DEFAULT_OPTIONS.maxRiskScore!;
       
       // Adjust thresholds based on security posture
-      switch (currentPosture) => {
-        case: 'maximum':
+      switch (currentPosture) {
+        case 'maximum':
           adjustedMinTrustScore += 0.2; // Much stricter trust requirement
           adjustedMaxRiskScore -= 0.1; // Much lower risk tolerance
           break;
-        case: 'high':
+        case 'high':
           adjustedMinTrustScore += 0.1; // Stricter trust requirement
           adjustedMaxRiskScore -= 0.05; // Lower risk tolerance
           break;
-        case: 'elevated':
+        case 'elevated':
           adjustedMinTrustScore += 0.05; // Slightly stricter trust requirement
           adjustedMaxRiskScore -= 0.02; // Slightly lower risk tolerance
           break;
-}
+      }
       
       // Evaluate zero-trust access decision
       let accessDecision: 'allow' | 'deny' | 'challenge' = 'deny';
@@ -152,50 +152,50 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       const userPermissions = (req.user as any)?.permissions || [];
       const userRoles = (req.user as any)?.roles || [(req.user as any)?.role].filter(Boolean);
       
-      const hasRequiredPermissions = requiredPermissions.length === 0 || ;
+      const hasRequiredPermissions = requiredPermissions.length === 0 || 
         requiredPermissions.every(perm => userPermissions.includes(perm));
       
       // Super admins bypass most checks
       if (Array.isArray(userRoles) && userRoles.includes('super_admin')) {
         accessDecision = 'allow';
         decisionReason = 'Super admin access';
-}
+      }
       // If permissions are missing, deny access
       else if (requiredPermissions.length > 0 && !hasRequiredPermissions) {
         accessDecision = 'deny';
         decisionReason = 'Missing required permissions';
-}
+      }
       // If trust score is too low, deny access
       else if (trustScore < adjustedMinTrustScore) {
         if (trustScore < adjustedMinTrustScore - 0.1) {
           accessDecision = 'deny';
           decisionReason = 'Trust level too low';
-} else {
+        } else {
           accessDecision = 'challenge';
           decisionReason = 'Additional verification required due to low trust level';
-}
+        }
       }
       // If risk score is too high, deny access
       else if (riskScore > adjustedMaxRiskScore) {
         if (riskScore > adjustedMaxRiskScore + 0.1) {
           accessDecision = 'deny';
           decisionReason = 'Risk level too high';
-} else {
+        } else {
           accessDecision = 'challenge';
           decisionReason = 'Additional verification required due to elevated risk';
-}
+        }
       }
       // Otherwise, allow access
       else {
         accessDecision = 'allow';
         decisionReason = 'Context evaluation passed';
-}
+      }
       
       // Update security context with decision
       securityContext.setStatus(
-        accessDecision = == 'allow' ? 'approved' : 
+        accessDecision === 'allow' ? 'approved' : 
         accessDecision === 'challenge' ? 'challenge' : 'denied',
-        decisionReason;
+        decisionReason
       );
       
       // Log the decision
@@ -205,8 +205,9 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
       
       // Implement the access decision
       if (accessDecision === 'allow') {
-        // Allow the request to proceed: next();
-}
+        // Allow the request to proceed
+        next();
+      }
       else if (accessDecision === 'challenge') {
         // Implement step-up authentication or verification
         // For now, we'll just deny access with a special status code
@@ -215,7 +216,7 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           message: 'Additional verification required',
           code: 'VERIFICATION_REQUIRED',
           reason: decisionReason
-});
+        });
       }
       else {
         // Deny access
@@ -223,16 +224,16 @@ export function createZeroTrustMiddleware(options: ZeroTrustOptions = {}) {
           success: false,
           message: 'Access denied',
           reason: decisionReason
-});
+        });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('[ZeroTrust] Error in zero-trust middleware:', error);
       
       // In case of internal error, deny access
       res.status(500).json({
         success: false,
         message: 'Security verification error'
-});
+      });
     }
   };
 }
@@ -245,9 +246,9 @@ export function createResourceAccessMiddleware(resourceType: string, resourceId:
   return createZeroTrustMiddleware({
     resourceSensitivity: sensitivityLevel,
     contextSensitive: true,
-    minTrustScore: 0.5 + (sensitivityLevel / 200), // 0.5 to: 1.0 based on sensitivity,
-  maxRiskScore: 0.3 - (sensitivityLevel / 500)   // 0.3 to: 0.1 based on sensitivity
-});
+    minTrustScore: 0.5 + (sensitivityLevel / 200), // 0.5 to 1.0 based on sensitivity
+    maxRiskScore: 0.3 - (sensitivityLevel / 500)   // 0.3 to 0.1 based on sensitivity
+  });
 }
 
 /**
@@ -260,7 +261,7 @@ export function createAdminAccessMiddleware() {
     minTrustScore: 0.8,
     maxRiskScore: 0.1,
     requiredPermissions: ['admin.access']
-});
+  });
 }
 
 /**
@@ -273,5 +274,5 @@ export function createSecurityOperationsMiddleware() {
     minTrustScore: 0.9,
     maxRiskScore: 0.05,
     requiredPermissions: ['security.manage']
-});
+  });
 }

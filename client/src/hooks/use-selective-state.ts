@@ -40,7 +40,7 @@ interface SelectiveStateOptions<T> {
    * Custom comparison function for state changes
    * @default Object.is
    */
-  equalityFn?: (a, b) => boolean;
+  equalityFn?: (a: any, b: any) => boolean;
   
   /**
    * Whether to use deep tracking (track nested object access)
@@ -114,7 +114,7 @@ export function useSelectiveState<T extends object>(
   
   // Create accessor tracking proxy
   const createTrackingProxy = (
-    obj,
+    obj: any,
     path: string = '',
     isRoot: boolean = false
   ): any => {
@@ -306,7 +306,7 @@ export function useSelectiveSelector<T extends object, R>(
   const [, setForceRender] = useState({});
   
   // Create tracking proxy for the selector function
-  const createTrackingProxy = (obj, path: string = ''): any => {
+  const createTrackingProxy = (obj: any, path: string = ''): any => {
     if (obj === null || obj === undefined) {
       return obj;
     }

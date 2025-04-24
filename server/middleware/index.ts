@@ -30,7 +30,7 @@ import {
  * Set up all middleware for the Express application
  * Incorporates performance optimizations for faster response times
  */
-export function setupMiddleware(app: express.Application, sessionSecret: string): void: {
+export function setupMiddleware(app: express.Application, sessionSecret: string): void {
   const config = loadConfig();
   
   // Request timing middleware for performance monitoring
@@ -46,30 +46,30 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
   app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
-        "default-src: 'self'; " +
-        "script-src: 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co https://www.youtube.com https://js.stripe.com; " +
-        "style-src: 'self' 'unsafe-inline'; " +
-        "img-src: 'self' data: blob: https://i.ytimg.com; " +
-        "connect-src: 'self' wss: ws: https://api.stripe.com; " +
-        "font-src: 'self' data:; " +
-        "object-src: 'none'; " +
-        "media-src: 'self' https://www.youtube.com; " +
-        "frame-src: 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com https://www.google.com https://*.google.com https://js.stripe.com, https://hooks.stripe.com;"
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.util.repl.co https://www.youtube.com https://js.stripe.com; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob: https://i.ytimg.com; " +
+        "connect-src 'self' wss: ws: https://api.stripe.com; " +
+        "font-src 'self' data:; " +
+        "object-src 'none'; " +
+        "media-src 'self' https://www.youtube.com; " +
+        "frame-src 'self' https://auth.util.repl.co https://www.youtube.com https://youtube.com https://www.google.com https://*.google.com https://js.stripe.com https://hooks.stripe.com;"
       );
     next();
-});
+  });
 
   // Configure CORS
   app.use(cors({
     origin: config.corsOrigins,
     credentials: true
-}));
+  }));
 
   // Optimized compression middleware (if enabled)
   if (config.enableCompression) {
     // Use optimized compression with threshold and content-type filtering
     app.use(optimizedCompression());
-}
+  }
 
   // Session configuration
   const sessionConfig: expressSession.SessionOptions = {
@@ -80,7 +80,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
       secure: config.enableHttps,
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}
+    }
   };
 
   app.use(expressSession.default(sessionConfig));
@@ -88,7 +88,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
   // Rate limiting (if enabled)
   if (config.features.enableRateLimiting) {
     app.use(defaultLimiter);
-}
+  }
 
   // CSRF protection (if enabled)
   if (config.csrfProtection) {
@@ -98,7 +98,7 @@ export function setupMiddleware(app: express.Application, sessionSecret: string)
     app.use((req, res, next) => {
       res.locals.csrfToken = req.csrfToken?.();
       next();
-});
+    });
   }
 
   // Auth middleware

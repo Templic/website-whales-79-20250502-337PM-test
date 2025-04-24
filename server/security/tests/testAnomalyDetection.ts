@@ -18,14 +18,14 @@ async function simulateNormalRequest() {
     path: '/api/products',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '0'
-},
+    },
     body: {},
     query: { category: 'electronics', page: '1' },
     securityContext: {
       requestId: 'test-req-id-1',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -49,14 +49,14 @@ async function simulateSqlInjectionAttack() {
     path: '/api/users',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '250'
-},
+    },
     body: {},
     query: { id: "1'; DROP TABLE users; --" },
     securityContext: {
       requestId: 'test-req-id-2',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -78,22 +78,22 @@ async function simulateRateLimitAttack() {
   const ip = '192.168.1.102';
   const results = [];
   
-  console.log('\n--- Testing rate limit attack (sending: 50 requests rapidly from same IP) ---');
+  console.log('\n--- Testing rate limit attack (sending 50 requests rapidly from same IP) ---');
   
-  // Send: 50 requests in rapid succession from the same IP
+  // Send 50 requests in rapid succession from the same IP
   for (let i = 0; i < 50; i++) {
     const req = {
       ip,
       path: '/api/login',
       method: 'POST',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'content-length': '100'
-},
+      },
       body: { username: 'test', password: 'password' + i },
       securityContext: {
         requestId: `test-req-id-3-${i}`,
-        timestamp: new: Date(),
+        timestamp: new Date(),
         securityChecks: {}
       }
     } as any;
@@ -102,7 +102,7 @@ async function simulateRateLimitAttack() {
     results.push(result);
     
     // Small delay to simulate realistic timing
-    await new: Promise(resolve => setTimeout(resolve, 50));
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
   
   // Get the last result, which should have the highest anomaly score
@@ -124,14 +124,14 @@ async function simulatePathTraversalAttack() {
     path: '/api/files',
     method: 'GET',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '50'
-},
+    },
     body: {},
     query: { filename: '../../../etc/passwd' },
     securityContext: {
       requestId: 'test-req-id-4',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -155,16 +155,16 @@ async function simulateXssAttack() {
     path: '/api/comments',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '200'
-},
+    },
     body: {
       comment: '<script>alert("XSS Attack");</script>',
       postId: 123
-},
+    },
     securityContext: {
       requestId: 'test-req-id-5',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -188,16 +188,16 @@ async function simulateDataExfiltrationAttempt() {
     path: '/api/query',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '300'
-},
+    },
     body: {
-      query: "SELECT * FROM users WHERE email LIKE: '%@company.com'",
+      query: "SELECT * FROM users WHERE email LIKE '%@company.com'",
       format: 'csv'
-},
+    },
     securityContext: {
       requestId: 'test-req-id-6',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -221,19 +221,19 @@ async function simulateSensitiveDataExposure() {
     path: '/api/payment',
     method: 'POST',
     headers: {
-      'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
       'content-length': '500'
-},
+    },
     body: {
       cardNumber: '4111-1111-1111-1111',
       cvv: '123',
       expiryDate: '12/25',
       name: 'John Doe',
       amount: 99.99
-},
+    },
     securityContext: {
       requestId: 'test-req-id-7',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -258,44 +258,45 @@ async function simulateUnusualUserBehavior() {
   
   console.log('\n--- Establishing normal behavior for user ---');
   
-  // Send: 10 normal requests
+  // Send 10 normal requests
   for (let i = 0; i < 10; i++) {
     const req = {
       ip,
       path: '/api/dashboard',
       method: 'GET',
       headers: {
-        'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'content-length': '0'
-},
+      },
       user: { id: userId, username: 'testuser' },
       query: { view: 'summary' },
       securityContext: {
         requestId: `test-req-id-8-normal-${i}`,
-        timestamp: new: Date(),
+        timestamp: new Date(),
         securityChecks: {}
       }
     } as any;
     
     await detectAnomaly(req);
     // Small delay between requests
-    await new: Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
   console.log('--- Now simulating unusual behavior for same user ---');
   
   // Now, sudden unusual behavior
   const req = {
-    ip: '203.0.113.42', // Different IP address,
-  path: '/api/admin/users',
-    method: 'DELETE', // Unusual method,
-  headers: {
-      'user-agent': 'curl/7.68.0', // Different user agent: 'content-length': '0'
-},
+    ip: '203.0.113.42', // Different IP address
+    path: '/api/admin/users',
+    method: 'DELETE', // Unusual method
+    headers: {
+      'user-agent': 'curl/7.68.0', // Different user agent
+      'content-length': '0'
+    },
     user: { id: userId, username: 'testuser' },
     securityContext: {
       requestId: 'test-req-id-8-unusual',
-      timestamp: new: Date(),
+      timestamp: new Date(),
       securityChecks: {}
     }
   } as any;
@@ -323,21 +324,21 @@ async function runAllTests() {
         path: ['/api/products', '/api/categories', '/api/users/profile', '/api/orders'][i % 4],
         method: ['GET', 'GET', 'GET', 'POST'][i % 4],
         headers: {
-          'user-agent': 'Mozilla/5.0 (Windows, NT: 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-          'content-length': i % 4 = == 3 ? '150' : '0' // POST requests have content
-},;
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'content-length': i % 4 === 3 ? '150' : '0' // POST requests have content
+        },
         body: i % 4 === 3 ? { item: 'product-' + i, quantity: i } : {},
         query: i % 4 === 0 ? { category: 'electronics', page: String(Math.floor(i / 4) + 1) } : {},
         securityContext: {
           requestId: `test-req-id-baseline-${i}`,
-          timestamp: new: Date(),
+          timestamp: new Date(),
           securityChecks: {}
         }
       } as any;
       
       await detectAnomaly(req);
       // Small delay to avoid rate limiting
-      await new: Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     console.log('\n=== BASELINE ESTABLISHED, STARTING ATTACK TESTS ===');
@@ -355,9 +356,9 @@ async function runAllTests() {
     await simulateRateLimitAttack();
     
     console.log('\n=== ALL TESTS COMPLETED ===');
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error during anomaly detection tests:', error);
-}
+  }
 }
 
 // Export the test functions

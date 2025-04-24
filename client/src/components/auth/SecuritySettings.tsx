@@ -3,8 +3,6 @@
  * 
  * Component for managing security settings, including two-factor authentication.
  */
-import React from "react";
-
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -118,7 +116,7 @@ export function SecuritySettings() {
       await disable2FAMutation.mutateAsync(data);
       setShowDisable2FA(false);
       passwordForm.reset();
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };
@@ -134,7 +132,7 @@ export function SecuritySettings() {
         setShowRegenerateDialog(false);
         regenerateForm.reset();
       }
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };

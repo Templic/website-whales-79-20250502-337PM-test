@@ -11,7 +11,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanc
 /**
  * Custom API error class
  */
-export class ApiError extends Error: {
+export class ApiError extends Error {
   statusCode: number;
   details?: any;
   
@@ -20,7 +20,7 @@ export class ApiError extends Error: {
     this.statusCode = statusCode;
     this.details = details;
     this.name = 'ApiError';
-}
+  }
 }
 
 /**
@@ -28,8 +28,8 @@ export class ApiError extends Error: {
  */
 export const asyncHandler = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch (next: unknown) ;
-};
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 };
 
 /**
@@ -46,23 +46,23 @@ export const errorHandler = (err, req: Request, res: Response, next: NextFunctio
     statusCode = err.statusCode;
     message = err.message;
     details = err.details;
-} else if (err.statusCode) {
+  } else if (err.statusCode) {
     // Some other error with a status code
     statusCode = err.statusCode;
     message = err.message;
-} else {
+  } else {
     // Unknown error
     console.error('Unhandled Error:', err);
-}
+  }
   
   // Log security event for certain errors
   if (statusCode >= 400) {
     const severity = statusCode >= 500 
-      ? SecurityEventSeverity.HIGH ;
+      ? SecurityEventSeverity.HIGH 
       : (statusCode >= 401 ? SecurityEventSeverity.MEDIUM : SecurityEventSeverity.LOW);
       
     const category = statusCode === 401 || statusCode === 403
-      ? SecurityEventCategory.AUTHORIZATION;
+      ? SecurityEventCategory.AUTHORIZATION
       : (statusCode === 400 ? SecurityEventCategory.API_SECURITY : SecurityEventCategory.GENERAL);
     
     securityBlockchain.recordEvent({
@@ -79,15 +79,15 @@ export const errorHandler = (err, req: Request, res: Response, next: NextFunctio
         path: req.originalUrl,
         query: req.query,
         error: err.stack || err.toString(),
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     });
   }
   
   // In production, don't expose error details
   if (process.env.NODE_ENV === 'production') {
     details = undefined;
-}
+  }
   
   // Send the error response
   res.status(statusCode).json({

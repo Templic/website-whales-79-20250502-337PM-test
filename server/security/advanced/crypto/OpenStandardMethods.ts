@@ -17,37 +17,37 @@ import { Buffer } from 'buffer';
 import { ImmutableSecurityLogger, SecurityEventType } from '../blockchain/SecurityLogger';
 
 // Interfaces for type safety
-export interface SecretShare: {
-  index: number;,
-  share: string;,
+export interface SecretShare {
+  index: number;
+  share: string;
   timestamp: number;
 }
 
-export interface VerifiableSecretSharing: {
-  shares: SecretShare[];,
-  threshold: number;,
-  commitments: string[];,
-  totalShares: number;,
+export interface VerifiableSecretSharing {
+  shares: SecretShare[];
+  threshold: number;
+  commitments: string[];
+  totalShares: number;
   timestamp: number;
 }
 
-export interface ForwardSecureSignature: {
-  signature: string;,
-  publicKey: string;,
-  period: number;,
-  message: string;,
+export interface ForwardSecureSignature {
+  signature: string;
+  publicKey: string;
+  period: number;
+  message: string;
   timestamp: number;
 }
 
-export interface ZeroKnowledgeProof: {
-  commitment: string;,
-  proof: string;,
-  value: number;,
+export interface ZeroKnowledgeProof {
+  commitment: string;
+  proof: string;
+  value: number;
   timestamp: number;
 }
 
 /**
- * Method: 1: Verifiable Secret Sharing (Shamir + Feldman VSS)
+ * Method 1: Verifiable Secret Sharing (Shamir + Feldman VSS)
  * 
  * Based on:
  * - Shamir, A. (1979). "How to share a secret". Communications of the ACM.
@@ -57,9 +57,9 @@ export interface ZeroKnowledgeProof: {
  * can reconstruct the secret (threshold scheme). The Feldman extension adds
  * verification capabilities to detect modified shares.
  */
-export class VerifiableSecretSharingModule: {
+export class VerifiableSecretSharingModule {
   private readonly PRIME = BigInt('115792089237316195423570985008687907853269984665640564039457584007913129639747');
-  private readonly logger = new: ImmutableSecurityLogger('VSS');
+  private readonly logger = new ImmutableSecurityLogger('VSS');
 
   /**
    * Creates a verifiable secret sharing scheme
@@ -69,14 +69,14 @@ export class VerifiableSecretSharingModule: {
    * @param threshold Minimum number of shares needed to reconstruct
    * @returns VerifiableSecretSharing object with shares and verification commitments
    */
-  public: createShares(secret: string, totalShares: number, threshold: number): VerifiableSecretSharing: {
+  public createShares(secret: string, totalShares: number, threshold: number): VerifiableSecretSharing {
     if (threshold > totalShares) {
       throw new Error('Threshold cannot be greater than the total number of shares');
-}
+    }
 
     if (threshold < 2) {
-      throw new Error('Threshold must be at, least: 2');
-}
+      throw new Error('Threshold must be at least 2');
+    }
 
     try {
       // Convert secret to a number
@@ -86,7 +86,7 @@ export class VerifiableSecretSharingModule: {
       const coefficients: bigint[] = [secretValue];
       for (let i = 1; i < threshold; i++) {
         coefficients.push(this.getRandomBigInt());
-}
+      }
       
       // Generate commitments for verification (Feldman's VSS)
       const g = this.findGenerator();
@@ -95,7 +95,7 @@ export class VerifiableSecretSharingModule: {
         // g^coef mod p as commitment
         const commitment = this.modPow(g, coef, this.PRIME);
         commitments.push(commitment.toString());
-}
+      }
       
       // Generate shares
       const shares: SecretShare[] = [];
@@ -107,13 +107,13 @@ export class VerifiableSecretSharingModule: {
         for (let j = 1; j < coefficients.length; j++) {
           const term = this.modMul(coefficients[j], this.modPow(x, BigInt(j), this.PRIME), this.PRIME);
           y = this.modAdd(y, term, this.PRIME);
-}
+        }
         
         shares.push({
           index: i,
           share: y.toString(),
           timestamp: Date.now()
-});
+        });
       }
       
       const result: VerifiableSecretSharing = {
@@ -122,23 +122,23 @@ export class VerifiableSecretSharingModule: {
         commitments,
         totalShares,
         timestamp: Date.now()
-};
+      };
       
       // Log the creation of shares (without revealing the actual shares)
       this.logger.info('Created verifiable secret sharing', {
         threshold,
         totalShares,
         timestamp: result.timestamp
-});
+      });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to create verifiable secret sharing', {
         error: (error as Error).message,
         threshold,
         totalShares,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
@@ -150,7 +150,7 @@ export class VerifiableSecretSharingModule: {
    * @param commitments The commitments used for verification
    * @returns boolean indicating if the share is valid
    */
-  public: verifyShare(share: SecretShare, commitments: string[]): boolean: {
+  public verifyShare(share: SecretShare, commitments: string[]): boolean {
     try {
       const g = this.findGenerator();
       const x = BigInt(share.index);
@@ -166,7 +166,7 @@ export class VerifiableSecretSharingModule: {
         const exponent = this.modPow(x, BigInt(j), this.PRIME);
         const term = this.modPow(commitment, exponent, this.PRIME);
         right = this.modMul(right, term, this.PRIME);
-}
+      }
       
       // If left equals right, the share is valid
       const isValid = left === this.modReduce(right, this.PRIME);
@@ -175,15 +175,15 @@ export class VerifiableSecretSharingModule: {
         index: share.index,
         isValid,
         timestamp: Date.now()
-});
+      });
       
       return isValid;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to verify share', {
         error: (error as Error).message,
         index: share.index,
         timestamp: Date.now()
-});
+      });
       return false;
     }
   }
@@ -195,7 +195,7 @@ export class VerifiableSecretSharingModule: {
    * @param threshold Minimum number of shares needed
    * @returns The reconstructed secret
    */
-  public: reconstructSecret(shares: SecretShare[], threshold: number): string: {
+  public reconstructSecret(shares: SecretShare[], threshold: number): string {
     if (shares.length < threshold) {
       throw new Error(`Not enough shares: got ${shares.length}, need ${threshold}`);
     }
@@ -219,10 +219,10 @@ export class VerifiableSecretSharingModule: {
             numerator = this.modMul(numerator, xj, this.PRIME);
             const diff = this.modSub(xj, xi, this.PRIME);
             denominator = this.modMul(denominator, diff, this.PRIME);
-}
+          }
         }
         
-        // Calculate the Lagrange basis polynomial evaluated at: 0
+        // Calculate the Lagrange basis polynomial evaluated at 0
         const inverseDenominator = this.modInverse(denominator, this.PRIME);
         const lagrangeTerm = this.modMul(numerator, inverseDenominator, this.PRIME);
         const contribution = this.modMul(yi, lagrangeTerm, this.PRIME);
@@ -237,55 +237,55 @@ export class VerifiableSecretSharingModule: {
         sharesUsed: validShares.length,
         threshold,
         timestamp: Date.now()
-});
+      });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to reconstruct secret', {
         error: (error as Error).message,
         sharesProvided: shares.length,
         threshold,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
   
   // Utility methods
-  private: stringToNumber(str: string): bigint: {
+  private stringToNumber(str: string): bigint {
     const hash = crypto.createHash('sha256').update(str).digest('hex');
     return BigInt(`0x${hash}`);
   }
   
-  private: numberToString(num: bigint): string: {
+  private numberToString(num: bigint): string {
     const hex = num.toString(16);
     const buf = Buffer.from(hex, 'hex');
     return buf.toString('utf8');
-}
+  }
   
-  private: getRandomBigInt(): bigint: {
+  private getRandomBigInt(): bigint {
     const randomBytes = crypto.randomBytes(32);
     return BigInt(`0x${randomBytes.toString('hex')}`);
   }
   
-  private: findGenerator(): bigint: {
+  private findGenerator(): bigint {
     // For simplicity, using a known generator of the prime field
     return BigInt(2);
-}
+  }
   
-  private: modAdd(a: bigint, b: bigint, m: bigint): bigint: {
+  private modAdd(a: bigint, b: bigint, m: bigint): bigint {
     return this.modReduce((a + b), m);
-}
+  }
   
-  private: modSub(a: bigint, b: bigint, m: bigint): bigint: {
+  private modSub(a: bigint, b: bigint, m: bigint): bigint {
     return this.modReduce((a - b + m), m);
-}
+  }
   
-  private: modMul(a: bigint, b: bigint, m: bigint): bigint: {
+  private modMul(a: bigint, b: bigint, m: bigint): bigint {
     return this.modReduce((a * b), m);
-}
+  }
   
-  private: modPow(base: bigint, exponent: bigint, m: bigint): bigint: {
+  private modPow(base: bigint, exponent: bigint, m: bigint): bigint {
     if (m === BigInt(1)) return BigInt(0);
     
     let result = BigInt(1);
@@ -294,7 +294,7 @@ export class VerifiableSecretSharingModule: {
     while (exponent > BigInt(0)) {
       if (exponent % BigInt(2) === BigInt(1)) {
         result = this.modReduce((result * base), m);
-}
+      }
       exponent = exponent >> BigInt(1);
       base = this.modReduce((base * base), m);
     }
@@ -302,34 +302,34 @@ export class VerifiableSecretSharingModule: {
     return result;
   }
   
-  private: modReduce(x: bigint, m: bigint): bigint: {
+  private modReduce(x: bigint, m: bigint): bigint {
     return ((x % m) + m) % m;
-}
+  }
   
-  private: modInverse(a: bigint, m: bigint): bigint: {
+  private modInverse(a: bigint, m: bigint): bigint {
     // Extended Euclidean Algorithm
-    let: [old_r, r] = [a, m];
-    let: [old_s, s] = [BigInt(1), BigInt(0)];
-    let: [old_t, t] = [BigInt(0), BigInt(1)];
+    let [old_r, r] = [a, m];
+    let [old_s, s] = [BigInt(1), BigInt(0)];
+    let [old_t, t] = [BigInt(0), BigInt(1)];
     
     while (r !== BigInt(0)) {
       const quotient = old_r / r;
       [old_r, r] = [r, old_r - quotient * r];
       [old_s, s] = [s, old_s - quotient * s];
       [old_t, t] = [t, old_t - quotient * t];
-}
+    }
     
-    // Make sure old_r = gcd(a, m) = 1;
+    // Make sure old_r = gcd(a, m) = 1
     if (old_r !== BigInt(1)) {
       throw new Error('Modular inverse does not exist');
-}
+    }
     
     return this.modReduce(old_s, m);
   }
 }
 
 /**
- * Method: 2: Forward-Secure Digital Signatures (FS-Schnorr)
+ * Method 2: Forward-Secure Digital Signatures (FS-Schnorr)
  * 
  * Based on:
  * - Bellare, M. and Miner, S. K. (1999). "A Forward-Secure Digital Signature Scheme"
@@ -338,10 +338,10 @@ export class VerifiableSecretSharingModule: {
  * This implementation provides forward security, meaning that even if the private
  * key is compromised in the future, signatures created in the past remain secure.
  */
-export class ForwardSecureSignatureModule: {
+export class ForwardSecureSignatureModule {
   private readonly CURVE = 'secp256k1';
   private readonly HASH_ALGO = 'sha256';
-  private readonly logger = new: ImmutableSecurityLogger('FS-SIG');
+  private readonly logger = new ImmutableSecurityLogger('FS-SIG');
   
   /**
    * Generates a key pair for forward-secure signatures
@@ -349,19 +349,19 @@ export class ForwardSecureSignatureModule: {
    * @param periods Number of time periods the key will be valid for
    * @returns Object containing public key and first period private key
    */
-  public: generateKeyPair(periods: number = 100): { publicKey: string, privateKeys: string[], timestamp: number } {
+  public generateKeyPair(periods: number = 100): { publicKey: string, privateKeys: string[], timestamp: number } {
     try {
       // Generate base key pair
       const baseKeyPair = crypto.generateKeyPairSync('ec', {
         namedCurve: this.CURVE,
         publicKeyEncoding: {
-          type 'spki',
+          type: 'spki',
           format: 'pem'
-},
+        },
         privateKeyEncoding: {
-          type 'pkcs8',
+          type: 'pkcs8',
           format: 'pem'
-}
+        }
       });
       
       // Derive period-specific private keys
@@ -376,20 +376,20 @@ export class ForwardSecureSignatureModule: {
         publicKey: baseKeyPair.publicKey,
         privateKeys,
         timestamp: Date.now()
-};
+      };
       
       this.logger.info('Generated forward-secure key pair', {
         periods,
         timestamp: result.timestamp
-});
+      });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to generate forward-secure key pair', {
         error: (error as Error).message,
         periods,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
@@ -402,7 +402,7 @@ export class ForwardSecureSignatureModule: {
    * @param period Current time period
    * @returns Forward-secure signature object
    */
-  public: sign(message: string, privateKey: string, publicKey: string, period: number): ForwardSecureSignature: {
+  public sign(message: string, privateKey: string, publicKey: string, period: number): ForwardSecureSignature {
     try {
       // Convert the period-specific private key to an EC private key
       // This is a simplification; a real implementation would derive proper EC keys
@@ -418,22 +418,22 @@ export class ForwardSecureSignatureModule: {
         period,
         message,
         timestamp: Date.now()
-};
+      };
       
       this.logger.info('Created forward-secure signature', {
         period,
         messageLength: message.length,
         timestamp: result.timestamp
-});
+      });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to create forward-secure signature', {
         error: (error as Error).message,
         period,
         messageLength: message?.length || 0,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
@@ -445,7 +445,7 @@ export class ForwardSecureSignatureModule: {
    * @param publicKey Public key
    * @returns Boolean indicating if the signature is valid
    */
-  public: verify(signature: ForwardSecureSignature): boolean: {
+  public verify(signature: ForwardSecureSignature): boolean {
     try {
       // In a real implementation, this would use Schnorr verification
       // For simplicity, we're using a HMAC-based approach
@@ -461,15 +461,15 @@ export class ForwardSecureSignatureModule: {
         period: signature.period,
         isValid,
         timestamp: Date.now()
-});
+      });
       
       return isValid;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to verify forward-secure signature', {
         error: (error as Error).message,
         period: signature.period,
         timestamp: Date.now()
-});
+      });
       return false;
     }
   }
@@ -481,11 +481,11 @@ export class ForwardSecureSignatureModule: {
    * @param currentPeriod Current time period
    * @returns Updated private keys array with current period key deleted
    */
-  public: updateKey(privateKeys: string[], currentPeriod: number): string[] {
+  public updateKey(privateKeys: string[], currentPeriod: number): string[] {
     try {
       if (currentPeriod >= privateKeys.length - 1) {
         throw new Error('Reached the last period, cannot update further');
-}
+      }
       
       // Remove the current period key
       const updatedKeys = [...privateKeys];
@@ -495,22 +495,22 @@ export class ForwardSecureSignatureModule: {
         fromPeriod: currentPeriod,
         toPeriod: currentPeriod + 1,
         timestamp: Date.now()
-});
+      });
       
       return updatedKeys;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to update forward-secure key', {
         error: (error as Error).message,
         currentPeriod,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
 }
 
 /**
- * Method: 3: Privacy-Preserving Zero-Knowledge Proofs (Bulletproofs)
+ * Method 3: Privacy-Preserving Zero-Knowledge Proofs (Bulletproofs)
  * 
  * Based on:
  * - Bünz, B., Bootle, J., Boneh, D., Poelstra, A., Wuille, P., & Maxwell, G. (2018).
@@ -521,10 +521,10 @@ export class ForwardSecureSignatureModule: {
  * This implementation provides zero-knowledge range proofs, allowing a party to prove
  * that a committed value lies in a specific range without revealing the value itself.
  */
-export class ZeroKnowledgeProofModule: {
+export class ZeroKnowledgeProofModule {
   private readonly PRIME = BigInt('115792089237316195423570985008687907853269984665640564039457584007913129639747');
   private readonly G = BigInt(2); // Generator
-  private readonly logger = new: ImmutableSecurityLogger('ZKP');
+  private readonly logger = new ImmutableSecurityLogger('ZKP');
   
   /**
    * Creates a zero-knowledge range proof for a value
@@ -534,9 +534,9 @@ export class ZeroKnowledgeProofModule: {
    * @param max Maximum value of the range
    * @returns Zero-knowledge proof object
    */
-  public: createRangeProof(value: number, min: number, max: number): ZeroKnowledgeProof: {
+  public createRangeProof(value: number, min: number, max: number): ZeroKnowledgeProof {
     if (value < min || value > max) {
-      throw new Error(`Value ${value} is outside the range: [${min}, ${max}]`);
+      throw new Error(`Value ${value} is outside the range [${min}, ${max}]`);
     }
     
     try {
@@ -554,9 +554,9 @@ export class ZeroKnowledgeProofModule: {
       const result: ZeroKnowledgeProof = {
         commitment,
         proof,
-        value, // In a real implementation, we would not include the actual value,
-  timestamp: Date.now()
-};
+        value, // In a real implementation, we would not include the actual value
+        timestamp: Date.now()
+      };
       
       this.logger.info('Created zero-knowledge range proof', {
         range: `[${min}, ${max}]`,
@@ -564,7 +564,7 @@ export class ZeroKnowledgeProofModule: {
       });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to create range proof', {
         error: (error as Error).message,
         range: `[${min}, ${max}]`,
@@ -582,7 +582,7 @@ export class ZeroKnowledgeProofModule: {
    * @param max Maximum value of the range
    * @returns Boolean indicating if the proof is valid
    */
-  public: verifyRangeProof(proof: ZeroKnowledgeProof, min: number, max: number): boolean: {
+  public verifyRangeProof(proof: ZeroKnowledgeProof, min: number, max: number): boolean {
     try {
       // In a real Bulletproofs implementation, this would verify the range proof
       // without learning the underlying value
@@ -597,7 +597,7 @@ export class ZeroKnowledgeProofModule: {
       });
       
       return isValid;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to verify range proof', {
         error: (error as Error).message,
         range: `[${min}, ${max}]`,
@@ -614,12 +614,12 @@ export class ZeroKnowledgeProofModule: {
    * @param values The individual values that should sum to the total
    * @returns Object containing commitments and proof
    */
-  public: createSumProof(sum: number, values: number[]): { 
+  public createSumProof(sum: number, values: number[]): { 
     sumCommitment: string, 
     valueCommitments: string[], 
     proof: string,
     timestamp: number
-} {
+  } {
     // Check that the values actually sum to the expected total
     const actualSum = values.reduce((a, b) => a + b, 0);
     if (actualSum !== sum) {
@@ -634,7 +634,7 @@ export class ZeroKnowledgeProofModule: {
       // Create commitments
       const sumCommitment = this.createCommitment(BigInt(sum), sumBlinding);
       const valueCommitments = values.map((v, i) => 
-        this.createCommitment(BigInt(v), valuesBlindings[i]);
+        this.createCommitment(BigInt(v), valuesBlindings[i])
       );
       
       // In a real implementation, this would be a zero-knowledge proof
@@ -643,7 +643,7 @@ export class ZeroKnowledgeProofModule: {
         BigInt(sum), 
         values.map(v => BigInt(v)), 
         sumBlinding, 
-        valuesBlindings;
+        valuesBlindings
       );
       
       const result = {
@@ -651,20 +651,20 @@ export class ZeroKnowledgeProofModule: {
         valueCommitments,
         proof,
         timestamp: Date.now()
-};
+      };
       
       this.logger.info('Created sum proof', {
         valuesCount: values.length,
         timestamp: result.timestamp
-});
+      });
       
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to create sum proof', {
         error: (error as Error).message,
         valuesCount: values?.length || 0,
         timestamp: Date.now()
-});
+      });
       throw error;
     }
   }
@@ -675,11 +675,11 @@ export class ZeroKnowledgeProofModule: {
    * @param sumProof Object containing the commitments and proof
    * @returns Boolean indicating if the proof is valid
    */
-  public: verifySumProof(sumProof: { 
+  public verifySumProof(sumProof: { 
     sumCommitment: string, 
     valueCommitments: string[], 
     proof: string 
-}): boolean: {
+  }): boolean {
     try {
       // In a real implementation, this would verify the zero-knowledge proof
       
@@ -690,26 +690,26 @@ export class ZeroKnowledgeProofModule: {
         valuesCount: sumProof.valueCommitments.length,
         isValid,
         timestamp: Date.now()
-});
+      });
       
       return isValid;
-    } catch (error: unknown) {
+    } catch (error) {
       this.logger.error('Failed to verify sum proof', {
         error: (error as Error).message,
         valuesCount: sumProof.valueCommitments?.length || 0,
         timestamp: Date.now()
-});
+      });
       return false;
     }
   }
   
   // Utility methods
-  private: getRandomValue(): bigint: {
+  private getRandomValue(): bigint {
     const randomBytes = crypto.randomBytes(32);
     return BigInt(`0x${randomBytes.toString('hex')}`);
   }
   
-  private: createCommitment(value: bigint, blinding: bigint): string: {
+  private createCommitment(value: bigint, blinding: bigint): string {
     // Pedersen commitment: g^value * h^blinding
     const g = this.G;
     const h = this.modPow(g, BigInt(256), this.PRIME); // Another generator, derived from g
@@ -719,9 +719,9 @@ export class ZeroKnowledgeProofModule: {
     
     const commitment = this.modMul(gValue, hBlinding, this.PRIME);
     return commitment.toString();
-}
+  }
   
-  private: simulateRangeProof(value: bigint, min: bigint, max: bigint, blinding: bigint): string: {
+  private simulateRangeProof(value: bigint, min: bigint, max: bigint, blinding: bigint): string {
     // In a real implementation, this would create an actual Bulletproof
     // For now, we'll just create a string that represents the proof
     const proofData = {
@@ -730,41 +730,41 @@ export class ZeroKnowledgeProofModule: {
       max: max.toString(),
       blinding: blinding.toString(),
       timestamp: Date.now()
-};
+    };
     
     return Buffer.from(JSON.stringify(proofData)).toString('base64');
   }
   
-  private: simulateVerification(proof: ZeroKnowledgeProof, min: bigint, max: bigint): boolean: {
+  private simulateVerification(proof: ZeroKnowledgeProof, min: bigint, max: bigint): boolean {
     // In a real implementation, this would verify the Bulletproof
     // For now, we'll just check that the value is in range
     return proof.value >= Number(min) && proof.value <= Number(max);
-}
+  }
   
-  private: simulateSumProof(
+  private simulateSumProof(
     sum: bigint, 
     values: bigint[], 
     sumBlinding: bigint, 
     valuesBlindings: bigint[]
-  ): string: {
+  ): string {
     // In a real implementation, this would create a zero-knowledge proof
     // For now, we'll just create a string that represents the proof
     const proofData = {
       sum: sum.toString(),
-      values: values.map(v = > v.toString()),
+      values: values.map(v => v.toString()),
       sumBlinding: sumBlinding.toString(),
       valuesBlindings: valuesBlindings.map(b => b.toString()),
-      timestamp: Date.now();
-};
+      timestamp: Date.now()
+    };
     
     return Buffer.from(JSON.stringify(proofData)).toString('base64');
   }
   
-  private: modMul(a: bigint, b: bigint, m: bigint): bigint: {
+  private modMul(a: bigint, b: bigint, m: bigint): bigint {
     return ((a * b) % m + m) % m;
-}
+  }
   
-  private: modPow(base: bigint, exponent: bigint, m: bigint): bigint: {
+  private modPow(base: bigint, exponent: bigint, m: bigint): bigint {
     if (m === BigInt(1)) return BigInt(0);
     
     let result = BigInt(1);
@@ -773,7 +773,7 @@ export class ZeroKnowledgeProofModule: {
     while (exponent > BigInt(0)) {
       if (exponent % BigInt(2) === BigInt(1)) {
         result = this.modMul(result, base, m);
-}
+      }
       exponent = exponent >> BigInt(1);
       base = this.modMul(base, base, m);
     }
@@ -783,6 +783,6 @@ export class ZeroKnowledgeProofModule: {
 }
 
 // Export instances
-export const verifiableSecretSharing = new: VerifiableSecretSharingModule();
-export const forwardSecureSignature = new: ForwardSecureSignatureModule();
-export const zeroKnowledgeProof = new: ZeroKnowledgeProofModule();
+export const verifiableSecretSharing = new VerifiableSecretSharingModule();
+export const forwardSecureSignature = new ForwardSecureSignatureModule();
+export const zeroKnowledgeProof = new ZeroKnowledgeProofModule();

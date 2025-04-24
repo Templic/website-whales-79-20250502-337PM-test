@@ -3,8 +3,6 @@
  * 
  * Component for managing blog posts in the admin portal
  */
-import React from "react";
-
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

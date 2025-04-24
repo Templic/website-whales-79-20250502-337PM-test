@@ -20,7 +20,7 @@ import { SecurityLogLevel } from '../types/securityTypes';
  * 
  * @param app Express application
  */
-export function applyGlobalSecurityMiddleware(app: Application): void: {
+export function applyGlobalSecurityMiddleware(app: Application): void {
   // Apply security headers to all responses
   app.use(securityHeadersMiddleware);
   
@@ -31,8 +31,8 @@ export function applyGlobalSecurityMiddleware(app: Application): void: {
       path: req.path,
       ip: req.ip,
       userAgent: req.headers['user-agent'],
-      timestamp: new: Date()
-}, SecurityLogLevel.DEBUG);
+      timestamp: new Date()
+    }, SecurityLogLevel.DEBUG);
     
     next();
   });
@@ -43,22 +43,22 @@ export function applyGlobalSecurityMiddleware(app: Application): void: {
  * 
  * @param apiRouter Express router for API routes
  */
-export function enhanceSecurityRoutes(apiRouter: Router): void: {
+export function enhanceSecurityRoutes(apiRouter: Router): void {
   // Security scanning route
   apiRouter.post('/security/scan', adminRateLimiter(), (req: Request, res: Response) => {
     logSecurityEvent('SECURITY_SCAN_REQUESTED', {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session?.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Trigger security scan (implementation details omitted)
     
     res.json({
       status: 'success',
       message: 'Security scan initiated'
-});
+    });
   });
   
   // Authentication scanning route
@@ -67,15 +67,15 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session?.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Trigger authentication scan (implementation details omitted)
     
     res.json({
       status: 'success',
       message: 'Authentication scan initiated'
-});
+    });
   });
   
   // Password change route
@@ -84,7 +84,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       return res.status(401).json({
         status: 'error',
         message: 'Authentication required'
-});
+      });
     }
     
     // Change password logic (implementation details omitted)
@@ -93,13 +93,13 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     res.json({
       status: 'success',
       message: 'Password changed successfully'
-});
+    });
   });
   
   // Security logs access route
@@ -108,8 +108,8 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session?.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Fetch security logs (implementation details omitted)
     
@@ -117,7 +117,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       status: 'success',
       data: {
         logs: [] // Placeholder for actual logs
-}
+      }
     });
   });
   
@@ -127,7 +127,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       return res.status(401).json({
         status: 'error',
         message: 'Authentication required'
-});
+      });
     }
     
     // Lock account logic (implementation details omitted)
@@ -136,13 +136,13 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     res.json({
       status: 'success',
       message: 'Account locked successfully'
-});
+    });
   });
   
   // Test security scan route
@@ -151,15 +151,15 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.session?.userId,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Trigger test security scan (implementation details omitted)
     
     res.json({
       status: 'success',
       message: 'Test security scan initiated'
-});
+    });
   });
 }
 
@@ -168,7 +168,7 @@ export function enhanceSecurityRoutes(apiRouter: Router): void: {
  * 
  * @param apiRouter Express router for API routes
  */
-export function enhanceNewsletterRoutes(apiRouter: Router): void: {
+export function enhanceNewsletterRoutes(apiRouter: Router): void {
   // Newsletter subscribe route
   apiRouter.post('/newsletter/subscribe', 
     standardRateLimiter(),
@@ -178,7 +178,7 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Newsletter subscription logic (implementation details omitted)
@@ -189,14 +189,14 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
           userAgent: req.headers['user-agent'],
           userId: req.session.userId,
           email: req.body.email,
-          timestamp: new: Date()
-}, SecurityLogLevel.INFO);
+          timestamp: new Date()
+        }, SecurityLogLevel.INFO);
       }
       
       res.json({
         status: 'success',
         message: 'Successfully subscribed to newsletter'
-});
+      });
     }
   );
   
@@ -209,7 +209,7 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Newsletter unsubscription logic (implementation details omitted)
@@ -217,7 +217,7 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
       res.json({
         status: 'success',
         message: 'Successfully unsubscribed from newsletter'
-});
+      });
     }
   );
   
@@ -230,7 +230,7 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Newsletter status check logic (implementation details omitted)
@@ -238,9 +238,9 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
       res.json({
         status: 'success',
         data: {
-          subscribed: false, // Placeholder for actual status,
-  preferences: [] // Placeholder for actual preferences
-}
+          subscribed: false, // Placeholder for actual status
+          preferences: [] // Placeholder for actual preferences
+        }
       });
     }
   );
@@ -251,7 +251,7 @@ export function enhanceNewsletterRoutes(apiRouter: Router): void: {
  * 
  * @param shopRouter Express router for shop routes
  */
-export function enhanceOrderRoutes(shopRouter: Router): void: {
+export function enhanceOrderRoutes(shopRouter: Router): void {
   // Create order route
   shopRouter.post('/orders', 
     standardRateLimiter(),
@@ -261,7 +261,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Create order logic (implementation details omitted)
@@ -272,17 +272,17 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
           userAgent: req.headers['user-agent'],
           userId: req.session.userId,
           orderItems: req.body.items.length,
-          timestamp: new: Date()
-}, SecurityLogLevel.INFO);
+          timestamp: new Date()
+        }, SecurityLogLevel.INFO);
       }
       
       res.json({
         status: 'success',
         message: 'Order created successfully',
         data: {
-          orderId: 'placeholder-order-id', // Placeholder for actual order ID,
-  total: 0 // Placeholder for actual total
-}
+          orderId: 'placeholder-order-id', // Placeholder for actual order ID
+          total: 0 // Placeholder for actual total
+        }
       });
     }
   );
@@ -296,7 +296,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Update order logic (implementation details omitted)
@@ -304,7 +304,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
       res.json({
         status: 'success',
         message: 'Order updated successfully'
-});
+      });
     }
   );
   
@@ -317,7 +317,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'No data provided'
-});
+        });
       }
       
       // Process payment logic (implementation details omitted)
@@ -331,17 +331,17 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
           amount: req.body.amount,
           currency: req.body.currency,
           paymentMethod: req.body.paymentMethod,
-          timestamp: new: Date()
-}, SecurityLogLevel.INFO);
+          timestamp: new Date()
+        }, SecurityLogLevel.INFO);
       }
       
       res.json({
         status: 'success',
         message: 'Payment processed successfully',
         data: {
-          transactionId: 'placeholder-transaction-id', // Placeholder for actual transaction ID,
-  status: 'completed' // Placeholder for actual status
-}
+          transactionId: 'placeholder-transaction-id', // Placeholder for actual transaction ID
+          status: 'completed' // Placeholder for actual status
+        }
       });
     }
   );
@@ -356,7 +356,7 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
         return res.status(400).json({
           status: 'error',
           message: 'Order ID is required'
-});
+        });
       }
       
       // Get order logic (implementation details omitted)
@@ -365,9 +365,9 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
         status: 'success',
         data: {
           orderId,
-          items: [], // Placeholder for actual items,
-  total: 0 // Placeholder for actual total
-}
+          items: [], // Placeholder for actual items
+          total: 0 // Placeholder for actual total
+        }
       });
     }
   );
@@ -381,11 +381,11 @@ export function enhanceOrderRoutes(shopRouter: Router): void: {
       res.json({
         status: 'success',
         data: {
-          orders: [], // Placeholder for actual orders,
-  total:  0, // Placeholder for actual total count,
-  page: parseInt(req.query.page as string) || 1,
+          orders: [], // Placeholder for actual orders
+          total: 0, // Placeholder for actual total count
+          page: parseInt(req.query.page as string) || 1,
           limit: parseInt(req.query.limit as string) || 20
-}
+        }
       });
     }
   );

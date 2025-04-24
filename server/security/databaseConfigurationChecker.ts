@@ -7,7 +7,7 @@ import fs from 'fs';
  * Database Configuration Checker
  * Performs regular audits of the database configuration for security issues
  */
-export class DatabaseConfigurationChecker: {
+export class DatabaseConfigurationChecker {
   private readonly reportDir: string;
   private readonly configChecklist = [
     'SSL is enabled for database connections',
@@ -21,7 +21,7 @@ export class DatabaseConfigurationChecker: {
     'Database error messages are sanitized before reaching clients',
     'Database contains no default or test accounts',
     'User privileges follow principle of least privilege',
-    'Database connections use parameterized queries',;
+    'Database connections use parameterized queries',
   ];
   
   constructor() {
@@ -40,7 +40,7 @@ export class DatabaseConfigurationChecker: {
     
     const startTime = Date.now();
     const report: DatabaseConfigReport = {
-      timestamp: new: Date().toISOString(),
+      timestamp: new Date().toISOString(),
       overallStatus: 'pending',
       categories: {},
       recommendations: [],
@@ -52,7 +52,7 @@ export class DatabaseConfigurationChecker: {
       const securityAssessment = await databaseSecurity.assessSecurityConfiguration();
       
       // Map it to our report format
-      report.overallStatus = securityAssessment.overallScore >= 80 ? 'passed' : ;
+      report.overallStatus = securityAssessment.overallScore >= 80 ? 'passed' : 
                              securityAssessment.overallScore >= 60 ? 'warning' : 'failed';
                              
       report.categories = {
@@ -61,18 +61,18 @@ export class DatabaseConfigurationChecker: {
         queryProtection: mapCategoryToReportFormat(securityAssessment.categories.queryProtection),
         dataEncryption: mapCategoryToReportFormat(securityAssessment.categories.dataEncryption),
         auditLogging: mapCategoryToReportFormat(securityAssessment.categories.auditLogging)
-};
+      };
       
       report.recommendations = securityAssessment.recommendations;
       
       // Additional database-specific checks
       await this.performAdditionalChecks(report);
       
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error during database configuration check:', error);
       report.overallStatus = 'error';
       report.error = error instanceof Error ? error.message : 'Unknown error during configuration check';
-}
+    }
     
     // Calculate execution time
     report.executionTimeMs = Date.now() - startTime;
@@ -81,7 +81,7 @@ export class DatabaseConfigurationChecker: {
     await this.saveReport(report);
     
     // Log completion
-    console.log(`Database configuration check completed in ${report.executionTimeMs}ms with, status: ${report.overallStatus}`);
+    console.log(`Database configuration check completed in ${report.executionTimeMs}ms with status: ${report.overallStatus}`);
     
     return report;
   }
@@ -103,22 +103,22 @@ export class DatabaseConfigurationChecker: {
           FROM pg_stat_user_indexes
           WHERE idx_scan = $1
           AND schemaname NOT LIKE $2
-          ORDER, BY: pg_relation_size(indexrelid) DESC;
+          ORDER BY pg_relation_size(indexrelid) DESC
         `, [0, 'pg_%']);
         
         if (unusedIndexesResult.rows.length > 0) {
           if (!report.recommendations) {
             report.recommendations = [];
-}
+          }
           
           const unusedIndexes = unusedIndexesResult.rows.map(row => row.index).join(', ');
           report.recommendations.push(
-            `Consider removing unused indexes to improve, performance: ${unusedIndexes}`
+            `Consider removing unused indexes to improve performance: ${unusedIndexes}`
           );
         }
         
         // Check for default database names
-        const databaseName = (await client.query('SELECT: current_database()')).rows[0].current_database;
+        const databaseName = (await client.query('SELECT current_database()')).rows[0].current_database;
         if (['postgres', 'template1', 'postgres0'].includes(databaseName)) {
           if (!report.categories.accessControl) {
             report.categories.accessControl = { status: 'warning', issues: [] };
@@ -128,7 +128,7 @@ export class DatabaseConfigurationChecker: {
             severity: 'medium',
             message: 'Using a default/common database name increases risk of automated attacks',
             remediation: 'Use a non-standard name for production databases'
-});
+          });
         }
         
         // Check database parameter settings for security
@@ -151,20 +151,20 @@ export class DatabaseConfigurationChecker: {
             
             report.categories.auditLogging.issues.push({
               severity: check.severity as any,
-              message: `Parameter: '${check.param}' is set to: '${currentValue}' instead of recommended: '${check.expected}'`,
+              message: `Parameter '${check.param}' is set to '${currentValue}' instead of recommended '${check.expected}'`,
               remediation: `Set ${check.param}=${check.expected} in PostgreSQL configuration`
             });
           }
         }
         
-      } finally: {
+      } finally {
         client.release();
-}
-    } catch (error: unknown) {
+      }
+    } catch (error) {
       console.error('Error during additional database checks:', error);
       if (!report.recommendations) {
         report.recommendations = [];
-}
+      }
       report.recommendations.push('Fix database connection to enable complete configuration assessment');
     }
   }
@@ -174,7 +174,7 @@ export class DatabaseConfigurationChecker: {
    */
   private async saveReport(report: DatabaseConfigReport): Promise<void> {
     try {
-      const timestamp = new: Date().toISOString().replace(/:/g, '-');
+      const timestamp = new Date().toISOString().replace(/:/g, '-');
       const reportFile = path.join(this.reportDir, `db-security-config-${timestamp}.json`);
       
       fs.writeFileSync(reportFile, JSON.stringify(report, null, 2));
@@ -185,25 +185,25 @@ export class DatabaseConfigurationChecker: {
       const mdReport = this.generateMarkdownReport(report);
       fs.writeFileSync(mdReportFile, mdReport);
       console.log(`Database configuration markdown report saved to ${mdReportFile}`);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error saving database configuration report:', error);
-}
+    }
   }
   
   /**
    * Generate a human-readable markdown report
    */
-  private: generateMarkdownReport(report: DatabaseConfigReport): string: {
+  private generateMarkdownReport(report: DatabaseConfigReport): string {
     const statusEmoji = {
       passed: '✅',
       warning: '⚠️',
       failed: '❌',
       error: '🔥',
       pending: '⏳'
-};
+    };
     
     let markdown = `# Database Security Configuration Report\n\n`;
-    markdown += `**Report Date:** ${new: Date(report.timestamp).toLocaleString()}\n\n`;
+    markdown += `**Report Date:** ${new Date(report.timestamp).toLocaleString()}\n\n`;
     markdown += `**Overall Status:** ${statusEmoji[report.overallStatus] || ''} ${report.overallStatus.toUpperCase()}\n\n`;
     
     if (report.error) {
@@ -212,7 +212,7 @@ export class DatabaseConfigurationChecker: {
     
     markdown += `## Configuration Categories\n\n`;
     
-    for (const: [category, data] of Object.entries(report.categories)) {
+    for (const [category, data] of Object.entries(report.categories)) {
       const displayCategory = category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
       
       markdown += `### ${displayCategory}: ${statusEmoji[data.status] || ''} ${data.status.toUpperCase()}\n\n`;
@@ -222,9 +222,10 @@ export class DatabaseConfigurationChecker: {
         markdown += `|----------|-------|-------------|\n`;
         
         for (const issue of data.issues) {
-          const severityIcon = issue.severity === 'critical' ? '🔴' :
+          const severityIcon = 
+            issue.severity === 'critical' ? '🔴' :
             issue.severity === 'high' ? '🟠' :
-            issue.severity === 'medium' ? '🟡' :;
+            issue.severity === 'medium' ? '🟡' :
             '🟢';
           
           markdown += `| ${severityIcon} ${issue.severity} | ${issue.message} | ${issue.remediation || 'N/A'} |\n`;
@@ -233,7 +234,7 @@ export class DatabaseConfigurationChecker: {
         markdown += '\n';
       } else {
         markdown += `No issues found in this category.\n\n`;
-}
+      }
     }
     
     if (report.recommendations && report.recommendations.length > 0) {
@@ -258,21 +259,21 @@ export class DatabaseConfigurationChecker: {
       if (report.categories) {
         // Map checks to categories based on keywords
         const matchingCategories = Object.entries(report.categories).filter(([category, data]) => {
-          return data.issues && data.issues.some(issue = > 
+          return data.issues && data.issues.some(issue => 
             check.toLowerCase().includes(category.toLowerCase()) || 
-            issue.message.toLowerCase().includes(check.toLowerCase());
+            issue.message.toLowerCase().includes(check.toLowerCase())
           );
-});
+        });
         
         if (matchingCategories.length > 0) {
-          const: [_, data] = matchingCategories[0];
+          const [_, data] = matchingCategories[0];
           status = data.status;
           icon = statusEmoji[data.status] || '';
-} else {
+        } else {
           // If we have no issues reported that match this check, it likely passed
           status = 'Likely Passed';
           icon = '✅';
-}
+        }
       }
       
       markdown += `| ${check} | ${icon} ${status} |\n`;
@@ -286,13 +287,13 @@ export class DatabaseConfigurationChecker: {
   /**
    * Schedule regular configuration checks
    */
-  scheduleRegularChecks(intervalHours: number = 24): void: {
+  scheduleRegularChecks(intervalHours: number = 24): void {
     console.log(`Scheduling database configuration checks every ${intervalHours} hours`);
     
     setInterval(() => {
       this.checkDatabaseConfiguration()
         .catch(error => console.error('Scheduled database configuration check failed:', error));
-}, intervalHours * 60 * 60 * 1000);
+    }, intervalHours * 60 * 60 * 1000);
     
     // Run an initial check
     this.checkDatabaseConfiguration()
@@ -303,36 +304,36 @@ export class DatabaseConfigurationChecker: {
 /**
  * Helper function to map security assessment to report format
  */
-function mapCategoryToReportFormat(category: any): any: {
+function mapCategoryToReportFormat(category): DatabaseConfigCategoryReport {
   return {
     status: category.score >= 80 ? 'passed' : 
            category.score >= 60 ? 'warning' : 'failed',
     issues: category.issues || []
-};
+  };
 }
 
 /**
  * Database configuration report interface
  */
-export interface DatabaseConfigReport: {
+export interface DatabaseConfigReport {
   timestamp: string;
   overallStatus: 'passed' | 'warning' | 'failed' | 'error' | 'pending';
   categories: {
     [key: string]: DatabaseConfigCategoryReport;
-};
+  };
   recommendations?: string[];
   error?: string;
   executionTimeMs: number;
 }
 
-export interface DatabaseConfigCategoryReport: {
+export interface DatabaseConfigCategoryReport {
   status: 'passed' | 'warning' | 'failed' | 'pending';
   issues: Array<{
-    severity: 'critical' | 'high' | 'medium' | 'low';,
-  message: string;
+    severity: 'critical' | 'high' | 'medium' | 'low';
+    message: string;
     remediation?: string;
-}>;
+  }>;
 }
 
 // Export a singleton instance
-export const databaseConfigChecker = new: DatabaseConfigurationChecker();
+export const databaseConfigChecker = new DatabaseConfigurationChecker();

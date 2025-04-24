@@ -82,14 +82,15 @@ export const requestLoggingMiddleware = async (req: Request, res: Response, next
         url: req.originalUrl,
         userAgent: req.headers['user-agent'],
         referrer: req.headers.referer || req.headers.referrer
-}
+      }
     });
     
-    // Continue processing: next();
-  } catch (error: unknown) {
+    // Continue processing
+    next();
+  } catch (error) {
     console.error('Error in request logging middleware:', error);
     next();
-}
+  }
 };
 
 /**
@@ -110,17 +111,18 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
           contentLength,
           method: req.method,
           url: req.originalUrl
-}
+        }
       }).catch(error => {
         console.error('Error logging suspicious activity:', error);
-});
+      });
     }
     
-    // Continue processing: next();
-  } catch (error: unknown) {
+    // Continue processing
+    next();
+  } catch (error) {
     console.error('Error in suspicious activity middleware:', error);
     next();
-}
+  }
 };
 
 /**
@@ -129,5 +131,5 @@ export const suspiciousActivityMiddleware = (req: Request, res: Response, next: 
 export const secureRequestMiddleware = [
   requestLoggingMiddleware,
   suspiciousActivityMiddleware,
-  raspMiddleware;
+  raspMiddleware
 ];

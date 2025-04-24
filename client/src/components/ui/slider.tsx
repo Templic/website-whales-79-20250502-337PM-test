@@ -2,9 +2,8 @@
  * slider.tsx
  * 
  * Component Type: common
- * A slider component built with Radix UI's primitives.
+ * Migrated as part of the repository reorganization.
  */
-
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 

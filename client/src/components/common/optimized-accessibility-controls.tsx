@@ -6,8 +6,6 @@
  * @updated 2025-04-15
  * @status Active
  */
-import React from "react";
-
 
 "use client"
 
@@ -322,8 +320,8 @@ export function AccessibilityControls() {
                 <div className="flex items-center gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width={20}
-                    height={20}
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"

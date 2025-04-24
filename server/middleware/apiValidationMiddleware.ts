@@ -20,15 +20,17 @@ import { securityFabric } from '../security/advanced/SecurityFabric';
 export function validateRoute(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not, found: ${category}.${name}`);
+    throw new Error(`Schema not found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
   
   return [
-    // Apply security validation first: securityValidation(),
+    // Apply security validation first
+    securityValidation(),
     
-    // Then apply schema validation: validateBody(schema)
+    // Then apply schema validation
+    validateBody(schema)
   ];
 }
 
@@ -41,7 +43,7 @@ export function validateRoute(category: keyof typeof apiSchemas, name: string) {
 export function validateQueryParams(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not, found: ${category}.${name}`);
+    throw new Error(`Schema not found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
@@ -61,7 +63,7 @@ export function validateQueryParams(category: keyof typeof apiSchemas, name: str
 export function validateRouteParams(category: keyof typeof apiSchemas, name: string) {
   const schemas = apiSchemas[category];
   if (!schemas || !schemas[name as keyof typeof schemas]) {
-    throw new Error(`Schema not, found: ${category}.${name}`);
+    throw new Error(`Schema not found: ${category}.${name}`);
   }
   
   const schema = schemas[name as keyof typeof schemas] as AnyZodObject;
@@ -102,17 +104,17 @@ export function validateComplex({
 }) {
   const middlewares = [securityValidation()];
   
-  if (bodySchema) => {
+  if (bodySchema) {
     middlewares.push(validateBody(bodySchema));
-}
+  }
   
-  if (querySchema) => {
+  if (querySchema) {
     middlewares.push(validateQuery(querySchema));
-}
+  }
   
-  if (paramsSchema) => {
+  if (paramsSchema) {
     middlewares.push(validateParams(paramsSchema));
-}
+  }
   
   return middlewares;
 }
@@ -129,9 +131,10 @@ export function defaultApiValidation() {
       path: req.path,
       method: req.method,
       ip: req.ip,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
-    // Apply default security validation: securityValidation()(req, res, next);
+    // Apply default security validation
+    securityValidation()(req, res, next);
   };
 }

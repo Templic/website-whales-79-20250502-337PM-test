@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,7 +28,7 @@ export default function MusicReleasePage() {
     try {
       const response = await axios.get('/api/tracks');
       setTracks(response.data);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching tracks:', error);
     }
   };

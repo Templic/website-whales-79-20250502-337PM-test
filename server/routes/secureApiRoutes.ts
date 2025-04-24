@@ -25,7 +25,7 @@ const idParamSchema = z.object({
 });
 
 const searchQuerySchema = z.object({
-  query: z.string().min(2).max(50).optional(),
+  q: z.string().min(2).max(50).optional(),
   category: z.string().min(3).max(50).optional(),
   minPrice: z.number().min(0).optional(),
   maxPrice: z.number().positive().optional(),
@@ -89,7 +89,7 @@ adminRouter.secureGet('/dashboard/metrics', (req: Request, res: Response) => {
       totalUsers: 0,
       totalItems: 0,
       revenueThisMonth: 0
-}
+    }
   });
 });
 

@@ -2,7 +2,7 @@
  * Command-line interface for testing the ML-based Anomaly Detection System
  * 
  * Usage:
- *   ts-node testAnomaly.ts: [option]
+ *   ts-node testAnomaly.ts [option]
  * 
  * Options:
  *   --all                Run all tests
@@ -37,54 +37,55 @@ async function main() {
   if (args.length === 0) {
     printUsage();
     return;
-}
+  }
   
   const option = args[0].toLowerCase();
   
   try {
-    switch(option) => {
-      case: '--all':
+    switch(option) {
+      case '--all':
         await runAllTests();
         break;
-      case: '--normal':
+      case '--normal':
         await simulateNormalRequest();
         break;
-      case: '--sql-injection':
+      case '--sql-injection':
         await simulateSqlInjectionAttack();
         break;
-      case: '--rate-limit':
+      case '--rate-limit':
         await simulateRateLimitAttack();
         break;
-      case: '--path-traversal':
+      case '--path-traversal':
         await simulatePathTraversalAttack();
         break;
-      case: '--xss':
+      case '--xss':
         await simulateXssAttack();
         break;
-      case: '--data-exfiltration':
+      case '--data-exfiltration':
         await simulateDataExfiltrationAttempt();
         break;
-      case: '--sensitive-data':
+      case '--sensitive-data':
         await simulateSensitiveDataExposure();
         break;
-      case: '--unusual-behavior':
+      case '--unusual-behavior':
         await simulateUnusualUserBehavior();
         break;
       default:
-        console.error(`Unknown, option: ${option}`);
+        console.error(`Unknown option: ${option}`);
         printUsage();
         break;
     }
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error running test:', error);
-}
+  }
 }
 
 function printUsage() {
   console.log(`
 Usage:
-  ts-node testAnomaly.ts: [option],
-  Options:
+  ts-node testAnomaly.ts [option]
+
+Options:
   --all                Run all tests
   --normal             Test normal request detection
   --sql-injection      Test SQL injection detection
@@ -93,7 +94,9 @@ Usage:
   --xss                Test XSS attack detection
   --data-exfiltration  Test data exfiltration detection
   --sensitive-data     Test sensitive data exposure detection
-  --unusual-behavior   Test unusual user behavior, detection: `);
+  --unusual-behavior   Test unusual user behavior detection
+  `);
 }
 
-// Run the main function main().catch(console.error);
+// Run the main function
+main().catch(console.error);

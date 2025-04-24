@@ -16,7 +16,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from '../blockchain/Secu
 /**
  * Deep scan types
  */
-export enum DeepScanType: {
+export enum DeepScanType {
   /**
    * Code scan
    */
@@ -40,8 +40,8 @@ export enum DeepScanType: {
 
 /**
  * Vulnerability severity
- */;
-export enum VulnerabilitySeverity: {
+ */
+export enum VulnerabilitySeverity {
   /**
    * Critical severity
    */
@@ -70,8 +70,8 @@ export enum VulnerabilitySeverity: {
 
 /**
  * Vulnerability type
- */;
-export enum VulnerabilityType: {
+ */
+export enum VulnerabilityType {
   /**
    * SQL injection
    */
@@ -115,8 +115,8 @@ export enum VulnerabilityType: {
 
 /**
  * Deep scan options
- */;
-export interface DeepScanOptions: {
+ */
+export interface DeepScanOptions {
   /**
    * Scan types to perform
    */
@@ -146,7 +146,7 @@ export interface DeepScanOptions: {
 /**
  * Vulnerability finding interface
  */
-export interface VulnerabilityFinding: {
+export interface VulnerabilityFinding {
   /**
    * Finding ID
    */
@@ -155,7 +155,7 @@ export interface VulnerabilityFinding: {
   /**
    * Vulnerability type
    */
-  type VulnerabilityType;
+  type: VulnerabilityType;
   
   /**
    * Vulnerability severity
@@ -201,7 +201,7 @@ export interface VulnerabilityFinding: {
 /**
  * Deep scan result interface
  */
-export interface DeepScanResult: {
+export interface DeepScanResult {
   /**
    * Scan ID
    */
@@ -280,7 +280,7 @@ export interface DeepScanResult: {
      * Lines of code scanned
      */
     linesScanned: number;
-};
+  };
   
   /**
    * Errors encountered during the scan
@@ -291,11 +291,11 @@ export interface DeepScanResult: {
 /**
  * Deep scan engine class
  */
-export class DeepScanEngine: {
+export class DeepScanEngine {
   /**
    * Active scans
    */
-  private activeScans: Map<string, DeepScanResult> = new: Map();
+  private activeScans: Map<string, DeepScanResult> = new Map();
   
   /**
    * Whether the engine is initialized
@@ -308,7 +308,7 @@ export class DeepScanEngine: {
   public async initialize(): Promise<void> {
     if (this.initialized) {
       return;
-}
+    }
     
     // Register the deep scan engine with the security fabric
     securityFabric.registerComponent('deepScanEngine', this);
@@ -334,9 +334,9 @@ export class DeepScanEngine: {
     const scanResult: DeepScanResult = {
       scanId,
       scanTypes,
-      startTime: new: Date(),
-      endTime: new: Date(), // Will be updated when scan is complete,
-  duration:  0, // Will be updated when scan is complete
+      startTime: new Date(),
+      endTime: new Date(), // Will be updated when scan is complete
+      duration: 0, // Will be updated when scan is complete
       options,
       findings: [],
       summary: {
@@ -348,7 +348,7 @@ export class DeepScanEngine: {
         infoFindings: 0,
         filesScanned: 0,
         linesScanned: 0
-},
+      },
       errors: []
     };
     
@@ -360,8 +360,8 @@ export class DeepScanEngine: {
       scanId,
       scanTypes,
       options,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Log scan start
     securityBlockchain.addSecurityEvent({
@@ -372,11 +372,11 @@ export class DeepScanEngine: {
         scanId,
         scanTypes,
         options
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     }).catch(error => {
       console.error('[DEEP-SCAN] Error logging scan start:', error);
-});
+    });
     
     console.log(`[DEEP-SCAN] Starting scan: ${scanId} (${scanTypes.join(', ')})`);
     
@@ -386,11 +386,11 @@ export class DeepScanEngine: {
       
       // Update scan result with error
       const scan = this.activeScans.get(scanId);
-      if (scan) => {
+      if (scan) {
         scan.errors.push(error.message || String(error));
-        scan.endTime = new: Date();
+        scan.endTime = new Date();
         scan.duration = scan.endTime.getTime() - scan.startTime.getTime();
-}
+      }
     });
     
     return scanId;
@@ -402,22 +402,22 @@ export class DeepScanEngine: {
   private async performScan(scanId: string): Promise<void> {
     const scan = this.activeScans.get(scanId);
     if (!scan) {
-      throw new Error(`Scan not, found: ${scanId}`);
+      throw new Error(`Scan not found: ${scanId}`);
     }
     
     try {
       // If full scan, expand to all scan types
       if (scan.scanTypes.includes(DeepScanType.FULL)) {
         scan.scanTypes = Object.values(DeepScanType).filter(type => type !== DeepScanType.FULL);
-}
+      }
       
       // Perform each scan type
       for (const scanType of scan.scanTypes) {
         await this.performScanType(scan, scanType);
-}
+      }
       
       // Update scan completion time and duration
-      scan.endTime = new: Date();
+      scan.endTime = new Date();
       scan.duration = scan.endTime.getTime() - scan.startTime.getTime();
       
       // Emit scan completion event
@@ -426,8 +426,8 @@ export class DeepScanEngine: {
         scanTypes: scan.scanTypes,
         findings: scan.findings.length,
         duration: scan.duration,
-        timestamp: new: Date()
-});
+        timestamp: new Date()
+      });
       
       // Log scan completion
       securityBlockchain.addSecurityEvent({
@@ -440,14 +440,14 @@ export class DeepScanEngine: {
           findings: scan.findings.length,
           duration: scan.duration,
           summary: scan.summary
-},
-        timestamp: new: Date()
+        },
+        timestamp: new Date()
       }).catch(error => {
         console.error('[DEEP-SCAN] Error logging scan completion:', error);
-});
+      });
       
-      console.log(`[DEEP-SCAN] Scan, completed: ${scanId} - ${scan.findings.length} findings (${scan.duration}ms)`);
-    } catch (error: unknown) {
+      console.log(`[DEEP-SCAN] Scan completed: ${scanId} - ${scan.findings.length} findings (${scan.duration}ms)`);
+    } catch (error) {
       // Log scan error
       securityBlockchain.addSecurityEvent({
         severity: SecurityEventSeverity.HIGH,
@@ -457,19 +457,19 @@ export class DeepScanEngine: {
           scanId,
           scanTypes: scan.scanTypes,
           error: error.message || String(error)
-},
-        timestamp: new: Date()
+        },
+        timestamp: new Date()
       }).catch(logError => {
         console.error('[DEEP-SCAN] Error logging scan error:', logError);
-});
+      });
       
       // Emit scan error event
       securityFabric.emit('security:deep-scan:error', {
         scanId,
         scanTypes: scan.scanTypes,
         error: error.message || String(error),
-        timestamp: new: Date()
-});
+        timestamp: new Date()
+      });
       
       console.error(`[DEEP-SCAN] Scan error: ${scanId}`, error);
       
@@ -483,7 +483,7 @@ export class DeepScanEngine: {
   private async performScanType(scan: DeepScanResult, scanType: DeepScanType): Promise<void> {
     console.log(`[DEEP-SCAN] Performing ${scanType} scan for scan ${scan.scanId}`);
     
-    switch (scanType) => {
+    switch (scanType) {
       case DeepScanType.CODE:
         await this.performCodeScan(scan);
         break;
@@ -494,7 +494,7 @@ export class DeepScanEngine: {
         await this.performApiScan(scan);
         break;
       default:
-        throw new Error(`Unknown scan, type ${scanType}`);
+        throw new Error(`Unknown scan type: ${scanType}`);
     }
   }
   
@@ -513,7 +513,7 @@ export class DeepScanEngine: {
     // Scan each file
     for (const file of files) {
       await this.scanCodeFile(scan, file);
-}
+    }
   }
   
   /**
@@ -528,18 +528,18 @@ export class DeepScanEngine: {
     // Get exclude directories, default to node_modules and .git
     const excludeDirectories = ['node_modules', '.git', 'dist', 'build', 'coverage'];
     
-    // Get max depth, default to: 10
+    // Get max depth, default to 10
     const maxDepth = scan.options.maxDepth || 10;
     
     // Recursively scan directories
     const scanDir = async (dir: string, depth: number): Promise<void> => {
       if (depth > maxDepth) {
         return;
-}
+      }
       
       if (excludeDirectories.some(exclude => dir.includes(exclude))) {
         return;
-}
+      }
       
       try {
         const entries = await fs.promises.readdir(dir, { withFileTypes: true });
@@ -549,25 +549,25 @@ export class DeepScanEngine: {
           
           if (entry.isDirectory()) {
             await scanDir(fullPath, depth + 1);
-} else if (entry.isFile()) {
+          } else if (entry.isFile()) {
             // Check file extension if extensions are provided
-            if (extensions) => {
+            if (extensions) {
               const fileExt = path.extname(entry.name).toLowerCase();
               if (!extensions.includes(fileExt)) {
                 continue;
-}
+              }
             }
             
             // Check if file should be excluded
             if (scan.options.excludeFiles && scan.options.excludeFiles.some(exclude => fullPath.includes(exclude))) {
               continue;
-}
+            }
             
             // Add file to list
             files.push(fullPath);
           }
         }
-      } catch (error: unknown) {
+      } catch (error) {
         scan.errors.push(`Error scanning directory ${dir}: ${error}`);
       }
     };
@@ -576,7 +576,7 @@ export class DeepScanEngine: {
     for (const dir of includeDirectories) {
       if (await this.directoryExists(dir)) {
         await scanDir(dir, 0);
-}
+      }
     }
     
     return files;
@@ -589,9 +589,9 @@ export class DeepScanEngine: {
     try {
       const stat = await fs.promises.stat(dirPath);
       return stat.isDirectory();
-} catch (error: unknown) {
+    } catch (error) {
       return false;
-}
+    }
   }
   
   /**
@@ -611,9 +611,9 @@ export class DeepScanEngine: {
       
       if (fileExt === '.js' || fileExt === '.ts' || fileExt === '.jsx' || fileExt === '.tsx') {
         await this.scanJavaScriptCode(scan, filePath, content, lines);
-}
+      }
       
-    } catch (error: unknown) {
+    } catch (error) {
       scan.errors.push(`Error scanning file ${filePath}: ${error.message}`);
     }
   }
@@ -625,7 +625,7 @@ export class DeepScanEngine: {
     // Define vulnerability patterns
     const patterns = [
       {
-        type VulnerabilityType.SQL_INJECTION,
+        type: VulnerabilityType.SQL_INJECTION,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\b(SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b.*\$\{.*\}/i,
         description: 'Potential SQL injection vulnerability due to unparameterized queries with template literals',
@@ -633,21 +633,21 @@ export class DeepScanEngine: {
         cweId: 'CWE-89'
       },
       {
-        type VulnerabilityType.XSS,
+        type: VulnerabilityType.XSS,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\b(innerHTML|outerHTML|document\.write|eval)\b/i,
         description: 'Potential XSS vulnerability due to unsafe DOM manipulation',
         remediation: 'Use textContent or innerText instead, or use a sanitization library',
         cweId: 'CWE-79'
-},
+      },
       {
-        type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+        type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /(password|secret|key|token|credential)s?\s*=\s*['"`][^'"`]*['"`]/i,
         description: 'Potential sensitive data exposure due to hardcoded secrets',
         remediation: 'Use environment variables or a secrets management system',
         cweId: 'CWE-798'
-}
+      }
     ];
     
     // Scan each line for patterns
@@ -665,14 +665,14 @@ export class DeepScanEngine: {
             
             if (patternSeverityIndex > minimumSeverityIndex) {
               continue;
-}
+            }
           }
           
           // Add finding
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type pattern.type,
+            type: pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -720,12 +720,12 @@ export class DeepScanEngine: {
         
         if (fileName === 'package.json') {
           await this.scanPackageJson(scan, file, content);
-} else if (fileName === '.env' || fileName.endsWith('.env')) {
+        } else if (fileName === '.env' || fileName.endsWith('.env')) {
           await this.scanEnvFile(scan, file, content, lines);
-} else if (fileExt === '.json') {
+        } else if (fileExt === '.json') {
           await this.scanJsonConfig(scan, file, content, lines);
-}
-      } catch (error: unknown) {
+        }
+      } catch (error) {
         scan.errors.push(`Error scanning configuration file ${file}: ${error.message}`);
       }
     }
@@ -748,7 +748,7 @@ export class DeepScanEngine: {
             const findingId = crypto.randomUUID();
             const finding: VulnerabilityFinding = {
               id: findingId,
-              type VulnerabilityType.INSECURE_CONFIGURATION,
+              type: VulnerabilityType.INSECURE_CONFIGURATION,
               severity: VulnerabilitySeverity.MEDIUM,
               description: `Using a flexible version specifier (${version}) for security-critical package: ${dependency}`,
               location: filePath,
@@ -762,7 +762,7 @@ export class DeepScanEngine: {
           }
         }
       }
-    } catch (error: unknown) {
+    } catch (error) {
       scan.errors.push(`Error parsing package.json: ${error.message}`);
     }
   }
@@ -770,7 +770,7 @@ export class DeepScanEngine: {
   /**
    * Check if a package is security-critical
    */
-  private: isSecurityCriticalPackage(name: string): boolean: {
+  private isSecurityCriticalPackage(name: string): boolean {
     const securityCriticalPackages = [
       'express',
       'helmet',
@@ -781,11 +781,11 @@ export class DeepScanEngine: {
       'express-session',
       'cors',
       'csurf',
-      'stripe';
+      'stripe'
     ];
     
     return securityCriticalPackages.includes(name);
-}
+  }
   
   /**
    * Scan .env file for vulnerabilities
@@ -799,7 +799,7 @@ export class DeepScanEngine: {
       // Skip empty lines and comments
       if (!line || line.startsWith('#')) {
         continue;
-}
+      }
       
       // Check for sensitive keys in environment variables
       const sensitiveKeyPattern = /(PRIVATE|SECRET|KEY|TOKEN|PASSWORD|CREDENTIAL|API.?KEY)/i;
@@ -809,7 +809,7 @@ export class DeepScanEngine: {
         const findingId = crypto.randomUUID();
         const finding: VulnerabilityFinding = {
           id: findingId,
-          type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+          type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
           severity: VulnerabilitySeverity.MEDIUM,
           description: `Sensitive environment variable detected: ${variableMatch[1]}`,
           location: `${filePath}:${lineNumber}`,
@@ -831,7 +831,7 @@ export class DeepScanEngine: {
     // Define vulnerability patterns for JSON files
     const patterns = [
       {
-        type VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+        type: VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /(api[_-]?key|token|secret|password|credential)[_-]?\w*\s*[:=]\s*["'](?!process|env|config|{{)[a-zA-Z0-9_\-\.]{8,}["']/i,
         description: 'Potential sensitive data exposure due to hardcoded API keys, tokens, or credentials',
@@ -839,13 +839,13 @@ export class DeepScanEngine: {
         cweId: 'CWE-798'
       },
       {
-        type VulnerabilityType.INSECURE_CONFIGURATION,
+        type: VulnerabilityType.INSECURE_CONFIGURATION,
         severity: VulnerabilitySeverity.MEDIUM,
         pattern: /(ssl[_-]?verify|verify[_-]?ssl|check[_-]?ssl|validate[_-]?cert)\s*[:=]\s*(false|0|"false"|'false')/i,
         description: 'Potential security vulnerability due to disabled SSL certificate validation',
         remediation: 'Enable SSL certificate validation',
         cweId: 'CWE-295'
-}
+      }
     ];
     
     // Scan each line for patterns
@@ -858,7 +858,7 @@ export class DeepScanEngine: {
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type pattern.type,
+            type: pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -904,8 +904,8 @@ export class DeepScanEngine: {
         
         // Scan for API security issues
         await this.scanApiCode(scan, file, content, lines);
-} catch (error: unknown) {
-        scan.errors.push(`Error scanning file ${file} for API, issues: ${error.message}`);
+      } catch (error) {
+        scan.errors.push(`Error scanning file ${file} for API issues: ${error.message}`);
       }
     }
   }
@@ -917,15 +917,15 @@ export class DeepScanEngine: {
     // Define vulnerability patterns
     const patterns = [
       {
-        type VulnerabilityType.AUTH_BYPASS,
+        type: VulnerabilityType.AUTH_BYPASS,
         severity: VulnerabilitySeverity.HIGH,
         pattern: /\bapp\.(get|post|put|delete|patch)\s*\(\s*["'`][^"'`]*["`']\s*,\s*(?!auth|authenticate|authorize|checkAuth|isAuthenticated|validateToken|requireAuth|checkPermission)/i,
         description: 'API endpoint without authentication middleware',
         remediation: 'Add authentication middleware to API routes',
         cweId: 'CWE-306'
-},
+      },
       {
-        type VulnerabilityType.INSECURE_CONFIGURATION,
+        type: VulnerabilityType.INSECURE_CONFIGURATION,
         severity: VulnerabilitySeverity.MEDIUM,
         pattern: /\bcors\s*\(\s*\{\s*origin\s*:\s*["'`]\*["'`]\s*\}\s*\)/i,
         description: 'CORS configured to allow all origins',
@@ -944,13 +944,13 @@ export class DeepScanEngine: {
           // Skip if the line doesn't look like an API route definition
           if (!line.includes('app.') && !line.includes('router.')) {
             continue;
-}
+          }
           
           // Add finding
           const findingId = crypto.randomUUID();
           const finding: VulnerabilityFinding = {
             id: findingId,
-            type pattern.type,
+            type: pattern.type,
             severity: pattern.severity,
             description: pattern.description,
             location: `${filePath}:${lineNumber}`,
@@ -973,7 +973,7 @@ export class DeepScanEngine: {
   /**
    * Add a finding to a scan result
    */
-  private: addFinding(scan: DeepScanResult, finding: VulnerabilityFinding): void: {
+  private addFinding(scan: DeepScanResult, finding: VulnerabilityFinding): void {
     // Add the finding to the list
     scan.findings.push(finding);
     
@@ -997,17 +997,17 @@ export class DeepScanEngine: {
       case VulnerabilitySeverity.INFO:
         scan.summary.infoFindings++;
         break;
-}
+    }
     
     // Emit finding event
     securityFabric.emit('security:deep-scan:finding', {
       scanId: scan.scanId,
       findingId: finding.id,
-      type finding.type,
+      type: finding.type,
       severity: finding.severity,
       location: finding.location,
-      timestamp: new: Date()
-});
+      timestamp: new Date()
+    });
     
     // Log finding
     securityBlockchain.addSecurityEvent({
@@ -1017,22 +1017,22 @@ export class DeepScanEngine: {
       metadata: {
         scanId: scan.scanId,
         findingId: finding.id,
-        type finding.type,
+        type: finding.type,
         location: finding.location,
         description: finding.description,
         remediation: finding.remediation
-},
-      timestamp: new: Date()
+      },
+      timestamp: new Date()
     }).catch(error => {
       console.error('[DEEP-SCAN] Error logging finding:', error);
-});
+    });
   }
   
   /**
    * Map vulnerability severity to security event severity
    */
-  private: mapVulnerabilitySeverityToEventSeverity(severity: VulnerabilitySeverity): SecurityEventSeverity: {
-    switch (severity) => {
+  private mapVulnerabilitySeverityToEventSeverity(severity: VulnerabilitySeverity): SecurityEventSeverity {
+    switch (severity) {
       case VulnerabilitySeverity.CRITICAL:
         return SecurityEventSeverity.CRITICAL;
       case VulnerabilitySeverity.HIGH:
@@ -1045,22 +1045,22 @@ export class DeepScanEngine: {
         return SecurityEventSeverity.INFO;
       default:
         return SecurityEventSeverity.MEDIUM;
-}
+    }
   }
   
   /**
    * Get a scan result by ID
    */
-  public: getScanById(scanId: string): DeepScanResult | null: {
+  public getScanById(scanId: string): DeepScanResult | null {
     return this.activeScans.get(scanId) || null;
-}
+  }
   
   /**
    * Get all active scans
    */
-  public: getAllScans(): DeepScanResult[] {
+  public getAllScans(): DeepScanResult[] {
     return Array.from(this.activeScans.values());
-}
+  }
   
   /**
    * Start a deep scan with maximum settings
@@ -1069,11 +1069,11 @@ export class DeepScanEngine: {
     return this.startScan({
       scanTypes: [DeepScanType.FULL],
       maxDepth: 15
-});
+    });
   }
 }
 
 /**
  * Global deep scan engine instance
  */
-export const deepScanEngine = new: DeepScanEngine();
+export const deepScanEngine = new DeepScanEngine();

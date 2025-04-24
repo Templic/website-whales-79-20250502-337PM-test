@@ -1,4 +1,3 @@
-import React from "react";
 import { Switch, Route, useLocation, Router } from "wouter";
 // import { lazy } from 'react';
 import { QueryClientProvider } from "@tanstack/react-query";

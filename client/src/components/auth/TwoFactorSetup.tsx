@@ -4,8 +4,6 @@
  * Component for setting up two-factor authentication.
  * This guides users through the process of enabling 2FA for their account.
  */
-import React from "react";
-
 
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -81,7 +79,7 @@ export function TwoFactorSetup({ onSetupComplete, onCancel }: TwoFactorSetupProp
       const data = await setup2FAMutation.mutateAsync();
       setSetupData(data);
       setStep(1);
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };
@@ -152,7 +150,7 @@ export function TwoFactorSetup({ onSetupComplete, onCancel }: TwoFactorSetupProp
       });
       
       setStep(3); // Move to completion step
-    } catch (error: unknown) {
+    } catch (error) {
       // Error handling is done in the mutation
     }
   };

@@ -21,7 +21,7 @@ interface PayPalPaymentProps {
   amount: number;
   currency: string;
   onPaymentSuccess: (paymentId: string) => Promise<void>;
-  onPaymentError?: (error) => void;
+  onPaymentError?: (error: any) => void;
 }
 
 /**
@@ -139,7 +139,7 @@ export default function PayPalPayment({
                 
                 // Notify parent component
                 await onPaymentSuccess(paymentId);
-              } catch (error: unknown) {
+              } catch (error: any) {
                 setError(error.message || 'An error occurred during payment processing');
                 
                 if (onPaymentError) {

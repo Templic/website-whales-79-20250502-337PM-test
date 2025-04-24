@@ -188,11 +188,11 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
           width={width}
           height={height}
           className={className}
-          style={{ 
+          style={{
             objectFit,
             objectPosition,
             ...style,
-           }}
+          }}
           draggable={draggable}
           crossOrigin={crossOrigin}
           referrerPolicy={referrerPolicy}
@@ -219,8 +219,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 100,
-    height: 100,
+    width: '100%',
+    height: '100%',
     backgroundColor: placeholderColor,
     backgroundImage: blurDataUrl ? `url(${blurDataUrl})` : undefined,
     backgroundSize: 'cover',
@@ -231,13 +231,13 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   
   return (
     <div
-      style={{ 
+      style={{
         position: 'relative',
         overflow: 'hidden',
         width,
         height,
         display: 'inline-block',
-       }}
+      }}
       className={className}
     >
       {(blurDataUrl || placeholderColor) && (

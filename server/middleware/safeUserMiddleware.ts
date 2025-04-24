@@ -9,10 +9,10 @@ import { Request, Response, NextFunction } from 'express';
 /**
  * Create a sanitized user object without sensitive fields
  */
-export function createSafeUser(user: {
+export function createSafeUser(user) {
   if (!user) {
     return null;
-}
+  }
   
   return {
     id: user.id,
@@ -24,7 +24,7 @@ export function createSafeUser(user: {
     lastLogin: user.lastLogin || null,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt || null
-};
+  };
 }
 
 /**
@@ -35,12 +35,12 @@ export function safeUserMiddleware(req: Request, res: Response, next: NextFuncti
   const originalJson = res.json;
   
   // Override res.json to sanitize user data in responses
-  res.json = function(data) => {
+  res.json = function(data) {
     // Check if the response data contains user information and sanitize it
     if (data && typeof data === 'object') {
       // If it's a user object with sensitive fields
       if (data.password && data.username) {
-        console.log(`Sanitizing direct user, response: ${data.username}`);
+        console.log(`Sanitizing direct user response: ${data.username}`);
         return originalJson.call(this, createSafeUser(data));
       }
       

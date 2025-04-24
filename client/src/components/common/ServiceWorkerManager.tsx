@@ -159,7 +159,7 @@ const ServiceWorkerManager: React.FC<ServiceWorkerManagerProps> = ({
       
       // Refresh the page to use the new service worker
       window.location.reload();
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to apply update:', error);
     }
   };

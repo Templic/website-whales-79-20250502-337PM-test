@@ -4,7 +4,8 @@
  * A reusable popover component based on the shadcn UI components.
  * Used by the date-picker component and other UI elements that need floating content.
  */
-import React from "react";
+
+import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils";
 

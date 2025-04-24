@@ -7,8 +7,6 @@
  * A combined breathwork feature that merges the functionality of BreathSyncPlayer
  * and BreathSynchronizationCeremony into a single integrated experience.
  */
-import React from "react";
-
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";

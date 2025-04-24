@@ -4,8 +4,6 @@
  * Component Type: cosmic
  * Migrated from imported components.
  */
-import React from "react";
-
 "use client"
 
 import type { ReactNode } from "react"

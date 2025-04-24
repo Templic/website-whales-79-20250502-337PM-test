@@ -4,8 +4,6 @@
  * Component Type: common
  * Migrated as part of the repository reorganization.
  */
-
-
 "use client"
 
 import * as React from "react"
@@ -82,8 +80,8 @@ function CircularProgress({
       <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100">
         <circle
           className={trackColor}
-          cx={50}
-          cy={50}
+          cx="50"
+          cy="50"
           r={radius}
           strokeWidth={getStrokeWidth()}
           fill="none"
@@ -94,8 +92,8 @@ function CircularProgress({
       <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
         <circle
           className={cn("transition-all duration-300 ease-in-out", indicatorColor)}
-          cx={50}
-          cy={50}
+          cx="50"
+          cy="50"
           r={radius}
           strokeWidth={getStrokeWidth()}
           fill="none"

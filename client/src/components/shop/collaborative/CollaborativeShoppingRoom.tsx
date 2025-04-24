@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useEffect } from 'react';
 import { Room, RoomMessage, RoomParticipant, ProductViewHandler } from './types';
 import ChatRoom from './ChatRoom';
@@ -180,7 +179,7 @@ class MockSocketConnection {
     }
   }
   
-  emit(event: string, data) {
+  emit(event: string, data: any) {
     if (this.callbacks[event]) {
       this.callbacks[event].forEach(callback => {
         setTimeout(() => {
@@ -214,7 +213,7 @@ export const CollaborativeShoppingRoom = ({
       setIsConnected(true);
     };
     
-    const handleRoomJoined = (data) => {
+    const handleRoomJoined = (data: any) => {
       if (data.roomId === roomId) {
         setMessages(data.messages);
         setParticipants(data.participants);
@@ -222,13 +221,13 @@ export const CollaborativeShoppingRoom = ({
       }
     };
     
-    const handleRoomUpdated = (data) => {
+    const handleRoomUpdated = (data: any) => {
       if (data.roomId === roomId) {
         setParticipants(data.participants);
       }
     };
     
-    const handleRoomMessage = (data) => {
+    const handleRoomMessage = (data: any) => {
       if (data.roomId === roomId) {
         setMessages(data.messages);
       }

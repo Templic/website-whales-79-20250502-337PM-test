@@ -1,4 +1,3 @@
-import React from "react";
 
 /**
  * @deprecated This page has been consolidated into CosmicConnectivityPage.tsx.

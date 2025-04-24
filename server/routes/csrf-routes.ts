@@ -22,7 +22,7 @@ router.get('/csrf-token', (req: Request, res: Response) => {
   return res.json({
     success: true,
     csrfToken: token
-});
+  });
 });
 
 export default router;

@@ -7,8 +7,6 @@
  * @updated 2025-04-15
  * @status Active
  */
-import React from "react";
-
 
 "use client"
 
@@ -346,7 +344,7 @@ export function BinauralBeatGenerator({
         gainNodeRef.current.disconnect()
         gainNodeRef.current = null
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error stopping oscillators:", error)
     }
   }, [])
@@ -402,7 +400,7 @@ export function BinauralBeatGenerator({
         // Start pulse detection algorithm
         startPulseDetection()
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error accessing camera:', error)
       setShowPulseDetection(false)
     }
@@ -508,7 +506,7 @@ export function BinauralBeatGenerator({
   /**
    * Apply preset
    */
-  const applyPreset = useCallback((preset) => {
+  const applyPreset = useCallback((preset: any) => {
     setLeftFreq(preset.leftFreq)
     setRightFreq(preset.rightFreq)
     setWaveType(preset.waveType)
@@ -756,7 +754,7 @@ export function BinauralBeatGenerator({
                       id="timer-duration"
                       type="number"
                       min="1"
-                      max={120}
+                      max="120"
                       value={timerDuration}
                       onChange={handleTimerDurationChange}
                       className="w-20"
@@ -797,8 +795,8 @@ export function BinauralBeatGenerator({
                       <canvas
                         ref={canvasRef}
                         className="absolute top-0 left-0 w-full h-full opacity-0"
-                        width={320}
-                        height={240}
+                        width="320"
+                        height="240"
                       />
                       
                       {heartRate && (

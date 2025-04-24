@@ -120,8 +120,8 @@ const GeometricSection: React.FC<GeometricSectionProps> = ({
       className: "sacred-geometry-shape",
       style: {
         transform: `rotate(${rotation}deg) scale(${scale})`,
-        width: 100,
-        height: 100,
+        width: '100%',
+        height: '100%',
         boxShadow: glowEffect,
       }
     };

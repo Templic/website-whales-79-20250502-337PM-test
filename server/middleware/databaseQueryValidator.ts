@@ -32,7 +32,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
           status: 'error',
           message: 'The requested query contains potentially unsafe operations',
           details: validationResult.risks
-});
+        });
       }
     }
     
@@ -58,7 +58,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
                 ip: req.ip,
                 path: req.path,
                 method: req.method
-}
+              }
             );
             
             return res.status(403).json({
@@ -66,7 +66,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               message: `Query parameter contains potentially unsafe SQL operations`,
               parameter: param,
               details: validationResult.risks
-});
+            });
           }
         }
       }
@@ -96,7 +96,7 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
                 ip: req.ip,
                 path: req.path,
                 method: req.method
-}
+              }
             );
             
             return res.status(403).json({
@@ -104,14 +104,15 @@ export function validateDatabaseQuery(req: Request, res: Response, next: NextFun
               message: `Query string parameter contains potentially unsafe SQL operations`,
               parameter: param,
               details: validationResult.risks
-});
+            });
           }
         }
       }
     }
   }
   
-  // Continue if query is valid or no query in request: next();
+  // Continue if query is valid or no query in request
+  next();
 }
 
 /**
@@ -128,7 +129,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
     for (const field of fieldsToSanitize) {
       if (req.body[field] !== undefined) {
         req.body[field] = databaseSecurity.sanitizeParameter(req.body[field]);
-}
+      }
     }
     
     // Also sanitize query parameters
@@ -136,7 +137,7 @@ export function sanitizeDatabaseParams(req: Request, res: Response, next: NextFu
       for (const field of fieldsToSanitize) {
         if (typeof req.query[field] === 'string') {
           req.query[field] = databaseSecurity.sanitizeParameter(req.query[field] as string);
-}
+        }
       }
     }
   }
@@ -156,7 +157,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
         return res.status(401).json({
           status: 'error',
           message: 'Authentication required for this operation'
-});
+        });
       }
       
       return next();
@@ -179,7 +180,7 @@ export function verifyDatabaseAccess(resource: string, action: string) {
           action,
           path: req.path,
           method: req.method
-}
+        }
       );
       
       return res.status(403).json({
@@ -206,7 +207,7 @@ export function logDatabaseAccess(actionDescription: string) {
         method: req.method,
         query: req.query,
         params: req.params
-}
+      }
     );
     
     next();

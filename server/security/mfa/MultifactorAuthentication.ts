@@ -13,23 +13,23 @@ import { logSecurityEvent } from '../advanced/SecurityLogger';
 import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/SecurityFabric';
 
 // MFA types
-export enum MFAType: {
+export enum MFAType {
   TOTP = 'totp',
   SMS = 'sms',
   EMAIL = 'email',
   RECOVERY = 'recovery'
 }
 
-// MFA verification status;
-export enum MFAVerificationStatus: {
+// MFA verification status
+export enum MFAVerificationStatus {
   SUCCESS = 'success',
   FAILED = 'failed',
   THROTTLED = 'throttled'
 }
 
-// TOTP options interface;
-interface TOTPOptions: {
-  issuer: string;,
+// TOTP options interface
+interface TOTPOptions {
+  issuer: string;
   label: string;
   algorithm?: 'SHA1' | 'SHA256' | 'SHA512';
   digits?: number;
@@ -39,44 +39,47 @@ interface TOTPOptions: {
 /**
  * MFA Manager class for handling various MFA methods
  */
-class MFAManager: {
+class MFAManager {
   // Rate limiting storage (userId -> { method: { lastAttempt, attemptCount } })
   private rateLimiting: Record<number, Record<string, { lastAttempt: number; attemptCount: number }>> = {};
   
-  // TOTP window size (number, of: 30-second periods to check)
+  // TOTP window size (number of 30-second periods to check)
   private totpWindowSize = 2;
   
   // Rate limiting settings
   private maxAttempts = 5;
-  private lockoutPeriod = 15 * 60 * 1000; // 15 minutes: constructor() {
-    // Clean up rate limiting data every hour: setInterval(() => {
+  private lockoutPeriod = 15 * 60 * 1000; // 15 minutes
+  
+  constructor() {
+    // Clean up rate limiting data every hour
+    setInterval(() => {
       this.cleanupRateLimiting();
-}, 60 * 60 * 1000);
+    }, 60 * 60 * 1000);
   }
   
   /**
    * Clean up old rate limiting data
    */
-  private: cleanupRateLimiting(): void: {
+  private cleanupRateLimiting(): void {
     const now = Date.now();
     
     for (const userId in this.rateLimiting) {
       for (const method in this.rateLimiting[userId]) {
         if (now - this.rateLimiting[userId][method].lastAttempt > this.lockoutPeriod) {
           delete this.rateLimiting[userId][method];
-}
+        }
       }
       
       if (Object.keys(this.rateLimiting[userId]).length === 0) {
         delete this.rateLimiting[userId];
-}
+      }
     }
   }
   
   /**
    * Check rate limiting for a user/method
    */
-  private: checkRateLimit(userId: number, method: string): boolean: {
+  private checkRateLimit(userId: number, method: string): boolean {
     if (!this.rateLimiting[userId]) {
       this.rateLimiting[userId] = {};
     }
@@ -85,7 +88,7 @@ class MFAManager: {
       this.rateLimiting[userId][method] = {
         lastAttempt: Date.now(),
         attemptCount: 0
-};
+      };
       return true;
     }
     
@@ -95,7 +98,7 @@ class MFAManager: {
     // Reset counter if lockout period has passed
     if (now - data.lastAttempt > this.lockoutPeriod) {
       data.attemptCount = 0;
-}
+    }
     
     // Check if too many attempts
     if (data.attemptCount >= this.maxAttempts) {
@@ -143,7 +146,7 @@ class MFAManager: {
       });
       
       return { secret, qrCode };
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -162,14 +165,14 @@ class MFAManager: {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.TOTP)) {
       return MFAVerificationStatus.THROTTLED;
-}
+    }
     
     try {
       // Convert token to number and validate format
       const tokenNumber = parseInt(token, 10);
       if (isNaN(tokenNumber) || token.length !== 6) {
         return MFAVerificationStatus.FAILED;
-}
+      }
       
       // Get current time in seconds
       const now = Math.floor(Date.now() / 1000);
@@ -199,7 +202,7 @@ class MFAManager: {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -214,7 +217,7 @@ class MFAManager: {
   /**
    * Generate TOTP code
    */
-  private: generateTOTPCode(secret: string, counter: number): number: {
+  private generateTOTPCode(secret: string, counter: number): number {
     try {
       // Convert counter to buffer
       const buffer = Buffer.alloc(8);
@@ -224,18 +227,18 @@ class MFAManager: {
       const hmac = crypto.createHmac('sha1', Buffer.from(secret, 'base64'));
       const hmacResult = hmac.update(buffer).digest();
       
-      // Get offset (use, last: 4 bits of the last byte)
+      // Get offset (use last 4 bits of the last byte)
       const offset = hmacResult[hmacResult.length - 1] & 0xf;
       
-      // Get: 4 bytes starting at offset
+      // Get 4 bytes starting at offset
       const code = ((hmacResult[offset] & 0x7f) << 24) |
                    ((hmacResult[offset + 1] & 0xff) << 16) |
-                   ((hmacResult[offset + 2] & 0xff) << 8) |;
+                   ((hmacResult[offset + 2] & 0xff) << 8) |
                    (hmacResult[offset + 3] & 0xff);
       
-      // Get: 6 digits
+      // Get 6 digits
       return code % 1000000;
-} catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -254,13 +257,15 @@ class MFAManager: {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.SMS)) {
       throw new Error('Rate limit exceeded. Try again later.');
-}
+    }
     
     try {
-      // Generate: 6-digit code
+      // Generate 6-digit code
       const code = Math.floor(100000 + Math.random() * 900000).toString();
       
-      // In a real application, send the code via SMS: logSecurityEvent({
+      // In a real application, send the code via SMS
+      
+      logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.INFO,
         message: 'SMS verification code generated',
@@ -268,7 +273,7 @@ class MFAManager: {
       });
       
       return code;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -287,13 +292,15 @@ class MFAManager: {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.EMAIL)) {
       throw new Error('Rate limit exceeded. Try again later.');
-}
+    }
     
     try {
-      // Generate: 8-character alphanumeric code
+      // Generate 8-character alphanumeric code
       const code = crypto.randomBytes(4).toString('hex').toUpperCase();
       
-      // In a real application, send the code via email: logSecurityEvent({
+      // In a real application, send the code via email
+      
+      logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.INFO,
         message: 'Email verification code generated',
@@ -301,7 +308,7 @@ class MFAManager: {
       });
       
       return code;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -326,11 +333,11 @@ class MFAManager: {
         const code = [
           crypto.randomBytes(2).toString('hex').toUpperCase(),
           crypto.randomBytes(2).toString('hex').toUpperCase(),
-          crypto.randomBytes(2).toString('hex').toUpperCase();
+          crypto.randomBytes(2).toString('hex').toUpperCase()
         ].join('-');
         
         codes.push(code);
-}
+      }
       
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
@@ -340,7 +347,7 @@ class MFAManager: {
       });
       
       return codes;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -367,7 +374,7 @@ class MFAManager: {
       }
       
       return hashedCodes;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -386,12 +393,12 @@ class MFAManager: {
     // Check rate limiting
     if (!this.checkRateLimit(userId, MFAType.RECOVERY)) {
       return MFAVerificationStatus.THROTTLED;
-}
+    }
     
     try {
       // Check each hashed code
       for (const hashedCode of hashedCodes) {
-        const: [hash, salt] = hashedCode.split('.');
+        const [hash, salt] = hashedCode.split('.');
         const testHash = crypto.createHmac('sha256', salt).update(code).digest('hex');
         
         if (testHash === hash) {
@@ -414,7 +421,7 @@ class MFAManager: {
       });
       
       return MFAVerificationStatus.FAILED;
-    } catch (error: unknown) {
+    } catch (error) {
       logSecurityEvent({
         category: SecurityEventCategory.AUTHENTICATION,
         severity: SecurityEventSeverity.ERROR,
@@ -428,4 +435,4 @@ class MFAManager: {
 }
 
 // Create singleton instance
-export const mfaManager = new: MFAManager();
+export const mfaManager = new MFAManager();

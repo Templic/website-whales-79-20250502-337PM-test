@@ -3,8 +3,6 @@
  * 
  * Advanced content workflow management page for admin users
  */
-import React from "react";
-
 import { Suspense } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { WorkflowManagement } from "@/components/features/admin";

@@ -1,3 +1,0 @@
-# test
-
-Archived test pages

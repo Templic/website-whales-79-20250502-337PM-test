@@ -13,17 +13,17 @@ import bytes from 'bytes';
  * Configuration options for response compression
  */
 export interface CompressionOptions {
-  /** Minimum response size in bytes to compress (default 1kb) */
+  /** Minimum response size in bytes to compress (default: 1kb) */
   threshold?: number | string;
-  /** Compression level (0-9, where: 0 = no compression, 9 = maximum compression) */
+  /** Compression level (0-9, where 0 = no compression, 9 = maximum compression) */
   level?: number;
-  /** Memory level (1-9, where: 1 = minimum memory usage, 9 = maximum memory usage) */
+  /** Memory level (1-9, where 1 = minimum memory usage, 9 = maximum memory usage) */
   memLevel?: number;
   /** Whether to compress responses for all request types */
   forceCompression?: boolean;
   /** Whether to use dynamic compression based on request priority */
   dynamicCompression?: boolean;
-  /** Content types to compress (default text/*, application/json, application/javascript, etc.) */
+  /** Content types to compress (default: text/*, application/json, application/javascript, etc.) */
   contentTypes?: string[];
   /** Whether to use Brotli compression when available */
   useBrotli?: boolean;
@@ -70,8 +70,8 @@ const defaultOptions: CompressionOptions = {
  * Cache of user-agent compression capabilities
  */
 const userAgentCache = new Map<string, { 
-  brotli: boolean;
-  gzip: boolean;
+  brotli: boolean; 
+  gzip: boolean; 
   deflate: boolean;
 }>();
 
@@ -89,12 +89,12 @@ function shouldCompress(req: Request, res: Response, options: CompressionOptions
       !acceptEncoding.includes('deflate') && 
       !acceptEncoding.includes('br')) {
     return false;
-}
+  }
   
   // Don't compress already compressed responses
   if (res.getHeader('Content-Encoding')) {
     return false;
-}
+  }
   
   // Skip compression for small responses
   const contentLength = parseInt(res.getHeader('Content-Length') as string || '0', 10);
@@ -104,7 +104,7 @@ function shouldCompress(req: Request, res: Response, options: CompressionOptions
   
   if (contentLength > 0 && contentLength < threshold) {
     return false;
-}
+  }
   
   // Skip compression for non-matching content types
   const contentType = res.getHeader('Content-Type') as string || '';
@@ -113,13 +113,13 @@ function shouldCompress(req: Request, res: Response, options: CompressionOptions
       if (type.endsWith('*')) {
         const prefix = type.slice(0, -1);
         return contentType.startsWith(prefix);
-}
+      }
       return contentType.includes(type);
     });
     
     if (!matched) {
       return false;
-}
+    }
   }
   
   // Apply dynamic compression based on request priority
@@ -127,19 +127,19 @@ function shouldCompress(req: Request, res: Response, options: CompressionOptions
     // Skip compression for high-priority or low-latency requests
     if (req.headers['x-priority'] === 'high') {
       return false;
-}
+    }
     
     // Skip compression for real-time APIs
     if (req.path.includes('/api/real-time') || 
         req.path.includes('/api/stream') ||
         req.path.includes('/api/events')) {
       return false;
-}
+    }
     
     // Skip compression for API endpoints when server load is high
     if (req.path.startsWith('/api') && global.SERVER_LOAD && global.SERVER_LOAD > 0.8) {
       return false;
-}
+    }
   }
   
   return true;
@@ -203,7 +203,7 @@ function getBestCompressionMethod(req: Request, options: CompressionOptions): 'b
 export function createCompressionMiddleware(options: CompressionOptions = {}) {
   const config = { ...defaultOptions, ...options };
   const threshold = typeof config.threshold === 'string' 
-    ? bytes.parse(config.threshold)
+    ? bytes.parse(config.threshold) 
     : (config.threshold || 0);
   
   // Create compression middleware

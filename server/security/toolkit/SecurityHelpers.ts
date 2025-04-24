@@ -13,7 +13,7 @@ import { SecurityEventCategory, SecurityEventSeverity } from '../advanced/blockc
 /**
  * Security decorator options for method decorators
  */
-export interface SecurityDecoratorOptions: {
+export interface SecurityDecoratorOptions {
   level?: SecurityLevel;
   requireAuth?: boolean;
   logActivity?: boolean;
@@ -37,8 +37,8 @@ export function createSecureDecorator() {
       level = SecurityLevel.STANDARD,
       requireAuth = false,
       logActivity = true,
-      blockHighRisk = false;
-} = options;
+      blockHighRisk = false
+    } = options;
     
     /**
      * Method decorator for class methods
@@ -57,25 +57,25 @@ export function createSecureDecorator() {
             return res.status(401).json({
               success: false,
               error: 'Authentication required'
-});
+            });
           }
           
           // Create security toolkit with specified level
-          const toolkit = new: SecurityToolkit({
+          const toolkit = new SecurityToolkit({
             level,
             enableAnomalyDetection: true,
             enableBlockchainLogging: true,
-            enableRuntimeProtection: level = == SecurityLevel.HIGH || level === SecurityLevel.MAXIMUM,
+            enableRuntimeProtection: level === SecurityLevel.HIGH || level === SecurityLevel.MAXIMUM,
             blockHighRiskRequests: blockHighRisk,
             anomalyThreshold: level === SecurityLevel.MAXIMUM ? 0.6 : 
                               level === SecurityLevel.HIGH ? 0.7 : 
                               level === SecurityLevel.STANDARD ? 0.8 : 0.9,
             rateLimit: level === SecurityLevel.MAXIMUM || level === SecurityLevel.HIGH ? 
-                         'strict' : 'default';
-});
+                         'strict' : 'default'
+          });
           
           // Log endpoint access if enabled
-          if (logActivity) => {
+          if (logActivity) {
             await toolkit.logSecurityEvent(
               SecurityEventCategory.API_ACCESS,
               SecurityEventSeverity.INFO,
@@ -85,13 +85,13 @@ export function createSecureDecorator() {
                 userId: req.user?.id,
                 ipAddress: req.ip,
                 userAgent: req.headers['user-agent']
-}
+              }
             );
           }
           
           // Call original method
           return await originalMethod.apply(this, [req, res, next]);
-        } catch (error: unknown) {
+        } catch (error) {
           // Log error
           await securityBlockchain.addSecurityEvent({
             category: SecurityEventCategory.API_ERROR,
@@ -104,10 +104,11 @@ export function createSecureDecorator() {
               stack: error.stack,
               userId: req.user?.id,
               ipAddress: req.ip
-}
+            }
           });
           
-          // Pass error to next middleware: next(error);
+          // Pass error to next middleware
+          next(error);
         }
       };
       
@@ -123,13 +124,13 @@ export function createSecureDecorator() {
  * @returns Class decorator
  */
 export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDARD) {
-  return function <T extends: { new(...args: any[]): {} }>(constructor: T) {
+  return function <T extends { new(...args: any[]): {} }>(constructor: T) {
     // Store the original constructor
     const originalConstructor = constructor;
     
     // Create a new constructor function
     const newConstructor: any = function(...args: any: any[]) {
-      const instance = new: originalConstructor(...args);
+      const instance = new originalConstructor(...args);
       
       // Wrap all methods with security middleware
       Object.getOwnPropertyNames(originalConstructor.prototype).forEach(methodName => {
@@ -146,10 +147,10 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
         if ((method as any).__secured) return;
         
         // Wrap method with security
-        (instance as, an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
+        (instance as an: anyy)[methodName] = async function(req: Request, res: Response, next: NextFunction) {
           try {
             // Create security toolkit with base level
-            const toolkit = new: SecurityToolkit(baseLevel);
+            const toolkit = new SecurityToolkit(baseLevel);
             
             // Log endpoint access
             await toolkit.logSecurityEvent(
@@ -161,12 +162,12 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
                 userId: req.user?.id,
                 ipAddress: req.ip,
                 userAgent: req.headers['user-agent']
-}
+              }
             );
             
             // Call original method
             return await method.apply(instance, [req, res, next]);
-          } catch (error: unknown) {
+          } catch (error) {
             // Log error
             await securityBlockchain.addSecurityEvent({
               category: SecurityEventCategory.API_ERROR,
@@ -179,10 +180,11 @@ export function secureController(baseLevel: SecurityLevel = SecurityLevel.STANDA
                 stack: error.stack,
                 userId: req.user?.id,
                 ipAddress: req.ip
-}
+              }
             });
             
-            // Pass error to next middleware: next(error);
+            // Pass error to next middleware
+            next(error);
           }
         };
         
@@ -209,7 +211,7 @@ export const secure = createSecureDecorator();
  * 
  * @returns Express middleware
  */
-export function securityHeaders(): RequestHandler: {
+export function securityHeaders(): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     // Set security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -221,15 +223,15 @@ export function securityHeaders(): RequestHandler: {
     
     // Content Security Policy
     res.setHeader('Content-Security-Policy', 
-      "default-src: 'self'; " +
-      "script-src: 'self' 'nonce-{nonce}'; " + 
-      "style-src: 'self' 'nonce-{nonce}'; " +
-      "img-src: 'self' data:; " +
-      "font-src: 'self'; " +
-      "object-src: 'none'; " +
-      "base-uri: 'self'; " +
-      "form-action: 'self'; " +
-      "frame-ancestors: 'none';"
+      "default-src 'self'; " +
+      "script-src 'self' 'nonce-{nonce}'; " + 
+      "style-src 'self' 'nonce-{nonce}'; " +
+      "img-src 'self' data:; " +
+      "font-src 'self'; " +
+      "object-src 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "frame-ancestors 'none';"
     );
     
     // Generate nonce for inline scripts and styles
@@ -250,12 +252,12 @@ export function securityHeaders(): RequestHandler: {
  * @param validators Object mapping parameter names to validation functions
  * @returns Express middleware
  */
-export function validateRequest(validators: Record<string, (value) => boolean | string>): RequestHandler: {
+export function validateRequest(validators: Record<string, (value) => boolean | string>): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     const errors: Record<string, string> = {};
     
     // Validate parameters
-    for (const: [param, validator] of Object.entries(validators)) {
+    for (const [param, validator] of Object.entries(validators)) {
       // Get value from request
       const value = req.body[param] || req.query[param] || req.params[param];
       
@@ -276,10 +278,11 @@ export function validateRequest(validators: Record<string, (value) => boolean | 
       return res.status(400).json({
         success: false,
         errors
-});
+      });
     }
     
-    // Continue if validation passed: next();
+    // Continue if validation passed
+    next();
   };
 }
 
@@ -289,7 +292,7 @@ export function validateRequest(validators: Record<string, (value) => boolean | 
  * @param intervalMs Verification interval in milliseconds
  * @returns Express middleware
  */
-export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHandler: {
+export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHandler {
   let lastVerification = Date.now();
   let chainValid = true;
   
@@ -309,13 +312,13 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
           message: 'Security blockchain integrity verification failed',
           timestamp: Date.now(),
           metadata: {
-            timestamp: new: Date().toISOString()
-}
+            timestamp: new Date().toISOString()
+          }
         });
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('[SECURITY] Error verifying blockchain integrity:', error);
-}
+    }
   }, intervalMs);
   
   // Ensure the interval is cleaned up when the server stops
@@ -340,8 +343,8 @@ export function verifyBlockchainIntegrity(intervalMs: number = 60000): RequestHa
             metadata: {
               path: req.path,
               method: req.method,
-              timestamp: new: Date().toISOString()
-}
+              timestamp: new Date().toISOString()
+            }
           }).catch(console.error);
         }
       }).catch(console.error);
@@ -364,7 +367,7 @@ export const validators = {
   required: (value) => {
     if (value === undefined || value === null || value === '') {
       return 'This field is required';
-}
+    }
     return true;
   },
   
@@ -374,7 +377,7 @@ export const validators = {
   string: (value) => {
     if (typeof value !== 'string') {
       return 'Must be a string';
-}
+    }
     return true;
   },
   
@@ -384,7 +387,7 @@ export const validators = {
   number: (value) => {
     if (typeof value !== 'number' && isNaN(Number(value))) {
       return 'Must be a number';
-}
+    }
     return true;
   },
   
@@ -394,7 +397,7 @@ export const validators = {
   boolean: (value) => {
     if (typeof value !== 'boolean' && value !== 'true' && value !== 'false') {
       return 'Must be a boolean';
-}
+    }
     return true;
   },
   
@@ -404,7 +407,7 @@ export const validators = {
   array: (value) => {
     if (!Array.isArray(value)) {
       return 'Must be an array';
-}
+    }
     return true;
   },
   
@@ -476,7 +479,7 @@ export const validators = {
   email: (value) => {
     if (typeof value !== 'string' || !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) {
       return 'Must be a valid email address';
-}
+    }
     return true;
   },
   
@@ -485,10 +488,10 @@ export const validators = {
    */
   url: (value) => {
     try {
-      new: URL(value);
+      new URL(value);
       return true;
-} catch (e: unknown) {
+    } catch (e) {
       return 'Must be a valid URL';
-}
+    }
   }
 };

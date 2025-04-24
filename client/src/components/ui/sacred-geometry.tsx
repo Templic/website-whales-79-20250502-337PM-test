@@ -5,8 +5,7 @@
  * Migrated as part of the repository reorganization.
  */
 import React from 'react';
-import { cn } from "@/lib/utils"
-
+import { cn } from '../../lib/utils';
 
 export interface SacredGeometryProps {
   variant?: 'cube' | 'tetrahedron' | 'octahedron' | 'icosahedron' | 'dodecahedron' | 'merkaba' | 'pentagon' | 'hexagon' | 'circle' | 'triangle' | 'octagon' | 'heptagon' | 'star' | 'six-pointed-star';
@@ -77,7 +76,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M2 7V17L12 22V12" 
@@ -85,7 +84,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 12V22L22 17V7" 
@@ -93,7 +92,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -107,7 +106,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 2L3 20L12 14L21 20L12 2Z" 
@@ -115,7 +114,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -129,19 +128,19 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M4 12H20" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 2V22" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -155,31 +154,31 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M3 9L12 12L21 9" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M3 15L12 12L21 15" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 2V12" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 12V22" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -193,25 +192,25 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M5 5L5 19" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M19 5L19 19" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M2 12H22" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -225,7 +224,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <path 
             d="M12 22L3 6H21L12 22Z" 
@@ -233,17 +232,17 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
           <circle 
-            cx={12} 
-            cy={12} 
+            cx="12" 
+            cy="12" 
             r="2" 
             stroke="currentColor" 
             strokeWidth={strokeWidth} 
             fill="currentColor" 
             fillOpacity={opacityValue} 
-            style={{  pointerEvents: 'none'  }}
+            style={{ pointerEvents: 'none' }}
           />
         </>
       );
@@ -256,7 +255,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 
@@ -268,21 +267,21 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 
     case 'circle':
       return createSvg(
         <circle 
-          cx={12} 
-          cy={12} 
+          cx="12" 
+          cy="12" 
           r="10" 
           stroke="currentColor" 
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 
@@ -294,7 +293,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 
@@ -306,7 +305,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 
@@ -318,7 +317,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
       
@@ -330,7 +329,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
       
@@ -342,7 +341,7 @@ const SacredGeometry: React.FC<SacredGeometryProps> = ({
           strokeWidth={strokeWidth} 
           fill="currentColor" 
           fillOpacity={opacityValue} 
-          style={{  pointerEvents: 'none'  }}
+          style={{ pointerEvents: 'none' }}
         />
       );
 

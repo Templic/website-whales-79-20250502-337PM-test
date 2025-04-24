@@ -22,8 +22,8 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const severity = req.query.severity as SecurityEventSeverity | undefined;
     const category = req.query.category as SecurityEventCategory | undefined;
-    const fromDate = req.query.fromDate ? new: Date(req.query.fromDate as string) : undefined;
-    const toDate = req.query.toDate ? new: Date(req.query.toDate as string) : undefined;
+    const fromDate = req.query.fromDate ? new Date(req.query.fromDate as string) : undefined;
+    const toDate = req.query.toDate ? new Date(req.query.toDate as string) : undefined;
     const titleContains = req.query.titleContains as string | undefined;
     const descriptionContains = req.query.descriptionContains as string | undefined;
     
@@ -35,7 +35,7 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
       fromDate,
       toDate,
       maxResults: page * limit
-}).slice((page - 1) * limit, page * limit);
+    }).slice((page - 1) * limit, page * limit);
     
     const total = securityBlockchain.queryEvents({
       severity,
@@ -44,7 +44,7 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
       descriptionContains,
       fromDate,
       toDate
-}).length;
+    }).length;
     
     return res.json({
       events,
@@ -53,14 +53,14 @@ securityDashboardRoutes.get('/events', async (req: Request, res: Response) => {
         limit,
         total,
         pages: Math.ceil(total / limit)
-}
+      }
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching security events:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security events'
-});
+    });
   }
 });
 
@@ -80,14 +80,14 @@ securityDashboardRoutes.get('/events/:id', async (req: Request, res: Response) =
       category: SecurityEventCategory.API_SECURITY,
       title: 'Mock Security Event',
       description: 'This is a mock security event',
-      timestamp: new: Date()
-});
-  } catch (error: unknown) {
+      timestamp: new Date()
+    });
+  } catch (error) {
     console.error(`Error fetching security event ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security event'
-});
+    });
   }
 });
 
@@ -105,7 +105,7 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
       return res.status(400).json({
         error: 'Bad request',
         message: 'acknowledgedBy is required'
-});
+      });
     }
     
     // In this stub implementation, just return a success response
@@ -114,12 +114,12 @@ securityDashboardRoutes.post('/events/:id/acknowledge', async (req: Request, res
       success: true,
       message: `Security event ${id} acknowledged by ${acknowledgedBy}`
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error acknowledging security event ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to acknowledge security event'
-});
+    });
   }
 });
 
@@ -132,53 +132,53 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
   try {
     // Calculate metrics
     const eventsLast24Hours = securityBlockchain.queryEvents({
-      fromDate: new: Date(Date.now() - 24 * 60 * 60 * 1000)
-}).length;
+      fromDate: new Date(Date.now() - 24 * 60 * 60 * 1000)
+    }).length;
     
     const criticalEvents = securityBlockchain.queryEvents({
       severity: SecurityEventSeverity.CRITICAL
-}).length;
+    }).length;
     
     const highEvents = securityBlockchain.queryEvents({
       severity: SecurityEventSeverity.HIGH
-}).length;
+    }).length;
     
     const mediumEvents = securityBlockchain.queryEvents({
       severity: SecurityEventSeverity.MEDIUM
-}).length;
+    }).length;
     
     const lowEvents = securityBlockchain.queryEvents({
       severity: SecurityEventSeverity.LOW
-}).length;
+    }).length;
     
     const infoEvents = securityBlockchain.queryEvents({
       severity: SecurityEventSeverity.INFO
-}).length;
+    }).length;
     
     // Event counts by category
     const categoryCounts: Record<string, number> = {};
     Object.values(SecurityEventCategory).forEach(category => {
       categoryCounts[category] = securityBlockchain.queryEvents({
         category: category as SecurityEventCategory
-}).length;
+      }).length;
     });
     
-    // Calculate daily event counts for the last: 30 days
+    // Calculate daily event counts for the last 30 days
     const dailyEventCounts: Record<string, number> = {};
-    const today = new: Date();
+    const today = new Date();
     for (let i = 0; i < 30; i++) {
-      const date = new: Date(today);
+      const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateString = date.toISOString().split('T')[0];
       
-      const startOfDay = new: Date(dateString as string);
-      const endOfDay = new: Date(dateString as string);
+      const startOfDay = new Date(dateString as string);
+      const endOfDay = new Date(dateString as string);
       endOfDay.setHours(23, 59, 59, 999);
       
       dailyEventCounts[dateString] = securityBlockchain.queryEvents({
         fromDate: startOfDay,
         toDate: endOfDay
-}).length;
+      }).length;
     }
     
     // Get blockchain statistics
@@ -186,10 +186,10 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
       blockCount: securityBlockchain.getBlocks().length,
       eventsCount: securityBlockchain.queryEvents().length,
       integrityVerified: securityBlockchain.verifyChain()
-};
+    };
     
     return res.json({
-      timestamp: new: Date(),
+      timestamp: new Date(),
       totalEventCount: securityBlockchain.queryEvents().length,
       eventsLast24Hours,
       severityCounts: {
@@ -198,17 +198,17 @@ securityDashboardRoutes.get('/metrics', async (req: Request, res: Response) => {
         medium: mediumEvents,
         low: lowEvents,
         info: infoEvents
-},
+      },
       categoryCounts,
       dailyEventCounts,
       blockchainStats
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching security metrics:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security metrics'
-});
+    });
   }
 });
 
@@ -227,7 +227,7 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
       deep,
       emitEvents: true,
       logFindings: true
-});
+    });
     
     // Start the scan in the background
     securityScanner.startScan(scanId).catch(error => {
@@ -240,12 +240,12 @@ securityDashboardRoutes.post('/scans', async (req: Request, res: Response) => {
       message: `Security scan of type ${scanType} started`,
       status: 'started'
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error starting security scan:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to start security scan'
-});
+    });
   }
 });
 
@@ -259,12 +259,12 @@ securityDashboardRoutes.get('/scans', async (req: Request, res: Response) => {
     const scans = securityScanner.getAllScans();
     // @ts-ignore - Response type issue
   return res.json({ scans });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching security scans:', error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security scans'
-});
+    });
   }
 });
 
@@ -287,11 +287,11 @@ securityDashboardRoutes.get('/scans/:id', async (req: Request, res: Response) =>
     
     // @ts-ignore - Response type issue
   return res.json({ scan });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error(`Error fetching security scan ${req.params.id}:`, error);
     return res.status(500).json({
       error: 'Internal server error',
       message: 'Failed to fetch security scan'
-});
+    });
   }
 });

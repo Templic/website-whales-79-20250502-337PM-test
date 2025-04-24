@@ -102,11 +102,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedMessages = savedMessages ? JSON.parse(savedMessages) : [];
       
       // Convert string timestamps back to Date objects
-      return parsedMessages.map((msg) => ({
+      return parsedMessages.map((msg: any) => ({
         ...msg,
         timestamp: new Date(msg.timestamp)
       }));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to parse chat messages from localStorage', error);
       return [];
     }
@@ -119,7 +119,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
       return savedSettings ? { ...defaultSettings, ...JSON.parse(savedSettings) } : defaultSettings;
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to parse chat settings from localStorage', error);
       return defaultSettings;
     }
@@ -144,7 +144,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to save chat messages to localStorage', error);
     }
   }, [messages]);
@@ -155,7 +155,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Failed to save chat settings to localStorage', error);
     }
   }, [settings]);

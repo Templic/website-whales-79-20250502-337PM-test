@@ -65,10 +65,10 @@ export const generateQrCode = async (totpUri: string): Promise<string> => {
     // Generate a QR code as a data URL
     const qrCodeDataUrl = await qrcode.toDataURL(totpUri);
     return qrCodeDataUrl;
-} catch (error: unknown) {
+  } catch (error) {
     console.error('Error generating QR code:', error);
     throw new Error('Failed to generate QR code');
-}
+  }
 };
 
 /**
@@ -81,10 +81,10 @@ export const verifyToken = (token: string, secret: string): boolean => {
   try {
     // Check if the token is valid
     return authenticator.verify({ token, secret });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error verifying token:', error);
     return false;
-}
+  }
 };
 
 /**
@@ -95,7 +95,7 @@ export const verifyToken = (token: string, secret: string): boolean => {
  */
 export const verifyBackupCode = (
   providedCode: string,
-  storedBackupCodes: string[] | null;
+  storedBackupCodes: string[] | null
 ): { success: boolean; remainingCodes: string[] } => {
   // Normalize the provided code
   const normalizedCode = providedCode.trim().toUpperCase();
@@ -115,18 +115,18 @@ export const verifyBackupCode = (
   // Remove the used code from the array of backup codes
   const remainingCodes = [
     ...storedBackupCodes.slice(0, codeIndex),
-    ...storedBackupCodes.slice(codeIndex + 1);
+    ...storedBackupCodes.slice(codeIndex + 1)
   ];
   
   return { success: true, remainingCodes };
 };
 
 /**
- * Log security events related to: 2FA
+ * Log security events related to 2FA
  */
 export const logSecurityEvent = (eventData): void => {
   // In a production environment, this would log to a secure audit log
-  console.log(`[SECURITY EVENT] ${new: Date().toISOString()}:`, eventData);
+  console.log(`[SECURITY EVENT] ${new Date().toISOString()}:`, eventData);
   
   // TODO: Implement more sophisticated logging mechanism for security events
   // This could include writing to a database, sending alerts, etc.

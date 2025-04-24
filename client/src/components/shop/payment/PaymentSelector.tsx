@@ -1,4 +1,3 @@
-import React from "react";
 import { CreditCard, CreditCardIcon, DollarSign, Bitcoin, Wallet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 

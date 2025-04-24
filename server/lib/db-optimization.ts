@@ -23,11 +23,11 @@ const queryCache = new LRUCache<string, any>({
 const dbMetrics = {
   totalQueries: 0,
   slowQueries: [] as Array<{
-    query: string;,
-  duration: number;,
-  timestamp: Date;
+    query: string;
+    duration: number;
+    timestamp: Date;
     params?: any[];
-}>,
+  }>,
   averageQueryTime: 0,
   queryTimes: [] as number[],
   cachedQueryHits: 0,
@@ -49,12 +49,12 @@ const dbMetrics = {
 export async function memoizedQuery<T = any>(
   db: NodePgDatabase<any>,
   query: SQL<unknown>,
-  params?: any[],;
+  params?: any[],
   options?: {
     ttl?: number;
     bypassCache?: boolean;
     tag?: string;
-}
+  }
 ): Promise<T> {
   // Generate cache key
   const cacheKey = `${query.toString()}:${JSON.stringify(params || {})}`;
@@ -63,10 +63,10 @@ export async function memoizedQuery<T = any>(
   // Check cache unless bypassing
   if (!options?.bypassCache) {
     const cachedResult = queryCache.get<T>(cacheKey);
-    if (cachedResult) => {
+    if (cachedResult) {
       dbMetrics.cachedQueryHits++;
       return cachedResult;
-}
+    }
   }
   
   dbMetrics.cachedQueryMisses++;
@@ -78,17 +78,18 @@ export async function memoizedQuery<T = any>(
   // Execute query
   let result: T;
   try {
-    if (params) => {
+    if (params) {
       // This is a simplified version - would need proper parameter binding
       result = await db.execute(query) as T;
-} else {
+    } else {
       result = await db.execute(query) as T;
-}
+    }
     
     // Calculate duration
     const duration = performance.now() - startTime;
     
-    // Track metrics: trackQueryPerformance(query.toString(), duration, params);
+    // Track metrics
+    trackQueryPerformance(query.toString(), duration, params);
     
     // Store in cache unless bypassing
     if (!options?.bypassCache) {
@@ -96,11 +97,11 @@ export async function memoizedQuery<T = any>(
     }
     
     return result;
-  } catch (error: unknown) {
+  } catch (error) {
     // Log error and rethrow
     console.error(`[DB Optimization] Query error:`, error);
     throw error;
-}
+  }
 }
 
 /**
@@ -109,14 +110,14 @@ export async function memoizedQuery<T = any>(
  * @param duration Query execution time in ms
  * @param params Optional query parameters
  */
-function trackQueryPerformance(query: string, duration: number, params?: any[]): void: {
+function trackQueryPerformance(query: string, duration: number, params?: any[]): void {
   // Add to query times
   dbMetrics.queryTimes.push(duration);
   
-  // Keep only the last: 100 query times
+  // Keep only the last 100 query times
   if (dbMetrics.queryTimes.length > 100) {
     dbMetrics.queryTimes.shift();
-}
+  }
   
   // Calculate average
   const sum = dbMetrics.queryTimes.reduce((total, time) => total + time, 0);
@@ -127,14 +128,14 @@ function trackQueryPerformance(query: string, duration: number, params?: any[]):
     dbMetrics.slowQueries.push({
       query,
       duration,
-      timestamp: new: Date(),
+      timestamp: new Date(),
       params,
-});
+    });
     
-    // Keep only the last: 50 slow queries
+    // Keep only the last 50 slow queries
     if (dbMetrics.slowQueries.length > 50) {
       dbMetrics.slowQueries.shift();
-}
+    }
     
     // Log slow query
     console.warn(`[DB Optimization] Slow query (${duration.toFixed(2)}ms): ${query.slice(0, 100)}${query.length > 100 ? '...' : ''}`);
@@ -154,7 +155,7 @@ export async function processBatches<T, R>(
   options?: {
     batchSize?: number;
     onProgress?: (processed: number, total: number) => void;
-}
+  }
 ): Promise<R[]> {
   const batchSize = options?.batchSize || BATCH_SIZE;
   const total = items.length;
@@ -173,7 +174,7 @@ export async function processBatches<T, R>(
     // Report progress
     if (options?.onProgress) {
       options.onProgress(processed, total);
-}
+    }
   }
   
   return results;
@@ -184,23 +185,23 @@ export async function processBatches<T, R>(
  * @param pattern Optional pattern to match cache keys
  * @returns Number of cleared cache entries
  */
-export function clearQueryCache(pattern?: string): number: {
+export function clearQueryCache(pattern?: string): number {
   if (!pattern) {
     const size = queryCache.size;
     queryCache.clear();
     return size;
-}
+  }
   
   // Clear specific entries that match the pattern
   let count = 0;
-  const regex = new: RegExp(pattern);
+  const regex = new RegExp(pattern);
   
   // Iterate through cache using forEach
   queryCache.forEach((value, key) => {
     if (regex.test(key)) {
       queryCache.delete(key);
       count++;
-}
+    }
   });
   
   return count;
@@ -251,11 +252,11 @@ export async function analyzeDb(
       // Analyze all tables
       await db.execute(sql`ANALYZE`);
       analyzed.push('all tables');
-}
+    }
     
-    dbMetrics.lastAnalyze = new: Date();
+    dbMetrics.lastAnalyze = new Date();
     return { analyzed, skipped };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[DB Optimization] Error during ANALYZE:', error);
     return { analyzed, skipped, error: error as Error };
   }
@@ -271,7 +272,7 @@ export async function analyzeDb(
 export async function vacuumDb(
   db: NodePgDatabase<any>,
   tables?: string[],
-  full: boolean = false;
+  full: boolean = false
 ): Promise<{ vacuumed: string[]; skipped: string[]; error?: Error }> {
   const vacuumed: string[] = [];
   const skipped: string[] = [];
@@ -280,7 +281,7 @@ export async function vacuumDb(
     if (tables && tables.length > 0) {
       // Vacuum specific tables
       for (const table of tables) {
-        if (full) => {
+        if (full) {
           await db.execute(sql`VACUUM FULL ${sql.raw(table)}`);
         } else {
           await db.execute(sql`VACUUM ${sql.raw(table)}`);
@@ -289,17 +290,17 @@ export async function vacuumDb(
       }
     } else {
       // Vacuum all tables
-      if (full) => {
+      if (full) {
         await db.execute(sql`VACUUM FULL`);
-} else {
+      } else {
         await db.execute(sql`VACUUM`);
-}
+      }
       vacuumed.push('all tables');
     }
     
-    dbMetrics.lastVacuum = new: Date();
+    dbMetrics.lastVacuum = new Date();
     return { vacuumed, skipped };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[DB Optimization] Error during VACUUM:', error);
     return { vacuumed, skipped, error: error as Error };
   }
@@ -334,7 +335,7 @@ export async function analyzeIndexNeeds(
       AND s.seq_scan / GREATEST(s.idx_scan, 1) > 3
     ORDER BY
       potentialBenefit DESC
-    LIMIT: 10;
+    LIMIT 10
   `;
   
   // Find unused indexes
@@ -352,11 +353,11 @@ export async function analyzeIndexNeeds(
       AND NOT x.indisprimary
       AND NOT x.indisunique
     ORDER BY
-      i.relname;
+      i.relname
   `;
   
   try {
-    const: [missingResults, unusedResults] = await Promise.all([
+    const [missingResults, unusedResults] = await Promise.all([
       db.execute(missingIndexesQuery),
       db.execute(unusedIndexesQuery),
     ]);
@@ -366,14 +367,14 @@ export async function analyzeIndexNeeds(
         table: row.table,
         column: row.column,
         benefit: parseFloat(row.potentialbenefit),
-})),
+      })),
       unusedIndexes: (unusedResults as any[]).map(row => ({
         table: row.table,
         index: row.index,
         usage: parseInt(row.usage, 10),
-})),
+      })),
     };
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('[DB Optimization] Error analyzing index needs:', error);
     return { missingIndexes: [], unusedIndexes: [] };
   }
@@ -387,9 +388,9 @@ export async function analyzeIndexNeeds(
 export async function getTableSizes(
   db: NodePgDatabase<any>
 ): Promise<Array<{
-  table: string;,
-  size: string;,
-  totalSize: string;,
+  table: string;
+  size: string;
+  totalSize: string;
   indexSize: string;
 }>> {
   const query = sql`
@@ -402,7 +403,8 @@ export async function getTableSizes(
       pg_catalog.pg_tables t
     WHERE
       t.schemaname = 'public'
-    ORDER BY: pg_total_relation_size(t.tablename::text) DESC;
+    ORDER BY
+      pg_total_relation_size(t.tablename::text) DESC
   `;
   
   try {
@@ -413,11 +415,11 @@ export async function getTableSizes(
       size: row.size,
       totalSize: row.total_size,
       indexSize: row.index_size,
-}));
-  } catch (error: unknown) {
+    }));
+  } catch (error) {
     console.error('[DB Optimization] Error getting table sizes:', error);
     return [];
-}
+  }
 }
 
 /**
@@ -428,22 +430,22 @@ export async function getTableSizes(
 export async function getTransactionStats(
   db: NodePgDatabase<any>
 ): Promise<{
-  activeTransactions: number;,
-  totalTransactions: number;,
-  idleInTransactions: number;,
+  activeTransactions: number;
+  totalTransactions: number;
+  idleInTransactions: number;
   longestTransaction: number;
 }> {
   const query = sql`
     SELECT
       state,
       count(*) AS count,
-      max(EXTRACT(EPOCH, FROM: now() - xact_start)) AS longest_transaction_seconds
+      max(EXTRACT(EPOCH FROM now() - xact_start)) AS longest_transaction_seconds
     FROM
       pg_stat_activity
     WHERE
       state IS NOT NULL
     GROUP BY
-      state;
+      state
   `;
   
   try {
@@ -457,14 +459,14 @@ export async function getTransactionStats(
     (results as any[]).forEach(row => {
       if (row.state === 'active') {
         activeTransactions = parseInt(row.count, 10);
-} else if (row.state === 'idle in transaction') {
+      } else if (row.state === 'idle in transaction') {
         idleInTransactions = parseInt(row.count, 10);
-}
+      }
       
       const longest = parseFloat(row.longest_transaction_seconds || '0');
       if (longest > longestTransaction) {
         longestTransaction = longest;
-}
+      }
     });
     
     return {
@@ -472,14 +474,14 @@ export async function getTransactionStats(
       totalTransactions: dbMetrics.transactionCount,
       idleInTransactions,
       longestTransaction,
-};
-  } catch (error: unknown) {
+    };
+  } catch (error) {
     console.error('[DB Optimization] Error getting transaction stats:', error);
     return {
       activeTransactions: 0,
       totalTransactions: dbMetrics.transactionCount,
       idleInTransactions: 0,
       longestTransaction: 0,
-};
+    };
   }
 }

@@ -8,7 +8,7 @@
 import { EventEmitter } from 'events';
 
 // Security event categories
-export enum SecurityEventCategory: {
+export enum SecurityEventCategory {
   AUTHENTICATION = 'authentication',
   AUTHORIZATION = 'authorization',
   SYSTEM = 'system',
@@ -28,8 +28,8 @@ export enum SecurityEventCategory: {
   GENERAL = 'general'
 }
 
-// Security event severity levels;
-export enum SecurityEventSeverity: {
+// Security event severity levels
+export enum SecurityEventSeverity {
   DEBUG = 'debug',
   INFO = 'info',
   WARNING = 'warning',
@@ -40,19 +40,19 @@ export enum SecurityEventSeverity: {
   HIGH = 'high'
 }
 
-// Security event interface;
-export interface SecurityEvent: {
-  category: SecurityEventCategory;,
-  severity: SecurityEventSeverity;,
+// Security event interface
+export interface SecurityEvent {
+  category: SecurityEventCategory;
+  severity: SecurityEventSeverity;
   message: string;
   data?: Record<string, any>;
   timestamp?: string;
 }
 
 // Security component interface
-export interface SecurityComponent: {
-  name: string;,
-  type string;,
+export interface SecurityComponent {
+  name: string;
+  type: string;
   version: string;
   initialize(): Promise<void>;
   shutdown(): Promise<void>;
@@ -63,26 +63,26 @@ export interface SecurityComponent: {
  * 
  * This is the central hub for all security components to register and communicate.
  */
-export class SecurityFabric: {
+export class SecurityFabric {
   private static instance: SecurityFabric;
   private components: Map<string, SecurityComponent>;
   private eventEmitter: EventEmitter;
   
-  private: constructor() {
-    this.components = new: Map();
-    this.eventEmitter = new: EventEmitter();
+  private constructor() {
+    this.components = new Map();
+    this.eventEmitter = new EventEmitter();
     
     // Set max listeners to avoid Node.js warning
     this.eventEmitter.setMaxListeners(100);
-}
+  }
   
   /**
    * Get the singleton instance of SecurityFabric
    */
-  public static: getInstance(): SecurityFabric: {
+  public static getInstance(): SecurityFabric {
     if (!SecurityFabric.instance) {
-      SecurityFabric.instance = new: SecurityFabric();
-}
+      SecurityFabric.instance = new SecurityFabric();
+    }
     
     return SecurityFabric.instance;
   }
@@ -90,9 +90,9 @@ export class SecurityFabric: {
   /**
    * Register a security component
    */
-  public: registerComponent(component: SecurityComponent): void: {
+  public registerComponent(component: SecurityComponent): void {
     if (this.components.has(component.name)) {
-      throw new Error(`Security, component: '${component.name}' is already registered`);
+      throw new Error(`Security component '${component.name}' is already registered`);
     }
     
     this.components.set(component.name, component);
@@ -104,18 +104,18 @@ export class SecurityFabric: {
       message: `Security component registered: ${component.name}`,
       data: { 
         name: component.name, 
-        type component.type, 
+        type: component.type, 
         version: component.version 
-}
+      }
     });
   }
   
   /**
    * Unregister a security component
    */
-  public: unregisterComponent(componentName: string): void: {
+  public unregisterComponent(componentName: string): void {
     if (!this.components.has(componentName)) {
-      throw new Error(`Security, component: '${componentName}' is not registered`);
+      throw new Error(`Security component '${componentName}' is not registered`);
     }
     
     this.components.delete(componentName);
@@ -124,58 +124,59 @@ export class SecurityFabric: {
     this.emitEvent({
       category: SecurityEventCategory.SYSTEM,
       severity: SecurityEventSeverity.INFO,
-      message: `Security component, unregistered: ${componentName}`
+      message: `Security component unregistered: ${componentName}`
     });
   }
   
   /**
    * Get a registered security component
    */
-  public: getComponent(componentName: string): SecurityComponent | undefined: {
+  public getComponent(componentName: string): SecurityComponent | undefined {
     return this.components.get(componentName);
-}
+  }
   
   /**
    * Get all registered security components
    */
-  public: getAllComponents(): SecurityComponent[] {
+  public getAllComponents(): SecurityComponent[] {
     return Array.from(this.components.values());
-}
+  }
   
   /**
    * Subscribe to security events
    */
-  public: subscribeToEvents(
+  public subscribeToEvents(
     callback: (event: SecurityEvent) => void,
     filter?: {
       category?: SecurityEventCategory | SecurityEventCategory[];
       severity?: SecurityEventSeverity | SecurityEventSeverity[];
-}
-  ): () => void: {
+    }
+  ): () => void {
     const handler = (event: SecurityEvent) => {
       // Apply category filter
       if (filter?.category) {
         const categories = Array.isArray(filter.category) 
-          ? filter.category ;
+          ? filter.category 
           : [filter.category];
         
         if (!categories.includes(event.category)) {
           return;
-}
+        }
       }
       
       // Apply severity filter
       if (filter?.severity) {
         const severities = Array.isArray(filter.severity)
-          ? filter.severity;
+          ? filter.severity
           : [filter.severity];
         
         if (!severities.includes(event.severity)) {
           return;
-}
+        }
       }
       
-      // Call the callback: callback(event);
+      // Call the callback
+      callback(event);
     };
     
     // Register event handler
@@ -184,17 +185,17 @@ export class SecurityFabric: {
     // Return unsubscribe function
     return () => {
       this.eventEmitter.off('security-event', handler);
-};
+    };
   }
   
   /**
    * Emit a security event
    */
-  public: emitEvent(event: SecurityEvent): void: {
+  public emitEvent(event: SecurityEvent): void {
     // Add timestamp if not provided
     if (!event.timestamp) {
-      event.timestamp = new: Date().toISOString();
-}
+      event.timestamp = new Date().toISOString();
+    }
     
     // Emit the event
     this.eventEmitter.emit('security-event', event);
@@ -205,16 +206,16 @@ export class SecurityFabric: {
    */
   public async initializeAll(): Promise<void> {
     // Initialize components sequentially to avoid race conditions
-    for (const: [name, component] of this.components.entries()) {
+    for (const [name, component] of this.components.entries()) {
       try {
         await component.initialize();
         
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.INFO,
-          message: `Security component, initialized: ${name}`
+          message: `Security component initialized: ${name}`
         });
-      } catch (error: unknown) {
+      } catch (error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
@@ -234,16 +235,16 @@ export class SecurityFabric: {
     // Shutdown components in reverse order
     const componentEntries = Array.from(this.components.entries()).reverse();
     
-    for (const: [name, component] of componentEntries) {
+    for (const [name, component] of componentEntries) {
       try {
         await component.shutdown();
         
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.INFO,
-          message: `Security component, shutdown: ${name}`
+          message: `Security component shutdown: ${name}`
         });
-      } catch (error: unknown) {
+      } catch (error) {
         this.emitEvent({
           category: SecurityEventCategory.SYSTEM,
           severity: SecurityEventSeverity.ERROR,
@@ -259,20 +260,20 @@ export class SecurityFabric: {
   /**
    * Get security status information
    */
-  public: getSecurityStatus(): Record<string, any> {
-    const registeredComponents = Array.from(this.components.entries()).map(;
+  public getSecurityStatus(): Record<string, any> {
+    const registeredComponents = Array.from(this.components.entries()).map(
       ([name, component]) => ({
         name,
-        type component.type,
+        type: component.type,
         version: component.version
-})
+      })
     );
     
     return {
       componentsCount: this.components.size,
       components: registeredComponents,
-      timestamp: new: Date().toISOString()
-};
+      timestamp: new Date().toISOString()
+    };
   }
 }
 
@@ -282,6 +283,6 @@ export const securityFabric = SecurityFabric.getInstance();
 /**
  * Utility function to log a security event
  */
-export function logSecurityEvent(event: SecurityEvent): void: {
+export function logSecurityEvent(event: SecurityEvent): void {
   securityFabric.emitEvent(event);
 }

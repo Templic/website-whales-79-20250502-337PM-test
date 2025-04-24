@@ -18,14 +18,14 @@ const intervals: { [key: string]: NodeJS.Timeout } = {};
 export function startContentScheduler(intervalMinutes = 1) {
   console.log(`[Background] Starting content scheduler (interval: ${intervalMinutes} minute(s))`);
   
-  // Run immediately on startup: runContentScheduler()
+  // Run immediately on startup
+  runContentScheduler()
     .then((result: {published: number, failed: number, archived: number, archivedFailed: number, upcomingExpiring: number}) => {
       console.log(`[Background] Initial content scheduling run complete: ${result.published} published, ${result.archived} archived`);
     })
-    .catch((err: unknown) => {
-      const error = err as Error;
-      console.error('[Background] Error during initial content scheduling run:', error);
-});
+    .catch((err: Error) => {
+      console.error('[Background] Error during initial content scheduling run:', err);
+    });
   
   // Then set up interval
   const intervalMs = intervalMinutes * 60 * 1000;
@@ -35,10 +35,9 @@ export function startContentScheduler(intervalMinutes = 1) {
       if (result.published > 0 || result.archived > 0) {
         console.log(`[Background] Content scheduling run: ${result.published} published, ${result.archived} archived`);
       }
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error('[Background] Error in content scheduler:', error);
-}
+    } catch (err) {
+      console.error('[Background] Error in content scheduler:', err);
+    }
   }, intervalMs);
   
   return intervals['contentScheduler'];
@@ -52,7 +51,7 @@ export function stopContentScheduler() {
     clearInterval(intervals['contentScheduler']);
     delete intervals['contentScheduler'];
     console.log('[Background] Content scheduler stopped');
-}
+  }
 }
 
 /**
@@ -73,7 +72,7 @@ export function stopAllBackgroundServices() {
   Object.keys(intervals).forEach(key => {
     clearInterval(intervals[key]);
     delete intervals[key];
-});
+  });
   
   console.log('[Background] All background services stopped');
 }
@@ -87,7 +86,7 @@ export const backgroundServiceConfig = {
     HIGH: 0,
     MEDIUM: 1,
     LOW: 2
-}
+  }
 };
 
 export function initializeOptimizedServices() {

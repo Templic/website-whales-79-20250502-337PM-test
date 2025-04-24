@@ -6,8 +6,6 @@
  * 
  * NOTE: This is for TESTING PURPOSES ONLY and should not be used in production!
  */
-import React from "react";
-
 
 import { useState } from 'react';
 import axios from 'axios';
@@ -59,7 +57,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: unknown) {
+    } catch (err: any) {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to generate key pair');
       console.error('Key generation error:', err);
@@ -87,7 +85,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: unknown) {
+    } catch (err: any) {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to encrypt data');
       console.error('Encryption error:', err);
@@ -115,7 +113,7 @@ export default function QuantumCryptoTester() {
       setResult(response.data);
       
       setLoading(false);
-    } catch (err: unknown) {
+    } catch (err: any) {
       setLoading(false);
       setError(err.response?.data?.message || err.message || 'Failed to decrypt data');
       console.error('Decryption error:', err);

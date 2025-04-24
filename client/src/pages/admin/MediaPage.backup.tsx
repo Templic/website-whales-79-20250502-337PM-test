@@ -4,8 +4,6 @@
  * Enhanced Media Management for the Admin Portal
  * Allows uploading, organizing, and managing various media types
  */
-import React from "react";
-
 import { useState, useRef, ChangeEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";

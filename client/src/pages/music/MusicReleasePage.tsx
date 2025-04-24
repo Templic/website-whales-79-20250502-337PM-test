@@ -3,8 +3,6 @@
  * 
  * Migrated as part of the repository reorganization.
  */
-import React from "react";
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,12 +48,12 @@ export default function MusicReleasePage() {
       
       const response = await axios.get('/api/tracks', { params });
       setTracks(response.data);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error fetching tracks:', error);
     }
   };
 
-  const handleTrackSelect = (track) => {
+  const handleTrackSelect = (track: any) => {
     // Navigate to the specific track detail page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -83,7 +81,7 @@ export default function MusicReleasePage() {
                 src="https://www.youtube.com/embed/jzpvkq3Krjg?rel=0&showinfo=0&controls=1"
                 title="Feels So Good - Music Video"
                 className="absolute inset-0 w-full h-full rounded-lg"
-                frameBorder={0}
+                frameBorder="0"
                 loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen

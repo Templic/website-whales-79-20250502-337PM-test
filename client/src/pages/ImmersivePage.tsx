@@ -1,4 +1,3 @@
-import React from "react";
 import { CosmicBackground } from "@/components/features/cosmic/CosmicBackground";
 import { ImmersiveHeader } from "@/components/immersive/ImmersiveHeader";
 import { FrequencyAttunementChamber } from "@/components/immersive/FrequencyAttunementChamber";

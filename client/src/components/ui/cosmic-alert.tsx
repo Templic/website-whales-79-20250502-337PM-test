@@ -5,8 +5,7 @@
  * Migrated as part of the repository reorganization.
  */
 import React from 'react';
-import { cn } from "@/lib/utils"
-
+import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 
 export interface CosmicAlertProps {

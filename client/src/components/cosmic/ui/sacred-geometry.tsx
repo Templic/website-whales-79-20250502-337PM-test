@@ -8,7 +8,9 @@ interface GeometryContainerProps {
 }
 
 export function HexagonContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -52,7 +54,9 @@ export function HexagonContainer({
 }
 
 export function TriangleContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -92,7 +96,7 @@ export function TriangleContainer({
       </div>
       {/* Text positioning for triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{  transform: 'translateY(25%)'  }}>
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(25%)' }}>
           {children}
         </div>
       </div>
@@ -101,7 +105,9 @@ export function TriangleContainer({
 }
 
 export function InvertedTriangleContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -141,7 +147,7 @@ export function InvertedTriangleContainer({
       </div>
       {/* Text positioning for inverted triangles */}
       <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{  transform: 'translateY(-25%)'  }}>
+        <div className="w-[70%] h-[60%] flex flex-col items-center justify-center overflow-y-auto hide-scrollbar text-center relative" style={{ transform: 'translateY(-25%)' }}>
           {children}
         </div>
       </div>
@@ -150,7 +156,9 @@ export function InvertedTriangleContainer({
 }
 
 export function OctagonContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -195,7 +203,9 @@ export function OctagonContainer({
 }
 
 export function StarburstContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
 }: GeometryContainerProps) {
   return (
     <div
@@ -218,7 +228,7 @@ export function StarburstContainer({
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
           className="opacity-20"
-          style={{  animation: "rotate 180s linear infinite"  }}
+          style={{ animation: "rotate 180s linear infinite" }}
         >
           <path
             d="M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z"
@@ -249,7 +259,9 @@ interface CircleContainerProps extends GeometryContainerProps {
 }
 
 export function CircleContainer({
-  children$2 className$2 glowColor = "rgba(0$2 230$2 230$2 0.5$2",
+  children,
+  className,
+  glowColor = "rgba(0, 230, 230, 0.5)",
   rotateSpeed = 60,
 }: CircleContainerProps) {
   return (
@@ -276,24 +288,24 @@ export function CircleContainer({
           }}
         >
           <circle
-            cx={50}
-            cy={50}
+            cx="50"
+            cy="50"
             r="45"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
           />
           <circle
-            cx={50}
-            cy={50}
+            cx="50"
+            cy="50"
             r="35"
             stroke="white"
             strokeWidth="0.5"
             fill="none"
           />
           <circle
-            cx={50}
-            cy={50}
+            cx="50"
+            cy="50"
             r="25"
             stroke="white"
             strokeWidth="0.5"

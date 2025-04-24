@@ -24,11 +24,12 @@ export function createSecureExpressApp() {
   // This will apply:
   // - Security headers (CSP, X-XSS-Protection, etc.)
   // - Input sanitization for request body, query, and params
-  // - XSS attack detection: applyXssProtection(app);
+  // - XSS attack detection
+  applyXssProtection(app);
   
   // Example routes demonstrating XSS protection
   
-  // Example: 1: Safe HTML rendering with sanitization
+  // Example 1: Safe HTML rendering with sanitization
   app.post('/api/comments', (req, res) => {
     const { author, content } = req.body;
     
@@ -44,20 +45,20 @@ export function createSecureExpressApp() {
       comment: {
         author,
         content: sanitizedContent
-}
+      }
     });
   });
   
-  // Example: 2: Safe user data display with encoding
+  // Example 2: Safe user data display with encoding
   app.get('/api/users/:id', (req, res) => {
     const userId = req.params.id;
     
     // Fetch user data (simulated)
     const userData = {
       id: userId,
-      name: 'User: ' + userId,
-      bio: '<p>This is a <strong>formatted</strong> bio for user: ' + userId + '</p>'
-};
+      name: 'User ' + userId,
+      bio: '<p>This is a <strong>formatted</strong> bio for user ' + userId + '</p>'
+    };
     
     // When rendering in HTML context, encode if not using React
     // React will handle encoding by default
@@ -65,12 +66,12 @@ export function createSecureExpressApp() {
     
     res.json({
       ...userData,
-      // Only include sanitized content in the API response if it will be inserted as HTML,
-  sanitizedBio: DOMPurify.sanitize(userData.bio)
-});
+      // Only include sanitized content in the API response if it will be inserted as HTML
+      sanitizedBio: DOMPurify.sanitize(userData.bio)
+    });
   });
   
-  // Example: 3: Safe URL handling
+  // Example 3: Safe URL handling
   app.get('/api/redirect', (req, res) => {
     const { url } = req.query;
     
@@ -83,19 +84,19 @@ export function createSecureExpressApp() {
     const allowedDomains = ['example.com', 'trusted-domain.com'];
     
     try {
-      const parsedUrl = new: URL(url);
+      const parsedUrl = new URL(url);
       
       if (!allowedDomains.includes(parsedUrl.hostname)) {
         return res.status(403).json({ error: 'Redirect to this domain is not allowed' });
       }
       
       res.redirect(url);
-    } catch (error: unknown) {
+    } catch (error) {
       res.status(400).json({ error: 'Invalid URL format' });
     }
   });
   
-  // Example: 4: Safe file handling
+  // Example 4: Safe file handling
   app.post('/api/upload', (req, res) => {
     // For file uploads, validate file types and content
     // This is a simulated example - actual file validation would be more complex
@@ -122,6 +123,6 @@ export function createSecureExpressApp() {
  * 
  * const app = createSecureExpressApp();
  * app.listen(3000, () => {
- *   console.log('Server running on, port: 3000');
+ *   console.log('Server running on port 3000');
  * });
  */

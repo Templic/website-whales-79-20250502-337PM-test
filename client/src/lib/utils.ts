@@ -1,109 +1,96 @@
 /**
- * Common utility functions used throughout the application
- * This module provides reusable utility functions for various purposes
+ * utils.ts
+ * 
+ * A collection of utility functions used throughout the application.
  */
 
-import { ClassValue, clsx } from 'clsx';
-import { cn } from "@/lib/utils"
+import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 /**
- * Merge class names with Tailwind CSS classes
- * This function combines clsx with tailwind-merge to handle class conflicts
+ * Combines multiple class values into a single className string,
+ * handling Tailwind CSS conflicts using twMerge.
+ * 
+ * @param inputs - Class values to combine
+ * @returns Combined className string
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Format a date as a readable string
+ * Formats a date to a string representation.
+ * 
+ * @param date - The date to format
+ * @param options - Intl.DateTimeFormatOptions to customize the format
+ * @returns Formatted date string
  */
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
+export function formatDate(
+  date: Date | string | null | undefined,
+  options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
-  }).format(date);
+    month: 'long',
+    day: 'numeric'
+  }
+): string {
+  if (!date) return '';
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString(undefined, options);
 }
 
 /**
- * Format a number as a currency string
+ * Formats a currency value according to the specified locale and currency.
+ * 
+ * @param value - The numeric value to format as currency
+ * @param currency - The currency code (default: 'USD')
+ * @param locale - The locale to use for formatting (default: 'en-US')
+ * @returns Formatted currency string
  */
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(
+  value: number,
+  currency: string = 'USD',
+  locale: string = 'en-US'
+): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'USD',
-  }).format(amount);
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value);
 }
 
 /**
- * Delay execution by the specified number of milliseconds
+ * Truncates a string to a maximum length, adding an ellipsis if needed.
+ * 
+ * @param str - The string to truncate
+ * @param maxLength - Maximum length of the string
+ * @returns Truncated string
  */
-export function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+export function truncate(str: string, maxLength: number): string {
+  if (!str || str.length <= maxLength) return str;
+  return `${str.substring(0, maxLength)}...`;
 }
 
 /**
- * Truncate a string to the specified length and add ellipsis
- */
-export function truncate(str: string, length: number): string {
-  if (str.length <= length) return str;
-  return str.slice(0, length) + '...';
-}
-
-/**
- * Generate a random ID
- */
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 9);
-}
-
-/**
- * Safely access nested object properties
- */
-export function get<T, K extends keyof T>(obj: T, key: K): T[K] | undefined {
-  return obj ? obj[key] : undefined;
-}
-
-/**
- * Debounce a function
+ * Creates a debounced version of a function.
+ * 
+ * @param func - The function to debounce
+ * @param delay - The delay in milliseconds
+ * @returns Debounced function
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  delay: number
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   
-  return function(...args: Parameters<T>): void {
-    const later = () => {
+  return function(...args: Parameters<T>) {
+    if (timeout) clearTimeout(timeout);
+    
+    timeout = setTimeout(() => {
+      func(...args);
       timeout = null;
-      func(...args);
-    };
-    
-    if (timeout !== null) {
-      clearTimeout(timeout);
-    }
-    
-    timeout = setTimeout(later, wait);
-  };
-}
-
-/**
- * Throttle a function
- */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number
-): (...args: Parameters<T>) => void {
-  let inThrottle = false;
-  
-  return function(...args: Parameters<T>): void {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
+    }, delay);
   };
 }

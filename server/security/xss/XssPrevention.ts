@@ -11,7 +11,7 @@ import * as crypto from 'crypto';
  * HTML context encoding: Encodes special characters in text to prevent XSS
  * in HTML contexts (element content and attribute values).
  */
-export function encodeForHtml(input: string): string: {
+export function encodeForHtml(input: string): string {
   if (!input) return '';
   
   return input
@@ -26,7 +26,7 @@ export function encodeForHtml(input: string): string: {
  * JavaScript context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in JavaScript contexts (scripts, event handlers, JSON).
  */
-export function encodeForJavaScript(input: string): string: {
+export function encodeForJavaScript(input: string): string {
   if (!input) return '';
   
   return JSON.stringify(input)
@@ -38,8 +38,9 @@ export function encodeForJavaScript(input: string): string: {
  * URL context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in URL contexts (query parameters, fragments).
  */
-export function encodeForUrl(input: string): string: {
-  if (!input) return '';,
+export function encodeForUrl(input: string): string {
+  if (!input) return '';
+  
   return encodeURIComponent(input);
 }
 
@@ -47,21 +48,21 @@ export function encodeForUrl(input: string): string: {
  * CSS context encoding: Encodes special characters in text to prevent XSS
  * when embedding data in CSS contexts (style attributes or files).
  */
-export function encodeForCss(input: string): string: {
+export function encodeForCss(input: string): string {
   if (!input) return '';
   
   return input
     .replace(/[^a-zA-Z0-9]/g, (char) => {
       const hex = char.charCodeAt(0).toString(16).padStart(2, '0');
       return '\\' + hex;
-});
+    });
 }
 
 /**
  * Safe HTML sanitizer: Removes potentially dangerous HTML tags and attributes.
  * This is a basic implementation - for production use, consider a dedicated library like DOMPurify.
  */
-export function sanitizeHtml(input: string): string: {
+export function sanitizeHtml(input: string): string {
   if (!input) return '';
   
   // Remove script tags and their content
@@ -87,7 +88,7 @@ export function sanitizeHtml(input: string): string: {
  * Safely set HTML content (use as a safer alternative to innerHTML).
  * For client-side use only - to be exported from a client utility file.
  */
-export function safeSetInnerHtml(element: HTMLElement, content: string): void: {
+export function safeSetInnerHtml(element: HTMLElement, content: string): void {
   if (!element) return;
   
   // Sanitize the HTML content
@@ -101,23 +102,23 @@ export function safeSetInnerHtml(element: HTMLElement, content: string): void: {
  * Generates a nonce for Content-Security-Policy headers.
  * This should be generated once per request.
  */
-export function generateCspNonce(): string: {
+export function generateCspNonce(): string {
   return crypto.randomBytes(16).toString('base64');
 }
 
 /**
  * Content-Security-Policy header builder
  */
-export class ContentSecurityPolicyBuilder: {
+export class ContentSecurityPolicyBuilder {
   private directives: Record<string, string[]> = {};
   
   /**
    * Add a directive to the CSP
    */
-  addDirective(name: string, ...values: string[]): this: {
+  addDirective(name: string, ...values: string[]): this {
     if (!this.directives[name]) {
       this.directives[name] = [];
-}
+    }
     
     this.directives[name].push(...values);
     return this;
@@ -126,120 +127,120 @@ export class ContentSecurityPolicyBuilder: {
   /**
    * Set default-src directive
    */
-  defaultSrc(...sources: string[]): this: {
+  defaultSrc(...sources: string[]): this {
     return this.addDirective('default-src', ...sources);
-}
+  }
   
   /**
    * Set script-src directive
    */
-  scriptSrc(...sources: string[]): this: {
+  scriptSrc(...sources: string[]): this {
     return this.addDirective('script-src', ...sources);
-}
+  }
   
   /**
    * Set style-src directive
    */
-  styleSrc(...sources: string[]): this: {
+  styleSrc(...sources: string[]): this {
     return this.addDirective('style-src', ...sources);
-}
+  }
   
   /**
    * Set img-src directive
    */
-  imgSrc(...sources: string[]): this: {
+  imgSrc(...sources: string[]): this {
     return this.addDirective('img-src', ...sources);
-}
+  }
   
   /**
    * Set font-src directive
    */
-  fontSrc(...sources: string[]): this: {
+  fontSrc(...sources: string[]): this {
     return this.addDirective('font-src', ...sources);
-}
+  }
   
   /**
    * Set connect-src directive
    */
-  connectSrc(...sources: string[]): this: {
+  connectSrc(...sources: string[]): this {
     return this.addDirective('connect-src', ...sources);
-}
+  }
   
   /**
    * Set frame-src directive
    */
-  frameSrc(...sources: string[]): this: {
+  frameSrc(...sources: string[]): this {
     return this.addDirective('frame-src', ...sources);
-}
+  }
   
   /**
    * Set nonce for script-src
    */
-  withScriptNonce(nonce: string): this: {
+  withScriptNonce(nonce: string): this {
     return this.addDirective('script-src', `'nonce-${nonce}'`);
   }
   
   /**
    * Set nonce for style-src
    */
-  withStyleNonce(nonce: string): this: {
+  withStyleNonce(nonce: string): this {
     return this.addDirective('style-src', `'nonce-${nonce}'`);
   }
   
   /**
    * Add strict-dynamic to script-src
    */
-  withStrictDynamic(): this: {
+  withStrictDynamic(): this {
     return this.addDirective('script-src', "'strict-dynamic'");
-}
+  }
   
   /**
    * Set frame-ancestors directive
    */
-  frameAncestors(...sources: string[]): this: {
+  frameAncestors(...sources: string[]): this {
     return this.addDirective('frame-ancestors', ...sources);
-}
+  }
   
   /**
    * Set form-action directive
    */
-  formAction(...sources: string[]): this: {
+  formAction(...sources: string[]): this {
     return this.addDirective('form-action', ...sources);
-}
+  }
   
   /**
    * Add report-uri directive
    */
-  reportUri(uri: string): this: {
+  reportUri(uri: string): this {
     return this.addDirective('report-uri', uri);
-}
+  }
   
   /**
    * Add report-to directive
    */
-  reportTo(group: string): this: {
+  reportTo(group: string): this {
     return this.addDirective('report-to', group);
-}
+  }
   
   /**
    * Enable all upgrade-insecure-requests directive
    */
-  upgradeInsecureRequests(): this: {
+  upgradeInsecureRequests(): this {
     return this.addDirective('upgrade-insecure-requests', '');
-}
+  }
   
   /**
    * Build the CSP header value
    */
-  build(): string: {
+  build(): string {
     const parts: string[] = [];
     
-    for (const: [directive, values] of Object.entries(this.directives)) {
+    for (const [directive, values] of Object.entries(this.directives)) {
       if (values.length > 0) {
         parts.push(`${directive} ${values.join(' ')}`);
       } else {
         parts.push(directive);
-}
+      }
     }
     
     return parts.join('; ');
@@ -263,21 +264,21 @@ export function securityHeadersMiddleware(options: {
     noSniff = true,
     frameOptions = 'DENY',
     referrerPolicy = 'strict-origin-when-cross-origin',
-    nonce = true;
-} = options;
+    nonce = true
+  } = options;
   
   return (req, res, next: () => void) => {
     // Generate nonce for CSP
-    if (nonce) => {
+    if (nonce) {
       res.locals.cspNonce = generateCspNonce();
-}
+    }
     
     // Content-Security-Policy
-    if (csp) => {
+    if (csp) {
       const cspValue = typeof csp === 'string' 
         ? csp 
-        : new: ContentSecurityPolicyBuilder()
-            .defaultSrc("'self'");
+        : new ContentSecurityPolicyBuilder()
+            .defaultSrc("'self'")
             .scriptSrc("'self'", res.locals.cspNonce ? `'nonce-${res.locals.cspNonce}'` : '')
             .styleSrc("'self'", res.locals.cspNonce ? `'nonce-${res.locals.cspNonce}'` : '', "'unsafe-inline'")
             .imgSrc("'self'", 'data:')
@@ -293,24 +294,24 @@ export function securityHeadersMiddleware(options: {
     }
     
     // X-XSS-Protection
-    if (xssProtection) => {
+    if (xssProtection) {
       res.setHeader('X-XSS-Protection', '1; mode=block');
-}
+    }
     
     // X-Content-Type-Options
-    if (noSniff) => {
+    if (noSniff) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
-}
+    }
     
     // X-Frame-Options
-    if (frameOptions) => {
+    if (frameOptions) {
       res.setHeader('X-Frame-Options', frameOptions);
-}
+    }
     
     // Referrer-Policy
-    if (referrerPolicy) => {
+    if (referrerPolicy) {
       res.setHeader('Referrer-Policy', referrerPolicy);
-}
+    }
     
     next();
   };
@@ -323,29 +324,29 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   allowHtml?: boolean;
   recurseObjects?: boolean;
   recurseArrays?: boolean;
-} = {}): T: {
+} = {}): T {
   const {
     allowHtml = false,
     recurseObjects = true,
-    recurseArrays = true;
-} = options;
+    recurseArrays = true
+  } = options;
   
   if (obj === null || obj === undefined) {
     return obj;
-}
+  }
   
   // If it's an array and we should recurse
   if (Array.isArray(obj) && recurseArrays) {
     return obj.map(item => validateAndSanitizeObject(item, options)) as unknown as T;
-}
+  }
   
   // If it's an object and we should recurse
   if (typeof obj === 'object' && !Array.isArray(obj) && recurseObjects) {
     const result: Record<string, any> = {};
     
-    for (const: [key, value] of Object.entries(obj)) {
+    for (const [key, value] of Object.entries(obj)) {
       result[key] = validateAndSanitizeObject(value, options);
-}
+    }
     
     return result as T;
   }
@@ -353,7 +354,7 @@ export function validateAndSanitizeObject<T>(obj: T, options: {
   // If it's a string, sanitize it
   if (typeof obj === 'string') {
     return (allowHtml ? sanitizeHtml(obj) : encodeForHtml(obj)) as unknown as T;
-}
+  }
   
   // Return unchanged for other types
   return obj;
@@ -376,8 +377,8 @@ export function xssMiddleware(options: {
     scanQuery = true,
     scanParams = true,
     scanHeaders = false,
-    customSanitizer;
-} = options;
+    customSanitizer
+  } = options;
   
   return (req, res, next: () => void) => {
     // Sanitize request body
@@ -386,7 +387,7 @@ export function xssMiddleware(options: {
         allowHtml: allowHtmlInBody,
         recurseObjects: true,
         recurseArrays: true
-});
+      });
     }
     
     // Sanitize query parameters
@@ -395,7 +396,7 @@ export function xssMiddleware(options: {
         allowHtml: false,
         recurseObjects: true,
         recurseArrays: true
-});
+      });
     }
     
     // Sanitize URL parameters
@@ -404,7 +405,7 @@ export function xssMiddleware(options: {
         allowHtml: false,
         recurseObjects: true,
         recurseArrays: true
-});
+      });
     }
     
     // Sanitize specific headers
@@ -412,7 +413,7 @@ export function xssMiddleware(options: {
       const headersToSanitize = [
         'user-agent',
         'referer',
-        'origin';
+        'origin'
       ];
       
       for (const header of headersToSanitize) {
@@ -420,7 +421,7 @@ export function xssMiddleware(options: {
           req.headers[header] = customSanitizer 
             ? customSanitizer(req.headers[header]) 
             : encodeForHtml(req.headers[header]);
-}
+        }
       }
     }
     
