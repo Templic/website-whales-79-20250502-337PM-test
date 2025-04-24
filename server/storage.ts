@@ -278,27 +278,27 @@ export class PostgresStorage implements IStorage {
   }
 
   // Category methods
-  async: createCategory(category: InsertCategory): Promise<Category> {
+  async createCategory(category: InsertCategory): Promise<Category> {
     const result = await db.insert(categories).values(category).returning();
     return result[0];
-}
+  }
 
-  async: getCategories(): Promise<Category[]> {
+  async getCategories(): Promise<Category[]> {
     return await db.select().from(categories);
-}
+  }
 
   // Comment methods
-  async: createComment(comment: InsertComment): Promise<Comment> {
+  async createComment(comment: InsertComment): Promise<Comment> {
     const result = await db.insert(comments).values(comment).returning();
     return result[0];
-}
+  }
 
-  async: getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
+  async getCommentsByPostId(postId: number, onlyApproved: boolean = false): Promise<Comment[]> {
     console.log(`Fetching comments for post ID: ${postId}, onlyApproved: ${onlyApproved}`);
 
     // Use drizzle-orm's built-in parameterized queries with proper type checking
     // instead of building raw SQL strings
-    if (onlyApproved) => {
+    if (onlyApproved) {
       return await db.select()
         .from(comments)
         .where(and(
@@ -306,35 +306,35 @@ export class PostgresStorage implements IStorage {
           eq(comments.approved, true)
         ))
         .orderBy(desc(comments.createdAt));
-} else: {
+    } else {
       return await db.select()
         .from(comments)
         .where(eq(comments.postId, postId))
         .orderBy(desc(comments.createdAt));
-}
+    }
   }
 
-  async: approveComment(id: number): Promise<Comment> {
-    const result = await db.update(comments);
+  async approveComment(id: number): Promise<Comment> {
+    const result = await db.update(comments)
       .set({ approved: true })
       .where(eq(comments.id, id))
       .returning();
     return result[0];
   }
 
-  async: rejectComment(id: number): Promise<Comment> {
+  async rejectComment(id: number): Promise<Comment> {
     const result = await db.delete(comments)
-      .where(eq(comments.id, id));
+      .where(eq(comments.id, id))
       .returning();
     return result[0];
-}
+  }
 
   // Password recovery methods
-  async: createPasswordResetToken(userId: number): Promise<string> {
+  async createPasswordResetToken(userId: number): Promise<string> {
     // Generate a secure random token
     const token = randomBytes(32).toString("hex");
-    const expires = new: Date();
-    expires.setHours(expires.getHours() + 1); // Token expires in: 1 hour
+    const expires = new Date();
+    expires.setHours(expires.getHours() + 1); // Token expires in 1 hour
 
     // Create a properly defined table for password reset tokens if it doesn't exist already
     // Note: In production this should be moved to the schema definition in shared/schema.ts
@@ -344,8 +344,8 @@ export class PostgresStorage implements IStorage {
       token: text('token').notNull(),
       expires: timestamp('expires').notNull(),
       used: integer('used').notNull().default(0), // Using integer for boolean (0 = false, 1=true)
-      createdAt: timestamp('created_at').defaultNow();
-});
+      createdAt: timestamp('created_at').defaultNow()
+    });
 
     // Use ORM to insert data securely with proper parameter handling
     await db.insert(passwordResetTokens).values({
@@ -353,12 +353,12 @@ export class PostgresStorage implements IStorage {
       token: token,
       expires: expires,
       used: 0
-});
+    });
 
     return token;
   }
 
-  async: validatePasswordResetToken(token: string): Promise<User | undefined> {
+  async validatePasswordResetToken(token: string): Promise<User | undefined> {
     // Define password reset tokens table structure
     const passwordResetTokens = pgTable('password_reset_tokens', {
       id: serial('id').primaryKey(),
@@ -367,40 +367,41 @@ export class PostgresStorage implements IStorage {
       expires: timestamp('expires').notNull(),
       used: integer('used').notNull().default(0),
       createdAt: timestamp('created_at').defaultNow()
-});
+    });
     
     // Use a properly parameterized join query
     // This approach prevents SQL injection by using the ORM's 
     // parameter handling mechanisms
     const validTokens = await db.select({
       userId: passwordResetTokens.userId
-})
+    })
     .from(passwordResetTokens)
     .where(and(
       eq(passwordResetTokens.token, token),
-      // Use a safer parameterized approach instead of raw SQL: gt(passwordResetTokens.expires, new: Date()),
+      // Use a safer parameterized approach instead of raw SQL: gt(passwordResetTokens.expires, new Date()),
       eq(passwordResetTokens.used, 0)
     ));
     
     // If no valid token found, return undefined
     if (validTokens.length === 0) {
       return undefined;
-}
+    }
     
     // Get the user associated with the token
     const userId = validTokens[0].userId;
-    const: [user] = await db.select().from(users).where(eq(users.id, userId));
+    const user = await db.select().from(users).where(eq(users.id, userId)).then(r => r[0]);
     
     return user;
   }
 
-  async: updateUserPassword(userId: number, newPassword: string): Promise<User> {
+  async updateUserPassword(userId: number, newPassword: string): Promise<User> {
     // Update the user's password with parameterized query
-    const: [updatedUser] = await db
+    const updatedUser = await db
       .update(users)
-      .set({ password: newPassword, updatedAt: new: Date() })
+      .set({ password: newPassword, updatedAt: new Date() })
       .where(eq(users.id, userId))
-      .returning();
+      .returning()
+      .then(r => r[0]);
 
     // Define password reset tokens table structure (same as in other methods)
     const passwordResetTokens = pgTable('password_reset_tokens', {
@@ -410,29 +411,29 @@ export class PostgresStorage implements IStorage {
       expires: timestamp('expires').notNull(),
       used: integer('used').notNull().default(0),
       createdAt: timestamp('created_at').defaultNow()
-});
+    });
 
     // Update all reset tokens for this user to be used
     // Using ORM's update method instead of raw SQL for parameterized queries
     await db.update(passwordResetTokens)
-      .set({ used: 1 }) // 1 = true;
+      .set({ used: 1 }) // 1 = true
       .where(eq(passwordResetTokens.userId, userId));
 
     return updatedUser;
   }
 
-  async: getUserByEmail(email: string): Promise<User | undefined> {
-    const: [user] = await db.select().from(users).where(eq(users.email, email));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const user = await db.select().from(users).where(eq(users.email, email)).then(r => r[0]);
     return user;
-}
+  }
 
-  async: deleteUser(id: number): Promise<void> {
-    try: {
+  async deleteUser(id: number): Promise<void> {
+    try {
       // First check if user exists
       const user = await this.getUser(id);
       if (!user) {
-        throw new: Error('User not found');
-}
+        throw new Error('User not found');
+      }
 
       // Delete user from database
       await db.delete(users).where(eq(users.id, id));
@@ -442,43 +443,43 @@ export class PostgresStorage implements IStorage {
     } catch (error: unknown) {
       console.error('Error deleting user:', error);
       throw error;
-}
+    }
   }
 
-  async: approvePost(id: number): Promise<Post> {
-    const result = await db.update(posts);
-      .set({ approved: true, updatedAt: new: Date() })
+  async approvePost(id: number): Promise<Post> {
+    const result = await db.update(posts)
+      .set({ approved: true, updatedAt: new Date() })
       .where(eq(posts.id, id))
       .returning();
     return result[0];
   }
 
-  async: getUnapprovedPosts(): Promise<Post[]> {
+  async getUnapprovedPosts(): Promise<Post[]> {
     // Use properly parameterized queries with ORM methods instead of raw SQL
     return await db.select()
       .from(posts)
       .where(eq(posts.approved, false))
       .orderBy(desc(posts.createdAt));
-}
+  }
 
-  async: deletePost(id: number): Promise<void> {
-    try: {
+  async deletePost(id: number): Promise<void> {
+    try {
       // Check if post exists
       const post = await db.select()
         .from(posts)
-        .where(eq(posts.id, id));
+        .where(eq(posts.id, id))
         .limit(1);
 
       if (!post.length) {
-        throw new: Error('Post not found');
-}
+        throw new Error('Post not found');
+      }
 
       // Define post categories junction table structure
       const postCategories = pgTable('post_categories', {
         id: serial('id').primaryKey(),
         postId: integer('post_id').notNull(),
-        categoryId: integer('category_id').notNull(),
-});
+        categoryId: integer('category_id').notNull()
+      });
 
       // Delete post category associations using ORM instead of raw SQL
       // This is safer and prevents SQL injection
@@ -495,83 +496,83 @@ export class PostgresStorage implements IStorage {
     } catch (error: unknown) {
       console.error("Error deleting post:", error);
       throw error;
-}
+    }
   }
 
-  async: getUnapprovedComments(): Promise<Comment[]> {
+  async getUnapprovedComments(): Promise<Comment[]> {
     console.log('Attempting to fetch unapproved comments...');
-    try: {
+    try {
       // Use properly parameterized queries with ORM methods instead of raw SQL
       const results = await db.select()
         .from(comments)
-        .where(eq(comments.approved, false));
+        .where(eq(comments.approved, false))
         .orderBy(desc(comments.createdAt));
 
       console.log('Fetched unapproved comments:', results);
       return results;
-} catch (error: unknown) {
+    } catch (error: unknown) {
       console.error('Error fetching unapproved comments:', error);
       throw error;
-}
+    }
   }
 
   // Music methods
-  async: getTracks(): Promise<Track[]> {
+  async getTracks(): Promise<Track[]> {
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(tracks)
       .orderBy(desc(tracks.createdAt));
-}
+  }
   
-  async: getAllTracks(): Promise<Track[]> {
+  async getAllTracks(): Promise<Track[]> {
     // This returns all tracks including non-published ones (for admin use)
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(tracks)
       .orderBy(desc(tracks.createdAt));
-}
+  }
 
-  async: getAlbums(): Promise<Album[]> {
+  async getAlbums(): Promise<Album[]> {
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(albums)
       .orderBy(desc(albums.releaseDate));
-}
+  }
 
-  async: deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void> {
+  async deleteMusic(trackId: number, userId: number, userRole: 'admin' | 'super_admin'): Promise<void> {
     // Verify user has required role
     if (userRole !== 'admin' && userRole !== 'super_admin') {
-      throw new: Error('Unauthorized - requires admin privileges');
-}
+      throw new Error('Unauthorized - requires admin privileges');
+    }
 
     // Get track info before deletion
-    const: [track] = await db.select().from(tracks).where(eq(tracks.id, trackId));
+    const track = await db.select().from(tracks).where(eq(tracks.id, trackId)).then(r => r[0]);
     if (!track) {
-      throw new: Error('Track not found');
-}
+      throw new Error('Track not found');
+    }
 
     // Delete file from filesystem
     const filePath = path.join(process.cwd(), 'uploads', track.audioUrl);
-    try: {
+    try {
       await fs.unlink(filePath);
-} catch (error: unknown) {
+    } catch (error: unknown) {
       console.error('Error deleting file:', error);
       // Continue with database deletion even if file deletion fails
-}
+    }
 
     // Delete from database
     await db.delete(tracks).where(eq(tracks.id, trackId));
   }
   
   // Product methods
-  async: getAllProducts(): Promise<Product[]> {
+  async getAllProducts(): Promise<Product[]> {
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(products)
       .orderBy(desc(products.createdAt));
-}
+  }
 
-  async: uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
+  async uploadMusic({ file, targetPage, uploadedBy, userRole }: { 
     file, 
     targetPage: string,
     uploadedBy: number,
@@ -579,7 +580,7 @@ export class PostgresStorage implements IStorage {
 }): Promise<Track> {
     // Verify user has required role
     if (userRole !== 'admin' && userRole !== 'super_admin') {
-      throw new: Error('Unauthorized - requires admin privileges');
+      throw new Error('Unauthorized - requires admin privileges');
 }
     // Simple local file saving - replace with cloud storage in production
     const uploadDir = path.join(process.cwd(), 'uploads');
@@ -590,27 +591,27 @@ export class PostgresStorage implements IStorage {
 
 
     // Create database record
-    const: [track] = await db.insert(tracks).values({
+    const [track] = await db.insert(tracks).values({
       title: file.name,
       artist: "Dale the Whale", // Could be made dynamic,
   audioUrl: fileName, //Store relative path,
-  createdAt: new: Date(),
-      updatedAt: new: Date()
+  createdAt: new Date(),
+      updatedAt: new Date()
 }).returning();
 
     return track;
   }
 
-  async: createInitialUsers() {
-    try: {
+  async createInitialUsers() {
+    try {
       const initialUsers = [
-        { username: 'admin', password: await: hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
-        { username: 'superadmin', password: await: hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
-        { username: 'user', password: await: hashPassword('user123'), email: 'user@example.com', role: 'user' }
+        { username: 'admin', password: await hashPassword('admin123'), email: 'admin@example.com', role: 'admin' },
+        { username: 'superadmin', password: await hashPassword('superadmin123'), email: 'superadmin@example.com', role: 'super_admin' },
+        { username: 'user', password: await hashPassword('user123'), email: 'user@example.com', role: 'user' }
       ];
 
       for (const userData of initialUsers) {
-        try: {
+        try {
           const existingUser = await this.getUserByUsername(userData.username);
           if (!existingUser) {
             await this.createUser(userData);
@@ -625,8 +626,8 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: initializeSampleData() {
-    try: {
+  async initializeSampleData() {
+    try {
       // Initialize subscribers
       const existingSubscribers = await db.select().from(subscribers);
       if (existingSubscribers.length === 0) {
@@ -635,19 +636,19 @@ export class PostgresStorage implements IStorage {
             name: "Emily Johnson",
             email: "emily.j@example.com",
             active: true,
-            createdAt: new: Date("2024-01-15")
+            createdAt: new Date("2024-01-15")
 },
           {
             name: "Michael Chen",
             email: "m.chen@example.com",
             active: true,
-            createdAt: new: Date("2024-01-16")
+            createdAt: new Date("2024-01-16")
 },
           {
             name: "Sarah Williams",
             email: "sarah.w@example.com",
             active: true,
-            createdAt: new: Date("2024-01-17")
+            createdAt: new Date("2024-01-17")
 }
         ]);
       }
@@ -685,8 +686,8 @@ export class PostgresStorage implements IStorage {
               </div>
             `,
             status: "draft",
-            createdAt: new: Date("2025-03-15"),
-            updatedAt: new: Date("2025-03-15")
+            createdAt: new Date("2025-03-15"),
+            updatedAt: new Date("2025-03-15")
 },
           {
             title: "Winter Solstice Special Newsletter",
@@ -711,9 +712,9 @@ export class PostgresStorage implements IStorage {
               </div>
             `,
             status: "sent",
-            sentAt: new: Date("2024-12-15"),
-            createdAt: new: Date("2024-12-10"),
-            updatedAt: new: Date("2024-12-15")
+            sentAt: new Date("2024-12-15"),
+            createdAt: new Date("2024-12-10"),
+            updatedAt: new Date("2024-12-15")
 }
         ]);
       }
@@ -776,8 +777,8 @@ export class PostgresStorage implements IStorage {
             published: true,
             approved: true,
             authorId: 1, // admin user,
-  createdAt: new: Date("2025-03-10"),
-            updatedAt: new: Date("2025-03-10");
+  createdAt: new Date("2025-03-10"),
+            updatedAt: new Date("2025-03-10")
 },
           {
             title: "Ocean Conservation Efforts: Making Waves for Change",
@@ -797,8 +798,8 @@ export class PostgresStorage implements IStorage {
             published: true,
             approved: true,
             authorId: 2, // superadmin user,
-  createdAt: new: Date("2025-02-15"),
-            updatedAt: new: Date("2025-02-15");
+  createdAt: new Date("2025-02-15"),
+            updatedAt: new Date("2025-02-15")
 },
           {
             title: "Behind the Music: The Making of: 'Cosmic Depths'",
@@ -818,9 +819,9 @@ export class PostgresStorage implements IStorage {
             published: true,
             approved: true,
             authorId: 1, // admin user,
-  createdAt: new: Date("2025-01-20"),
-            updatedAt: new: Date("2025-01-20")
-};
+  createdAt: new Date("2025-01-20"),
+            updatedAt: new Date("2025-01-20")
+}
         ]);
 
         // Get the inserted posts to link them with categories
@@ -957,28 +958,28 @@ export class PostgresStorage implements IStorage {
             {
               venue: 'Ocean Sound Arena',
               city: 'Miami',
-              date: new: Date('2024-04-15: 20:00:00'),
+              date: new Date('2024-04-15 20:00:00'),
               ticket_link: 'https://tickets.example.com/miami',
               status: 'upcoming'
 },
             {
               venue: 'Cosmic Waves Theater',
               city: 'Los Angeles',
-              date: new: Date('2024-05-01: 19:30:00'),
+              date: new Date('2024-05-01 19:30:00'),
               ticket_link: 'https://tickets.example.com/la',
               status: 'upcoming'
 },
             {
               venue: 'Blue Note Jazz Club',
               city: 'New York',
-              date: new: Date('2024-05-15: 21:00:00'),
+              date: new Date('2024-05-15 21:00:00'),
               ticket_link: 'https://tickets.example.com/ny',
               status: 'upcoming'
 },
             {
               venue: 'Marine Gardens',
               city: 'Seattle',
-              date: new: Date('2024-06-01: 20:00:00'),
+              date: new Date('2024-06-01 20:00:00'),
               ticket_link: 'https://tickets.example.com/seattle',
               status: 'upcoming'
 }
@@ -998,32 +999,32 @@ export class PostgresStorage implements IStorage {
             artist: "Dale The Whale",
             duration: "4:30",
             audioUrl: "/audio/meditation-alpha.mp3",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 },
           {
             title: "Ocean's Calling",
             artist: "Dale The Whale",
             duration: "4:15",
             audioUrl: "oceans-calling.mp3",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 },
           {
             title: "Whale Song Symphony",
             artist: "Dale The Whale",
             duration: "6:30",
             audioUrl: "whale-song-symphony.mp3",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 },
           {
             title: "Deep Blue Meditation",
             artist: "Dale The Whale",
             duration: "8:20",
             audioUrl: "deep-blue-meditation.mp3",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 }
         ]);
 
@@ -1031,20 +1032,20 @@ export class PostgresStorage implements IStorage {
           {
             title: "Oceanic Collection",
             artist: "Dale The Whale",
-            releaseDate: new: Date("2025-01-15"),
+            releaseDate: new Date("2025-01-15"),
             coverImage: "/images/music/ethereal-meditation.svg",
             description: "A collection of ocean-inspired tracks",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 },
           {
             title: "Cosmic Journeys",
             artist: "Dale The Whale",
-            releaseDate: new: Date("2024-12-01"),
+            releaseDate: new Date("2024-12-01"),
             coverImage: "/static/images/cosmic-journeys.jpg",
             description: "Deep space ambient music",
-            createdAt: new: Date(),
-            updatedAt: new: Date()
+            createdAt: new Date(),
+            updatedAt: new Date()
 }
         ]);
       }
@@ -1054,7 +1055,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Session cleanup method
-  async: cleanupExpiredSessions(): Promise<void> {
+  async cleanupExpiredSessions(): Promise<void> {
     try: {
       // Define the session table structure for type safety and consistent use
       const sessionTable = pgTable('session', {
@@ -1077,7 +1078,7 @@ export class PostgresStorage implements IStorage {
   }
 
   // Session analytics methods
-  async: getSessionAnalytics(userId: number): Promise<any> {
+  async getSessionAnalytics(userId: number): Promise<any> {
     try: {
       // Query for the session table - this is safer as it uses parameterized queries
       // First define the session table to match the table structure
@@ -1134,10 +1135,10 @@ export class PostgresStorage implements IStorage {
   }
 
   // Advanced admin methods implementation
-  async: updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
+  async updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
     try: {
-      const: [updatedUser] = await db.update(users)
-        .set({ role, updatedAt: new: Date() })
+      const [updatedUser] = await db.update(users)
+        .set({ role, updatedAt: new Date() })
         .where(eq(users.id, userId))
         .returning();
       return updatedUser;
@@ -1147,7 +1148,7 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: banUser(userId: number): Promise<User> {
+  async banUser(userId: number): Promise<User> {
     try: {
       await db.update(users)
         .set({ 
@@ -1168,7 +1169,7 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: unbanUser(userId: number): Promise<User> {
+  async unbanUser(userId: number): Promise<User> {
     try: {
       await db.update(users)
         .set({ 
@@ -1189,8 +1190,8 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: getSystemSettings(): Promise<any> {
-    try: {
+  async getSystemSettings(): Promise<any> {
+    try {
       // Define the system_settings table schema for type safety
       const systemSettingsTable = pgTable('system_settings', {
         id: serial('id').primaryKey(),
@@ -1202,7 +1203,7 @@ export class PostgresStorage implements IStorage {
       
       // Use ORM query builder for type-safe parameterized query
       const systemSettings = await db.select()
-        .from(systemSettingsTable);
+        .from(systemSettingsTable)
         .limit(1);
       
       return systemSettings[0] || {
@@ -1216,8 +1217,8 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: updateSystemSettings(settings): Promise<void> {
-    try: {
+  async updateSystemSettings(settings): Promise<void> {
+    try {
       // Define the system_settings table schema for type safety - same as in getSystemSettings
       const systemSettingsTable = pgTable('system_settings', {
         id: serial('id').primaryKey(),
@@ -1248,7 +1249,7 @@ export class PostgresStorage implements IStorage {
       });
       
       // Add updatedAt field
-      cleanedSettings.updatedAt = new: Date();
+      cleanedSettings.updatedAt = new Date();
       
       // Use upsert to safely handle the insert or update
       await db.insert(systemSettingsTable)

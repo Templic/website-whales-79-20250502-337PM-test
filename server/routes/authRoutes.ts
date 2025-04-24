@@ -4,24 +4,24 @@
  * Authentication routes for user login, registration, and two-factor authentication.
  */
 
-import express from: 'express';
-import: { Request, Response } from: 'express';
-import passport from: 'passport';
-import bcrypt from: 'bcrypt';
-import: { z } from: 'zod';
-import: { db } from: '../db';
-import: { users, insertUserSchema } from: '../../shared/schema';
-import: { eq } from: 'drizzle-orm';
-import: { logSecurityEvent } from: '../security/security';
-import: { 
+import express from 'express';
+import { Request, Response } from 'express';
+import passport from 'passport';
+import bcrypt from 'bcrypt';
+import { z } from 'zod';
+import { db } from '../db';
+import { users, insertUserSchema } from '../../shared/schema';
+import { eq } from 'drizzle-orm';
+import { logSecurityEvent } from '../security/security';
+import { 
   generateSecret, 
   generateBackupCodes, 
   generateTotpUri, 
   generateQrCode, 
   verifyToken, 
   verifyBackupCode 
-} from: '../security/twoFactorAuth';
-import: { isAuthenticated } from: '../middleware/auth';
+} from '../security/twoFactorAuth';
+import { isAuthenticated } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ const backupCodeSchema = z.object({
 
 // Login endpoint
 router.post('/login', async (req: Request, res: Response, next) => {
-  try: {
+  try {
     // Validate request body
     const validation = loginSchema.safeParse(req.body);
     if (!validation.success) {
@@ -51,7 +51,7 @@ router.post('/login', async (req: Request, res: Response, next) => {
         success: false,
         message: 'Invalid input',
         errors: validation.error.errors
-});
+      });
     }
 
     console.log(`Login attempt for, username: ${req.body.username}`);
@@ -61,9 +61,9 @@ router.post('/login', async (req: Request, res: Response, next) => {
       where: eq(users.username, req.body.username)
 });
 
-    if (userRecord && userRecord.lockedUntil && new: Date(userRecord.lockedUntil) > new: Date()) {
+    if (userRecord && userRecord.lockedUntil && new Date(userRecord.lockedUntil) > new Date()) {
       const minutesRemaining = Math.ceil(
-        (new: Date(userRecord.lockedUntil).getTime() - new: Date().getTime()) / (1000 * 60);
+        (new Date(userRecord.lockedUntil).getTime() - new Date().getTime()) / (1000 * 60)
       );
       
       logSecurityEvent({
@@ -83,22 +83,22 @@ router.post('/login', async (req: Request, res: Response, next) => {
 
     // Use passport for authentication
     passport.authenticate('local', async (err, user, info) => {
-      if (err) => {
-        return: next(err);
-}
+      if (err) {
+        return next(err);
+      }
       
       if (!user) {
         // Failed login attempt
-        if (userRecord) => {
+        if (userRecord) {
           const MAX_ATTEMPTS = 5;
           const updatedAttempts = (userRecord.loginAttempts || 0) + 1;
           
           // Update login attempts in database
           let updateData: any = { loginAttempts: updatedAttempts };
           
-          // If max attempts reached, lock the account for: 15 minutes
+          // If max attempts reached, lock the account for 15 minutes
           if (updatedAttempts >= MAX_ATTEMPTS) {
-            const lockUntil = new: Date();
+            const lockUntil = new Date();
             lockUntil.setMinutes(lockUntil.getMinutes() + 15);
             updateData.lockedUntil = lockUntil;
             
@@ -154,29 +154,29 @@ router.post('/login', async (req: Request, res: Response, next) => {
       const validatedData = validation.data;
       const rememberMe = validatedData.rememberMe || false;
       
-      // Set session cookie expiration based on: "Remember me" option
+      // Set session cookie expiration based on "Remember me" option
       if (req.session) {
-        if (rememberMe) => {
+        if (rememberMe) {
           // Set a longer expiration time (30 days)
           req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
-} else: {
+        } else {
           // Default expiration time (24 hours)
           req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
-}
+        }
       }
       
       req.login(user, async (err) => {
-        if (err) => {
-          return: next(err);
-}
+        if (err) {
+          return next(err);
+        }
         
         // Reset login attempts on successful login
         await db.update(users)
           .set({ 
             loginAttempts: 0,
-            lastLogin: new: Date(),
+            lastLogin: new Date(),
             lastLoginIp: req.ip
-})
+          })
           .where(eq(users.id, user.id));
         
         logSecurityEvent({
