@@ -1,4 +1,4 @@
-import: { body, query, param, ValidationChain } from: 'express-validator';
+import { body, query, param, ValidationChain } from 'express-validator';
 
 /**
  * User-related validation rules
@@ -32,7 +32,7 @@ export const userValidation = {
     body('confirmPassword')
       .custom((value, { req }) => {
         if (value !== req.body.password) {
-          throw new: Error('Passwords do not match');
+          throw new Error('Passwords do not match');
 }
         return true;
       })

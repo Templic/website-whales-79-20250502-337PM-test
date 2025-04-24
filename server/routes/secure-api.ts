@@ -6,10 +6,10 @@
  * input validation.
  */
 
-import express, { Request, Response } from: 'express';
-import: { immutableSecurityLogs as securityBlockchain } from: '../security/advanced/blockchain/ImmutableSecurityLogs';
-import: { SecurityEventCategory, SecurityEventSeverity } from: '../security/advanced/blockchain/SecurityEventTypes';
-import * as qrc from: '../security/advanced/quantum/QuantumResistantCrypto';
+import express, { Request, Response } from 'express';
+import { immutableSecurityLogs as securityBlockchain } from '../security/advanced/blockchain/ImmutableSecurityLogs';
+import { SecurityEventCategory, SecurityEventSeverity } from '../security/advanced/blockchain/SecurityEventTypes';
+import * as qrc from '../security/advanced/quantum/QuantumResistantCrypto';
 
 // Create a router
 const router = express.Router();
@@ -18,7 +18,7 @@ const router = express.Router();
  * Get the server's security status
  */
 router.get('/status', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Log access to blockchain
     await securityBlockchain.addSecurityEvent({
       category: SecurityEventCategory.API,
@@ -60,7 +60,7 @@ router.get('/status', async (req: Request, res: Response) => {
  * Get information about the security architecture
  */
 router.get('/info', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Return security architecture information
     res.json({
       name: 'Advanced Security Architecture',
@@ -100,7 +100,7 @@ router.get('/info', async (req: Request, res: Response) => {
  * Generate a quantum-resistant key pair
  */
 router.post('/generate-keys', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get key generation parameters
     const: { algorithm = 'kyber', strength = 'high' } = req.body;
     
@@ -143,7 +143,7 @@ router.post('/generate-keys', async (req: Request, res: Response) => {
  * Encrypt data using quantum-resistant algorithm
  */
 router.post('/encrypt', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get encryption parameters
     const: { data, publicKey, algorithm = 'kyber' } = req.body;
     
@@ -193,7 +193,7 @@ router.post('/encrypt', async (req: Request, res: Response) => {
  * Decrypt data using quantum-resistant algorithm
  */
 router.post('/decrypt', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get decryption parameters
     const: { encrypted, privateKey, algorithm = 'kyber' } = req.body;
     
@@ -242,7 +242,7 @@ router.post('/decrypt', async (req: Request, res: Response) => {
  * Sign data using quantum-resistant algorithm
  */
 router.post('/sign', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get signing parameters
     const: { data, privateKey, algorithm = 'dilithium' } = req.body;
     
@@ -292,7 +292,7 @@ router.post('/sign', async (req: Request, res: Response) => {
  * Verify signature using quantum-resistant algorithm
  */
 router.post('/verify', async (req: Request, res: Response) => {
-  try: {
+  try {
     // Get verification parameters
     const: { data, signature, publicKey, algorithm = 'dilithium' } = req.body;
     

@@ -829,7 +829,7 @@ export class PostgresStorage implements IStorage {
 
         // Link posts to categories using the ORM instead of raw SQL
         if (insertedPosts.length > 0) {
-          try: {
+          try {
             // Define post_categories junction table using Drizzle ORM
             const postCategoriesTable = pgTable('post_categories', {
               id: serial('id').primaryKey(),
@@ -885,7 +885,7 @@ export class PostgresStorage implements IStorage {
 });
       
       // Use Drizzle's ORM methods instead of raw SQL
-      try: {
+      try {
         const existingProposals = await db.select().from(collaborationProposalsTable);
         if (existingProposals.length === 0) {
           await db.insert(collaborationProposalsTable).values([
@@ -927,7 +927,7 @@ export class PostgresStorage implements IStorage {
 });
       
       // Use Drizzle's ORM methods instead of raw SQL
-      try: {
+      try {
         const existingPatrons = await db.select().from(patronsTable);
         if (existingPatrons.length === 0) {
           await db.insert(patronsTable).values([
@@ -951,7 +951,7 @@ export class PostgresStorage implements IStorage {
 });
       
       // Use Drizzle's ORM methods instead of raw SQL
-      try: {
+      try {
         const existingTours = await db.select().from(tourDatesTable);
         if (existingTours.length === 0) {
           await db.insert(tourDatesTable).values([
@@ -1056,7 +1056,7 @@ export class PostgresStorage implements IStorage {
 
   // Session cleanup method
   async cleanupExpiredSessions(): Promise<void> {
-    try: {
+    try {
       // Define the session table structure for type safety and consistent use
       const sessionTable = pgTable('session', {
         sid: text('sid').primaryKey(),
@@ -1079,7 +1079,7 @@ export class PostgresStorage implements IStorage {
 
   // Session analytics methods
   async getSessionAnalytics(userId: number): Promise<any> {
-    try: {
+    try {
       // Query for the session table - this is safer as it uses parameterized queries
       // First define the session table to match the table structure
       const sessionTable = pgTable('session', {
@@ -1111,8 +1111,8 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: updateSessionActivity(sessionId: string, data): Promise<void> {
-    try: {
+  async updateSessionActivity(sessionId: string, data): Promise<void> {
+    try {
       // Define the session table structure for type safety
       const sessionTable = pgTable('session', {
         sid: text('sid').primaryKey(),
@@ -1136,7 +1136,7 @@ export class PostgresStorage implements IStorage {
 
   // Advanced admin methods implementation
   async updateUserRole(userId: number, role: 'user' | 'admin' | 'super_admin'): Promise<User> {
-    try: {
+    try {
       const [updatedUser] = await db.update(users)
         .set({ role, updatedAt: new Date() })
         .where(eq(users.id, userId))
@@ -1149,18 +1149,18 @@ export class PostgresStorage implements IStorage {
   }
 
   async banUser(userId: number): Promise<User> {
-    try: {
+    try {
       await db.update(users)
         .set({ 
           isBanned: true,
-          updatedAt: new: Date()
+          updatedAt: new Date()
 })
         .where(eq(users.id, userId));
 
       // Return the updated user
       const updatedUser = await this.getUser(userId);
       if (!updatedUser) {
-        throw new: Error(`User with ID ${userId} not found after banning`);
+        throw new Error(`User with ID ${userId} not found after banning`);
       }
       return updatedUser;
     } catch (error: unknown) {
@@ -1170,18 +1170,18 @@ export class PostgresStorage implements IStorage {
   }
 
   async unbanUser(userId: number): Promise<User> {
-    try: {
+    try {
       await db.update(users)
         .set({ 
           isBanned: false,
-          updatedAt: new: Date()
+          updatedAt: new Date()
 })
         .where(eq(users.id, userId));
 
       // Return the updated user
       const updatedUser = await this.getUser(userId);
       if (!updatedUser) {
-        throw new: Error(`User with ID ${userId} not found after unbanning`);
+        throw new Error(`User with ID ${userId} not found after unbanning`);
       }
       return updatedUser;
     } catch (error: unknown) {
@@ -1267,12 +1267,12 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
-    try: {
+  async getAdminAnalytics(fromDate?: string, toDate?: string): Promise<any> {
+    try {
       console.log(`Storage: Filtering analytics from ${fromDate || 'beginning'} to ${toDate || 'now'}`);
 
       // Apply date filtering if provided
-      const whereClause = fromDate && toDate ;
+      const whereClause = fromDate && toDate 
         ? sql`created_at BETWEEN ${fromDate}::timestamp AND ${toDate}::timestamp`
         : fromDate 
           ? sql`created_at >= ${fromDate}::timestamp` 
@@ -1282,7 +1282,7 @@ export class PostgresStorage implements IStorage {
 
       // Get total user count - we don't have last_activity field, so we'll use total users as active
       // If date range is provided, count users created within that range
-      const: [activeUsers] = await db.select({ count: sql<number>`count(*)` })
+      const [activeUsers] = await db.select({ count: sql<number>`count(*)` })
         .from(users)
         .where(fromDate || toDate ? whereClause : sql`TRUE`);
 
@@ -1291,10 +1291,10 @@ export class PostgresStorage implements IStorage {
       let registrationsWhereClause;
       if (fromDate || toDate) {
         registrationsWhereClause = whereClause;
-} else: {
+} else {
         registrationsWhereClause = sql`created_at > now() - interval: '30 days'`;
 }
-      const: [newRegistrations] = await db.select({ count: sql<number>`count(*)` })
+      const [newRegistrations] = await db.select({ count: sql<number>`count(*)` })
         .from(users)
         .where(registrationsWhereClause);
 
@@ -1311,18 +1311,18 @@ export class PostgresStorage implements IStorage {
           .from(posts)
           .where(sql`approved = false AND ${whereClause}`);
         contentReports = result[0];
-      } else: {
+      } else {
         contentReports = await contentReportsQuery.then(res => res[0]);
 }
 
       // Get content distribution
-      const: [postsCount] = await db.select({ count: sql<number>`count(*)` })
+      const [postsCount] = await db.select({ count: sql<number>`count(*)` })
         .from(posts);
 
-      const: [commentsCount] = await db.select({ count: sql<number>`count(*)` })
+      const [commentsCount] = await db.select({ count: sql<number>`count(*)` })
         .from(comments);
 
-      const: [tracksCount] = await db.select({ count: sql<number>`count(*)` })
+      const [tracksCount] = await db.select({ count: sql<number>`count(*)` })
         .from(tracks);
 
       // Get user roles distribution using parameterized queries
@@ -1367,18 +1367,18 @@ export class PostgresStorage implements IStorage {
       const months: string[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
       const activeUsersOverTime: number[] = [0, 0, 0, 0, 0, 0];
       
-      try: {
+      try {
         // For this aggregation, we need to use SQL template literals, but in a safe way
         // All raw date calculations are using SQL literals (not user input)
         const userActivityData = await db.execute(
           sql`
-            SELECT: to_char(date_trunc('month', created_at), 'Mon') as month,
+            SELECT to_char(date_trunc('month', created_at), 'Mon') as month,
               COUNT(id) as count
             FROM users
-            WHERE created_at > NOW() - INTERVAL: '6 months'
-            GROUP BY: date_trunc('month', created_at)
-            ORDER BY: date_trunc('month', created_at)
-          `;
+            WHERE created_at > NOW() - INTERVAL '6 months'
+            GROUP BY date_trunc('month', created_at)
+            ORDER BY date_trunc('month', created_at)
+          `
         );
         
         // Clear default arrays if we have actual data
@@ -1409,7 +1409,7 @@ export class PostgresStorage implements IStorage {
       // Similarly for registrations over time (use the same months for consistency)
       const newRegistrationsOverTime = [...activeUsersOverTime]; // For simplicity, using the same data pattern
 
-      return: {
+      return {
         activeUsers: activeUsers?.count || 0,
         newRegistrations: newRegistrations?.count || 0,
         contentReports: contentReports?.count || 0,
@@ -1427,7 +1427,7 @@ export class PostgresStorage implements IStorage {
     } catch (error: unknown) {
       console.error("Error fetching admin analytics:", error);
       // Return default values if there's an error
-      return: {
+      return {
         activeUsers: 0,
         newRegistrations: 0, 
         contentReports: 0,
@@ -1449,8 +1449,8 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: getUserActivity(userId: number): Promise<any> {
-    try: {
+  async getUserActivity(userId: number): Promise<any> {
+    try {
       // Use the ORM's built-in functions to create a properly parameterized query
       // This is safer than using raw SQL with template literals
       
@@ -1474,16 +1474,16 @@ export class PostgresStorage implements IStorage {
       
       return result[0] || {
         username: 'Unknown User',
-        created_at: new: Date(),
+        created_at: new Date(),
         updated_at: null,
         post_count: 0,
         comment_count: 0
 };
     } catch (error: unknown) {
       console.error("Error fetching user activity:", error);
-      return: {
+      return {
         username: 'Unknown User',
-        created_at: new: Date(),
+        created_at: new Date(),
         updated_at: null,
         post_count: 0,
         comment_count: 0
@@ -1492,8 +1492,8 @@ export class PostgresStorage implements IStorage {
   }
 
   // Content management methods
-  async: getAllContentItems(): Promise<ContentItem[]> {
-    try: {
+  async getAllContentItems(): Promise<ContentItem[]> {
+    try {
       // Use parameterized queries with ORM methods
       return await db.select()
         .from(contentItems)
@@ -1504,9 +1504,9 @@ export class PostgresStorage implements IStorage {
 }
   }
 
-  async: getContentItemById(id: number): Promise<ContentItem | null> {
-    try: {
-      const: [contentItem] = await db.select().from(contentItems).where(eq(contentItems.id, id));
+  async getContentItemById(id: number): Promise<ContentItem | null> {
+    try {
+      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.id, id));
       return contentItem || null;
 } catch (error: unknown) {
       console.error(`Error fetching content item by ID ${id}:`, error);
@@ -1514,9 +1514,9 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: getContentItemByKey(key: string): Promise<ContentItem | null> {
-    try: {
-      const: [contentItem] = await db.select().from(contentItems).where(eq(contentItems.key, key));
+  async getContentItemByKey(key: string): Promise<ContentItem | null> {
+    try {
+      const [contentItem] = await db.select().from(contentItems).where(eq(contentItems.key, key));
       return contentItem || null;
 } catch (error: unknown) {
       console.error(`Error fetching content item by key: "${key}":`, error);
@@ -1524,9 +1524,9 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async: createContentItem(contentData): Promise<ContentItem> {
-    try: {
-      const now = new: Date();
+  async createContentItem(contentData): Promise<ContentItem> {
+    try {
+      const now = new Date();
       const data = {
         ...contentData,
         createdAt: now,
