@@ -183,8 +183,8 @@ const defaultConfig: ServerConfig = {
  * Load environment-specific configuration
  * This merges the default config with environment overrides
  */
-export function loadConfig(): ServerConfig: {
-  try: {
+export function loadConfig(): ServerConfig {
+  try {
     // Get startup priority from env var or default to: 'full'
     const startupPriority = (process.env.STARTUP_PRIORITY as StartupPriority) || 'full';
     
@@ -205,7 +205,7 @@ export function loadConfig(): ServerConfig: {
       const securityConfig = JSON.parse(fs.readFileSync(fullSecurityPath, 'utf8'));
       config = mergeConfigs(config, securityConfig);
       console.log('Loaded full security configuration with enhanced protection');
-}
+    }
     else if (fs.existsSync(envConfigPath)) {
       const envConfig = JSON.parse(fs.readFileSync(envConfigPath, 'utf8'));
       config = mergeConfigs(config, envConfig);
@@ -217,33 +217,33 @@ export function loadConfig(): ServerConfig: {
     // Environment variable overrides
     if (process.env.PORT) {
       config.port = parseInt(process.env.PORT, 10);
-}
+    }
     
     if (process.env.ENABLE_DB_OPTIMIZATION === 'false') {
       config.features.enableDatabaseOptimization = false;
-}
+    }
     
     if (process.env.ENABLE_SECURITY_SCANS === 'false') {
       config.features.enableSecurityScans = false;
-}
+    }
     
     return config;
   } catch (error: unknown) {
     console.error('Error loading configuration:', error);
     return defaultConfig;
-}
+  }
 }
 
 /**
  * Merge configuration objects with proper deep merging
  */
-function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerConfig>): ServerConfig: {
+function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerConfig>): ServerConfig {
   const result = { ...baseConfig };
   
   for (const [key, value] of Object.entries(overrideConfig)) {
     if (value === null || value === undefined) {
       continue;
-}
+    }
     
     if (key === 'features' && baseConfig.features && typeof value === 'object') {
       result.features = { ...baseConfig.features, ...value };
@@ -253,7 +253,7 @@ function mergeConfigs(baseConfig: ServerConfig, overrideConfig: Partial<ServerCo
       result.security = { ...baseConfig.security, ...value };
     } else {
       (result as any)[key] = value;
-}
+    }
   }
   
   return result;
@@ -268,7 +268,7 @@ export function getEnabledFeatures(config: ServerConfig): string[] {
   for (const [feature, enabled] of Object.entries(config.features)) {
     if (enabled) {
       enabledFeatures.push(feature.replace('enable', ''));
-}
+    }
   }
   
   return enabledFeatures;

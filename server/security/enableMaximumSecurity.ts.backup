@@ -74,8 +74,7 @@ export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
     ...features
 };
   
-  // Log the changes
-  logSecurityEvent({
+  // Log the changes: logSecurityEvent({
     category: SecurityEventCategory.SYSTEM,
     severity: SecurityEventSeverity.INFO,
     message: 'Security features updated',
@@ -86,8 +85,8 @@ export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
 /**
  * Enable maximum security mode
  */
-export function enableMaximumSecurity(): void {
-  try {
+export function: enableMaximumSecurity(): void: {
+  try: {
     console.log('[SECURITY] Enabling maximum security mode');
     
     // Set all security features to maximum: setSecurityFeatures(MAXIMUM_SECURITY_FEATURES);
@@ -118,15 +117,20 @@ export function enableMaximumSecurity(): void {
         });
     }
     
-    // Log the maximum security mode activation
-    console.log('[SECURITY] Maximum security mode activated', activeSecurityFeatures);
+    // Log the maximum security mode activation: logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.INFO,
+      message: 'Maximum security mode activated',
+      data: { features: activeSecurityFeatures }
+    });
   } catch (error: unknown) {
     console.error('[SECURITY] Error enabling maximum security mode:', error);
     
-    // Log the error
-    console.error('[SECURITY] Detailed error:', { 
-      errorMessage: (error as Error).message, 
-      stack: (error as Error).stack 
+    // Log the error: logSecurityEvent({
+      category: SecurityEventCategory.SYSTEM,
+      severity: SecurityEventSeverity.ERROR,
+      message: 'Error enabling maximum security mode',
+      data: { error: (error as Error).message, stack: (error as Error).stack }
     });
     
     throw error;
@@ -136,34 +140,34 @@ export function enableMaximumSecurity(): void {
 /**
  * Check if a specific security feature is enabled
  */
-export function isSecurityFeatureEnabled(feature: keyof SecurityFeatures): boolean {
+export function: isSecurityFeatureEnabled(feature: keyof SecurityFeatures): boolean: {
   return activeSecurityFeatures[feature];
 }
 
 /**
  * Get performance impact warning
  */
-export function getPerformanceImpactWarning(): string | null {
+export function: getPerformanceImpactWarning(): string | null: {
   const highImpactFeatures = [];
   
   if (activeSecurityFeatures.quantumResistance) {
     highImpactFeatures.push('Quantum-Resistant Cryptography');
-  }
+}
   
   if (activeSecurityFeatures.mlAnomalyDetection) {
     highImpactFeatures.push('ML-based Anomaly Detection');
-  }
+}
   
   if (activeSecurityFeatures.blockchainLogging) {
     highImpactFeatures.push('Blockchain Logging');
-  }
+}
   
   if (activeSecurityFeatures.deepScanning) {
     highImpactFeatures.push('Deep Scanning');
-  }
+}
   
   if (highImpactFeatures.length > 0) {
-    return `Warning: The following security features may impact performance: ${highImpactFeatures.join(', ')}`;
+    return: `Warning: The following security features may impact performance: ${highImpactFeatures.join(', ')}`;
   }
   
   return null;
