@@ -1,9 +1,9 @@
-declare module: 'connect-pg-simple' {
-  import session from: 'express-session';
-  export default function: connectPgSimple(session: typeof: import('express-session')): new (options) => session.Store;
+declare module 'connect-pg-simple' {
+  import session from 'express-session';
+  export default function connectPgSimple(session: typeof import('express-session')): new (options: any) => session.Store;
 }
 
-import: { 
+import { 
   type Subscriber, type InsertSubscriber, 
   type Post, type InsertPost, 
   type Category, type InsertCategory, 
@@ -19,22 +19,22 @@ import: {
   subscribers, posts, categories, comments, users, 
   tracks, albums, newsletters, contentItems,
   contentHistory, contentUsage, contentWorkflowHistory, products
-} from: "../shared/schema";
-import: { sql, eq, and, desc, gt, count, max } from: "drizzle-orm";
-import: { pgTable, serial, text, timestamp, integer, json } from: "drizzle-orm/pg-core";
-import: { db } from: "./db";
-import session from: "express-session";
-import connectPg from: "connect-pg-simple";
-import: { randomBytes } from: 'crypto';
-import fs from: 'fs/promises';
-import path from: 'path';
-import: { hashPassword } from: './auth';
+} from "../shared/schema";
+import { sql, eq, and, desc, gt, count, max } from "drizzle-orm";
+import { pgTable, serial, text, timestamp, integer, json } from "drizzle-orm/pg-core";
+import { db } from "./db";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { randomBytes } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+import { hashPassword } from './auth';
 
 
 const PostgresSessionStore = connectPg(session);
 
-export interface IStorage: {
-  // Session store,
+export interface IStorage {
+  // Session store
   sessionStore: session.Store;
 
   // User methods: getUser(id: number): Promise<User | undefined>;
@@ -122,15 +122,15 @@ export interface IStorage: {
   ): Promise<ContentItem>;
 }
 
-export class PostgresStorage implements IStorage: {
+export class PostgresStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
     // Initialize session store with PostgreSQL
-    this.sessionStore = new: PostgresSessionStore({
+    this.sessionStore = new PostgresSessionStore({
       conObject: {
         connectionString: process.env.DATABASE_URL,
-},
+      },
       createTableIfMissing: true,
     });
 
@@ -140,94 +140,94 @@ export class PostgresStorage implements IStorage: {
   }
 
   // User methods
-  async: getUser(id: number): Promise<User | undefined> {
-    const: [user] = await db.select().from(users).where(eq(users.id, id));
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
-}
+  }
 
-  async: getUserByUsername(username: string): Promise<User | undefined> {
-    const: [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
-}
+  }
 
-  async: createUser(user: InsertUser): Promise<User> {
-    try: {
-      const: [newUser] = await db.insert(users).values(user).returning();
+  async createUser(user: InsertUser): Promise<User> {
+    try {
+      const [newUser] = await db.insert(users).values(user).returning();
       return newUser;
-} catch (error: unknown) {
+    } catch (error: unknown) {
       console.error("Error creating user:", error);
       if (error.code === '23505') { // PostgreSQL unique constraint violation
         if (error.constraint?.includes('email')) {
-          throw new: Error('Email address already exists');
-}
+          throw new Error('Email address already exists');
+        }
         if (error.constraint?.includes('username')) {
-          throw new: Error('Username already exists');
-}
+          throw new Error('Username already exists');
+        }
       }
       throw error;
     }
   }
 
-  async: getAllUsers(): Promise<User[]> {
+  async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.createdAt);
-}
+  }
 
   // Subscriber methods
-  async: createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
+  async createSubscriber(insertSubscriber: InsertSubscriber): Promise<Subscriber> {
     const result = await db.insert(subscribers).values(insertSubscriber).returning();
     return result[0];
-}
+  }
 
-  async: findSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
-    const: [subscriber] = await db.select().from(subscribers).where(eq(subscribers.email, email));
+  async findSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
+    const [subscriber] = await db.select().from(subscribers).where(eq(subscribers.email, email));
     return subscriber;
-}
+  }
 
-  async: getAllSubscribers() {
+  async getAllSubscribers() {
     return await db.select().from(subscribers).orderBy(subscribers.createdAt);
-}
+  }
 
   // Newsletter methods
-  async: createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
+  async createNewsletter(newsletter: InsertNewsletter): Promise<Newsletter> {
     const result = await db.insert(newsletters).values(newsletter).returning();
     return result[0];
-}
+  }
 
-  async: getAllNewsletters(): Promise<Newsletter[]> {
+  async getAllNewsletters(): Promise<Newsletter[]> {
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(newsletters)
       .orderBy(desc(newsletters.createdAt));
-}
+  }
 
-  async: getNewsletterById(id: number): Promise<Newsletter | null> {
+  async getNewsletterById(id: number): Promise<Newsletter | null> {
     const result = await db.select().from(newsletters).where(eq(newsletters.id, id));
     return result[0] || null;
-}
+  }
 
-  async: updateNewsletter(id: number, newsletter: Partial<InsertNewsletter>): Promise<Newsletter> {
-    const result = await db.update(newsletters);
-      .set({ ...newsletter, updatedAt: new: Date() })
+  async updateNewsletter(id: number, newsletter: Partial<InsertNewsletter>): Promise<Newsletter> {
+    const result = await db.update(newsletters)
+      .set({ ...newsletter, updatedAt: new Date() })
       .where(eq(newsletters.id, id))
       .returning();
     return result[0];
   }
 
-  async: sendNewsletter(id: number): Promise<Newsletter> {
+  async sendNewsletter(id: number): Promise<Newsletter> {
     // Fetch the newsletter first
     const newsletter = await this.getNewsletterById(id);
     if (!newsletter) {
-      throw new: Error("Newsletter not found");
-}
+      throw new Error("Newsletter not found");
+    }
 
     // Update the newsletter status to sent
-    const now = new: Date();
-    const: [updatedNewsletter] = await db.update(newsletters)
+    const now = new Date();
+    const [updatedNewsletter] = await db.update(newsletters)
       .set({ 
         status: "sent", 
         sentAt: now,
         updatedAt: now
-})
+      })
       .where(eq(newsletters.id, id))
       .returning();
 
@@ -237,12 +237,12 @@ export class PostgresStorage implements IStorage: {
   }
 
   // Post methods
-  async: createPost(post: InsertPost): Promise<Post> {
+  async createPost(post: InsertPost): Promise<Post> {
     const result = await db.insert(posts).values(post).returning();
     return result[0];
-}
+  }
 
-  async: getPosts(): Promise<Post[]> {
+  async getPosts(): Promise<Post[]> {
     // Return only published and approved posts for public consumption
     // Use parameterized queries with ORM methods
     return await db.select()
@@ -254,24 +254,24 @@ export class PostgresStorage implements IStorage: {
         )
       )
       .orderBy(desc(posts.createdAt));
-}
+  }
   
-  async: getAllPosts(): Promise<Post[]> {
+  async getAllPosts(): Promise<Post[]> {
     // Return all posts regardless of status (for admin use)
     // Use parameterized queries with ORM methods
     return await db.select()
       .from(posts)
       .orderBy(desc(posts.createdAt));
-}
+  }
 
-  async: getPostById(id: number): Promise<Post | null> {
+  async getPostById(id: number): Promise<Post | null> {
     const result = await db.select().from(posts).where(eq(posts.id, id));
     return result[0] || null;
-}
+  }
 
-  async: updatePost(id: number, post: Partial<InsertPost>): Promise<Post> {
-    const result = await db.update(posts);
-      .set({ ...post, updatedAt: new: Date() })
+  async updatePost(id: number, post: Partial<InsertPost>): Promise<Post> {
+    const result = await db.update(posts)
+      .set({ ...post, updatedAt: new Date() })
       .where(eq(posts.id, id))
       .returning();
     return result[0];
