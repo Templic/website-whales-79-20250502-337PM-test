@@ -116,7 +116,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     '/api/health',
     '/api/webhooks',
     '/api/external-callbacks',
-    '/api/stripe-webhook';
+    '/api/stripe-webhook'
   ];
   
   // Apply CSRF protection with exemptions
@@ -127,7 +127,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       httpOnly: true,
       secure: process.env.NODE_ENV  === 'production',
       sameSite: 'strict'
-};
+  }
   }));
   
   // Simple health check endpoint
@@ -168,7 +168,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     
     try {
       // Run the API security verification
-      const results = await: verifyApiSecurity();
+      const results = await verifyApiSecurity();
       
       res.json({
         success: true,
@@ -224,13 +224,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 }
       
       // User exists in database
-      if (fullUserRecord) => {
+      if (fullUserRecord) {
         console.log("User found in database:", fullUserRecord.username);
         
         // For demo purposes, using hardcoded password verification
         // In a real app, we'd use bcrypt to compare against stored hash
         if ((username  === 'admin' && password === 'admin123') || 
-            (username === 'superadmin' && password === 'superadmin123') || ;
+            (username === 'superadmin' && password === 'superadmin123') || 
             (username === 'user' && password === 'user123')) {
           
           // IMPORTANT: Create a sanitized user object without sensitive fields
@@ -383,7 +383,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const userRolesDistribution = {
         user: users.filter(user => user.role === 'user').length,
         admin: users.filter(user => user.role === 'admin').length,
-        super_admin: users.filter(user => user.role === 'super_admin').length;
+        super_admin: users.filter(user => user.role === 'super_admin').length
 };
 
       // Get total pending reviews (comments + posts)
@@ -398,11 +398,11 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         .from(comments)
         .where(eq(comments.approved, false));
 
-      const totalReviewed = parseInt(approvedComments[0]?.count.toString() || '0') + ;
+      const totalReviewed = parseInt(approvedComments[0]?.count.toString() || '0') + 
                             parseInt(rejectedComments[0]?.count.toString() || '0');
 
       const approvalRate = totalReviewed > 0 
-        ? Math.round((parseInt(approvedComments[0]?.count.toString() || '0') / totalReviewed) * 100);
+        ? Math.round((parseInt(approvedComments[0]?.count.toString() || '0') / totalReviewed) * 100)
         : 0;
 
       // Determine system health based on pending reviews and other factors
@@ -479,22 +479,22 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       const { action } = req.body;
 
       // Handle different actions based on the request
-      switch (action) => {
-        case: 'promote':
+      switch (action) {
+        case 'promote':
           if (req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can promote users" });
           }
           const promotedUser = await storage.updateUserRole(userId, 'admin');
           return res.json(createSafeUser(promotedUser));
 
-        case: 'demote':
+        case 'demote':
           if (req.user.role !== 'super_admin') {
             return res.status(403).json({ message: "Only super admins can demote users" });
           }
           const demotedUser = await storage.updateUserRole(userId, 'user');
           return res.json(createSafeUser(demotedUser));
 
-        case: 'delete':
+        case 'delete':
           // Check if user is trying to delete themselves
           if (userId === req.user.id) {
             return res.status(400).json({ message: "You cannot delete your own account" });
@@ -520,7 +520,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           // @ts-ignore - Response type issue
   return res.json({ success: true, message: "User deleted successfully" });
           
-        case: 'ban':
+        case 'ban':
           // Check if user is trying to ban themselves
           if (userId === req.user.id) {
             return res.status(400).json({ message: "You cannot ban your own account" });
@@ -545,7 +545,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           const bannedUser = await storage.banUser(userId);
           return res.json(createSafeUser(bannedUser));
           
-        case: 'unban':
+        case 'unban':
           // Get user to unban and perform role checks
           const userToUnban = await storage.getUser(userId);
           if (!userToUnban) {
@@ -579,7 +579,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       console.log("Created new subscriber:", subscriber);
 
       // Send welcome email if SMTP is configured
-      if (transporter) => {
+      if (transporter) {
         try {
           await transporter.sendMail({
             from: process.env.SMTP_FROM || 'noreply@example.com',
@@ -670,7 +670,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           console.error(`Error fetching author for post ${post.id}:`, error);
         }
 
-        return: {
+        return {
           ...post,
           authorName
 };
@@ -787,7 +787,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         setting,
         enabled,
         settings: getSecuritySettings()
-      });
+      })
     } catch (error: unknown) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
@@ -807,14 +807,15 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         message: 'Failed to retrieve security settings', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-});
+})
     }
   });
 
   // Test endpoint - simulate unauthorized access (for testing purposes only)
   app.get("/api/test/security/simulate-unauthorized", (req, res) => {
     try {
-      // Log the unauthorized access attempt: logSecurityEvent({
+      // Log the unauthorized access attempt
+      logSecurityEvent({
         type: 'UNAUTHORIZED_ATTEMPT',
         setting: 'API_ACCESS',
         timestamp: new Date().toISOString(),
@@ -822,7 +823,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
         userAgent: req.headers['user-agent'] || 'Unknown',
         path: '/api/test/security/simulate-unauthorized',
         method: 'GET'
-});
+      });
 
       res.status(401).json({
         message: 'Unauthorized access attempt logged successfully',
@@ -833,7 +834,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         message: 'Failed to simulate unauthorized access', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-});
+})
     }
   });
 
@@ -898,7 +899,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           try {
             return JSON.parse(line);
 } catch (err: unknown) {
-            return: { rawLog: line, parseError: true };
+            return { rawLog: line, parseError: true };
           }
         });
 
@@ -940,7 +941,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         message: 'Failed to retrieve security statistics', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-});
+})
     }
   });
 
@@ -988,7 +989,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           try {
             return JSON.parse(line);
 } catch (err: unknown) {
-            return: { rawLog: line, parseError: true };
+            return { rawLog: line, parseError: true };
           }
         });
 
@@ -1002,7 +1003,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         message: 'Failed to retrieve security logs', 
         error: error instanceof Error ? error.message : 'Unknown error' 
-});
+})
     }
   });
 
@@ -1022,7 +1023,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     try {
-      const scanResults = await: runSecurityScan();
+      const scanResults = await runSecurityScan();
 
       res.json({
         message: 'Security scan completed successfully',
@@ -1041,7 +1042,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
   
@@ -1061,7 +1062,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
     }
 
     try {
-      const authScanResults = await: runAuthSecurityScan();
+      const authScanResults = await runAuthSecurityScan();
 
       res.json({
         message: 'Authentication security scan completed successfully',
@@ -1075,21 +1076,21 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 },
         vulnerabilities: authScanResults.vulnerabilities,
         securityRating: authScanResults.criticalIssues  === 0 ? 
-          (authScanResults.highIssues === 0 ? 'A' : 'B') : 'C';
-      });
+          (authScanResults.highIssues === 0 ? 'A' : 'B') : 'C'
+      })
     } catch (error: unknown) {
       console.error('Error running authentication security scan:', error);
       res.status(500).json({
         message: 'Failed to run authentication security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
   // Test security scan endpoint (for testing purposes)
   app.get("/api/test/security/scan", async (req, res) => {
     try {
-      const scanResults = await: runSecurityScan();
+      const scanResults = await runSecurityScan();
 
       res.json({
         message: 'Security scan completed successfully',
@@ -1108,7 +1109,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({
         message: 'Failed to run security scan',
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
@@ -1223,13 +1224,13 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       }
 
       // Send newsletter to all active subscribers (in a real app, this would use a queue)
-      if (transporter) => {
+      if (transporter) {
         try {
           // Send newsletter (just to the first subscriber for demo purposes)
           await transporter.sendMail({
             from: process.env.SMTP_FROM || 'noreply@example.com',
             to: activeSubscribers[0].email, // In production, use BCC for all subscribers,
-  subject: newsletter.title,
+            subject: newsletter.title,
             html: newsletter.content
 });
         } catch (emailError: unknown) {
@@ -1275,7 +1276,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           console.error(`Error fetching post for comment ${comment.id}:`, error);
         }
 
-        return: {
+        return {
           ...comment,
           authorName,
           postTitle
@@ -1316,7 +1317,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
           }
         }
 
-        return: {
+        return {
           ...track,
           uploadedByName
 };
@@ -1385,7 +1386,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
 
     try {
       const trackId = parseInt(req.params.trackId);
-      await storage.deleteMusic(trackId, req.user.id, req.user.role, as: 'admin' | 'super_admin');
+      await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ success: true, message: "Track deleted successfully" });
     } catch (error: unknown) {
       console.error(`Error deleting track:`, error);
@@ -1403,14 +1404,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       // Only return approved posts for non-admin users
       // Check if authentication function exists
       const isAuthenticated = typeof req.isAuthenticated === 'function' 
-        ? req.isAuthenticated() ;
+        ? req.isAuthenticated() 
         : false;
       
       const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
       
       // During development, return all posts
       const filteredPosts = process.env.NODE_ENV === 'production' && !isAdmin
-        ? posts.filter(post => post.approved);
+        ? posts.filter(post => post.approved)
         : posts;
 
       res.json(filteredPosts);
@@ -1419,14 +1420,14 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
       res.status(500).json({ 
         message: "Error fetching posts",
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
   app.get("/api/posts/unapproved", async (req, res) => {
     // Check if authentication function exists
     const isAuthenticated = typeof req.isAuthenticated === 'function' 
-      ? req.isAuthenticated() ;
+      ? req.isAuthenticated() 
       : false;
     
     const isAdmin = isAuthenticated && req.user?.role && ['admin', 'super_admin'].includes(req.user.role);
@@ -1654,7 +1655,7 @@ export async function registerRoutes(app: express.Application): Promise<Server> 
   app.post("/api/contact", contactValidation, validate, async (req, res) => {
   try {
     // Input is already validated by our middleware
-    const { insertContactSchema } = await: import("@shared/schema");
+    const { insertContactSchema } = await import("@shared/schema");
     const data = insertContactSchema.parse(req.body);
 
     // Create database entry
@@ -1737,7 +1738,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         return res.status(400).json({ message: "Invalid or expired reset token" });
       }
 
-      const hashedPassword = await: hashPassword(newPassword);
+      const hashedPassword = await hashPassword(newPassword);
       await storage.updateUserPassword(user.id, hashedPassword);
 
       res.json({ message: "Password updated successfully" });
@@ -1800,7 +1801,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         file: file,
         targetPage: targetPage,
         uploadedBy: req.user.id,
-        userRole: req.user.role, as: 'admin' | 'super_admin'
+        userRole: req.user.role as 'admin' | 'super_admin'
 });
       res.json(result);
     } catch (error: unknown) {
@@ -1819,7 +1820,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ 
         message: "Error fetching tracks",
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
@@ -1832,7 +1833,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ 
         message: "Error fetching albums",
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
@@ -1844,12 +1845,12 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
 
     try {
       const trackId = Number(req.params.id);
-      await storage.deleteMusic(trackId, req.user.id, req.user.role, as: 'admin' | 'super_admin');
+      await storage.deleteMusic(trackId, req.user.id, req.user.role as 'admin' | 'super_admin');
       res.json({ message: "Track deleted successfully" });
     } catch (error: unknown) {
       console.error("Error deleting track:", error);
       res.status(error.message  === 'Track not found' ? 404 : 500)
-        .json({ message: error.message || "Failed to delete track" });
+        .json({ message: error.message || "Failed to delete track" })
     }
   });
 
@@ -1991,7 +1992,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       res.status(500).json({ 
         message: "Error fetching analytics data",
         error: error instanceof Error ? error.message : 'Unknown error' 
-});
+})
     }
   });
 
@@ -2128,7 +2129,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         success: false, 
         message: 'Failed to log security event',
         error: error instanceof Error ? error.message : 'Unknown error'
-});
+})
     }
   });
 
@@ -2183,7 +2184,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         message: `Security setting ${setting} ${enabled ? 'enabled' : 'disabled'} successfully`,
         setting,
         enabled
-      });
+      })
     } catch (error: unknown) {
       console.error('Error updating security setting:', error);
       res.status(500).json({ message: 'Failed to update security setting' });
@@ -2216,11 +2217,11 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
         const createdByUser = item.createdBy ? users.find(u => u.id === item.createdBy) : null;
         const reviewerUser = item.reviewerId ? users.find(u => u.id === item.reviewerId) : null;
         
-        return: {
+        return {
           ...item,
           createdByName: createdByUser ? createdByUser.username : undefined,
           reviewerName: reviewerUser ? reviewerUser.username : undefined
-};
+}
       });
       
       res.json(enhancedItems);
@@ -2248,10 +2249,10 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
       const enhancedHistory = history.map(entry => {
         const actor = entry.actorId ? users.find(u => u.id === entry.actorId) : null;
         
-        return: {
+        return {
           ...entry,
           actorName: actor ? actor.username : undefined
-};
+}
       });
       
       res.json(enhancedHistory);
@@ -2320,7 +2321,7 @@ app.post("/api/posts/comments/:id/reject", async (req, res) => {
           try {
             return JSON.parse(line);
 } catch (e: unknown) {
-            return: { raw: line, error: 'Failed to parse log entry' };
+            return { raw: line, error: 'Failed to parse log entry' };
           }
         });
 

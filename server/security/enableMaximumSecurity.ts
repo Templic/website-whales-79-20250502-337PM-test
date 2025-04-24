@@ -5,22 +5,22 @@
  * features regardless of performance impact.
  */
 
-import: { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from: './advanced/SecurityFabric';
-import: { startMetricsCollection } from: './monitoring/MetricsCollector';
-import: { initializeEventsCollector } from: './monitoring/EventsCollector';
+import { securityFabric, SecurityEventCategory, SecurityEventSeverity, logSecurityEvent } from './advanced/SecurityFabric';
+import { startMetricsCollection } from './monitoring/MetricsCollector';
+import { initializeEventsCollector } from './monitoring/EventsCollector';
 
 // Available security features
-export interface SecurityFeatures: {
-  quantumResistance: boolean;,
-  mlAnomalyDetection: boolean;,
-  blockchainLogging: boolean;,
-  mfa: boolean;,
-  csrf: boolean;,
-  inputValidation: boolean;,
-  apiSecurity: boolean;,
-  realTimeMonitoring: boolean;,
-  bruteForceProtection: boolean;,
-  rateLimiting: boolean;,
+export interface SecurityFeatures {
+  quantumResistance: boolean;
+  mlAnomalyDetection: boolean;
+  blockchainLogging: boolean;
+  mfa: boolean;
+  csrf: boolean;
+  inputValidation: boolean;
+  apiSecurity: boolean;
+  realTimeMonitoring: boolean;
+  bruteForceProtection: boolean;
+  rateLimiting: boolean;
   deepScanning: boolean;
 }
 
@@ -60,14 +60,14 @@ let activeSecurityFeatures: SecurityFeatures = { ...DEFAULT_SECURITY_FEATURES };
 /**
  * Get the current active security features
  */
-export function: getActiveSecurityFeatures(): SecurityFeatures: {
-  return: { ...activeSecurityFeatures };
+export function getActiveSecurityFeatures(): SecurityFeatures {
+  return { ...activeSecurityFeatures };
 }
 
 /**
  * Set active security features
  */
-export function: setSecurityFeatures(features: Partial<SecurityFeatures>): void: {
+export function setSecurityFeatures(features: Partial<SecurityFeatures>): void {
   // Update active features
   activeSecurityFeatures = {
     ...activeSecurityFeatures,

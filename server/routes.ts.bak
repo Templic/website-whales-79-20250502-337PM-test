@@ -35,7 +35,7 @@ import secureApiRoutes from './routes/secure-api';
 import { verifyApiSecurity } from './security/apiSecurityVerification';
 // Import CSRF protection middleware
 import { enhancedCsrfProtection } from './security/middleware/enhancedCsrfProtection';
-import: {
+import {
   insertSubscriberSchema,
   insertPostSchema,
   insertCommentSchema,
@@ -100,7 +100,7 @@ import { protectApiRoutes } from './security/apiRoutesProtector';
 const transporter = createTransport({
   host: process.env.SMTP_HOST || 'smtp.example.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE  === 'true',;
+  secure: process.env.SMTP_SECURE  === 'true',
   auth: {
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || ''

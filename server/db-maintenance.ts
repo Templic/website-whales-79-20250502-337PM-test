@@ -5,32 +5,32 @@
  * tables that need optimization based on actual usage patterns.
  */
 
-import: { QueryResult } from: 'pg';
-import: { db, pgPool } from: './db';
-import: { config } from: './config';
-import: { log } from: './vite';
-import: { sql } from: 'drizzle-orm';
+import { QueryResult } from 'pg';
+import { db, pgPool } from './db';
+import { config } from './config';
+import { log } from './vite';
+import { sql } from 'drizzle-orm';
 
 // Track last maintenance time
 let lastMaintenanceRun: number | null = null;
 
 // Statistics for each table
-interface TableStats: {
-  tableName: string;,
-  schemaName: string;,
-  rowCount: number;,
-  deadTuples: number;,
-  modifiedTuples: number;,
-  lastVacuum: Date | null;,
-  lastAnalyze: Date | null;,
-  lastAutoVacuum: Date | null;,
+interface TableStats {
+  tableName: string;
+  schemaName: string;
+  rowCount: number;
+  deadTuples: number;
+  modifiedTuples: number;
+  lastVacuum: Date | null;
+  lastAnalyze: Date | null;
+  lastAutoVacuum: Date | null;
   lastAutoAnalyze: Date | null;
 }
 
 /**
  * Schedule intelligent database maintenance based on configuration
  */
-export async function: scheduleIntelligentMaintenance(): Promise<void> {
+export async function scheduleIntelligentMaintenance(): Promise<void> {
   // Skip if optimization is disabled
   if (!config.features.enableDatabaseOptimization || !config.database.enableOptimization) {
     log('Database optimization is disabled, skipping maintenance scheduling', 'db-maintenance');
@@ -40,7 +40,7 @@ export async function: scheduleIntelligentMaintenance(): Promise<void> {
   // Run maintenance immediately if it's the first run
   if (lastMaintenanceRun === null) {
     log('Initial database maintenance run scheduled', 'db-maintenance');
-    await: runIntelligentMaintenance();
+    await runIntelligentMaintenance();
 }
 
   // Schedule regular maintenance
@@ -48,21 +48,21 @@ export async function: scheduleIntelligentMaintenance(): Promise<void> {
   log(`Scheduled regular database maintenance every ${interval / (1000 * 60 * 60)} hours`, 'db-maintenance');
   
   setInterval(async () => {
-    await: runIntelligentMaintenance();
-}, interval);
+    await runIntelligentMaintenance();
+  }, interval);
 }
 
 /**
  * Run intelligent database maintenance operations
  * This analyzes table statistics and only runs maintenance on tables that need it
  */
-export async function: runIntelligentMaintenance(): Promise<void> {
-  try: {
+export async function runIntelligentMaintenance(): Promise<void> {
+  try {
     const startTime = Date.now();
     log('Starting intelligent database maintenance...', 'db-maintenance');
 
     // Get table statistics
-    const tableStats = await: getTableStatistics();
+    const tableStats = await getTableStatistics();
     
     // Get tables needing maintenance
     const vacuumCandidates = identifyVacuumCandidates(tableStats);
@@ -73,13 +73,13 @@ export async function: runIntelligentMaintenance(): Promise<void> {
 
     // Run VACUUM on tables needing it
     if (vacuumCandidates.length > 0) {
-      await: runVacuum(vacuumCandidates);
-}
+      await runVacuum(vacuumCandidates);
+    }
 
     // Run ANALYZE on tables needing it
     if (analyzeCandidates.length > 0) {
-      await: runAnalyze(analyzeCandidates);
-}
+      await runAnalyze(analyzeCandidates);
+    }
 
     // Update last maintenance time
     lastMaintenanceRun = Date.now();
@@ -92,7 +92,7 @@ export async function: runIntelligentMaintenance(): Promise<void> {
       log('Maintenance summary:', 'db-maintenance');
       log(`- VACUUM performed on ${vacuumCandidates.length} tables`, 'db-maintenance');
       log(`- ANALYZE performed on ${analyzeCandidates.length} tables`, 'db-maintenance');
-    } else: {
+    } else {
       log('No tables required maintenance at this time', 'db-maintenance');
 }
     
@@ -106,8 +106,8 @@ export async function: runIntelligentMaintenance(): Promise<void> {
 /**
  * Get database table statistics for maintenance decisions
  */
-async function: getTableStatistics(): Promise<TableStats[]> {
-  try: {
+async function getTableStatistics(): Promise<TableStats[]> {
+  try {
     // Using parameterized query for security
     const statsQuery = `
       SELECT
@@ -143,15 +143,15 @@ async function: getTableStatistics(): Promise<TableStats[]> {
 }));
   } catch (error: unknown) {
     log(`Error fetching table statistics: ${error}`, 'db-maintenance');
-    return: [];
+    return [];
   }
 }
 
 /**
  * Identify tables that need VACUUM based on dead tuples
  */
-function: identifyVacuumCandidates(tableStats: TableStats[]): string[] {
-  const: { excludeTables, targetTables, vacuumThreshold } = config.database;
+function identifyVacuumCandidates(tableStats: TableStats[]): string[] {
+  const { excludeTables, targetTables, vacuumThreshold } = config.database;
   const candidates: string[] = [];
 
   for (const stats of tableStats) {
@@ -178,8 +178,8 @@ function: identifyVacuumCandidates(tableStats: TableStats[]): string[] {
 /**
  * Identify tables that need ANALYZE based on modified tuples
  */
-function: identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
-  const: { excludeTables, targetTables, analyzeThreshold } = config.database;
+function identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
+  const { excludeTables, targetTables, analyzeThreshold } = config.database;
   const candidates: string[] = [];
 
   for (const stats of tableStats) {
@@ -210,16 +210,16 @@ function: identifyAnalyzeCandidates(tableStats: TableStats[]): string[] {
  * Validates that a table name is safe to use in SQL operations
  * This helps prevent SQL injection attacks
  */
-function: isValidTableName(tableName: string): boolean: {
+function isValidTableName(tableName: string): boolean {
   // Only allow alphanumeric characters, underscores, and hyphens
   // This is a strict validation for table names to prevent SQL injection
   return /^[a-zA-Z0-9_-]+$/.test(tableName);
 }
 
-async function: runVacuum(tables: string[]): Promise<void> {
+async function runVacuum(tables: string[]): Promise<void> {
   if (tables.length === 0) return;
 
-  try: {
+  try {
     const client = await pgPool.connect();
 
     for (const table of tables) {
@@ -251,10 +251,10 @@ async function: runVacuum(tables: string[]): Promise<void> {
 /**
  * Run ANALYZE operation on specific tables
  */
-async function: runAnalyze(tables: string[]): Promise<void> {
+async function runAnalyze(tables: string[]): Promise<void> {
   if (tables.length === 0) return;
 
-  try: {
+  try {
     const client = await pgPool.connect();
 
     for (const table of tables) {
@@ -270,7 +270,7 @@ async function: runAnalyze(tables: string[]): Promise<void> {
       // PostgreSQL requires double quotes for identifiers
       // Since parameterized queries don't directly support identifier substitution,
       // we need to validate the table name and then use template literals
-      const query = `ANALYZE VERBOSE: "${table}"`;
+      const query = `ANALYZE VERBOSE "${table}"`;
       await client.query(query);
       
       const duration = Date.now() - startTime;
@@ -287,8 +287,8 @@ async function: runAnalyze(tables: string[]): Promise<void> {
  * Force vacuum and analyze on all tables
  * This is a utility function for manual maintenance
  */
-export async function: forceFullMaintenance(): Promise<void> {
-  try: {
+export async function forceFullMaintenance(): Promise<void> {
+  try {
     const startTime = Date.now();
     log('Starting full database maintenance (VACUUM ANALYZE on all tables)...', 'db-maintenance');
 
@@ -306,7 +306,7 @@ export async function: forceFullMaintenance(): Promise<void> {
     const allTables = result.rows.map(row => row.tablename);
     
     // Filter out excluded tables
-    const: { excludeTables } = config.database;
+    const { excludeTables } = config.database;
     const tablesToMaintain = allTables.filter(table => !excludeTables.includes(table));
     
     log(`Running full maintenance on ${tablesToMaintain.length} tables`, 'db-maintenance');
