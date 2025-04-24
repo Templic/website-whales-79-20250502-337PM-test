@@ -86,7 +86,7 @@ export const userValidation = {
       .optional()
       .custom((value, { req }) => {
         if (value !== req.body.newPassword) {
-          throw new: Error('Passwords do not match');
+          throw new Error('Passwords do not match');
 }
         return true;
       })
